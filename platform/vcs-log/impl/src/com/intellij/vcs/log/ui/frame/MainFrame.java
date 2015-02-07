@@ -186,7 +186,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          myUI.hideAll();
+          myUI.collapseAll();
         }
 
         @Override
@@ -201,7 +201,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     AnAction expandBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myUI.showAll();
+        myUI.expandAll();
       }
 
       @Override

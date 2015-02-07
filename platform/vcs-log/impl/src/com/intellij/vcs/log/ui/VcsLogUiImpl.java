@@ -123,11 +123,11 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }, title, false, null, getMainFrame().getMainComponent());
   }
 
-  public void showAll() {
+  public void expandAll() {
     performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), "Expanding linear branches...");
   }
 
-  public void hideAll() {
+  public void collapseAll() {
     performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), "Collapsing linear branches...");
   }
 
