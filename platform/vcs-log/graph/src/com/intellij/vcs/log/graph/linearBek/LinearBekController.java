@@ -36,18 +36,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class LinearBekController extends CascadeLinearGraphController {
   private static final Logger LOG = Logger.getInstance(LinearBekController.class);
   @NotNull private final LinearBekGraph myCompiledGraph;
   private final LinearBekGraphBuilder myLinearBekGraphBuilder;
+  private final BekGraphLayout myBekGraphLayout;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
     myCompiledGraph = new LinearBekGraph(getDelegateLinearGraphController().getCompiledGraph());
-    myLinearBekGraphBuilder = new LinearBekGraphBuilder(myCompiledGraph, new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(),
-                                                                                            controller.getBekIntMap()));
+    myBekGraphLayout = new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap());
+    myLinearBekGraphBuilder = new LinearBekGraphBuilder(myCompiledGraph, myBekGraphLayout);
 
     long start = System.currentTimeMillis();
     myLinearBekGraphBuilder.collapseAll();
@@ -98,6 +98,8 @@ public class LinearBekController extends CascadeLinearGraphController {
       }
     }
     else if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE) {
+      final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(myCompiledGraph.myGraph);
+      new LinearBekGraphBuilder(workingGraph, myBekGraphLayout).collapseAll();
       return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
         @Nullable
         @Override
@@ -105,7 +107,7 @@ public class LinearBekController extends CascadeLinearGraphController {
           return new Runnable() {
             @Override
             public void run() {
-              myLinearBekGraphBuilder.collapseAll();
+              workingGraph.applyTo(myCompiledGraph);
             }
           };
         }
@@ -119,12 +121,8 @@ public class LinearBekController extends CascadeLinearGraphController {
           return new Runnable() {
             @Override
             public void run() {
-              Set<GraphEdge> allEdges = myCompiledGraph.myDottedEdges.getEdges();
-              for (GraphEdge e : allEdges) {
-                if (myCompiledGraph.myDottedEdges.hasEdge(e.getUpNodeIndex(), e.getDownNodeIndex())) {
-                  myCompiledGraph.expandEdge(e);
-                }
-              }
+              myCompiledGraph.myDottedEdges.removeAll();
+              myCompiledGraph.myHiddenEdges.removeAll();
             }
           };
         }

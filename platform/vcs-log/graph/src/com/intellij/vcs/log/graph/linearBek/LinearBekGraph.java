@@ -111,4 +111,22 @@ public class LinearBekGraph implements LinearGraph {
 
     return addedEdges;
   }
+
+  public static class WorkingLinearBekGraph extends LinearBekGraph {
+    public WorkingLinearBekGraph(@NotNull LinearGraph graph) {
+      super(graph);
+    }
+
+    public void applyTo(LinearBekGraph graph) {
+      graph.myDottedEdges.removeAll();
+      graph.myHiddenEdges.removeAll();
+
+      for (GraphEdge e : myDottedEdges.getEdges()) {
+        graph.myDottedEdges.createEdge(e);
+      }
+      for (GraphEdge e : myHiddenEdges.getEdges()) {
+        graph.myHiddenEdges.createEdge(e);
+      }
+    }
+  }
 }

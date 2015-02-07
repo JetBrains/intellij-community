@@ -140,6 +140,10 @@ public class EdgeStorageWrapper {
     return value == null ? EdgeStorage.NULL_ID : value;
   }
 
+  public void removeAll() {
+    myEdgeStorage.removeAll();
+  }
+
   public static EdgeStorageWrapper createSimpleEdgeStorage() {
     return new EdgeStorageWrapper(new EdgeStorage(), new Function.Self<Integer, Integer>(), new Function.Self<Integer, Integer>());
   }
