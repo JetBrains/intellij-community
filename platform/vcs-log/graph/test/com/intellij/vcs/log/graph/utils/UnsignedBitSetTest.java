@@ -18,17 +18,19 @@ package com.intellij.vcs.log.graph.utils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class UnsignedBitSetTest {
 
   private static String toStr(@NotNull UnsignedBitSet bitSet) {
     StringBuilder s = new StringBuilder();
     for (int i = -5; i <= 5; i++) {
-      if (bitSet.get(i))
+      if (bitSet.get(i)) {
         s.append(1);
-      else
+      }
+      else {
         s.append(0);
+      }
     }
     return s.toString();
   }

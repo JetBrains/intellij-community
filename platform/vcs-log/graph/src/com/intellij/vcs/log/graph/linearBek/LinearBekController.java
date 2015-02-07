@@ -41,11 +41,12 @@ public class LinearBekController extends CascadeLinearGraphController {
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
     myCompiledGraph = new LinearBekGraph(getDelegateLinearGraphController().getCompiledGraph());
-    myLinearBekGraphBuilder = new LinearBekGraphBuilder(myCompiledGraph, new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap()));
+    myLinearBekGraphBuilder = new LinearBekGraphBuilder(myCompiledGraph, new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(),
+                                                                                            controller.getBekIntMap()));
 
     long start = System.currentTimeMillis();
     myLinearBekGraphBuilder.collapseAll();
-    System.err.println((System.currentTimeMillis() - start) / 1000.0 + " sec");
+    System.err.println("Linear bek took " + (System.currentTimeMillis() - start) / 1000.0 + " sec");
   }
 
   @NotNull

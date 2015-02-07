@@ -38,10 +38,8 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
     }
   }
 
-  @NotNull
-  private final Type myType;
-  @NotNull
-  private final LineStyle myLineStyle;
+  @NotNull private final Type myType;
+  @NotNull private final LineStyle myLineStyle;
   private final int myPositionInOtherRow;
 
   public EdgePrintElementImpl(int rowIndex,

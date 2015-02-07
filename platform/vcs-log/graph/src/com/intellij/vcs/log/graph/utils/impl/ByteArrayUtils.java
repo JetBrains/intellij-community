@@ -35,9 +35,8 @@ class ByteArrayUtils {
     if (value < 0) value = ~value;
 
     value >>= BYTE_OFFSET - 1;
-    for (int  i = 1; i < 4; i++) {
-      if (value == 0)
-        return i;
+    for (int i = 1; i < 4; i++) {
+      if (value == 0) return i;
       value >>= BYTE_OFFSET;
     }
     return 4;
@@ -45,7 +44,7 @@ class ByteArrayUtils {
 
   public static void writeDelta(int startIndex, int value, int sizeOf, byte[] bytes) {
     for (int i = sizeOf - 1; i >= 0; i--) {
-      bytes[startIndex + i] = (byte) value;
+      bytes[startIndex + i] = (byte)value;
       value >>= BYTE_OFFSET;
     }
   }
@@ -69,8 +68,7 @@ class ByteArrayUtils {
   }
 
   public static int groundPointCount(int arraySize, int blockSize) {
-    if (arraySize == 0)
-      return 1;
+    if (arraySize == 0) return 1;
 
     return (arraySize - 1) / blockSize + 1;
   }

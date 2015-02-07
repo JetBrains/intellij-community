@@ -17,7 +17,6 @@ package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -30,7 +29,10 @@ import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 200;
@@ -246,6 +248,7 @@ class LinearBekGraphBuilder {
       myBlockBody.add(body);
     }
 
+    @NotNull
     public TIntHashSet getTails() {
       return myTails;
     }

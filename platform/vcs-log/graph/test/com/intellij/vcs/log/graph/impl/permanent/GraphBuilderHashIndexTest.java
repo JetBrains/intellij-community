@@ -16,10 +16,10 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import org.junit.Test;
 
 import java.io.IOException;

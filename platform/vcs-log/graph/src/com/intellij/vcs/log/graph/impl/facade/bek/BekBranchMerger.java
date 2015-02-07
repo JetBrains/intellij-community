@@ -22,15 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 class BekBranchMerger {
-  @NotNull
-  private final List<BekBranch> myBekBranches;
-  @NotNull
-  private final BekEdgeRestrictions myEdgeRestrictions;
-  @NotNull
-  private final TimestampGetter myTimestampGetter;
+  @NotNull private final List<BekBranch> myBekBranches;
+  @NotNull private final BekEdgeRestrictions myEdgeRestrictions;
+  @NotNull private final TimestampGetter myTimestampGetter;
 
-  @NotNull
-  private final List<Integer> myInverseResultList = ContainerUtil.newArrayList();
+  @NotNull private final List<Integer> myInverseResultList = ContainerUtil.newArrayList();
 
   public BekBranchMerger(@NotNull List<BekBranch> bekBranches,
                          @NotNull BekEdgeRestrictions edgeRestrictions,
@@ -44,7 +40,7 @@ class BekBranchMerger {
   private boolean prepareLastPartsForBranches() {
     boolean hasUndoneBranches = false;
     for (BekBranch bekBranch : myBekBranches) {
-      if (!bekBranch.isDone()){
+      if (!bekBranch.isDone()) {
         hasUndoneBranches = true;
         if (bekBranch.getPrepareForInsertPart() == null) {
           bekBranch.updatePrepareForInsertPart(myTimestampGetter, myEdgeRestrictions);
@@ -56,8 +52,7 @@ class BekBranchMerger {
 
   private long getBranchLastPartTimestamp(BekBranch bekBranch) {
     List<Integer> prepareForInsertPart = bekBranch.getPrepareForInsertPart();
-    if (prepareForInsertPart == null)
-      return Long.MAX_VALUE;
+    if (prepareForInsertPart == null) return Long.MAX_VALUE;
 
     assert !prepareForInsertPart.isEmpty();
     int nodeIndex = prepareForInsertPart.get(0);
@@ -74,8 +69,9 @@ class BekBranchMerger {
 
     List<Integer> prepareForInsertPart = selectBranch.getPrepareForInsertPart();
     assert prepareForInsertPart != null;
-    for (int insertedNode: prepareForInsertPart)
+    for (int insertedNode : prepareForInsertPart) {
       myEdgeRestrictions.removeRestriction(insertedNode);
+    }
 
     myInverseResultList.addAll(ContainerUtil.reverse(prepareForInsertPart));
     selectBranch.doneInsertPreparedPart();

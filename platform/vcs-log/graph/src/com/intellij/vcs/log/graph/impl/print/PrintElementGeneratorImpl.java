@@ -46,31 +46,29 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
   private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
 
 
-  @NotNull
-  private final SLRUMap<Integer, List<GraphElement>> cache = new SLRUMap<Integer, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2);
-  @NotNull
-  private final EdgesInRowGenerator myEdgesInRowGenerator;
-  @NotNull
-  private final Comparator<GraphElement> myGraphElementComparator;
+  @NotNull private final SLRUMap<Integer, List<GraphElement>> cache = new SLRUMap<Integer, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2);
+  @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
+  @NotNull private final Comparator<GraphElement> myGraphElementComparator;
 
   private final int myLongSize;
   private final int myShowingPartSize;
   private final int myAddNearArrowSize;
 
-  public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
-                                   @NotNull PrintElementManager printElementManager,
-                                   boolean showLongEdges) {
+  public PrintElementGeneratorImpl(@NotNull LinearGraph graph, @NotNull PrintElementManager printElementManager, boolean showLongEdges) {
     super(graph, printElementManager);
     myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
     myGraphElementComparator = printElementManager.getGraphElementComparator();
     if (showLongEdges) {
       myLongSize = VERY_LONG_EDGE_SIZE;
       myShowingPartSize = VERY_LONG_EDGE_PART_SIZE;
-      if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES)
+      if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES) {
         myAddNearArrowSize = LONG_EDGE_SIZE;
-      else
+      }
+      else {
         myAddNearArrowSize = Integer.MAX_VALUE;
-    } else {
+      }
+    }
+    else {
       myLongSize = LONG_EDGE_SIZE;
       myShowingPartSize = LONG_EDGE_PART_SIZE;
       myAddNearArrowSize = Integer.MAX_VALUE;
@@ -91,7 +89,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     myAddNearArrowSize = addNearArrowSize;
   }
 
-    @NotNull
+  @NotNull
   @Override
   protected List<ShortEdge> getDownShortEdges(int rowIndex) {
     NullableFunction<GraphEdge, Integer> endPosition = createEndPositionFunction(rowIndex);
@@ -112,7 +110,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       }
 
       if (element instanceof GraphEdge) {
-        GraphEdge edge = (GraphEdge) element;
+        GraphEdge edge = (GraphEdge)element;
         Integer endPos = endPosition.fun(edge);
         if (endPos != null) result.add(new ShortEdge(edge, startPosition, endPos));
       }
@@ -126,8 +124,9 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     List<GraphElement> visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex + 1);
 
     final Map<GraphElement, Integer> toPosition = new HashMap<GraphElement, Integer>();
-    for (int position = 0; position < visibleElementsInNextRow.size(); position++)
+    for (int position = 0; position < visibleElementsInNextRow.size(); position++) {
       toPosition.put(visibleElementsInNextRow.get(position), position);
+    }
 
     return new NullableFunction<GraphEdge, Integer>() {
       @Override
@@ -136,8 +135,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
         Integer position = toPosition.get(edge);
         if (position == null) {
           Integer downNodeIndex = edge.getDownNodeIndex();
-          if (downNodeIndex != null)
-            position = toPosition.get(myLinearGraph.getGraphNode(downNodeIndex));
+          if (downNodeIndex != null) position = toPosition.get(myLinearGraph.getGraphNode(downNodeIndex));
         }
         return position;
       }
@@ -164,22 +162,24 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
           int upOffset = visibleRowIndex - normalEdge.first;
           int downOffset = normalEdge.second - visibleRowIndex;
 
-          if (edgeSize >= myLongSize)
-            addArrowIfNeeded(result, edge, position, upOffset, downOffset, myShowingPartSize);
+          if (edgeSize >= myLongSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, myShowingPartSize);
 
-          if (edgeSize >= myAddNearArrowSize)
-            addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
+          if (edgeSize >= myAddNearArrowSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
 
-        } else { // special edges
+        }
+        else { // special edges
           switch (edge.getType()) {
             case DOTTED_ARROW_DOWN:
             case NOT_LOAD_COMMIT:
-              if (intEqual(edge.getUpNodeIndex(), visibleRowIndex - 1))
+              if (intEqual(edge.getUpNodeIndex(), visibleRowIndex - 1)) {
                 result.add(new SimpleRowElement(edge, SimplePrintElement.Type.DOWN_ARROW, position));
+              }
               break;
             case DOTTED_ARROW_UP:
               if (intEqual(edge.getDownNodeIndex(), visibleRowIndex + 1)) // todo case 0-row arrow
+              {
                 result.add(new SimpleRowElement(edge, SimplePrintElement.Type.UP_ARROW, position));
+              }
               break;
             default:
               // todo log some error (nothing here)
@@ -196,20 +196,21 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
                                        int upOffset,
                                        int downOffset,
                                        int showingPartSize) {
-    if (upOffset == showingPartSize)
-      result.add(new SimpleRowElement(edge, SimplePrintElement.Type.DOWN_ARROW, position));
+    if (upOffset == showingPartSize) result.add(new SimpleRowElement(edge, SimplePrintElement.Type.DOWN_ARROW, position));
 
-    if (downOffset == showingPartSize)
-      result.add(new SimpleRowElement(edge, SimplePrintElement.Type.UP_ARROW, position));
+    if (downOffset == showingPartSize) result.add(new SimpleRowElement(edge, SimplePrintElement.Type.UP_ARROW, position));
   }
 
   private boolean edgeIsVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
     Pair<Integer, Integer> normalEdge = LinearGraphUtils.asNormalEdge(edge);
     if (normalEdge == null) // e.d. edge is special. See addSpecialEdges
+    {
       return false;
+    }
     if (normalEdge.second - normalEdge.first < myLongSize) {
       return true;
-    } else {
+    }
+    else {
       return visibleRowIndex - normalEdge.first <= myShowingPartSize || normalEdge.second - visibleRowIndex <= myShowingPartSize;
     }
   }
@@ -240,8 +241,7 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     result.add(myLinearGraph.getGraphNode(rowIndex));
 
     for (GraphEdge edge : myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {
-      if (edgeIsVisibleInRow(edge, rowIndex))
-        result.add(edge);
+      if (edgeIsVisibleInRow(edge, rowIndex)) result.add(edge);
     }
 
     addSpecialEdges(result, rowIndex);

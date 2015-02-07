@@ -26,7 +26,7 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph
 
 private val LinearGraph.lite: LiteLinearGraph get() = LinearGraphUtils.asLiteLinearGraph(this)
 
-private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) {false}.getMiddleNodes(upNode, downNode, false)
+private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) { false }.getMiddleNodes(upNode, downNode, false)
 
 private fun Collection<Int>.assert(s: String) = assertEquals(s, sort().joinToString(","))
 private fun Int?.assert(i: Int?) = assertEquals(i, this)
@@ -52,7 +52,7 @@ private fun FragmentGenerator.GreenFragment.assert(s: String)
 2
  */
 val simple = graph {
-  0(1,2)
+  0(1, 2)
   1(2)
   2()
 }
@@ -77,9 +77,9 @@ val twoBranch = graph {
 3 4 5
  */
 val downTree = graph {
-  0(1,2)
-  1(3,4)
-  2(4,5)
+  0(1, 2)
+  1(3, 4)
+  2(4, 5)
   3()
   4()
   5()
@@ -94,7 +94,7 @@ val downTree = graph {
  */
 val upTree = graph {
   0(3)
-  1(3,4)
+  1(3, 4)
   2(4)
   3(5)
   4(5)
@@ -116,13 +116,13 @@ val upTree = graph {
  8
  */
 val difficult = graph {
-  0(1,2)
-  1(3,4)
+  0(1, 2)
+  1(3, 4)
   2(6)
   3(5)
   4(6)
-  5(7,8)
-  6(7,8)
+  5(7, 8)
+  6(7, 8)
   7()
   8()
 }

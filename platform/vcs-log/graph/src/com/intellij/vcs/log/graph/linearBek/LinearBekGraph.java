@@ -27,7 +27,10 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class LinearBekGraph implements LinearGraph {
   @NotNull protected final LinearGraph myGraph;
@@ -103,7 +106,7 @@ public class LinearBekGraph implements LinearGraph {
       }
     });
 
-    for (GraphEdge graphEdge: downDottedEdges) {
+    for (GraphEdge graphEdge : downDottedEdges) {
       assert graphEdge.getType() == GraphEdgeType.DOTTED;
       addedEdges.addAll(expandEdge(graphEdge));
     }
