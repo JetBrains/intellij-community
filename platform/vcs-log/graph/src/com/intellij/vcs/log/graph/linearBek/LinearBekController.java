@@ -33,7 +33,10 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class LinearBekController extends CascadeLinearGraphController {
   private static final Logger LOG = Logger.getInstance(LinearBekController.class);
@@ -67,7 +70,8 @@ public class LinearBekController extends CascadeLinearGraphController {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED) {
             return new LinearGraphAnswer(GraphChangesUtil.edgesReplaced(Collections.singleton(edge), myCompiledGraph.expandEdge(edge),
-                                                                        getDelegateLinearGraphController().getCompiledGraph()), null, null, null);
+                                                                        getDelegateLinearGraphController().getCompiledGraph()), null, null,
+                                         null);
           }
         }
         else if (graphElement instanceof GraphNode) {
@@ -92,6 +96,39 @@ public class LinearBekController extends CascadeLinearGraphController {
           }
         }
       }
+    }
+    else if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE) {
+      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
+        @Nullable
+        @Override
+        public Runnable getGraphUpdater() {
+          return new Runnable() {
+            @Override
+            public void run() {
+              myLinearBekGraphBuilder.collapseAll();
+            }
+          };
+        }
+      };
+    }
+    else if (action.getType() == GraphAction.Type.BUTTON_EXPAND) {
+      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
+        @Nullable
+        @Override
+        public Runnable getGraphUpdater() {
+          return new Runnable() {
+            @Override
+            public void run() {
+              Set<GraphEdge> allEdges = myCompiledGraph.myDottedEdges.getEdges();
+              for (GraphEdge e : allEdges) {
+                if (myCompiledGraph.myDottedEdges.hasEdge(e.getUpNodeIndex(), e.getDownNodeIndex())) {
+                  myCompiledGraph.expandEdge(e);
+                }
+              }
+            }
+          };
+        }
+      };
     }
     return null;
   }
