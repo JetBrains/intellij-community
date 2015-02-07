@@ -180,20 +180,6 @@ class CollapsedActionManager {
     }
   }
 
-  private final static GraphChanges<Integer> SOME_CHANGES = new GraphChanges<Integer>() { //todo drop this
-    @NotNull
-    @Override
-    public Collection<Node<Integer>> getChangedNodes() {
-      return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public Collection<Edge<Integer>> getChangedEdges() {
-      return Collections.emptyList();
-    }
-  };
-
   private final static ActionCase LINEAR_COLLAPSE_CASE = new ActionCase() {
     @Nullable
     @Override
@@ -244,7 +230,7 @@ class CollapsedActionManager {
       modification.createEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
       modification.apply();
-      return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
+      return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
     }
 
     @NotNull
@@ -261,7 +247,7 @@ class CollapsedActionManager {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
-      return new DeferredGraphAnswer(SOME_CHANGES, null, null, null, modification);
+      return new DeferredGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null, modification);
     }
 
     @NotNull
@@ -293,7 +279,7 @@ class CollapsedActionManager {
         }
       }
 
-      return new DeferredGraphAnswer(SOME_CHANGES, null, null, null, modification);
+      return new DeferredGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null, modification);
     }
 
     @NotNull
@@ -328,7 +314,7 @@ class CollapsedActionManager {
         modification.removeEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
         modification.apply();
-        return new LinearGraphAnswer(SOME_CHANGES, null, null, null);
+        return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
       }
 
       return null;

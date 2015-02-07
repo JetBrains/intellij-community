@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public interface GraphChanges<NodeId> {
 
@@ -38,8 +39,10 @@ public interface GraphChanges<NodeId> {
   interface Edge<NodeId> {
     @Nullable
     NodeId upNodeId();
+
     @Nullable
     NodeId downNodeId();
+
     @Nullable
     NodeId targetId();
 
@@ -129,4 +132,18 @@ public interface GraphChanges<NodeId> {
       return myChangedEdges;
     }
   }
+
+  GraphChanges<Integer> SOME_CHANGES = new GraphChanges<Integer>() {
+    @NotNull
+    @Override
+    public Collection<Node<Integer>> getChangedNodes() {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<Edge<Integer>> getChangedEdges() {
+      return Collections.emptyList();
+    }
+  };
 }

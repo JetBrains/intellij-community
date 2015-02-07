@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
@@ -35,16 +36,20 @@ import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
+  private final BekIntMap myBekIntMap;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
-    final BekIntMap bekIntMap = controller.getBekIntMap();
+    myBekIntMap = controller.getBekIntMap();
     myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
-                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), bekIntMap));
+                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), myBekIntMap));
   }
 
   static LinearBekGraph compileGraph(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout) {
-    return new LinearBekGraphBuilder(graph, graphLayout).build();
+    long start = System.currentTimeMillis();
+    LinearBekGraph linearBekGraph = new LinearBekGraphBuilder(graph, graphLayout).build();
+    System.err.println((System.currentTimeMillis() - start) / 1000.0 + " sec");
+    return linearBekGraph;
   }
 
   @NotNull
@@ -62,9 +67,15 @@ public class LinearBekController extends CascadeLinearGraphController {
         if (graphElement instanceof GraphEdge) {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED) {
-            return new LinearGraphAnswer(
-              calculateChanges(edge, myCompiledGraph.expandEdge(edge), getDelegateLinearGraphController().getCompiledGraph()), null, null,
-              null);
+            return new LinearGraphAnswer(replacedEdges(Collections.singleton(edge), myCompiledGraph.expandEdge(edge),
+                                                       getDelegateLinearGraphController().getCompiledGraph()), null, null, null);
+          }
+        }
+        else if (graphElement instanceof GraphNode) {
+          if (new LinearBekGraphBuilder(getCompiledGraph(),
+                                        new BekGraphLayout(myPermanentGraphInfo.getPermanentGraphLayout(), myBekIntMap), myCompiledGraph)
+            .collapseFragment(((GraphNode)graphElement).getNodeIndex())) {
+            return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
           }
         }
       }
@@ -75,6 +86,16 @@ public class LinearBekController extends CascadeLinearGraphController {
           if (edge.getType() == GraphEdgeType.DOTTED) {
             return LinearGraphUtils
               .createSelectedAnswer(myCompiledGraph, ContainerUtil.set(edge.getUpNodeIndex(), edge.getDownNodeIndex()));
+          }
+        }
+        else if (graphElement instanceof GraphNode) {
+          LinearBekGraphBuilder.MergeFragment fragment = new LinearBekGraphBuilder(getCompiledGraph(),
+                                                                                   new BekGraphLayout(
+                                                                                     myPermanentGraphInfo.getPermanentGraphLayout(),
+                                                                                     myBekIntMap))
+            .getFragment(((GraphNode)graphElement).getNodeIndex());
+          if (fragment != null) {
+            return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, fragment.getAllNodes());
           }
         }
       }
@@ -119,11 +140,16 @@ public class LinearBekController extends CascadeLinearGraphController {
     }
   }
 
-  private static GraphChanges<Integer> calculateChanges(GraphEdge expanded, Collection<GraphEdge> addedEdges, LinearGraph delegateGraph) {
+  private static GraphChanges<Integer> replacedEdges(Collection<GraphEdge> removedEdges,
+                                                     Collection<GraphEdge> addedEdges,
+                                                     LinearGraph delegateGraph) {
     final Set<GraphChanges.Edge<Integer>> edgeChanges = ContainerUtil.newHashSet();
 
-    edgeChanges.add(new GraphChanges.EdgeImpl<Integer>(delegateGraph.getNodeId(expanded.getUpNodeIndex()),
-                                                       delegateGraph.getNodeId(expanded.getDownNodeIndex()), null, true));
+    for (GraphEdge edge : removedEdges) {
+      edgeChanges.add(
+        new GraphChanges.EdgeImpl<Integer>(delegateGraph.getNodeId(edge.getUpNodeIndex()), delegateGraph.getNodeId(edge.getDownNodeIndex()),
+                                           true));
+    }
 
     for (GraphEdge edge : addedEdges) {
       edgeChanges.add(

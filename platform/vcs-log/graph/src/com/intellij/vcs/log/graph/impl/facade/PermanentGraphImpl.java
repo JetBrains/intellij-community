@@ -113,6 +113,9 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     if (matchedCommits != null) {
       controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchedCommits));
     }
+    else if (sortType == SortType.LinearBek) {
+      controller = baseController;
+    }
     else {
       Set<Integer> idOfVisibleBranches = null;
       if (headsOfVisibleBranches != null) {
