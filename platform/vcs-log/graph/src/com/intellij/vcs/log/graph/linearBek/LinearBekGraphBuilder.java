@@ -37,6 +37,7 @@ import java.util.Set;
 class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 200;
   private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
+  private static final GraphEdgeToDownNode GRAPH_EDGE_TO_DOWN_NODE = new GraphEdgeToDownNode();
   @NotNull private final GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
 
@@ -181,23 +182,12 @@ class LinearBekGraphBuilder {
     magicSet = ContainerUtil.newHashSet(MAGIC_SET_SIZE);
 
     PriorityQueue<Integer> magicQueue = new PriorityQueue<Integer>(MAGIC_SET_SIZE);
-    magicQueue
-      .addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN), new Function<GraphEdge, Integer>() {
-        @Override
-        public Integer fun(GraphEdge graphEdge) {
-          return graphEdge.getDownNodeIndex();
-        }
-      }));
+    magicQueue.addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN), GRAPH_EDGE_TO_DOWN_NODE));
     while (!magicQueue.isEmpty()) {
       Integer i = magicQueue.poll();
       if (i > node + MAGIC_SET_SIZE) break;
       magicSet.add(i);
-      magicQueue.addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(i, EdgeFilter.NORMAL_DOWN), new Function<GraphEdge, Integer>() {
-        @Override
-        public Integer fun(GraphEdge graphEdge) {
-          return graphEdge.getDownNodeIndex();
-        }
-      }));
+      magicQueue.addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(i, EdgeFilter.NORMAL_DOWN), GRAPH_EDGE_TO_DOWN_NODE));
     }
     return magicSet;
   }
@@ -324,6 +314,13 @@ class LinearBekGraphBuilder {
       if (d2 == null) return -1;
 
       return d1.compareTo(d2);
+    }
+  }
+
+  private static class GraphEdgeToDownNode implements Function<GraphEdge, Integer> {
+    @Override
+    public Integer fun(GraphEdge graphEdge) {
+      return graphEdge.getDownNodeIndex();
     }
   }
 }
