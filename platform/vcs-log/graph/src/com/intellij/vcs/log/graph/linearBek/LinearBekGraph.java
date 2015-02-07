@@ -34,6 +34,10 @@ public class LinearBekGraph implements LinearGraph {
   @NotNull protected final EdgeStorageWrapper myHiddenEdges;
   @NotNull protected final EdgeStorageWrapper myDottedEdges;
 
+  public LinearBekGraph(@NotNull LinearGraph graph) {
+    this(graph, EdgeStorageWrapper.createSimpleEdgeStorage(), EdgeStorageWrapper.createSimpleEdgeStorage());
+  }
+
   public LinearBekGraph(@NotNull LinearGraph graph, @NotNull EdgeStorageWrapper hiddenEdges, @NotNull EdgeStorageWrapper dottedEdges) {
     myGraph = graph;
     myHiddenEdges = hiddenEdges;

@@ -37,18 +37,23 @@ import java.util.*;
 public class LinearBekController extends CascadeLinearGraphController {
   @NotNull private final LinearBekGraph myCompiledGraph;
   private final BekIntMap myBekIntMap;
+  private final BekGraphLayout myBekGraphLayout;
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
     myBekIntMap = controller.getBekIntMap();
-    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(),
-                                   new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), myBekIntMap));
+    myBekGraphLayout = new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), myBekIntMap);
+    myCompiledGraph = compileGraph(getDelegateLinearGraphController().getCompiledGraph(), myBekGraphLayout);
   }
 
   static LinearBekGraph compileGraph(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout) {
     long start = System.currentTimeMillis();
-    LinearBekGraph linearBekGraph = new LinearBekGraphBuilder(graph, graphLayout).build();
+
+    LinearBekGraph linearBekGraph = new LinearBekGraph(graph);
+    new LinearBekGraphBuilder(linearBekGraph, graphLayout).collapseAll();
+
     System.err.println((System.currentTimeMillis() - start) / 1000.0 + " sec");
+
     return linearBekGraph;
   }
 
@@ -72,9 +77,7 @@ public class LinearBekController extends CascadeLinearGraphController {
           }
         }
         else if (graphElement instanceof GraphNode) {
-          if (new LinearBekGraphBuilder(getCompiledGraph(),
-                                        new BekGraphLayout(myPermanentGraphInfo.getPermanentGraphLayout(), myBekIntMap), myCompiledGraph)
-            .collapseFragment(((GraphNode)graphElement).getNodeIndex())) {
+          if (new LinearBekGraphBuilder(myCompiledGraph, myBekGraphLayout).collapseFragment(((GraphNode)graphElement).getNodeIndex())) {
             return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
           }
         }
@@ -89,11 +92,8 @@ public class LinearBekController extends CascadeLinearGraphController {
           }
         }
         else if (graphElement instanceof GraphNode) {
-          LinearBekGraphBuilder.MergeFragment fragment = new LinearBekGraphBuilder(getCompiledGraph(),
-                                                                                   new BekGraphLayout(
-                                                                                     myPermanentGraphInfo.getPermanentGraphLayout(),
-                                                                                     myBekIntMap))
-            .getFragment(((GraphNode)graphElement).getNodeIndex());
+          LinearBekGraphBuilder.MergeFragment fragment =
+            new LinearBekGraphBuilder(myCompiledGraph, myBekGraphLayout).getFragment(((GraphNode)graphElement).getNodeIndex());
           if (fragment != null) {
             return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, fragment.getAllNodes());
           }
