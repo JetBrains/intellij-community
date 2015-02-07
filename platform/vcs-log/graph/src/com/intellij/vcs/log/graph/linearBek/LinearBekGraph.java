@@ -53,17 +53,9 @@ public class LinearBekGraph implements LinearGraph {
   @Override
   public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = new ArrayList<GraphEdge>();
+    result.addAll(myDottedEdges.getAdjacentEdges(nodeIndex, filter));
     result.addAll(myGraph.getAdjacentEdges(nodeIndex, filter));
     result.removeAll(myHiddenEdges.getAdjacentEdges(nodeIndex, filter));
-    result.addAll(myDottedEdges.getAdjacentEdges(nodeIndex, filter));
-
-    Collections.sort(result, new Comparator<GraphEdge>() {
-      @Override
-      public int compare(GraphEdge o1, GraphEdge o2) {
-        return o1.getUpNodeIndex().compareTo(o2.getUpNodeIndex()); // todo special edges
-      }
-    });
-
     return result;
   }
 
