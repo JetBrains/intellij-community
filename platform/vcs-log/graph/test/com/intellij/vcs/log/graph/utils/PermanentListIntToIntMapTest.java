@@ -47,7 +47,7 @@ public class PermanentListIntToIntMapTest extends UpdatableIntToIntMapTest {
 
   private static class UpdatableIntToIntMapWrapper implements UpdatableIntToIntMap {
     @NotNull private final Flags myFlags;
-    @NotNull private IntToIntMap myIntToIntMap;
+    private IntToIntMap myIntToIntMap;
 
     private UpdatableIntToIntMapWrapper(@NotNull Flags flags) {
       myFlags = flags;

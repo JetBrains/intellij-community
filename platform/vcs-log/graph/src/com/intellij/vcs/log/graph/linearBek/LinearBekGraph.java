@@ -38,13 +38,9 @@ public class LinearBekGraph implements LinearGraph {
   @NotNull protected final EdgeStorageWrapper myDottedEdges;
 
   public LinearBekGraph(@NotNull LinearGraph graph) {
-    this(graph, EdgeStorageWrapper.createSimpleEdgeStorage(), EdgeStorageWrapper.createSimpleEdgeStorage());
-  }
-
-  public LinearBekGraph(@NotNull LinearGraph graph, @NotNull EdgeStorageWrapper hiddenEdges, @NotNull EdgeStorageWrapper dottedEdges) {
     myGraph = graph;
-    myHiddenEdges = hiddenEdges;
-    myDottedEdges = dottedEdges;
+    myHiddenEdges = EdgeStorageWrapper.createSimpleEdgeStorage();
+    myDottedEdges = EdgeStorageWrapper.createSimpleEdgeStorage();
   }
 
   @Override
@@ -83,6 +79,8 @@ public class LinearBekGraph implements LinearGraph {
     assert edge.getType() == GraphEdgeType.DOTTED;
     final Integer tail = edge.getUpNodeIndex();
     final Integer firstChild = edge.getDownNodeIndex();
+    assert tail != null : "Collapsed from to an unloaded node";
+    assert firstChild != null : "Collapsed edge to an unloaded node";
 
     myDottedEdges.removeEdge(edge);
 

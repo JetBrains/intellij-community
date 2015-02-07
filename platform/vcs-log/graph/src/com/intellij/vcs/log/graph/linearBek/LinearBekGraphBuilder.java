@@ -36,7 +36,7 @@ import java.util.Set;
 
 class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 200;
-  public static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
+  private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
   @NotNull private final GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
 
@@ -227,21 +227,17 @@ class LinearBekGraphBuilder {
       myMergeWithOldCommit = mergeWithOldCommit;
     }
 
-    public boolean addTail(int tail) {
+    public void addTail(int tail) {
       if (!myBlockBody.contains(tail)) {
         myTails.add(tail);
-        return true;
       }
-      return false;
     }
 
-    public boolean addTailEdge(int upNodeIndex, int downNodeIndex) {
+    public void addTailEdge(int upNodeIndex, int downNodeIndex) {
       if (!myBlockBody.contains(upNodeIndex)) {
         myTails.add(upNodeIndex);
         myTailEdges.putValue(upNodeIndex, downNodeIndex);
-        return true;
       }
-      return false;
     }
 
     public void addBody(int body) {

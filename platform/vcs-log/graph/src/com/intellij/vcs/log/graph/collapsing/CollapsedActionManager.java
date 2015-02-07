@@ -27,6 +27,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
+import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer;
 import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
@@ -59,7 +60,6 @@ class CollapsedActionManager {
   }
 
   public static void expandNodes(@NotNull final CollapsedGraph collapsedGraph, Set<Integer> nodesToShow) {
-
     FragmentGenerator generator =
       new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph()), new Condition<Integer>() {
         @Override
@@ -230,7 +230,7 @@ class CollapsedActionManager {
       modification.createEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
       modification.apply();
-      return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
+      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
     }
 
     @NotNull
@@ -247,7 +247,7 @@ class CollapsedActionManager {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
-      return new DeferredGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null, modification);
+      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null, modification);
     }
 
     @NotNull
@@ -279,7 +279,7 @@ class CollapsedActionManager {
         }
       }
 
-      return new DeferredGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null, modification);
+      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null, modification);
     }
 
     @NotNull
@@ -314,7 +314,7 @@ class CollapsedActionManager {
         modification.removeEdge(new GraphEdge(upNodeIndex, downNodeIndex, null, GraphEdgeType.DOTTED));
 
         modification.apply();
-        return new LinearGraphAnswer(GraphChanges.SOME_CHANGES, null, null, null);
+        return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
       }
 
       return null;
