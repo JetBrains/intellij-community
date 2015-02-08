@@ -25,6 +25,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -195,6 +196,16 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
           if (!myFilterUi.getFilters().isEmpty()) {
             e.getPresentation().setEnabled(false);
           }
+          if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
+            e.getPresentation().setIcon(VcsLogIcons.CollapseMerges);
+            e.getPresentation().setText("Collapse all merges");
+            e.getPresentation().setDescription("Collapse all merges");
+          }
+          else {
+            e.getPresentation().setIcon(VcsLogIcons.CollapseBranches);
+            e.getPresentation().setText("Collapse all linear branches");
+            e.getPresentation().setDescription("Collapse all linear branches");
+          }
         }
       };
 
@@ -209,6 +220,16 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         super.update(e);
         if (!myFilterUi.getFilters().isEmpty()) {
           e.getPresentation().setEnabled(false);
+        }
+        if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
+          e.getPresentation().setIcon(VcsLogIcons.ExpandMerges);
+          e.getPresentation().setText("Expand all merges");
+          e.getPresentation().setDescription("Expand all merges");
+        }
+        else {
+          e.getPresentation().setIcon(VcsLogIcons.ExpandBranches);
+          e.getPresentation().setText("Expand all linear branches");
+          e.getPresentation().setDescription("Expand all linear branches");
         }
       }
     };
