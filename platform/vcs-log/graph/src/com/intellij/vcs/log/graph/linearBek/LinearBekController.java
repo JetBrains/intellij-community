@@ -67,67 +67,99 @@ public class LinearBekController extends CascadeLinearGraphController {
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
         GraphElement graphElement = action.getAffectedElement().getGraphElement();
         if (graphElement instanceof GraphEdge) {
-          GraphEdge edge = (GraphEdge)graphElement;
-          if (edge.getType() == GraphEdgeType.DOTTED) {
-            return new LinearGraphAnswer(GraphChangesUtil.edgesReplaced(Collections.singleton(edge), myCompiledGraph.expandEdge(edge),
-                                                                        getDelegateGraph()), null, null,
-                                         null);
-          }
+          return expandEdge((GraphEdge)graphElement);
         }
         else if (graphElement instanceof GraphNode) {
-          LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.collapseFragment(((GraphNode)graphElement).getNodeIndex());
-          if (fragment != null) {
-            return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
-          }
+          return collapseNode((GraphNode)graphElement);
         }
       }
       else if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         GraphElement graphElement = action.getAffectedElement().getGraphElement();
         if (graphElement instanceof GraphEdge) {
-          GraphEdge edge = (GraphEdge)graphElement;
-          if (edge.getType() == GraphEdgeType.DOTTED) {
-            return LinearGraphUtils
-              .createSelectedAnswer(myCompiledGraph, ContainerUtil.set(edge.getUpNodeIndex(), edge.getDownNodeIndex()));
-          }
+          return highlightEdge((GraphEdge)graphElement);
         }
         else if (graphElement instanceof GraphNode) {
-          LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.getFragment(((GraphNode)graphElement).getNodeIndex());
-          if (fragment != null) {
-            return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, fragment.getAllNodes());
-          }
+          return highlightNode((GraphNode)graphElement);
         }
       }
     }
     else if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE) {
-      final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(myCompiledGraph);
-      new LinearBekGraphBuilder(workingGraph, myBekGraphLayout).collapseAll();
-      return new LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.getRemovedEdges(), workingGraph.getAddedEdges(), getDelegateGraph()), null, null, null) {
-        @Nullable
-        @Override
-        public Runnable getGraphUpdater() {
-          return new Runnable() {
-            @Override
-            public void run() {
-              workingGraph.applyChanges();
-            }
-          };
-        }
-      };
+      return collapseAll();
     }
     else if (action.getType() == GraphAction.Type.BUTTON_EXPAND) {
-      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
-        @Nullable
-        @Override
-        public Runnable getGraphUpdater() {
-          return new Runnable() {
-            @Override
-            public void run() {
-              myCompiledGraph.myDottedEdges.removeAll();
-              myCompiledGraph.myHiddenEdges.removeAll();
-            }
-          };
-        }
-      };
+      return expandAll();
+    }
+    return null;
+  }
+
+  @NotNull
+  private LinearGraphAnswer expandAll() {
+    return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
+      @Nullable
+      @Override
+      public Runnable getGraphUpdater() {
+        return new Runnable() {
+          @Override
+          public void run() {
+            myCompiledGraph.myDottedEdges.removeAll();
+            myCompiledGraph.myHiddenEdges.removeAll();
+          }
+        };
+      }
+    };
+  }
+
+  @NotNull
+  private LinearGraphAnswer collapseAll() {
+    final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(myCompiledGraph);
+    new LinearBekGraphBuilder(workingGraph, myBekGraphLayout).collapseAll();
+    return new LinearGraphAnswer(
+      GraphChangesUtil.edgesReplaced(workingGraph.getRemovedEdges(), workingGraph.getAddedEdges(), getDelegateGraph()), null, null, null) {
+      @Nullable
+      @Override
+      public Runnable getGraphUpdater() {
+        return new Runnable() {
+          @Override
+          public void run() {
+            workingGraph.applyChanges();
+          }
+        };
+      }
+    };
+  }
+
+  @Nullable
+  private LinearGraphAnswer highlightNode(GraphNode node) {
+    LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.getFragment(node.getNodeIndex());
+    if (fragment != null) {
+      return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, fragment.getAllNodes());
+    }
+    return null;
+  }
+
+  @Nullable
+  private LinearGraphAnswer highlightEdge(GraphEdge edge) {
+    if (edge.getType() == GraphEdgeType.DOTTED) {
+      return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, ContainerUtil.set(edge.getUpNodeIndex(), edge.getDownNodeIndex()));
+    }
+    return null;
+  }
+
+  @Nullable
+  private LinearGraphAnswer collapseNode(GraphNode node) {
+    LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.collapseFragment(node.getNodeIndex());
+    if (fragment != null) {
+      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
+    }
+    return null;
+  }
+
+  @Nullable
+  private LinearGraphAnswer expandEdge(GraphEdge edge) {
+    if (edge.getType() == GraphEdgeType.DOTTED) {
+      return new LinearGraphAnswer(
+        GraphChangesUtil.edgesReplaced(Collections.singleton(edge), myCompiledGraph.expandEdge(edge), getDelegateGraph()), null, null,
+        null);
     }
     return null;
   }
