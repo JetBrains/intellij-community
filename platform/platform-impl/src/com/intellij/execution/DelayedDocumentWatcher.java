@@ -83,8 +83,8 @@ public class DelayedDocumentWatcher {
   }
 
   public void activate() {
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
     if (myConnection == null) {
+      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
       myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
         @Override
@@ -102,8 +102,8 @@ public class DelayedDocumentWatcher {
   }
 
   public void deactivate() {
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
     if (myConnection != null) {
+      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
       myConnection.disconnect();
       myConnection = null;
     }
