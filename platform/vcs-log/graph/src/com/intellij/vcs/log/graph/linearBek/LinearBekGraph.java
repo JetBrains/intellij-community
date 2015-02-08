@@ -113,39 +113,48 @@ public class LinearBekGraph implements LinearGraph {
   }
 
   public static class WorkingLinearBekGraph extends LinearBekGraph {
-    public WorkingLinearBekGraph(@NotNull LinearGraph graph) {
-      super(graph);
+    private final LinearBekGraph myLinearGraph;
+
+    public WorkingLinearBekGraph(@NotNull LinearBekGraph graph) {
+      super(graph.myGraph);
+      myLinearGraph = graph;
     }
 
     public Collection<GraphEdge> getAddedEdges() {
-      Set<GraphEdge> edges = myDottedEdges.getEdges();
-      edges.removeAll(ContainerUtil.filter(myHiddenEdges.getEdges(), new Condition<GraphEdge>() {
+      Set<GraphEdge> result = myDottedEdges.getEdges();
+      result.removeAll(ContainerUtil.filter(myHiddenEdges.getEdges(), new Condition<GraphEdge>() {
         @Override
         public boolean value(GraphEdge graphEdge) {
           return graphEdge.getType() == GraphEdgeType.DOTTED;
         }
       }));
-      return edges;
+      result.removeAll(myLinearGraph.myDottedEdges.getEdges());
+      return result;
     }
 
     public Collection<GraphEdge> getRemovedEdges() {
-      return ContainerUtil.filter(myHiddenEdges.getEdges(), new Condition<GraphEdge>() {
-        @Override
-        public boolean value(GraphEdge graphEdge) {
-          return graphEdge.getType() != GraphEdgeType.DOTTED;
-        }
-      });
+      Set<GraphEdge> result = ContainerUtil.newHashSet();
+      Set<GraphEdge> hidden = myHiddenEdges.getEdges();
+      result.addAll(ContainerUtil.filter(hidden, new Condition<GraphEdge>() {
+              @Override
+              public boolean value(GraphEdge graphEdge) {
+                return graphEdge.getType() != GraphEdgeType.DOTTED;
+              }
+            }));
+      result.addAll(ContainerUtil.intersection(hidden, myLinearGraph.myDottedEdges.getEdges()));
+      result.removeAll(myLinearGraph.myHiddenEdges.getEdges());
+      return result;
     }
 
-    public void applyTo(LinearBekGraph graph) {
-      graph.myDottedEdges.removeAll();
-      graph.myHiddenEdges.removeAll();
+    public void applyChanges() {
+      myLinearGraph.myDottedEdges.removeAll();
+      myLinearGraph.myHiddenEdges.removeAll();
 
       for (GraphEdge e : myDottedEdges.getEdges()) {
-        graph.myDottedEdges.createEdge(e);
+        myLinearGraph.myDottedEdges.createEdge(e);
       }
       for (GraphEdge e : myHiddenEdges.getEdges()) {
-        graph.myHiddenEdges.createEdge(e);
+        myLinearGraph.myHiddenEdges.createEdge(e);
       }
     }
   }

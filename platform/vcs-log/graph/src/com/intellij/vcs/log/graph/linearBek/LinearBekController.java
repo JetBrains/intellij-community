@@ -99,7 +99,7 @@ public class LinearBekController extends CascadeLinearGraphController {
       }
     }
     else if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE) {
-      final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(getDelegateGraph());
+      final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(myCompiledGraph);
       new LinearBekGraphBuilder(workingGraph, myBekGraphLayout).collapseAll();
       return new LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.getRemovedEdges(), workingGraph.getAddedEdges(), getDelegateGraph()), null, null, null) {
         @Nullable
@@ -108,7 +108,7 @@ public class LinearBekController extends CascadeLinearGraphController {
           return new Runnable() {
             @Override
             public void run() {
-              workingGraph.applyTo(myCompiledGraph);
+              workingGraph.applyChanges();
             }
           };
         }
