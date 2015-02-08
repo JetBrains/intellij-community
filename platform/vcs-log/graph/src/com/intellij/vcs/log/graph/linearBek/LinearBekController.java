@@ -186,8 +186,8 @@ public class LinearBekController extends CascadeLinearGraphController {
       if (fragment == null) continue;
 
       toCollapse.add(i);
-      toCollapse.addAll(fragment.getAllNodes());
-      toProcess.addAll(fragment.getAllNodes());
+      toCollapse.addAll(fragment.getTailsAndBody());
+      toProcess.addAll(fragment.getTailsAndBody());
 
       mergesCount++;
       if (mergesCount > 10) break;
