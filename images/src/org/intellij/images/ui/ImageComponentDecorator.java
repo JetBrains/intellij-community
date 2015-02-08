@@ -16,6 +16,7 @@
 package org.intellij.images.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import org.intellij.images.editor.ImageZoomModel;
 
 /**
  * Image Component manager. It can toggle backround transparency, grid, etc.
@@ -36,4 +37,10 @@ public interface ImageComponentDecorator {
    * @return <code>true</code> is decorator is enabled
    */
   boolean isEnabledForActionPlace(String place);
+
+  ImageZoomModel getZoomModel();
+
+  void setGridVisible(boolean visible);
+
+  boolean isGridVisible();
 }
