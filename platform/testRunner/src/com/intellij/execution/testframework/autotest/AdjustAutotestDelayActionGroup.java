@@ -15,30 +15,42 @@
  */
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Dennis.Ushakov
  */
 public class AdjustAutotestDelayActionGroup extends ActionGroup {
   public static final int MAX_DELAY = 10;
-  private final ExecutionEnvironment myEnvironment;
+  private final Project myProject;
+  private final DataContext myDataContext;
 
-  public AdjustAutotestDelayActionGroup(ExecutionEnvironment environment) {
+  public AdjustAutotestDelayActionGroup(@NotNull Project project, @NotNull JComponent parent) {
     super("Set AutoTest Delay", true);
-    myEnvironment = environment;
+    myProject = project;
+    myDataContext = DataManager.getInstance().getDataContext(parent);
   }
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(Boolean.TRUE == myEnvironment.getUserData(AutoTestManager.AUTOTESTABLE));
+    RunContentDescriptor descriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(myDataContext);
+    boolean visible = false;
+    if (descriptor != null) {
+      for (AnAction action : descriptor.getRestartActions()) {
+        if (action instanceof ToggleAutoTestAction) {
+          visible = true;
+          break;
+        }
+      }
+    }
+    e.getPresentation().setVisible(visible);
   }
 
   @NotNull
@@ -46,7 +58,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     final AnAction[] actions = new AnAction[MAX_DELAY];
     for (int i = 0; i < MAX_DELAY; i++) {
-      actions[i] = new SetAutoTestDelayAction(myEnvironment.getProject(), i + 1);
+      actions[i] = new SetAutoTestDelayAction(myProject, i + 1);
     }
     return actions;
   }

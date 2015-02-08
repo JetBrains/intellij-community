@@ -47,7 +47,6 @@ import javax.swing.*;
  * @author yole
  */
 public class AutoTestManager {
-  static final Key<Boolean> AUTOTESTABLE = Key.create("auto.test.manager.supported");
   private static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
   private static final Key<ProcessListener> ON_TERMINATION_RESTARTER_KEY = Key.create("auto.test.manager.on.termination.restarter");
   private static final Key<ExecutionEnvironment> EXECUTION_ENVIRONMENT_KEY = Key.create("auto.test.manager.execution.environment");
