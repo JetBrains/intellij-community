@@ -55,13 +55,14 @@ class LinearBekGraphBuilder {
     }
   }
 
-  public boolean collapseFragment(int mergeCommit) {
+  @Nullable
+  public MergeFragment collapseFragment(int mergeCommit) {
     MergeFragment fragment = getFragment(mergeCommit);
     if (fragment != null) {
       fragment.collapse(myLinearBekGraph);
-      return true;
+      return fragment;
     }
-    return false;
+    return null;
   }
 
   @Nullable

@@ -45,7 +45,7 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
-    myCompiledGraph = new LinearBekGraph(getDelegateLinearGraphController().getCompiledGraph());
+    myCompiledGraph = new LinearBekGraph(getDelegateGraph());
     myBekGraphLayout = new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap());
     myLinearBekGraphBuilder = new LinearBekGraphBuilder(myCompiledGraph, myBekGraphLayout);
 
@@ -70,12 +70,13 @@ public class LinearBekController extends CascadeLinearGraphController {
           GraphEdge edge = (GraphEdge)graphElement;
           if (edge.getType() == GraphEdgeType.DOTTED) {
             return new LinearGraphAnswer(GraphChangesUtil.edgesReplaced(Collections.singleton(edge), myCompiledGraph.expandEdge(edge),
-                                                                        getDelegateLinearGraphController().getCompiledGraph()), null, null,
+                                                                        getDelegateGraph()), null, null,
                                          null);
           }
         }
         else if (graphElement instanceof GraphNode) {
-          if (myLinearBekGraphBuilder.collapseFragment(((GraphNode)graphElement).getNodeIndex())) {
+          LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.collapseFragment(((GraphNode)graphElement).getNodeIndex());
+          if (fragment != null) {
             return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
           }
         }
@@ -98,9 +99,9 @@ public class LinearBekController extends CascadeLinearGraphController {
       }
     }
     else if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE) {
-      final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(myCompiledGraph.myGraph);
+      final LinearBekGraph.WorkingLinearBekGraph workingGraph = new LinearBekGraph.WorkingLinearBekGraph(getDelegateGraph());
       new LinearBekGraphBuilder(workingGraph, myBekGraphLayout).collapseAll();
-      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null) {
+      return new LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.getRemovedEdges(), workingGraph.getAddedEdges(), getDelegateGraph()), null, null, null) {
         @Nullable
         @Override
         public Runnable getGraphUpdater() {
@@ -129,6 +130,11 @@ public class LinearBekController extends CascadeLinearGraphController {
       };
     }
     return null;
+  }
+
+  @NotNull
+  private LinearGraph getDelegateGraph() {
+    return getDelegateLinearGraphController().getCompiledGraph();
   }
 
   @NotNull
