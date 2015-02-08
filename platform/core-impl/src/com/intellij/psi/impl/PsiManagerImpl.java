@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,25 +180,20 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public PsiFile findFile(@NotNull VirtualFile file) {
+    ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findFile(file);
   }
 
   @Override
   @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
-  }
-
-  @TestOnly
-  public void cleanupForNextTest() {
-    myFileManager.cleanupForNextTest();
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
-
     return myFileManager.findDirectory(file);
   }
 
@@ -532,5 +527,11 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public boolean isBatchFilesProcessingMode() {
     return myBatchFilesProcessingModeCount.get() > 0;
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myFileManager.cleanupForNextTest();
   }
 }
