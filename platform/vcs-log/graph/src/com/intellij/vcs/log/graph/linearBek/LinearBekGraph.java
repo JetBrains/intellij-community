@@ -95,16 +95,20 @@ public class LinearBekGraph implements LinearGraph {
       myHiddenEdges.removeEdge(edge);
     }
 
-    List<GraphEdge> hiddenDotted = myHiddenEdges.getAdjacentEdges(tail, EdgeFilter.ALL);
-
-    List<GraphEdge> downDottedEdges = ContainerUtil.filter(hiddenDotted, new Condition<GraphEdge>() {
+    List<GraphEdge> downDottedEdges =
+      ContainerUtil.filter(myHiddenEdges.getAdjacentEdges(tail, EdgeFilter.ALL), new Condition<GraphEdge>() {
+        @Override
+        public boolean value(GraphEdge graphEdge) {
+          return LinearGraphUtils.isEdgeDown(graphEdge, tail);
+        }
+      });
+    List<GraphEdge> upDottedEdges = ContainerUtil.filter(myHiddenEdges.getAdjacentEdges(firstChild, EdgeFilter.ALL), new Condition<GraphEdge>() {
       @Override
       public boolean value(GraphEdge graphEdge) {
-        return LinearGraphUtils.isEdgeDown(graphEdge, tail);
+        return LinearGraphUtils.isEdgeUp(graphEdge, firstChild);
       }
     });
-
-    for (GraphEdge graphEdge : downDottedEdges) {
+    for (GraphEdge graphEdge : ContainerUtil.concat(downDottedEdges, upDottedEdges)) {
       assert graphEdge.getType() == GraphEdgeType.DOTTED;
       addedEdges.addAll(expandEdge(graphEdge));
     }
@@ -136,11 +140,11 @@ public class LinearBekGraph implements LinearGraph {
       Set<GraphEdge> result = ContainerUtil.newHashSet();
       Set<GraphEdge> hidden = myHiddenEdges.getEdges();
       result.addAll(ContainerUtil.filter(hidden, new Condition<GraphEdge>() {
-              @Override
-              public boolean value(GraphEdge graphEdge) {
-                return graphEdge.getType() != GraphEdgeType.DOTTED;
-              }
-            }));
+        @Override
+        public boolean value(GraphEdge graphEdge) {
+          return graphEdge.getType() != GraphEdgeType.DOTTED;
+        }
+      }));
       result.addAll(ContainerUtil.intersection(hidden, myLinearGraph.myDottedEdges.getEdges()));
       result.removeAll(myLinearGraph.myHiddenEdges.getEdges());
       return result;
