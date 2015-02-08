@@ -33,9 +33,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LinearBekController extends CascadeLinearGraphController {
   private static final Logger LOG = Logger.getInstance(LinearBekController.class);
@@ -130,11 +128,21 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   @Nullable
   private LinearGraphAnswer highlightNode(GraphNode node) {
-    LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.getFragment(node.getNodeIndex());
-    if (fragment != null) {
-      return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, fragment.getAllNodes());
+    SortedSet<Integer> toCollapse = collectNodesToCollapse(node);
+
+    if (toCollapse.isEmpty()) return null;
+
+    Set<Integer> toHighlight = ContainerUtil.newHashSet();
+
+    LinearBekGraphBuilder builder = new LinearBekGraphBuilder(new LinearBekGraph(myCompiledGraph), myBekGraphLayout);
+    for (Integer i : toCollapse) {
+      LinearBekGraphBuilder.MergeFragment fragment = builder.collapseFragment(i);
+      if (fragment != null) {
+        toHighlight.addAll(fragment.getAllNodes());
+      }
     }
-    return null;
+
+    return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, toHighlight);
   }
 
   @Nullable
@@ -147,11 +155,44 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   @Nullable
   private LinearGraphAnswer collapseNode(GraphNode node) {
-    LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.collapseFragment(node.getNodeIndex());
-    if (fragment != null) {
-      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
+    SortedSet<Integer> toCollapse = collectNodesToCollapse(node);
+
+    if (toCollapse.isEmpty()) return null;
+
+    for (Integer i : toCollapse) {
+      myLinearBekGraphBuilder.collapseFragment(i);
     }
-    return null;
+    return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
+  }
+
+  @NotNull
+  private SortedSet<Integer> collectNodesToCollapse(GraphNode node) {
+    SortedSet<Integer> toCollapse = new TreeSet<Integer>(new Comparator<Integer>() {
+      @Override
+      public int compare(Integer o1, Integer o2) {
+        return o2.compareTo(o1);
+      }
+    });
+
+    int mergesCount = 0;
+
+    LinkedHashSet<Integer> toProcess = ContainerUtil.newLinkedHashSet();
+    toProcess.add(node.getNodeIndex());
+    while (!toProcess.isEmpty()) {
+      Integer i = ContainerUtil.getFirstItem(toProcess);
+      toProcess.remove(i);
+
+      LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.getFragment(i);
+      if (fragment == null) continue;
+
+      toCollapse.add(i);
+      toCollapse.addAll(fragment.getAllNodes());
+      toProcess.addAll(fragment.getAllNodes());
+
+      mergesCount++;
+      if (mergesCount > 10) break;
+    }
+    return toCollapse;
   }
 
   @Nullable

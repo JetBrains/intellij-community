@@ -240,11 +240,8 @@ class LinearBekGraphBuilder {
       return myTails;
     }
 
-    public Set<Integer> getAllNodes() {
+    public Set<Integer> getTailsAndBody() {
       Set<Integer> nodes = ContainerUtil.newHashSet();
-      nodes.add(myParent);
-      nodes.add(myFirstChild);
-      nodes.add(mySecondChild);
       TIntIterator it = myBlockBody.iterator();
       while (it.hasNext()) {
         nodes.add(it.next());
@@ -253,6 +250,15 @@ class LinearBekGraphBuilder {
       while (it.hasNext()) {
         nodes.add(it.next());
       }
+      return nodes;
+    }
+
+    public Set<Integer> getAllNodes() {
+      Set<Integer> nodes = ContainerUtil.newHashSet();
+      nodes.add(myParent);
+      nodes.add(myFirstChild);
+      nodes.add(mySecondChild);
+      nodes.addAll(getTailsAndBody());
       return nodes;
     }
 
@@ -299,6 +305,10 @@ class LinearBekGraphBuilder {
         graph.myHiddenEdges.createEdge(edge);
         graph.myDottedEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
       }
+    }
+
+    public int getParent() {
+      return myParent;
     }
   }
 
