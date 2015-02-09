@@ -128,7 +128,7 @@ public class XSourcePositionImpl implements XSourcePosition {
   }
 
   @NotNull
-  private static OpenFileDescriptor doCreateOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+  public static OpenFileDescriptor doCreateOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     return position.getOffset() != -1
            ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
            : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
