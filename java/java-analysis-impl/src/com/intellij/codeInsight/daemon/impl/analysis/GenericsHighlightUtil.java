@@ -1334,5 +1334,51 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
+
+  public static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass) {
+    final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
+    final GlobalSearchScope resolveScope = aClass.getResolveScope();
+    for (PsiClassType superType : aClass.getSuperTypes()) {
+      final String notAccessibleErrorMessage = isSuperTypeAccessible(superType, new HashSet<PsiClass>(), resolveScope, factory);
+      if (notAccessibleErrorMessage != null) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip(notAccessibleErrorMessage)
+          .range(HighlightNamesUtil.getClassDeclarationTextRange(aClass))
+          .create();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String isSuperTypeAccessible(PsiType superType,
+                                              HashSet<PsiClass> classes,
+                                              GlobalSearchScope resolveScope,
+                                              JavaPsiFacade factory) {
+    final PsiClass aClass = PsiUtil.resolveClassInType(superType);
+    if (aClass != null && classes.add(aClass)) {
+      final String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
+        return "Cannot access " + HighlightUtil.formatClass(aClass);
+      }
+
+      if (superType instanceof PsiClassType) {
+        for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
+          final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, resolveScope, factory);
+          if (notAccessibleMessage != null) {
+            return notAccessibleMessage;
+          }
+        }
+      }
+
+      for (PsiClassType type : aClass.getSuperTypes()) {
+        final String notAccessibleMessage = isSuperTypeAccessible(type, classes, resolveScope, factory);
+        if (notAccessibleMessage != null) {
+          return notAccessibleMessage;
+        }
+      }
+    }
+    return null;
+  }
 }
 
