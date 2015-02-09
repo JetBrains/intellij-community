@@ -35,10 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -186,6 +183,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     updateRequest();
   }
 
+  @CalledInAwt
   public void refresh() {
     List<Change> selectedChanges = getSelectedChanges();
 
