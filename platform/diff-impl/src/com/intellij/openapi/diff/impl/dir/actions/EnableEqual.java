@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 /**
@@ -26,7 +24,8 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
  */
 public class EnableEqual extends DirDiffAction {
   public EnableEqual(DirDiffTableModel model) {
-    super(model, "Show equal files", AllIcons.Vcs.Equal);
+    super(model);
+    EmptyAction.setupAction(this, "DirDiffMenu.EnableEqual", null);
   }
 
   @Override
@@ -36,10 +35,5 @@ public class EnableEqual extends DirDiffAction {
 
   public void updateState(boolean state) {
     getModel().setShowEqual(state);
-  }
-
-  @Override
-  public ShortcutSet getShortcut() {
-    return CustomShortcutSet.fromString("alt EQUALS");
   }
 }
