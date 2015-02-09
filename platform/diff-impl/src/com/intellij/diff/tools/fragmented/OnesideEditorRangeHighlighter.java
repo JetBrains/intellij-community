@@ -35,13 +35,14 @@ import java.util.List;
 public class OnesideEditorRangeHighlighter {
   public static final Logger LOG = OnesideDiffViewer.LOG;
 
-  @NotNull private final List<Element> myPieces;
+  @NotNull private final List<Element> myPieces = new ArrayList<Element>();
 
   public OnesideEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
-    myPieces = new ArrayList<Element>();
+    if (model == null) return;
+
     model.processRangeHighlightersOverlappingWith(0, document.getTextLength(), new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx marker) {
@@ -63,7 +64,6 @@ public class OnesideEditorRangeHighlighter {
 
     MarkupModelEx model1 = (MarkupModelEx)DocumentMarkupModel.forDocument(document1, project, false);
     MarkupModelEx model2 = (MarkupModelEx)DocumentMarkupModel.forDocument(document2, project, false);
-    myPieces = new ArrayList<Element>();
     init(model1, model2, ranges);
   }
 
