@@ -10,19 +10,21 @@ import com.intellij.structuralsearch.impl.matcher.MatchUtils;
  */
 public final class ReadPredicate extends MatchPredicate {
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+    PsiElement parent = matchedNode.getParent();
     if (matchedNode instanceof PsiIdentifier) {
-      matchedNode = matchedNode.getParent();
+      matchedNode = parent;
+      parent = matchedNode.getParent();
     }
-    if (matchedNode instanceof PsiReferenceExpression &&
-        ( !(matchedNode.getParent() instanceof PsiMethodCallExpression) &&
-          ( !(matchedNode.getParent() instanceof PsiAssignmentExpression) ||
-            ((PsiAssignmentExpression)matchedNode.getParent()).getLExpression() != matchedNode
-          )
-        ) &&
-        MatchUtils.getReferencedElement(matchedNode) instanceof PsiVariable
-       ) {
-      return true;
+    if (!(matchedNode instanceof PsiReferenceExpression) || parent instanceof PsiMethodCallExpression) {
+      return false;
     }
-    return false;
+    if (parent instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (assignmentExpression.getLExpression() == matchedNode &&
+          assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
+        return false;
+      }
+    }
+    return MatchUtils.getReferencedElement(matchedNode) instanceof PsiVariable;
   }
 }
