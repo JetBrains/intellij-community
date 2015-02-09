@@ -122,9 +122,9 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
         @Override
         public void run() {
-          refresh();
+          refresh(); // TODO: this could cause diff init in 'hide' state
         }
-      }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE, "", ModalityState.current());
+      }, InvokeAfterUpdateMode.SILENT, "", ModalityState.current());
       return new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change));
     }
 
