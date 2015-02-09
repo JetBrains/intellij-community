@@ -149,6 +149,10 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     LOG.assertTrue(!myAdditionTools.contains(tool));
   }
 
+  public ArrayList<DiffTool> getAdditionTools() {
+    return myAdditionTools;
+  }
+
   @Override
   public MarkupEditorFilter getDiffEditorFilter() {
     return DIFF_EDITOR_FILTER;

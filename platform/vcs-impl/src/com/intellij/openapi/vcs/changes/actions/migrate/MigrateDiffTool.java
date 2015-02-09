@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
@@ -24,9 +27,6 @@ import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.external.FrameDiffTool;
 import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffManager;
-import com.intellij.diff.chains.DiffRequestChain;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -51,6 +51,10 @@ public class MigrateDiffTool implements DiffTool {
     if (request.getHints().contains(MigrateToNewDiffUtil.DO_NOT_TRY_MIGRATE)) return false;
     if (request.getOnOkRunnable() != null) return false;
     if (!DiffManagerImpl.INTERNAL_DIFF.canShow(request) && !BinaryDiffTool.INSTANCE.canShow(request)) return false;
+    for (DiffTool tool : DiffManagerImpl.getInstanceEx().getAdditionTools()) {
+      if (tool == this) continue;
+      if (tool.canShow(request)) return false;
+    }
     return true;
   }
 
