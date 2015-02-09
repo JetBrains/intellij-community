@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.jdom.Document;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import java.io.*;
@@ -38,29 +40,29 @@ import java.util.*;
 import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
-  @NonNls public static final String PROPERTIES_FILE = "idea.properties.file";
-  @NonNls public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
-  @NonNls public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
-  @NonNls public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
-  @NonNls public static final String PROPERTY_HOME_PATH = "idea.home.path";
-  @NonNls public static final String PROPERTY_LOG_PATH = "idea.log.path";
-  @NonNls public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
-  @NonNls public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+  public static final String PROPERTIES_FILE = "idea.properties.file";
+  public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
+  public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
+  public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
+  public static final String PROPERTY_HOME_PATH = "idea.home.path";
+  public static final String PROPERTY_LOG_PATH = "idea.log.path";
+  public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
 
-  @NonNls private static final String LIB_FOLDER = "lib";
-  @NonNls private static final String PLUGINS_FOLDER = "plugins";
-  @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String LOG_DIRECTORY = "log";
-  @NonNls private static final String CONFIG_FOLDER = "config";
-  @NonNls private static final String OPTIONS_FOLDER = "options";
-  @NonNls private static final String SYSTEM_FOLDER = "system";
-  @NonNls private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
+  private static final String LIB_FOLDER = "lib";
+  private static final String PLUGINS_FOLDER = "plugins";
+  private static final String BIN_FOLDER = "bin";
+  private static final String LOG_DIRECTORY = "log";
+  private static final String CONFIG_FOLDER = "config";
+  private static final String OPTIONS_FOLDER = "options";
+  private static final String SYSTEM_FOLDER = "system";
+  private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
-  @NonNls private static String ourHomePath;
-  @NonNls private static String ourSystemPath;
-  @NonNls private static String ourConfigPath;
-  @NonNls private static String ourPluginsPath;
-  @NonNls private static String ourLogPath;
+  private static String ourHomePath;
+  private static String ourSystemPath;
+  private static String ourConfigPath;
+  private static String ourPluginsPath;
+  private static String ourLogPath;
 
   // IDE installation paths
 
@@ -260,7 +262,7 @@ public class PathManager {
    * Attempts to detect classpath entry which contains given resource.
    */
   @Nullable
-  public static String getResourceRoot(@NotNull Class context, @NonNls String path) {
+  public static String getResourceRoot(@NotNull Class context, String path) {
     URL url = context.getResource(path);
     if (url == null) {
       url = ClassLoader.getSystemResource(path.substring(1));
@@ -272,10 +274,9 @@ public class PathManager {
    * Attempts to extract classpath entry part from passed URL.
    */
   @Nullable
-  @NonNls
   private static String extractRoot(URL resourceURL, String resourcePath) {
     if (!(StringUtil.startsWithChar(resourcePath, '/') || StringUtil.startsWithChar(resourcePath, '\\'))) {
-      //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("precondition failed: " + resourcePath);
       return null;
     }
@@ -298,7 +299,7 @@ public class PathManager {
     }
 
     if (resultPath == null) {
-      //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("cannot extract: " + resourcePath + " from " + resourceURL);
       return null;
     }
@@ -319,7 +320,7 @@ public class PathManager {
   }
 
   public static void loadProperties() {
-    String[] propFiles = new String[]{
+    String[] propFiles = {
       System.getProperty(PROPERTIES_FILE),
       getUserPropertiesPath() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
@@ -352,7 +353,7 @@ public class PathManager {
             }
           }
           catch (IOException e) {
-            //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+            //noinspection UseOfSystemOutOrSystemErr
             System.err.println("Problem reading from property file: " + propFile.getPath());
           }
         }
@@ -362,24 +363,26 @@ public class PathManager {
 
   @Contract("null -> null")
   public static String substituteVars(String s) {
-    final String ideaHomePath = getHomePath();
-    return substituteVars(s, ideaHomePath);
+    return substituteVars(s, getHomePath());
   }
 
   @Contract("null, _ -> null")
   public static String substituteVars(String s, String ideaHomePath) {
     if (s == null) return null;
+
     if (s.startsWith("..")) {
       s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
     }
+
     s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
-    final Properties props = System.getProperties();
-    final Set keys = props.keySet();
-    for (final Object key1 : keys) {
+
+    Properties props = System.getProperties();
+    for (final Object key1 : props.keySet()) {
       String key = (String)key1;
       String value = props.getProperty(key);
       s = StringUtil.replace(s, "${" + key + "}", value);
     }
+
     return s;
   }
 
@@ -466,7 +469,7 @@ public class PathManager {
   // outdated stuff
 
   /** @deprecated use {@link #getPluginsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration") @NonNls public static final String PLUGINS_DIRECTORY = PLUGINS_FOLDER;
+  @SuppressWarnings("UnusedDeclaration") public static final String PLUGINS_DIRECTORY = PLUGINS_FOLDER;
 
   /** @deprecated use {@link #getPreInstalledPluginsPath()} (to remove in IDEA 14) */
   @SuppressWarnings({"UnusedDeclaration", "MethodNamesDifferingOnlyByCase", "SpellCheckingInspection"})
