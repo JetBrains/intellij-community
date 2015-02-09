@@ -117,6 +117,10 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   public void testSuperclassImplementsUnknownType() throws Exception {
     doTestWithoutLibrary();
   }
+
+  public void testDeclaredTypeOfVariableImplementsUnknownType() throws Exception {
+    doTestWithoutLibrary();
+  }
   
   public void testSuperclassImplementsGenericsOfUnknownType() throws Exception {
     doTestWithoutLibrary();

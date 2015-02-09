@@ -1336,14 +1336,23 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass) {
+    return areSupersAccessible(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+  }
+
+  public static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass, PsiElement ref) {
+    return areSupersAccessible(aClass, ref.getResolveScope(), ref.getTextRange());
+  }
+
+  private static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass,
+                                                   GlobalSearchScope resolveScope,
+                                                   TextRange range) {
     final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
-    final GlobalSearchScope resolveScope = aClass.getResolveScope();
     for (PsiClassType superType : aClass.getSuperTypes()) {
       final String notAccessibleErrorMessage = isSuperTypeAccessible(superType, new HashSet<PsiClass>(), resolveScope, factory);
       if (notAccessibleErrorMessage != null) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .descriptionAndTooltip(notAccessibleErrorMessage)
-          .range(HighlightNamesUtil.getClassDeclarationTextRange(aClass))
+          .range(range)
           .create();
       }
     }

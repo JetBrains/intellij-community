@@ -1221,7 +1221,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
-    myHolder.add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, expression.getQualifierExpression()));
+    final PsiExpression qualifierExpression = expression.getQualifierExpression();
+    myHolder.add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
+    if (!myHolder.hasErrorResults() && qualifierExpression != null) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
+      if (psiClass != null) {
+        myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, qualifierExpression));
+      }
+    }
   }
 
   @Override
