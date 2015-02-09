@@ -215,7 +215,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
       }
 
       if (myActualContent2 == null) {
@@ -241,7 +241,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
       }
 
       final DocumentContent content1 = myActualContent1;
