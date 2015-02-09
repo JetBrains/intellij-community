@@ -208,7 +208,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
     if (constructorCandidates.length == 0) {
       final GroovyResolveResult result = GroovyResolveResultImpl.from(classResolveResult);
-      if (result != null) return new GroovyResolveResult[]{result};
+      if (result != GroovyResolveResult.EMPTY_RESULT) return new GroovyResolveResult[]{result};
     }
     return constructorCandidates;
   }
