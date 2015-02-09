@@ -132,6 +132,6 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
 
   private static boolean isTrailingComment(@NotNull PsiComment comment) {
     final PsiElement prevElement = comment.getPrevSibling();
-    return !(prevElement instanceof PsiWhiteSpace) || !prevElement.textContains('\n');
+    return prevElement != null && (!(prevElement instanceof PsiWhiteSpace) || !prevElement.textContains('\n'));
   }
 }
