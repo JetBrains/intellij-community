@@ -133,7 +133,7 @@ binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedM
   //  projectBuilder.info(" $lib.name")
   //}
 
-  lines.sort(String.CASE_INSENSITIVE_ORDER)
+  lines.sort(true, String.CASE_INSENSITIVE_ORDER)
   File file = new File(filePath)
   file.parentFile.mkdirs()
   FileWriter out = new FileWriter(file)
