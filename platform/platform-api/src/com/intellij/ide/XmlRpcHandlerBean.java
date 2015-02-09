@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-/**
- * @author yole
- */
 public class XmlRpcHandlerBean extends AbstractExtensionPointBean {
   public static final ExtensionPointName<XmlRpcHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.xmlRpcHandler");
 
@@ -31,8 +27,4 @@ public class XmlRpcHandlerBean extends AbstractExtensionPointBean {
 
   @Attribute("implementation")
   public String implementation;
-
-  public Object instantiate() throws ClassNotFoundException {
-    return instantiate(implementation, ApplicationManager.getApplication().getPicoContainer());
-  }
 }
