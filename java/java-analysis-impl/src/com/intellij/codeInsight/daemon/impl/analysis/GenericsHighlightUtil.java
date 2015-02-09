@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -346,17 +347,21 @@ public class GenericsHighlightUtil {
     Map<PsiClass, PsiSubstitutor> inheritedClasses = new HashMap<PsiClass, PsiSubstitutor>();
     final TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     return checkInterfaceMultipleInheritance(aClass,
+                                             aClass,
                                              PsiSubstitutor.EMPTY, inheritedClasses,
                                              new HashSet<PsiClass>(), textRange);
   }
 
   private static HighlightInfo checkInterfaceMultipleInheritance(PsiClass aClass,
+                                                                 PsiElement place, 
                                                                  PsiSubstitutor derivedSubstitutor,
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
                                                                  TextRange textRange) {
     final PsiClassType[] superTypes = aClass.getSuperTypes();
     for (PsiClassType superType : superTypes) {
+      superType = PsiClassImplUtil.correctType(superType, place.getResolveScope());
+      if (superType == null) continue;
       final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
@@ -381,7 +386,7 @@ public class GenericsHighlightUtil {
       }
       inheritedClasses.put(superClass, superTypeSubstitutor);
       visited.add(superClass);
-      final HighlightInfo highlightInfo = checkInterfaceMultipleInheritance(superClass, superTypeSubstitutor, inheritedClasses, visited, textRange);
+      final HighlightInfo highlightInfo = checkInterfaceMultipleInheritance(superClass, place, superTypeSubstitutor, inheritedClasses, visited, textRange);
       visited.remove(superClass);
 
       if (highlightInfo != null) return highlightInfo;
