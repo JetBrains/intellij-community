@@ -105,7 +105,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
   static void appendCharValue(CharValue value, StringBuilder buf) {
     buf.append('\'');
     String s = value.toString();
-    StringUtil.escapeStringCharacters(s.length(), s, buf);
+    StringUtil.escapeStringCharacters(s.length(), s, "\'", buf);
     buf.append('\'');
   }
 

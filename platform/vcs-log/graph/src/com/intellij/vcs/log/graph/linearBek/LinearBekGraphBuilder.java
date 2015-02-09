@@ -230,5 +230,4 @@ class LinearBekGraphBuilder {
       return new LinearBekGraph(myGraph, myHiddenEdges, myDottedEdges);
     }
   }
-
 }

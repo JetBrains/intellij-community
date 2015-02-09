@@ -152,6 +152,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
 
   String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
+  notifyArtifactBuilt(macZip)
 
   buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
 }
@@ -198,6 +199,7 @@ private layoutMac(Map _args, String home, Paths paths) {
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args.urlSchemes = ["idea"]
   args.mac_no_yjp = true
+  args.executable = "idea"
   layoutMacApp(target, home, args)
 }
 

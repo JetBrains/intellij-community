@@ -50,6 +50,10 @@ import java.util.List;
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
+  // we want to limit number of line extentions to avoid very slow painting
+  // the constant is rather random (feel free to adjust it upon getting a new information)
+  private static final int LINE_EXTENTIONS_MAX_COUNT = 200;
+
   @Override
   public Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber) {
     if (!Registry.is("ide.debugger.inline")) {
@@ -142,7 +146,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       for (VariableText text : result) {
         infos.addAll(text.infos);
       }
-      return infos;
+      return infos.size() > LINE_EXTENTIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENTIONS_MAX_COUNT) : infos;
     }
     return null;
   }

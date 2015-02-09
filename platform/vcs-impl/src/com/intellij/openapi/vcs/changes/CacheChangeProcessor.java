@@ -15,9 +15,17 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.impl.DiffRequestProcessor;
+import com.intellij.diff.requests.*;
+import com.intellij.diff.tools.util.SoftHardCacheMap;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,19 +33,9 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.diff.requests.*;
-import com.intellij.diff.tools.util.SoftHardCacheMap;
-import org.jetbrains.annotations.CalledInBackground;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -121,6 +119,12 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     }
 
     if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
+      ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
+        @Override
+        public void run() {
+          refresh(); // TODO: this could cause diff init in 'hide' state
+        }
+      }, InvokeAfterUpdateMode.SILENT, "", ModalityState.current());
       return new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change));
     }
 
@@ -179,6 +183,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     updateRequest();
   }
 
+  @CalledInAwt
   public void refresh() {
     List<Change> selectedChanges = getSelectedChanges();
 

@@ -16,15 +16,17 @@
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.DelayedDocumentWatcher;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,47 +38,40 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author yole
  */
 public class AutoTestManager {
-  static final Key<Boolean> AUTOTESTABLE = Key.create("auto.test.manager.supported");
-  public static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
+  private static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
   private static final Key<ProcessListener> ON_TERMINATION_RESTARTER_KEY = Key.create("auto.test.manager.on.termination.restarter");
+  private static final Key<ExecutionEnvironment> EXECUTION_ENVIRONMENT_KEY = Key.create("auto.test.manager.execution.environment");
 
   private final Project myProject;
-
-  private int myDelay;
+  private int myDelayMillis;
   private DelayedDocumentWatcher myDocumentWatcher;
 
-  // accessed only from EDT
-  private final Set<Content> myEnabledDescriptors = Collections.newSetFromMap(new WeakHashMap<Content, Boolean>());
-
+  @NotNull
   public static AutoTestManager getInstance(Project project) {
     return ServiceManager.getService(project, AutoTestManager.class);
   }
 
-  public AutoTestManager(Project project) {
+  public AutoTestManager(@NotNull Project project) {
     myProject = project;
-    myDelay = PropertiesComponent.getInstance(myProject).getOrInitInt(AUTO_TEST_MANAGER_DELAY, 3000);
+    myDelayMillis = PropertiesComponent.getInstance(project).getOrInitInt(AUTO_TEST_MANAGER_DELAY, 3000);
     myDocumentWatcher = createWatcher();
   }
 
+  @NotNull
   private DelayedDocumentWatcher createWatcher() {
-    return new DelayedDocumentWatcher(myProject, myDelay, new Consumer<Integer>() {
+    return new DelayedDocumentWatcher(myProject, myDelayMillis, new Consumer<Integer>() {
       @Override
       public void consume(Integer modificationStamp) {
-        for (Content content : myEnabledDescriptors) {
-          runAutoTest(content, modificationStamp, myDocumentWatcher);
-        }
+        restartAllAutoTests(modificationStamp);
       }
     }, new Condition<VirtualFile>() {
       @Override
@@ -87,60 +82,114 @@ public class AutoTestManager {
     });
   }
 
-  public void setAutoTestEnabled(@NotNull RunContentDescriptor descriptor, boolean enabled) {
+  public void setAutoTestEnabled(@NotNull RunContentDescriptor descriptor, @NotNull ExecutionEnvironment environment, boolean enabled) {
     Content content = descriptor.getAttachedContent();
-    if (enabled) {
-      myEnabledDescriptors.add(content);
-      myDocumentWatcher.activate();
+    if (content != null) {
+      if (enabled) {
+        EXECUTION_ENVIRONMENT_KEY.set(content, environment);
+        myDocumentWatcher.activate();
+      }
+      else {
+        EXECUTION_ENVIRONMENT_KEY.set(content, null);
+        if (!hasEnabledAutoTests()) {
+          myDocumentWatcher.deactivate();
+        }
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        if (processHandler != null) {
+          clearRestarterListener(processHandler);
+        }
+      }
+    }
+  }
+
+  private boolean hasEnabledAutoTests() {
+    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
+      if (isAutoTestEnabledForDescriptor(descriptor)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
+    return isAutoTestEnabledForDescriptor(descriptor);
+  }
+
+  private static boolean isAutoTestEnabledForDescriptor(@NotNull RunContentDescriptor descriptor) {
+    Content content = descriptor.getAttachedContent();
+    if (content != null) {
+      ExecutionEnvironment watched = EXECUTION_ENVIRONMENT_KEY.get(content);
+      if (watched != null) {
+        ExecutionEnvironment current = getCurrentEnvironment(content);
+        boolean result = current != null && equals(current, watched);
+        if (!result) {
+          // let GC do its work
+          EXECUTION_ENVIRONMENT_KEY.set(content, null);
+        }
+        return result;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static ExecutionEnvironment getCurrentEnvironment(@NotNull Content content) {
+    JComponent component = content.getComponent();
+    if (component == null) {
+      return null;
+    }
+    return LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+  }
+
+  private static boolean equals(@NotNull ExecutionEnvironment env1, @NotNull ExecutionEnvironment env2) {
+    return env1.getRunProfile() == env2.getRunProfile() &&
+           env1.getRunner() == env2.getRunner() &&
+           env1.getExecutor() == env2.getExecutor() &&
+           env1.getExecutionTarget() == env2.getExecutionTarget();
+  }
+
+  private static void clearRestarterListener(@NotNull ProcessHandler processHandler) {
+    ProcessListener restarterListener = ON_TERMINATION_RESTARTER_KEY.get(processHandler, null);
+    if (restarterListener != null) {
+      processHandler.removeProcessListener(restarterListener);
+      ON_TERMINATION_RESTARTER_KEY.set(processHandler, null);
+    }
+  }
+
+  private void restartAllAutoTests(int modificationStamp) {
+    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    boolean active = false;
+    for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
+      if (isAutoTestEnabledForDescriptor(descriptor)) {
+        restartAutoTest(descriptor, modificationStamp, myDocumentWatcher);
+        active = true;
+      }
+    }
+    if (!active) {
+      myDocumentWatcher.deactivate();
+    }
+  }
+
+  private static void restartAutoTest(@NotNull RunContentDescriptor descriptor,
+                                      int modificationStamp,
+                                      @NotNull DelayedDocumentWatcher documentWatcher) {
+    ProcessHandler processHandler = descriptor.getProcessHandler();
+    if (processHandler != null && !processHandler.isProcessTerminated()) {
+      scheduleRestartOnTermination(descriptor, processHandler, modificationStamp, documentWatcher);
     }
     else {
-      clearRestarterListener(descriptor.getProcessHandler());
-      myEnabledDescriptors.remove(content);
-      if (myEnabledDescriptors.isEmpty()) {
-        myDocumentWatcher.deactivate();
-      }
-    }
-  }
-
-  private static void clearRestarterListener(@Nullable ProcessHandler processHandler) {
-    if (processHandler != null) {
-      ProcessListener restarterListener = ON_TERMINATION_RESTARTER_KEY.get(processHandler, null);
-      if (restarterListener != null) {
-        processHandler.removeProcessListener(restarterListener);
-        ON_TERMINATION_RESTARTER_KEY.set(processHandler, null);
-      }
-    }
-  }
-
-  public boolean isAutoTestEnabled(RunContentDescriptor descriptor) {
-    return myEnabledDescriptors.contains(descriptor.getAttachedContent());
-  }
-
-  private static void runAutoTest(@NotNull Content content, int modificationStamp, @NotNull DelayedDocumentWatcher documentWatcher) {
-    JComponent component = content.getComponent();
-    if (component != null) {
-      DataContext dataContext = DataManager.getInstance().getDataContext(component);
-      RunContentDescriptor descriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
-      if (descriptor != null) {
-        ProcessHandler processHandler = descriptor.getProcessHandler();
-        if (processHandler != null && !processHandler.isProcessTerminated()) {
-          scheduleRestartOnTermination(descriptor, content, processHandler, modificationStamp, documentWatcher);
-        }
-        else {
-          restart(descriptor, content);
-        }
-      }
+      restart(descriptor);
     }
   }
 
   private static void scheduleRestartOnTermination(@NotNull final RunContentDescriptor descriptor,
-                                                   @NotNull final Content content,
                                                    @NotNull final ProcessHandler processHandler,
                                                    final int modificationStamp,
                                                    @NotNull final DelayedDocumentWatcher documentWatcher) {
     ProcessListener restarterListener = ON_TERMINATION_RESTARTER_KEY.get(processHandler);
     if (restarterListener != null) {
-      return;
+      clearRestarterListener(processHandler);
     }
     restarterListener = new ProcessAdapter() {
       @Override
@@ -149,8 +198,8 @@ public class AutoTestManager {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (documentWatcher.isUpToDate(modificationStamp)) {
-              restart(descriptor, content);
+            if (isAutoTestEnabledForDescriptor(descriptor) && documentWatcher.isUpToDate(modificationStamp)) {
+              restart(descriptor);
             }
           }
         }, ModalityState.any());
@@ -160,23 +209,23 @@ public class AutoTestManager {
     processHandler.addProcessListener(restarterListener);
   }
 
-  private static void restart(@NotNull RunContentDescriptor descriptor, @NotNull Content content) {
+  private static void restart(@NotNull RunContentDescriptor descriptor) {
     descriptor.setActivateToolWindowWhenAdded(false);
     descriptor.setReuseToolWindowActivation(true);
-    ExecutionUtil.restart(content);
+    ExecutionUtil.restart(descriptor);
   }
 
   int getDelay() {
-    return myDelay;
+    return myDelayMillis;
   }
 
   void setDelay(int delay) {
-    myDelay = delay;
+    myDelayMillis = delay;
     myDocumentWatcher.deactivate();
     myDocumentWatcher = createWatcher();
-    if (!myEnabledDescriptors.isEmpty()) {
+    if (hasEnabledAutoTests()) {
       myDocumentWatcher.activate();
     }
-    PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, String.valueOf(myDelay));
+    PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, String.valueOf(myDelayMillis));
   }
 }

@@ -189,8 +189,8 @@ public class StudyEditInputAction extends DumbAwareAction {
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(tabbedPane.isEditorTabs() ? AllIcons.Actions.CloseNew : AllIcons.Actions.Close);
-      e.getPresentation().setHoveredIcon(tabbedPane.isEditorTabs() ? AllIcons.Actions.CloseNewHovered : AllIcons.Actions.CloseHovered);
+      e.getPresentation().setIcon(AllIcons.Actions.Close);
+      e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
       e.getPresentation().setText("Delete test");
     }

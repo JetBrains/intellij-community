@@ -29,7 +29,9 @@ public class RefreshDirDiffAction extends DirDiffAction {
   public static final CustomShortcutSet REFRESH_SHORTCUT = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta R" : "F5");
 
   public RefreshDirDiffAction(DirDiffTableModel model) {
-    super(model, "Refresh", PlatformIcons.SYNCHRONIZE_ICON);
+    super(model);
+    getTemplatePresentation().setText("Refresh");
+    getTemplatePresentation().setIcon(PlatformIcons.SYNCHRONIZE_ICON);
   }
 
   @Override

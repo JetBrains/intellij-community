@@ -16,9 +16,11 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +29,7 @@ import javax.swing.*;
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class FileIndentOptionsProvider {
+public abstract class FileIndentOptionsProvider { 
 
   public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
   /**
@@ -48,36 +50,18 @@ public abstract class FileIndentOptionsProvider {
   }
 
   /**
-   * @return A name which will be used to notify a user on overwritten indent options. If the option is <code>null</code>, no notification
+   * @return information used to create user notification in editor. If the option is <code>null</code>, no notification
    * will be shown.
    */
   @Nullable
-  public String getDisplayName() {
+  public EditorNotificationInfo getNotificationInfo(@NotNull Project project,
+                                                    @NotNull VirtualFile file,
+                                                    @NotNull FileEditor fileEditor,
+                                                    @NotNull CommonCodeStyleSettings.IndentOptions user,
+                                                    @NotNull CommonCodeStyleSettings.IndentOptions detected) {
     return null;
   }
-
-  /**
-   * @return The icon to be displayed in a notification message, can be <coe>null</coe> (no icon).
-   */
-  @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  /**
-   * @return <code>True</code> if the provider can be disabled (default is <code>false</code>).
-   */
-  public boolean canBeDisabled() {
-    return false;
-  }
-
-  /**
-   * Disables the provider.
-   * @param project The project to disable the provider for.
-   */
-  public void disable(@NotNull Project project) {
-  }
-
+  
   /**
    * Tells if there should not be any notification for this specific file.
    * @param file  The file to check.

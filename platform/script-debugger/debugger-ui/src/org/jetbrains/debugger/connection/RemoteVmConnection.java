@@ -3,7 +3,6 @@ package org.jetbrains.debugger.connection;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
@@ -35,9 +34,13 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
   }
 
   @NotNull
-  public abstract Bootstrap createBootstrap(@NotNull InetSocketAddress address, @NotNull AsyncPromise<Vm> result);
+  public abstract Bootstrap createBootstrap(@NotNull InetSocketAddress address, @NotNull AsyncPromise<Vm> promise);
 
-  public void open(@NotNull final InetSocketAddress address) {
+  public void open(@NotNull InetSocketAddress address) {
+    open(address, false);
+  }
+
+  public void open(@NotNull final InetSocketAddress address, final boolean waitForever) {
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to " + address.getHostName() + ":" + address.getPort());
     final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
@@ -54,12 +57,12 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
           }
         });
 
-        ActionCallback callback = new ActionCallback();
-        NettyUtil.connectClient(createBootstrap(address, result), address, callback);
-        callback.doWhenRejected(new Consumer<String>() {
+        AsyncPromise<Void> connectionPromise = new AsyncPromise<Void>();
+        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, waitForever ? -1 : NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT);
+        connectionPromise.rejected(new Consumer<Throwable>() {
           @Override
-          public void consume(String error) {
-            result.setError(Promise.createError(error));
+          public void consume(Throwable error) {
+            result.setError(error);
           }
         });
 

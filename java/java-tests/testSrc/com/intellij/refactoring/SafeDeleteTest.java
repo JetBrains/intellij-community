@@ -92,6 +92,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testToDeepDeleteParameterOverriders() throws Exception {
     doSingleFileTest();
   }

@@ -87,7 +87,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest();
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testWrongSuperInLibrary() throws Exception {
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
@@ -102,34 +101,37 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.configureByFile("java8/p/" + name + ".java");
     myFixture.checkHighlighting();
   }
-  
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
+
   public void testWrongComparator() throws Exception {
    doTestWithoutLibrary();
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testGenericComparator() throws Exception {
     doTestWithoutLibrary();
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testGenericCallableWithDifferentTypeArgs() throws Exception {
     doTestWithoutLibrary();
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testSuperclassImplementsUnknownType() throws Exception {
     doTestWithoutLibrary();
   }
+
+  public void testDeclaredTypeOfVariableImplementsUnknownType() throws Exception {
+    doTestWithoutLibrary();
+  }
   
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testSuperclassImplementsGenericsOfUnknownType() throws Exception {
     doTestWithoutLibrary();
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 20)
   public void testSuperMethodNotExist() throws Exception {
+    doTestWithoutLibrary();
+  }
+
+  @Bombed(day = 20, month = Calendar.FEBRUARY)
+  public void testNoOverriding() throws Exception {
     doTestWithoutLibrary();
   }
 

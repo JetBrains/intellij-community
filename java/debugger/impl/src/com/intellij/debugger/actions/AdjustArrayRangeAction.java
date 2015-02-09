@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class AdjustArrayRangeAction extends DebuggerAction {
       return;
     }
 
-    XValue container = node.getValueContainer();
+    final XValue container = node.getValueContainer();
     if (!(container instanceof JavaValue)) {
       return;
     }
@@ -79,17 +79,14 @@ public class AdjustArrayRangeAction extends DebuggerAction {
         public void contextAction() throws Exception {
           final Renderer lastRenderer = descriptor.getLastRenderer();
           if (lastRenderer instanceof ArrayRenderer) {
-            descriptor.setRenderer(clonedRenderer);
-            refreshViews(node);
-            //selectedNode.setRenderer(clonedRenderer);
+            ((JavaValue)container).setRenderer(clonedRenderer, node);
           }
           else if (lastRenderer instanceof CompoundNodeRenderer) {
             final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
               ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, clonedRenderer);
-              refreshViews(node);
-              //selectedNode.calcRepresentation();
+              ((JavaValue)container).reBuild(node);
             }
           }
         }

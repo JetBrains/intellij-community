@@ -25,14 +25,15 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.rt.debugger.ImageSerializer;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
+import org.intellij.images.editor.impl.ImageEditorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,9 +61,21 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     return new CustomPopupFullValueEvaluator(" (Show image)", evaluationContext) {
       @Override
       protected JComponent createComponent() {
-        return new JBScrollPane(new JBLabel(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes")));
+        return createIconViewer(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes"));
       }
     };
+  }
+
+  static JComponent createIconViewer(Icon icon) {
+    final int w = icon.getIconWidth();
+    final int h = icon.getIconHeight();
+    final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+      .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+    final Graphics2D g = image.createGraphics();
+    icon.paintIcon(null, g, 0, 0);
+    g.dispose();
+
+    return ImageEditorManagerImpl.createImageEditorUI(image);
   }
 
   @Nullable

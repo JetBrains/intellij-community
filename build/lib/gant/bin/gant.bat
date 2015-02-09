@@ -14,7 +14,7 @@
 @rem  implied. See the License for the specific language governing permissions and limitations under the
 @rem  License.
 @rem
-@rem  Author : Russel Winder <russel.winder@concertant.com>
+@rem  Author : Russel Winder <russel@winder.org.uk>
 
 @rem  Gant initiation script for Windows.
 
@@ -27,12 +27,20 @@ if "%DIRNAME%" == "" set DIRNAME=.\
 @rem If GANT_HOME is not set, deduce a path.
 
 if not "%GANT_HOME%" == "" goto endSetGantHome
-   set GANT_HOME=%DIRNAME%..
+   set GANT_HOME="%DIRNAME%.."
 :endSetGantHome
 
-@rem  Force GROOVY_HOME to be GANT_HOME so that the startGroovy code does the right thing.
+@rem  If GROOVY_HOME is not set, deduce a path -- this is needed in order to discover the location of the
+@rem  startGroovy script.
 
-set GROOVY_HOME=%GANT_HOME%
+if not "%GROOVY_HOME%" == "" goto endSetGroovyHome
+   for %%P in ( %PATH% ) do if exist %%P\groovy.exe set GROOVY_HOME=%%P\..
+   if not "%GROOVY_HOME%" == "" goto endSetGroovyHome
+   for %%P in ( %PATH% ) do if exist %%P\groovy.bat set GROOVY_HOME=%%P\..
+   if not "%GROOVY_HOME%" == "" goto endSetGroovyHome
+      call :environmentVariableError GROOVY_HOME
+      goto :EOF
+:endSetGroovyHome
 
 @rem  If ANT_HOME is not set, deduce a path -- this is needed in order to discover the location of the jars
 @rem  asscoiated with the Ant installation.
@@ -46,15 +54,15 @@ if not "%ANT_HOME%" == "" goto endSetAntHome
 
 set PROGNAME=gant.bat
 set GROOVY_SCRIPT_NAME=gant.bat
-set STARTER_CONF=%GANT_HOME%\conf\gant-starter.conf
+set STARTER_CONF="%GANT_HOME%\conf\gant-starter.conf"
 set JAVA_OPTS=%JAVA_OPTS% -Dgant.home="%GANT_HOME%" -Dant.home="%ANT_HOME%"
 
-%GANT_HOME%\bin\startGroovy.bat %DIRNAME% gant.Gant lib %*
+"%GANT_HOME%\bin\startGroovy.bat" "%DIRNAME%" gant.Gant %*
 
 @rem End local scope for the variables with windows NT shell
 if "%OS%" == "Windows_NT" endlocal
 
-exit /B %ERRORLEVEL%
+%COMSPEC% /C exit /B %ERRORLEVEL%
 
 :environmentVariableError
  echo.

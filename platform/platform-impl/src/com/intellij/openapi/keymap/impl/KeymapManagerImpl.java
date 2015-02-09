@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -70,9 +71,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
                                                         return scheme.writeExternal();
                                                       }
 
+                                                      @NotNull
                                                       @Override
-                                                      public boolean shouldBeSaved(@NotNull final KeymapImpl scheme) {
-                                                        return scheme.canModify();
+                                                      public State getState(@NotNull KeymapImpl scheme) {
+                                                        return scheme.canModify() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
                                                       }
                                                     },
                                                     RoamingType.PER_USER);
@@ -153,7 +155,13 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   @Override
   public String getActionBinding(String actionId) {
-    return myBoundShortcuts.get(actionId);
+    Set<String> visited = null;
+    String id = actionId, next;
+    while ((next = myBoundShortcuts.get(id)) != null) {
+      if (visited == null) visited = ContainerUtil.newHashSet();
+      if (!visited.add(id = next)) break;
+    }
+    return Comparing.equal(id, actionId) ? null : id;
   }
 
   @Override

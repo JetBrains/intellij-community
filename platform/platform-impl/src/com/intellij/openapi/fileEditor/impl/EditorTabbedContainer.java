@@ -420,8 +420,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(myTabs.isEditorTabs() ? AllIcons.Actions.CloseNew : AllIcons.Actions.Close);
-      e.getPresentation().setHoveredIcon(myTabs.isEditorTabs()? AllIcons.Actions.CloseNewHovered : AllIcons.Actions.CloseHovered);
+      e.getPresentation().setIcon(AllIcons.Actions.Close);
+      e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
       e.getPresentation().setText("Close. Alt-click to close others.");
     }

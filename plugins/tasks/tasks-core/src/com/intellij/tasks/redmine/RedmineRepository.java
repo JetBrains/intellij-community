@@ -167,6 +167,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
       .addParameter("offset", String.valueOf(offset))
       .addParameter("limit", String.valueOf(limit))
+      .addParameter("sort", "updated_on:desc")
       .addParameter("status_id", withClosed ? "*" : "open")
       .addParameter("assigned_to_id", "me");
     // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.

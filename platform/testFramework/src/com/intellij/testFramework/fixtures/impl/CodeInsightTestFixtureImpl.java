@@ -462,19 +462,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     scope.invalidate();
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
+    GlobalInspectionContextForTests globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
   }
 
   @NotNull
-  public static GlobalInspectionContextImpl createGlobalContextForTool(@NotNull AnalysisScope scope,
-                                                                       @NotNull final Project project,
-                                                                       @NotNull InspectionManagerEx inspectionManager,
-                                                                       @NotNull final InspectionToolWrapper ... toolWrappers) {
+  public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
+                                                                           @NotNull final Project project,
+                                                                           @NotNull InspectionManagerEx inspectionManager,
+                                                                           @NotNull final InspectionToolWrapper... toolWrappers) {
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", project, toolWrappers);
-    GlobalInspectionContextImpl context = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()) {
+    GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
       @Override
       protected List<Tools> getUsedTools() {
         try {
@@ -488,20 +488,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           InspectionProfileImpl.INIT_INSPECTIONS = false;
         }
       }
-
-      @Override
-      protected void notifyInspectionsFinished() {
-        super.notifyInspectionsFinished();
-        putUserData(FINISHED, true);
-      }
     };
     context.setCurrentScope(scope);
 
     return context;
-  }
-  private static final Key<Boolean> FINISHED = Key.create("Inspections finished");
-  public static boolean isInspectionsFinished(@NotNull GlobalInspectionContext context) {
-    return context.getUserData(FINISHED) == Boolean.TRUE;
   }
 
   @Override
@@ -1641,6 +1631,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return infos;
       }
       catch (ProcessCanceledException e) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        UIUtil.dispatchAllInvocationEvents();
         exception = e;
       }
     }

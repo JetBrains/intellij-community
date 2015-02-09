@@ -245,4 +245,10 @@ public class MapExternalResourceDialog extends DialogWrapper {
       }
     };
   }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Map External Resource dialog";
+  }
 }

@@ -623,6 +623,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         if (closed) return;
         super.close();
 
+        ApplicationManager.getApplication().assertWriteAccessAllowed();
+
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
         BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);

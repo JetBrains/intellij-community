@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 /**
@@ -26,7 +24,8 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
  */
 public class EnableRight extends DirDiffAction {
   protected EnableRight(DirDiffTableModel model) {
-    super(model, "Show new files on right side", AllIcons.Vcs.Arrow_left);
+    super(model);
+    EmptyAction.setupAction(this, "DirDiffMenu.EnableRight", null);
   }
 
   @Override
@@ -36,10 +35,5 @@ public class EnableRight extends DirDiffAction {
 
   public void updateState(boolean state) {
     getModel().setShowNewOnTarget(state);
-  }
-
-  @Override
-  public ShortcutSet getShortcut() {
-    return CustomShortcutSet.fromString("alt LEFT");
   }
 }

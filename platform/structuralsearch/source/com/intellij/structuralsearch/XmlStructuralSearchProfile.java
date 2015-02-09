@@ -141,14 +141,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         elementToReplace.replace(replacement);
       }
       else {
-        final PsiElement nextSibling = elementToReplace.getNextSibling();
         elementToReplace.delete();
-        assert nextSibling != null;
-        if (nextSibling.isValid()) {
-          if (nextSibling instanceof PsiWhiteSpace) {
-            nextSibling.delete();
-          }
-        }
       }
     }
   }

@@ -161,7 +161,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       @Override
       public void run() {
         try {
-          refUsages.set(ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
+          refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<UsageInfo[]>() {
             @Override
             public UsageInfo[] compute() {
               return findUsages();

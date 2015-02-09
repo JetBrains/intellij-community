@@ -15,10 +15,8 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
@@ -27,10 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Processor;
@@ -73,41 +68,17 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
               }
             });
           final FileIndentOptionsProvider provider = indentOptionsProviderRef.get();
-          if (provider != null &&
-              !provider.isAcceptedWithoutWarning(file) &&
-              provider.getDisplayName() != null &&
-              !userOptions.equals(detectedOptions)) {
-            final EditorNotificationPanel panel =
-              new EditorNotificationPanel()
-                .text(ApplicationBundle.message("code.style.indents.detector.message", provider.getDisplayName(),
-                                                getOptionDiffInfoString(userOptions, detectedOptions)));
-            if (provider.getIcon() != null) {
-              panel.icon(provider.getIcon());
+          EditorNotificationInfo info = provider != null && !provider.isAcceptedWithoutWarning(file) && !userOptions.equals(detectedOptions)
+                                        ? provider.getNotificationInfo(project, file, fileEditor, userOptions, detectedOptions)
+                                        : null;
+
+          if (info != null) {
+            EditorNotificationPanel panel = new EditorNotificationPanel().text(info.getTitle());
+            if (info.getIcon() != null) {
+              panel.icon(info.getIcon());
             }
-            panel.createActionLabel(
-              ApplicationBundle.message("code.style.indents.detector.accept"),
-              new Runnable() {
-                @Override
-                public void run() {
-                  provider.setAccepted(file);
-                  EditorNotifications.getInstance(project).updateAllNotifications();
-                }
-              }
-            );
-            if (provider.canBeDisabled()) {
-              panel.createActionLabel(
-                ApplicationBundle.message("code.style.indents.detector.disable"),
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    provider.disable(project);
-                    if (editor instanceof EditorEx) {
-                      ((EditorEx)editor).reinitSettings();
-                    }
-                    EditorNotifications.getInstance(project).updateAllNotifications();
-                  }
-                }
-              );
+            for (LabelWithAction action : info.getLabelAndActions()) {
+              panel.createActionLabel(action.label, action.action);
             }
             return panel;
           }
@@ -115,27 +86,5 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
       }
     }
     return null;
-  }
-
-  @NotNull
-  private static String getOptionDiffInfoString(CommonCodeStyleSettings.IndentOptions user,
-                                                CommonCodeStyleSettings.IndentOptions detected) {
-    StringBuilder sb = new StringBuilder();
-    if (user.INDENT_SIZE != detected.INDENT_SIZE) {
-      sb.append("indent size=").append(detected.INDENT_SIZE);
-    }
-    if (user.TAB_SIZE != detected.TAB_SIZE) {
-      if (sb.length() > 0) sb.append(", ");
-      sb.append("tab size=").append(detected.TAB_SIZE);
-    }
-    if (user.USE_TAB_CHARACTER != detected.USE_TAB_CHARACTER) {
-      if (sb.length() > 0) sb.append(", ");
-      sb.append(detected.USE_TAB_CHARACTER ? "tabs" : "no tabs");
-    }
-    if (user.SMART_TABS != detected.SMART_TABS) {
-      if (sb.length() > 0) sb.append(", ");
-      sb.append(detected.SMART_TABS ? "smart tabs" : "no smart tabs");
-    }
-    return sb.toString();
   }
 }

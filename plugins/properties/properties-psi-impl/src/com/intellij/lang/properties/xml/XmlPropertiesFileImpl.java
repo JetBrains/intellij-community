@@ -142,7 +142,9 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     XmlTag entry = rootTag.createChildTag("entry", "", value, false);
     entry.setAttribute("key", key);
     rootTag.addSubTag(entry, false);
-    return new XmlProperty(entry, this);
+    final XmlProperty property = new XmlProperty(entry, this);
+    myPropertiesMap.getValue().putValue(key, property);
+    return property;
   }
 
 

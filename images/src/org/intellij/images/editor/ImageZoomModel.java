@@ -38,4 +38,38 @@ public interface ImageZoomModel {
     boolean canZoomIn();
 
     boolean isZoomLevelChanged();
+
+    ImageZoomModel STUB = new ImageZoomModel() {
+        @Override
+        public double getZoomFactor() {
+            return 1;
+        }
+
+        @Override
+        public void setZoomFactor(double zoomFactor) {
+        }
+
+        @Override
+        public void zoomOut() {
+        }
+
+        @Override
+        public void zoomIn() {
+        }
+
+        @Override
+        public boolean canZoomOut() {
+            return false;
+        }
+
+        @Override
+        public boolean canZoomIn() {
+            return false;
+        }
+
+        @Override
+        public boolean isZoomLevelChanged() {
+            return false;
+        }
+    };
 }

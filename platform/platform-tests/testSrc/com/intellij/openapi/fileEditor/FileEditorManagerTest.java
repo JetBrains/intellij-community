@@ -161,7 +161,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     }
   }
 
-  public void testOpenInDumbMode() throws Exception {
+  public void _testOpenInDumbMode() throws Exception {
     PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
     try {
       DumbServiceImpl.getInstance(getProject()).setDumb(true);

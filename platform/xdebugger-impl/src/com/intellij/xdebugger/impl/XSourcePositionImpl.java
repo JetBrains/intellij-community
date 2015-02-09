@@ -113,11 +113,22 @@ public class XSourcePositionImpl implements XSourcePosition {
   @Override
   @NotNull
   public Navigatable createNavigatable(@NotNull Project project) {
-    return createOpenFileDescriptor(project, this);
+    return doCreateOpenFileDescriptor(project, this);
   }
 
   @NotNull
   public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+    Navigatable navigatable = position.createNavigatable(project);
+    if (navigatable instanceof OpenFileDescriptor) {
+      return (OpenFileDescriptor)navigatable;
+    }
+    else {
+      return doCreateOpenFileDescriptor(project, position);
+    }
+  }
+
+  @NotNull
+  public static OpenFileDescriptor doCreateOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     return position.getOffset() != -1
            ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
            : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);

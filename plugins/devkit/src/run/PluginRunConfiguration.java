@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -111,16 +112,23 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         fillParameterList(vm, VM_PARAMETERS);
         fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
         Sdk usedIdeaJdk = ideaJdk;
-        if (isAlternativeJreEnabled() && !StringUtil.isEmptyOrSpaces(getAlternativeJrePath())) {
-          try {
-            usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+        String alternativeIdePath = getAlternativeJrePath();
+        if (isAlternativeJreEnabled() && !StringUtil.isEmptyOrSpaces(alternativeIdePath)) {
+          final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(alternativeIdePath);
+          if (configuredJdk != null) {
+            usedIdeaJdk = configuredJdk;
           }
-          catch (CloneNotSupportedException e) {
-            throw new ExecutionException(e.getMessage());
+          else {
+            try {
+              usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+            }
+            catch (CloneNotSupportedException e) {
+              throw new ExecutionException(e.getMessage());
+            }
+            final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
+            sdkToSetUp.setHomePath(alternativeIdePath);
+            sdkToSetUp.commitChanges();
           }
-          final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
-          sdkToSetUp.setHomePath(getAlternativeJrePath());
-          sdkToSetUp.commitChanges();
         }
         @NonNls String libPath = usedIdeaJdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");

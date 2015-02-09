@@ -10,15 +10,12 @@
 @rem
 
 @rem Set local scope for the variables with windows NT shell
-if "%OS%"=="Windows_NT" setlocal
+if "%OS%"=="Windows_NT" setlocal enabledelayedexpansion
 
 set DIRNAME=%~1
 shift
 
 set CLASS=%~1
-shift
-
-set JARSPATH=%~1
 shift
 
 if exist "%USERPROFILE%/.groovy/preinit.bat" call "%USERPROFILE%/.groovy/preinit.bat"
@@ -36,7 +33,24 @@ if exist "%SystemRoot%\command\find.exe" set FIND_EXE="%SystemRoot%\command\find
 :check_JAVA_HOME
 @rem Make sure we have a valid JAVA_HOME
 if not "%JAVA_HOME%" == "" goto have_JAVA_HOME
-for %%P in (%PATH%) do if exist %%P\..\bin\java.exe set JAVA_HOME=%%P\..
+set PATHTMP=%PATH%
+:loop
+for /f "delims=; tokens=1*" %%i in ("!PATHTMP!") do (
+    if exist "%%i\..\bin\java.exe" (
+        set "JAVA_HOME=%%i\.."
+        goto found_JAVA_HOME
+    )
+    set PATHTMP=%%j
+    goto loop
+)
+goto check_default_JAVA_EXE
+
+:found_JAVA_HOME
+@rem Remove trailing \bin\.. from JAVA_HOME
+if "%JAVA_HOME:~-7%"=="\bin\.." SET "JAVA_HOME=%JAVA_HOME:~0,-7%"
+set JAVA_EXE=%JAVA_HOME%\bin\java.exe
+
+:check_default_JAVA_EXE
 if not "%JAVA_HOME%" == "" goto valid_JAVA_HOME
 java -version 2>NUL
 if not ERRORLEVEL 1 goto default_JAVA_EXE
@@ -170,8 +184,8 @@ if "x1" == "x%_SKIP%" goto skip_1
 
 rem now unescape -q, -s, -d
 set _ARG=%_ARG:-s=*%
-set _ARG=%_ARG:-d=-%
 set _ARG=%_ARG:-q="%
+set _ARG=%_ARG:-d=-%
 
 set CMD_LINE_ARGS=%CMD_LINE_ARGS% %_ARG%
 set _ARG=
@@ -203,7 +217,7 @@ set CMD_LINE_ARGS=%$
 
 :execute
 @rem Setup the command line
-set STARTER_CLASSPATH=%GROOVY_HOME%\%JARSPATH%\groovy-all-2.2.1.jar;%STARTER_CLASSPATH%
+set STARTER_CLASSPATH=%GROOVY_HOME%\lib\groovy-all-2.3.0.jar
 
 if exist "%USERPROFILE%/.groovy/init.bat" call "%USERPROFILE%/.groovy/init.bat"
 
@@ -221,19 +235,19 @@ set CP=%CLASSPATH%;%CP%
 :after_cp
 
 set STARTER_MAIN_CLASS=org.codehaus.groovy.tools.GroovyStarter
-if "%STARTER_CONF%" == "" set STARTER_CONF=%GROOVY_HOME%\conf\groovy-starter.conf
+set STARTER_CONF=%GROOVY_HOME%\conf\groovy-starter.conf
 
-if "%JAVA_OPTS%" == "" set JAVA_OPTS="-Xmx128m"
-set JAVA_OPTS=%JAVA_OPTS% -Dprogram.name="%PROGNAME%"
-set JAVA_OPTS=%JAVA_OPTS% -Dgroovy.home="%GROOVY_HOME%"
-if not "%TOOLS_JAR%" == "" set JAVA_OPTS=%JAVA_OPTS% -Dtools.jar="%TOOLS_JAR%"
-set JAVA_OPTS=%JAVA_OPTS% -Dgroovy.starter.conf="%STARTER_CONF%"
-set JAVA_OPTS=%JAVA_OPTS% -Dscript.name="%GROOVY_SCRIPT_NAME%"
+set GROOVY_OPTS="-Xmx128m"
+set GROOVY_OPTS=%GROOVY_OPTS% -Dprogram.name="%PROGNAME%"
+set GROOVY_OPTS=%GROOVY_OPTS% -Dgroovy.home="%GROOVY_HOME%"
+if not "%TOOLS_JAR%" == "" set GROOVY_OPTS=%GROOVY_OPTS% -Dtools.jar="%TOOLS_JAR%"
+set GROOVY_OPTS=%GROOVY_OPTS% -Dgroovy.starter.conf="%STARTER_CONF%"
+set GROOVY_OPTS=%GROOVY_OPTS% -Dscript.name="%GROOVY_SCRIPT_NAME%"
 
 if exist "%USERPROFILE%/.groovy/postinit.bat" call "%USERPROFILE%/.groovy/postinit.bat"
 
 @rem Execute Groovy
-"%JAVA_EXE%" %JAVA_OPTS% -classpath "%STARTER_CLASSPATH%" %STARTER_MAIN_CLASS% --main %CLASS% --conf "%STARTER_CONF%" --classpath "%CP%" %CMD_LINE_ARGS%
+"%JAVA_EXE%" %GROOVY_OPTS% %JAVA_OPTS% -classpath "%STARTER_CLASSPATH%" %STARTER_MAIN_CLASS% --main %CLASS% --conf "%STARTER_CONF%" --classpath "%CP%" %CMD_LINE_ARGS%
 
 :end
 @rem End local scope for the variables with windows NT shell
@@ -241,5 +255,4 @@ if "%OS%"=="Windows_NT" endlocal
 
 @rem Optional pause the batch file
 if "%GROOVY_BATCH_PAUSE%" == "on" pause
-
-exit /B %ERRORLEVEL%
+%COMSPEC% /C exit /B %ERRORLEVEL%

@@ -698,7 +698,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (forceCommit) {
         commitDocument(document);
       }
-      else if (!((DocumentEx)document).isInBulkUpdate()) {
+      else if (!((DocumentEx)document).isInBulkUpdate() && myPerformBackgroundCommit) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document, event);
       }
     }

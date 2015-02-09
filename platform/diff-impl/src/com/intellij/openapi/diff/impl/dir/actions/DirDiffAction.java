@@ -17,8 +17,10 @@ package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -28,8 +30,7 @@ import javax.swing.*;
 public abstract class DirDiffAction extends ToggleAction implements ShortcutProvider {
   private final DirDiffTableModel myModel;
 
-  protected DirDiffAction(DirDiffTableModel model, String name, Icon icon) {
-    super(name, name, icon);
+  protected DirDiffAction(DirDiffTableModel model) {
     myModel = model;
   }
 
@@ -68,5 +69,11 @@ public abstract class DirDiffAction extends ToggleAction implements ShortcutProv
   public void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(!getModel().isUpdating());
+  }
+
+  @Nullable
+  @Override
+  public ShortcutSet getShortcut() {
+    return getShortcutSet();
   }
 }

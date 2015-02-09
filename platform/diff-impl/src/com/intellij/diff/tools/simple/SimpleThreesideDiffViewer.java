@@ -375,16 +375,16 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   // Getters
   //
 
-  int getCurrentStartLine(@NotNull SimpleThreesideDiffChange change) {
+  private int getCurrentStartLine(@NotNull SimpleThreesideDiffChange change) {
     return change.getStartLine(getCurrentSide());
   }
 
-  int getCurrentEndLine(@NotNull SimpleThreesideDiffChange change) {
+  private int getCurrentEndLine(@NotNull SimpleThreesideDiffChange change) {
     return change.getEndLine(getCurrentSide());
   }
 
   @NotNull
-  List<SimpleThreesideDiffChange> getDiffChanges() {
+  protected List<SimpleThreesideDiffChange> getDiffChanges() {
     return myDiffChanges;
   }
 

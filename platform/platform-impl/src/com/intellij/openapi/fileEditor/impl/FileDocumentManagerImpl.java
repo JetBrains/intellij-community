@@ -174,6 +174,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         return null;
       }
 
+      ApplicationManager.getApplication().assertReadAccessAllowed();
       final CharSequence text = LoadTextUtil.loadText(file);
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);

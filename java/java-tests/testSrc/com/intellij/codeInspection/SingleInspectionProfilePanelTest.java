@@ -42,7 +42,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
     assertEquals(0, InspectionProfileTest.countInitializedTools(model));
-    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
+    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model, profile);
     panel.setVisible(true);
     panel.reset();
     assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 0, InspectionProfileTest.countInitializedTools(model));
@@ -70,7 +70,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
 
-    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
+    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model, profile);
     panel.setVisible(true);
     panel.reset();
     assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1, InspectionProfileTest.countInitializedTools(model));

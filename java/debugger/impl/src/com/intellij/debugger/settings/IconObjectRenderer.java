@@ -24,7 +24,6 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +61,7 @@ class IconObjectRenderer extends CompoundReferenceRenderer implements FullValueE
     return new CustomPopupFullValueEvaluator(" (Show icon)", evaluationContext) {
       @Override
       protected JComponent createComponent() {
-        return new JBLabel(ImageObjectRenderer.getIcon(myEvaluationContext, valueDescriptor.getValue(), "iconToBytes"));
+        return ImageObjectRenderer.createIconViewer(ImageObjectRenderer.getIcon(myEvaluationContext, valueDescriptor.getValue(), "iconToBytes"));
       }
     };
   }

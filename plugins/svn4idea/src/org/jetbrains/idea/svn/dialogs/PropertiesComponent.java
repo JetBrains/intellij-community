@@ -314,7 +314,7 @@ public class PropertiesComponent extends JPanel {
         // show erorr message
       }
 
-      SetKeywordsDialog dialog = new SetKeywordsDialog(project, PropertyValue.toString(propValue));
+      SetKeywordsDialog dialog = new SetKeywordsDialog(project, propValue);
       if (dialog.showAndGet()) {
         setProperty(SvnPropertyKeys.SVN_KEYWORDS, dialog.getKeywords(), false, false);
       }

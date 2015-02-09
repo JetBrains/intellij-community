@@ -32,11 +32,12 @@ import com.intellij.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffIcons;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -74,6 +76,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
 
   @Nullable private final SimpleFoldingModel myFoldingModel;
+  @NotNull private final ModifierProvider myModifierProvider;
 
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -82,6 +85,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
     myFoldingModel = createFoldingModel(myEditor1, myEditor2);
+
+    myModifierProvider = new ModifierProvider();
   }
 
   @Override
@@ -282,12 +287,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {
-            myDiffChanges.add(new SimpleDiffChange(fragment, myEditor1, myEditor2, getHighlightPolicy().isFineFragments()));
+            myDiffChanges.add(new SimpleDiffChange(SimpleDiffViewer.this, fragment, myEditor1, myEditor2,
+                                                   getHighlightPolicy().isFineFragments()));
           }
         }
 
-        if (myFoldingModel != null) myFoldingModel.install(data.getFragments(), myRequest,
-                                                           getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
+        if (myFoldingModel != null) {
+          myFoldingModel.install(data.getFragments(), myRequest,
+                                 getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
+        }
 
         scrollOnRediff();
 
@@ -433,7 +441,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   @NotNull
-  List<SimpleDiffChange> getDiffChanges() {
+  protected List<SimpleDiffChange> getDiffChanges() {
     return myDiffChanges;
   }
 
@@ -447,6 +455,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   protected JComponent getStatusPanel() {
     return myStatusPanel;
+  }
+
+  @NotNull
+  public ModifierProvider getModifierProvider() {
+    return myModifierProvider;
   }
 
   //
@@ -650,13 +663,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
     public ReplaceSelectedChangesAction() {
-      super("Replace", null, DiffIcons.getReplaceIcon(null), true);
+      super("Replace", null, AllIcons.Diff.Arrow, true);
     }
 
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return DiffIcons.getReplaceIcon(side);
+      return side.isLeft() ? AllIcons.Diff.Arrow : AllIcons.Diff.ArrowRight;
     }
 
     @Override
@@ -669,13 +682,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
     public AppendSelectedChangesAction() {
-      super("Insert", null, DiffIcons.getAppendIcon(null), true);
+      super("Insert", null, AllIcons.Diff.ArrowLeftDown, true);
     }
 
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return DiffIcons.getAppendIcon(side);
+      return side.isLeft() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.ArrowRightDown;
     }
 
     @Override
@@ -688,13 +701,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
     public RevertSelectedChangesAction() {
-      super("Revert", null, DiffIcons.getRevertIcon(null), false);
+      super("Revert", null, AllIcons.Diff.Remove, false);
     }
 
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return DiffIcons.getRevertIcon(side);
+      return AllIcons.Diff.Remove;
     }
 
     @Override
@@ -898,6 +911,54 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public long getStamp2() {
       return myStamp2;
+    }
+  }
+
+  public class ModifierProvider {
+    private boolean myShiftPressed;
+    private boolean myCtrlPressed;
+    private boolean myAltPressed;
+
+    public ModifierProvider() {
+      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+        @Override
+        public boolean dispatch(AWTEvent e) {
+          if (e instanceof KeyEvent) {
+            final int keyCode = ((KeyEvent)e).getKeyCode();
+            if (keyCode == KeyEvent.VK_SHIFT) {
+              myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;
+              updateActions();
+            }
+            if (keyCode == KeyEvent.VK_CONTROL) {
+              myCtrlPressed = e.getID() == KeyEvent.KEY_PRESSED;
+              updateActions();
+            }
+            if (keyCode == KeyEvent.VK_ALT) {
+              myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+              updateActions();
+            }
+          }
+          return false;
+        }
+      }, SimpleDiffViewer.this);
+    }
+
+    public boolean isShiftPressed() {
+      return myShiftPressed;
+    }
+
+    public boolean isCtrlPressed() {
+      return myCtrlPressed;
+    }
+
+    public boolean isAltPressed() {
+      return myAltPressed;
+    }
+
+    public void updateActions() {
+      for (SimpleDiffChange change : myDiffChanges) {
+        change.update();
+      }
     }
   }
 }
