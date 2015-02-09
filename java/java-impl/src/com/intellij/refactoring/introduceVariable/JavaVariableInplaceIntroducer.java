@@ -130,7 +130,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Override
   protected String getRefactoringId() {
-    return "refactoring.extractLocal";
+    return "refactoring.extractVariable";
   }
 
   @Override
