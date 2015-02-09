@@ -55,6 +55,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -296,7 +297,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
         @Override
         public void startNotified(final ProcessEvent event) {
-          toolWindow.setIcon(getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId())));
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              toolWindow.setIcon(getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId())));
+            }
+          });
         }
 
         @Override
@@ -320,8 +326,16 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                 }
               }
 
-              toolWindow.setIcon(alive ? getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId())) : myToolwindowIdToBaseIconMap.get(executor.getToolWindowId()));
-              content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
+              final boolean finalAlive = alive;
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  toolWindow.setIcon(finalAlive
+                                     ? getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId()))
+                                     : myToolwindowIdToBaseIconMap.get(executor.getToolWindowId()));
+                  content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
+                }
+              });
             }
           });
         }
