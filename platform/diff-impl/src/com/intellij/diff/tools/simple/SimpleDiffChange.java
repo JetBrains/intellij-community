@@ -18,6 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
@@ -318,7 +319,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, DiffIcons.getReplaceIcon(Side.RIGHT), new Runnable() {
+    return createIconRenderer(side, AllIcons.Diff.Arrow, new Runnable() {
       @Override
       public void run() {
         replaceChange(side);
@@ -328,7 +329,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, DiffIcons.getAppendIcon(Side.RIGHT), new Runnable() {
+    return createIconRenderer(side, AllIcons.Diff.ArrowLeftDown, new Runnable() {
       @Override
       public void run() {
         appendChange(side);
@@ -338,7 +339,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createRevertRenderer(@NotNull final Side side) {
-    return createIconRenderer(side.other(), DiffIcons.getRevertIcon(Side.RIGHT), new Runnable() {
+    return createIconRenderer(side.other(), AllIcons.Diff.Remove, new Runnable() {
       @Override
       public void run() {
         replaceChange(side.other());
