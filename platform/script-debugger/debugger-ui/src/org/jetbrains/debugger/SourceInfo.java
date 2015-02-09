@@ -23,15 +23,12 @@ public class SourceInfo extends XSourcePositionWrapper {
     }
 
     XSourcePosition position;
-    // binary file will be decompiled, must be under read action
-    AccessToken token = file.getFileType().isBinary() ? ReadAction.start() : null;
+    AccessToken token = ReadAction.start();
     try {
       position = XDebuggerUtil.getInstance().createPosition(file, line);
     }
     finally {
-      if (token != null) {
-        token.finish();
-      }
+      token.finish();
     }
     return position == null ? null : new SourceInfo(functionName, position, column);
   }
