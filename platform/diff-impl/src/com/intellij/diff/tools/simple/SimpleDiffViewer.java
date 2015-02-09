@@ -441,7 +441,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   @NotNull
-  List<SimpleDiffChange> getDiffChanges() {
+  protected List<SimpleDiffChange> getDiffChanges() {
     return myDiffChanges;
   }
 
