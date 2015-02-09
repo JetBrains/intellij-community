@@ -17,7 +17,9 @@ package org.jetbrains.ide;
 
 import com.intellij.ide.XmlRpcHandlerBean;
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -48,7 +50,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     handlerMapping = new THashMap<String, Object>();
     for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
       try {
-        handlerMapping.put(handlerBean.name, handlerBean.instantiate());
+        handlerMapping.put(handlerBean.name, AbstractExtensionPointBean.instantiate(handlerBean.findClass(handlerBean.implementation), ApplicationManager.getApplication().getPicoContainer(), true));
       }
       catch (ClassNotFoundException e) {
         LOG.error(e);

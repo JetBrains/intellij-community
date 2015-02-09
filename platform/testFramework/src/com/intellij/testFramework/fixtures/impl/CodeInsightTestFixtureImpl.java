@@ -1631,6 +1631,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return infos;
       }
       catch (ProcessCanceledException e) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        UIUtil.dispatchAllInvocationEvents();
         exception = e;
       }
     }
