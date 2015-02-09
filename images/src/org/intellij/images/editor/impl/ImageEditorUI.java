@@ -38,7 +38,6 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NonNls;
@@ -58,8 +57,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -68,13 +65,13 @@ import java.util.Locale;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, ImageComponentDecorator {
+final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider {
   @NonNls
   private static final String IMAGE_PANEL = "image";
   @NonNls
   private static final String ERROR_PANEL = "error";
 
-  private final @Nullable ImageEditor editor;
+  private final ImageEditor editor;
   private final DeleteProvider deleteProvider;
   private final CopyPasteSupport copyPasteSupport;
 
@@ -85,17 +82,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final JPanel contentPanel;
   private final JLabel infoLabel;
 
-  private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
-
-  ImageEditorUI(@Nullable ImageEditor editor) {
+  ImageEditorUI(ImageEditor editor, EditorOptions editorOptions) {
     this.editor = editor;
-
-    Options options = OptionsManager.getInstance().getOptions();
-    EditorOptions editorOptions = options.getEditorOptions();
-    options.addPropertyChangeListener(optionsChangeListener);
-
     final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
-    if (factory != null && editor != null) {
+    if (factory != null) {
       copyPasteSupport =
         factory.createPsiBasedCopyPasteSupport(editor.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
           public PsiElement[] getSelectedElements() {
@@ -178,11 +168,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       ColorModel colorModel = image.getColorModel();
       String format = document.getFormat();
       if (format == null) {
-        format = editor != null ? ImagesBundle.message("unknown.format") : "";
+        format = ImagesBundle.message("unknown.format");
       } else {
         format = format.toUpperCase(Locale.ENGLISH);
       }
-      VirtualFile file = editor != null ? editor.getFile() : null;
+      VirtualFile file = editor.getFile();
       infoLabel.setText(
         ImagesBundle.message("image.info",
                              image.getWidth(), image.getHeight(), format,
@@ -202,71 +192,14 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   void dispose() {
-    Options options = OptionsManager.getInstance().getOptions();
-    options.removePropertyChangeListener(optionsChangeListener);
-
     imageComponent.removeMouseWheelListener(wheelAdapter);
     imageComponent.getDocument().removeChangeListener(changeListener);
 
     removeAll();
   }
-  @Override
-  public void setTransparencyChessboardVisible(boolean visible) {
-    imageComponent.setTransparencyChessboardVisible(visible);
-  }
 
-  @Override
-  public boolean isTransparencyChessboardVisible() {
-    return imageComponent.isTransparencyChessboardVisible();
-  }
-
-  @Override
-  public boolean isEnabledForActionPlace(String place) {
-    // Disable for thumbnails action
-    return !ThumbnailViewActions.ACTION_PLACE.equals(place);
-  }
-
-
-  @Override
-  public void setGridVisible(boolean visible) {
-    imageComponent.setGridVisible(visible);
-  }
-
-  @Override
-  public boolean isGridVisible() {
-    return imageComponent.isGridVisible();
-  }
-
-  public ImageZoomModel getZoomModel() {
+  ImageZoomModel getZoomModel() {
     return zoomModel;
-  }
-
-  public void setImage(BufferedImage image, String format) {
-    ImageDocument document = imageComponent.getDocument();
-    BufferedImage previousImage = document.getValue();
-    document.setValue(image);
-    if (image == null) return;
-    document.setFormat(format);
-    ImageZoomModel zoomModel = getZoomModel();
-    if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
-      // Set smart zooming behaviour on open
-      Options options = OptionsManager.getInstance().getOptions();
-      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
-      // Open as actual size
-      zoomModel.setZoomFactor(1.0d);
-
-      if (zoomOptions.isSmartZooming()) {
-        Dimension prefferedSize = zoomOptions.getPrefferedSize();
-        if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
-          // Resize to preffered size
-          // Calculate zoom factor
-
-          double factor =
-            (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
-          zoomModel.setZoomFactor(Math.ceil(factor));
-        }
-      }
-    }
   }
 
   private final class ImageContainerPane extends JBLayeredPane {
@@ -280,7 +213,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         @Override
         public Point magnify(double scale, Point at) {
           Point locationBefore = imageComponent.getLocation();
-          ImageZoomModel model = editor != null ? editor.getZoomModel() : getZoomModel();
+          ImageZoomModel model = editor.getZoomModel();
           double factor = model.getZoomFactor();
           model.setZoomFactor(scale * factor);
           return new Point(((int)((at.x - Math.max(scale > 1.0 ? locationBefore.x : 0, 0)) * scale)), 
@@ -450,18 +383,18 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   public Object getData(String dataId) {
 
     if (CommonDataKeys.PROJECT.is(dataId)) {
-      return editor != null ? editor.getProject() : null;
+      return editor.getProject();
     } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return editor != null ? editor.getFile() : null;
+      return editor.getFile();
     } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return editor != null ? new VirtualFile[]{editor.getFile()} : new VirtualFile[]{};
+      return new VirtualFile[]{editor.getFile()};
     } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
       return getData(CommonDataKeys.PSI_ELEMENT.getName());
     } else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      VirtualFile file = editor != null ? editor.getFile() : null;
+      VirtualFile file = editor.getFile();
       return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return editor != null ? new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())} : new PsiElement[]{} ;
+      return new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())};
     } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
       return this;
     } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
@@ -469,7 +402,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return deleteProvider;
     } else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
-      return editor != null ? editor : this;
+      return editor;
     }
 
     return null;
@@ -517,21 +450,4 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return myImage;
     }
   }
-
-  private class OptionsChangeListener implements PropertyChangeListener {
-    public void propertyChange(PropertyChangeEvent evt) {
-      Options options = (Options) evt.getSource();
-      EditorOptions editorOptions = options.getEditorOptions();
-      TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
-      GridOptions gridOptions = editorOptions.getGridOptions();
-
-      imageComponent.setTransparencyChessboardCellSize(chessboardOptions.getCellSize());
-      imageComponent.setTransparencyChessboardWhiteColor(chessboardOptions.getWhiteColor());
-      imageComponent.setTransparencyChessboardBlankColor(chessboardOptions.getBlackColor());
-      imageComponent.setGridLineZoomFactor(gridOptions.getLineZoomFactor());
-      imageComponent.setGridLineSpan(gridOptions.getLineSpan());
-      imageComponent.setGridLineColor(gridOptions.getLineColor());
-    }
-  }
-
 }

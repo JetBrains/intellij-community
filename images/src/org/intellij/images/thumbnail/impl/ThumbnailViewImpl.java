@@ -19,13 +19,11 @@
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import icons.ImagesIcons;
-import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.vfs.IfsUtil;
@@ -162,24 +160,10 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
   public void dispose() {
     // Dispose UI
-    Disposer.dispose(getUI());
+    getUI().dispose();
     // Unregister ToolWindow
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     windowManager.unregisterToolWindow(TOOLWINDOW_ID);
-  }
-
-  @Override
-  public ImageZoomModel getZoomModel() {
-    return ImageZoomModel.STUB;
-  }
-
-  @Override
-  public void setGridVisible(boolean visible) {
-  }
-
-  @Override
-  public boolean isGridVisible() {
-    return false;
   }
 
   private final class LazyScroller implements Runnable {

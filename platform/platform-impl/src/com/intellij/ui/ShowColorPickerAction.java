@@ -18,13 +18,11 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -41,16 +39,6 @@ public class ShowColorPickerAction extends AnAction {
       picker.setModal(false);
       picker.show();
     }
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    if (component == null || !(SwingUtilities.getWindowAncestor(component) instanceof Frame)) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-    e.getPresentation().setEnabledAndVisible(true);
   }
 
   private static JComponent rootComponent(Project project) {
