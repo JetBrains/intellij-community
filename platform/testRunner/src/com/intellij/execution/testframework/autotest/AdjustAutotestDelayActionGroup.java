@@ -29,12 +29,10 @@ import javax.swing.*;
  */
 public class AdjustAutotestDelayActionGroup extends ActionGroup {
   public static final int MAX_DELAY = 10;
-  private final Project myProject;
   private final DataContext myDataContext;
 
-  public AdjustAutotestDelayActionGroup(@NotNull Project project, @NotNull JComponent parent) {
+  public AdjustAutotestDelayActionGroup(@NotNull JComponent parent) {
     super("Set AutoTest Delay", true);
-    myProject = project;
     myDataContext = DataManager.getInstance().getDataContext(parent);
   }
 
@@ -58,29 +56,31 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     final AnAction[] actions = new AnAction[MAX_DELAY];
     for (int i = 0; i < MAX_DELAY; i++) {
-      actions[i] = new SetAutoTestDelayAction(myProject, i + 1);
+      actions[i] = new SetAutoTestDelayAction(i + 1);
     }
     return actions;
   }
 
   private static class SetAutoTestDelayAction extends ToggleAction {
     private final int myDelay;
-    @NotNull private final Project myProject;
 
-    public SetAutoTestDelayAction(@NotNull Project project, int delay) {
+    public SetAutoTestDelayAction(int delay) {
       super(delay + "s");
-      myProject = project;
       myDelay = delay * 1000;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return AutoTestManager.getInstance(myProject).getDelay() == myDelay;
+      Project project = e.getProject();
+      return project != null && AutoTestManager.getInstance(project).getDelay() == myDelay;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      AutoTestManager.getInstance(myProject).setDelay(myDelay);
+      Project project = e.getProject();
+      if (project != null) {
+        AutoTestManager.getInstance(project).setDelay(myDelay);
+      }
     }
   }
 }
