@@ -11,13 +11,16 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class FileUrlMapper {
   public static final ExtensionPointName<FileUrlMapper> EP_NAME = ExtensionPointName.create("com.jetbrains.fileUrlMapper");
 
   @NotNull
-  public abstract List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority);
+  public List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority) {
+    return Collections.emptyList();
+  }
 
   /**
    * Optional to implement, useful if default navigation position to source file is not equals to 0:0 (java file for example)
