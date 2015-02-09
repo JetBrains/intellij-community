@@ -127,7 +127,7 @@ public class DebuggerUIUtil {
                                           JComponent component,
                                           @Nullable final FullValueEvaluationCallbackImpl callback) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null);
-    builder.setResizable(true)
+    builder.setResizable(true).setAlpha(1)
         .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
         .setRequestFocus(false);
