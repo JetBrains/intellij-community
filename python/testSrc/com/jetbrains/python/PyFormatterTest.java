@@ -496,11 +496,6 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  // PY-12932
-  public void testMultilineCommentIgnored() {
-    doTest();
-  }
-
   // PY-12938
   public void testDoubleHashCommentIgnored() {
     doTest();
@@ -513,6 +508,11 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-12775
   public void testShebangCommentIgnored() {
+    doTest();
+  }
+
+  // PY-13232
+  public void testWhitespaceInsertedAfterHashSignInMultilineComment() {
     doTest();
   }
 

@@ -109,10 +109,6 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
         if (charAfterDash == '#' || charAfterDash == ':') {
           return; // doc comment
         }
-        if (commentSpansSeveralLines(comment)) {
-          return;
-        }
-
         final String commentTextWithoutDash = origText.substring(commentStart + 1);
         final String newText;
         if (isTrailingComment(comment)) {
@@ -132,38 +128,6 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
         }
       }
     }
-  }
-
-  private static boolean commentSpansSeveralLines(@NotNull PsiComment comment) {
-
-    for (PsiElement prevElement = comment.getPrevSibling(); prevElement != null; prevElement = prevElement.getPrevSibling()) {
-      if (prevElement instanceof PsiWhiteSpace) {
-        if (StringUtil.countNewLines(prevElement.getText()) > 1) {
-          break;
-        }
-      }
-      else if (prevElement instanceof PsiComment) {
-        return true;
-      }
-      else {
-        break;
-      }
-    }
-
-    for (PsiElement nextElement = comment.getNextSibling(); nextElement != null; nextElement = nextElement.getNextSibling()) {
-      if (nextElement instanceof PsiWhiteSpace) {
-        if (StringUtil.countNewLines(nextElement.getText()) > 1) {
-          break;
-        }
-      }
-      else if (nextElement instanceof PsiComment) {
-        return true;
-      }
-      else {
-        break;
-      }
-    }
-    return false;
   }
 
   private static boolean isTrailingComment(@NotNull PsiComment comment) {
