@@ -385,11 +385,26 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter p = entry.getValue();
-      if (p.isPositionalContainer() || p.isKeywordContainer()) {
-        continue;
-      }
-      final PyType argType = context.getType(entry.getKey());
       final PyType paramType = context.getType(p);
+
+      PyType argType = context.getType(entry.getKey());
+      if (p.isPositionalContainer()) {
+        final PyClassType tupleClassType = PyBuiltinCache.getInstance(p).getTupleType();
+        if (tupleClassType == null) {
+          return null;
+        }
+        final PyClass tupleClass = tupleClassType.getPyClass();
+        argType = new PyCollectionTypeImpl(tupleClass, false, argType);
+      } else if (p.isKeywordContainer()) {
+        final PyClassType dictClassType = PyBuiltinCache.getInstance(p).getDictType();
+        if (dictClassType == null) {
+          return null;
+        }
+        final PyClass dictClass = dictClassType.getPyClass();
+        final PyType strType = PyBuiltinCache.getInstance(p).getStrType();
+        final PyType dictType = PyTupleType.create(p, new PyType[] {strType, argType});
+        argType = new PyCollectionTypeImpl(dictClass, false, dictType);
+      }
       if (!match(paramType, argType, context, substitutions)) {
         return null;
       }

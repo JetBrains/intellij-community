@@ -369,6 +369,51 @@ public class PyTypeTest extends PyTestCase {
                   "expr = f(1)\n");
   }
 
+  public void testGenericVarargsOneArg() {
+    PyExpression expr = parseExpr("def f(*args):\n" +
+                                  "    '''\n" +
+                                  "    :type args: tuple[T]\n" +
+                                  "    :rtype: T\n" +
+                                  "    '''\n" +
+                                  "    return args[0]\n" +
+                                  "\n" +
+                                  "expr = f(1)\n");
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
+    assertNotNull(actual);
+    assertEquals("int", actual.getName());
+  }
+
+  public void testGenericVarargsTwoArgs() {
+    PyExpression expr = parseExpr("def f(*args):\n" +
+                                  "    '''\n" +
+                                  "    :type args: tuple[T]\n" +
+                                  "    :rtype: T\n" +
+                                  "    '''\n" +
+                                  "    return args[0]\n" +
+                                  "\n" +
+                                  "expr = f(1, 2)\n");
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
+    assertNotNull(actual);
+    assertEquals("int", actual.getName());
+  }
+
+  public void testGenericKwargs() {
+    PyExpression expr = parseExpr("def f(**kwargs):\n" +
+                                  "    '''\n" +
+                                  "    :type kwargs: dict[str, T]\n" +
+                                  "    :rtype: T\n" +
+                                  "    '''\n" +
+                                  "    return args[0]\n" +
+                                  "\n" +
+                                  "expr = f(arg=1, arg2=2)\n");
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
+    assertNotNull(actual);
+    assertEquals("int", actual.getName());
+  }
+
   // PY-5831
   public void testYieldType() {
     doTest("Any", "def f():\n" +
