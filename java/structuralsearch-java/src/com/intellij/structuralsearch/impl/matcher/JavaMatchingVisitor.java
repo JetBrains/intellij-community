@@ -740,18 +740,19 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     PsiElement[] typeparams = null;
     if (el2 instanceof PsiJavaCodeReferenceElement) {
-      typeparams = ((PsiJavaCodeReferenceElement)el2).getParameterList().getTypeParameterElements();
+      final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)el2).getParameterList();
+      if (parameterList != null) {
+        typeparams = parameterList.getTypeParameterElements();
+      }
     }
     else if (el2 instanceof PsiTypeParameter) {
       el2 = ((PsiTypeParameter)el2).getNameIdentifier();
     }
-    else if (el2 instanceof PsiClass && ((PsiClass)el2).hasTypeParameters()
-      ) {
+    else if (el2 instanceof PsiClass && ((PsiClass)el2).hasTypeParameters()) {
       typeparams = ((PsiClass)el2).getTypeParameters();
       el2 = ((PsiClass)el2).getNameIdentifier();
     }
-    else if (el2 instanceof PsiMethod && ((PsiMethod)el2).hasTypeParameters()
-      ) {
+    else if (el2 instanceof PsiMethod && ((PsiMethod)el2).hasTypeParameters()) {
       typeparams = ((PsiMethod)_type2).getTypeParameters();
       el2 = ((PsiMethod)_type2).getNameIdentifier();
     }
