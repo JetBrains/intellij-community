@@ -1,15 +1,10 @@
 package de.plushnikov.delegate;
 
-import lombok.Delegate;
-
-import java.util.concurrent.Callable;
-
 public class DelegateWithException implements Callable<Integer> {
 
-    @Delegate
+    @lombok.Delegate
     private final Callable<Integer> delegated;
 
-    @java.beans.ConstructorProperties({"delegated"})
     public DelegateWithException(Callable<Integer> delegated) {
         this.delegated = delegated;
     }
@@ -24,4 +19,7 @@ public class DelegateWithException implements Callable<Integer> {
 
         System.out.println(myCallable.call());
     }
+}
+interface Callable<V> {
+    V call() throws Exception;
 }

@@ -1,14 +1,14 @@
-public class DelegateWithException implements java.util.concurrent.Callable<Integer> {
+public class DelegateWithException implements Callable<Integer> {
 
   @lombok.Delegate
-  private final java.util.concurrent.Callable<Integer> delegated;
+  private final Callable<Integer> delegated;
 
-  public DelegateWithException(java.util.concurrent.Callable<Integer> delegated) {
+  public DelegateWithException(Callable<Integer> delegated) {
     this.delegated = delegated;
   }
 
   public static void main(String[] args) throws Exception {
-    DelegateWithException myCallable = new DelegateWithException(new java.util.concurrent.Callable<Integer>() {
+    DelegateWithException myCallable = new DelegateWithException(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return 1;
@@ -17,4 +17,8 @@ public class DelegateWithException implements java.util.concurrent.Callable<Inte
 
     System.out.println(myCallable.call());
   }
+}
+
+interface Callable<V> {
+  V call() throws Exception;
 }

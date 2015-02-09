@@ -199,6 +199,8 @@
 				    <li>Issue #53: Basic Support for Lombok configuration keys</li>
 				    <li>Fixed #57: Incorrect constructors appear in "Structure" when `@Value` and `@Builder`</li>
 				    <li>Fixed #70: Conflict resolution failed on renaming field together with its accessors in IntelliJ 14</li>
+				    <li>Issue #74: Fixed (only IntelliJ 14+) Sneaky Throws Not Correctly Detected for Anonymous Inner Class </li>
+						<li>Issue #75: Added support for @lombok.Builder (lombok version 1.16)</li>
 				</ol>
 			</li>
 		  <li>0.8.9
