@@ -140,11 +140,6 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
     return groupElement;
   }
 
-  @Override
-  public boolean shouldBeSaved(@NotNull final ToolsGroup scheme) {
-    return true;
-  }
-
   private void saveTool(T tool, Element groupElement) {
     Element element = new Element(TOOL);
     if (tool.getName() != null) {

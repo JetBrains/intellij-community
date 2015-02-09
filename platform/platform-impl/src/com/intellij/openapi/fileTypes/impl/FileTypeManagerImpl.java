@@ -204,9 +204,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         return type;
       }
 
+      @NotNull
       @Override
-      public boolean shouldBeSaved(@NotNull final AbstractFileType fileType) {
-        return shouldBeSavedToFile(fileType);
+      public State getState(@NotNull AbstractFileType fileType) {
+        if (!shouldSave(fileType)) {
+          return State.NON_PERSISTENT;
+        }
+        if (!myDefaultTypes.contains(fileType)) {
+          return State.POSSIBLY_CHANGED;
+        }
+        return fileType.isModified() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
       }
 
       @Override
@@ -359,14 +366,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         map.addContent(content);
       }
     }
-  }
-
-  private boolean shouldBeSavedToFile(final FileType fileType) {
-    //noinspection deprecation
-    if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) {
-      return false;
-    }
-    return !myDefaultTypes.contains(fileType) || isDefaultModified(fileType);
   }
 
   @Override
@@ -844,15 +843,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (connection != null) {
       connection.disconnect();
     }
-  }
-
-
-  @SuppressWarnings({"SimplifiableIfStatement"})
-  private static boolean isDefaultModified(FileType fileType) {
-    if (fileType instanceof ExternalizableFileType) {
-      return ((ExternalizableFileType)fileType).isModified();
-    }
-    return true; //TODO?
   }
 
   @Override

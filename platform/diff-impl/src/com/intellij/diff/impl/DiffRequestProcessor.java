@@ -448,7 +448,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private class ShowInExternalToolAction extends DumbAwareAction {
     public ShowInExternalToolAction() {
-      super("Show in external tool", null, AllIcons.General.ExternalToolsSmall);
+      EmptyAction.setupAction(this, "Diff.ShowInExternalTool", null);
     }
 
     @Override

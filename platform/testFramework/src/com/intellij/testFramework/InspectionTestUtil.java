@@ -22,7 +22,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -153,7 +153,7 @@ expected:
 
   public static void runTool(@NotNull InspectionToolWrapper toolWrapper,
                              @NotNull final AnalysisScope scope,
-                             @NotNull final GlobalInspectionContextImpl globalContext) {
+                             @NotNull final GlobalInspectionContextForTests globalContext) {
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
@@ -164,6 +164,6 @@ expected:
     do {
       UIUtil.dispatchAllInvocationEvents();
     }
-    while (!CodeInsightTestFixtureImpl.isInspectionsFinished(globalContext));
+    while (!globalContext.isFinished());
   }
 }

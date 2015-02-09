@@ -16,6 +16,8 @@
 package com.intellij.diff.settings;
 
 import com.intellij.diff.tools.external.ExternalDiffSettings;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
@@ -58,6 +60,17 @@ public class ExternalDiffSettingsPanel {
         updateEnabledEffect();
       }
     });
+    myMergeEnabled.getModel().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateEnabledEffect();
+      }
+    });
+
+    myDiffPath.addBrowseFolderListener(DiffBundle.message("select.external.diff.program.dialog.title"), null, null,
+                                       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myMergePath.addBrowseFolderListener(DiffBundle.message("select.external.merge.program.dialog.title"), null, null,
+                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
   }
 
   @NotNull

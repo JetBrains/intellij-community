@@ -18,6 +18,10 @@ package com.intellij.diff.impl;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
@@ -61,6 +65,13 @@ public abstract class DiffWindowBase {
     myProcessor.init();
     myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     Disposer.register(myWrapper, myProcessor);
+
+    new DumbAwareAction() {
+      public void actionPerformed(final AnActionEvent e) {
+        myWrapper.close();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
+                                myProcessor.getComponent());
   }
 
   public void show() {

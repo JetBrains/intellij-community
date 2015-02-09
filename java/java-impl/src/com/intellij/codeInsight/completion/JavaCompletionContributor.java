@@ -248,6 +248,10 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
 
+    if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
+      new LambdaCompletionProvider().addCompletions(parameters, new ProcessingContext(), result);
+    }
+
     addAllClasses(parameters, result, inheritors);
 
     final PsiElement parent = position.getParent();

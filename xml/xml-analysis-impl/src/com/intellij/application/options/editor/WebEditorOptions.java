@@ -37,7 +37,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
   private boolean myAutoCloseTag = true;
-  private boolean mySyncTagEditing = false;
+  private boolean mySyncTagEditing = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myInsertQuotesForAttributeValue = true;
 
@@ -47,6 +47,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public WebEditorOptions() {
     setTagTreeHighlightingEnabled(!ApplicationManager.getApplication().isUnitTestMode());
+    setSyncTagEditing(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
   public static WebEditorOptions getInstance() {

@@ -157,7 +157,7 @@ public class DiffUtil {
 
     if (enableFolding) {
       editor.getSettings().setFoldingOutlineShown(true);
-      editor.getSettings().setCodeFoldingEnabled(false);
+      editor.getSettings().setAutoCodeFoldingEnabled(false);
     }
     else {
       editor.getSettings().setFoldingOutlineShown(false);
@@ -360,13 +360,7 @@ public class DiffUtil {
   @NotNull
   private static JComponent createTitlePanel(@NotNull String title) {
     if (title.isEmpty()) title = " "; // do not collapse
-    JTextField field = new JTextField(title);
-    field.setEditable(false);
-    field.setBorder(null);
-    field.setFont(UIUtil.getLabelFont());
-    field.setBackground(UIUtil.TRANSPARENT_COLOR);
-    field.setOpaque(false);
-    return field;
+    return new JLabel(title); // TODO: allow to copy text
   }
 
   @NotNull
@@ -597,6 +591,7 @@ public class DiffUtil {
                                        @NotNull Document document2,
                                        int oLine1,
                                        int oLine2) {
+    if (line1 == line2 && oLine1 == oLine2) return;
     if (line1 == line2) {
       insertLines(document1, line1, document2, oLine1, oLine2);
     }

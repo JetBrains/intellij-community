@@ -60,10 +60,11 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumWithoutConstants() { doParserTest("{ private A }", false, true); }
 
   public void testAnnoSimple() { doParserTest("{ int foo (); }", true, false); }
-  public void testAnnoDefault() { doParserTest("{ Class foo () default String.class; }", true, false); }
+  public void testAnnoDefault() { doParserTest("{ Class foo() default String.class; }", true, false); }
   public void testAnnoNested() { doParserTest("{ @interface Inner { String bar () default \"<unspecified>\"; } }", true, false); }
   public void testAnnoInner() { doParserTest("{ @interface Inner { double bar () default 0.0; } }"); }
   public void testAnnoOtherMembers() { doParserTest("{ int field;\n void m() {}\n class C {}\n interface I {} }", true, false); }
+  public void testAnnoLoop() { doParserTest("{ @@@ int i; }"); }
 
   public void testFieldSimple() { doParserTest("{ int field = 0; }"); }
   public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }"); }

@@ -41,6 +41,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+  public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
 
   private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
@@ -175,11 +176,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myUiProperties.setLongEdgesVisibility(visibility);
   }
 
-  public void setBek(PermanentGraph.SortType bekType) {
+  @Override
+  public void setBekType(@NotNull PermanentGraph.SortType bekType) {
     myUiProperties.setBek(bekType.ordinal());
     myFilterer.onSortTypeChange(bekType);
   }
 
+  @Override
+  @NotNull
   public PermanentGraph.SortType getBekType() {
     return PermanentGraph.SortType.values()[myUiProperties.getBekSortType()];
   }
@@ -191,6 +195,11 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public boolean isShowRootNames() {
     return myUiProperties.isShowRootNames();
+  }
+
+  @Override
+  public boolean areGraphActionsEnabled() {
+    return myMainFrame.areGraphActionsEnabled();
   }
 
   @NotNull

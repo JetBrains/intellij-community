@@ -35,9 +35,9 @@ public class SynchronizeDiff extends DirDiffAction {
   private final boolean mySelectedOnly;
 
   public SynchronizeDiff(DirDiffTableModel model, boolean selectedOnly) {
-    super(model,
-          selectedOnly ? "Synchronize Selected" : "Synchronize All",
-          selectedOnly ? AllIcons.Actions.Resume : AllIcons.Actions.Rerun);
+    super(model);
+    getTemplatePresentation().setText(selectedOnly ? "Synchronize Selected" : "Synchronize All");
+    getTemplatePresentation().setIcon(selectedOnly ? AllIcons.Actions.Resume : AllIcons.Actions.Rerun);
     mySelectedOnly = selectedOnly;
   }
 

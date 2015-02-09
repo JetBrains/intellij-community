@@ -30,8 +30,8 @@ import com.intellij.util.QueryExecutor;
  * @author max
  */
 public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.directClassInheritorsSearch");
-  public static DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.directClassInheritorsSearch");
+  public static final DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
   public static class SearchParameters {
     private final PsiClass myClass;

@@ -478,7 +478,7 @@ public class InferenceSession {
       final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
       final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable.getParameter());
       if (substitutedReturnType != null) {
-        addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
+        addConstraint(new TypeCompatibilityConstraint(targetType, PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, (PsiExpression)myContext)));
       }
     } 
     else {
@@ -489,7 +489,7 @@ public class InferenceSession {
           LOG.assertTrue(returnType instanceof PsiClassType);
           final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
           InferenceVariable[] copy = initBounds(null, typeParameters);
-          final PsiType substitutedCapture = PsiUtil.captureToplevelWildcards(returnType, myContext);
+          final PsiType substitutedCapture = PsiImplUtil.normalizeWildcardTypeByPosition(returnType, (PsiExpression)myContext);
           myIncorporationPhase.addCapture(copy, (PsiClassType)substituteWithInferenceVariables(returnType));
           addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
@@ -1134,7 +1134,7 @@ public class InferenceSession {
       // the type to search is the result of capture conversion (5.1.10) applied to T; 
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
-        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(PsiUtil.captureToplevelWildcards(pType, myContext));
+        final PsiClassType.ClassResolveResult pResult = PsiUtil.resolveGenericsClassInType(PsiImplUtil.normalizeWildcardTypeByPosition(pType, (PsiExpression)myContext));
         final PsiClass pClass = pResult.getElement();
         final PsiSubstitutor receiverSubstitutor = pClass != null ? TypeConversionUtil
           .getClassSubstitutor(containingClass, pClass, pResult.getSubstitutor()) : null;

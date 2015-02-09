@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -86,6 +87,9 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
+          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+            return false;
+          }
           return provider.accept(project, file);
         }
       })) {

@@ -28,7 +28,7 @@ public final class NameMapper {
 
   private Map<String, String> rawNameToSource;
 
-  NameMapper(@NotNull Document document, @NotNull Document generatedDocument, @NotNull MappingList sourceMappings, @NotNull SourceMap sourceMap) {
+  public NameMapper(@NotNull Document document, @NotNull Document generatedDocument, @NotNull MappingList sourceMappings, @NotNull SourceMap sourceMap) {
     this.document = document;
     this.generatedDocument = generatedDocument;
     this.sourceMappings = sourceMappings;

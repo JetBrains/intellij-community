@@ -54,8 +54,8 @@ public interface EditorSettings {
   boolean isFoldingOutlineShown();
   void setFoldingOutlineShown(boolean val);
 
-  boolean isCodeFoldingEnabled();
-  void setCodeFoldingEnabled(boolean val);
+  boolean isAutoCodeFoldingEnabled();
+  void setAutoCodeFoldingEnabled(boolean val);
 
   boolean isUseTabCharacter(Project project);
   void setUseTabCharacter(boolean useTabCharacter);

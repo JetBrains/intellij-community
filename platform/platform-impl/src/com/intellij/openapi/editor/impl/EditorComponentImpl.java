@@ -63,6 +63,19 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
         return myEditor.visualPositionToXY(magnificationPosition);
       }
     });
+    putClientProperty("sun.lwawt.macosx.CInputMethod.selectPreviousGlyph.callback", new Runnable() {
+      @Override
+      public void run() {
+        // This is supposed to be called from sun.lwawt.macosx.CInputMethod class of a custom JDK, 
+        // built for IntelliJ platform running on MacOS.
+        // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
+        // Non-patched JDK supports this functionality only for TextComponent/JTextComponent descendants.
+        int caretOffset = myEditor.getCaretModel().getOffset();
+        if (caretOffset > 0) {
+          myEditor.getSelectionModel().setSelection(caretOffset - 1, caretOffset);
+        }
+      }
+    });
     myApplication = (ApplicationImpl)ApplicationManager.getApplication();
   }
 

@@ -38,8 +38,10 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private int myLinkWidth;
 
   public XDebuggerTreeRenderer() {
-    Insets ipad = myLink.getIpad();
-    myLink.setIpad(new JBInsets(ipad.top, 0, ipad.bottom, ipad.right));
+    Insets myLinkIpad = myLink.getIpad();
+    myLink.setIpad(new JBInsets(myLinkIpad.top, 0, myLinkIpad.bottom, myLinkIpad.right));
+    Insets myIpad = getIpad();
+    setIpad(new JBInsets(myLinkIpad.top, myIpad.left, myLinkIpad.bottom, 0));
   }
 
   public void customizeCellRenderer(@NotNull final JTree tree,

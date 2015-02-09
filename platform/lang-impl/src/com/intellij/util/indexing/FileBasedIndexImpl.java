@@ -1982,7 +1982,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 }
 
                 if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
-                  clearPsiIndicesForUnsavedDocuments(file);
+                  clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
                 }
               }
               finally {
@@ -2067,6 +2067,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               IndexingStamp.setFileIndexedStateOutdated(fileId, indexId);
             }
           }
+
+          clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
 
           // the file is for sure not a dir and it was previously indexed by at least one index AND it belongs to some update set
           if (!isTooLarge(file) && getIndexableSetForFile(file) != null) scheduleForUpdate(file);
@@ -2320,12 +2322,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private boolean clearPsiIndicesForUnsavedDocuments(@NotNull VirtualFile file) {
-    Document document = myFileDocumentManager.getDocument(file);
+  private boolean clearUpToDateStateForPsiIndicesOfUnsavedDocuments(@NotNull VirtualFile file) {
+    Document document = myFileDocumentManager.getCachedDocument(file);
+
     if (document != null && myFileDocumentManager.isDocumentUnsaved(document)) {
-      for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
-        myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
+      if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
+        for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+          myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(psiBackedIndex);
+        }
       }
+
+      myLastIndexedDocStamps.clearForDocument(document); // Q: non psi indices
+      document.putUserData(ourFileContentKey, null);
+
       return true;
     }
     return false;
@@ -2472,7 +2481,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             PsiFile file = event.getFile();
             if (file != null) {
               VirtualFile virtualFile = file.getVirtualFile();
-              if (!clearPsiIndicesForUnsavedDocuments(virtualFile)) {
+              if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(virtualFile)) {
                 // change in persistent file
                 if (virtualFile instanceof VirtualFileWithId) {
                   int fileId = ((VirtualFileWithId)virtualFile).getId();

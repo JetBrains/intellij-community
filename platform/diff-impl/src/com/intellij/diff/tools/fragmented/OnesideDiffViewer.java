@@ -76,8 +76,8 @@ import java.util.List;
 public class OnesideDiffViewer extends TextDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(OnesideDiffViewer.class);
 
-  @NotNull private final EditorEx myEditor;
-  @NotNull private final Document myDocument;
+  @NotNull protected final EditorEx myEditor;
+  @NotNull protected final Document myDocument;
   @NotNull private final OnesideDiffPanel myPanel;
 
   @Nullable private final DocumentContent myActualContent1;
@@ -90,7 +90,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
   @NotNull private final OnesideFoldingModel myFoldingModel;
 
-  @NotNull private Side myMasterSide = Side.LEFT;
+  @NotNull protected Side myMasterSide = Side.LEFT;
 
   @Nullable private ChangedBlockData myChangedBlockData;
 
@@ -131,20 +131,20 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @Override
-  public void onDispose() {
+  protected void onDispose() {
     updateContextHints();
     EditorFactory.getInstance().releaseEditor(myEditor);
     super.onDispose();
   }
 
-  private void processContextHints() {
+  protected void processContextHints() {
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
     if (side != null) myMasterSide = side;
 
     myScrollToLineHelper.processContext();
   }
 
-  private void updateContextHints() {
+  protected void updateContextHints() {
     myScrollToLineHelper.updateContext();
     myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
   }
@@ -215,7 +215,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
       }
 
       if (myActualContent2 == null) {
@@ -241,7 +241,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
       }
 
       final DocumentContent content1 = myActualContent1;
@@ -417,10 +417,32 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   /*
+   * This convertor returns -1 if exact matching is impossible
+   */
+  @CalledInAwt
+  protected int transferLineToOnesideStrict(@NotNull Side side, int line) {
+    if (myChangedBlockData == null) return -1;
+
+    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
+    return side.isLeft() ? lineConvertor.convertInv1(line) : lineConvertor.convertInv2(line);
+  }
+
+  /*
+   * This convertor returns -1 if exact matching is impossible
+   */
+  @CalledInAwt
+  protected int transferLineFromOnesideStrict(@NotNull Side side, int line) {
+    if (myChangedBlockData == null) return -1;
+
+    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
+    return side.isLeft() ? lineConvertor.convert1(line) : lineConvertor.convert2(line);
+  }
+
+  /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
-  private int transferLineToOneside(@NotNull Side side, int line) {
+  protected int transferLineToOneside(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return line;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -431,7 +453,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
-  private Pair<int[], Side> transferLineFromOneside(int line) {
+  protected Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
     if (myChangedBlockData == null) {
@@ -517,7 +539,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  List<OnesideDiffChange> getDiffChanges() {
+  protected List<OnesideDiffChange> getDiffChanges() {
     return myChangedBlockData == null ? null : myChangedBlockData.getDiffChanges();
   }
 

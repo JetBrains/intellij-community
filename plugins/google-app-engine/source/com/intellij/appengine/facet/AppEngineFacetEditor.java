@@ -154,6 +154,11 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "Google_App_Engine_Facet";
+  }
+
+  @Override
   public void onFacetInitialized(@NotNull Facet facet) {
     AppEngineWebIntegration.getInstance().setupDevServer(((AppEngineFacet)facet).getSdk());
   }

@@ -48,6 +48,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
@@ -94,6 +95,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private DocumentationManager myManager;
   private SmartPsiElementPointer myElement;
+  private long myModificationCount;
 
   private final Stack<Context> myBackStack = new Stack<Context>();
   private final Stack<Context> myForwardStack = new Stack<Context>();
@@ -485,6 +487,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myElement != null ? myElement.getElement() : null;
   }
 
+  private void setElement(SmartPsiElementPointer element) {
+    myElement = element;
+    myModificationCount = getCurrentModificationCount();
+  }
+
+  public boolean isUpToDate() {
+    return getElement() != null && myModificationCount == getCurrentModificationCount();
+  }
+
+  private long getCurrentModificationCount() {
+    return myElement != null ? PsiModificationTracker.SERVICE.getInstance(myElement.getProject()).getModificationCount() : -1;
+  }
+
   public void setNavigateCallback(Consumer<PsiElement> navigateCallback) {
     myNavigateCallback = navigateCallback;
   }
@@ -531,7 +546,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                                            : null;
 
     if (element != null) {
-      myElement = element;
+      setElement(element);
     }
 
     myIsEmpty = false;
@@ -546,7 +561,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
-    myElement = element;
+    setElement(element);
 
     boolean justShown = false;
     if (!myIsShown && myHint != null) {

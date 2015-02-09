@@ -39,7 +39,7 @@ public class DiffIcons {
     return side.selectN(REPLACE_LEFT, REPLACE_RIGHT);
   }
 
-  @Nullable
+  @NotNull
   public static Icon getAppendIcon(@Nullable Side side) {
     if (side == null) side = Side.LEFT;
     return side.selectN(APPEND_LEFT, APPEND_RIGHT);
