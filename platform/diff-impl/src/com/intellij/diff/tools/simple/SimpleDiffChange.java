@@ -358,6 +358,8 @@ public class SimpleDiffChange {
         return icon;
       }
 
+      public boolean isNavigateAction() { return true; }
+
       @Nullable
       @Override
       public AnAction getClickAction() {
