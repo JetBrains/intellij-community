@@ -199,6 +199,7 @@ private layoutMac(Map _args, String home, Paths paths) {
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args.urlSchemes = ["idea"]
   args.mac_no_yjp = true
+  args.executable = "idea"
   layoutMacApp(target, home, args)
 }
 
