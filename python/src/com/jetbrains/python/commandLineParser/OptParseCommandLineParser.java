@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.optParse;
+package com.jetbrains.python.commandLineParser;
 
+import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 // TODO: Support options and their arguments
 
@@ -36,23 +41,17 @@ import java.util.*;
  *
  * @author Ilya.Kazakevich
  */
-public final class ParsedCommandLine {
+public final class OptParseCommandLineParser implements CommandLineParser {
   @NotNull
-  private final WordWithPosition myCommand;
-  @NotNull
-  private final List<WordWithPosition> myArguments = new ArrayList<WordWithPosition>();
-
-  /**
-   * @param commandLine command line to parse
-   * @throws MalformedCommandLineException if malformed commandline can't be parsed
-   */
-  public ParsedCommandLine(@NotNull final String commandLine) throws MalformedCommandLineException {
-    final Deque<WordWithPosition> parts = new LinkedList<WordWithPosition>(WordWithPosition.splitText(commandLine));
+  @Override
+  public CommandLineParseResult parse(@NotNull final List<WordWithPosition> commandLineParts) throws MalformedCommandLineException {
+    final Deque<WordWithPosition> parts = new ArrayDeque<WordWithPosition>(commandLineParts);
     if (parts.isEmpty()) {
       throw new MalformedCommandLineException("No command provided");
     }
-    myCommand = parts.pop();
-    if (myCommand.getText().startsWith("-")) {
+    final WordWithPosition command = parts.pop();
+    final List<Pair<CommandLinePartType, WordWithPosition>> resultParts = new ArrayList<Pair<CommandLinePartType, WordWithPosition>>();
+    if (command.getText().startsWith("-")) {
       throw new MalformedCommandLineException("Command can't start with option prefix");
     }
 
@@ -60,46 +59,13 @@ public final class ParsedCommandLine {
     for (final WordWithPosition part : parts) {
       if (part.getText().startsWith("-")) {
         // This is option!
+        resultParts.add(Pair.create(CommandLinePartType.OPTION, part));
       }
       else {
         // TODO: Check optopn argument!
-        myArguments.add(part);
+        resultParts.add(Pair.create(CommandLinePartType.ARGUMENT, part));
       }
     }
+    return new CommandLineParseResult(command, resultParts);
   }
-
-
-  /**
-   * @return command (i.e. "startapp" in "startapp my_app")
-   */
-  @NotNull
-  public WordWithPosition getCommand() {
-    return myCommand;
-  }
-
-  /**
-   * @return all arguments (not options or option arguments!)
-   */
-  @NotNull
-  public List<WordWithPosition> getArguments() {
-    return Collections.unmodifiableList(myArguments);
-  }
-
-  /**
-   * @return all parts for command line as simple words
-   */
-  @NotNull
-  public List<String> getAsWords() {
-    final List<String> result = new ArrayList<String>();
-
-    result.add(myCommand.getText());
-
-    for (final WordWithPosition argument : myArguments) {
-      result.add(argument.getText());
-    }
-    // TODO: Add options as well
-    return result;
-  }
-
-  // TODO: Add options, arguments and option arguments
 }

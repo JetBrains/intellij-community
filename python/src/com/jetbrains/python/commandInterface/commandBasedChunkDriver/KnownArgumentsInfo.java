@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandsWithArgs;
+package com.jetbrains.python.commandInterface.commandBasedChunkDriver;
 
 import com.google.common.base.Preconditions;
-import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.python.commandInterface.commandsWithArgs.ArgumentsValuesValidationInfo.ArgumentValueError;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * In some special cases we have insight about command arguments.
@@ -62,6 +60,15 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
   private final int myMaxArguments;
 
   /**
+   * For command with fixed number of arguments. In this case all arguments are fixed and required!
+   *
+   * @param arguments arguments this command have
+   */
+  public KnownArgumentsInfo(@NotNull final Collection<Argument> arguments) {
+    this(arguments, arguments.size(), arguments.size());
+  }
+
+  /**
    * For commands with infinite number of values last argument accepts (my_command VAL1 VAL2 .. VALN)
    *
    * @param arguments    list of known arguments (last one would be used to accept all residual values)
@@ -91,36 +98,20 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
 
   @Nullable
   @Override
-  public Argument getArgument(final int argumentPosition) {
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+    if (argumentPosition >= myMaxArguments) {
+      return null;
+    }
+    final boolean optional = argumentPosition >= myMinArguments;
+
     if (myArguments.size() > argumentPosition) {
-      return myArguments.get(argumentPosition);
+      return Pair.create(!optional, myArguments.get(argumentPosition));
     }
 
     // We may need last one
-    if (argumentPosition <= myMaxArguments) {
-      return myArguments.get(myArguments.size() - 1);
+    if (argumentPosition < myMaxArguments) {
+      return Pair.create(false, myArguments.get(myArguments.size() - 1));
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  public ArgumentsValuesValidationInfo validateArgumentValues(@NotNull final List<String> argumentValuesToCheck) {
-    final Map<Integer, ArgumentValueError> errors = new HashMap<Integer, ArgumentValueError>();
-
-    for (int i = 0; i < argumentValuesToCheck.size(); i++) {
-      final String userValue = argumentValuesToCheck.get(i);
-      final Argument argument = getArgument(i);
-      if (argument == null) {
-        errors.put(i, ArgumentValueError.EXCESS);
-        continue;
-      }
-      final List<String> availableValues = argument.getAvailableValues();
-      if (availableValues != null && !availableValues.contains(userValue)) {
-        errors.put(i, ArgumentValueError.BAD_VALUE);
-      }
-    }
-
-    return new ArgumentsValuesValidationInfo(errors, argumentValuesToCheck.size() < myMinArguments);
   }
 }

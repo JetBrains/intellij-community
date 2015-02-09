@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.optParse;
+package com.jetbrains.python;
 
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +33,7 @@ public final class WordWithPosition extends Range<Integer> {
 
   /**
    * Creates word with beam (it has start, but it is infinite)
+   *
    * @param word word
    * @param from start
    */
@@ -48,6 +49,15 @@ public final class WordWithPosition extends Range<Integer> {
   public WordWithPosition(@NotNull final String word, final int from, final int to) {
     super(from, to);
     myWord = word;
+  }
+
+  /**
+   * Creates instance with certain text and range (start/end)
+   * @param word text
+   * @param range range
+   */
+  public WordWithPosition(@NotNull final String word, @NotNull final Range<Integer> range) {
+    this(word, range.getFrom(), range.getTo());
   }
 
   @NotNull
@@ -121,7 +131,7 @@ public final class WordWithPosition extends Range<Integer> {
    * @return parse result
    */
   @NotNull
-  static List<WordWithPosition> splitText(@NotNull final String text) {
+  public static List<WordWithPosition> splitText(@NotNull final String text) {
     // TODO: Rewrite using regex or scanner?
     int position = 0;
     int wordStart = -1;

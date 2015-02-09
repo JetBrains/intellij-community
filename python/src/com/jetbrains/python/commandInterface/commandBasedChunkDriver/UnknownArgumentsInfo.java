@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandsWithArgs;
+package com.jetbrains.python.commandInterface.commandBasedChunkDriver;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * For many commands we know nothing about arguments but their help text.
@@ -40,15 +39,10 @@ public final class UnknownArgumentsInfo implements ArgumentsInfo {
     myHelp = allArgumentsHelpText;
   }
 
+
   @Nullable
   @Override
-  public Argument getArgument(final int argumentPosition) {
-    return new Argument(myHelp); // We can't say argument does not exist.
-  }
-
-  @NotNull
-  @Override
-  public ArgumentsValuesValidationInfo validateArgumentValues(@NotNull final List<String> argumentValuesToCheck) {
-    return ArgumentsValuesValidationInfo.NO_ERROR; // Actually, we have no idea
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+    return Pair.create(false, new Argument(myHelp));
   }
 }

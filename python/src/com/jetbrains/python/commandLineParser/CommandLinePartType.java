@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandsWithArgs;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.jetbrains.python.commandLineParser;
 
 /**
- * Command with arguments
+ * Types of command line parts.
  *
  * @author Ilya.Kazakevich
  */
-public interface Command {
-
-
+public enum CommandLinePartType {
   /**
-   * @return command name
+   * Argument (or positional, or unnamed argument) something that has only value. Like "my_folder" in "rm my_folder"
    */
-  @NotNull
-  String getName();
-
+  ARGUMENT,
   /**
-   * @return Command readable help text
+   * Option is named but optional parameter. Like "-l" in "ls -l".
    */
-  @Nullable
-  String getHelp();
-
-
+  OPTION,
   /**
-   * @return Information about command positional, unnamed {@link com.jetbrains.python.commandInterface.commandsWithArgs.Argument arguments} (not options!)
+   * Some part of command line that {@link com.jetbrains.python.commandLineParser.CommandLineParser} does not understand
    */
-  @NotNull
-  ArgumentsInfo getArgumentsInfo();
+  UNKNOWN
 }

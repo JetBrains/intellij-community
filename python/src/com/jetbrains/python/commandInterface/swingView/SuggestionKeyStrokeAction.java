@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.optParse;
+package com.jetbrains.python.commandInterface.swingView;
 
-import org.jetbrains.annotations.NotNull;
+import java.awt.event.ActionEvent;
 
 /**
- * This exception is thrown when command line can't be parsed
+ * "Suggestion request" action
  *
  * @author Ilya.Kazakevich
  */
-public class MalformedCommandLineException extends Exception {
-  MalformedCommandLineException(@NotNull final String message) {
-    super(message);
+final class SuggestionKeyStrokeAction extends KeyStrokeAction {
+  SuggestionKeyStrokeAction() {
+    super(KeyStrokeInfo.SUGGESTION);
+  }
+
+  @Override
+  public void actionPerformed(final ActionEvent e) {
+    myPresenter.suggestionRequested();
   }
 }

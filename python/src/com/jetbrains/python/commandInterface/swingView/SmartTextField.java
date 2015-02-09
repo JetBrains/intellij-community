@@ -17,13 +17,9 @@ package com.jetbrains.python.commandInterface.swingView;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Range;
 import com.intellij.util.ui.StatusText;
-import com.jetbrains.python.commandInterface.CommandInterfaceView;
-import com.jetbrains.python.commandInterface.CommandInterfaceView.SpecialErrorPlace;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,11 +43,6 @@ public class SmartTextField extends JTextField {
   @NotNull
   private final Collection<UnderlineInfo> myUnderlineInfo = new ArrayList<UnderlineInfo>();
   private int myPreferredWidth;
-  /**
-   * (color, special_place) tuple to underline special place, or null if no underline required
-   */
-  @Nullable
-  private Pair<Color, SpecialErrorPlace> mySpecialUnderlinePlace;
 
   public SmartTextField() {
     setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.CONSOLE_PLAIN));
@@ -66,14 +57,8 @@ public class SmartTextField extends JTextField {
     synchronized (myUnderlineInfo) {
       for (final UnderlineInfo underlineInfo : myUnderlineInfo) {
         g.setColor(underlineInfo.myColor);
+        // To prevent too long underlines: last char should really be last
         underline(g, underlineInfo.getFrom(), underlineInfo.getTo());
-      }
-      if (mySpecialUnderlinePlace != null) {
-        final SpecialErrorPlace place = mySpecialUnderlinePlace.second;
-        g.setColor(mySpecialUnderlinePlace.first);
-        final int endPosition = getTextEndPosition();
-        final int from = (place == SpecialErrorPlace.WHOLE_TEXT ? 0 : endPosition - getColumnWidth());
-        underline(g, from, endPosition);
       }
     }
   }
@@ -90,17 +75,11 @@ public class SmartTextField extends JTextField {
     g.drawLine(from + getColumnWidth(), verticalPosition, to + getColumnWidth(), verticalPosition);
   }
 
-  /**
-   * @return place (in px) where entered text ends.
-   */
-  int getTextEndPosition() {
-    return (getText().length() + 1) * getColumnWidth();
-  }
 
   /**
    * @return place (in px) where caret.
    */
-  int getTextCursorPosition() {
+  int getTextCaretPositionInPx() {
     return (getCaretPosition() + 1) * getColumnWidth();
   }
 
@@ -139,17 +118,7 @@ public class SmartTextField extends JTextField {
   void hideUnderline() {
     synchronized (myUnderlineInfo) {
       myUnderlineInfo.clear();
-      mySpecialUnderlinePlace = null;
     }
-  }
-
-  /**
-   * Sets appropriate width in chars
-   *
-   * @param widthInChars num of chars
-   */
-  void setPreferredWidthInChars(final int widthInChars) {
-    setColumns(widthInChars);
   }
 
   /**
@@ -161,18 +130,6 @@ public class SmartTextField extends JTextField {
     myPreferredWidth = width;
   }
 
-  /**
-   * Display underline in special place
-   *
-   * @param color                 color to underline
-   * @param specialUnderlinePlace special place to underline
-   */
-  void underlineText(@NotNull final SpecialErrorPlace specialUnderlinePlace,
-                     @NotNull final Color color) {
-    synchronized (myUnderlineInfo) {
-      mySpecialUnderlinePlace = Pair.create(color, specialUnderlinePlace);
-    }
-  }
 
   /**
    * Wrapper to display placeholder
