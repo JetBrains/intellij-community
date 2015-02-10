@@ -36,18 +36,22 @@ import org.picocontainer.PicoContainer;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
   public static final String PROPERTIES_FILE = "idea.properties.file";
-  public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
-  public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
-  public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_HOME_PATH = "idea.home.path";
+  public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
+  public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
+  public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
   public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+
+  private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
 
   private static final String LIB_FOLDER = "lib";
   private static final String PLUGINS_FOLDER = "plugins";
@@ -58,9 +62,11 @@ public class PathManager {
   private static final String SYSTEM_FOLDER = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
+  private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
+
   private static String ourHomePath;
-  private static String ourSystemPath;
   private static String ourConfigPath;
+  private static String ourSystemPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
 
@@ -70,7 +76,7 @@ public class PathManager {
   public static String getHomePath() {
     if (ourHomePath != null) return ourHomePath;
 
-    String fromProperty = System.getProperty(PROPERTY_HOME_PATH);
+    String fromProperty = System.getProperty(PROPERTY_HOME_PATH, System.getProperty(PROPERTY_HOME));
     if (fromProperty != null) {
       ourHomePath = getAbsolutePath(fromProperty);
       if (!new File(ourHomePath).isDirectory()) {
@@ -335,11 +341,6 @@ public class PathManager {
             try {
               Map<String, String> properties = FileUtil.loadProperties(fis);
 
-              String home = properties.get("idea.home");
-              if (home != null && ourHomePath == null) {
-                ourHomePath = getAbsolutePath(substituteVars(home));
-              }
-
               Properties sysProperties = System.getProperties();
               for (String key : properties.keySet()) {
                 if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
@@ -374,13 +375,30 @@ public class PathManager {
       s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
     }
 
-    s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
+    Matcher m = PROPERTY_REF.matcher(s);
+    while (m.find()) {
+      String key = m.group(1);
+      String value = System.getProperty(key);
 
-    Properties props = System.getProperties();
-    for (final Object key1 : props.keySet()) {
-      String key = (String)key1;
-      String value = props.getProperty(key);
-      s = StringUtil.replace(s, "${" + key + "}", value);
+      if (value == null) {
+        if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+          value = ideaHomePath;
+        }
+        else if (PROPERTY_CONFIG_PATH.equals(key)) {
+          value = getConfigPath();
+        }
+        else if (PROPERTY_SYSTEM_PATH.equals(key)) {
+          value = getSystemPath();
+        }
+      }
+
+      if (value == null) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println("Unknown property: " + key);
+        value = "";
+      }
+
+      s = m.replaceAll(value);
     }
 
     return s;
