@@ -46,10 +46,17 @@ public class PathManagerTest {
 
     assertEquals("/" + TEST_VALUE + "/" + TEST_VALUE + "/", PathManager.substituteVars("/${" + TEST_RPOP + "}/${" + TEST_RPOP + "}/"));
 
-    assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home.path}/build.txt"));
-    assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home}/build.txt"));
-
-    assertEquals("/opt/idea/build.txt", PathManager.substituteVars("${idea.home.path}/build.txt", "/opt/idea"));
+    String home = System.clearProperty(PathManager.PROPERTY_HOME_PATH);
+    try {
+      assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home.path}/build.txt"));
+      assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home}/build.txt"));
+      assertEquals("/opt/idea/build.txt", PathManager.substituteVars("${idea.home.path}/build.txt", "/opt/idea"));
+    }
+    finally {
+      if (home != null) {
+        System.setProperty(PathManager.PROPERTY_HOME_PATH, home);
+      }
+    }
 
     String config = System.clearProperty(PathManager.PROPERTY_CONFIG_PATH);
     try {
