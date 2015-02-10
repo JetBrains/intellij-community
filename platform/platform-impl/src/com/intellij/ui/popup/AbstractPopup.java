@@ -703,6 +703,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     assert ApplicationManager.getApplication().isDispatchThread();
+    assert myState == State.INIT : "Popup was already shown. Recreate a new instance to show again.";
 
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
