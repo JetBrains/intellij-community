@@ -273,6 +273,15 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   }
 
   @Override
+  public Insets getInsets() {
+    Insets insets = super.getInsets();
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && isEditable) {
+      insets.right += 2;
+    }
+    return insets;
+  }
+
+  @Override
   public boolean hasFocus() {
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && myPaintingNow && isEditable) {
       return false;
