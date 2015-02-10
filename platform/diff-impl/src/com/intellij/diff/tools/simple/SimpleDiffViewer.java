@@ -608,7 +608,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return;
       }
 
-      Editor modifiedEditor = side.other(myModifyOpposite).selectN(myEditor1, myEditor2);
+      Editor modifiedEditor = side.other(myModifyOpposite).selectNotNull(myEditor1, myEditor2);
       if (!DiffUtil.isEditable(modifiedEditor)) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -626,7 +626,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final Side side = Side.fromLeft(editor == myEditor1);
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
 
-      Editor modifiedEditor = side.other(myModifyOpposite).selectN(myEditor1, myEditor2);
+      Editor modifiedEditor = side.other(myModifyOpposite).selectNotNull(myEditor1, myEditor2);
       String title = e.getPresentation().getText() + " selected changes";
       DiffUtil.executeWriteCommand(modifiedEditor.getDocument(), e.getProject(), title, new Runnable() {
         @Override

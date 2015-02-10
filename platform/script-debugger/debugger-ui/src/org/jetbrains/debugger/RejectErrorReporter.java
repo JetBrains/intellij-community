@@ -5,6 +5,7 @@ import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.debugger.values.ValueManager;
 import org.jetbrains.rpc.CommandProcessor;
 
 public final class RejectErrorReporter implements Consumer<Throwable> {
@@ -25,6 +26,8 @@ public final class RejectErrorReporter implements Consumer<Throwable> {
     if (!(error instanceof Promise.MessageError)) {
       CommandProcessor.LOG.error(error);
     }
-    session.reportError((description == null ? "" : description + ": ") + error.getMessage());
+    if (error != ValueManager.OBSOLETE_CONTEXT_ERROR) {
+      session.reportError((description == null ? "" : description + ": ") + error.getMessage());
+    }
   }
 }

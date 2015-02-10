@@ -228,9 +228,9 @@ public class SimpleDiffChange {
     final Document document1 = myEditor1.getDocument();
     final Document document2 = myEditor2.getDocument();
 
-    DiffUtil.applyModification(sourceSide.other().selectN(document1, document2),
+    DiffUtil.applyModification(sourceSide.other().selectNotNull(document1, document2),
                                getStartLine(sourceSide.other()), getEndLine(sourceSide.other()),
-                               sourceSide.selectN(document1, document2),
+                               sourceSide.selectNotNull(document1, document2),
                                getStartLine(sourceSide), getEndLine(sourceSide));
 
     destroyHighlighter();
@@ -246,9 +246,9 @@ public class SimpleDiffChange {
     final Document document1 = myEditor1.getDocument();
     final Document document2 = myEditor2.getDocument();
 
-    DiffUtil.applyModification(sourceSide.other().selectN(document1, document2),
+    DiffUtil.applyModification(sourceSide.other().selectNotNull(document1, document2),
                                getEndLine(sourceSide.other()), getEndLine(sourceSide.other()),
-                               sourceSide.selectN(document1, document2),
+                               sourceSide.selectNotNull(document1, document2),
                                getStartLine(sourceSide), getEndLine(sourceSide));
 
     destroyHighlighter();
@@ -262,7 +262,7 @@ public class SimpleDiffChange {
   private MyGutterOperation createOperation(@NotNull Side side) {
     assert myEditor1 != null && myEditor2 != null;
     int offset = side.getStartOffset(myFragment);
-    EditorEx editor = side.selectN(myEditor1, myEditor2);
+    EditorEx editor = side.selectNotNull(myEditor1, myEditor2);
     RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
                                                                                HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                                null,
@@ -303,8 +303,8 @@ public class SimpleDiffChange {
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
       myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
-      boolean isEditable = DiffUtil.isEditable(mySide.selectN(myEditor1, myEditor2));
-      boolean isOtherEditable = DiffUtil.isEditable(mySide.other().selectN(myEditor1, myEditor2));
+      boolean isEditable = DiffUtil.isEditable(mySide.selectNotNull(myEditor1, myEditor2));
+      boolean isOtherEditable = DiffUtil.isEditable(mySide.other().selectNotNull(myEditor1, myEditor2));
 
       if (myCtrlPressed && myShiftPressed) return null;
       if ((myShiftPressed || !isOtherEditable) && isEditable) {
@@ -350,7 +350,7 @@ public class SimpleDiffChange {
   @Nullable
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide, @NotNull final Icon icon, @NotNull final Runnable perform) {
     assert myEditor1 != null && myEditor2 != null;
-    if (!DiffUtil.isEditable(sourceSide.other().selectN(myEditor1, myEditor2))) return null;
+    if (!DiffUtil.isEditable(sourceSide.other().selectNotNull(myEditor1, myEditor2))) return null;
     return new GutterIconRenderer() {
       @NotNull
       @Override
@@ -372,7 +372,7 @@ public class SimpleDiffChange {
 
             if (!myIsValid) return;
 
-            DiffUtil.executeWriteCommand(sourceSide.other().selectN(document1, document2), project, "Replace change", new Runnable() {
+            DiffUtil.executeWriteCommand(sourceSide.other().selectNotNull(document1, document2), project, "Replace change", new Runnable() {
               @Override
               public void run() {
                 perform.run();

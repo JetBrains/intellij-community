@@ -49,9 +49,10 @@ public final class SourceMapDecoder {
 
   public interface SourceResolverFactory {
     @NotNull
-    SourceResolver create(@NotNull List<String> sourcesUrl, @Nullable List<String> sourcesContent);
+    SourceResolver create(@NotNull List<String> sourceUrls, @Nullable List<String> sourceContents);
   }
 
+  @Nullable
   public static SourceMap decode(@NotNull String contents, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
     if (contents.isEmpty()) {
       throw new IOException("source map contents cannot be empty");

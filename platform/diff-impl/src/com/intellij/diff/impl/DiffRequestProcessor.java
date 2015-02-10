@@ -583,6 +583,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyNextDifferenceAction extends NextDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
@@ -606,6 +611,8 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
+      if (!isNavigationEnabled() || !hasNextChange()) return;
+
       if (myIterationState != IterationState.NEXT) {
         // TODO: provide "change" word in chain UserData - for tests/etc
         if (iterable != null) iterable.notify("Press again to go to the next file");
@@ -620,6 +627,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
@@ -642,6 +654,8 @@ public abstract class DiffRequestProcessor implements Disposable {
         myIterationState = IterationState.NONE;
         return;
       }
+
+      if (!isNavigationEnabled() || !hasNextChange()) return;
 
       if (myIterationState != IterationState.PREV) {
         if (iterable != null) iterable.notify("Press again to go to the previous file");

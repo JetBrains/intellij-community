@@ -200,6 +200,8 @@ public class MavenResourceCompilerConfigurationGenerator {
   }
 
   private static void generateManifest(@NotNull MavenProject mavenProject, @NotNull Module module) {
+    if(mavenProject.isAggregator()) return;
+
     try {
       String jdkVersion = null;
       Sdk sdk = ModuleRootManager.getInstance(module).getSdk();

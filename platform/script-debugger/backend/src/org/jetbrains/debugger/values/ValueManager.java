@@ -16,6 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
 public abstract class ValueManager<VM extends Vm> {
+  public static final RuntimeException OBSOLETE_CONTEXT_ERROR = Promise.createError("Obsolete context");
+  public static final Promise<?> OBSOLETE_CONTEXT_PROMISE = Promise.reject(OBSOLETE_CONTEXT_ERROR);
+
   private final AtomicInteger cacheStamp = new AtomicInteger();
   private volatile boolean obsolete;
 
@@ -61,7 +64,8 @@ public abstract class ValueManager<VM extends Vm> {
 
   @NotNull
   public static <T> Promise<T> reject() {
-    return Promise.reject("Obsolete context");
+    //noinspection unchecked
+    return (Promise<T>)OBSOLETE_CONTEXT_PROMISE;
   }
 
   @NotNull

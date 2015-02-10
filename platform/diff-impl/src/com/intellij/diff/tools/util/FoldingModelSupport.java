@@ -264,7 +264,7 @@ public class FoldingModelSupport {
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {
-      MyPaintable paintable = side.selectN(myPaintable1, myPaintable2);
+      MyPaintable paintable = side.selectNotNull(myPaintable1, myPaintable2);
       paintable.paintOnDivider(gg, divider);
     }
 

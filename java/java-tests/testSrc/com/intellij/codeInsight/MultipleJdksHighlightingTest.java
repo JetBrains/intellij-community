@@ -34,6 +34,7 @@ import java.util.Calendar;
 public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   private CodeInsightTestFixture myFixture;
+  private Module myJava6Module;
   private Module myJava7Module;
   private Module myJava8Module;
 
@@ -47,6 +48,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     super.tearDown();
     myFixture.tearDown();
     myFixture = null;
+    myJava6Module = null;
     myJava7Module = null;
     myJava8Module = null;
   }
@@ -57,12 +59,24 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/multipleJdks");
-    final JavaModuleFixtureBuilder[] builders = new JavaModuleFixtureBuilder[2];
+    final JavaModuleFixtureBuilder[] builders = new JavaModuleFixtureBuilder[3];
     builders[0] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builders[1] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    builders[2] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     myFixture.setUp();
-    myJava7Module = builders[0].getFixture().getModule();
-    myJava8Module = builders[1].getFixture().getModule();
+    myJava6Module = builders[0].getFixture().getModule();
+    myJava7Module = builders[1].getFixture().getModule();
+    myJava8Module = builders[2].getFixture().getModule();
+    ModuleRootModificationUtil.updateModel(myJava6Module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        model.addModuleOrderEntry(myJava7Module);
+        model.setSdk(IdeaTestUtil.getMockJdk17());
+        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java6";
+        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
+      }
+    });
+
     ModuleRootModificationUtil.updateModel(myJava7Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
@@ -130,14 +144,23 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTestWithoutLibrary();
   }
 
-  @Bombed(day = 20, month = Calendar.FEBRUARY)
   public void testNoOverriding() throws Exception {
     doTestWithoutLibrary();
+  }
+
+  public void testStaticCallOnChildWithNotAccessibleParent() throws Exception {
+    doTest3Modules();
   }
 
   private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  private void doTest3Modules() {
+    final String name = getTestName(false);
+    myFixture.configureByFiles("java6/p/" + name + ".java", "java7/p/" + name + ".java", "java8/p/" + name + ".java");
     myFixture.checkHighlighting();
   }
 
