@@ -38,7 +38,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   private static final Comparator<EditorSchemeAttributeDescriptor> ATTR_COMPARATOR = new Comparator<EditorSchemeAttributeDescriptor>() {
     @Override
     public int compare(EditorSchemeAttributeDescriptor o1, EditorSchemeAttributeDescriptor o2) {
-      return StringUtil.naturalCompare(o1.getType(), o2.getType());
+      return StringUtil.naturalCompare(o1.toString(), o2.toString());
     }
   };
   private final JBList myOptionsList;
