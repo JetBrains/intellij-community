@@ -719,6 +719,10 @@ public class PsiClassImplUtil {
 
     String qualifiedName = superClass.getQualifiedName();
     if (qualifiedName != null && !PsiSearchScopeUtil.isInScope(resolveScope, superClass)) {
+      final PsiFile file = superClass.getContainingFile();
+      if (file == null || !file.getViewProvider().isPhysical()) {
+        return originalType;
+      }
       PsiClass originalSuperClass = superClass;
       PsiSubstitutor originalSubstitutor = originalResolveResult.getSubstitutor();
       superClass = JavaPsiFacade.getInstance(superClass.getProject()).findClass(qualifiedName, resolveScope);
