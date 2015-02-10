@@ -85,7 +85,7 @@ target('default': 'The default target') {
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
             home, null, paths, true)
-  String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
+  String macZip = "$paths.artifacts/ideaIC-$snapshot.mac.zip"
   notifyArtifactBuilt(macZip)
 }
 
@@ -101,7 +101,7 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
              home, null, paths)
-  String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
+  String macZip = "$paths.artifacts/ideaIC-$snapshot.mac.zip"
   notifyArtifactBuilt(macZip)
 }
 
