@@ -17,7 +17,10 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -289,11 +292,15 @@ public class SimpleDiffChange {
     }
 
     public void update() {
-      if (myCtrlPressed == myViewer.getModifierProvider().isCtrlPressed() &&
-          myShiftPressed == myViewer.getModifierProvider().isShiftPressed()) {
+      if (!areModifiersChanged()) {
         return;
       }
       myHighlighter.setGutterIconRenderer(createRenderer());
+    }
+
+    private boolean areModifiersChanged() {
+      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed() ||
+             myShiftPressed != myViewer.getModifierProvider().isShiftPressed();
     }
 
     @Nullable
@@ -358,7 +365,9 @@ public class SimpleDiffChange {
         return icon;
       }
 
-      public boolean isNavigateAction() { return true; }
+      public boolean isNavigateAction() {
+        return true;
+      }
 
       @Nullable
       @Override
