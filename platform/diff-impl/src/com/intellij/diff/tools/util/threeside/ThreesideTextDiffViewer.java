@@ -254,7 +254,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   public EditorEx getCurrentEditor() {
-    return myCurrentSide.selectN(myEditors);
+    return myCurrentSide.selectNotNull(myEditors);
   }
 
   @NotNull
@@ -274,7 +274,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
-    Editor editor = side.selectN(myEditors);
+    Editor editor = side.selectNotNull(myEditors);
     DiffUtil.scrollEditor(editor, line);
     myCurrentSide = side;
   }
@@ -301,7 +301,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor() {
     EditorEx editor = getCurrentEditor();
 
-    DocumentContent content = getCurrentSide().selectN(myActualContents);
+    DocumentContent content = getCurrentSide().selectNotNull(myActualContents);
 
     int offset = editor.getCaretModel().getOffset();
     return content.getOpenFileDescriptor(offset);
@@ -363,8 +363,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       DiffContent[] contents = myRequest.getContents();
       String[] titles = myRequest.getContentTitles();
 
-      DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(), mySide1.selectN(contents), mySide2.selectN(contents),
-                                                  mySide1.selectN(titles), mySide1.selectN(titles));
+      DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(), mySide1.selectNotNull(contents), mySide2.selectNotNull(contents),
+                                                  mySide1.selectNotNull(titles), mySide1.selectNotNull(titles));
       DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
     }
   }

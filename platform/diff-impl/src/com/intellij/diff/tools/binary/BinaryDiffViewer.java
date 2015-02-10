@@ -388,7 +388,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     FileEditor editor = getCurrentEditor();
     if (editor == null) return null;
 
-    DiffContent content = getCurrentSide().selectN(request.getContents());
+    DiffContent content = getCurrentSide().selectNotNull(request.getContents());
 
     return content.getOpenFileDescriptor();
   }

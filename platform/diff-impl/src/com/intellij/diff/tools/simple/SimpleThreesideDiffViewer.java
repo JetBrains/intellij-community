@@ -391,7 +391,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull
   @Override
   protected SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side) {
-    return side.selectN(mySyncScrollable1, mySyncScrollable2);
+    return side.selectNotNull(mySyncScrollable1, mySyncScrollable2);
   }
 
   @NotNull
@@ -548,15 +548,15 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     protected void processHelper(@NotNull ScrollHelper helper) {
-      ThreeSide left = mySide.selectN(ThreeSide.LEFT, ThreeSide.BASE);
-      ThreeSide right = mySide.selectN(ThreeSide.BASE, ThreeSide.RIGHT);
+      ThreeSide left = mySide.selectNotNull(ThreeSide.LEFT, ThreeSide.BASE);
+      ThreeSide right = mySide.selectNotNull(ThreeSide.BASE, ThreeSide.RIGHT);
 
       if (!helper.process(0, 0)) return;
       for (SimpleThreesideDiffChange diffChange : myDiffChanges) {
         if (!helper.process(diffChange.getStartLine(left), diffChange.getStartLine(right))) return;
         if (!helper.process(diffChange.getEndLine(left), diffChange.getEndLine(right))) return;
       }
-      helper.process(left.selectN(myEditors).getDocument().getLineCount(), right.selectN(myEditors).getDocument().getLineCount());
+      helper.process(left.selectNotNull(myEditors).getDocument().getLineCount(), right.selectNotNull(myEditors).getDocument().getLineCount());
     }
   }
 
@@ -569,8 +569,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     public void process(@NotNull Handler handler) {
-      ThreeSide left = mySide.selectN(ThreeSide.LEFT, ThreeSide.BASE);
-      ThreeSide right = mySide.selectN(ThreeSide.BASE, ThreeSide.RIGHT);
+      ThreeSide left = mySide.selectNotNull(ThreeSide.LEFT, ThreeSide.BASE);
+      ThreeSide right = mySide.selectNotNull(ThreeSide.BASE, ThreeSide.RIGHT);
 
       for (SimpleThreesideDiffChange diffChange : myDiffChanges) {
         if (!diffChange.getType().isChange(mySide)) continue;
@@ -596,8 +596,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     public void paint(@NotNull Graphics g, @NotNull Component divider) {
       Graphics2D gg = getDividerGraphics(g, divider);
 
-      Editor editor1 = mySide.selectN(myEditors.get(0), myEditors.get(1));
-      Editor editor2 = mySide.selectN(myEditors.get(1), myEditors.get(2));
+      Editor editor1 = mySide.selectNotNull(myEditors.get(0), myEditors.get(1));
+      Editor editor2 = mySide.selectNotNull(myEditors.get(1), myEditors.get(2));
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
