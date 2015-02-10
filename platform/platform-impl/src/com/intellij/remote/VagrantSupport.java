@@ -43,9 +43,6 @@ public abstract class VagrantSupport {
   @Nullable
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
 
-  @NotNull
-  public abstract RemoteCredentials getVagrantSettings(@NotNull Project project, String vagrantFolder);
-
   @Deprecated
   /**
    * @deprecated use computeVagrantSettings
@@ -77,14 +74,12 @@ public abstract class VagrantSupport {
 
   public abstract boolean isVagrantInstance(VirtualFile dir);
 
-  public boolean isMultipleMachinesException(Throwable t) {
-    // false positives are ok as we double-check parsing Vagrantfile
-    return t.getMessage().contains("multi-VM"); // TODO: make sure it has no false negative
-  }
-
   public abstract List<String> getMachineNames(@NotNull String instanceFolder);
 
   public boolean isNotReadyForSsh(Throwable t) {
     return t.getMessage().contains("not yet ready for SSH");
   }
+
+
+  public static class MultipleMachinesException extends Exception {}
 }
