@@ -1349,8 +1349,9 @@ public class AbstractPopup implements JBPopup {
         @Override
         public void run() {
           //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(myFinalRunnable);
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
-          myFinalRunnable.run();
           myFinalRunnable = null;
         }
       };
