@@ -239,7 +239,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           info.cleanup();
 
           for (Iterator<PointerReference> iterator = pointers.iterator(); iterator.hasNext(); ) {
-            if (pointer.equals(iterator.next().get())) {
+            if (pointer == iterator.next().get()) {
               iterator.remove();
               return true;
             }
