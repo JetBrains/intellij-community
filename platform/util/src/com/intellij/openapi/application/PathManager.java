@@ -167,11 +167,6 @@ public class PathManager {
     return platformPath(selector, "Library/Preferences", CONFIG_FOLDER);
   }
 
-  @NotNull
-  public static String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
-  }
-
   public static void ensureConfigFolderExists() {
     checkAndCreate(getConfigPath(), true);
   }
@@ -206,6 +201,11 @@ public class PathManager {
     }
 
     return ourPluginsPath;
+  }
+
+  @NotNull
+  public static String getDefaultPluginPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
   }
 
   // runtime paths
@@ -316,19 +316,10 @@ public class PathManager {
     return resultPath;
   }
 
-  public static String getUserPropertiesPath() {
-    if (PATHS_SELECTOR != null) {
-      return platformPath(PATHS_SELECTOR, "Library/Preferences", ".");
-    }
-    else {
-      return getUserHome();
-    }
-  }
-
   public static void loadProperties() {
     String[] propFiles = {
       System.getProperty(PROPERTIES_FILE),
-      getUserPropertiesPath() + "/idea.properties",
+      getUserPropertiesPath(),
       getHomePath() + "/bin/idea.properties",
       getHomePath() + "/community/bin/idea.properties"};
 
@@ -343,7 +334,7 @@ public class PathManager {
 
               Properties sysProperties = System.getProperties();
               for (String key : properties.keySet()) {
-                if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
+                if (sysProperties.getProperty(key, null) == null) {  // do not override already defined properties
                   String value = substituteVars(properties.get(key));
                   sysProperties.setProperty(key, value);
                 }
@@ -359,6 +350,16 @@ public class PathManager {
           }
         }
       }
+    }
+  }
+
+  private static String getUserPropertiesPath() {
+    if (PATHS_SELECTOR != null) {
+      // do not use getConfigPath() here - as it may be not yet defined
+      return platformPath(PATHS_SELECTOR, "Library/Preferences", /*"APPDATA", "XDG_CONFIG_HOME", ".config",*/ "") + "/idea.properties";
+    }
+    else {
+      return getUserHome() + "/.idea.properties";
     }
   }
 
@@ -465,13 +466,36 @@ public class PathManager {
   }
 
   // todo[r.sh] XDG directories, Windows folders
-  private static String platformPath(String selector, String macDir, String fallback) {
-    if (SystemInfo.isMac) {
-      return getUserHome() + File.separator + macDir + File.separator + selector;
+  // http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  // http://www.microsoft.com/security/portal/mmpc/shared/variables.aspx
+  private static String platformPath(@NotNull String selector, @Nullable String macPart, @NotNull String fallback) {
+    return platformPath(selector, macPart, null, null, null, fallback);
+  }
+
+  private static String platformPath(@NotNull String selector,
+                                     @Nullable String macPart,
+                                     @Nullable String winVar,
+                                     @Nullable String xdgVar,
+                                     @Nullable String xdgDir,
+                                     @NotNull String fallback) {
+    if (macPart != null && SystemInfo.isMac) {
+      return getUserHome() + File.separator + macPart + File.separator + selector;
     }
-    else {
-      return getUserHome() + File.separator + "." + selector + File.separator + fallback;
+
+    if (winVar != null && SystemInfo.isWindows) {
+      String dir = System.getenv(winVar);
+      if (dir != null) {
+        return dir + File.separator + selector;
+      }
     }
+
+    if (xdgVar != null && xdgDir != null && SystemInfo.hasXdgOpen()) {
+      String dir = System.getenv(xdgVar);
+      if (dir == null) dir = getUserHome() + File.separator + xdgDir;
+      return dir + File.separator + selector;
+    }
+
+    return getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
   private static boolean checkAndCreate(String path, boolean createIfNotExists) {
