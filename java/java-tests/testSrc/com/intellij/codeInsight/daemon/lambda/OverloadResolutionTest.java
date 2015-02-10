@@ -79,6 +79,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPreferDefaultMethodsOverStatic() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
