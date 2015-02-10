@@ -17,6 +17,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
@@ -287,14 +289,24 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       myState = State.APPLYING;
 
       final Document document = myEditor.getDocument();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
+      final Runnable apply = new Runnable() {
         public void run() {
           for (Couple<RangeMarker> couple : myMarkers) {
             final RangeMarker leader = couple.first;
             final RangeMarker support = couple.second;
             final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
+          }
+        }
+      };
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          if (lookup != null) {
+            lookup.performGuardedChange(apply);
+          } else {
+            apply.run();
           }
         }
       });

@@ -82,6 +82,12 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
                      "<html><body></body><bertran></bertran><bertran></bertran><html>");
   }
 
+  public void testCompletionWithLookupAfterTyping() {
+    doTestCompletion("<html><body></body><bertran></bertran><b<caret>></b><html>", "e",
+                     "<html><body></body><bertran></bertran><be></be><html>");
+    assertNotNull(myFixture.getLookup());
+  }
+
   public void testUndo() {
     doTest("<div<caret>></div>", "v", "<divv></divv>");
     myFixture.performEditorAction(IdeActions.ACTION_UNDO);
