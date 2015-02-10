@@ -145,7 +145,7 @@ public class OnesideFragmentBuilder {
   }
 
   private void appendText(@NotNull Side side, int offset1, int offset2, int lines, int startLine1, int startLine2) {
-    Document document = side.selectN(myDocument1, myDocument2);
+    Document document = side.selectNotNull(myDocument1, myDocument2);
 
     int newline = document.getTextLength() > offset2 + 1 ? 1 : 0;
     TextRange base = new TextRange(myBuilder.length(), myBuilder.length() + offset2 - offset1 + newline);

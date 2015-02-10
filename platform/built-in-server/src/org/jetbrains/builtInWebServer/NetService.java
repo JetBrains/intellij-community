@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.io.NettyUtil;
 
 import javax.swing.*;
@@ -84,8 +85,10 @@ public abstract class NetService implements Disposable {
             @Override
             public void run() {
               if (!result.isRejected()) {
+                AsyncPromise<OSProcessHandler> promise = new AsyncPromise<OSProcessHandler>();
                 try {
-                  connectToProcess(result, port, processHandler, processListener);
+                  connectToProcess(promise, port, processHandler, processListener);
+                  promise.notify(result);
                 }
                 catch (Throwable e) {
                   result.setRejected();
@@ -121,11 +124,11 @@ public abstract class NetService implements Disposable {
   @Nullable
   protected abstract OSProcessHandler createProcessHandler(@NotNull Project project, int port) throws ExecutionException;
 
-  protected void connectToProcess(@NotNull AsyncResult<OSProcessHandler> asyncResult,
+  protected void connectToProcess(@NotNull AsyncPromise<OSProcessHandler> promise,
                                   int port,
                                   @NotNull OSProcessHandler processHandler,
                                   @NotNull Consumer<String> errorOutputConsumer) {
-    asyncResult.setDone(processHandler);
+    promise.setResult(processHandler);
   }
 
   protected abstract void closeProcessConnections();

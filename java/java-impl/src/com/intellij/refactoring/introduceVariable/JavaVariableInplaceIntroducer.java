@@ -129,6 +129,11 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
+  protected String getRefactoringId() {
+    return "refactoring.extractVariable";
+  }
+
+  @Override
   protected void restoreState(@NotNull PsiVariable psiField) {
     if (myDeleteSelf) return;
     super.restoreState(psiField);
@@ -157,6 +162,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     } else {
       super.deleteTemplateField(variable);
     }
+  }
+
+  @Override
+  protected PsiExpression getBeforeExpr() {
+    final PsiVariable variable = getVariable();
+    if (variable != null) {
+      return variable.getInitializer();
+    }
+    return super.getBeforeExpr();
   }
 
   @Override

@@ -540,6 +540,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void setRenderer(NodeRenderer nodeRenderer, final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myValueDescriptor.setRenderer(nodeRenderer);
+    reBuild(node);
+  }
+
+  public void reBuild(final XValueNodeImpl node) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     myCurrentChildrenStart = 0;
     node.getTree().getLaterInvocator().offer(new Runnable() {
       @Override

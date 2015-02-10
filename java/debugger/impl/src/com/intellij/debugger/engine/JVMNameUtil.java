@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,13 +249,13 @@ public class JVMNameUtil {
   }
                                
   public static JVMName getJVMQualifiedName(PsiClass psiClass) {
-    if (!PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-      final String name = getNonAnonymousClassName(psiClass);
-      if (name != null) {
-        return getJVMRawText(name);
-      }
+    final String name = getNonAnonymousClassName(psiClass);
+    if (name != null) {
+      return getJVMRawText(name);
     }
-    return new JVMClassAt(SourcePosition.createFromElement(psiClass));
+    else {
+      return new JVMClassAt(SourcePosition.createFromElement(psiClass));
+    }
   }
 
   @Nullable
@@ -264,17 +264,18 @@ public class JVMNameUtil {
     if (psiClass == null) {
       return null;
     }
-    if (!PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-      final String name = getNonAnonymousClassName(psiClass);
-      if (name != null) {
-        return getJVMRawText(name);
-      }
+    final String name = getNonAnonymousClassName(psiClass);
+    if (name != null) {
+      return getJVMRawText(name);
     }
     return new JVMClassAt(pos);
   }
 
   @Nullable
   public static String getNonAnonymousClassName(PsiClass aClass) {
+    if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      return null;
+    }
     String name = aClass.getName();
     if (name == null) {
       return null;

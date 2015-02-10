@@ -499,8 +499,11 @@ class PyDB:
         set_return_control_callback(return_control)
 
         from pydev_import_hook import import_hook_manager
-        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
-        import_hook_manager.add_module_name("matplotlib", activate_matplotlib())
+        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot, do_enable_gui
+        import_hook_manager.add_module_name("matplotlib", lambda: activate_matplotlib(do_enable_gui))
+        # enable_gui_function in activate_matplotlib should be called in main thread. Unlike integrated console,
+        # in the debug console we have no interpreter instance with exec_queue, but we run this code in the main
+        # thread and can call it directly.
         import_hook_manager.add_module_name("pylab", activate_pylab)
         import_hook_manager.add_module_name("pyplot", activate_pyplot)
         self.use_hooks_in_debug_console = True
@@ -547,12 +550,6 @@ class PyDB:
                         try:
                             while True:
                                 int_cmd = queue.get(False)
-                                if int_cmd.canBeExecutedBy(curr_thread_id):
-                                    PydevdLog(2, "processing internal command ", str(int_cmd))
-                                    int_cmd.doIt(self)
-                                else:
-                                    PydevdLog(2, "NOT processing internal command ", str(int_cmd))
-                                    cmdsToReadd.append(int_cmd)
 
                                 if not self.use_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec):
                                     # patch matplotlib if only debug console was started
@@ -561,6 +558,14 @@ class PyDB:
                                     except:
                                         sys.stderr.write("Matplotlib support in debug console failed\n")
                                         pydev_log.error("Error in matplotlib init %s\n" % sys.exc_info()[0])
+
+                                if int_cmd.canBeExecutedBy(curr_thread_id):
+                                    PydevdLog(2, "processing internal command ", str(int_cmd))
+                                    int_cmd.doIt(self)
+                                else:
+                                    PydevdLog(2, "NOT processing internal command ", str(int_cmd))
+                                    cmdsToReadd.append(int_cmd)
+
 
                         except _queue.Empty: #@UndefinedVariable
                             for int_cmd in cmdsToReadd:

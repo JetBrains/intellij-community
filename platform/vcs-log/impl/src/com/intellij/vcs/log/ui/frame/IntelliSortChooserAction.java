@@ -60,7 +60,7 @@ class IntelliSortChooserAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     super.update(e);
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(logUI != null);
+    e.getPresentation().setEnabled(logUI != null);
     if (logUI != null) {
       String description = "IntelliSort: " + logUI.getBekType().getName();
       e.getPresentation().setDescription(description);

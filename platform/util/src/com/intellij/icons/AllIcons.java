@@ -311,6 +311,9 @@ public class AllIcons {
   public static class Diff {
     public static final Icon ApplyNotConflicts = IconLoader.getIcon("/diff/applyNotConflicts.png"); // 16x16
     public static final Icon Arrow = IconLoader.getIcon("/diff/arrow.png"); // 11x11
+    public static final Icon ArrowLeftDown = IconLoader.getIcon("/diff/arrowLeftDown.png"); // 11x11
+    public static final Icon ArrowRight = IconLoader.getIcon("/diff/arrowRight.png"); // 11x11
+    public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.png"); // 11x11
     public static final Icon BranchDiff = IconLoader.getIcon("/diff/branchDiff.png"); // 16x16
     public static final Icon CurrentLine = IconLoader.getIcon("/diff/currentLine.png"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16

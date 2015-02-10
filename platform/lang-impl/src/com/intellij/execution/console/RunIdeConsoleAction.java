@@ -28,6 +28,7 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -50,6 +51,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.script.*;
 import javax.swing.*;
@@ -58,6 +60,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author gregsh
@@ -68,12 +71,22 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
   private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
+  private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
   static class Engines {
-    static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newLinkedHashMap();
-    static  {
-      for (ScriptEngineFactory factory : new ScriptEngineManager().getEngineFactories()) {
-        ourEngines.put(factory.getLanguageName(), factory);
-      }
+    static final List<ScriptEngineFactory> ourEngines = new CopyOnWriteArrayList<ScriptEngineFactory>();
+    static {
+      PooledThreadExecutor.INSTANCE.submit(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              ourEngines.addAll(new ScriptEngineManager().getEngineFactories());
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
+        });
     }
   }
 
@@ -86,11 +99,11 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     if (Engines.ourEngines.size() == 1) {
-      runConsole(e, Engines.ourEngines.values().iterator().next());
+      runConsole(e, Engines.ourEngines.get(0));
     }
     else {
       DefaultActionGroup actions = new DefaultActionGroup(
-        ContainerUtil.map(Engines.ourEngines.values(), new NotNullFunction<ScriptEngineFactory, AnAction>() {
+        ContainerUtil.map(Engines.ourEngines, new NotNullFunction<ScriptEngineFactory, AnAction>() {
           @NotNull
           @Override
           public AnAction fun(final ScriptEngineFactory engine) {
@@ -119,7 +132,8 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         FileEditorManager.getInstance(project).openFile(virtualFile, true);
       }
     }
-    catch (IOException ignored) {
+    catch (IOException ex) {
+      LOG.error(ex);
     }
   }
 
@@ -137,7 +151,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
   @Nullable
   private static ScriptEngine findScriptEngine(@NotNull VirtualFile file) {
-    for (ScriptEngineFactory factory : Engines.ourEngines.values()) {
+    for (ScriptEngineFactory factory : Engines.ourEngines) {
       if (factory.getExtensions().contains(file.getExtension())) {
         return factory.getScriptEngine();
       }
@@ -149,7 +163,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull ScriptEngine engine) {
-
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
     if (selectedRange.getLength() == 0) {

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
@@ -120,7 +121,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
     file = userFileDir.findChild(name);
     assert file != null;
-    String answerFileName = file.getNameWithoutExtension() + ".answer";
+    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
     VirtualFile answerFile = answerFileDir.findChild(answerFileName);
     if (answerFile == null) {
       return;
@@ -143,7 +144,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(0, document.getTextLength(), answerDocument.getText());
+            document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
           }
         });
       }
@@ -156,6 +157,17 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       final AnswerPlaceholder answerPlaceholder = taskFile.getTaskWindows().get(i);
       replaceTaskWindow(project, document, answerPlaceholder);
     }
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+      }
+    }, "x", "qwe");
     document.removeDocumentListener(listener);
   }
 
@@ -204,7 +216,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           @Override
           public boolean accept(File pathname) {
             String name = pathname.getName();
-            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows") && !name.contains(".pyc");
+            String nameWithoutExtension = FileUtil.getNameWithoutExtension(pathname);
+            return !nameWithoutExtension.endsWith(".answer") && !name.contains("__pycache__") && !name.contains("_windows") && !name.contains(".pyc");
           }
         }, null);
       }

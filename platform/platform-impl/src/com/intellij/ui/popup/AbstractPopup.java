@@ -703,6 +703,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     assert ApplicationManager.getApplication().isDispatchThread();
+    assert myState == State.INIT : "Popup was already shown. Recreate a new instance to show again.";
 
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
@@ -1349,8 +1350,9 @@ public class AbstractPopup implements JBPopup {
         @Override
         public void run() {
           //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(myFinalRunnable);
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
-          myFinalRunnable.run();
           myFinalRunnable = null;
         }
       };

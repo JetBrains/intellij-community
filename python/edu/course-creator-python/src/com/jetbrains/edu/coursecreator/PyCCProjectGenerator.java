@@ -64,6 +64,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
 
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = new Course(name, author, description);
+    course.setLanguage("Python");
     service.setCourse(course);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);

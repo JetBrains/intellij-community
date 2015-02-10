@@ -69,7 +69,7 @@ public class OnesideEditorHighlighter implements EditorHighlighter {
         offset = base.getStartOffset();
       }
 
-      HighlighterIterator it = range.getSide().selectN(it1, it2);
+      HighlighterIterator it = range.getSide().selectNotNull(it1, it2);
       while (!it.atEnd() && changed.getStartOffset() >= it.getEnd()) {
         it.advance();
       }

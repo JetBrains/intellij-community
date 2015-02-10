@@ -32,11 +32,11 @@ import com.intellij.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffIcons;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -608,7 +608,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return;
       }
 
-      Editor modifiedEditor = side.other(myModifyOpposite).selectN(myEditor1, myEditor2);
+      Editor modifiedEditor = side.other(myModifyOpposite).selectNotNull(myEditor1, myEditor2);
       if (!DiffUtil.isEditable(modifiedEditor)) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -626,7 +626,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final Side side = Side.fromLeft(editor == myEditor1);
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
 
-      Editor modifiedEditor = side.other(myModifyOpposite).selectN(myEditor1, myEditor2);
+      Editor modifiedEditor = side.other(myModifyOpposite).selectNotNull(myEditor1, myEditor2);
       String title = e.getPresentation().getText() + " selected changes";
       DiffUtil.executeWriteCommand(modifiedEditor.getDocument(), e.getProject(), title, new Runnable() {
         @Override
@@ -663,13 +663,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
     public ReplaceSelectedChangesAction() {
-      super("Replace", null, DiffIcons.getReplaceIcon(null), true);
+      super("Replace", null, AllIcons.Diff.Arrow, true);
     }
 
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return DiffIcons.getReplaceIcon(side);
+      return side.isLeft() ? AllIcons.Diff.Arrow : AllIcons.Diff.ArrowRight;
     }
 
     @Override
@@ -682,13 +682,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
     public AppendSelectedChangesAction() {
-      super("Insert", null, DiffIcons.getAppendIcon(null), true);
+      super("Insert", null, AllIcons.Diff.ArrowLeftDown, true);
     }
 
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return DiffIcons.getAppendIcon(side);
+      return side.isLeft() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.ArrowRightDown;
     }
 
     @Override
@@ -701,13 +701,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
     public RevertSelectedChangesAction() {
-      super("Revert", null, DiffIcons.getRevertIcon(null), false);
+      super("Revert", null, AllIcons.Diff.Remove, false);
     }
 
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return DiffIcons.getRevertIcon(side);
+      return AllIcons.Diff.Remove;
     }
 
     @Override

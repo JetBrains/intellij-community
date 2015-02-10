@@ -48,7 +48,7 @@ public enum ThreeSide {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull T left, @NotNull T base, @NotNull T right) {
+  public <T> T selectNotNull(@NotNull T left, @NotNull T base, @NotNull T right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
     if (myIndex == 2) return right;
@@ -67,7 +67,7 @@ public enum ThreeSide {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull T[] array) {
+  public <T> T selectNotNull(@NotNull T[] array) {
     assert array.length == 3;
     return array[myIndex];
   }
@@ -79,7 +79,7 @@ public enum ThreeSide {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull List<T> list) {
+  public <T> T selectNotNull(@NotNull List<T> list) {
     assert list.size() == 3;
     return list.get(myIndex);
   }

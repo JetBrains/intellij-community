@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
@@ -74,11 +73,9 @@ public abstract class CompletionService {
                                           @Nullable final CompletionContributor from,
                                           final Consumer<CompletionResult> consumer) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
-    final boolean dumb = DumbService.getInstance(parameters.getPosition().getProject()).isDumb();
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
       final CompletionContributor contributor = contributors.get(i);
-      if (dumb && !DumbService.isDumbAware(contributor)) continue;
 
       final CompletionResultSet result = createResultSet(parameters, consumer, contributor);
       contributor.fillCompletionVariants(parameters, result);

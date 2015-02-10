@@ -671,7 +671,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      return XSourcePositionImpl.createOpenFileDescriptor(project, this);
+      return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
   }
 
