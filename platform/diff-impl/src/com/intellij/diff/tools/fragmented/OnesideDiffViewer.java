@@ -1009,7 +1009,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         myShouldScroll = !doScrollToContext(myNavigationContext);
       }
       if (myShouldScroll && myCaretPosition != null && myCaretPosition.length == 2) {
-        LogicalPosition twosidePosition = myMasterSide.selectN(myCaretPosition);
+        LogicalPosition twosidePosition = myMasterSide.selectNotNull(myCaretPosition);
         int onesideLine = transferLineToOneside(myMasterSide, twosidePosition.line);
         LogicalPosition position = new LogicalPosition(onesideLine, twosidePosition.column);
 

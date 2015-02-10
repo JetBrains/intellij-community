@@ -241,7 +241,7 @@ public class MergeUtil {
 
     @NotNull
     private Interval getRange(@NotNull ThreeSide side) {
-      return side.selectN(myLeft, myBase, myRight);
+      return side.selectNotNull(myLeft, myBase, myRight);
     }
 
     public int getStartLine(@NotNull ThreeSide side) {
