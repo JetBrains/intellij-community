@@ -19,7 +19,7 @@
  * It has several abilities, including (but not limited):
  * <ol>
  *   <li>Suggestion box</li>
- *   <li>Error marking</li>
+ *   <li>Error emphasising</li>
  *   <li>Popups</li>
  *   <li>AutoCompletion</li>
  * </ol>
@@ -31,8 +31,14 @@
  *
  * <p>
  *   There is also swing-based view implementation in {@link com.jetbrains.python.commandInterface.swingView}
- *   and presenter implementation based on idea of commands with arguments. See {@link com.jetbrains.python.commandInterface.commandsWithArgs}
+ *   and presenter implementation based on idea of commands with arguments. See {@link com.jetbrains.python.commandInterface.chunkDriverBasedPresenter}
  * </p>
+ *
+ * <p>
+ *   Presenter and View talk to each other only in term of text and chars. Presenter knows nothing about pixels and should never
+ *   assume view have certain pixel size.
+ * </p>
+ *
  *
  *
  * @author Ilya.Kazakevich

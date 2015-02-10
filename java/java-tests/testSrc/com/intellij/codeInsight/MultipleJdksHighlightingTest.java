@@ -117,12 +117,21 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   public void testSuperclassImplementsUnknownType() throws Exception {
     doTestWithoutLibrary();
   }
+
+  public void testDeclaredTypeOfVariableImplementsUnknownType() throws Exception {
+    doTestWithoutLibrary();
+  }
   
   public void testSuperclassImplementsGenericsOfUnknownType() throws Exception {
     doTestWithoutLibrary();
   }
 
   public void testSuperMethodNotExist() throws Exception {
+    doTestWithoutLibrary();
+  }
+
+  @Bombed(day = 20, month = Calendar.FEBRUARY)
+  public void testNoOverriding() throws Exception {
     doTestWithoutLibrary();
   }
 

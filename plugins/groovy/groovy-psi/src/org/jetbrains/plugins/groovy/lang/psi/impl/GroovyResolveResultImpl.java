@@ -148,9 +148,9 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
            '}';
   }
 
-  @Nullable
+  @NotNull
   public static GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
-    if (classResolveResult.getElement() == null) return null;
+    if (classResolveResult.getElement() == null) return GroovyResolveResult.EMPTY_RESULT;
     return new GroovyResolveResultImpl(
       classResolveResult.getElement(),
       null,

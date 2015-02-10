@@ -342,7 +342,7 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
       <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction" />
-      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction" text="Open IDE Scripting Console"/>
+      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
     </group>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
