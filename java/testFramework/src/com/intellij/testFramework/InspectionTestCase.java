@@ -22,7 +22,6 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
@@ -63,7 +62,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     InspectionEP ep = new InspectionEP();
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();
-    ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
+    ep.shortName = UnusedDeclarationInspection.SHORT_NAME;
     return new GlobalInspectionToolWrapper(ep);
   }
 
