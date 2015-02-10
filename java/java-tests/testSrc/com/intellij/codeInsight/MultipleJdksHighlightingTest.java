@@ -144,7 +144,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTestWithoutLibrary();
   }
 
-  @Bombed(day = 20, month = Calendar.FEBRUARY)
   public void testNoOverriding() throws Exception {
     doTestWithoutLibrary();
   }
