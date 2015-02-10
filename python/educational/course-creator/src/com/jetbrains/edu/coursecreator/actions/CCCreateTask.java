@@ -7,11 +7,13 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -22,12 +24,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.StudyLanguageManager;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.Lesson;
 import com.jetbrains.edu.coursecreator.format.Task;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CCCreateTask extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CCCreateTask.class.getName());
+
   public CCCreateTask() {
     super("Task", "Create new Task", PlatformIcons.DIRECTORY_CLOSED_ICON);
   }
@@ -67,40 +73,62 @@ public class CCCreateTask extends DumbAwareAction {
       public void run() {
         final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
+          Language language = Language.findLanguageByID(course.getLanguage());
+          if (language == null) {
+            return;
+          }
+          final StudyLanguageManager studyLanguageManager = StudyLanguageManager.INSTANCE.forLanguage(language);
           CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
-          final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("task.html");
-          final FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("tests");
-          final FileTemplate taskTemplate = FileTemplateManager.getInstance(project).getInternalTemplate("task.answer");
-          try {
-            final PsiElement taskFile = FileTemplateUtil.createFromTemplate(template, "task.html", null, taskDirectory);
-            final PsiElement testsFile = FileTemplateUtil.createFromTemplate(testsTemplate, "tests.py", null, taskDirectory);
-            final PsiElement taskPyFile = FileTemplateUtil.createFromTemplate(taskTemplate, "file1", null, taskDirectory);
 
-            final Task task = new Task(taskName);
-            task.addTaskFile("file1.py", size + 1);
-            task.setIndex(size + 1);
-            lesson.addTask(task, taskDirectory);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-                for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
-                  fileEditorManager.closeFile(virtualFile);
-                }
-                if (view != null) {
-                  EditorHelper.openInEditor(testsFile, false);
-                  EditorHelper.openInEditor(taskPyFile, false);
-                  view.selectElement(taskFile);
-                  EditorHelper.openInEditor(taskFile, false);
-                }
+          createFromTemplateAndOpen(taskDirectory, studyLanguageManager.getTestsTemplate(project), view);
+          createFromTemplateAndOpen(taskDirectory, FileTemplateManager.getInstance(project).getInternalTemplate("task.html"), view);
+          String defaultExtension = studyLanguageManager.getDefaultTaskFileExtension();
+          String taskFileName = null;
+          if (defaultExtension != null) {
+            FileTemplate taskFileTemplate = studyLanguageManager.getTaskFileTemplateForExtension(project,
+                                                                                          defaultExtension);
+            createFromTemplateAndOpen(taskDirectory, taskFileTemplate, view);
+            if (taskFileTemplate != null) {
+              taskFileName = taskFileTemplate.getName();
+            }
+          }
+
+          final Task task = new Task(taskName);
+          task.setIndex(size + 1);
+          lesson.addTask(task, taskDirectory);
+          if (taskFileName != null) {
+            task.addTaskFile(taskFileName, size + 1);
+          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+              for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
+                fileEditorManager.closeFile(virtualFile);
               }
-            });
-          }
-          catch (Exception ignored) {
-          }
+            }
+          });
         }
       }
     });
+  }
+
+  private static void createFromTemplateAndOpen(@NotNull final PsiDirectory taskDirectory,
+                                                @Nullable final FileTemplate template,
+                                                @Nullable IdeView view) {
+    if (template == null) {
+      return;
+    }
+    try {
+      final PsiElement file = FileTemplateUtil.createFromTemplate(template, template.getName(), null, taskDirectory);
+      if (view != null) {
+        EditorHelper.openInEditor(file, false);
+        view.selectElement(file);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Override

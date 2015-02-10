@@ -13,6 +13,8 @@ public class Course {
   @Expose private String name;
   @Expose private String author;
 
+  @Expose private String language;
+
   private Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
 
   public Map<String, Lesson> getLessonsMap() {
@@ -80,5 +82,13 @@ public class Course {
 
   public void setLessonsMap(Map<String, Lesson> lessonsMap) {
     myLessonsMap = lessonsMap;
+  }
+
+  public String getLanguage() {
+    return language;
+  }
+
+  public void setLanguage(String language) {
+    this.language = language;
   }
 }
