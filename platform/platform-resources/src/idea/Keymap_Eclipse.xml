@@ -47,7 +47,7 @@
       <keyboard-shortcut first-keystroke="shift alt D" />
       <keyboard-shortcut first-keystroke="shift F9" />
     </action>
-    <action id="Debugger.Inspect">
+    <action id="XDebugger.Inspect">
       <keyboard-shortcut first-keystroke="shift control I" />
     </action>
     <action id="DelegateMethods">
