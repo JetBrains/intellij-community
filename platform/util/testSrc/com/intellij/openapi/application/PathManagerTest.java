@@ -48,9 +48,10 @@ public class PathManagerTest {
 
     String home = System.clearProperty(PathManager.PROPERTY_HOME_PATH);
     try {
-      assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home.path}/build.txt"));
       assertEquals(PathManager.getHomePath() + "/build.txt", PathManager.substituteVars("${idea.home}/build.txt"));
-      assertEquals("/opt/idea/build.txt", PathManager.substituteVars("${idea.home.path}/build.txt", "/opt/idea"));
+      assertEquals(PathManager.getHomePath() + "\\build.txt", PathManager.substituteVars("${idea.home.path}\\build.txt"));
+      assertEquals("/opt/idea/build.txt", PathManager.substituteVars("${idea.home}/build.txt", "/opt/idea"));
+      assertEquals("C:\\opt\\idea\\build.txt", PathManager.substituteVars("${idea.home.path}\\build.txt", "C:\\opt\\idea"));
     }
     finally {
       if (home != null) {

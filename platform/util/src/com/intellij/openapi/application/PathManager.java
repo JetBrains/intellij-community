@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -399,7 +396,8 @@ public class PathManager {
         value = "";
       }
 
-      s = m.replaceAll(value);
+      s = StringUtil.replace(s, m.group(), value);
+      m = PROPERTY_REF.matcher(s);
     }
 
     return s;
