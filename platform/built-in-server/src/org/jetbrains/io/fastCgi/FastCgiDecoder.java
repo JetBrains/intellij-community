@@ -1,4 +1,4 @@
-package org.jetbrains.fastCgi;
+package org.jetbrains.io.fastCgi;
 
 import com.intellij.util.Consumer;
 import gnu.trove.TIntObjectHashMap;
@@ -10,7 +10,7 @@ import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.Decoder;
 
-import static org.jetbrains.fastCgi.FastCgiService.LOG;
+import static org.jetbrains.io.fastCgi.FastCgiService.LOG;
 
 public class FastCgiDecoder extends Decoder {
   private enum State {

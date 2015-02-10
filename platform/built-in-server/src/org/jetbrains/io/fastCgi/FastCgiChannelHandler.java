@@ -1,4 +1,4 @@
-package org.jetbrains.fastCgi;
+package org.jetbrains.io.fastCgi;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.Responses;
 import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 
-import static org.jetbrains.fastCgi.FastCgiService.LOG;
+import static org.jetbrains.io.fastCgi.FastCgiService.LOG;
 
 @ChannelHandler.Sharable
 public class FastCgiChannelHandler extends SimpleChannelInboundHandlerAdapter<FastCgiResponse> {
