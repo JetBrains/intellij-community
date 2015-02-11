@@ -1,6 +1,7 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +13,9 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.coursecreator.format.Course;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class.getName());
@@ -55,5 +58,11 @@ public class CCUtils {
     catch (NumberFormatException e) {
       return -1;
     }
+  }
+
+  @Nullable
+  public static StudyLanguageManager getStudyLanguageManager(@NotNull final Course course) {
+    Language language = Language.findLanguageByID(course.getLanguage());
+    return language == null ? null :  StudyLanguageManager.INSTANCE.forLanguage(language);
   }
 }
