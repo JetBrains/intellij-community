@@ -201,6 +201,10 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   
   public void testLeaveTrailingComment() throws Exception { doTest(); }
 
+  public void testConvertComment() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(".java");
   }
