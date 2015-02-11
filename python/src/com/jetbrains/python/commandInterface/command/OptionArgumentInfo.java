@@ -13,36 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandBasedChunkDriver;
+package com.jetbrains.python.commandInterface.command;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * For many commands we know nothing about arguments but their help text.
- * This strategy is for this case
+ * Information about option argument
  *
  * @author Ilya.Kazakevich
  */
-public final class UnknownArgumentsInfo implements ArgumentsInfo {
+public interface OptionArgumentInfo {
   /**
-   * Argument help text
+   * Validates argument value
+   *
+   * @param value value to validate
+   * @return true if valid
    */
-  @NotNull
-  private final String myHelp;
+  boolean isValid(@NotNull String value);
 
   /**
-   * @param allArgumentsHelpText argument help text
+   * @return list of available values (if argument is based on list of choices), or null if any value is accepted (but should be validated)
    */
-  public UnknownArgumentsInfo(@NotNull final String allArgumentsHelpText) {
-    myHelp = allArgumentsHelpText;
-  }
-
-
   @Nullable
-  @Override
-  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
-    return Pair.create(false, new Argument(myHelp));
-  }
+  List<String> getAvailableValues();
 }

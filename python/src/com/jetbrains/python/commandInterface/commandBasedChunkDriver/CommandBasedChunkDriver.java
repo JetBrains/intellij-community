@@ -23,6 +23,9 @@ import com.jetbrains.python.commandInterface.chunkDriverBasedPresenter.ChunkDriv
 import com.jetbrains.python.commandInterface.chunkDriverBasedPresenter.ChunkInfo;
 import com.jetbrains.python.commandInterface.chunkDriverBasedPresenter.ParseInfo;
 import com.jetbrains.python.commandInterface.chunkDriverBasedPresenter.SuggestionInfo;
+import com.jetbrains.python.commandInterface.command.Argument;
+import com.jetbrains.python.commandInterface.command.ArgumentsInfo;
+import com.jetbrains.python.commandInterface.command.Command;
 import com.jetbrains.python.commandLineParser.CommandLineParseResult;
 import com.jetbrains.python.commandLineParser.CommandLineParser;
 import com.jetbrains.python.commandLineParser.CommandLinePartType;
