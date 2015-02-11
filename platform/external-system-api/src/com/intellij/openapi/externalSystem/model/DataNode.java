@@ -24,10 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to 
@@ -48,6 +45,7 @@ public class DataNode<T> implements Serializable {
   private static final Logger LOG = Logger.getInstance(DataNode.class);
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
+  @NotNull private final List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
 
   @NotNull private final Key<T> myKey;
   private transient T myData;
@@ -71,18 +69,6 @@ public class DataNode<T> implements Serializable {
     DataNode<T> result = new DataNode<T>(key, data, this);
     myChildren.add(result);
     return result;
-  }
-
-  @NotNull
-  public <T> DataNode<T> createOrReplaceChild(@NotNull Key<T> key, @NotNull T data) {
-    for (Iterator<DataNode<?>> iterator = myChildren.iterator(); iterator.hasNext(); ) {
-      DataNode<?> child = iterator.next();
-      if (child.getKey().equals(key)) {
-        iterator.remove();
-        break;
-      }
-    }
-    return createChild(key, data);
   }
 
   @NotNull
@@ -237,7 +223,7 @@ public class DataNode<T> implements Serializable {
 
   @NotNull
   public Collection<DataNode<?>> getChildren() {
-    return myChildren;
+    return myChildrenView;
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
@@ -304,7 +290,7 @@ public class DataNode<T> implements Serializable {
 
   public void clear(boolean removeFromGraph) {
     if (removeFromGraph && myParent != null) {
-      for (Iterator<DataNode<?>> iterator = myParent.getChildren().iterator(); iterator.hasNext(); ) {
+      for (Iterator<DataNode<?>> iterator = myParent.myChildren.iterator(); iterator.hasNext(); ) {
         DataNode<?> dataNode = iterator.next();
         if (System.identityHashCode(dataNode) == System.identityHashCode(this)) {
           iterator.remove();
@@ -315,5 +301,18 @@ public class DataNode<T> implements Serializable {
     myParent = null;
     myRawData = null;
     myChildren.clear();
+  }
+
+  public DataNode<T> graphCopy() {
+    return nodeCopy(this, null);
+  }
+
+  private static <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
+    DataNode<T> copy = new DataNode<T>(dataNode.myKey, dataNode.myData, newParent);
+    copy.myRawData = dataNode.myRawData;
+    for (DataNode<?> child : dataNode.myChildren) {
+      copy.addChild(nodeCopy(child, copy));
+    }
+    return copy;
   }
 }
