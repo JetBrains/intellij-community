@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine;
-
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import org.jetbrains.annotations.Nullable;
+package com.jetbrains.python.commandInterface.command;
 
 /**
- * @author egor
+ * Argument type to be used with {@link OptionTypedArgumentInfo}
+ * @author Ilya.Kazakevich
  */
-public interface FullValueEvaluatorProvider {
-  @Nullable
-  XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext, ValueDescriptorImpl valueDescriptor);
+public enum OptionArgumentType {
+  /**
+   * String (actually, anything)
+   */
+  STRING,
+  /**
+   * Integer or long
+   */
+  INTEGER
 }

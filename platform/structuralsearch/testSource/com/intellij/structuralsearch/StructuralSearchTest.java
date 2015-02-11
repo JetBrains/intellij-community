@@ -2476,6 +2476,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                            "@Deprecated\n" +
                            "package one.two;";
     assertEquals("Find annotation on package statement", 1, findMatchesCount(source4, "@'_Annotation", true));
+
+    final String source5 ="class A {" +
+                          "  boolean a(Object o) {" +
+                          "    return o instanceof @HH String;" +
+                          "  }" +
+                          "}";
+    assertEquals("Find annotation on instanceof expression", 1, findMatchesCount(source5, "'_a instanceof @HH String"));
+    assertEquals("Match annotation correctly on instanceof expression", 0, findMatchesCount(source5, "'_a instanceof @GG String"));
   }
 
   public void testBoxingAndUnboxing() {

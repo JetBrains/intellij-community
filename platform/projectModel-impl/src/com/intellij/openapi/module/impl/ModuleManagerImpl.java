@@ -504,7 +504,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.getModules();
   }
 
-  private Module[] myCachedSortedModules = null;
+  private volatile Module[] myCachedSortedModules = null;
 
   @Override
   @NotNull
@@ -523,7 +523,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.findModuleByName(name);
   }
 
-  private Comparator<Module> myCachedModuleComparator = null;
+  private volatile Comparator<Module> myCachedModuleComparator = null;
 
   @Override
   @NotNull
@@ -602,7 +602,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>(new EqualityPolicy.ByHashingStrategy<String>(FilePathHashingStrategy.create()));
-    private Module[] myModulesCache;
+    private volatile Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<Module>();
     private final Map<Module, String> myModuleToNewName = new HashMap<Module, String>();

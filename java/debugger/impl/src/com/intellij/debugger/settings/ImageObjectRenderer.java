@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,17 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,25 +37,17 @@ import java.util.List;
 /**
 * Created by Egor on 04.10.2014.
 */
-class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
+class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
   public ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Image", null, null);
     setClassName("java.awt.Image");
+    setEnabled(true);
   }
 
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws
-                                                                                                                             EvaluateException {
-    String res = calcToStringLabel(descriptor, evaluationContext, listener);
-    if (res != null) {
-      return res;
-    }
-    return super.calcLabel(descriptor, evaluationContext, listener);
-  }
-
-  @NotNull
+  @Nullable
   @Override
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
-    return new CustomPopupFullValueEvaluator(" (Show image)", evaluationContext) {
+    return new CustomPopupFullValueEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
       @Override
       protected JComponent createComponent() {
         return createIconViewer(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes"));
@@ -66,7 +55,8 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
     };
   }
 
-  static JComponent createIconViewer(Icon icon) {
+  static JComponent createIconViewer(@Nullable Icon icon) {
+    if (icon == null) return new JLabel("null", JLabel.CENTER);
     final int w = icon.getIconWidth();
     final int h = icon.getIconHeight();
     final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()

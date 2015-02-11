@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine;
+package com.jetbrains.python.commandInterface.command;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author egor
+ * TODO: Redundant?!
+ * Case when command has no arguments (for sure!)
+ *
+ * @author Ilya.Kazakevich
  */
-public interface FullValueEvaluatorProvider {
+public final class NoArgumentsInfo implements ArgumentsInfo {
+  /**
+   * Instance to use when command has no arguments
+   */
+  public static final ArgumentsInfo INSTANCE = new NoArgumentsInfo();
+
+  private NoArgumentsInfo() {
+  }
+
   @Nullable
-  XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext, ValueDescriptorImpl valueDescriptor);
+  @Override
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+    return null;
+  }
 }

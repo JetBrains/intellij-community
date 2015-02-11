@@ -40,6 +40,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class DebuggerUIUtil {
                                           JComponent component,
                                           @Nullable final FullValueEvaluationCallbackImpl callback) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null);
-    builder.setResizable(true)/*.setAlpha(1)*/ // alpha disabled because of IDEA-136331
+    builder.setResizable(true)
       .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
         .setRequestFocus(false);
@@ -326,6 +327,16 @@ public class DebuggerUIUtil {
     @Override
     public boolean isObsolete() {
       return myObsolete.get();
+    }
+  }
+
+  @Nullable
+  public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
+    if (valueNode.getValueContainer() instanceof XValueTextProvider) {
+      return ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
+    }
+    else {
+      return valueNode.getRawValue();
     }
   }
 }
