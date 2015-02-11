@@ -58,7 +58,7 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
     List<PsiFile> files = createTestFiles(srcDir, classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
-    performReformatActionOnModule(module, files.subList(0, 1));
+    performReformatActionOnModule(module, ContainerUtil.newArrayList(srcDir));
 
     checkFormationAndImportsOptimizationFor(files);
   }

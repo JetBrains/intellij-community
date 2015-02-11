@@ -107,6 +107,14 @@ public class DfaExpressionFactory {
       return myFactory.getConstFactory().createFromValue(value, type, null);
     }
 
+    if (expression instanceof PsiThisExpression) {
+      PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)expression).getQualifier();
+      PsiElement target = qualifier == null ? null : qualifier.resolve();
+      if (target instanceof PsiClass) {
+        return myFactory.getVarFactory().createVariableValue((PsiModifierListOwner)target, null, false, null);
+      }
+    }
+
     return null;
   }
 

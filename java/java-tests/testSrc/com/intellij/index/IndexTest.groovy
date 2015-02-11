@@ -33,6 +33,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
@@ -285,7 +286,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(findClass("Foo"));
   }
 
-  public void "_test rename unsaved file"() {
+  public void "test rename unsaved file"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -304,7 +305,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
   }
 
-  public void "_test rename dir with unsaved file"() {
+  public void "test rename dir with unsaved file"() {
     def psiFile = myFixture.addFileToProject("foo/Foo.java", "package pkg; class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -324,7 +325,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
   }
 
-  public void "_test language level change"() {
+  public void "test language level change"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -336,6 +337,25 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
 
     assert ((PsiJavaFile)psiFile).importList.node
+  }
+
+  public void "test language level change2"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def vFile = psiFile.virtualFile
+    def scope = GlobalSearchScope.allScope(project)
+
+    psiFile.add(elementFactory.createEnum("SomeEnum"))
+
+    CodeStyleManager.getInstance(getProject()).reformat(psiFile)
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
+    assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
   }
 
   public void "test changing a file without psi makes the document committed and updates index"() {

@@ -30,6 +30,13 @@ public abstract class JdkVersionDetector {
     return JpsServiceManager.getInstance().getService(JdkVersionDetector.class);
   }
 
+  /**
+   * Returns java version for JDK located at {@code homePath} in format like<br>
+   * <tt>java version "1.8.0_40"</tt><br>
+   * by running '<tt>java -version</tt>' command
+   * @param homePath path to JDK home directory
+   * @return version string of {@code null} if version cannot be determined
+   */
   @Nullable
   public abstract String detectJdkVersion(String homePath);
 

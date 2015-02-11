@@ -16,13 +16,22 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
+import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author max
@@ -30,6 +39,14 @@ import javax.swing.*;
 public class PropertiesStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final Property myProperty;
   private String myPresentableName;
+
+  private static final TextAttributesKey GROUP_KEY;
+  static {
+    TextAttributes attributes = new TextAttributes();
+    attributes.setFontType(Font.ITALIC);
+    GROUP_KEY = TextAttributesKey.createTextAttributesKey("STRUCTURE_GROUP_KEY", attributes);
+  }
+
 
   public PropertiesStructureViewElement(final Property element) {
     myProperty = element;
@@ -63,14 +80,17 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement,
 
   @NotNull
   public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
+    return new ColoredItemPresentation() {
+      @Nullable
+      @Override
+      public TextAttributesKey getTextAttributesKey() {
+        return (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY :null;
+      }
+
       public String getPresentableText() {
-        if (myPresentableName == null) {
-          return myProperty.getUnescapedKey();
-        }
-        else {
-          return myPresentableName;
-        }
+        return myPresentableName == null
+               ? myProperty.getUnescapedKey()
+               : (myPresentableName.isEmpty() ? ResourceBundlePropertyStructureViewElement.PROPERTY_GROUP_KEY_TEXT : myPresentableName);
       }
 
       public String getLocationString() {

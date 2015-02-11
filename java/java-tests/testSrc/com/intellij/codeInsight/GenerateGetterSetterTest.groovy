@@ -16,6 +16,7 @@
 package com.intellij.codeInsight
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateGetterHandler
+import com.intellij.codeInsight.generation.GenerateSetterHandler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -93,6 +94,50 @@ class Foo {
   private void generateGetter() {
     WriteCommandAction.runWriteCommandAction(getProject(), {
     new GenerateGetterHandler() {
+      @Override
+      protected ClassMember[] chooseMembers(
+        ClassMember[] members,
+        boolean allowEmptySelection,
+        boolean copyJavadocCheckbox,
+        Project project,
+        @Nullable @Nullable Editor editor) {
+        return members
+      }
+    }.invoke(project, myFixture.editor, myFixture.file)
+    })
+    UIUtil.dispatchAllInvocationEvents()
+  }
+
+  public void "test static or this setter with same name parameter"() {
+    myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    static int p;
+    int f;
+
+    <caret>
+}
+'''
+    generateSetter()
+    myFixture.checkResult '''
+class Foo {
+    static int p;
+    int f;
+
+    public static void setP(int p) {
+        Foo.p = p;
+    }
+
+    public void setF(int f) {
+        this.f = f;
+    }
+}
+'''
+  }
+  
+  private void generateSetter() {
+    WriteCommandAction.runWriteCommandAction(getProject(), {
+    new GenerateSetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(
         ClassMember[] members,

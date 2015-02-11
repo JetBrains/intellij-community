@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -94,6 +95,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     return myMap.containsKey(name);
   }
 
+  @Nullable
   @Override
   public String[] getValues(@NonNls String name) {
     final String value = getValue(name);

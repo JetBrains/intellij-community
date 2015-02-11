@@ -21,18 +21,16 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
@@ -189,17 +187,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     createProjectSubFile("gradle/wrapper/gradle-wrapper.properties", writer.toString());
   }
 
+  @NotNull
   private static File wrapperJar() {
-    URI location;
-    try {
-      location = GradleWrapperMain.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-    if (!location.getScheme().equals("file")) {
-      throw new RuntimeException(String.format("Cannot determine classpath for wrapper JAR from codebase '%s'.", location));
-    }
-    return new File(location.getPath());
+    return new File(PathUtil.getJarPathForClass(GradleWrapperMain.class));
   }
 }

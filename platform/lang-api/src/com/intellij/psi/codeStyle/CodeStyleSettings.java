@@ -27,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -166,7 +167,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
 
-  public boolean AUTODETECT_INDENTS = false;
+  public boolean AUTODETECT_INDENTS = true;
 
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
@@ -674,7 +675,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange) {
-    return getIndentOptionsByFile(file, formatRange, false);
+    return getIndentOptionsByFile(file, formatRange, false, null);
   }
 
   /**
@@ -686,12 +687,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    *                    indent options are taken from file indent options providers.
    * @param ignoreDocOptions Ignore options stored in the document and use file indent options providers even if there is no text range
    *                         or the text range doesn't cover the entire file.
+   * @param providerProcessor A callback object containing a reference to indent option provider which has returned indent options.
    * @return Indent options from the associated document or file indent options providers.
    * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
    */
   @NotNull
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions) {
-    if (file != null && file.isValid()) {
+  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
+                                              @Nullable Processor<FileIndentOptionsProvider> providerProcessor) {
+    if (file != null && file.isValid() && file.isWritable()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {
         IndentOptions docOptions = IndentOptions.retrieveFromAssociatedDocument(file);
@@ -702,6 +705,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         if (!isFullReformat || provider.useOnFullReformat()) {
           IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
+            if (providerProcessor != null) {
+              providerProcessor.process(provider);
+            }
             logIndentOptions(file, provider, indentOptions);
             return indentOptions;
           }

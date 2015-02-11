@@ -51,6 +51,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testValueCompatibleWithThrowsStatement() throws Exception {
+    doTest(false);
+  }
+
   public void testIDEA102800() throws Exception {
     doTest();
   }
@@ -60,6 +64,22 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIgnoreNonFunctionalArgumentsWhenCheckIfFunctionalMoreSpecific() throws Exception {
+    doTest();
+  }
+
+  public void testLambdaIsNotCongruentWithFunctionalTypeWithTypeParams() throws Exception {
+    doTest();
+  }
+
+  public void testDetectPolyExpressionInReturnsOfExplicitlyTypedLambdaWhenPrimitiveCouldWin() throws Exception {
+    doTest();
+  }
+
+  public void testDetectNotEqualParametersInFunctionalTypesForExactMethodReferences() throws Exception {
+    doTest();
+  }
+
+  public void testPreferDefaultMethodsOverStatic() throws Exception {
     doTest();
   }
 

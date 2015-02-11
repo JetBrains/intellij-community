@@ -578,6 +578,10 @@
                      key="non.public.clone.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.cloning.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.cloneable.NonPublicCloneInspection"/>
+    <localInspection language="JAVA" shortName="UseOfClone" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="use.of.clone.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.cloning.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.cloneable.UseOfCloneInspection"/>
 
     <!--group.names.control.flow.issues-->
     <localInspection language="JAVA" shortName="BreakStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="break.statement.display.name"
@@ -1238,6 +1242,10 @@
                      implementationClass="com.siyeh.ig.javabeans.SuspiciousGetterSetterInspection"/>
 
     <!--group.names.javadoc.issues-->
+    <localInspection language="JAVA" shortName="DanglingJavadoc" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="dangling.javadoc.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.javadoc.DanglingJavadocInspection"/>
     <localInspection language="JAVA" shortName="HtmlTagCanBeJavadocTag" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"

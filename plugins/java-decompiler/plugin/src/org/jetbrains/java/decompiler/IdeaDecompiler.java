@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,8 +183,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }
       decompiler.decompileContext();
 
-      file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY,
-                       new ExactMatchLineNumbersMapping(saver.myMapping));
+      if (saver.myMapping != null) {
+        file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY, new ExactMatchLineNumbersMapping(saver.myMapping));
+      }
 
       return saver.myResult;
     }
@@ -344,7 +345,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private static class ExactMatchLineNumbersMapping implements LineNumbersMapping {
     private int[] myMapping;
 
-    private ExactMatchLineNumbersMapping(int[] mapping) {
+    private ExactMatchLineNumbersMapping(@NotNull int[] mapping) {
       myMapping = mapping;
     }
 

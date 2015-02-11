@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -32,10 +33,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -67,6 +65,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<Document, Pair<CharSequence, Long>> myLastCommittedTexts = ContainerUtil.newConcurrentMap();
   protected boolean myStopTrackingDocuments;
+  protected boolean myPerformBackgroundCommit = true;
 
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
@@ -699,7 +698,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (forceCommit) {
         commitDocument(document);
       }
-      else if (!((DocumentEx)document).isInBulkUpdate()) {
+      else if (!((DocumentEx)document).isInBulkUpdate() && myPerformBackgroundCommit) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document, event);
       }
     }
@@ -839,6 +838,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myLastCommittedTexts.clear();
     myUncommittedDocuments.clear();
     mySynchronizer.cleanupForNextTest();
+  }
+
+  @TestOnly
+  public void disableBackgroundCommit(@NotNull Disposable parentDisposable) {
+    assert myPerformBackgroundCommit;
+    myPerformBackgroundCommit = false;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myPerformBackgroundCommit = true;
+      }
+    });
   }
 
   @NotNull

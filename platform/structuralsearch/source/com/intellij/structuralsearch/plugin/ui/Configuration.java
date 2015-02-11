@@ -3,6 +3,8 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
+import org.jdom.Attribute;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -16,11 +18,12 @@ import org.jetbrains.annotations.NonNls;
 public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
+
   private String name = "";
   private String category = null;
   private boolean predefined;
-
-  private static ConfigurationCreator configurationCreator;
+  private long created = -1L;
 
   public String getName() {
     return name;
@@ -38,12 +41,33 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.category = category;
   }
 
+  public long getCreated() {
+    return created;
+  }
+
+  public void setCreated(long created) {
+    if (predefined) {
+      throw new AssertionError();
+    }
+    this.created = created;
+  }
+
   public void readExternal(Element element) {
     name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
+    final Attribute attribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
+    if (attribute != null) {
+      try {
+        created = attribute.getLongValue();
+      }
+      catch (DataConversionException ignore) {}
+    }
   }
 
   public void writeExternal(Element element) {
     element.setAttribute(NAME_ATTRIBUTE_NAME,name);
+    if (created > 0) {
+      element.setAttribute(CREATED_ATTRIBUTE_NAME, String.valueOf(created));
+    }
   }
 
   public boolean isPredefined() {
@@ -71,16 +95,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return name.equals(other.name);
   }
 
+  @Override
   public int hashCode() {
-    return getMatchOptions().hashCode();
-  }
-
-  public static void setActiveCreator(ConfigurationCreator creator) {
-    configurationCreator = creator;
-  }
-
-  public static ConfigurationCreator getConfigurationCreator() {
-    return configurationCreator;
+    return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
   }
 
   @NonNls public static final String CONTEXT_VAR_NAME = "__context__";

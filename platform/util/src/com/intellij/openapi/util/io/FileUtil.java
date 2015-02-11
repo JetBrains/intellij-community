@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -497,7 +497,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
-      FileSystemUtil.clonePermissions(fromFile.getPath(), toFile.getPath());
+      FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
 
@@ -1545,7 +1545,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   /**
-   * Like {@link Properties#load(java.io.Reader)}, but preserves the order of key/value pairs.
+   * Like {@link Properties#load(Reader)}, but preserves the order of key/value pairs.
    */
   @NotNull
   public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
@@ -1575,5 +1575,16 @@ public class FileUtil extends FileUtilRt {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
     return delete(success ? tempFileNameForDeletion:file);
+  }
+
+  public static boolean isFileSystemCaseSensitive(@NotNull String path) throws FileNotFoundException {
+    FileAttributes attributes = FileSystemUtil.getAttributes(path);
+    if (attributes == null) {
+      throw new FileNotFoundException(path);
+    }
+
+    FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
+    FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
+    return !(attributes.equals(upper) && attributes.equals(lower));
   }
 }

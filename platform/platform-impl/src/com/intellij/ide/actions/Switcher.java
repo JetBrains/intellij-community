@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
@@ -1147,7 +1146,7 @@ public class Switcher extends AnAction implements DumbAware {
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
 
-        // calc color the same way editor tabs do this, i.e. including extensions
+        // calc color the same way editor tabs do this, i.e. including EPs
         Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
 
         if (!selected &&  color != null) {
@@ -1169,11 +1168,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     String getNameForRendering() {
       if (myNameForRendering == null) {
-        myNameForRendering = first instanceof VirtualFilePathWrapper && ((VirtualFilePathWrapper)first).enforcePresentableName()
-          ? ((VirtualFilePathWrapper)first).getPresentablePath()
-          : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
-            ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, first)
-            : first.getName();
+        // calc name the same way editor tabs do this, i.e. including EPs
+        myNameForRendering = EditorTabbedContainer.calcTabTitle(myProject, first);
       }
       return myNameForRendering;
     }

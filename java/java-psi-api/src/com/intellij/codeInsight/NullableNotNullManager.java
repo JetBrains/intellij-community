@@ -36,7 +36,7 @@ import java.util.*;
  * User: anna
  * Date: 1/25/11
  */
-public class NullableNotNullManager implements PersistentStateComponent<Element> {
+public abstract class NullableNotNullManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
@@ -184,12 +184,16 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     if (AnnotationUtil.isAnnotated(owner, nullable ? Arrays.asList(DEFAULT_NOT_NULLS) : Arrays.asList(DEFAULT_NULLABLES), checkBases, false)) {
       return null;
     }
-    
-    if (!nullable && InferredAnnotationsManager.getInstance(owner.getProject()).ignoreInference(owner, AnnotationUtil.NOT_NULL)) {
+
+    if (!nullable && hasHardcodedContracts(owner)) {
       return null;
     }
-
+    
     return findNullabilityDefaultInHierarchy(owner, nullable);
+  }
+
+  protected boolean hasHardcodedContracts(PsiElement element) {
+    return false;
   }
 
   @Nullable

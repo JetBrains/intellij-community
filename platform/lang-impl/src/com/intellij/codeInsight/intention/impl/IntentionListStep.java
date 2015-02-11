@@ -27,6 +27,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -320,6 +322,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     if (a instanceof LowPriorityAction) {
       return group - 3;
+    }
+    if (a instanceof SuppressIntentionActionFromFix) {
+      if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+        return group - 1;
+      }
     }
     if (a instanceof QuickFixWrapper) {
       final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();

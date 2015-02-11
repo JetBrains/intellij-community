@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,8 +127,8 @@ public class DebuggerUIUtil {
                                           JComponent component,
                                           @Nullable final FullValueEvaluationCallbackImpl callback) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null);
-    builder.setResizable(true)
-        .setMovable(true)
+    builder.setResizable(true)/*.setAlpha(1)*/ // alpha disabled because of IDEA-136331
+      .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
         .setRequestFocus(false);
       if (callback != null) {

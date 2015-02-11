@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,7 +120,7 @@ public class IgnoredFileBean {
     }
     else {
       // quick check for 'file' == exact match pattern
-      if (IgnoreSettingsType.FILE.equals(myType) && !myFilenameIfFile.equals(file.getName())) return false;
+      if (IgnoreSettingsType.FILE.equals(myType) && !StringUtil.equals(myFilenameIfFile, file.getNameSequence())) return false;
 
       VirtualFile selector = resolve();
       if (Comparing.equal(selector, NullVirtualFile.INSTANCE)) return false;

@@ -15,6 +15,10 @@
  */
 package com.intellij.ide.browsers;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Url;
@@ -37,5 +41,9 @@ public abstract class WebBrowserService {
   public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     OpenInBrowserRequest request = OpenInBrowserRequest.create(element);
     return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);
+  }
+
+  public static boolean isHtmlOrXmlFile(@NotNull Language language) {
+    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
   }
 }

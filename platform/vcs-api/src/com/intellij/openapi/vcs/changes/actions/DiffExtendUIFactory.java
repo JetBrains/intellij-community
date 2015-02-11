@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+@Deprecated
 public interface DiffExtendUIFactory {
   DiffExtendUIFactory NONE = new DiffExtendUIFactory() {
     public List<? extends AnAction> createActions(Change change) {

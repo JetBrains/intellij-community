@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.progress;
 import com.intellij.util.SystemProperties;
 
 public class ProcessCanceledException extends RuntimeException {
-  private static final boolean ourHasStackTraces = SystemProperties.getBooleanProperty("idea.is.internal", false);
+  private static final boolean ourHasStackTraces = SystemProperties.getBooleanProperty("idea.is.internal", false) || SystemProperties.getBooleanProperty("idea.is.unit.test", false);
 
   public ProcessCanceledException() {
   }

@@ -55,6 +55,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      });
   }
 
+  public void testPlaceInsideLoopAndRename() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("expr");
+      }
+    });
+  }
+  
   public void testRanges() throws Exception {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override

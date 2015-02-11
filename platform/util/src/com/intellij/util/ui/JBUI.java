@@ -15,14 +15,26 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.border.CustomLineBorder;
+
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JBUI {
-  private static boolean IS_HIDPI = "true".equals(System.getProperty("hidpi"));
+  private static boolean IS_HIDPI = ("true".equals(System.getProperty("hidpi")) || getSystemDPI() >= 144)
+                                    && !("false".equals(System.getProperty("hidpi")));
+
+  private static int getSystemDPI() {
+    try {
+      return Toolkit.getDefaultToolkit().getScreenResolution();
+    } catch (HeadlessException e) {
+      return 96;
+    }
+  }
 
   public static int scale(int i) {
     return isHiDPI() ? 2 * i : i;
@@ -30,6 +42,10 @@ public class JBUI {
 
   public static JBDimension size(int width, int height) {
     return new JBDimension(width, height);
+  }
+
+  public static JBDimension size(int widthAndHeight) {
+    return new JBDimension(widthAndHeight, widthAndHeight);
   }
 
   public static JBDimension size(Dimension size) {
@@ -52,8 +68,28 @@ public class JBUI {
     return new JBInsets(0, 0, 0, 0);
   }
 
+  public static JBInsets insetsTop(int t) {
+    return insets(t, 0, 0, 0);
+  }
+
+  public static JBInsets insetsLeft(int l) {
+    return insets(0, l, 0, 0);
+  }
+
+  public static JBInsets insetsBottom(int b) {
+    return insets(0, 0, b, 0);
+  }
+
+  public static JBInsets insetsRight(int r) {
+    return insets(0, 0, 0, r);
+  }
+
   public static EmptyIcon emptyIcon(int i) {
     return (EmptyIcon)EmptyIcon.create(scale(i));
+  }
+
+  public static JBDimension emptySize() {
+    return new JBDimension(0, 0);
   }
 
   public static float scale(float f) {
@@ -95,8 +131,32 @@ public class JBUI {
       return new JBEmptyBorder(top, left, bottom, right);
     }
 
+    public static JBEmptyBorder empty(int topAndBottom, int leftAndRight) {
+      return new JBEmptyBorder(topAndBottom, leftAndRight, topAndBottom, leftAndRight);
+    }
+
+    public static JBEmptyBorder emptyTop(int offset) {
+      return new JBEmptyBorder(offset, 0, 0, 0);
+    }
+
+    public static JBEmptyBorder emptyLeft(int offset) {
+      return new JBEmptyBorder(0, offset,  0, 0);
+    }
+
+    public static JBEmptyBorder emptyBottom(int offset) {
+      return new JBEmptyBorder(0, 0, offset, 0);
+    }
+
+    public static JBEmptyBorder emptyRight(int offset) {
+      return new JBEmptyBorder(0, 0, 0, offset);
+    }
+
     public static JBEmptyBorder empty() {
       return new JBEmptyBorder(0);
+    }
+
+    public static Border customLine(Color color, int top, int left, int bottom, int right) {
+      return new CustomLineBorder(color, insets(top, left, bottom, right));
     }
   }
 }

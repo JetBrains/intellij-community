@@ -243,11 +243,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (myPanels == null) {
       synchronized (myInitLock) {
         if (myPanels == null) {
-          myPanels = new JPanel(new BorderLayout());
-          myPanels.setOpaque(false);
-          myPanels.setBorder(new MyBorder());
+          final JPanel panel = new JPanel(new BorderLayout());
+          panel.setOpaque(false);
+          panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
-          myPanels.add(mySplitters, BorderLayout.CENTER);
+          panel.add(mySplitters, BorderLayout.CENTER);
+          myPanels = panel;
         }
       }
     }
@@ -761,7 +762,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (compositeRef.isNull()) {
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.
-      newProviders = getAvailableProviders(file);
+      newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file);
       if (newProviders.length == 0) {
         return Pair.create(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY);
       }
@@ -957,22 +958,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         editor.setState(state);
       }
     }
-  }
-
-  @NotNull
-  private FileEditorProvider[] getAvailableProviders(@NotNull VirtualFile file) {
-    final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
-    if (DumbService.getInstance(myProject).isDumb()) {
-      final List<FileEditorProvider> dumbAware = ContainerUtil.findAll(providers, new Condition<FileEditorProvider>() {
-        @Override
-        public boolean value(FileEditorProvider fileEditorProvider) {
-          return DumbService.isDumbAware(fileEditorProvider);
-        }
-      });
-      providers = dumbAware.toArray(new FileEditorProvider[dumbAware.size()]);
-    }
-    return providers;
   }
 
   @NotNull

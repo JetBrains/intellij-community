@@ -46,12 +46,14 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.NonFocusableCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -127,7 +129,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void restoreState(PsiVariable psiField) {
+  protected String getRefactoringId() {
+    return "refactoring.extractVariable";
+  }
+
+  @Override
+  protected void restoreState(@NotNull PsiVariable psiField) {
     if (myDeleteSelf) return;
     super.restoreState(psiField);
   }
@@ -141,7 +148,10 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   protected void performCleanup() {
     super.performCleanup();
-    super.restoreState(getVariable());
+    PsiVariable variable = getVariable();
+    if (variable != null) {
+      super.restoreState(variable);
+    }
   }
 
   @Override
@@ -152,6 +162,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     } else {
       super.deleteTemplateField(variable);
     }
+  }
+
+  @Override
+  protected PsiExpression getBeforeExpr() {
+    final PsiVariable variable = getVariable();
+    if (variable != null) {
+      return variable.getInitializer();
+    }
+    return super.getBeforeExpr();
   }
 
   @Override
@@ -270,6 +289,14 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       LOG.assertTrue(expr.isValid(), expr.getText());
       stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
     }
+  }
+
+  @Override
+  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+    if (!isReplaceAllOccurrences() && getExpr() == null && !myReplaceSelf) {
+      return;
+    }
+    super.addReferenceAtCaret(refs);
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,

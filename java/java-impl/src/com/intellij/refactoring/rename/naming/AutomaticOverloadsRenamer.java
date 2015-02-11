@@ -38,7 +38,7 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
   }
 
   public String getDialogTitle() {
-    return "Rename overloads";
+    return "Rename Overloads";
   }
 
   public String getDialogDescription() {

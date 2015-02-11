@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,21 +36,17 @@ import java.util.List;
 
 public class OpenFileDescriptor implements Navigatable {
   /**
-   * Tells descriptor to navigate in specific editor rather than file editor
-   * in main IDEA window.
-   * For example if you want to navigate in editor embedded into modal dialog,
-   * you should provide this data.
+   * Tells descriptor to navigate in specific editor rather than file editor in main IDEA window.
+   * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
 
-  @NotNull
+  private final Project myProject;
   private final VirtualFile myFile;
-  private final int myOffset;
   private final int myLogicalLine;
   private final int myLogicalColumn;
+  private final int myOffset;
   private final RangeMarker myRangeMarker;
-  @NotNull
-  private final Project myProject;
 
   private boolean myUseCurrentWindow = false;
 
@@ -62,8 +58,7 @@ public class OpenFileDescriptor implements Navigatable {
     this(project, file, logicalLine, logicalColumn, -1, false);
   }
 
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
-                            int logicalLine, int logicalColumn, boolean persistent) {
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, boolean persistent) {
     this(project, file, logicalLine, logicalColumn, -1, persistent);
   }
 
@@ -71,10 +66,8 @@ public class OpenFileDescriptor implements Navigatable {
     this(project, file, -1, -1, -1, false);
   }
 
-  private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
-                             int logicalLine, int logicalColumn, int offset, boolean persistent) {
+  private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, int offset, boolean persistent) {
     myProject = project;
-
     myFile = file;
     myLogicalLine = logicalLine;
     myLogicalColumn = logicalColumn;
@@ -139,7 +132,7 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   private boolean navigateInRequestedEditor() {
-    DataContext ctx = DataManager.getInstance().getDataContext();
+    @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
     Editor e = NAVIGATE_IN_EDITOR.getData(ctx);
     if (e == null) return false;
     if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), myFile)) return false;

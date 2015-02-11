@@ -669,6 +669,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   // made public for tests
   public void compact() throws IOException {
     synchronized (myEnumerator) {
+      force();
       LOG.info("Compacting "+myEnumerator.myFile.getPath());
       LOG.info("Live keys:" + ((int)(myLiveAndGarbageKeysCounter  / LIVE_KEY_MASK)) +
                ", dead keys:" + ((int)(myLiveAndGarbageKeysCounter & DEAD_KEY_NUMBER_MASK)) +

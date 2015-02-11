@@ -62,12 +62,14 @@ public class GradleStartupActivity implements StartupActivity {
   public void runActivity(@NotNull final Project project) {
     configureBuildClasspath(project);
     showNotificationForUnlinkedGradleProject(project);
+
+    final GradleResourceCompilerConfigurationGenerator buildConfigurationGenerator = new GradleResourceCompilerConfigurationGenerator(project);
     CompilerManager.getInstance(project).addBeforeTask(new CompileTask() {
       @Override
       public boolean execute(CompileContext context) {
         AccessToken token = ReadAction.start();
         try {
-          new GradleResourceCompilerConfigurationGenerator(project, context).generateBuildConfiguration();
+          buildConfigurationGenerator.generateBuildConfiguration(context);
         }
         finally {
           token.finish();

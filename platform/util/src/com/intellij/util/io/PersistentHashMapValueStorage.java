@@ -38,10 +38,19 @@ public class PersistentHashMapValueStorage {
   private volatile long mySize;
   private final File myFile;
   private final String myPath;
+  private final ExceptionalIOCancellationCallback myExceptionalIOCancellationCallback;
   private boolean myCompactionMode = false;
 
   private static final int CACHE_PROTECTED_QUEUE_SIZE = 10;
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
+
+  public static class CreationTimeOptions {
+    public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
+  }
+
+  public interface ExceptionalIOCancellationCallback {
+    void checkCancellation();
+  }
 
   // cache size is twice larger than constants because (when used) it replaces two caches
   private static final FileAccessorCache<RandomAccessFileWithLengthAndSizeTracking> ourRandomAccessFileCache = new FileAccessorCache<RandomAccessFileWithLengthAndSizeTracking>(
@@ -93,6 +102,7 @@ public class PersistentHashMapValueStorage {
   };
 
   public PersistentHashMapValueStorage(String path) throws IOException {
+    myExceptionalIOCancellationCallback = CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
     myPath = path;
     myFile = new File(path);
     mySize = myFile.length();  // volatile write
@@ -322,6 +332,7 @@ public class PersistentHashMapValueStorage {
   public ReadResult readBytes(long tailChunkAddress) throws IOException {
     force();
 
+    checkCancellation();
     long chunk = tailChunkAddress;
     int chunkCount = 0;
 
@@ -362,6 +373,8 @@ public class PersistentHashMapValueStorage {
 
         chunk = prevChunkAddress;
         chunkCount++;
+
+        if (prevChunkAddress != 0) checkCancellation();
         if (result.length > mySize) {
           throw new PersistentEnumeratorBase.CorruptedException(myFile);
         }
@@ -377,11 +390,17 @@ public class PersistentHashMapValueStorage {
     }
 
     if (chunkCount > 1 && !myCompactionMode) {
+      checkCancellation();
       long l = appendBytes(new ByteSequence(result), 0);
       return new ReadResult(l, result);
     }
 
     return new ReadResult(tailChunkAddress, result);
+  }
+
+  // hook for exceptional termination of long io operation
+  protected void checkCancellation() {
+    if (myExceptionalIOCancellationCallback != null) myExceptionalIOCancellationCallback.checkCancellation();
   }
 
   private long readPrevChunkAddress(long chunk) throws IOException {

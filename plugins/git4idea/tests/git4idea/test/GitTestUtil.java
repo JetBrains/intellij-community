@@ -31,17 +31,17 @@ import git4idea.GitVcs;
 import git4idea.config.GitVersion;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-import static com.intellij.openapi.vcs.Executor.*;
-import static git4idea.test.GitExecutor.addCommit;
-import static git4idea.test.GitExecutor.git;
-import static git4idea.test.GitExecutor.last;
+import static com.intellij.openapi.vcs.Executor.append;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.mkdir;
+import static com.intellij.openapi.vcs.Executor.touch;
+import static git4idea.test.GitExecutor.*;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
@@ -117,13 +117,6 @@ public class GitTestUtil {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file);
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
-  }
-
-  /**
-   * Default port will be occupied by main idea instance => define the custom default to avoid searching of free port
-   */
-  public static void setDefaultBuiltInServerPort() {
-    System.setProperty(BuiltInServerManagerImpl.PROPERTY_RPC_PORT, "64463");
   }
 
   public static void assumeSupportedGitVersion(@NotNull GitVcs vcs) {

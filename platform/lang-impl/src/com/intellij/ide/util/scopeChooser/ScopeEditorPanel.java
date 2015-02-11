@@ -38,6 +38,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
@@ -237,11 +238,11 @@ public class ScopeEditorPanel {
     myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final boolean recursiveEnabled = isButtonEnabled(true, e.getPaths(), e);
+        final boolean recursiveEnabled = isButtonEnabled(true);
         includeRec.setEnabled(recursiveEnabled);
         excludeRec.setEnabled(recursiveEnabled);
 
-        final boolean nonRecursiveEnabled = isButtonEnabled(false, e.getPaths(), e);
+        final boolean nonRecursiveEnabled = isButtonEnabled(false);
         include.setEnabled(nonRecursiveEnabled);
         exclude.setEnabled(nonRecursiveEnabled);
       }
@@ -279,19 +280,6 @@ public class ScopeEditorPanel {
     });
 
     return buttonsPanel;
-  }
-
-  static boolean isButtonEnabled(boolean rec, TreePath[] paths, TreeSelectionEvent e) {
-    if (paths != null) {
-      for (TreePath path : paths) {
-        if (!e.isAddedPath(path)) continue;
-        final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-        if (PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, rec) != null) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   boolean isButtonEnabled(boolean rec) {

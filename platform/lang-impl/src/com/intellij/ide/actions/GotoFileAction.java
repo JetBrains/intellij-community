@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +33,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +54,11 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
 
   @Override
   public void gotoActionPerformed(AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
     final Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
+
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
     GotoActionCallback<FileType> callback = new GotoActionCallback<FileType>() {
       @Override
@@ -71,9 +76,10 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
 
             //this is for better cursor position
             if (element instanceof PsiFile) {
-              VirtualFile vfile = ((PsiFile)element).getVirtualFile();
-              if (vfile == null) return;
-              n = new OpenFileDescriptor(project, vfile, popup.getLinePosition(), popup.getColumnPosition()).setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+              VirtualFile file = ((PsiFile)element).getVirtualFile();
+              if (file == null) return;
+              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
+              n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
             }
 
             if (!n.canNavigate()) return;
@@ -82,8 +88,8 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
         }, ModalityState.NON_MODAL);
       }
     };
-    PsiElement context = getPsiContext(e);
-    showNavigationPopup(e, gotoFileModel, callback, "Files matching pattern", true, true, new GotoFileItemProvider(project, context));
+    GotoFileItemProvider provider = new GotoFileItemProvider(project, getPsiContext(e));
+    showNavigationPopup(e, gotoFileModel, callback, IdeBundle.message("go.to.file.toolwindow.title"), true, true, provider);
   }
 
   protected static class GotoFileFilter extends ChooseByNameFilter<FileType> {
@@ -148,5 +154,4 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       return o1.getName().compareToIgnoreCase(o2.getName());
     }
   }
-
 }

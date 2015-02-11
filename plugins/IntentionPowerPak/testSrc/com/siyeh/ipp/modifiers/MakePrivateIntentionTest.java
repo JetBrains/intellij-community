@@ -27,6 +27,7 @@ public class MakePrivateIntentionTest extends IPPTestCase {
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
   public void testMethod() { doTest(); }
+  public void testAnnotatedMember() { doTest(); }
 
   @Override
   protected String getRelativePath() {

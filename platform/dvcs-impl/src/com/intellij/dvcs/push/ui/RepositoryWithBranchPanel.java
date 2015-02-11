@@ -147,10 +147,10 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
       myRepositoryCheckbox.setVisible(true);
       if (myCheckBoxLoadingIconGapH < 0) {
         myTextRenderer.append("");
-        myTextRenderer.appendFixedTextFragmentWidth(calculateRendererShiftH(myTextRenderer));
+        myTextRenderer.appendTextPadding(calculateRendererShiftH(myTextRenderer));
       }
       myTextRenderer.append(getRepositoryName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
-      myTextRenderer.appendFixedTextFragmentWidth(120);
+      myTextRenderer.appendTextPadding(120);
     }
     else {
       myRepositoryCheckbox.setVisible(false);

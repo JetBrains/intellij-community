@@ -2,6 +2,7 @@ package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -117,5 +118,23 @@ public class JsonPsiUtil {
    */
   public static boolean hasElementType(@NotNull PsiElement element, IElementType... types) {
     return element.getNode() != null && hasElementType(element.getNode(), types);
+  }
+
+  /**
+   * Returns text of the given PSI element. Unlike obvious {@link PsiElement#getText()} this method unescapes text of the element if latter
+   * belongs to injected code fragment using {@link InjectedLanguageManager#getUnescapedText(PsiElement)}.
+   *
+   * @param element PSI element which text is needed
+   * @return text of the element with any host escaping removed
+   */
+  @NotNull
+  public static String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
+    if (manager.isInjectedFragment(element.getContainingFile())) {
+      return manager.getUnescapedText(element);
+    }
+    else {
+      return element.getText();
+    }
   }
 }

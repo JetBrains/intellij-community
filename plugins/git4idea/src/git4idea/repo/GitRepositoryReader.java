@@ -80,11 +80,22 @@ class GitRepositoryReader {
   @NotNull
   GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
     Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> branches = readBranches(remotes);
+    Set<GitLocalBranch> localBranches = branches.first;
+
     HeadInfo headInfo = readHead();
     Repository.State state = readRepositoryState(headInfo);
-    GitLocalBranch currentBranch = findCurrentBranch(headInfo, state, branches.first);
-    String currentRevision = getCurrentRevision(headInfo, currentBranch);
-    return new GitBranchState(currentRevision, currentBranch, state, branches.first, branches.second);
+
+    GitLocalBranch currentBranch;
+    String currentRevision;
+    if (localBranches.isEmpty() && headInfo.content != null) {
+      currentBranch = new GitLocalBranch(headInfo.content, GitBranch.DUMMY_HASH);
+      currentRevision = null;
+    }
+    else {
+      currentBranch = findCurrentBranch(headInfo, state, localBranches);
+      currentRevision = getCurrentRevision(headInfo, currentBranch);
+    }
+    return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
   }
 
   @Nullable

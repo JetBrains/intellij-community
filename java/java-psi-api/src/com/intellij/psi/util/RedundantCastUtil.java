@@ -204,7 +204,14 @@ public class RedundantCastUtil {
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = ((PsiTypeCastExpression)rExpr).getOperand();
         if (castOperand != null) {
-          PsiType operandType = castOperand.getType();
+          PsiType operandType;
+          if (castOperand instanceof PsiTypeCastExpression) {
+            final PsiExpression nestedCastOperand = ((PsiTypeCastExpression)castOperand).getOperand();
+            operandType = nestedCastOperand != null ? nestedCastOperand.getType() : null;
+          }
+          else {
+            operandType = castOperand.getType();
+          }
           if (operandType != null) {
             if (lType != null && TypeConversionUtil.isAssignable(lType, operandType, false)) {
               addToResults((PsiTypeCastExpression)rExpr);
@@ -549,6 +556,14 @@ public class RedundantCastUtil {
           final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
           LOG.assertTrue(initializer != null, operand.getText());
           opType = initializer.getType();
+
+          if (opType != null) {
+            final PsiExpression expr = PsiUtil.skipParenthesizedExprDown(operand);
+            if (expr instanceof PsiConditionalExpression) {
+              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)expr).getThenExpression())) return;
+              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)expr).getElseExpression())) return;
+            }
+          }
         }
         catch (IncorrectOperationException ignore) {}
       }
@@ -629,6 +644,16 @@ public class RedundantCastUtil {
           addToResults(typeCast);
         }
       }
+    }
+
+    private static boolean isApplicableForConditionalBranch(PsiType opType, PsiExpression thenExpression) {
+      if (thenExpression != null) {
+        final PsiType thenType = thenExpression.getType();
+        if (thenType != null && !TypeConversionUtil.isAssignable(opType, thenType)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private static boolean arrayAccessAtTheLeftSideOfAssignment(PsiElement element) {

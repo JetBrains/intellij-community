@@ -23,6 +23,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Base class for {@link EditorActionHandler} instances, which need to modify the document.
+ * Implementations should override {@link #executeWriteAction(Editor, Caret, DataContext)}.
+ */
 public abstract class EditorWriteActionHandler extends EditorActionHandler {
   private boolean inExecution;
 
@@ -34,7 +38,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public final void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
+  public void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
     if (editor.isViewer()) return;
 
     if (dataContext != null) {
@@ -63,7 +67,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
   /**
    * @deprecated Use/override
-   * {@link #executeWriteAction(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * {@link #executeWriteAction(Editor, Caret, DataContext)}
    * instead.
    */
   public void executeWriteAction(Editor editor, DataContext dataContext) {

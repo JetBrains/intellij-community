@@ -37,6 +37,7 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
       Response response = Request.Post(url).bodyForm(Form.form().
         add("content", content).
         add("uuid", UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())).
+        add("patch", String.valueOf(false)).
         add("ide", ApplicationNamesInfo.getInstance().getProductName()).build()).execute();
 
       final HttpResponse httpResponse = response.returnResponse();

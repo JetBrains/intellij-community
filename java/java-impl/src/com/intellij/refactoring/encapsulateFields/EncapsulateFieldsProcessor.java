@@ -167,7 +167,19 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return showConflicts(conflicts, refUsages.get());
+
+    UsageInfo[] infos = refUsages.get();
+    for (UsageInfo info : infos) {
+      PsiElement element = info.getElement();
+      if (element != null) {
+        PsiElement parent = element.getParent();
+        if (RefactoringUtil.isPlusPlusOrMinusMinus(parent) && !(parent.getParent() instanceof PsiExpressionStatement)) {
+          conflicts.putValue(parent, "Unable to proceed with postfix/prefix expression when it's result type is used");
+        }
+      }
+    }
+
+    return showConflicts(conflicts, infos);
   }
 
   private void checkExistingMethods(MultiMap<PsiElement, String> conflicts, boolean isGetter) {

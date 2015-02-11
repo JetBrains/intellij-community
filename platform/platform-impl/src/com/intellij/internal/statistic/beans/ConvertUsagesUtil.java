@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic.beans;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -40,10 +41,13 @@ public class ConvertUsagesUtil {
 
     StringBuffer buffer = new StringBuffer();
     for (Map.Entry<GroupDescriptor, Set<T>> entry : sortedMap.entrySet()) {
-      buffer.append(entry.getKey().getId());
-      buffer.append(GROUP_SEPARATOR);
-      buffer.append(convertValueMap(entry.getValue()));
-      buffer.append(GROUPS_SEPARATOR);
+      String value = convertValueMap(entry.getValue());
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        buffer.append(entry.getKey().getId());
+        buffer.append(GROUP_SEPARATOR);
+        buffer.append(value);
+        buffer.append(GROUPS_SEPARATOR);
+      }
     }
 
     return buffer.toString();
@@ -52,20 +56,25 @@ public class ConvertUsagesUtil {
   //@NotNull
   public static String convertValueMap(Set<? extends UsageDescriptor> descriptors) {
     assert descriptors != null;
+    if (descriptors.isEmpty()) return "";
     final StringBuffer buffer = new StringBuffer();
     for (UsageDescriptor usageDescriptor : descriptors) {
-      buffer.append(usageDescriptor.getKey());
-      buffer.append("=");
-      buffer.append(usageDescriptor.getValue());
-      buffer.append(GROUP_VALUE_SEPARATOR);
+      int value = usageDescriptor.getValue();
+      if (value != 0) {
+        buffer.append(usageDescriptor.getKey());
+        buffer.append("=");
+        buffer.append(value);
+        buffer.append(GROUP_VALUE_SEPARATOR);
+      }
     }
+    if (buffer.length() == 0) return "";
     buffer.deleteCharAt(buffer.length() - 1);
 
     return buffer.toString();
   }
 
   //@NotNull
-  public static String cutPatchString(String patchStr, int maxSize) {
+  public static String cutDataString(String patchStr, int maxSize) {
     assert patchStr != null;
     for (int i = maxSize - 1; i >= 0; i--) {
       final char c = patchStr.charAt(i);

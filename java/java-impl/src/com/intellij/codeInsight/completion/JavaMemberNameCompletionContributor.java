@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -394,7 +395,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (fieldType.equals(varType)) {
         final String getterName = PropertyUtil.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
-             psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
+             psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);
         }
       }
@@ -402,7 +403,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (PsiType.VOID.equals(varType)) {
         final String setterName = PropertyUtil.suggestSetterName(field);
         if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
-             psiClass.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true) == null)) {
+             psiClass.findMethodBySignature(GenerateMembersUtil.generateSetterPrototype(field), true) == null)) {
           propertyHandlers.add(setterName);
         }
       }

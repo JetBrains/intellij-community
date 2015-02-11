@@ -17,16 +17,14 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UseJBColor")
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
-
-  private static final int ACTIVE_TAB_SHADOW_HEIGHT = 3;
 
   @Override
   public void doPaintInactive(Graphics2D g2d,
@@ -39,92 +37,53 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
                               int row,
                               int column,
                               boolean vertical) {
-    if (tabColor != null) {
-      g2d.setPaint(UIUtil.getGradientPaint(x, y, Gray._200, x, y + effectiveBounds.height, Gray._130));
-      g2d.fillRect(x, y, w, h);
-
-      g2d.setColor(ColorUtil.toAlpha(tabColor, 150));
-      g2d.fillRect(x, y, w, h);
-    } else {
-      g2d.setPaint(UIUtil.getGradientPaint(x, y, Gray._255.withAlpha(180), x, y + effectiveBounds.height, Gray._255.withAlpha(100)));
-      g2d.fillRect(x, y, w, h);
-    }
-
-
-    // Push top row under the navbar or toolbar and have a blink over previous row shadow for 2nd and subsequent rows.
-    if (row == 0) {
-      g2d.setColor(Gray._200.withAlpha(200));
-    }
-    else {
-      g2d.setColor(Gray._255.withAlpha(100));
-    }
-
-    g2d.drawLine(x, y, x + w - 1, y);
+    ;
+    g2d.setColor(tabColor != null ? tabColor : getDefaultTabColor());
+    g2d.fillRect(x, y, w, h);
+    g2d.setColor(getInactiveMaskColor());
+    g2d.fillRect(x, y, w, h);
 
     if (!vertical) {
-      drawShadow(g2d, x, w, y + h);
+      drawShadowLines(g2d, x, y, w);
     }
-  }
-
-  private static void drawShadow(Graphics2D g, int x, int w, int shadowBottom) {
-    int shadowTop = shadowBottom - ACTIVE_TAB_SHADOW_HEIGHT;
-    g.setPaint(UIUtil.getGradientPaint(x, shadowTop, Gray.TRANSPARENT,
-                                   x, shadowBottom, Gray._0.withAlpha(30)));
-    g.fillRect(x, shadowTop, w, ACTIVE_TAB_SHADOW_HEIGHT);
   }
 
   @Override
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
-    g.setColor(UIUtil.getPanelBackground());
+    g.setColor(getBackgroundColor());
     g.fill(clip);
-
-    g.setColor(Gray._0.withAlpha(80));
-    g.fill(clip);
-
-    final int x = rectangle.x;
-    final int y = rectangle.y;
-    g.setPaint(UIUtil.getGradientPaint(x, y, Gray._255.withAlpha(160),
-                                 x, rectangle.y + rectangle.height, Gray._255.withAlpha(120)));
-    g.fillRect(x, rectangle.y, rectangle.width, rectangle.height + (vertical ? 1 : 0));
-
     if (!vertical) {
-      g.setColor(Gray._210);
-      g.drawLine(x, rectangle.y, x + rectangle.width, rectangle.y);
-
-      drawShadow(g, rectangle.x, rectangle.width, rectangle.y + rectangle.height);
+      drawShadowLines(g, rectangle.x, rectangle.y, rectangle.width);
     }
   }
 
-  private static Color multiplyColor(Color c) {
-    //noinspection UseJBColor
-    return new Color(c.getRed() * c.getRed() / 255, c.getGreen() * c.getGreen() / 255, c.getBlue() * c.getBlue() / 255);
+  private void drawShadowLines(Graphics g, int x, int y, int width) {
+    g.setColor(ColorUtil.withAlpha(getShadowBaseColor(), .5));
+    g.drawLine(x, y, x + width, y);
+    g.setColor(ColorUtil.withAlpha(getShadowBaseColor(), .2));
+    g.drawLine(x, y+1, x + width, y+1);
   }
 
   public void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height) {
-    if (tabColor != null) {
-      g.setColor(multiplyColor(tabColor));
-      g.fill(selectedShape.fillPath.getShape());
-
-      g.setPaint(UIUtil.getGradientPaint(x, y, Gray._255.withAlpha(150), x, y + height, Gray._255.withAlpha(0)));
-    } else {
-      g.setPaint(UIUtil.getGradientPaint(x, y, Gray._255, x, y + height, Gray._230));
-    }
-
+    g.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g.fill(selectedShape.fillPath.getShape());
-
-    g.setColor(Gray._255.withAlpha(180));
     g.draw(selectedShape.fillPath.getShape());
-
-    // fix right side due to swing stupidity (fill & draw will occupy different shapes)
-    g.draw(selectedShape.labelPath
-               .transformLine(selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getY() +
-                                                                                                     selectedShape.labelPath.deltaY(1),
-                              selectedShape.labelPath.getMaxX() - selectedShape.labelPath.deltaX(1), selectedShape.labelPath.getMaxY() -
-                                                                                                     selectedShape.labelPath.deltaY(4)));
   }
 
   @Override
   public Color getBackgroundColor() {
-    return Gray._142;
+    return Gray._177;
+  }
+
+  protected Color getDefaultTabColor() {
+    return Color.WHITE;
+  }
+
+  protected Color getInactiveMaskColor() {
+    return ColorUtil.withAlpha(new Color(0x262626), .2);
+  }
+
+  protected Color getShadowBaseColor() {
+    return new Color(0xbababa);
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,11 +126,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myTitle;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     withTitle(title);
   }
 
-  public FileChooserDescriptor withTitle(String title) {
+  public FileChooserDescriptor withTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = title;
     return this;
   }

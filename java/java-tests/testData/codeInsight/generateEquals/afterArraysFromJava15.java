@@ -21,8 +21,7 @@ class Test {
 
     public int hashCode() {
         int result = myOs != null ? Arrays.hashCode(myOs) : 0;
-        result = 31 * result + (myIIs != null ? // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(myIIs) : 0);
+        result = 31 * result + (myIIs != null ? Arrays.deepHashCode(myIIs) : 0);
         result = 31 * result + (myIs != null ? Arrays.hashCode(myIs) : 0);
         return result;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 public final class ReadOnlyModificationException extends RuntimeException {
   private final VirtualFile myFile;
 
-  public ReadOnlyModificationException(@NotNull VirtualFile file) {
+  public ReadOnlyModificationException(@NotNull VirtualFile file, @NotNull  Throwable cause) {
+    super(cause);
+
     myFile = file;
   }
 

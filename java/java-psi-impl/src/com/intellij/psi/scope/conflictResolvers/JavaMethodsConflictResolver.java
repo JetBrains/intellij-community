@@ -534,6 +534,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           return Specifics.FIRST;
         }
 
+        if (method1.hasModifierProperty(PsiModifier.DEFAULT) && method2.hasModifierProperty(PsiModifier.STATIC)) {
+          return Specifics.FIRST;
+        }
+
+        if (method2.hasModifierProperty(PsiModifier.DEFAULT) && method1.hasModifierProperty(PsiModifier.STATIC)) {
+          return Specifics.SECOND;
+        }
       }
 
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && myArgumentsList instanceof PsiExpressionList && (typeParameters1.length == 0 || typeParameters2.length == 0)) {
@@ -615,12 +622,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           return Specifics.SECOND;
         }
       }
+      else if (MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
+               MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor(false)), method1.getSignature(info1.getSubstitutor(false)))) {
+        return Specifics.FIRST;
+      }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
-        if (MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) && 
-            MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor(false)), method1.getSignature(info1.getSubstitutor(false)))) {
-          return Specifics.FIRST;
-        }
-        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
+        if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
           return Specifics.FIRST;
         }
       }

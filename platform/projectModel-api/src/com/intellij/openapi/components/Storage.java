@@ -39,5 +39,5 @@ public @interface Storage {
   RoamingType roamingType() default RoamingType.PER_USER;
 
   Class<? extends StateStorage> storageClass() default StateStorage.class;
-  Class<? extends StateSplitter> stateSplitter() default StateSplitter.class;
+  Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 }

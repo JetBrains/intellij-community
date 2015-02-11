@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -51,8 +50,6 @@ public class HgRevertCommand {
       options.add("--no-backup");
     }
     options.addAll(files);
-    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", options);
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
-    return result;
+    return new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", options);
   }
 }

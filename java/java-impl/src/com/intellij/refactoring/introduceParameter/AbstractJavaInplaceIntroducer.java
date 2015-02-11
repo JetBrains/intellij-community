@@ -92,7 +92,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   @Override
-  protected void restoreState(PsiVariable psiField) {
+  protected void restoreState(@NotNull PsiVariable psiField) {
     final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(getType());
     super.restoreState(psiField);
     for (PsiExpression occurrence : myOccurrences) {

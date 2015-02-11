@@ -17,10 +17,8 @@ package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -31,7 +29,7 @@ import java.util.Set;
 class JdkInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     final String vendor = System.getProperty("java.vendor", "Unknown");
     for (String version : new String[]{"1.9", "1.8", "1.7", "1.6"}) {
       if (SystemInfo.isJavaVersionAtLeast(version)) {

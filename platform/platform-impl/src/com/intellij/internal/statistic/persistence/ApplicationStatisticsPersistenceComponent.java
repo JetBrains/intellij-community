@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -46,6 +47,9 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   implements ApplicationComponent, PersistentStateComponent<Element> {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
+  private final Alarm myAlarm;
+  private final long PERSIST_PERIOD = 24*60*60*1000; //1 day
+
   private static final String TOKENIZER = ",";
 
   @NonNls
@@ -56,9 +60,15 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   @NonNls
   private static final String PROJECT_TAG = "project";
   @NonNls
+  private static final String COLLECTION_TIME_TAG = "collectionTime";
+  @NonNls
   private static final String PROJECT_ID_ATTR = "id";
   @NonNls
   private static final String VALUES_ATTR = "values";
+
+  public ApplicationStatisticsPersistenceComponent() {
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+  }
 
   public static ApplicationStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationStatisticsPersistenceComponent.class);
@@ -80,7 +90,13 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
               frameworkDescriptors.add(descriptor);
             }
           }
-          getApplicationData(groupDescriptor).put(projectId, frameworkDescriptors);
+          long collectionTime;
+          try {
+            collectionTime = Long.valueOf(projectElement.getAttributeValue(COLLECTION_TIME_TAG));
+          } catch (NumberFormatException ignored) {
+            collectionTime = 0;
+          }
+          getApplicationData(groupDescriptor).put(projectId, new CollectedUsages(frameworkDescriptors, collectionTime));
         }
       }
     }
@@ -90,17 +106,18 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   public Element getState() {
     Element element = new Element("state");
 
-    for (Map.Entry<GroupDescriptor, Map<String, Set<UsageDescriptor>>> appData : getApplicationData().entrySet()) {
+    for (Map.Entry<GroupDescriptor, Map<String, CollectedUsages>> appData : getApplicationData().entrySet()) {
       Element groupElement = new Element(GROUP_TAG);
       groupElement.setAttribute(GROUP_NAME_ATTR, appData.getKey().getId());
       boolean isEmptyGroup = true;
 
-      for (Map.Entry<String, Set<UsageDescriptor>> projectData : appData.getValue().entrySet()) {
+      for (Map.Entry<String, CollectedUsages> projectData : appData.getValue().entrySet()) {
         Element projectElement = new Element(PROJECT_TAG);
         projectElement.setAttribute(PROJECT_ID_ATTR, projectData.getKey());
-        final Set<UsageDescriptor> projectDataValue = projectData.getValue();
-        if (!projectDataValue.isEmpty()) {
-          projectElement.setAttribute(VALUES_ATTR, joinUsages(projectDataValue));
+        final CollectedUsages projectDataValue = projectData.getValue();
+        if (!projectDataValue.usages.isEmpty()) {
+          projectElement.setAttribute(VALUES_ATTR, joinUsages(projectDataValue.usages));
+          projectElement.setAttribute(COLLECTION_TIME_TAG, String.valueOf(projectDataValue.collectionTime));
           groupElement.addContent(projectElement);
           isEmptyGroup = false;
         }
@@ -164,9 +181,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appClosing() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          doPersistProjectUsages(project);
-        }
+        persistOpenedProjects();
         persistOnClosing = false;
       }
     });
@@ -179,16 +194,36 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         }
       }
     });
+
+    persistPeriodically();
+  }
+
+  private void persistPeriodically() {
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        persistOpenedProjects();
+        persistPeriodically();
+      }
+    }, PERSIST_PERIOD);
+  }
+
+  private static void persistOpenedProjects() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      doPersistProjectUsages(project);
+    }
   }
 
   private static void doPersistProjectUsages(@NotNull Project project) {
-    if (!project.isInitialized() || DumbService.isDumb(project)) {
-      return;
-    }
+    synchronized (ApplicationStatisticsPersistenceComponent.class) {
+      if (!project.isInitialized() || DumbService.isDumb(project)) {
+        return;
+      }
 
-    for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
-      if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-        ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+      for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
+        if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
+          ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+        }
       }
     }
   }

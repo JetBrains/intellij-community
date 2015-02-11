@@ -82,6 +82,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         scope = scope.union(additionalScope);
       }
     }
+    for (UseScopeOptimizer optimizer : UseScopeOptimizer.EP_NAME.getExtensions()) {
+      final GlobalSearchScope scopeToExclude = optimizer.getScopeToExclude(element);
+      if (scopeToExclude != null) {
+        scope = scope.intersectWith(GlobalSearchScope.notScope(scopeToExclude));
+      }
+    }
     return scope;
   }
 

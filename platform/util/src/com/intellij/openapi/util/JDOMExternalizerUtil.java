@@ -15,15 +15,20 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizerUtil {
+
+  private static final String VALUE_ATTR_NAME = "value";
+
   public static void writeField(@NotNull Element root, @NotNull @NonNls String fieldName, String value) {
     Element element = new Element("option");
     element.setAttribute("name", fieldName);
@@ -70,7 +75,7 @@ public class JDOMExternalizerUtil {
   public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
     Element element = new Element(childTagName);
     if (attrValue != null) {
-      element.setAttribute("value", attrValue);
+      element.setAttribute(VALUE_ATTR_NAME, attrValue);
     }
     parent.addContent(element);
     return element;
@@ -82,9 +87,41 @@ public class JDOMExternalizerUtil {
     if (!children.isEmpty()) {
       Element first = children.get(0);
       if (first != null) {
-        return first.getAttributeValue("value");
+        return first.getAttributeValue(VALUE_ATTR_NAME);
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static List<String> getChildrenValueAttributes(@NotNull Element parent, @NotNull String childTagName) {
+    List<Element> children = parent.getChildren(childTagName);
+    if (children.isEmpty()) {
+      return Collections.emptyList();
+    }
+    if (children.size() == 1) {
+      String value = children.iterator().next().getAttributeValue(VALUE_ATTR_NAME);
+      return value == null ? Collections.<String>emptyList() : Collections.singletonList(value);
+    }
+    List<String> values = ContainerUtil.newArrayListWithCapacity(children.size());
+    for (Element child : children) {
+      String value = child.getAttributeValue(VALUE_ATTR_NAME);
+      if (value != null) {
+        values.add(value);
+      }
+    }
+    return values;
+  }
+
+  public static void addChildrenWithValueAttribute(@NotNull Element parent,
+                                                   @NotNull String childTagName,
+                                                   @NotNull List<String> attrValues) {
+    for (String value : attrValues) {
+      if (value != null) {
+        Element child = new Element(childTagName);
+        child.setAttribute(VALUE_ATTR_NAME, value);
+        parent.addContent(child);
+      }
+    }
   }
 }

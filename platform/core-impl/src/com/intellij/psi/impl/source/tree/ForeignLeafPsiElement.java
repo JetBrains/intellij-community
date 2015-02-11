@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeignLeafPsiElement extends LeafPsiElement {
-  private final ForeignLeafType myForeignType;
+  @NotNull private final ForeignLeafType myForeignType;
 
   public ForeignLeafPsiElement(@NotNull ForeignLeafType type, CharSequence text) {
     super(dereferenceElementType(type.getDelegate()), text);
@@ -76,6 +76,7 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
     return 0;
   }
 
+  @NotNull
   public ForeignLeafType getForeignType() {
     return myForeignType;
   }

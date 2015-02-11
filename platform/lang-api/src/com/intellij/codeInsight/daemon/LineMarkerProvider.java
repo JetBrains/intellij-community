@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,26 @@ import java.util.List;
  */
 public interface LineMarkerProvider {
   @Nullable
+  /**
+   * Get line markers for this PsiElement.
+   *
+   * NOTE for implementers:
+   * Please return line marker info for exact element you were asked for.
+   *  For example, do not return class marker info if getLineMarkerInfo() was called for a method.
+   * Please return relevant line marker info for as small element as possible.
+   *  For example, do not return method marker for PsiMethod. Instead, return it for the PsiIdentifier which is a name of this method.
+   *
+   * More technical details:
+   *  Inspection (specifically, LineMarkersPass) for performance reasons queries all LineMarkerProviders in two passes:
+   *    - first pass for all elements in visible area
+   *    - second pass for all the rest elements
+   *  If providers return nothing for either area, its line markers are cleared.
+   *  So if, for example a method, is half-visible (e.g. its name is visible but a part of its body isn't) and
+   *  some poorly written LineMarkerProvider returns info for the PsiMethod instead of PsiIdentifier then following happens:
+   *  - the first pass removes line marker info because whole PsiMethod is not visible.
+   *  - the second pass tries to add line marker info back because LineMarkerProvider is called for the PsiMethod at last.
+   *  As a result, line marker icon blinks annoyingly.
+   */
   LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element);
 
   void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result);

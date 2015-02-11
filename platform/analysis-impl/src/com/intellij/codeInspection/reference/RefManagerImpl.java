@@ -64,7 +64,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
-  private int myLastUsedMask = 256 * 256 * 256 * 4;
+  private long myLastUsedMask = 256 * 256 * 256 * 8;
 
   @NotNull
   private final Project myProject;
@@ -190,7 +190,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public int getLastUsedMask() {
+  public long getLastUsedMask() {
     myLastUsedMask *= 2;
     return myLastUsedMask;
   }

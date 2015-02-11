@@ -18,13 +18,13 @@ package com.intellij.vcs.log.graph.impl.print;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.SimplePrintElement;
-import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
-import com.intellij.vcs.log.graph.api.printer.PrintElementWithGraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl;
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,21 +34,20 @@ import java.util.Collection;
 public abstract class AbstractPrintElementGenerator implements PrintElementGenerator {
 
   @NotNull
-  protected final PrintedLinearGraph myPrintedLinearGraph;
+  protected final LinearGraph myLinearGraph;
   @NotNull
-  protected final PrintElementsManager myPrintElementsManager;
+  protected final PrintElementManager myPrintElementManager;
 
-  protected AbstractPrintElementGenerator(@NotNull PrintedLinearGraph printedLinearGraph,
-                                          @NotNull PrintElementsManager printElementsManager) {
-    myPrintedLinearGraph = printedLinearGraph;
-    myPrintElementsManager = printElementsManager;
+  protected AbstractPrintElementGenerator(@NotNull LinearGraph linearGraph, @NotNull PrintElementManager printElementManager) {
+    myLinearGraph = linearGraph;
+    myPrintElementManager = printElementManager;
   }
 
   @NotNull
-  public Collection<PrintElement> getPrintElements(int rowIndex) {
-    Collection<PrintElement> result = new ArrayList<PrintElement>();
+  public Collection<PrintElementWithGraphElement> getPrintElements(int rowIndex) {
+    Collection<PrintElementWithGraphElement> result = new ArrayList<PrintElementWithGraphElement>();
 
-    if (rowIndex < myPrintedLinearGraph.nodesCount() - 1) {
+    if (rowIndex < myLinearGraph.nodesCount() - 1) {
       for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
         result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN));
       }
@@ -68,7 +67,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
   }
 
   private SimplePrintElementImpl createSimplePrintElement(int rowIndex, SimpleRowElement rowElement) {
-    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement, myPrintElementsManager);
+    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myType, rowElement.myElement, myPrintElementManager);
   }
 
   private EdgePrintElementImpl createEdgePrintElement(int rowIndex, @NotNull ShortEdge shortEdge, @NotNull EdgePrintElement.Type type) {
@@ -80,7 +79,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
       positionInCurrentRow = shortEdge.myDownPosition;
       positionInOtherRow = shortEdge.myUpPosition;
     }
-    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, myPrintElementsManager);
+    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, myPrintElementManager);
   }
 
   @NotNull
@@ -91,32 +90,9 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
     }
 
     int rowIndex = printElement.getRowIndex();
-    if (printElement instanceof SimplePrintElement) {
-      for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {
-        if (rowElement.myPosition == printElement.getPositionInCurrentRow())
-          return createSimplePrintElement(rowIndex, rowElement);
-      }
-    }
-
-    if (printElement instanceof EdgePrintElement) {
-      EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-      if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-        for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
-          if (shortEdge.myUpPosition == edgePrintElement.getPositionInCurrentRow() &&
-            shortEdge.myDownPosition == edgePrintElement.getPositionInOtherRow()) {
-            return createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN);
-          }
-        }
-      }
-
-      if (edgePrintElement.getType() == EdgePrintElement.Type.UP) {
-        for (ShortEdge shortEdge : getDownShortEdges(rowIndex - 1)) {
-          if (shortEdge.myDownPosition == edgePrintElement.getPositionInCurrentRow() &&
-              shortEdge.myUpPosition == edgePrintElement.getPositionInOtherRow()) {
-            return createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP);
-          }
-        }
-      }
+    for (PrintElementWithGraphElement printElementWithGE : getPrintElements(rowIndex)) {
+      if (printElementWithGE.equals(printElement))
+        return printElementWithGE;
     }
     throw new IllegalStateException("Not found graphElement for this printElement: " + printElement);
   }

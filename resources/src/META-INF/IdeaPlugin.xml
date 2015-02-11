@@ -46,6 +46,9 @@
 
   <application-components>
     <component>
+      <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystem</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
   </application-components>
@@ -117,8 +120,6 @@
     <extensionPoint name="debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
 
-    <extensionPoint name="debugger.jvmDebugProvider"
-                    interface="com.intellij.debugger.engine.JVMDebugProvider"/>
     <extensionPoint name="debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware"/>
 
@@ -1025,7 +1026,7 @@
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider"/>
     <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider" />
-    <regExpModifierProvider implementation="com.intellij.codeInsight.JavaRegExpModifierProvider" />
+    <regExpModifierProvider language="JAVA" implementationClass="com.intellij.codeInsight.JavaRegExpModifierProvider" />
 
     <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
@@ -1194,8 +1195,6 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
-
-    <bundledColorScheme path="/colorSchemes/Darcula"/>
 
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
@@ -1565,6 +1564,10 @@
                         serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
     <applicationService serviceInterface="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"
                         serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.GetterTemplatesManager"
+                        serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.SetterTemplatesManager"
+                        serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
                         serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringContext"

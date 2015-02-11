@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -71,10 +68,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Alarm;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -130,7 +124,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
                                 @NotNull PsiDocumentManager psiDocumentManager,
-                                @NotNull EditorColorsManager colorsManager,
                                 @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
                                 @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
@@ -310,7 +303,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
-    setUpdateByTimerEnabled(false);
     FileStatusMap.getAndClearLog();
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.allowDirt(canChangeDocument);
@@ -372,9 +364,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @TestOnly
   public void prepareForTest() {
-    //if (!myInitialized) {
-    //  projectOpened();
-    //}
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
@@ -639,11 +628,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return false;
   }
 
-  @Nullable
+  @NotNull
   public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
+    return ObjectUtils.notNull(markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY), Collections.<LineMarkerInfo>emptyList());
   }
 
   static void setLineMarkers(@NotNull Document document, List<LineMarkerInfo> lineMarkers, Project project) {
@@ -662,6 +651,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideLastIntentionHint();
+    
+    if (editor.getCaretModel().getCaretCount() > 1) return;
+    
     IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
     if (hasToRecreate) {
       hintComponent.recreate();
@@ -829,6 +821,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
   }
 
+  @TestOnly
   synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }

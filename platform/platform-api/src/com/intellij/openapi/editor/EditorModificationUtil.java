@@ -198,6 +198,17 @@ public class EditorModificationUtil {
   }
 
   @Nullable
+  public static Transferable getContentsToPasteToEditor(@Nullable Producer<Transferable> producer) {
+    if (producer == null) {
+      CopyPasteManager manager = CopyPasteManager.getInstance();
+      return manager.areDataFlavorsAvailable(DataFlavor.stringFlavor) ? manager.getContents() : null;
+    }
+    else {
+      return producer.produce();
+    }
+  } 
+
+  @Nullable
   public static String getStringContent(@NotNull Transferable content) {
     RawText raw = RawText.fromTransferable(content);
     if (raw != null) return raw.rawText;

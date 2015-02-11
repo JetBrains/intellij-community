@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -426,5 +428,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
       return result;
     }
+  }
+
+  public void selectGroup(String searchQuery) {
+    ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTable, true)).findAndSelectElement(searchQuery);
   }
 }

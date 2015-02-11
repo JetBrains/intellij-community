@@ -55,9 +55,9 @@ public class CalendarView extends JPanel {
   private final JComboBox myMonths = new ComboBox();
   private final JSpinner myYears = new JSpinner(new SpinnerNumberModel(2013, 0, Integer.MAX_VALUE, 1));
 
-  private final JSpinner myHours = new JSpinner(new SpinnerNumberModel(24, 0, 24, 1));
-  private final JSpinner myMinutes = new JSpinner(new SpinnerNumberModel(60, 0, 60, 1));
-  private final JSpinner mySeconds = new JSpinner(new SpinnerNumberModel(60, 0, 60, 1));
+  private final JSpinner myHours = new JSpinner(new SpinnerNumberModel(23, 0, 23, 1));
+  private final JSpinner myMinutes = new JSpinner(new SpinnerNumberModel(59, 0, 59, 1));
+  private final JSpinner mySeconds = new JSpinner(new SpinnerNumberModel(59, 0, 59, 1));
   private final Calendar myCalendar = Calendar.getInstance();
 
   public CalendarView() {

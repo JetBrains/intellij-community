@@ -84,9 +84,21 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     initMapAndCache();
   }
 
+  private static final PersistentHashMapValueStorage.ExceptionalIOCancellationCallback ourProgressManagerCheckCancelledIOCanceller =
+    new PersistentHashMapValueStorage.ExceptionalIOCancellationCallback() {
+      @Override
+      public void checkCancellation() {
+        ProgressManager.checkCanceled();
+      }
+  };
   private void initMapAndCache() throws IOException {
-    final ValueContainerMap<Key, Value> map = new ValueContainerMap<Key, Value>(myStorageFile, myKeyDescriptor, myDataExternalizer,
-                                                                                myKeyIsUniqueForIndexedFile);
+    final ValueContainerMap<Key, Value> map;
+    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(ourProgressManagerCheckCancelledIOCanceller);
+    try {
+      map = new ValueContainerMap<Key, Value>(myStorageFile, myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile);
+    } finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
+    }
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
       @Override
       @NotNull

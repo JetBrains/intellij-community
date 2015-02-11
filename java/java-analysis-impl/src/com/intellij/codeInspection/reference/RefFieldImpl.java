@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
-  private static final int ASSIGNED_ONLY_IN_INITIALIZER = 0x40000;
+  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0x40000;
 
   RefFieldImpl(@NotNull RefClass ownerClass, PsiField field, RefManager manager) {
     super(field, manager);
@@ -94,13 +93,13 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   private void setUsedForWriting(boolean usedForWriting) {
-    setFlag(false, ASSIGNED_ONLY_IN_INITIALIZER);
+    setFlag(false, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
     setFlag(usedForWriting, USED_FOR_WRITING_MASK);
   }
 
   @Override
   public boolean isOnlyAssignedInInitializer() {
-    return checkFlag(ASSIGNED_ONLY_IN_INITIALIZER);
+    return checkFlag(ASSIGNED_ONLY_IN_INITIALIZER_MASK);
   }
 
   @Override
@@ -130,7 +129,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
       if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
         if (!checkFlag(USED_FOR_WRITING_MASK)) {
-          setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER);
+          setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
           setFlag(true, USED_FOR_WRITING_MASK);
         }
       }

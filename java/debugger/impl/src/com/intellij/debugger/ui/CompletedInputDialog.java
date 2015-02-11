@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +67,7 @@ public class CompletedInputDialog extends DialogWrapper {
 
     myPanel.add(myCombo, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
             new Insets(0, 1, 0, 1), 0, 0));
-    myPanel.setPreferredSize(new Dimension(200, 50));
+    myPanel.setPreferredSize(JBUI.size(200, 50));
     return myPanel;
   }
 

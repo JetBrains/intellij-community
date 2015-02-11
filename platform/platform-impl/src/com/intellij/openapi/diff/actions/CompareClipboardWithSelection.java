@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public class CompareClipboardWithSelection extends BaseDiffAction {
   @Nullable
   protected DiffRequest getDiffData(DataContext dataContext) {

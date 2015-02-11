@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -1147,25 +1148,22 @@ public class HighlightMethodUtil {
 
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
-    PsiClass superClass = aClass.getSuperClass();
-    PsiMethod superMethod = superClass == null
-                            ? null
-                            : MethodSignatureUtil.findMethodBySignature(superClass, method, true);
-
-    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic,superClass, superMethod,containingFile);
-    if (highlightInfo != null) return highlightInfo;
-    if (!isStatic) {
-      // all methods in interface are instance, so no possible errors in this case
+    final HierarchicalMethodSignature methodSignature = PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method);
+    final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
+    if (superSignatures.isEmpty()) {
       return null;
     }
-    PsiClass[] interfaces = aClass.getInterfaces();
-    for (PsiClass aInterfaces : interfaces) {
-        superClass = aInterfaces;
-        superMethod = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(aClass, superClass, method.getSignature(PsiSubstitutor.EMPTY), true);
-        highlightInfo = checkStaticMethodOverride(aClass, method, true, superClass, superMethod,containingFile);
-        if (highlightInfo != null) return highlightInfo;
+
+    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    for (HierarchicalMethodSignature signature : superSignatures) {
+      final PsiMethod superMethod = signature.getMethod();
+      final PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
+      final HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic, superClass, superMethod,containingFile);
+      if (highlightInfo != null) {
+        return highlightInfo;
       }
+    }
     return null;
   }
 

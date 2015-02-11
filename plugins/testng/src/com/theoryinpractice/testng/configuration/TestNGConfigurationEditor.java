@@ -142,6 +142,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         commonJavaParameters.setModuleContext(moduleSelector.getModule());
       }
     });
+    commonJavaParameters.setHasModuleMacro();
 
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());

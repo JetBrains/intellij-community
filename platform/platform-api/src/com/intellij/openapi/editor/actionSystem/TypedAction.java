@@ -23,6 +23,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,11 @@ public class TypedAction {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (!FileDocumentManager.getInstance().requestWriting(doc, project)) {
+        return;
+      }
+
       doc.startGuardedBlockChecking();
       try {
         final String str = String.valueOf(charTyped);
@@ -114,10 +120,6 @@ public class TypedAction {
 
     @Override
     public void run() {
-      if (!FileDocumentManager.getInstance().requestWriting(myEditor.getDocument(), myEditor.getProject())) {
-        return;
-      }
-
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
         @Override
         public void run() {

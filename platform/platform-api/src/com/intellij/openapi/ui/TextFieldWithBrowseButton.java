@@ -49,7 +49,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
-    this(new JTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener);
+    this(new JBTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener);
   }
 
   public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {

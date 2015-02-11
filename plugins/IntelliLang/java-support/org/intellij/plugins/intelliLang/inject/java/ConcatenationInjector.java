@@ -73,12 +73,12 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     PsiFile containingFile = null;
     for (PsiElement operand : operands) {
       if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
+        hasLiteral = true;
         if (containingFile == null) {
           containingFile = operands[0].getContainingFile();
         }
 
         tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
-        hasLiteral = true;
         if (tempInjectedLanguage != null) break;
       }
     }
@@ -134,6 +134,13 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     public void processInjections() {
       final PsiElement firstOperand = myOperands[0];
+      Ref<PsiElement> causeRef = Ref.create();
+      BaseInjection commentInjection = mySupport.findCommentInjection(firstOperand, causeRef);
+      if (commentInjection != null) {
+        processCommentInjectionInner(causeRef.get(), commentInjection);
+        return;
+      }
+
       final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
@@ -258,10 +265,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
       Ref<PsiElement> causeRef = Ref.create();
       BaseInjection injection = mySupport.findCommentInjection(anchor, causeRef);
-      return injection == null || processCommentInjectionInner(owner, causeRef.get(), injection);
+      return injection == null || processCommentInjectionInner(causeRef.get(), injection);
     }
 
-    protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
+    protected boolean processCommentInjectionInner(PsiElement comment, BaseInjection injection) {
       processInjectionWithContext(injection, false);
       return false;
     }

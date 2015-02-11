@@ -135,7 +135,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     RunProfile runProfile = LangDataKeys.RUN_PROFILE.getData(DataManager.getInstance().getDataContext(tree));
     if (runProfile instanceof RunConfiguration) {
       String id = ((RunConfiguration)runProfile).getType().getId();
-      return !(id.startsWith("Javascript") || id.startsWith("Node"));
+      return !(id.startsWith("Javascript") || id.startsWith("Node") || id.equals("ChromiumRemoteDebugType") || id.equals("FirefoxRemoteDebugType"));
     }
     return true;
   }

@@ -72,7 +72,6 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected GitPlatformTest() {
     PlatformTestCase.initPlatformLangPrefix();
-    GitTestUtil.setDefaultBuiltInServerPort();
   }
 
   @Override

@@ -51,14 +51,11 @@ class A {
         int result1;
         long temp1;
         result1 = Arrays.hashCode(a1);
-        result1 = 31 * result1 +               // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(a2);
+        result1 = 31 * result1 + Arrays.deepHashCode(a2);
         result1 = 31 * result1 + Arrays.hashCode(a3);
-        result1 = 31 * result1 +               // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(a4);
+        result1 = 31 * result1 + Arrays.deepHashCode(a4);
         result1 = 31 * result1 + Arrays.hashCode(a5);
-        result1 = 31 * result1 +               // Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
-                Arrays.hashCode(a6);
+        result1 = 31 * result1 + Arrays.deepHashCode(a6);
         result1 = 31 * result1 + (int) a7;
         result1 = 31 * result1 + (int) a8;
         result1 = 31 * result1 + a9;

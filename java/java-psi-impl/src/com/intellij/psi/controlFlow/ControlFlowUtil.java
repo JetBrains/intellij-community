@@ -731,7 +731,8 @@ public class ControlFlowUtil {
 
           if (nextOffset == endOffset) {
             final Instruction lastInstruction = flow.getInstructions().get(endOffset - 1);
-            isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn);
+            isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
+                       !(lastInstruction instanceof ThrowToInstruction);
           }
 
           isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];

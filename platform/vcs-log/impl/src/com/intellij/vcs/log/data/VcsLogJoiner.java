@@ -153,7 +153,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void markRealRedNode(@NotNull CommitId node) {
       if (!currentRed.remove(node))
-        throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL); // never happened
+        throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL); // see VcsLogJoinerTest#illegalStateExceptionTest2
       allRedCommit.add(node);
     }
 

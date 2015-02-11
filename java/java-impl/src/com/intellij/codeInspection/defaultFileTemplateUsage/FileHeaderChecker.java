@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,15 +102,20 @@ public class FileHeaderChecker {
 
         String newText;
         try {
-          newText = template.getText(computeProperties(matcher, offsetToProperty, project));
+          newText = template.getText(computeProperties(matcher, offsetToProperty, project)).trim();
         }
         catch (IOException e) {
           LOG.error(e);
           return;
         }
 
-        PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newText);
-        element.replace(newComment);
+        if (!newText.isEmpty()) {
+          PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newText);
+          element.replace(newComment);
+        }
+        else {
+          element.delete();
+        }
       }
     };
 

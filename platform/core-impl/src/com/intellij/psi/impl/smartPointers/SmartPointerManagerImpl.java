@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,20 +32,26 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.MarkersHolderFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.UnsafeWeakList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
 
   private final Project myProject;
-  private final Object lock = new Object();
-  private final Key<List<SmartPointerEx>> POINTERS_KEY;
+  private static final Object lock = new Object();
+  private static final ReferenceQueue<SmartPointerEx> ourQueue = new ReferenceQueue<SmartPointerEx>();
+  private final Key<Set<PointerReference>> POINTERS_KEY;
   private final Key<Boolean> POINTERS_ARE_FASTENED_KEY;
 
   public SmartPointerManagerImpl(Project project) {
@@ -54,23 +60,33 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     POINTERS_ARE_FASTENED_KEY = Key.create("SMART_POINTERS_ARE_FASTENED for "+project);
   }
 
+  private static void processQueue() {
+    while (true) {
+      PointerReference reference = (PointerReference)ourQueue.poll();
+      if (reference == null) break;
+      synchronized (lock) {
+        Set<PointerReference> pointers = reference.file.getUserData(reference.key);
+        if (pointers != null) {
+          pointers.remove(reference);
+          if (pointers.isEmpty()) {
+            reference.file.putUserData(reference.key, null);
+          }
+        }
+      }
+    }
+  }
+
   public void fastenBelts(@NotNull VirtualFile file, int offset, @Nullable RangeMarker[] cachedRangeMarkers) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    processQueue();
     synchronized (lock) {
-      List<SmartPointerEx> pointers = getPointers(file);
-      if (pointers == null) return;
+      List<SmartPointerEx> pointers = getStrongPointers(file);
+      if (pointers.isEmpty()) return;
 
       if (getAndFasten(file)) return;
 
-      if (pointers.isEmpty()) {
-        file.putUserData(POINTERS_KEY, null);
-      }
-      else {
-        for (SmartPointerEx pointer : pointers) {
-          if (pointer != null) {
-            pointer.fastenBelt(offset, cachedRangeMarkers);
-          }
-        }
+      for (SmartPointerEx pointer : pointers) {
+        pointer.fastenBelt(offset, cachedRangeMarkers);
       }
 
       PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().getCachedPsiFile(file);
@@ -103,21 +119,15 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   public void unfastenBelts(@NotNull VirtualFile file, int offset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    processQueue();
     synchronized (lock) {
-      List<SmartPointerEx> pointers = getPointers(file);
-      if (pointers == null) return;
+      List<SmartPointerEx> pointers = getStrongPointers(file);
+      if (pointers.isEmpty()) return;
 
       if (!getAndUnfasten(file)) return;
 
-      if (pointers.isEmpty()) {
-        file.putUserData(POINTERS_KEY, null);
-      }
-      else {
-        for (SmartPointerEx pointer : pointers) {
-          if (pointer != null) {
-            pointer.unfastenBelt(offset);
-          }
-        }
+      for (SmartPointerEx pointer : pointers) {
+        pointer.unfastenBelt(offset);
       }
 
       PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().getCachedPsiFile(file);
@@ -147,6 +157,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       PsiUtilCore.ensureValid(element);
       LOG.error("Invalid element:" + element);
     }
+    processQueue();
     SmartPointerEx<E> pointer = getCachedPointer(element);
     if (pointer != null) {
       containingFile = containingFile == null ? element.getContainingFile() : containingFile;
@@ -197,12 +208,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   private <E extends PsiElement> void initPointer(@NotNull SmartPointerEx<E> pointer, @NotNull VirtualFile containingFile) {
     synchronized (lock) {
-      List<SmartPointerEx> pointers = getPointers(containingFile);
+      Set<PointerReference> pointers = getPointers(containingFile);
       if (pointers == null) {
-        pointers = new UnsafeWeakList<SmartPointerEx>(); // we synchronise access anyway
+        pointers = ContainerUtil.newTroveSet(); // we synchronise access anyway
         containingFile.putUserData(POINTERS_KEY, pointers);
       }
-      pointers.add(pointer);
+      pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY));
 
       if (areBeltsFastened(containingFile)) {
         pointer.fastenBelt(0, null);
@@ -222,26 +233,45 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           }
           PsiFile containingFile = pointer.getContainingFile();
           if (containingFile == null) return false;
-          List<SmartPointerEx> pointers = getPointers(containingFile.getViewProvider().getVirtualFile());
+          Set<PointerReference> pointers = getPointers(containingFile.getViewProvider().getVirtualFile());
           if (pointers == null) return false;
           SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
           info.cleanup();
-          return pointers.remove(pointer);
+
+          for (Iterator<PointerReference> iterator = pointers.iterator(); iterator.hasNext(); ) {
+            if (pointer == iterator.next().get()) {
+              iterator.remove();
+              return true;
+            }
+          }
+          return false;
         }
       }
     }
     return false;
   }
 
-  private List<SmartPointerEx> getPointers(@NotNull VirtualFile containingFile) {
+  @Nullable
+  private Set<PointerReference> getPointers(@NotNull VirtualFile containingFile) {
     return containingFile.getUserData(POINTERS_KEY);
+  }
+
+  @NotNull
+  private List<SmartPointerEx> getStrongPointers(@NotNull VirtualFile containingFile) {
+    Set<PointerReference> refs = getPointers(containingFile);
+    if (refs == null) return Collections.emptyList();
+
+    List<SmartPointerEx> result = ContainerUtil.newArrayList();
+    for (PointerReference reference : refs) {
+      ContainerUtil.addIfNotNull(result, reference.get());
+    }
+    return result;
   }
 
   @TestOnly
   public int getPointersNumber(@NotNull PsiFile containingFile) {
     synchronized (lock) {
-      List<SmartPointerEx> pointers = getPointers(containingFile.getViewProvider().getVirtualFile());
-      return pointers == null ? 0 : ((UnsafeWeakList)pointers).toStrongList().size();
+      return getStrongPointers(containingFile.getViewProvider().getVirtualFile()).size();
     }
   }
 
@@ -263,4 +293,19 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
+
+  private static class PointerReference extends WeakReference<SmartPointerEx> {
+    private final VirtualFile file;
+    private final Key<Set<PointerReference>> key;
+
+    public PointerReference(SmartPointerEx<?> pointer,
+                            VirtualFile containingFile,
+                            ReferenceQueue<SmartPointerEx> queue,
+                            Key<Set<PointerReference>> key) {
+      super(pointer, queue);
+      file = containingFile;
+      this.key = key;
+    }
+  }
+
 }

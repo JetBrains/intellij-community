@@ -84,6 +84,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return false;
     }
 
+    if (parent instanceof PsiReferenceExpression) {
+      PsiExpression expression = ((PsiReferenceExpression)parent).getQualifierExpression();
+      if (expression != null && expression != myElement) {
+        return false;
+      }
+    }
+
     PsiManager manager = file.getManager();
     return manager.isInProject(file) && !getClassesToImport().isEmpty();
   }

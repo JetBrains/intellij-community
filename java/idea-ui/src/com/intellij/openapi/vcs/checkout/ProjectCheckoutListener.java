@@ -32,6 +32,10 @@ import java.io.FilenameFilter;
  * @author yole
  */
 public class ProjectCheckoutListener implements CheckoutListener {
+
+  public ProjectCheckoutListener() {
+  }
+
   @Override
   public boolean processCheckedOutDirectory(Project project, File directory) {
     File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*" + ProjectFileType.DOT_DEFAULT_EXTENSION));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -152,7 +153,7 @@ expected:
 
   public static void runTool(@NotNull InspectionToolWrapper toolWrapper,
                              @NotNull final AnalysisScope scope,
-                             @NotNull final GlobalInspectionContextImpl globalContext) {
+                             @NotNull final GlobalInspectionContextForTests globalContext) {
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
@@ -160,6 +161,9 @@ expected:
     }
 
     globalContext.doInspections(scope);
-    UIUtil.dispatchAllInvocationEvents();
+    do {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    while (!globalContext.isFinished());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.DataPoint;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -394,8 +395,8 @@ public class InstructionImpact {
       case CodeConstants.opc_ldc:
       case CodeConstants.opc_ldc_w:
       case CodeConstants.opc_ldc2_w:
-        cn = pool.getPrimitiveConstant(instr.getOperand(0));
-        switch (cn.type) {
+        PooledConstant constant = pool.getConstant(instr.getOperand(0));
+        switch (constant.type) {
           case CodeConstants.CONSTANT_Integer:
             stack.push(new VarType(CodeConstants.TYPE_INT));
             break;
@@ -415,6 +416,9 @@ public class InstructionImpact {
             break;
           case CodeConstants.CONSTANT_Class:
             stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Class"));
+            break;
+          case CodeConstants.CONSTANT_MethodHandle:
+            stack.push(new VarType(((LinkConstant)constant).descriptor));
             break;
         }
         break;

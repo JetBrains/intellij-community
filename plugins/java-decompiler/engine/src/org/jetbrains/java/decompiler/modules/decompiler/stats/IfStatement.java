@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,7 +216,7 @@ public class IfStatement extends Statement {
     tracer.incrementCurrentSourceLine();
 
     if (ifstat == null) {
-      buf.append(InterpreterUtil.getIndentString(indent + 1));
+      buf.appendIndent(indent + 1);
 
       if (ifedge.explicit) {
         if (ifedge.getType() == StatEdge.TYPE_BREAK) {

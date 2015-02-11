@@ -83,4 +83,22 @@ def abc = null
 
   }
 
+  public void testResolveAnnotationsInInjectedCodeInMethodCall() {
+    myFixture.addClass("package foo; @interface Bar{}")
+
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
+    final PsiFile psiFile = myFixture.configureByText("script.groovy", """
+new groovy.lang.GroovyShell().evaluate '''
+import foo.Bar
+
+@Ba<caret>r
+def abc = null
+'''
+""");
+    assertNotNull(psiFile);
+    PsiReference ref = psiFile.findReferenceAt(myFixture.editor.caretModel.offset)
+    assert ref.resolve() instanceof PsiClass
+    assert ref.resolve().qualifiedName == 'foo.Bar'
+  }
+
 }

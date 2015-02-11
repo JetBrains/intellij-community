@@ -19,8 +19,8 @@ public abstract class VariableContextBase implements VariableContext {
 
   @NotNull
   @Override
-  public Promise<MemberFilter> createMemberFilter() {
-    return getViewSupport().createMemberFilter(this);
+  public Promise<MemberFilter> getMemberFilter() {
+    return getViewSupport().getMemberFilter(this);
   }
 
   @Nullable

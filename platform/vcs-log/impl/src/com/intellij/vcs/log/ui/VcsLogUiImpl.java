@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +18,7 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
@@ -32,12 +34,14 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.Future;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+  public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
 
   private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
@@ -74,21 +78,22 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
     TIntHashSet previouslySelected = getSelectedCommits();
 
-    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
     myVisiblePack = pack;
-
     boolean permGraphChanged = previousPermGraph != myVisiblePack.getPermanentGraph();
 
     GraphTableModel currentModel = getModel();
     if (currentModel == null) {
-      GraphTableModel newModel = new GraphTableModel(myVisiblePack, myLogDataHolder, this);
-      setModel(newModel, myVisiblePack.getVisibleGraph(), previouslySelected);
+      getTable().setModel(new GraphTableModel(myVisiblePack, myLogDataHolder, this));
     }
     else {
       currentModel.setVisiblePack(myVisiblePack);
+      restoreSelection(currentModel, myVisiblePack.getVisibleGraph(), previouslySelected, getTable());
     }
+    getTable().setPaintBusy(false);
+
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
@@ -98,15 +103,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public MainFrame getMainFrame() {
     return myMainFrame;
-  }
-
-  private void setModel(@NotNull GraphTableModel newModel,
-                        @NotNull VisibleGraph<Integer> newVisibleGraph,
-                        @NotNull TIntHashSet previouslySelectedCommits) {
-    final VcsLogGraphTable table = getTable();
-    table.setModel(newModel);
-    restoreSelection(newModel, newVisibleGraph, previouslySelectedCommits, table);
-    table.setPaintBusy(false);
   }
 
   private static void restoreSelection(@NotNull GraphTableModel newModel,
@@ -149,24 +145,30 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myMainFrame.getGraphTable().repaint();
   }
 
-  public void showAll() {
-    runUnderModalProgress("Expanding linear branches...", new Runnable() {
+  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull final String title) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(false);
+        final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
+        final Runnable updater = answer.getGraphUpdater();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            assert updater != null : "Action:" + title + "\nController: " + myVisiblePack.getVisibleGraph().getActionController() + "\nAnswer:" + answer;
+            updater.run();
+            handleAnswer(answer, true);
+          }
+        });
       }
-    });
-    handleAnswer(null, true);
+    }, title, false, null, getMainFrame().getMainComponent());
+  }
+
+  public void showAll() {
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), "Expanding linear branches...");
   }
 
   public void hideAll() {
-    runUnderModalProgress("Collapsing linear branches...", new Runnable() {
-      @Override
-      public void run() {
-        myVisiblePack.getVisibleGraph().getActionController().setLinearBranchesExpansion(true);
-      }
-    });
-    handleAnswer(null, true);
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), "Collapsing linear branches...");
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
@@ -174,13 +176,16 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myUiProperties.setLongEdgesVisibility(visibility);
   }
 
-  public void setBek(boolean bek) {
-    myUiProperties.setBek(bek);
-    myFilterer.onSortTypeChange(bek ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+  @Override
+  public void setBekType(@NotNull PermanentGraph.SortType bekType) {
+    myUiProperties.setBek(bekType.ordinal());
+    myFilterer.onSortTypeChange(bekType);
   }
 
-  public boolean isBek() {
-    return myUiProperties.isBek();
+  @Override
+  @NotNull
+  public PermanentGraph.SortType getBekType() {
+    return PermanentGraph.SortType.values()[myUiProperties.getBekSortType()];
   }
 
   public void setShowRootNames(boolean isShowRootNames) {
@@ -192,22 +197,33 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myUiProperties.isShowRootNames();
   }
 
-  public void jumpToCommit(@NotNull Hash commitHash) {
+  @Override
+  public boolean areGraphActionsEnabled() {
+    return myMainFrame.areGraphActionsEnabled();
+  }
+
+  @NotNull
+  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash) {
+    SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, Hash, Integer>() {
       @Override
       public Integer fun(GraphTableModel model, Hash hash) {
         return model.getRowOfCommit(hash);
       }
-    });
+    }, future);
+    return future;
   }
 
-  public void jumpToCommitByPartOfHash(@NotNull String commitHash) {
+  @NotNull
+  public Future<Boolean> jumpToCommitByPartOfHash(@NotNull String commitHash) {
+    SettableFuture<Boolean> future = SettableFuture.create();
     jumpTo(commitHash, new PairFunction<GraphTableModel, String, Integer>() {
       @Override
       public Integer fun(GraphTableModel model, String hash) {
         return model.getRowOfCommitByPartOfHash(hash);
       }
-    });
+    }, future);
+    return future;
   }
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange) {
@@ -235,13 +251,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }
   }
 
-  private <T> void jumpTo(@NotNull final T commitId, @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter) {
+  private <T> void jumpTo(@NotNull final T commitId,
+                          @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                          @NotNull final SettableFuture<Boolean> future) {
+    if (future.isCancelled()) return;
+
     GraphTableModel model = getModel();
     if (model == null) {
       invokeOnChange(new Runnable() {
         @Override
         public void run() {
-          jumpTo(commitId, rowGetter);
+          jumpTo(commitId, rowGetter, future);
         }
       });
       return;
@@ -250,12 +270,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     int row = rowGetter.fun(model, commitId);
     if (row >= 0) {
       myMainFrame.getGraphTable().jumpToRow(row);
+      future.set(true);
     }
     else if (model.canRequestMore()) {
       model.requestToLoadMore(new Runnable() {
         @Override
         public void run() {
-          jumpTo(commitId, rowGetter);
+          jumpTo(commitId, rowGetter, future);
         }
       });
     }
@@ -263,12 +284,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       invokeOnChange(new Runnable() {
         @Override
         public void run() {
-          jumpTo(commitId, rowGetter);
+          jumpTo(commitId, rowGetter, future);
         }
       });
     }
     else {
       commitNotFound(commitId.toString());
+      future.set(false);
     }
   }
 
@@ -340,14 +362,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  public void runUnderModalProgress(@NotNull final String task, @NotNull final Runnable runnable) {
-    getTable().executeWithoutRepaint(new Runnable() {
-      public void run() {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, getMainFrame().getMainComponent());
-      }
-    });
   }
 
   @Override
@@ -424,5 +438,4 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void dispose() {
     getTable().removeAllHighlighters();
   }
-
 }

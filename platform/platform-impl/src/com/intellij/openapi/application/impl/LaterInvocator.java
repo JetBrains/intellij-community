@@ -33,6 +33,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,11 +249,26 @@ public class LaterInvocator {
     }
   }
 
+  /**
+   * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances 
+   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link UIUtil#dispatchAllInvocationEvents()} would
+   * stop processing events too early and lead to spurious test failures.
+   * 
+   * @see IdeEventQueue#peekEvent() 
+   */
+  public static boolean ensureFlushRequested() {
+    if (getNextEvent(false) != null) {
+      SwingUtilities.invokeLater(ourFlushQueueRunnable);
+      return true;
+    }
+    return false;
+  }
+
   @Nullable
-  private static RunnableInfo pollNext() {
+  private static RunnableInfo getNextEvent(boolean remove) {
     synchronized (LOCK) {
       if (!ourForcedFlushQueue.isEmpty()) {
-        final RunnableInfo toRun = ourForcedFlushQueue.remove(0);
+        final RunnableInfo toRun = remove ? ourForcedFlushQueue.remove(0) : ourForcedFlushQueue.get(0);
         if (!toRun.expired.value(null)) {
           return toRun;
         }
@@ -281,7 +297,9 @@ public class LaterInvocator {
         }
 
         if (!currentModality.dominates(info.modalityState)) {
-          ourQueue.remove(ourQueueSkipCount);
+          if (remove) {
+            ourQueue.remove(ourQueueSkipCount);
+          }
           return info;
         }
         ourQueueSkipCount++;
@@ -301,7 +319,7 @@ public class LaterInvocator {
     public void run() {
       FLUSHER_SCHEDULED.set(false);
 
-      final RunnableInfo lastInfo = pollNext();
+      final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;
 
       if (lastInfo != null) {

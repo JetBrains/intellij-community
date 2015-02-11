@@ -193,14 +193,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
 
 
+      @NotNull
       @Override
-      public boolean shouldBeSaved(@NotNull final TemplateGroup template) {
+      public State getState(@NotNull TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            return true;
+            return State.POSSIBLY_CHANGED;
           }
         }
-        return false;
+        return State.NON_PERSISTENT;
       }
 
       @Override
@@ -638,10 +639,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         }
       }
     }
-  }
-
-  public SchemesManager<TemplateGroup,TemplateGroup> getSchemesManager() {
-    return mySchemesManager;
   }
 
   public List<TemplateGroup> getTemplateGroups() {

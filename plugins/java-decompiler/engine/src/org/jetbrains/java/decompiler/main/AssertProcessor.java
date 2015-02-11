@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,8 +173,7 @@ public class AssertProcessor {
 
     Exprent ascond = null, retcond = null;
     if (exprres[0] != null) {
-      ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT,
-                                   Arrays.asList((Exprent)exprres[0]), throwError.bytecode);
+      ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, (Exprent)exprres[0], throwError.bytecode);
       retcond = SecondaryFunctionsHelper.propagateBoolNot(ascond);
     }
 

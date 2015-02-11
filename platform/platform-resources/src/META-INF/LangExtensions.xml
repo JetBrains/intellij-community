@@ -328,8 +328,21 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.LibraryScopeCache"
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
-    <projectService serviceInterface="com.intellij.ide.scratch.ScratchpadManager"
-                    serviceImplementation="com.intellij.ide.scratch.ScratchpadManagerImpl"/>
+    <projectViewPane implementation="com.intellij.ide.scratch.ScratchProjectViewPane"/>
+    <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
+                        serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
+
+    <fileTypeFactory implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$TypeFactory"/>
+    <navbar implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$NavBarExtension"/>
+    <lang.substitutor language="TEXT" implementationClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Substitutor" order="first"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$AccessExtension"/>
+    <fileIconProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
+    <editorTabTitleProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
+    <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
+
+    <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType" />
+    <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
+    <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="defaultLanguage"/>
@@ -705,7 +718,6 @@
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.OtherTabsAndIndentsProvider"/>
 
     <projectService serviceInterface="com.intellij.ide.todo.TodoView"
                     serviceImplementation="com.intellij.ide.todo.TodoView"/>
@@ -801,6 +813,7 @@
     <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.fileTypes.FileTypeUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -868,9 +881,6 @@
 
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
 
-    <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
-    <fileIconProvider implementation="com.intellij.ide.scratch.ScratchpadIconProvider"/>
-
     <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
      <!--the following binding uses 'first' order to make sure it captures raw text before any other processor modifies it -->
@@ -896,6 +906,7 @@
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider" order="last"/>
+    <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
   </extensions>
 </idea-plugin>
 

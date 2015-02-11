@@ -100,7 +100,7 @@ public class TemplateToken extends ZenCodingToken {
     String templateString = template.getString();
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(callback.getProject());
     if (!containsAttrsVar(template)) {
-      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText(HTMLLanguage.INSTANCE, templateString);
+      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, templateString, false, true);
       dummyRootTag = dummyFile.getRootTag();
       if (dummyRootTag != null) {
         addMissingAttributes(dummyRootTag, attributes);

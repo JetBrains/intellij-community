@@ -91,6 +91,7 @@ public interface PropertiesFile {
 
   IProperty addProperty(String key, String value);
 
+  IProperty addPropertyAfter(String key, String value, Property anchor);
   /**
    * @return Property key to the property value map.
    * Do not modify this map. It's no use anyway.
@@ -106,4 +107,6 @@ public interface PropertiesFile {
   Project getProject();
 
   String getText();
+
+  boolean isAlphaSorted();
 }

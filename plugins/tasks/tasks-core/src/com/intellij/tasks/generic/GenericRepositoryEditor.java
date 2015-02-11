@@ -106,7 +106,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     installListener(myTasksListURLText);
     installListener(mySingleTaskURLText);
     installListener(myDownloadTasksInSeparateRequests);
-    myTabbedPane.addTab("Server configuration", myPanel);
+    myTabbedPane.addTab("Server Configuration", myPanel);
 
     // Put appropriate configuration components on the card panel
     ResponseHandler xmlHandler = myRepository.getResponseHandler(ResponseType.XML);

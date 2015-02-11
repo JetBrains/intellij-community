@@ -15,13 +15,16 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CloudApplicationRuntime extends DeploymentRuntime {
 
   private final String myApplicationName;
+  private Deployment myDeployment;
 
   public CloudApplicationRuntime(String applicationName) {
     myApplicationName = applicationName;
@@ -39,5 +42,13 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
   @Nullable
   public String getStatusText() {
     return null;
+  }
+
+  public void setDeploymentModel(@NotNull Deployment deployment) {
+    myDeployment = deployment;
+  }
+
+  protected Deployment getDeploymentModel() {
+    return myDeployment;
   }
 }

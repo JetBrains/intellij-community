@@ -46,7 +46,6 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final TextAnnotationPresentation myPresentation;
   private final boolean myIsGutterAction;
   private Couple<Map<String, Color>> myColorScheme;
-  private boolean myShowAdditionalInfo = false;
 
   AnnotationFieldGutter(FileAnnotation annotation,
                         Editor editor,
@@ -154,12 +153,8 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return colorMap.get(number.asString());
   }
 
-  public void setShowAdditionalInfo(boolean show) {
-    myShowAdditionalInfo = show;
-  }
-
   public boolean isAvailable() {
-    return myShowAdditionalInfo || VcsUtil.isAspectAvailableByDefault(getID());
+    return VcsUtil.isAspectAvailableByDefault(getID());
   }
 
   @Nullable

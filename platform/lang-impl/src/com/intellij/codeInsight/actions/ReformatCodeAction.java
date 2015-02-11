@@ -76,7 +76,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       dir = file.getContainingDirectory();
       hasSelection = editor.getSelectionModel().hasSelection();
     }
-    else if (areFiles(files)) {
+    else if (containsAtLeastOneFile(files)) {
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
       if (!operationStatus.hasReadonlyFiles()) {
         ReformatFilesOptions selectedFlags = getReformatFilesOptions(project, files);
@@ -105,9 +105,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         reformatModule(project, moduleContext, selectedFlags);
       }
       return;
-    }
-    else if (files != null && files.length == 1) {
-      file = PsiManager.getInstance(project).findFile(files[0]);
     }
     else {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -317,7 +314,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         return;
       }
     }
-    else if (files!= null && areFiles(files)) {
+    else if (files!= null && containsAtLeastOneFile(files)) {
       boolean anyFormatters = false;
       for (VirtualFile virtualFile : files) {
         if (virtualFile.isDirectory()) {
@@ -397,9 +394,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     myTestOptions = options;
   }
 
-  public static boolean areFiles(final VirtualFile[] files) {
+  public static boolean containsAtLeastOneFile(final VirtualFile[] files) {
     if (files == null) return false;
-    if (files.length < 2) return false;
+    if (files.length < 1) return false;
     for (VirtualFile virtualFile : files) {
       if (virtualFile.isDirectory()) return false;
     }

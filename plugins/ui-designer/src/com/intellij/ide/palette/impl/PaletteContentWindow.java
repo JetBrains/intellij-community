@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.ide.palette.impl;
 
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -90,7 +91,7 @@ public class PaletteContentWindow extends JPanel implements Scrollable {
     }
 
     public Dimension minimumLayoutSize(Container parent) {
-      return new Dimension(0, 0);
+      return JBUI.emptySize();
     }
 
     public Dimension preferredLayoutSize(Container parent) {

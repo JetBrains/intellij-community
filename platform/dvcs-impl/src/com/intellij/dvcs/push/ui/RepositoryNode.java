@@ -83,20 +83,20 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
       repoFixedWidth += checkBoxWidth;
       if (myCheckBoxHGap > 0) {
         renderer.append("");
-        renderer.appendFixedTextFragmentWidth(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
+        renderer.appendTextPadding(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
       }
     }
     else {
       if (myCheckBoxHGap <= 0) {
         renderer.append("");
-        renderer.appendFixedTextFragmentWidth(myRepositoryPanel.calculateRendererShiftH(renderer));
+        renderer.appendTextPadding(myRepositoryPanel.calculateRendererShiftH(renderer));
       }
     }
     SimpleTextAttributes repositoryDetailsTextAttributes = PushLogTreeUtil
       .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isChecked());
 
     renderer.append(getRepoName(renderer, repoFixedWidth), repositoryDetailsTextAttributes);
-    renderer.appendFixedTextFragmentWidth(repoFixedWidth);
+    renderer.appendTextPadding(repoFixedWidth);
     renderer.append(myRepositoryPanel.getSourceName(), repositoryDetailsTextAttributes);
     renderer.append(myRepositoryPanel.getArrow(), repositoryDetailsTextAttributes);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();

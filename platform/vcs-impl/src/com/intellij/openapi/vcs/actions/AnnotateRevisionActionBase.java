@@ -2,6 +2,8 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -15,6 +17,8 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.diff.Diff;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +64,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final VcsFileRevision fileRevision = getFileRevision(e);
     final VirtualFile file = getFile(e);
     final AbstractVcs vcs = getVcs(e);
@@ -68,10 +72,15 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     assert file != null;
     assert fileRevision != null;
 
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
+    final int oldLine = editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
+
     final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
     assert annotationProvider != null;
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
+    final Ref<Integer> newLineRef = new Ref<Integer>();
     final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
     final ProjectLevelVcsManagerImpl plVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(vcs.getProject());
@@ -82,7 +91,20 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
                                                               BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          fileAnnotationRef.set(annotationProvider.annotate(file, fileRevision));
+          FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
+
+          int newLine = oldLine;
+          if (oldContent != null) {
+            String content = fileAnnotation.getAnnotatedContent();
+            try {
+              newLine = Diff.translateLine(oldContent, content, oldLine, true);
+            }
+            catch (FilesTooBigForDiffException ignore) {
+            }
+          }
+
+          fileAnnotationRef.set(fileAnnotation);
+          newLineRef.set(newLine);
         }
         catch (VcsException e) {
           exceptionRef.set(e);
@@ -103,7 +125,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
         }
         if (fileAnnotationRef.isNull()) return;
 
-        AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), file, vcs);
+        AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), file, vcs, newLineRef.get());
       }
     });
   }

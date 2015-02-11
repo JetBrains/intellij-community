@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
+import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Factory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -135,8 +137,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   @Override
   protected UnnamedConfigurable createConfigurable(Couple<TemplateResource> item) {
-    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, myProject);
-    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, myProject);
+    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
+    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
       @Nullable
       @Override
@@ -146,14 +148,14 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
         final JPanel eqPanel = new JPanel(new BorderLayout());
         eqPanel.add(new TitledSeparator("Equals Template:"), BorderLayout.NORTH);
         final JComponent eqPane = equalsConfigurable.createComponent();
-        eqPane.setPreferredSize(new Dimension(300, 200));
+        eqPane.setPreferredSize(JBUI.size(300, 200));
         eqPanel.add(eqPane, BorderLayout.CENTER);
         splitter.setFirstComponent(eqPanel);
 
         final JPanel hcPanel = new JPanel(new BorderLayout());
         hcPanel.add(new TitledSeparator("HashCode Template:"), BorderLayout.NORTH);
         final JComponent hcPane = hashCodeConfigurable.createComponent();
-        hcPane.setPreferredSize(new Dimension(300, 200));
+        hcPane.setPreferredSize(JBUI.size(300, 200));
         hcPanel.add(hcPane, BorderLayout.CENTER);
         splitter.setSecondComponent(hcPanel);
 

@@ -16,45 +16,73 @@
 package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.Node;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
-// TODO: Full duplicate of SvnMergeInfoTest in org.jetbrains.idea.svn (before latter was refactored).
+// TODO: Full duplicate of SvnMergeInfoTest in org.jetbrains.idea.svn.
 public class SvnMergeInfoTest extends Svn16TestCase {
+
+  private static final String CONTENT1 = "123\n456\n123";
+  private static final String CONTENT2 = "123\n456\n123\n4";
+
   private File myBranchVcsRoot;
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private WCInfo myWCInfo;
+  private WCInfoWithBranches myWCInfoWithBranches;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
+
+  private SvnVcs myVcs;
+  private BranchInfo myMergeChecker;
+
+  private File trunk;
+  private File folder;
+  private File folder1;
+  private File f1;
+  private File f2;
+
+  private String myTrunkUrl;
+  private String myBranchUrl;
   private MergeContext myMergeContext;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    myTrunkUrl = myRepoUrl + "/trunk";
+    myBranchUrl = myRepoUrl + "/branch";
 
     myBranchVcsRoot = new File(myTempDirFixture.getTempDirPath(), "branch");
     myBranchVcsRoot.mkdir();
@@ -63,529 +91,381 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     myProjectLevelVcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
 
     VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
-    Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myRepoUrl + "/branch"), SVNURL.parseURIEncoded(myRepoUrl));
+    Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myBranchUrl), SVNURL.parseURIEncoded(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, Depth.INFINITY);
-    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), myRepoUrl + "/trunk", myWCInfo, "trunk", vcsRoot);
+    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), myTrunkUrl, myWCInfo, SVNPathUtil.tail(myTrunkUrl), vcsRoot);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
 
-    SvnConfiguration.getInstance(myProject).setCheckNestedForQuickMerge(true);
-//    AbstractVcs vcsFound = myProjectLevelVcsManager.findVcsByName(SvnVcs.VCS_NAME);
-//    Assert.assertEquals(1, myProjectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
+    myVcs = SvnVcs.getInstance(myProject);
+    myVcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);
+
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+
+    final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
+    myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.<WCInfoWithBranches.Branch>emptyList(), vcsRoot,
+                                                  new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
+    myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
   }
 
   @Test
   public void testSimpleNotMerged() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createOneFolderStructure();
 
     // rev 3
+    editAndCommit(trunk, f1);
 
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
-
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList = changeListList.get(0);
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, myRepoUrl, myRepoUrl + "/branch", myRepoUrl + "/trunk", myRepoUrl + "/trunk");
-    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
-
-    myOneShotMergeInfoHelper.prepare();
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult);
+    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
   }
 
   @Test
   public void testSimpleMerged() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createOneFolderStructure();
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
+    editAndCommit(trunk, f1);
 
     // rev 4: record as merged into branch
-    runInAndVerifyIgnoreOutput("merge", "-c", "3", myRepoUrl + "/trunk", myBranchVcsRoot.getAbsolutePath(), "--record-only");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
+    recordMerge(myBranchVcsRoot, myTrunkUrl, "-c", "3");
+    commitFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot);
 
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
-
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString()); 
-
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList = changeListList.get(0);
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
-
-    myOneShotMergeInfoHelper.prepare();
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.MERGED, oneShotResult);
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
+    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.MERGED);
   }
 
   @Test
   public void testEmptyMergeinfoBlocks() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createOneFolderStructure();
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
+    editAndCommit(trunk, f1);
 
     // rev 4: record as merged into branch
-    runInAndVerifyIgnoreOutput("merge", "-c", "3", myRepoUrl + "/trunk", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
+    merge(myBranchVcsRoot, myTrunkUrl, "-c", "3");
+    commitFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot);
     // rev5: put blocking empty mergeinfo
     //runInAndVerifyIgnoreOutput("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
-    runInAndVerifyIgnoreOutput("merge", "-r", "3:2", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
+    merge(new File(myBranchVcsRoot, "folder"), myTrunkUrl + "/folder", "-r", "3:2");
+    commitFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot);
 
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
+    assertMergeInfo(new File(myBranchVcsRoot, "folder"), "");
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
-    final SVNPropertyData dataFolder = wcClient.doGetProperty(new File(myBranchVcsRoot, "folder"), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert dataFolder != null && dataFolder.getValue() != null && "".equals(dataFolder.getValue().getString());
-
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList = changeListList.get(0);
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
-
-    myOneShotMergeInfoHelper.prepare();
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult);  // todo
+    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
   }
 
   @Test
   public void testNonInheritableMergeinfo() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createOneFolderStructure();
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
+    editAndCommit(trunk, f1);
 
     // rev 4: record non inheritable merge
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3*", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
+    setMergeInfo(myBranchVcsRoot, "/trunk:3*");
+    commitFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot);
 
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3*");
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && "/trunk:3*".equals(data.getValue().getString());
-
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList = changeListList.get(0);
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
-
-    myOneShotMergeInfoHelper.prepare();
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult);
+    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
   }
 
   @Test
   public void testOnlyImmediateInheritableMergeinfo() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createOneFolderStructure();
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
-    Thread.sleep(100);
+    editAndCommit(trunk, f1, CONTENT1);
     // rev4
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123\n4");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
+    editAndCommit(trunk, f1, CONTENT2);
+
+    updateFile(myBranchVcsRoot);
 
     // rev 4: record non inheritable merge
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3,4", myBranchVcsRoot.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3", new File(myBranchVcsRoot, "folder").getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
+    setMergeInfo(myBranchVcsRoot, "/trunk:3,4");
+    setMergeInfo(new File(myBranchVcsRoot, "folder"), "/trunk:3");
+    commitFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot);
 
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3-4", "/trunk:3,4");
+    assertMergeInfo(new File(myBranchVcsRoot, "folder"), "/trunk:3");
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && ("/trunk:3-4".equals(data.getValue().getString()) ||
-                                                      "/trunk:3,4".equals(data.getValue().getString()));
-    final SVNPropertyData dataFolder = wcClient.doGetProperty(new File(myBranchVcsRoot, "folder"), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert dataFolder != null && dataFolder.getValue() != null && "/trunk:3".equals(dataFolder.getValue().getString());
+    final List<SvnChangeList> changeListList = getTrunkChangeLists();
 
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList4 = changeListList.get(0);
-    assert changeList4.getNumber() == 4;
-    final SvnChangeList changeList3 = changeListList.get(1);
-    assert changeList3.getNumber() == 3;
-
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
-    result = mergeChecker.checkList(changeList4, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
-
-    myOneShotMergeInfoHelper.prepare();
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList3);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.MERGED, oneShotResult);
-
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult1 = myOneShotMergeInfoHelper.checkList(changeList4);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult1);
+    assertRevisions(changeListList, 4, 3);
+    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, SvnMergeInfoCache.MergeCheckResult.MERGED);
   }
 
   @Test
   public void testTwoPaths() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    final File folder1 = new File(folder, "folder1");
-    folder1.mkdir();
-    final File f2 = new File(folder1, "f2.txt");
-    f2.createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createTwoFolderStructure(myBranchVcsRoot);
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
-    VcsTestUtil.editFileInCommand(myProject, vf2, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
+    editFile(f1);
+    editFile(f2);
+    commitFile(trunk);
+
+    updateFile(myBranchVcsRoot);
 
     // rev 4: record non inheritable merge
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3", myBranchVcsRoot.getAbsolutePath());
+    setMergeInfo(myBranchVcsRoot, "/trunk:3");
     // this makes not merged for f2 path
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3*", new File(myBranchVcsRoot, "folder/folder1").getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
+    setMergeInfo(new File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*");
+    commitFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot);
 
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
+    assertMergeInfo(new File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*");
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
-    final SVNPropertyData dataFolder = wcClient.doGetProperty(new File(myBranchVcsRoot, "folder/folder1"), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert dataFolder != null && dataFolder.getValue() != null && "/trunk:3*".equals(dataFolder.getValue().getString());
+    final List<SvnChangeList> changeListList = getTrunkChangeLists();
 
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList3 = changeListList.get(0);
-    assert changeList3.getNumber() == 3;
-
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
-
-    myOneShotMergeInfoHelper.prepare();
-    final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList3);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult);
+    assertRevisions(changeListList, 3);
+    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
   }
 
   @Test
   public void testWhenInfoInRepo() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    final File fullBranch = newFolder(myTempDirFixture.getTempDirPath(), "fullBranch");
 
-    final File fullBranch = new File(myTempDirFixture.getTempDirPath(), "fullBranch");
-    fullBranch.mkdir();
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    // this will be taken as branch wc root
-    final File folder1 = new File(folder, "folder1");
-    folder1.mkdir();
-    final File f2 = new File(folder1, "f2.txt");
-    f2.createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", fullBranch.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch/folder/folder1", myBranchVcsRoot.getAbsolutePath());
+    createTwoFolderStructure(fullBranch);
+    // folder1 will be taken as branch wc root
+    checkOutFile(myBranchUrl + "/folder/folder1", myBranchVcsRoot);
 
     // rev 3 : f2 changed
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
+    editAndCommit(trunk, f2);
 
     // rev 4: record as merged into branch using full branch WC
-    runInAndVerifyIgnoreOutput("merge", "-c", "3", myRepoUrl + "/trunk", fullBranch.getAbsolutePath(), "--record-only");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", fullBranch.getAbsolutePath());
+    recordMerge(fullBranch, myTrunkUrl, "-c", "3");
+    commitFile(fullBranch);
+    updateFile(myBranchVcsRoot);
 
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
+    final List<SvnChangeList> changeListList = getTrunkChangeLists();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
-    final SvnChangeList changeList3 = changeListList.get(0);
-    assert changeList3.getNumber() == 3;
-
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
+    assertRevisions(changeListList, 3);
+    assertMergeResult(changeListList.get(0), SvnMergeInfoCache.MergeCheckResult.MERGED);
   }
 
   @Test
   public void testMixedWorkingRevisions() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    final File f1 = new File(folder, "f1.txt");
-    f1.createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
-
-    FileUtil.delete(trunk);
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
-    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
+    createOneFolderStructure();
 
     // rev 3
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
+    editAndCommit(trunk, f1);
 
     // rev 4: record non inheritable merge
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
-
-    Thread.sleep(100);
+    setMergeInfo(myBranchVcsRoot, "/trunk:3");
+    commitFile(myBranchVcsRoot);
     // ! no update!
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
 
-    final SVNInfo f1info = wcClient.doInfo(new File(myBranchVcsRoot, "folder/f1.txt"), SVNRevision.UNDEFINED);
+    final Info f1info = myVcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
     assert f1info.getRevision().getNumber() == 2;
 
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
-
+    final List<SvnChangeList> changeListList = getTrunkChangeLists();
     final SvnChangeList changeList = changeListList.get(0);
-    final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo mergeChecker =
-      new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk");
-    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
+
+    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
 
     // and after update
-    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
-    Thread.sleep(100);
+    updateFile(myBranchVcsRoot);
+    myMergeChecker.clear();
 
-    mergeChecker.clear();
-    result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
-    assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
+    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED);
+  }
+
+  private void createOneFolderStructure() throws InterruptedException, IOException {
+    trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
+    folder = newFolder(trunk, "folder");
+    f1 = newFile(folder, "f1.txt");
+    f2 = newFile(folder, "f2.txt");
+    waitTime();
+
+    importAndCheckOut(trunk);
+  }
+
+  private void createTwoFolderStructure(File branchFolder) throws InterruptedException, IOException {
+    trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
+    folder = newFolder(trunk, "folder");
+    f1 = newFile(folder, "f1.txt");
+    folder1 = newFolder(folder, "folder1");
+    f2 = newFile(folder1, "f2.txt");
+    waitTime();
+
+    importAndCheckOut(trunk, branchFolder);
+  }
+
+  @NotNull
+  private List<SvnChangeList> getTrunkChangeLists() throws com.intellij.openapi.vcs.VcsException {
+    final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
+
+    return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(myTrunkUrl), 0);
+  }
+
+  private void importAndCheckOut(@NotNull File trunk) throws IOException {
+    importAndCheckOut(trunk, myBranchVcsRoot);
+  }
+
+  private void importAndCheckOut(@NotNull File trunk, @NotNull File branch) throws IOException {
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myTrunkUrl);
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myTrunkUrl, myBranchUrl);
+
+    FileUtil.delete(trunk);
+    checkOutFile(myTrunkUrl, trunk);
+    checkOutFile(myBranchUrl, branch);
+  }
+
+  @NotNull
+  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file) throws InterruptedException, IOException {
+    return editAndCommit(trunk, file, CONTENT1);
+  }
+
+  @NotNull
+  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file, @NotNull String content)
+    throws InterruptedException, IOException {
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+
+    return editAndCommit(trunk, vf, content);
+  }
+
+  @NotNull
+  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull VirtualFile file, @NotNull String content)
+    throws InterruptedException, IOException {
+    editFile(file, content);
+    commitFile(trunk);
+
+    return file;
+  }
+
+  private void editFile(@NotNull File file) throws InterruptedException {
+    editFile(file, CONTENT1);
+  }
+
+  private void editFile(@NotNull File file, @NotNull String content) throws InterruptedException {
+    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+
+    editFile(vf, content);
+  }
+
+  private void editFile(@NotNull VirtualFile file, @NotNull String content) throws InterruptedException {
+    VcsTestUtil.editFileInCommand(myProject, file, content);
+    waitTime();
+  }
+
+  private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SVNException {
+    // TODO: Replace with ClientFactory model
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
+    final SVNPropertyData data = wcClient.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
+    assert data != null && data.getValue() != null;
+
+    boolean result = false;
+
+    for (String value : values) {
+      result |= value.equals(data.getValue().getString());
+    }
+
+    assert result;
+  }
+
+  private void assertMergeResult(@NotNull List<SvnChangeList> changeLists, @NotNull SvnMergeInfoCache.MergeCheckResult... mergeResults)
+    throws VcsException {
+    myOneShotMergeInfoHelper.prepare();
+
+    for (int i = 0; i < mergeResults.length; i++) {
+      SvnChangeList changeList = changeLists.get(i);
+
+      assertMergeResult(changeList, mergeResults[i]);
+      assertMergeResultOneShot(changeList, mergeResults[i]);
+    }
+  }
+
+  private void assertMergeResult(@NotNull SvnChangeList changeList, @NotNull SvnMergeInfoCache.MergeCheckResult mergeResult) {
+    assert mergeResult.equals(myMergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath()));
+  }
+
+  private void assertMergeResultOneShot(@NotNull SvnChangeList changeList, @NotNull SvnMergeInfoCache.MergeCheckResult mergeResult) {
+    Assert.assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList));
+  }
+
+  private static void assertRevisions(@NotNull List<SvnChangeList> changeLists, @NotNull int... revisions) {
+    for (int i = 0; i < revisions.length; i++) {
+      assert changeLists.get(i).getNumber() == revisions[i];
+    }
+  }
+
+  private void commitFile(@NotNull File file) throws IOException, InterruptedException {
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", file.getAbsolutePath());
+    waitTime();
+  }
+
+  private void updateFile(@NotNull File file) throws IOException, InterruptedException {
+    runInAndVerifyIgnoreOutput("up", file.getAbsolutePath());
+    waitTime();
+  }
+
+  private void checkOutFile(@NotNull String url, @NotNull File directory) throws IOException {
+    runInAndVerifyIgnoreOutput("co", url, directory.getAbsolutePath());
+  }
+
+  private void setMergeInfo(@NotNull File file, @NotNull String value) throws IOException, InterruptedException {
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.getAbsolutePath());
+    waitTime();
+  }
+
+  private void merge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException, InterruptedException {
+    merge(file, url, false, revisions);
+  }
+
+  private void recordMerge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException, InterruptedException {
+    merge(file, url, true, revisions);
+  }
+
+  private void merge(@NotNull File file, @NotNull String url, boolean recordOnly, @NotNull String... revisions)
+    throws IOException, InterruptedException {
+    List<String> parameters = ContainerUtil.newArrayList();
+
+    parameters.add("merge");
+    ContainerUtil.addAll(parameters, revisions);
+    parameters.add(url);
+    parameters.add(file.getAbsolutePath());
+    if (recordOnly) {
+      parameters.add("--record-only");
+    }
+
+    runInAndVerifyIgnoreOutput(ArrayUtil.toObjectArray(parameters, String.class));
+    waitTime();
+  }
+
+  @NotNull
+  private static File newFile(File parent, String name) throws IOException {
+    final File f1 = new File(parent, name);
+    f1.createNewFile();
+    return f1;
+  }
+
+  @NotNull
+  private static File newFolder(String parent, String name) throws InterruptedException {
+    final File trunk = new File(parent, name);
+    trunk.mkdir();
+    waitTime();
+    return trunk;
+  }
+
+  @NotNull
+  private static File newFolder(File parent, String name) throws InterruptedException {
+    final File trunk = new File(parent, name);
+    trunk.mkdir();
+    waitTime();
+    return trunk;
+  }
+
+  private static void waitTime() throws InterruptedException {
+    Thread.sleep(100);
   }
 }

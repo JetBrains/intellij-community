@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
 import java.awt.*;
@@ -139,7 +140,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
 
   @Override
   public Dimension minimumLayoutSize(Container container) {
-    Dimension dimension = new Dimension(0, 0);
+    Dimension dimension = JBUI.emptySize();
     for(int i = 0; i < container.getComponentCount(); i++){
       Component component = container.getComponent(i);
       if (!component.isVisible()) continue;
@@ -158,7 +159,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
 
   @Override
   public Dimension preferredLayoutSize(Container container) {
-    Dimension dimension = new Dimension(0, 0);
+    Dimension dimension = JBUI.emptySize();
     for(int i = 0; i < container.getComponentCount(); i++){
       Component component = container.getComponent(i);
       if (!component.isVisible()) continue;

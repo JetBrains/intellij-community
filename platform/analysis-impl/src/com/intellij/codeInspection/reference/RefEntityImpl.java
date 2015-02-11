@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.BitUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public abstract class RefEntityImpl implements RefEntity {
   protected List<RefEntity> myChildren;
   private final String myName;
   private Map<Key, Object> myUserMap;
-  protected int myFlags = 0;
+  protected long myFlags;
   protected final RefManagerImpl myManager;
 
   protected RefEntityImpl(String name, @NotNull RefManager manager) {
@@ -137,17 +138,12 @@ public abstract class RefEntityImpl implements RefEntity {
     }
   }
 
-  public boolean checkFlag(int mask) {
-    return (myFlags & mask) != 0;
+  public boolean checkFlag(long mask) {
+    return BitUtil.isSet(myFlags, mask);
   }
 
-  public void setFlag(boolean b, int mask) {
-    if (b) {
-      myFlags |= mask;
-    }
-    else {
-      myFlags &= ~mask;
-    }
+  public void setFlag(final boolean value, final long mask) {
+    myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   @Override

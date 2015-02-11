@@ -78,11 +78,12 @@ public int hashCode() {
 #end
 ##
 #macro(adjustHashCodeToArrays $field)
-#if ($field.array && $java_version > 4)
-#if ($field.nestedArray)
-// Probably incorrect - hashCode for high dimension arrays with Arrays.hashCode
+   #if ($field.array && $java_version > 4)
+    #if ($field.nestedArray)
+      java.util.Arrays.deepHashCode($field.accessor)##
+    #else
+      java.util.Arrays.hashCode($field.accessor)##
     #end
-    java.util.Arrays.hashCode($field.accessor)##
   #else
     ${field.accessor}.hashCode()##
   #end

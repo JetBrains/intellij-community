@@ -103,6 +103,7 @@ public class AnalyzeStacktraceUtil {
       toolbarActions.add(action);
     }
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
+    console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(new AnnotateStackTraceAction(console.getEditor(), console.getHyperlinks()));
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);

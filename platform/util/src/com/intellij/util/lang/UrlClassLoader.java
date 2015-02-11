@@ -43,6 +43,8 @@ import java.util.List;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
+  // Feature enabling flag for saving / restoring file system information for local class directories, see Builder#usePersistentClasspathIndexForLocalClassDirectories
+  private static final boolean INDEX_PERSISTENCE_ENABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
   @NonNls static final String CLASS_EXTENSION = ".class";
 
   static {
@@ -67,6 +69,7 @@ public class UrlClassLoader extends ClassLoader {
     private ClassLoader myParent = null;
     private boolean myLockJars = false;
     private boolean myUseCache = false;
+    private boolean myUsePersistentClasspathIndex = false;
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources = false;
@@ -82,6 +85,17 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
     public Builder useCache() { myUseCache = true; return this; }
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
+
+    // Instruction for FileLoader to save list of files / packages under its root and use this information instead of walking filesystem for
+    // speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
+    // FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
+    // such information upon appearing new file for output root.
+    // N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
+    // logical error since code is prepared for that and disk access is performed upon class / resource loading
+    public Builder usePersistentClasspathIndexForLocalClassDirectories() {
+      myUsePersistentClasspathIndex = INDEX_PERSISTENCE_ENABLED;
+      return this;
+    }
 
     /**
      * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
@@ -117,7 +131,8 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache());
+    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
+           .usePersistentClasspathIndexForLocalClassDirectories());
   }
 
   /** @deprecated use {@link #build()} (to remove in IDEA 15) */
@@ -144,7 +159,7 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, null, null);
+    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, false, null, null);
     myAllowBootstrapResources = false;
   }
 
@@ -156,7 +171,8 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload, builder.myCachePool, builder.myCachingCondition);
+    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
   }
 

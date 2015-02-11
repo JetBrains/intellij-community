@@ -10,7 +10,7 @@ class CloneCallsConstructors implements Cloneable {
 class One {
   @Override
   public Object clone() throws CloneNotSupportedException {
-    return new One();
+    return new <warning descr="'clone()' creates new 'One' instances">One</warning>();
   }
 }
 final class Two implements Cloneable {

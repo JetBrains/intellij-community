@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -171,6 +172,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     westPanel.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
         toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
+      }
+    });
+    westPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        toolWindow.fireActivated();
       }
     });
 
@@ -520,7 +527,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     public void actionPerformed(final ActionEvent e) {
       AnAction action =
-        myAlternativeAction != null && (e.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK ? myAlternativeAction : myAction;
+        myAlternativeAction != null && BitUtil.isSet(e.getModifiers(), InputEvent.ALT_MASK) ? myAlternativeAction : myAction;
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null;

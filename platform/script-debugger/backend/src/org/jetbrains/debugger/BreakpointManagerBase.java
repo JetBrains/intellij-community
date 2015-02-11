@@ -110,6 +110,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     return Promise.all(promises);
   }
 
+  @NotNull
   protected abstract Promise<Void> doClearBreakpoint(@NotNull T breakpoint);
 
   @Override
@@ -138,5 +139,23 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   @Override
   public ScriptRegExpSupport getScriptRegExpSupport() {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public MUTE_MODE getMuteMode() {
+    return MUTE_MODE.ONE;
+  }
+
+  @NotNull
+  @Override
+  public Promise<Void> flush(@NotNull Breakpoint breakpoint) {
+    return ((T)breakpoint).flush(this);
+  }
+
+  @NotNull
+  @Override
+  public Promise<?> enableBreakpoints(boolean enabled) {
+    return Promise.reject("Unsupported");
   }
 }

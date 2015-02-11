@@ -85,8 +85,13 @@ public class GitVcsPanel {
     });
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
-    mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    if (!project.isDefault()) {
+      final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+      mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
+    }
+    else {
+      mySyncControl.setVisible(true);
+    }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesButton);
     myEnableForcePush.addItemListener(new ItemListener() {

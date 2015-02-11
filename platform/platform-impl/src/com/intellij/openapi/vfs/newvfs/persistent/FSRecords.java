@@ -94,7 +94,7 @@ public class FSRecords implements Forceable {
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
-  private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
+  private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
 
   private static final ReentrantReadWriteLock.ReadLock r;
   private static final ReentrantReadWriteLock.WriteLock w;
@@ -685,7 +685,7 @@ public class FSRecords implements Forceable {
     try {
       try {
         r.lock();
-        final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+        final DataInputStream input = readAttribute(1, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         try {
@@ -727,7 +727,7 @@ public class FSRecords implements Forceable {
         DbConnection.markDirty();
         final int root = getNames().enumerate(rootUrl);
 
-        final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+        final DataInputStream input = readAttribute(1, ourChildrenAttr);
         int[] names = ArrayUtil.EMPTY_INT_ARRAY;
         int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
@@ -752,7 +752,7 @@ public class FSRecords implements Forceable {
           }
         }
 
-        final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
+        final DataOutputStream output = writeAttribute(1, ourChildrenAttr);
         int id;
         try {
           id = createRecord();
@@ -784,7 +784,7 @@ public class FSRecords implements Forceable {
       try {
         w.lock();
         DbConnection.markDirty();
-        final DataInputStream input = readAttribute(1, CHILDREN_ATT);
+        final DataInputStream input = readAttribute(1, ourChildrenAttr);
         assert input != null;
         int count;
         int[] names;
@@ -809,7 +809,7 @@ public class FSRecords implements Forceable {
         names = ArrayUtil.remove(names, index);
         ids = ArrayUtil.remove(ids, index);
 
-        final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
+        final DataOutputStream output = writeAttribute(1, ourChildrenAttr);
         try {
           DataInputOutputUtil.writeINT(output, count - 1);
           for (int i = 0; i < names.length; i++) {
@@ -834,7 +834,7 @@ public class FSRecords implements Forceable {
     try {
       r.lock();
       try {
-        final DataInputStream input = readAttribute(id, CHILDREN_ATT);
+        final DataInputStream input = readAttribute(id, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         final int count = DataInputOutputUtil.readINT(input);
@@ -879,7 +879,7 @@ public class FSRecords implements Forceable {
     try {
       r.lock();
       try {
-        final DataInputStream input = readAttribute(parentId, CHILDREN_ATT);
+        final DataInputStream input = readAttribute(parentId, ourChildrenAttr);
         if (input == null) return NameId.EMPTY_ARRAY;
 
         int count = DataInputOutputUtil.readINT(input);
@@ -906,7 +906,7 @@ public class FSRecords implements Forceable {
     try {
       r.lock();
       try {
-        return findAttributePage(id, CHILDREN_ATT, false) != 0;
+        return findAttributePage(id, ourChildrenAttr, false) != 0;
       } finally {
         r.unlock();
       }
@@ -920,7 +920,7 @@ public class FSRecords implements Forceable {
     try {
       w.lock();
       DbConnection.markDirty();
-      final DataOutputStream record = writeAttribute(id, CHILDREN_ATT, false);
+      final DataOutputStream record = writeAttribute(id, ourChildrenAttr);
       DataInputOutputUtil.writeINT(record, children.length);
       for (int child : children) {
         if (child == id) {
@@ -1241,8 +1241,8 @@ public class FSRecords implements Forceable {
       synchronized (att.getId()) {
         try {
           r.lock();
-          DataInputStream stream = readAttribute(fileId, att.getId());
-          if (stream != null) {
+          DataInputStream stream = readAttribute(fileId, att);
+          if (stream != null && att.isVersioned()) {
             try {
               int actualVersion = DataInputOutputUtil.readINT(stream);
               if (actualVersion != att.getVersion()) {
@@ -1269,18 +1269,18 @@ public class FSRecords implements Forceable {
 
   // should be called under r or w lock
   @Nullable
-  private static DataInputStream readAttribute(int fileId, String attId) throws IOException {
-    int page = findAttributePage(fileId, attId, false);
+  private static DataInputStream readAttribute(int fileId, FileAttribute attribute) throws IOException {
+    int page = findAttributePage(fileId, attribute, false);
     if (page == 0) return null;
     return getAttributesStorage().readStream(page);
   }
 
-  private static int findAttributePage(int fileId, @NotNull String attrId, boolean toWrite) throws IOException {
+  private static int findAttributePage(int fileId, FileAttribute attr, boolean toWrite) throws IOException {
     checkFileIsValid(fileId);
 
     Storage storage = getAttributesStorage();
 
-    int encodedAttrId = DbConnection.getAttributeId(attrId);
+    int encodedAttrId = DbConnection.getAttributeId(attr.getId());
     int recordId = getAttributeRecordId(fileId);
 
     if (recordId == 0) {
@@ -1416,18 +1416,15 @@ public class FSRecords implements Forceable {
   }
 
   @NotNull
-  public static DataOutputStream writeAttribute(final int fileId, @NotNull String attId, boolean fixedSize) {
-    return new AttributeOutputStream(fileId, attId, fixedSize);
-  }
-
-  @NotNull
   public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    DataOutputStream stream = writeAttribute(fileId, att.getId(), att.isFixedSize());
-    try {
-      DataInputOutputUtil.writeINT(stream, att.getVersion());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    DataOutputStream stream = new AttributeOutputStream(fileId, att);
+    if (att.isVersioned()) {
+      try {
+        DataInputOutputUtil.writeINT(stream, att.getVersion());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     return stream;
   }
@@ -1562,15 +1559,13 @@ public class FSRecords implements Forceable {
   }
 
   private static class AttributeOutputStream extends DataOutputStream {
-    private final String myAttributeId;
+    private final FileAttribute myAttribute;
     private final int myFileId;
-    private final boolean myFixedSize;
 
-    private AttributeOutputStream(final int fileId, @NotNull String attributeId, boolean fixedSize) {
+    private AttributeOutputStream(final int fileId, @NotNull FileAttribute attribute) {
       super(new BufferExposingByteArrayOutputStream());
       myFileId = fileId;
-      myFixedSize = fixedSize;
-      myAttributeId = attributeId;
+      myAttribute = attribute;
     }
 
     @Override
@@ -1578,18 +1573,18 @@ public class FSRecords implements Forceable {
       super.close();
 
       try {
-        synchronized (myAttributeId) {
+        synchronized (myAttribute.getId()) {
           final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
           final int page;
           try {
             w.lock();
             incModCount(myFileId);
-            page = findAttributePage(myFileId, myAttributeId, true);
+            page = findAttributePage(myFileId, myAttribute, true);
           }
           finally {
             w.unlock();
           }
-          getAttributesStorage().writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFixedSize);
+          getAttributesStorage().writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
         }
       }
       catch (Throwable e) {

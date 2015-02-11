@@ -20,13 +20,12 @@ import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -55,11 +54,25 @@ class NewPropertyAction extends AnAction {
     if (project == null) {
       return;
     }
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
-    if (editor == null || !(editor instanceof ResourceBundleEditor)) {
-      return;
+    ResourceBundleEditor resourceBundleEditor;
+    final DataContext context = e.getDataContext();
+    FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    if (fileEditor instanceof ResourceBundleEditor) {
+      resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+    } else {
+      final Editor editor = CommonDataKeys.EDITOR.getData(context);
+      resourceBundleEditor = editor != null ? editor.getUserData(ResourceBundleEditor.RESOURCE_BUNDLE_EDITOR_KEY) : null;
     }
-    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)editor;
+    if (resourceBundleEditor == null) {
+      for (FileEditor editor : FileEditorManager.getInstance(project).getSelectedEditors()) {
+        if (editor instanceof ResourceBundleEditor) {
+          resourceBundleEditor = (ResourceBundleEditor)editor;
+        }
+      }
+      if (resourceBundleEditor == null) {
+        return;
+      }
+    }
 
     final String prefix;
     final String separator;
@@ -86,14 +99,12 @@ class NewPropertyAction extends AnAction {
         throw new IllegalStateException("unsupported type: " + selectedElement.getClass());
       }
     }
-    final ResourceBundle resourceBundle = resourceBundleEditor.getResourceBundle();
-
     Messages.showInputDialog(project,
                              PropertiesBundle.message("new.property.dialog.name.prompt.text"),
                              PropertiesBundle.message("new.property.dialog.title"),
                              Messages.getQuestionIcon(),
                              null,
-                             new NewPropertyNameValidator(resourceBundle, prefix, separator));
+                             new NewPropertyNameValidator(resourceBundleEditor, prefix, separator));
   }
 
   @Override
@@ -105,15 +116,15 @@ class NewPropertyAction extends AnAction {
   }
 
   private static class NewPropertyNameValidator implements InputValidator {
-    private final @NotNull ResourceBundle myResourceBundle;
+    private final @NotNull ResourceBundleEditor myResourceBundleEditor;
     private final @Nullable String myPrefix;
     private final @Nullable String mySeparator;
 
 
-    public NewPropertyNameValidator(final @NotNull ResourceBundle resourceBundle,
+    public NewPropertyNameValidator(final @NotNull ResourceBundleEditor resourceBundleEditor,
                                     final @Nullable String prefix,
                                     final @Nullable String separator) {
-      myResourceBundle = resourceBundle;
+      myResourceBundleEditor = resourceBundleEditor;
       myPrefix = prefix;
       mySeparator = separator;
     }
@@ -127,7 +138,8 @@ class NewPropertyAction extends AnAction {
     public boolean canClose(final String inputString) {
       final String newPropertyName = myPrefix == null ? inputString : (myPrefix + mySeparator + inputString);
 
-      for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
+      final ResourceBundle resourceBundle = myResourceBundleEditor.getResourceBundle();
+      for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
         for (final String propertyName : propertiesFile.getNamesMap().keySet()) {
           if (newPropertyName.equals(propertyName)) {
             Messages.showErrorDialog("Can't add new property. Property with key \'" + newPropertyName + "\' already exists.", "New Property");
@@ -136,18 +148,21 @@ class NewPropertyAction extends AnAction {
         }
       }
 
-      final PropertiesFile defaultPropertiesFile = myResourceBundle.getDefaultPropertiesFile();
+      final PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
           CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
             @Override
             public void run() {
-              defaultPropertiesFile.addProperty(newPropertyName, "");
+              myResourceBundleEditor.getPropertiesInsertDeleteManager().insertNewProperty(newPropertyName, "");
             }
           });
         }
       });
+
+      myResourceBundleEditor.updateTreeRoot();
+      myResourceBundleEditor.selectProperty(newPropertyName);
       return true;
     }
   }

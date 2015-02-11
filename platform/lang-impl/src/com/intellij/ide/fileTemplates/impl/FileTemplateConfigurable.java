@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -229,9 +228,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(3);
     editorSettings.setAdditionalLinesCount(3);
-
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    editorSettings.setCaretRowShown(false);
 
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

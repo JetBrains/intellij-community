@@ -20,18 +20,29 @@
 package org.jetbrains.java.generate.template;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.element.FieldElement;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
 
+  public static final Key<Map<String, PsiType>> TEMPLATE_IMPLICITS = Key.create("TEMPLATE_IMPLICITS");
+  
   private TemplatesState myState = new TemplatesState();
 
   public abstract TemplateResource[] getDefaultTemplates();
@@ -103,5 +114,32 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
                 myState.templates.add(item);
             }
         }
+    }
+
+    @NotNull
+    public static PsiType createFieldListElementType(Project project) {
+      final PsiType classType = createElementType(project, FieldElement.class);
+      final PsiClass listClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(project));
+      return listClass != null ? JavaPsiFacade.getElementFactory(project).createType(listClass, classType) : PsiType.NULL;
+    }
+
+    @NotNull
+    public static PsiType createElementType(Project project, Class<?> elementClass) {
+      final List<String> methodNames = 
+        ContainerUtil.mapNotNull(elementClass.getMethods(),
+                                 new Function<Method, String>() {
+                                   @Override
+                                   public String fun(Method method) {
+                                     final String methodName = method.getName();
+                                     if (methodName.startsWith("set")) {
+                                       //hide setters from completion list
+                                       return null;
+                                     }
+                                     return method.getGenericReturnType().toString() + " " + methodName + "();";
+                                   }
+                                 });
+      final String text = "interface " + elementClass.getSimpleName() + " {\n" + StringUtil.join(methodNames, "\n") + "}";
+      final PsiClass aClass = JavaPsiFacade.getElementFactory(project).createClassFromText(text, null).getInnerClasses()[0];
+      return JavaPsiFacade.getElementFactory(project).createType(aClass);
     }
 }

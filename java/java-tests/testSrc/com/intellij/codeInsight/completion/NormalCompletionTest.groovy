@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -674,6 +675,7 @@ public class ListUtils {
   }
 
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
+  public void testNothingAfterTypeParameterQualifier() { doAntiTest(); }
 
   public void testSpacesAroundEq() throws Throwable { doTest('='); }
 
@@ -1484,5 +1486,15 @@ class Bar {
     myFixture.assertPreferredCompletionItems(0, "xcreateZoo", "xcreateElephant");
   }
 
+  public void "test code cleanup during completion generation"() {
+    myFixture.configureByText "a.java", "class Foo {int i; ge<caret>}"
+    myFixture.enableInspections(new UnqualifiedFieldAccessInspection())
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult '''class Foo {int i;
 
+    public int getI() {
+        return this.i;
+    }
+}'''
+  }
 }

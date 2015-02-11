@@ -947,12 +947,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (myPatches.isEmpty() || (! myContainBasedChanges)) return;
       final List<FilePatchInProgress.PatchChange> changes = getAllChanges();
       Collections.sort(changes, myMyChangeComparator);
-      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       int selectedIdx = 0;
       final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>(changes.size());
       if (selectedChanges.isEmpty()) {
-        selectedChanges.addAll(changes);
+        selectedChanges = changes;
       }
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);

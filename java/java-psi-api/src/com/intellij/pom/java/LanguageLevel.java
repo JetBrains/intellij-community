@@ -16,6 +16,8 @@
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaCoreBundle;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -24,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
+ * @see LanguageLevelProjectExtension
+ * @see LanguageLevelModuleExtension
  */
 public enum LanguageLevel {
   JDK_1_3("Java 1.3", JavaCoreBundle.message("jdk.1.3.language.level.description")),

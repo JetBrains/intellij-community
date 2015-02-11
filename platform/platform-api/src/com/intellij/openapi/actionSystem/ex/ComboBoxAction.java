@@ -425,7 +425,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
       else {
-        paintComponent(g);
+        super.paint(g);
       }
     }
       final Insets insets = super.getInsets();

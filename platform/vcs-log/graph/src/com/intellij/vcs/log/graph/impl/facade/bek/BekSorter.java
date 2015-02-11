@@ -76,28 +76,21 @@ public class BekSorter {
 
       @Override
       public int getBekIndex(int usualIndex) {
-        if (usualIndex == LinearGraph.NOT_LOAD_COMMIT)
-          return LinearGraph.NOT_LOAD_COMMIT;
         return compressedReverseMap.get(usualIndex);
       }
 
       @Override
       public int getUsualIndex(int bekIndex) {
-        if (bekIndex == LinearGraph.NOT_LOAD_COMMIT)
-          return LinearGraph.NOT_LOAD_COMMIT;
         return compressedBekMap.get(bekIndex);
       }
     };
   }
 
-  @NotNull
-  private final LinearGraph myPermanentGraph;
+  @NotNull private final LinearGraph myPermanentGraph;
 
-  @NotNull
-  private final GraphLayoutImpl myGraphLayout;
+  @NotNull private final GraphLayoutImpl myGraphLayout;
 
-  @NotNull
-  private final TimestampGetter myTimestampGetter;
+  @NotNull private final TimestampGetter myTimestampGetter;
 
   private BekSorter(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout, @NotNull TimestampGetter timestampGetter) {
     myPermanentGraph = permanentGraph;
