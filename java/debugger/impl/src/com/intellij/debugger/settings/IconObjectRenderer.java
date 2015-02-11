@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -33,21 +32,11 @@ import javax.swing.*;
 /**
 * Created by Egor on 04.10.2014.
 */
-class IconObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
-
+class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
   public IconObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Icon", null, null);
     setClassName("javax.swing.Icon");
     setEnabled(true);
-  }
-
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws
-                                                                                                                             EvaluateException {
-    String res = calcToStringLabel(descriptor, evaluationContext, listener);
-    if (res != null) {
-      return res;
-    }
-    return super.calcLabel(descriptor, evaluationContext, listener);
   }
 
   @Override

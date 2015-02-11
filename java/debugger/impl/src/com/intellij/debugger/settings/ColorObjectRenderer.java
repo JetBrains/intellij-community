@@ -18,7 +18,6 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.util.ui.ColorIcon;
 import com.sun.jdi.*;
@@ -29,21 +28,11 @@ import java.awt.*;
 /**
 * Created by Egor on 04.10.2014.
 */
-class ColorObjectRenderer extends CompoundReferenceRenderer {
-
+class ColorObjectRenderer extends ToStringBasedRenderer {
   public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Color", null, null);
     setClassName("java.awt.Color");
     setEnabled(true);
-  }
-
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws
-                                                                                                                             EvaluateException {
-    String res = calcToStringLabel(descriptor, evaluationContext, listener);
-    if (res != null) {
-      return res;
-    }
-    return super.calcLabel(descriptor, evaluationContext, listener);
   }
 
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {

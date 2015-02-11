@@ -22,9 +22,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
@@ -41,20 +38,11 @@ import java.util.List;
 /**
 * Created by Egor on 04.10.2014.
 */
-class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
+class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
   public ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Image", null, null);
     setClassName("java.awt.Image");
     setEnabled(true);
-  }
-
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws
-                                                                                                                             EvaluateException {
-    String res = calcToStringLabel(descriptor, evaluationContext, listener);
-    if (res != null) {
-      return res;
-    }
-    return super.calcLabel(descriptor, evaluationContext, listener);
   }
 
   @NotNull
