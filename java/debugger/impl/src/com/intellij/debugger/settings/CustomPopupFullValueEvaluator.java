@@ -46,7 +46,7 @@ public abstract class CustomPopupFullValueEvaluator<T> extends XFullValueEvaluat
 
   @Override
   public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+    myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
