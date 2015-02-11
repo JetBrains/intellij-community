@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
@@ -38,6 +39,8 @@ import java.util.List;
 * Created by Egor on 04.10.2014.
 */
 class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEvaluatorProvider {
+  private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
+
   public ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Image", null, null);
     setClassName("java.awt.Image");
@@ -56,7 +59,7 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
   }
 
   static JComponent createIconViewer(@Nullable Icon icon) {
-    if (icon == null) return new JLabel("null", JLabel.CENTER);
+    if (icon == null) return new JLabel("No data", SwingConstants.CENTER);
     final int w = icon.getIconWidth();
     final int h = icon.getIconHeight();
     final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -78,7 +81,7 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
       }
     }
     catch (Exception e) {
-      return null;
+      LOG.info("Exception while getting image data", e);
     }
     return null;
   }
