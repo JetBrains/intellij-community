@@ -143,4 +143,13 @@ public class MnemonicHelper extends ComponentTreeWatcher {
                       "alt pressed " + mnemonic;
     return CustomShortcutSet.fromString(shortcut);
   }
+
+  /**
+   * Initializes mnemonics support for the specified component and for its children if needed.
+   *
+   * @param component the root component of the hierarchy
+   */
+  public static void init(Component component) {
+    new MnemonicHelper().register(component);
+  }
 }

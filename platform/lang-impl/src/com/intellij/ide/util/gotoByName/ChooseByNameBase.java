@@ -897,7 +897,7 @@ public abstract class ChooseByNameBase {
     myTextPopup.setSize(bounds.getSize());
     myTextPopup.setLocation(bounds.getLocation());
 
-    new MnemonicHelper().register(myTextFieldPanel);
+    MnemonicHelper.init(myTextFieldPanel);
     if (myProject != null && !myProject.isDefault()) {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
     }

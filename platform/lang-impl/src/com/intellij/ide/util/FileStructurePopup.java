@@ -242,7 +242,7 @@ public class FileStructurePopup implements Disposable {
   public void show() {
     //final long time = System.currentTimeMillis();
     JComponent panel = createCenterPanel();
-    new MnemonicHelper().register(panel);
+    MnemonicHelper.init(panel);
     boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
       .setTitle(myTitle)
