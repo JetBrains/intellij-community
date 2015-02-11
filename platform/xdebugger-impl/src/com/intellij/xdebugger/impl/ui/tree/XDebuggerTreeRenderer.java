@@ -81,6 +81,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
             myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);
+            myLinkWidth = 0;
           }
         }
       }
