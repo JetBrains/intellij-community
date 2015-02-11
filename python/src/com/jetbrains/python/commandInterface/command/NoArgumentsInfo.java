@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle;
+package com.jetbrains.python.commandInterface.command;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
-public class LabelWithAction {
+/**
+ * TODO: Redundant?!
+ * Case when command has no arguments (for sure!)
+ *
+ * @author Ilya.Kazakevich
+ */
+public final class NoArgumentsInfo implements ArgumentsInfo {
+  /**
+   * Instance to use when command has no arguments
+   */
+  public static final ArgumentsInfo INSTANCE = new NoArgumentsInfo();
 
-  public final String label;
-  public final Runnable action;
+  private NoArgumentsInfo() {
+  }
 
-  public LabelWithAction(@NotNull String label, @NotNull Runnable action) {
-    this.label = label;
-    this.action = action;
+  @Nullable
+  @Override
+  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
+    return null;
   }
 }

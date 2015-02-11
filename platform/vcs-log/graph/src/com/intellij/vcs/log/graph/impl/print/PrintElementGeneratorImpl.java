@@ -203,12 +203,6 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
       result.add(new SimpleRowElement(edge, SimplePrintElement.Type.UP_ARROW, position));
   }
 
-  @Override
-  public void invalidate() {
-    myEdgesInRowGenerator.invalidate();
-    cache.clear();
-  }
-
   private boolean edgeIsVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
     Pair<Integer, Integer> normalEdge = LinearGraphUtils.asNormalEdge(edge);
     if (normalEdge == null) // e.d. edge is special. See addSpecialEdges

@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 public interface StudyLanguageManager {
   LanguageExtension<StudyLanguageManager> INSTANCE = new LanguageExtension<StudyLanguageManager>("Edu.StudyLanguageManager");
 
@@ -17,4 +19,8 @@ public interface StudyLanguageManager {
 
   @Nullable
   FileTemplate getTestsTemplate(@NotNull final Project project);
+
+  boolean packFile(File pathname);
+
+  String[] getAdditionalFilesToPack();
 }

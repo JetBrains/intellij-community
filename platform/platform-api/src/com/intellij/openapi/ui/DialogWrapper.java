@@ -1242,7 +1242,7 @@ public abstract class DialogWrapper {
       southSection.add(south, BorderLayout.SOUTH);
     }
 
-    new MnemonicHelper().register(root);
+    MnemonicHelper.init(root);
     if (!postponeValidation()) {
       startTrackingValidation();
     }

@@ -37,7 +37,10 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void clearScopesCachesForModules();
 
-
+  /**
+   * @see ProjectRootManagerEx#addProjectJdkListener(ProjectJdkListener)
+   * @see ProjectRootManagerEx#removeProjectJdkListener(ProjectJdkListener)
+   */
   public interface ProjectJdkListener extends EventListener {
     void projectJdkChanged();
   }

@@ -15,18 +15,24 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author nik
@@ -36,6 +42,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private boolean myHaveLink;
   private int myLinkOffset;
   private int myLinkWidth;
+
+  private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
   public XDebuggerTreeRenderer() {
     Insets myLinkIpad = myLink.getIpad();
@@ -56,16 +64,36 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     XDebuggerTreeNode node = (XDebuggerTreeNode)value;
     node.appendToComponent(this);
     setIcon(node.getIcon());
+
+    Rectangle treeVisibleRect = tree.getVisibleRect();
+    TreePath path = tree.getPathForRow(row);
+    int rowX = path != null ? ((XDebuggerTree.LinkTreeUI)tree.getUI()).getRowX(row, path.getPathCount() - 1) : 0;
+
     if (myHaveLink) {
-      Dimension linkSize = myLink.getPreferredSize();
-      myLinkWidth = linkSize.width;
-      myLink.setBounds(0, 0, linkSize.width, linkSize.height);
-      Rectangle treeVisibleRect = tree.getVisibleRect();
-      TreePath path = tree.getPathForRow(row);
-      int rowX = path != null ? ((XDebuggerTree.LinkTreeUI)tree.getUI()).getRowX(row, path.getPathCount() - 1) : 0;
-      myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
+      setupLinkDimensions(treeVisibleRect, rowX);
+    }
+    else {
+      if (rowX + super.getPreferredSize().width > treeVisibleRect.x + treeVisibleRect.width) {
+        // text does not fit visible area - show link
+        if (node instanceof XValueNodeImpl) {
+          final String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
+          if (rawValue != null) {
+            myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
+            append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
+            setupLinkDimensions(treeVisibleRect, rowX);
+            myLinkWidth = 0;
+          }
+        }
+      }
     }
     putClientProperty(AbstractExpandableItemsHandler.DISABLE_EXPANDABLE_HANDLER, myHaveLink ? true : null);
+  }
+
+  private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
+    Dimension linkSize = myLink.getPreferredSize();
+    myLinkWidth = linkSize.width;
+    myLink.setBounds(0, 0, linkSize.width, linkSize.height);
+    myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
   }
 
   @Override
@@ -129,6 +157,31 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
+    }
+  }
+
+  private static class MyLongTextHyperlink extends XDebuggerTreeNodeHyperlink {
+    private String myText;
+    private Project myProject;
+
+    public MyLongTextHyperlink() {
+      super(XDebuggerBundle.message("node.test.show.full.value"));
+    }
+
+    public void setupComponent(String text, Project project) {
+      myText = text;
+      myProject = project;
+    }
+
+    @Override
+    public boolean alwaysOnScreen() {
+      return true;
+    }
+
+    @Override
+    public void onClick(MouseEvent event) {
+      DebuggerUIUtil.showValuePopup(new ImmediateFullValueEvaluator(myText), event, myProject, null);
+      event.consume();
     }
   }
 }

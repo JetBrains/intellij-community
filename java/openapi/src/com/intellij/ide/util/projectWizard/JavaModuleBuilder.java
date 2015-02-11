@@ -155,7 +155,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   @Override
   public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
-    Boolean aDefault = extension.isDefault();
+    Boolean aDefault = extension.getDefault();
     LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
     if (aDefault != null && !aDefault) {
       instance.setLanguageLevel(extension.getLanguageLevel());

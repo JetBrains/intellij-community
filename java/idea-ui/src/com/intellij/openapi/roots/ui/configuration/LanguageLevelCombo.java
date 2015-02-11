@@ -16,16 +16,18 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.core.JavaCoreBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,24 +35,30 @@ import javax.swing.*;
 /**
  * @author ven
  */
+@SuppressWarnings("unchecked")
 public class LanguageLevelCombo extends ComboBox {
 
-  public static final String USE_PROJECT_LANGUAGE_LEVEL = ProjectBundle.message("project.language.level.combo.item");
+  /** Default from current SDK */
   @Nullable
   private LanguageLevel myDefaultLevel;
+  private Pair<String, String> myProjectDefault;
 
   public LanguageLevelCombo() {
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
-    setRenderer(new ListCellRendererWrapper() {
+    setRenderer(new ColoredListCellRendererWrapper() {
       @Override
-      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LanguageLevel) {
-          setText(((LanguageLevel)value).getPresentableText());
+          append(((LanguageLevel)value).getPresentableText());
         }
-        else if (value instanceof String) {
-          setText((String)value);
+        else if (value instanceof Pair) {
+          Pair<String, String> pair = (Pair<String, String>)value;
+          append(pair.first);
+          if (pair.second != null) {
+            append(" (" + pair.second + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
       }
     });
@@ -69,20 +77,19 @@ public class LanguageLevelCombo extends ComboBox {
         myDefaultLevel = version.getMaxLanguageLevel();
       }
     }
-    String item = null;
+    Pair<String, String> item = null;
     if (myDefaultLevel != null) {
-      item = JavaCoreBundle.message("default.jdk.level.description", myDefaultLevel.getPresentableText());
+      item = Pair.create(JavaCoreBundle.message("default.language.level.description"), myDefaultLevel.getPresentableText());
       addItem(item);
     }
     else if (project.isDefault()) {
-      item = JavaCoreBundle.message("default.language.level.description");
+      item = Pair.create(JavaCoreBundle.message("default.language.level.description"), null);
       addItem(item);
       myDefaultLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
     }
 
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
-    Boolean aDefault = extension.isDefault();
-    if (item != null && aDefault != null && aDefault) {
+    if (item != null && extension.isDefault()) {
       setSelectedItem(item);
     }
     else {
@@ -102,9 +109,11 @@ public class LanguageLevelCombo extends ComboBox {
 
   @Override
   public void setSelectedItem(Object anObject) {
-    if (anObject == null) {
-      anObject = USE_PROJECT_LANGUAGE_LEVEL;
-    }
-    super.setSelectedItem(anObject);
+    super.setSelectedItem(anObject == null ? myProjectDefault : anObject);
+  }
+
+  void addProjectDefault(String projectLevel) {
+    myProjectDefault = Pair.create(ProjectBundle.message("project.language.level.combo.item"), projectLevel);
+    insertItemAt(myProjectDefault, 0);
   }
 }

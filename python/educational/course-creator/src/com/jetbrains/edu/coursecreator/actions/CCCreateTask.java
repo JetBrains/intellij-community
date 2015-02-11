@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -80,25 +81,23 @@ public class CCCreateTask extends DumbAwareAction {
           final StudyLanguageManager studyLanguageManager = StudyLanguageManager.INSTANCE.forLanguage(language);
           CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
 
+          final Task task = new Task(taskName);
+          task.setIndex(size + 1);
+          lesson.addTask(task, taskDirectory);
+
           createFromTemplateAndOpen(taskDirectory, studyLanguageManager.getTestsTemplate(project), view);
           createFromTemplateAndOpen(taskDirectory, FileTemplateManager.getInstance(project).getInternalTemplate("task.html"), view);
           String defaultExtension = studyLanguageManager.getDefaultTaskFileExtension();
-          String taskFileName = null;
           if (defaultExtension != null) {
             FileTemplate taskFileTemplate = studyLanguageManager.getTaskFileTemplateForExtension(project,
                                                                                           defaultExtension);
             createFromTemplateAndOpen(taskDirectory, taskFileTemplate, view);
             if (taskFileTemplate != null) {
-              taskFileName = taskFileTemplate.getName();
+              String taskFileName = FileUtil.getNameWithoutExtension(taskFileTemplate.getName());
+              task.addTaskFile(taskFileName + "." + defaultExtension, size + 1);
             }
           }
 
-          final Task task = new Task(taskName);
-          task.setIndex(size + 1);
-          lesson.addTask(task, taskDirectory);
-          if (taskFileName != null) {
-            task.addTaskFile(taskFileName, size + 1);
-          }
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {

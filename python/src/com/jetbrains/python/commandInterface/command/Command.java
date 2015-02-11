@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandBasedChunkDriver;
+package com.jetbrains.python.commandInterface.command;
 
 import com.intellij.openapi.module.Module;
 import com.jetbrains.python.commandLineParser.CommandLineParseResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * Command with arguments
+ * Command with arguments and options
  *
  * @author Ilya.Kazakevich
  */
@@ -46,6 +48,12 @@ public interface Command {
    */
   @NotNull
   ArgumentsInfo getArgumentsInfo();
+
+  /**
+   * @return command options
+   */
+  @NotNull
+  List<Option> getOptions();
 
   /**
    * Execute command

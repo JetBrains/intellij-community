@@ -29,6 +29,4 @@ public interface PrintElementGenerator {
 
   @NotNull
   PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement);
-
-  void invalidate();
 }

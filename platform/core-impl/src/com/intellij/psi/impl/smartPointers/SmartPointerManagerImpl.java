@@ -200,6 +200,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (!file.isValid()) {
       LOG.error("Invalid element:" + file);
     }
+    processQueue();
     SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range));
     initPointer(pointer, file.getViewProvider().getVirtualFile());
 

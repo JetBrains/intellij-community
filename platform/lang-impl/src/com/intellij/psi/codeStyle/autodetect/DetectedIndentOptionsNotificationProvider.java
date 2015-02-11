@@ -32,6 +32,8 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -77,8 +79,15 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
             if (info.getIcon() != null) {
               panel.icon(info.getIcon());
             }
-            for (LabelWithAction action : info.getLabelAndActions()) {
-              panel.createActionLabel(action.label, action.action);
+            for (final ActionLabelData actionLabelData : info.getLabelAndActions()) {
+              Runnable onClickAction = new Runnable() {
+                @Override
+                public void run() {
+                  actionLabelData.action.run();
+                  EditorNotifications.getInstance(project).updateAllNotifications();
+                }
+              };
+              panel.createActionLabel(actionLabelData.label, onClickAction);
             }
             return panel;
           }

@@ -13,29 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.commandBasedChunkDriver;
-
-import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * TODO: Redundant?!
- * Case when command has no arguments (for sure!)
- *
+ * Command with arguments and options.
+ * Each {@link com.jetbrains.python.commandInterface.command.Command} may have one or more positional {@link com.jetbrains.python.commandInterface.command.Argument arguments}
+ * and several {@link com.jetbrains.python.commandInterface.command.Option options}.
  * @author Ilya.Kazakevich
  */
-public final class NoArgumentsInfo implements ArgumentsInfo {
-  /**
-   * Instance to use when command has no arguments
-   */
-  public static final ArgumentsInfo INSTANCE = new NoArgumentsInfo();
-
-  private NoArgumentsInfo() {
-  }
-
-  @Nullable
-  @Override
-  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
-    return null;
-  }
-}
+package com.jetbrains.python.commandInterface.command;
