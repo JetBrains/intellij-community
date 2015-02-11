@@ -16,6 +16,10 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
@@ -27,11 +31,13 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 
 public class OptionsPanelImpl extends JPanel implements OptionsPanel {
@@ -51,8 +57,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
   private final CollectionListModel<EditorSchemeAttributeDescriptor> myListModel;
 
-  public OptionsPanelImpl(ColorAndFontDescriptionPanel optionsPanel,
-                          ColorAndFontOptions options,
+  public OptionsPanelImpl(ColorAndFontOptions options,
                           SchemesPanel schemesProvider,
                           String categoryName) {
     super(new BorderLayout());
@@ -60,12 +65,35 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     mySchemesProvider = schemesProvider;
     myCategoryName = categoryName;
 
-    optionsPanel.setActionListener(new ActionListener() {
+    myOptionsPanel = new ColorAndFontDescriptionPanel() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      protected void onSettingsChanged(ActionEvent e) {
+        super.onSettingsChanged(e);
         myDispatcher.getMulticaster().settingsChanged();
       }
-    });
+
+      @Override
+      protected void onHyperLinkClicked(HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(OptionsPanelImpl.this));
+          String attrName = e.getDescription();
+          Element element = e.getSourceElement();
+          String pageName;
+          try {
+            pageName = element.getDocument().getText(element.getStartOffset(), element.getEndOffset() - element.getStartOffset());
+          }
+          catch (BadLocationException e1) {
+            return;
+          }
+          final SearchableConfigurable page = myOptions.findSubConfigurable(pageName);
+          if (page != null && settings != null) {
+            Runnable runnable = page.enableSearch(attrName);
+            ActionCallback callback = settings.select(page);
+            if (runnable != null) callback.doWhenDone(runnable);
+          }
+        }
+      }
+    };
 
     myListModel = new CollectionListModel<EditorSchemeAttributeDescriptor>();
     myOptionsList = new JBList(myListModel);
@@ -96,8 +124,8 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     scrollPane.setPreferredSize(new Dimension(230, 60));
     JPanel north = new JPanel(new BorderLayout());
     north.add(scrollPane, BorderLayout.CENTER);
-    north.add(optionsPanel, BorderLayout.EAST);
-    myOptionsPanel = optionsPanel;
+    north.add(myOptionsPanel, BorderLayout.EAST);
+
     add(north, BorderLayout.NORTH);
   }
 
@@ -161,6 +189,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       @Override
       public void run() {
         ListScrollingUtil.selectItem(myOptionsList, index);
+        myOptionsList.requestFocus();
       }
     };
   }
@@ -169,7 +198,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     return ContainerUtil.indexOf(myListModel.getItems(), new Condition<EditorSchemeAttributeDescriptor>() {
       @Override
       public boolean value(EditorSchemeAttributeDescriptor o) {
-        return StringUtil.naturalCompare(o.getType(), option) == 0;
+        return StringUtil.naturalCompare(o.toString(), option) == 0;
       }
     });
   }

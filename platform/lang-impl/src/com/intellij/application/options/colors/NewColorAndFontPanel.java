@@ -99,8 +99,7 @@ public class NewColorAndFontPanel extends JPanel {
                                             Collection<String> optionList, ColorSettingsPage page) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
 
-    final ColorAndFontDescriptionPanel descriptionPanel = new ColorAndFontDescriptionPanel();
-    final OptionsPanel optionsPanel = new OptionsPanelImpl(descriptionPanel, options, schemesPanel, category);
+    final OptionsPanel optionsPanel = new OptionsPanelImpl(options, schemesPanel, category);
 
 
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList, page);
