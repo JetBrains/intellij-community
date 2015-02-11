@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                                     @NotNull CommonCodeStyleSettings.IndentOptions userOptions,
                                                     @NotNull CommonCodeStyleSettings.IndentOptions detectedOptions)
   {
-    NotificationLabels labels = getNotificationLabels(userOptions, detectedOptions);
+    final NotificationLabels labels = getNotificationLabels(userOptions, detectedOptions);
     final Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (labels == null || editor == null) return null;
 
@@ -121,7 +122,20 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       }
     );
 
-    return new EditorNotificationInfo(labels.title, okAction, disableForSingleFile, showSettings);
+    final List<ActionLabelData> actions = ContainerUtil.newArrayList(okAction, disableForSingleFile, showSettings);
+    return new EditorNotificationInfo() {
+      @NotNull
+      @Override
+      public List<ActionLabelData> getLabelAndActions() {
+        return actions;
+      }
+
+      @NotNull
+      @Override
+      public String getTitle() {
+        return labels.title;
+      }
+    };
   }
 
   @Nullable
