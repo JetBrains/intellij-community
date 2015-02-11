@@ -1574,6 +1574,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testDocBookRole() throws Exception {
+    doTestWithLocations(
+      new String[][] {
+        {"http://docbook.org/ns/docbook", "DocBookV5.xsd"},
+        {"http://www.w3.org/1999/xlink", "xlink.xsd"},
+        {"http://www.w3.org/XML/1998/namespace", "xml.xsd"}
+      },
+      "xml"
+    );
+  }
+
   public void testCorrectGeneratedDtdUpdate() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".xml");
     Collection<HighlightInfo> infos = filterInfos(doHighlighting());

@@ -66,7 +66,7 @@ public final class FloatingDecorator extends JDialog {
 
   FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
-    new MnemonicHelper().register(getContentPane());
+    MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);

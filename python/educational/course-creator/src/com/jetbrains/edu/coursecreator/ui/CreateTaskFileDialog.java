@@ -8,21 +8,25 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.StudyLanguageManager;
+import com.jetbrains.edu.coursecreator.format.Course;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.event.MouseEvent;
 
 public class CreateTaskFileDialog extends DialogWrapper {
+  private final Course myCourse;
   private JPanel myPanel;
   private JBList myList;
   private JTextField myTextField;
 
   @SuppressWarnings("unchecked")
-  public CreateTaskFileDialog(@Nullable Project project, String generatedFileName) {
+  public CreateTaskFileDialog(@Nullable Project project, String generatedFileName, @NotNull final Course course) {
     super(project);
+    myCourse = course;
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
 
     DefaultListModel model = new DefaultListModel();
@@ -51,16 +55,11 @@ public class CreateTaskFileDialog extends DialogWrapper {
       }
     }.installOn(myList);
 
-    myList.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          //TODO: do smth to check validness
-        }
-      }
-    );
-
-    ListScrollingUtil.selectItem(myList, FileTypeManager.getInstance().getFileTypeByExtension("py"));
+    StudyLanguageManager manager = CCUtils.getStudyLanguageManager(myCourse);
+    if (manager != null) {
+      String extension = manager.getDefaultTaskFileExtension();
+      ListScrollingUtil.selectItem(myList, FileTypeManager.getInstance().getFileTypeByExtension(extension != null ? extension : "txt"));
+    }
     return myPanel;
   }
 

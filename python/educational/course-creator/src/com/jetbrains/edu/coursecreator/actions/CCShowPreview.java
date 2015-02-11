@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -92,6 +91,9 @@ public class CCShowPreview extends DumbAwareAction {
     Lesson lesson = course.getLesson(lessonDir.getName());
     Task task = lesson.getTask(taskDir.getName());
     TaskFile taskFile = task.getTaskFile(file.getName());
+    if (taskFile == null) {
+      return;
+    }
     final Map<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
     for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       if (entry.getValue() == taskFile) {
@@ -103,7 +105,10 @@ public class CCShowPreview extends DumbAwareAction {
         });
       }
     }
-    String userFileName = FileUtil.getNameWithoutExtension(file.getName()) + ".py";
+    String userFileName = CCProjectService.getRealTaskFileName(file.getName());
+    if (userFileName == null) {
+      return;
+    }
     VirtualFile userFile = taskDir.getVirtualFile().findChild(userFileName);
     if (userFile == null) {
       LOG.info("Generated file " + userFileName + "was not found");

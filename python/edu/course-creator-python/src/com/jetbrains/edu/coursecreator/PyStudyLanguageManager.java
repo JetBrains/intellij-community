@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 public class PyStudyLanguageManager implements StudyLanguageManager {
   @Nullable
   @Override
@@ -26,6 +28,17 @@ public class PyStudyLanguageManager implements StudyLanguageManager {
   @Override
   public FileTemplate getTestsTemplate(@NotNull final Project project) {
     return getInternalTemplateByName(project, "tests.py");
+  }
+
+  @Override
+  public boolean packFile(File pathname) {
+    String name = pathname.getName();
+    return !name.contains("__pycache__") && !name.contains(".pyc");
+  }
+
+  @Override
+  public String[] getAdditionalFilesToPack() {
+    return new String[]{"test_helper.py"};
   }
 
   private static FileTemplate getInternalTemplateByName(@NotNull final Project project, String name) {

@@ -27,13 +27,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
 
 /**
  * @author Rustam Vishnyakov
@@ -82,22 +84,21 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                                     @NotNull CommonCodeStyleSettings.IndentOptions userOptions,
                                                     @NotNull CommonCodeStyleSettings.IndentOptions detectedOptions)
   {
-    NotificationLabels labels = getNotificationLabels(userOptions, detectedOptions);
+    final NotificationLabels labels = getNotificationLabels(userOptions, detectedOptions);
     final Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (labels == null || editor == null) return null;
 
-    LabelWithAction okAction = new LabelWithAction(
+    ActionLabelData okAction = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.accept"),
       new Runnable() {
         @Override
         public void run() {
           setAccepted(file);
-          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       }
     );
 
-    LabelWithAction disableForSingleFile = new LabelWithAction(
+    ActionLabelData disableForSingleFile = new ActionLabelData(
       labels.revertToOldSettingsLabel,
       new Runnable() {
         @Override
@@ -106,24 +107,35 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           if (editor instanceof EditorEx) {
             ((EditorEx)editor).reinitSettings();
           }
-          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       }
     );
 
-    LabelWithAction showSettings = new LabelWithAction(
+    ActionLabelData showSettings = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.show.settings"),
       new Runnable() {
         @Override
         public void run() {
           ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode",
                                                   ApplicationBundle.message("settings.code.style.general.autodetect.indents"));
-          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       }
     );
 
-    return new EditorNotificationInfo(labels.title, okAction, disableForSingleFile, showSettings);
+    final List<ActionLabelData> actions = ContainerUtil.newArrayList(okAction, disableForSingleFile, showSettings);
+    return new EditorNotificationInfo() {
+      @NotNull
+      @Override
+      public List<ActionLabelData> getLabelAndActions() {
+        return actions;
+      }
+
+      @NotNull
+      @Override
+      public String getTitle() {
+        return labels.title;
+      }
+    };
   }
 
   @Nullable

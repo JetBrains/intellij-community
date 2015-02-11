@@ -138,7 +138,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
     InternalExternalProjectInfo merged = new InternalExternalProjectInfo(
       projectSystemId,
       projectPath,
-      externalProjectStructure
+      externalProjectStructure != null ? externalProjectStructure.graphCopy() : null
     );
     merged.setLastImportTimestamp(lastImportTimestamp);
     merged.setLastSuccessfulImportTimestamp(lastSuccessfulImportTimestamp);

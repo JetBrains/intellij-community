@@ -102,7 +102,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   @Override
   @NotNull
   protected JComponent createCustomComponent() {
-    new MnemonicHelper().register(getComponent());
+    MnemonicHelper.init(getComponent());
     myComponent = myComponentFactory.create();
     DomUIFactory.getDomUIFactory().setupErrorOutdatingUserActivityWatcher(this, getDomElement());
     DomManager.getDomManager(getProject()).addDomEventListener(new DomEventListener() {

@@ -17,7 +17,6 @@ package com.intellij.codeInspection.unsorted;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
@@ -30,11 +29,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,7 +64,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
           holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName), ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
           return;
         }
-        if (!isAlphaSorted(propertiesFile)) {
+        if (!propertiesFile.isAlphaSorted()) {
           holder.registerProblem(file, "Properties file is unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
         }
       }
@@ -81,32 +77,9 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
       if (!(file instanceof PropertiesFileImpl)) {
         return true;
       }
-      if (!file.equals(exceptedFile)) {
-        if (!isAlphaSorted(file)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private static boolean isAlphaSorted(final @NotNull PropertiesFile propertiesFile) {
-    return isAlphaSorted(ContainerUtil.mapNotNull(propertiesFile.getProperties(), new NullableFunction<IProperty, String>() {
-      @Nullable
-      @Override
-      public String fun(IProperty property) {
-        return property.getKey();
-      }
-    }));
-  }
-
-  private static boolean isAlphaSorted(final List<String> keys) {
-    String prevKey = null;
-    for (String key : keys) {
-      if (prevKey != null && prevKey.compareTo(key) > 0) {
+      if (!file.equals(exceptedFile) && !file.isAlphaSorted()) {
         return false;
       }
-      prevKey = key;
     }
     return true;
   }
@@ -137,7 +110,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final boolean force = myFilesToSort.length == 1;
       for (PropertiesFile file : myFilesToSort) {
-        if (!force && isAlphaSorted(file)) {
+        if (!force && file.isAlphaSorted()) {
           continue;
         }
         sortPropertiesFile(file);

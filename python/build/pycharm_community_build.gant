@@ -377,5 +377,6 @@ private layoutMac(Map _args, String target) {
   args.help_id = "PY"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
+  args.executable = "pycharm"
   layoutMacApp(target, ch, args)
 }
