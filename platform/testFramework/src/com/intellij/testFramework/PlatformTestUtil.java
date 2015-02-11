@@ -808,6 +808,11 @@ public class PlatformTestUtil {
     return homePath;
   }
 
+  public static String getPlatformTestDataPath() {
+    return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+  }
+
+
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return new Comparator<AbstractTreeNode>() {
       @Override
