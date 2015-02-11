@@ -701,6 +701,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   private void registerCannotApplyError(@NotNull String invokedText, @NotNull CallInfo info) {
+    if (info.getArgumentTypes() == null) return;
     final String typesString = buildArgTypesList(info.getArgumentTypes());
     registerError(
       info.getElementToHighlight(),
