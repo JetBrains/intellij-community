@@ -45,6 +45,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   public ImageObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Image", null, null);
     setClassName("java.awt.Image");
+    setEnabled(true);
   }
 
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws

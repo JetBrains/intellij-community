@@ -38,6 +38,7 @@ class IconObjectRenderer extends CompoundReferenceRenderer implements FullValueE
   public IconObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Icon", null, null);
     setClassName("javax.swing.Icon");
+    setEnabled(true);
   }
 
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws

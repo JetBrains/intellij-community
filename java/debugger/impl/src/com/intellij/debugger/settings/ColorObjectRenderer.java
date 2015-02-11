@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ class ColorObjectRenderer extends CompoundReferenceRenderer {
   public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Color", null, null);
     setClassName("java.awt.Color");
+    setEnabled(true);
   }
 
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws
@@ -55,6 +56,7 @@ class ColorObjectRenderer extends CompoundReferenceRenderer {
         if (valueField != null) {
           final Value rgbValue = objRef.getValue(valueField);
           if (rgbValue instanceof IntegerValue) {
+            @SuppressWarnings("UseJBColor")
             final Color color = new Color(((IntegerValue)rgbValue).value(), true);
             return new ColorIcon(16, 12, color, true);
           }
