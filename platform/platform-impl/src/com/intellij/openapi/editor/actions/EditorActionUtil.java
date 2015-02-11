@@ -198,8 +198,12 @@ public class EditorActionUtil {
       }
     }
 
+    int newSpacesEnd = lineStart + buf.length();
     if (newCaretOffset >= spacesEnd) {
       newCaretOffset += buf.length() - (spacesEnd - lineStart);
+    }
+    else if (newCaretOffset >= lineStart && newCaretOffset < spacesEnd && newCaretOffset > newSpacesEnd) {
+      newCaretOffset = newSpacesEnd;
     }
 
     if (buf.length() > 0) {

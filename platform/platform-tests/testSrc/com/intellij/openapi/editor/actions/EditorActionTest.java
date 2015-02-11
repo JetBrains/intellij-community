@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.datatransfer.StringSelection;
@@ -186,5 +187,11 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("blah blah\n" +
                       "blah <selection>blah\n" +
                       "blah bl<caret></selection>ah");
+  }
+  
+  public void testCaretComesBeforeTextOnUnindent() throws IOException {
+    initText("      <caret>  text");
+    unindent();
+    checkResultByText("    <caret>text");
   }
 }

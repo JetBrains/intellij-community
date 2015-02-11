@@ -429,7 +429,7 @@ public class DaemonListeners implements Disposable {
     @Override
     public void beforeWriteActionStart(Object action) {
       myDaemonWasRunning = myDaemonCodeAnalyzer.isRunning();
-      if (!myDaemonWasRunning || isUnderIgnoredAction(action)) return; // we'll restart in writeActionFinished()
+      if (!myDaemonWasRunning) return; // we'll restart in writeActionFinished()
       stopDaemon(true, "Write action start");
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,11 @@ public class TypeCustomizerInspection extends BaseInspection {
     return new BaseInspectionVisitor() {
       @Override
       public void visitFile(GroovyFileBase file) {
-        if (!CompilerConfiguration.getInstance(file.getProject()).isResourceFile(file.getVirtualFile())) {
-          if (fileSeemsToBeTypeCustomizer(file)) {
-            final LocalQuickFix[] fixes = {new AddToResourceFix(file)};
-            final String message = GroovyInspectionBundle.message("type.customizer.is.not.marked.as.a.resource.file");
-            registerError(file, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-          }
+        CompilerConfiguration configuration = CompilerConfiguration.getInstance(file.getProject());
+        if (configuration != null && !configuration.isResourceFile(file.getVirtualFile()) && fileSeemsToBeTypeCustomizer(file)) {
+          final LocalQuickFix[] fixes = {new AddToResourceFix(file)};
+          final String message = GroovyInspectionBundle.message("type.customizer.is.not.marked.as.a.resource.file");
+          registerError(file, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     };
