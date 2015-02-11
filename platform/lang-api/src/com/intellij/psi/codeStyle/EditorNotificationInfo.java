@@ -27,11 +27,11 @@ public class EditorNotificationInfo {
 
   private String myTitle;
   private Icon myIcon;
-  private List<LabelWithAction> myLabelsWithActions = ContainerUtil.newArrayList();
+  private List<ActionLabelData> myLabelsWithActions = ContainerUtil.newArrayList();
 
   public EditorNotificationInfo(@NotNull String title,
-                                @NotNull LabelWithAction firstLabel,
-                                @Nullable LabelWithAction... otherLabels)
+                                @NotNull ActionLabelData firstLabel,
+                                @Nullable ActionLabelData... otherLabels)
   {
     myTitle = title;
     myLabelsWithActions.add(firstLabel);
@@ -42,15 +42,15 @@ public class EditorNotificationInfo {
 
   public EditorNotificationInfo(@NotNull String title,
                                 @NotNull Icon icon,
-                                @NotNull LabelWithAction firstLabel,
-                                @Nullable LabelWithAction... otherLabels)
+                                @NotNull ActionLabelData firstLabel,
+                                @Nullable ActionLabelData... otherLabels)
   {
     this(title, firstLabel, otherLabels);
     myIcon = icon;
   }
 
   @NotNull
-  public List<LabelWithAction> getLabelAndActions() {
+  public List<ActionLabelData> getLabelAndActions() {
     return myLabelsWithActions;
   }
 
@@ -65,17 +65,17 @@ public class EditorNotificationInfo {
   }
 
 
-  public static class LabelWithAction {
+  public static class ActionLabelData {
     public final String label;
     public final Runnable action;
     public boolean updateAllNotificationsOnFinish;
 
-    public LabelWithAction(@NotNull String label, @NotNull Runnable action) {
+    public ActionLabelData(@NotNull String label, @NotNull Runnable action) {
       this.label = label;
       this.action = action;
     }
 
-    public LabelWithAction setUpdateAllNotificationsOnActionEnd(boolean value) {
+    public ActionLabelData setUpdateAllNotificationsOnActionEnd(boolean value) {
       updateAllNotificationsOnFinish = value;
       return this;
     }

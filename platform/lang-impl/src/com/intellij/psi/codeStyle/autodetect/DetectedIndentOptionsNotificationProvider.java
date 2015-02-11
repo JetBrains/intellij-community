@@ -79,7 +79,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
             if (info.getIcon() != null) {
               panel.icon(info.getIcon());
             }
-            for (final LabelWithAction actionLabelData : info.getLabelAndActions()) {
+            for (final ActionLabelData actionLabelData : info.getLabelAndActions()) {
               Runnable onClickAction = actionLabelData.action;
               if (actionLabelData.updateAllNotificationsOnFinish) {
                 onClickAction = new Runnable() {

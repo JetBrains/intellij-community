@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +87,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     final Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (labels == null || editor == null) return null;
 
-    LabelWithAction okAction = new LabelWithAction(
+    ActionLabelData okAction = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.accept"),
       new Runnable() {
         @Override
@@ -98,7 +97,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       }
     ).setUpdateAllNotificationsOnActionEnd(true);
 
-    LabelWithAction disableForSingleFile = new LabelWithAction(
+    ActionLabelData disableForSingleFile = new ActionLabelData(
       labels.revertToOldSettingsLabel,
       new Runnable() {
         @Override
@@ -111,7 +110,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       }
     ).setUpdateAllNotificationsOnActionEnd(true);
 
-    LabelWithAction showSettings = new LabelWithAction(
+    ActionLabelData showSettings = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.show.settings"),
       new Runnable() {
         @Override
