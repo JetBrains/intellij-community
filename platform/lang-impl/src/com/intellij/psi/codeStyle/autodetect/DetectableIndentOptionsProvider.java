@@ -94,10 +94,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         @Override
         public void run() {
           setAccepted(file);
-          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       }
-    );
+    ).setUpdateAllNotificationsOnActionEnd(true);
 
     LabelWithAction disableForSingleFile = new LabelWithAction(
       labels.revertToOldSettingsLabel,
@@ -108,10 +107,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           if (editor instanceof EditorEx) {
             ((EditorEx)editor).reinitSettings();
           }
-          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       }
-    );
+    ).setUpdateAllNotificationsOnActionEnd(true);
 
     LabelWithAction showSettings = new LabelWithAction(
       ApplicationBundle.message("code.style.indents.detector.show.settings"),
@@ -120,10 +118,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         public void run() {
           ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode",
                                                   ApplicationBundle.message("settings.code.style.general.autodetect.indents"));
-          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       }
-    );
+    ).setUpdateAllNotificationsOnActionEnd(true);
 
     return new EditorNotificationInfo(labels.title, okAction, disableForSingleFile, showSettings);
   }

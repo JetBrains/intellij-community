@@ -68,10 +68,16 @@ public class EditorNotificationInfo {
   public static class LabelWithAction {
     public final String label;
     public final Runnable action;
+    public boolean updateAllNotificationsOnFinish;
 
     public LabelWithAction(@NotNull String label, @NotNull Runnable action) {
       this.label = label;
       this.action = action;
+    }
+
+    public LabelWithAction setUpdateAllNotificationsOnActionEnd(boolean value) {
+      updateAllNotificationsOnFinish = value;
+      return this;
     }
   }
 
