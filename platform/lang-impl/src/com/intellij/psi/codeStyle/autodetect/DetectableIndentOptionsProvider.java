@@ -95,7 +95,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           setAccepted(file);
         }
       }
-    ).setUpdateAllNotificationsOnActionEnd(true);
+    );
 
     ActionLabelData disableForSingleFile = new ActionLabelData(
       labels.revertToOldSettingsLabel,
@@ -108,7 +108,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           }
         }
       }
-    ).setUpdateAllNotificationsOnActionEnd(true);
+    );
 
     ActionLabelData showSettings = new ActionLabelData(
       ApplicationBundle.message("code.style.indents.detector.show.settings"),
@@ -119,7 +119,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                                   ApplicationBundle.message("settings.code.style.general.autodetect.indents"));
         }
       }
-    ).setUpdateAllNotificationsOnActionEnd(true);
+    );
 
     return new EditorNotificationInfo(labels.title, okAction, disableForSingleFile, showSettings);
   }
