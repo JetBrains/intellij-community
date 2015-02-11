@@ -839,12 +839,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitCastExpression(GrTypeCastExpression expression) {
     super.visitCastExpression(expression);
 
-    if (expression.getCastTypeElement() == null) return;
-    final PsiType expectedType = expression.getCastTypeElement().getType();
     final GrExpression operand = expression.getOperand();
+    if (operand == null) return;
     final PsiType actualType = operand.getType();
     if (actualType == null) return;
 
+    if (expression.getCastTypeElement() == null) return;
+    final PsiType expectedType = expression.getCastTypeElement().getType();
+    
     final ConversionResult result = TypesUtil.canCast(expectedType, actualType, expression);
     if (result == ConversionResult.OK) return;
     final ProblemHighlightType highlightType = result == ConversionResult.ERROR
