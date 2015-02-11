@@ -1,7 +1,6 @@
-package org.jetbrains.io.webSocket;
+package org.jetbrains.io.jsonRpc;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SimpleTimerTask;
@@ -9,31 +8,36 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectProcedure;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.io.webSocket.WebSocketServerOptions;
 
 import java.util.List;
 
-public class WebSocketServer implements Disposable {
+public class ClientManager implements Disposable {
+  public static final AttributeKey<Client> CLIENT = AttributeKey.valueOf("SocketHandler.client");
+
   private final SimpleTimerTask heartbeatTimer;
 
   @Nullable
-  private final WebSocketServerListener listener;
+  private final ClientListener listener;
 
-  final ExceptionHandler exceptionHandler;
+  @NotNull
+  public final ExceptionHandler exceptionHandler;
 
   private final THashSet<Client> clients = new THashSet<Client>();
 
-  public WebSocketServer() {
+  public ClientManager() {
     this(null, new ExceptionHandlerImpl());
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public WebSocketServer(@Nullable WebSocketServerListener listener, @NotNull ExceptionHandler exceptionHandler) {
+  public ClientManager(@Nullable ClientListener listener, @NotNull ExceptionHandler exceptionHandler) {
     this(null, exceptionHandler, listener);
   }
 
-  public WebSocketServer(@Nullable WebSocketServerOptions options, @NotNull ExceptionHandler exceptionHandler, @Nullable WebSocketServerListener listener) {
+  public ClientManager(@Nullable WebSocketServerOptions options, @NotNull ExceptionHandler exceptionHandler, @Nullable ClientListener listener) {
     this.exceptionHandler = exceptionHandler;
     this.listener = listener;
 
@@ -87,37 +91,14 @@ public class WebSocketServer implements Disposable {
     }
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
-  public void sendResponse(@NotNull Client client, @NotNull ByteBuf message) {
-    if (client.channel.isOpen()) {
-      client.send(message);
-    }
-  }
-
-  @Nullable
-  public <T> AsyncResult<T> send(Client client, int messageId, ByteBuf message) {
-    try {
-      return client.send(messageId, message);
-    }
-    catch (Throwable e) {
-      exceptionHandler.exceptionCaught(e);
-      return null;
-    }
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public AsyncResult removeAsyncResult(Client client, int messageId) {
-    return client.messageCallbackMap.remove(messageId);
-  }
-
-  public <T> void send(final int messageId, final ByteBuf message, @Nullable final List<AsyncResult<Pair<Client, T>>> results) {
+  public <T> void send(final int messageId, @NotNull final ByteBuf message, @Nullable final List<AsyncPromise<Pair<Client, T>>> results) {
     forEachClient(new TObjectProcedure<Client>() {
       private boolean first;
 
       @Override
       public boolean execute(final Client client) {
         try {
-          AsyncResult<Pair<Client, T>> result = client.send(messageId, first ? message : message.duplicate());
+          AsyncPromise<Pair<Client, T>> result = client.send(messageId, first ? message : message.duplicate());
           first = false;
           if (results != null) {
             results.add(result);
@@ -131,7 +112,7 @@ public class WebSocketServer implements Disposable {
     });
   }
 
-  boolean disconnectClient(@NotNull ChannelHandlerContext context, @NotNull Client client, boolean closeChannel) {
+  public boolean disconnectClient(@NotNull ChannelHandlerContext context, @NotNull Client client, boolean closeChannel) {
     synchronized (clients) {
       if (!clients.remove(client)) {
         return false;
@@ -139,7 +120,7 @@ public class WebSocketServer implements Disposable {
     }
 
     try {
-      context.attr(WebSocketHandshakeHandler.CLIENT).set(null);
+      context.attr(CLIENT).remove();
 
       if (closeChannel) {
         context.channel().close();

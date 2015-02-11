@@ -1,4 +1,4 @@
-package org.jetbrains.io.webSocket;
+package org.jetbrains.io.jsonRpc;
 
 public class ExceptionHandlerImpl implements ExceptionHandler {
   @Override

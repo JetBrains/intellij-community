@@ -1,11 +1,11 @@
-package org.jetbrains.io.webSocket;
+package org.jetbrains.io.jsonRpc;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
-public abstract class WebSocketServerListenerAdapter implements WebSocketServerListener {
+public abstract class ClientListenerAdapter implements ClientListener {
   @Override
   public void connected(@NotNull Client client, Map<String, List<String>> parameters) {
   }
