@@ -54,10 +54,12 @@ public abstract class CustomPopupFullValueEvaluator<T> extends XFullValueEvaluat
 
       @Override
       public void contextAction() throws Exception {
+        if (callback.isObsolete()) return;
         final T data = getData();
         DebuggerUIUtil.invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (callback.isObsolete()) return;
             final JComponent comp = createComponent(data);
             Project project = myEvaluationContext.getProject();
             JBPopup popup = DebuggerUIUtil.createValuePopup(project, comp, null);
