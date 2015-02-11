@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -58,7 +59,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   @NotNull
   @Override
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
-    return new CustomPopupFullValueEvaluator(" (Show image)", evaluationContext) {
+    return new CustomPopupFullValueEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
       @Override
       protected JComponent createComponent() {
         return createIconViewer(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes"));
