@@ -25,7 +25,7 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -46,7 +46,7 @@ class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvalu
     return ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
     return new CustomPopupFullValueEvaluator(DebuggerBundle.message("message.node.show.icon"), evaluationContext) {

@@ -26,7 +26,6 @@ import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +44,7 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
     setEnabled(true);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
     return new CustomPopupFullValueEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {

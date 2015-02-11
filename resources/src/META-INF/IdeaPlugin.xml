@@ -1498,6 +1498,7 @@
     <debugger.nodeRenderer implementation="com.intellij.debugger.settings.ColorObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.settings.ImageObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.settings.IconObjectRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.settings.GraphicsObjectRenderer"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
