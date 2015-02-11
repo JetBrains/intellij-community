@@ -65,7 +65,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   private boolean isInterfaceStaticMethodAccessibleThroughInheritance(PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.STATIC) && !(myCurrentFileContext instanceof PsiImportStaticStatement)) {
+    if (method.hasModifierProperty(PsiModifier.STATIC) && 
+        !(myCurrentFileContext instanceof PsiImportStaticStatement) && 
+        myPlace instanceof PsiMethodCallExpression && 
+        ((PsiMethodCallExpression)myPlace).getMethodExpression().getQualifierExpression() == null) {
       final PsiClass containingClass = method.getContainingClass();
       return containingClass != null && containingClass.isInterface();
     }
