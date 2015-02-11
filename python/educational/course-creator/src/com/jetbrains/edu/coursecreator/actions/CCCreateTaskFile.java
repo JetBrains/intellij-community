@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.StudyLanguageManager;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.Lesson;
@@ -57,7 +57,7 @@ public class CCCreateTaskFile extends DumbAwareAction {
 
     final int index = task.getTaskFiles().size() + 1;
     String generatedName = "file" + index;
-    CreateTaskFileDialog dialog = new CreateTaskFileDialog(project, generatedName);
+    CreateTaskFileDialog dialog = new CreateTaskFileDialog(project, generatedName, course);
     dialog.show();
     if (dialog.getExitCode() != OK_EXIT_CODE) {
       return;
@@ -68,11 +68,10 @@ public class CCCreateTaskFile extends DumbAwareAction {
     if (type == null) {
       return;
     }
-    Language language = Language.findLanguageByID(course.getLanguage());
-    if (language == null) {
+    final StudyLanguageManager studyLanguageManager = CCUtils.getStudyLanguageManager(course);
+    if (studyLanguageManager == null) {
       return;
     }
-    final StudyLanguageManager studyLanguageManager = StudyLanguageManager.INSTANCE.forLanguage(language);
     final String extension = type.getDefaultExtension();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
