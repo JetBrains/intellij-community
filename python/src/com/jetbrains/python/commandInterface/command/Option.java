@@ -78,7 +78,7 @@ public final class Option {
    * @return  if option accepts argument -- pair of [argument_quantity, its_type_info]. Null otherwise.
    */
   @Nullable
-  Pair<Integer, OptionArgumentInfo> getArgumentAndQuantity() {
+  public Pair<Integer, OptionArgumentInfo> getArgumentAndQuantity() {
     return myArgumentAndQuantity;
   }
 

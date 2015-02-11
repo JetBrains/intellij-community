@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 public class MalformedCommandLineException extends Exception {
-  MalformedCommandLineException(@NotNull final String message) {
+  public MalformedCommandLineException(@NotNull final String message) {
     super(message);
   }
 }

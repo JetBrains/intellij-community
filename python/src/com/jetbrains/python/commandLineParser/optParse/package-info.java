@@ -13,29 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandLineParser;
 
 /**
- * Types of command line parts.
- *
+ * {@link com.jetbrains.python.commandLineParser.CommandLineParser} based on <a href="https://docs.python.org/2/library/optparse.html">OptParse</a>
+ * See {@link com.jetbrains.python.commandLineParser.optParse.OptParseCommandLineParser}
  * @author Ilya.Kazakevich
  */
-public enum CommandLinePartType {
-  /**
-   * Argument (or positional, or unnamed argument) something that has only value. Like "my_folder" in "rm my_folder"
-   */
-  ARGUMENT,
-  /**
-   * Option is named but optional parameter. Like "-l" in "ls -l".
-   */
-  OPTION,
-  /**
-   * Option argument like --folder-to-delete=/
-   * Here root is option argument
-   */
-  OPTION_ARGUMENT,
-  /**
-   * Some part of command line that {@link com.jetbrains.python.commandLineParser.CommandLineParser} does not understand
-   */
-  UNKNOWN
-}
+package com.jetbrains.python.commandLineParser.optParse;
