@@ -55,7 +55,8 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
     };
   }
 
-  static JComponent createIconViewer(Icon icon) {
+  static JComponent createIconViewer(@Nullable Icon icon) {
+    if (icon == null) return new JLabel("null", JLabel.CENTER);
     final int w = icon.getIconWidth();
     final int h = icon.getIconHeight();
     final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
