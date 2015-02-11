@@ -33,10 +33,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -161,5 +158,20 @@ public class PropertiesImplUtil extends PropertiesUtil {
       return null;
     }
     return getResourceBundle(baseName, baseDirectory);
+  }
+
+  public static boolean isAlphaSorted(final Collection<? extends IProperty> properties) {
+    String previousKey = null;
+    for (IProperty property : properties) {
+      final String key = property.getKey();
+      if (key == null) {
+        return false;
+      }
+      if (previousKey != null && previousKey.compareTo(key) > 0) {
+        return false;
+      }
+      previousKey = key;
+    }
+    return true;
   }
 }

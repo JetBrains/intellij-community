@@ -121,16 +121,6 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   }
 
   @Override
-  public IProperty addPropertyFirst(String key, String value) {
-    return null;
-  }
-
-  @Override
-  public IProperty addPropertyLast(String key, String value) {
-    return null;
-  }
-
-  @Override
   public IProperty addPropertyAfter(String key, String value, Property anchor) {
     return null;
   }
@@ -200,6 +190,11 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @Override
   public String getText() {
     return getContainingFile().getText();
+  }
+
+  @Override
+  public boolean isAlphaSorted() {
+    return PropertiesImplUtil.isAlphaSorted(getProperties());
   }
 
   @Override

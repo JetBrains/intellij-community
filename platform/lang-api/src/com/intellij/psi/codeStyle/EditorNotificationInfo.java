@@ -15,53 +15,33 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Collections;
+import javax.swing.Icon;
 import java.util.List;
 
-public class EditorNotificationInfo {
-
-  private String myTitle;
-  private Icon myIcon;
-  private List<LabelWithAction> myLabelsWithActions = ContainerUtil.newArrayList();
-
-  public EditorNotificationInfo(@NotNull String title,
-                                @NotNull LabelWithAction firstLabel,
-                                @Nullable LabelWithAction... otherLabels)
-  {
-    myTitle = title;
-    myLabelsWithActions.add(firstLabel);
-    if (otherLabels != null) {
-      Collections.addAll(myLabelsWithActions, otherLabels);
-    }
-  }
-
-  public EditorNotificationInfo(@NotNull String title,
-                                @NotNull Icon icon,
-                                @NotNull LabelWithAction firstLabel,
-                                @Nullable LabelWithAction... otherLabels)
-  {
-    this(title, firstLabel, otherLabels);
-    myIcon = icon;
-  }
+public abstract class EditorNotificationInfo {
 
   @NotNull
-  public List<LabelWithAction> getLabelAndActions() {
-    return myLabelsWithActions;
-  }
+  public abstract List<ActionLabelData> getLabelAndActions();
+
+  @NotNull
+  public abstract String getTitle();
 
   @Nullable
   public Icon getIcon() {
-    return myIcon;
+    return null;
   }
 
-  @NotNull
-  public String getTitle() {
-    return myTitle;
+  public static class ActionLabelData {
+    public final String label;
+    public final Runnable action;
+
+    public ActionLabelData(@NotNull String label, @NotNull Runnable action) {
+      this.label = label;
+      this.action = action;
+    }
   }
 
 }
