@@ -231,12 +231,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myProjectSdkName = sdk.getName();
       myProjectSdkType = sdk.getSdkType().getName();
     }
+    projectJdkChanged();
+  }
+
+  private void projectJdkChanged() {
     mergeRootsChangesDuring(new Runnable() {
       @Override
       public void run() {
         myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
       }
     });
+    Sdk sdk = getProjectSdk();
+    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+      extension.projectSdkChanged(sdk);
+    }
   }
 
   @Override
@@ -244,12 +252,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myProjectSdkName = name;
 
-    mergeRootsChangesDuring(new Runnable() {
-      @Override
-      public void run() {
-        myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
-      }
-    });
+    projectJdkChanged();
   }
 
   @Override
