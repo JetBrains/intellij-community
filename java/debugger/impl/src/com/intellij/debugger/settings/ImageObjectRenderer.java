@@ -27,6 +27,7 @@ import com.intellij.rt.debugger.ImageSerializer;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.*;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,10 +51,10 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
   @Nullable
   @Override
   public XFullValueEvaluator getFullValueEvaluator(final EvaluationContextImpl evaluationContext, final ValueDescriptorImpl valueDescriptor) {
-    return new CustomPopupFullValueEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
+    return new IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
       @Override
-      protected JComponent createComponent() {
-        return createIconViewer(getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes"));
+      protected Icon getData() {
+        return getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes");
       }
     };
   }
@@ -117,5 +118,16 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
       return res;
     }
     return null;
+  }
+
+  static abstract class IconPopupEvaluator extends CustomPopupFullValueEvaluator<Icon> {
+    public IconPopupEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
+      super(linkText, evaluationContext);
+    }
+
+    @Override
+    protected JComponent createComponent(Icon data) {
+      return createIconViewer(data);
+    }
   }
 }

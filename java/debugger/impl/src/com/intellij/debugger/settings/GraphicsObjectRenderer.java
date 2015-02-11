@@ -51,11 +51,10 @@ public class GraphicsObjectRenderer extends ToStringBasedRenderer implements Ful
       if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
         return null;
       }
-      return new CustomPopupFullValueEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
+      return new ImageObjectRenderer.IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
         @Override
-        protected JComponent createComponent() {
-          return ImageObjectRenderer.createIconViewer(ImageObjectRenderer.getIcon(myEvaluationContext, bufImgValue,
-                                                                                  "imageToBytes"));
+        protected Icon getData() {
+          return ImageObjectRenderer.getIcon(myEvaluationContext, bufImgValue, "imageToBytes");
         }
       };
     } catch (Exception ignored) {}
