@@ -35,6 +35,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
+
 /**
  * @author Rustam Vishnyakov
  */

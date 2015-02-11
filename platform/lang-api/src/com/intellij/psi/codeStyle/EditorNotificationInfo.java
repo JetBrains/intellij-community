@@ -64,6 +64,17 @@ public class EditorNotificationInfo {
     return myTitle;
   }
 
+
+  public static class LabelWithAction {
+    public final String label;
+    public final Runnable action;
+
+    public LabelWithAction(@NotNull String label, @NotNull Runnable action) {
+      this.label = label;
+      this.action = action;
+    }
+  }
+
 }
 
 
