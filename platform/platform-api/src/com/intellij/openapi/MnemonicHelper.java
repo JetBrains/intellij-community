@@ -42,6 +42,7 @@ import java.util.Map;
  * @since 5.1
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
+  private static final MnemonicContainerListener LISTENER = new MnemonicContainerListener();
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.MnemonicHelper");
   private Map<Integer, String> myMnemonics = null;
 
@@ -57,6 +58,11 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   };
   @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
 
+  /**
+   * @see #init(Component)
+   * @deprecated do not use this object as a tree watcher
+   */
+  @Deprecated
   public MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
@@ -150,6 +156,11 @@ public class MnemonicHelper extends ComponentTreeWatcher {
    * @param component the root component of the hierarchy
    */
   public static void init(Component component) {
-    new MnemonicHelper().register(component);
+    if (Registry.is("ide.mnemonic.helper.old") || Registry.is("ide.checkDuplicateMnemonics")) {
+      new MnemonicHelper().register(component);
+    }
+    else {
+      LISTENER.addTo(component);
+    }
   }
 }
