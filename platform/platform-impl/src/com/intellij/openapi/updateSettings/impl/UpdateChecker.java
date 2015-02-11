@@ -566,7 +566,7 @@ public final class UpdateChecker {
 
     String bundledJdk = "";
     String jdkMacRedist = System.getProperty("idea.java.redist");
-    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0 ){
+    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0) {
       bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
     }
 
