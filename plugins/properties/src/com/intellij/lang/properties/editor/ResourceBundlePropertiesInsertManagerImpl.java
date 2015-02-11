@@ -65,17 +65,9 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
     }
     final PropertiesFile propertiesFile = myResourceBundle.getDefaultPropertiesFile();
     if (myAlphaSorted) {
-      final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
-      if (propertyAndPosition == null) {
-        propertiesFile.addPropertyFirst(key, value);
-        myKeysOrder.add(0, key);
-      } else {
-        propertiesFile.addPropertyAfter(key, value, (Property)propertyAndPosition.getFirst());
-        final Integer position = propertyAndPosition.getSecond();
-        myKeysOrder.add(position, key);
-      }
+      propertiesFile.addProperty(key, value);
     } else {
-      propertiesFile.addPropertyLast(key, value);
+      insertPropertyLast(key, value, propertiesFile);
       if (myOrdered) {
         myKeysOrder.add(key);
       }
@@ -85,14 +77,14 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
   @Override
   public void insertTranslation(String key, String value, final PropertiesFile propertiesFile) {
     if (myOrdered) {
-      final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
-      if (propertyAndPosition == null) {
-        propertiesFile.addPropertyFirst(key, value);
-      } else {
-        propertiesFile.addPropertyAfter(key, value, (Property)propertyAndPosition.getFirst());
+      if (myAlphaSorted) {
+        propertiesFile.addProperty(key, value);
+        return;
       }
+      final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
+      propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null :(Property)propertyAndPosition.getFirst());
     } else {
-      propertiesFile.addPropertyLast(key, value);
+      insertPropertyLast(key, value, propertiesFile);
     }
   }
 
@@ -100,13 +92,7 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
     if (myKeysOrder.isEmpty()) {
       return null;
     }
-    final int prevPosition;
-    if (myAlphaSorted) {
-      final int rawInsertionPosition = Collections.binarySearch(myKeysOrder, key);
-      prevPosition = rawInsertionPosition < 0 ? - rawInsertionPosition - 2 : rawInsertionPosition - 1;
-    } else {
-      prevPosition = myKeysOrder.indexOf(key);
-    }
+    final int prevPosition = myKeysOrder.indexOf(key);
     for (int i = prevPosition; i >= 0 ; i--) {
       final String prevKey = myKeysOrder.get(i);
       final IProperty property = file.findPropertyByKey(prevKey);
@@ -117,6 +103,12 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
     return null;
   }
 
+  public void insertPropertyLast(String key, String value, PropertiesFile propertiesFile) {
+    final List<IProperty> properties = propertiesFile.getProperties();
+    final IProperty lastProperty = properties.isEmpty() ? null : properties.get(properties.size() - 1);
+    propertiesFile.addPropertyAfter(key, value, (Property)lastProperty);
+  }
+
   @Override
   public void reload() {
     final List<String> keysOrder = keysOrder(myResourceBundle);
@@ -124,7 +116,7 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
     if (myOrdered) {
       Collections.reverse(keysOrder);
       myAlphaSorted = isAlphaSorted(keysOrder);
-      myKeysOrder = keysOrder;
+      myKeysOrder = myAlphaSorted ? null : keysOrder;
     } else {
       myKeysOrder = null;
     }
