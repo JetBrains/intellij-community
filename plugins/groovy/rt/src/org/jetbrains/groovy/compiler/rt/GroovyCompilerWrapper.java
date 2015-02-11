@@ -194,7 +194,7 @@ public class GroovyCompilerWrapper {
 
     if (forStubs) {
       collector.add(new CompilerMessage(GroovyCompilerMessageCategories.INFORMATION,
-                                        "Groovyc stub generation failed", null, -1, -1));
+                                        GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED, null, -1, -1));
     }
 
     final StringWriter writer = new StringWriter();
