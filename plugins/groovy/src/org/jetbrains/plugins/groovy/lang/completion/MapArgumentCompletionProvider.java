@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -37,8 +37,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,7 +97,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         .withTailText(":");
 
       if (entry.getValue().getPriority() == NamedArgumentDescriptor.Priority.UNLIKELY) {
-        lookup.withItemTextForeground(DefaultHighlighter.MAP_KEY_COLOR);
+        lookup.withItemTextForeground(GroovySyntaxHighlighter.MAP_KEY.getDefaultAttributes().getForegroundColor());
       }
       else {
         lookup = lookup.withIcon(JetgroovyIcons.Groovy.DynamicProperty);
