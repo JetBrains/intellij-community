@@ -654,7 +654,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (!isNavigationEnabled() || !hasNextChange()) return;
+      if (!isNavigationEnabled() || !hasPrevChange()) return;
 
       if (myIterationState != IterationState.PREV) {
         if (iterable != null) iterable.notify("Press again to go to the previous file");
