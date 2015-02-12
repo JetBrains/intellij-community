@@ -43,6 +43,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -141,7 +142,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
   }
 
   private static class TagNameSynchronizer extends DocumentAdapter {
-    private final PsiDocumentManager myDocumentManager;
+    private final PsiDocumentManagerBase myDocumentManager;
     private final Language myLanguage;
 
     private enum State {INITIAL, TRACKING, APPLYING}
@@ -157,7 +158,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final Document document = editor.getDocument();
       document.addDocumentListener(this, disposable);
       document.putUserData(SYNCHRONIZER_KEY, this);
-      myDocumentManager = PsiDocumentManager.getInstance(project);
+      myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     }
 
     @Override
@@ -171,7 +172,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final int oldLength = event.getOldLength();
       if (myState == State.INITIAL) {
         final PsiFile file = myDocumentManager.getPsiFile(document);
-        if (file == null) return;
+        if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
 
         final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
