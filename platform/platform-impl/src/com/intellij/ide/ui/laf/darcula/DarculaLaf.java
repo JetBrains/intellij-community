@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
@@ -141,7 +142,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + ".css");
+    URL url = getClass().getResource(getPrefix() + (JBUI.isHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
     defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
