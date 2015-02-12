@@ -97,7 +97,6 @@ public class LanguageLevelCombo extends ComboBox {
     }
   }
 
-  @Nullable
   public LanguageLevel getSelectedLevel() {
     Object item = getSelectedItem();
     return item instanceof LanguageLevel ? (LanguageLevel)item : myDefaultLevel;
