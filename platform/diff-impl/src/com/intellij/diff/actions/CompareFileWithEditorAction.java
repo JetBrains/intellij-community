@@ -90,7 +90,7 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
 
     ContentDiffRequest request = DiffRequestFactory.getInstance().createFromFiles(project, selectedFile, currentFile);
 
-    DiffContent editorContent = request.getContents()[1];
+    DiffContent editorContent = request.getContents().get(1);
     if (editorContent instanceof DocumentContent) {
       Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)editorContent).getDocument());
       if (editors.length != 0) {

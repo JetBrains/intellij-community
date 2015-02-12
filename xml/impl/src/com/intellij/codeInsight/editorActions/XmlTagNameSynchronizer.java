@@ -170,6 +170,22 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final Document document = event.getDocument();
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();
+      final CharSequence fragment = event.getNewFragment();
+      final int newLength = event.getNewLength();
+
+      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
+        // xml completion inserts extra space after tag name to ensure correct parsing
+        // we need to ignore it
+        return;
+      }
+
+      for (int i = 0; i < newLength; i++) {
+        if (!XmlUtil.isValidTagNameChar(fragment.charAt(i))) {
+          clearMarkers();
+          return;
+        }
+      }
+
       if (myState == State.INITIAL) {
         final PsiFile file = myDocumentManager.getPsiFile(document);
         if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
@@ -212,22 +228,6 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
         myState = State.TRACKING;
       }
       if (myMarkers.isEmpty()) return;
-
-      final CharSequence fragment = event.getNewFragment();
-      final int newLength = event.getNewLength();
-
-      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
-        // xml completion inserts extra space after tag name to ensure correct parsing
-        // we need to ignore it
-        return;
-      }
-
-      for (int i = 0; i < newLength; i++) {
-        if (!XmlUtil.isValidTagNameChar(fragment.charAt(i))) {
-          clearMarkers();
-          return;
-        }
-      }
 
       boolean fitsInMarker = fitsInMarker(offset, oldLength);
       if (!fitsInMarker) {

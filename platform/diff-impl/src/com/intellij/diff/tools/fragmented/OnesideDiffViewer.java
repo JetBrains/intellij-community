@@ -30,7 +30,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FoldingModelSupport.OnesideFoldingModel;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
@@ -43,6 +43,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,7 +61,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntFunction;
@@ -88,7 +91,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyStatusPanel myStatusPanel;
 
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
-  @NotNull private final OnesideFoldingModel myFoldingModel;
+  @NotNull private final MyFoldingModel myFoldingModel;
 
   @NotNull protected Side myMasterSide = Side.LEFT;
 
@@ -101,9 +104,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myStatusPanel = new MyStatusPanel();
 
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContent1 = contents[0] instanceof DocumentContent ? ((DocumentContent)contents[0]) : null;
-    myActualContent2 = contents[1] instanceof DocumentContent ? ((DocumentContent)contents[1]) : null;
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContent1 = contents.get(0) instanceof DocumentContent ? ((DocumentContent)contents.get(0)) : null;
+    myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
     assert myActualContent1 != null || myActualContent2 != null;
 
 
@@ -116,7 +119,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
     myPanel = new OnesideDiffPanel(myProject, contentPanel, myEditor, this, myContext);
 
-    myFoldingModel = new OnesideFoldingModel(myEditor, this);
+    myFoldingModel = new MyFoldingModel(myEditor, this);
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
@@ -1100,6 +1103,29 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       if (!caretPosition[0].equals(myCaretPosition[0])) return false;
       if (!caretPosition[1].equals(myCaretPosition[1])) return false;
       return true;
+    }
+  }
+
+  private static class MyFoldingModel extends FoldingModelSupport {
+    public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(new EditorEx[]{editor}, disposable);
+    }
+
+    public void install(@Nullable List<IntPair> changedLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+      Iterator<int[]> it = map(changedLines, new Function<IntPair, int[]>() {
+        @Override
+        public int[] fun(IntPair line) {
+          return new int[]{
+            line.val1,
+            line.val2};
+        }
+      });
+      install(it, context, defaultExpanded, range);
+    }
+
+    @NotNull
+    public TIntFunction getLineNumberConvertor() {
+      return getLineConvertor(0);
     }
   }
 }

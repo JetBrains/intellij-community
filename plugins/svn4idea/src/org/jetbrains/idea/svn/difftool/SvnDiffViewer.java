@@ -148,10 +148,10 @@ public class SvnDiffViewer implements DiffViewer {
       return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage());
     }
 
-    DiffContent[] contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
+    List<DiffContent> contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
 
-    Map<String, PropertyValue> before = getProperties(contents[0]);
-    Map<String, PropertyValue> after = getProperties(contents[1]);
+    Map<String, PropertyValue> before = getProperties(contents.get(0));
+    Map<String, PropertyValue> after = getProperties(contents.get(1));
 
     if (before.isEmpty() && after.isEmpty()) return null;
 

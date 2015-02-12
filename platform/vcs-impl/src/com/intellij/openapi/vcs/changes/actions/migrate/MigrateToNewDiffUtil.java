@@ -48,6 +48,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,14 +90,15 @@ public class MigrateToNewDiffUtil {
 
     com.intellij.openapi.diff.DiffContent[] contents = oldRequest.getContents();
     String[] titles = oldRequest.getContentTitles();
-    DiffContent[] newContents = new DiffContent[contents.length];
+    List<DiffContent> newContents = new ArrayList<DiffContent>(contents.length);
 
     for (int i = 0; i < contents.length; i++) {
-      newContents[i] = convertContent(oldRequest.getProject(), contents[i]);
-      if (newContents[i] == null) return null;
+      DiffContent convertedContent = convertContent(oldRequest.getProject(), contents[i]);
+      if (convertedContent == null) return null;
+      newContents.add(convertedContent);
     }
 
-    SimpleDiffRequest newRequest = new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, titles);
+    SimpleDiffRequest newRequest = new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, Arrays.asList(titles));
 
     newRequest.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, Collections.<AnAction>singletonList(new MyShowDiffAction(oldRequest)));
 

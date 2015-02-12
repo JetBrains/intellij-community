@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.actions;
 
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.actionSystem.ActionPlaces;

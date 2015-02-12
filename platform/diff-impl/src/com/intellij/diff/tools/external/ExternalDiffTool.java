@@ -135,8 +135,8 @@ public class ExternalDiffTool {
 
     ExternalDiffSettings settings = ExternalDiffSettings.getInstance();
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    String[] titles = ((ContentDiffRequest)request).getContentTitles();
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    List<String> titles = ((ContentDiffRequest)request).getContentTitles();
 
     ExternalDiffToolUtil.execute(settings, contents, titles, request.getTitle());
 
@@ -145,8 +145,8 @@ public class ExternalDiffTool {
 
   public static boolean canShow(@NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2 && contents.length != 3) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 2 && contents.size() != 3) return false;
     for (DiffContent content : contents) {
       if (!ExternalDiffToolUtil.canCreateFile(content)) return false;
     }

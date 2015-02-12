@@ -88,8 +88,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public ThreesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents[0], (DocumentContent)contents[1], (DocumentContent)contents[2]);
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents.get(0), (DocumentContent)contents.get(1), (DocumentContent)contents.get(2));
 
 
     myEditors = createEditors();
@@ -310,12 +310,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 3) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 3) return false;
 
-    if (!canShowContent(contents[0])) return false;
-    if (!canShowContent(contents[1])) return false;
-    if (!canShowContent(contents[2])) return false;
+    if (!canShowContent(contents.get(0))) return false;
+    if (!canShowContent(contents.get(1))) return false;
+    if (!canShowContent(contents.get(2))) return false;
 
     return true;
   }
@@ -360,8 +360,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      DiffContent[] contents = myRequest.getContents();
-      String[] titles = myRequest.getContentTitles();
+      List<DiffContent> contents = myRequest.getContents();
+      List<String> titles = myRequest.getContentTitles();
 
       DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(), mySide1.selectNotNull(contents), mySide2.selectNotNull(contents),
                                                   mySide1.selectNotNull(titles), mySide1.selectNotNull(titles));

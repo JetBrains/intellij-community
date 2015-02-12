@@ -571,7 +571,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   static Color adjustThumbColor(@NotNull Color base, boolean dark) {
-    return dark ? ColorUtil.withAlpha(ColorUtil.shift(base, 1.35), 0.5) 
+    return dark ? ColorUtil.withAlpha(ColorUtil.shift(base, 1.35), 0.5)
                 : ColorUtil.withAlpha(ColorUtil.shift(base, 0.68), 0.4);
   }
 
@@ -1115,7 +1115,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   @Override
-  public EditorGutterComponentEx getGutterComponentEx() {
+  public EditorGutterComponentImpl getGutterComponentEx() {
     return myGutterComponent;
   }
 
@@ -1710,7 +1710,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void bulkUpdateStarted() {
     saveCaretRelativePosition();
-    
+
     myCaretModel.onBulkDocumentUpdateStarted();
     mySoftWrapModel.onBulkDocumentUpdateStarted();
     myFoldingModel.onBulkDocumentUpdateStarted();
@@ -1731,7 +1731,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateGutterSize();
     repaintToScreenBottom(0);
     updateCaretCursor();
-    
+
     restoreCaretRelativePosition();
   }
 
@@ -3098,7 +3098,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = logicalLineToY(line + 1);
     }
 
-    if (y < clip.y || y > clip.y + clip.height) return;
+    y -= 1;
+    if (y + getLineHeight() < clip.y || y > clip.y + clip.height) return;
 
     int endShift = clip.x + clip.width;
     g.setColor(separatorColor);
@@ -3108,10 +3109,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (lineSeparatorRenderer != null) {
-      lineSeparatorRenderer.drawLine(g, 0, endShift, y - 1);
+      lineSeparatorRenderer.drawLine(g, 0, endShift, y);
     }
     else {
-      UIUtil.drawLine(g, 0, y - 1, endShift, y - 1);
+      UIUtil.drawLine(g, 0, y, endShift, y);
     }
   }
 
@@ -3603,10 +3604,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     draft.width += additionalSpace;
     return draft;
   }
-  
+
   private boolean shouldRespectAdditionalColumns() {
-    return !mySoftWrapModel.isSoftWrappingEnabled() 
-           || mySoftWrapModel.isRespectAdditionalColumns() 
+    return !mySoftWrapModel.isSoftWrappingEnabled()
+           || mySoftWrapModel.isRespectAdditionalColumns()
            || mySizeContainer.getContentSize().getWidth() > myScrollingModel.getVisibleArea().getWidth();
   }
 
@@ -4039,7 +4040,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown() 
+        && !myMousePressedEvent.isShiftDown()
         && !myMousePressedEvent.isPopupTrigger()
         && !isToggleCaretEvent(myMousePressedEvent)
         && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
@@ -4337,7 +4338,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     myCaretModel.setCaretsAndSelections(caretStates);
   }
-  
+
   private Caret getLeadCaret() {
     List<Caret> allCarets = myCaretModel.getAllCarets();
     Caret firstCaret = allCarets.get(0);
@@ -5061,7 +5062,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
   }
-  
+
   @NotNull
   MyScrollBar getHorizontalScrollBar() {
     return (MyScrollBar)myScrollPane.getHorizontalScrollBar();
