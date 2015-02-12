@@ -60,17 +60,12 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         public void run() {
           String title = IdeBundle.message("update.notifications.title");
           String message = IdeBundle.message("update.sni.disabled.notification");
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.WARNING, null).notify(null);
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, null).notify(null);
         }
       }, ModalityState.NON_MODAL);
     }
 
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-      @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        scheduleOnStartCheck();
-      }
-    });
+    scheduleOnStartCheck(app);
   }
 
   @Override
@@ -78,20 +73,25 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     PluginsAdvertiser.ensureDeleted();
   }
 
-  private void scheduleOnStartCheck() {
-    if (!mySettings.CHECK_NEEDED) {
+  private void scheduleOnStartCheck(@NotNull Application app) {
+    if (!mySettings.CHECK_NEEDED || mySettings.SECURE_CONNECTION && !NetUtils.isSniEnabled()) {
       return;
     }
 
-    String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
-    long timeToNextCheck = mySettings.LAST_TIME_CHECKED + CHECK_INTERVAL - System.currentTimeMillis();
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
+        long timeToNextCheck = mySettings.LAST_TIME_CHECKED + CHECK_INTERVAL - System.currentTimeMillis();
 
-    if (StringUtil.compareVersionNumbers(mySettings.LAST_BUILD_CHECKED, currentBuild) < 0 || timeToNextCheck <= 0) {
-      myCheckRunnable.run();
-    }
-    else {
-      queueNextCheck(timeToNextCheck);
-    }
+        if (StringUtil.compareVersionNumbers(mySettings.LAST_BUILD_CHECKED, currentBuild) < 0 || timeToNextCheck <= 0) {
+          myCheckRunnable.run();
+        }
+        else {
+          queueNextCheck(timeToNextCheck);
+        }
+      }
+    });
   }
 
   private void queueNextCheck(long interval) {
