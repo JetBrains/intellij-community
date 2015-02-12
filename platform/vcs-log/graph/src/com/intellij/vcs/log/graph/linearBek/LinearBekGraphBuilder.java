@@ -274,7 +274,7 @@ class LinearBekGraphBuilder {
         if (!LinearGraphUtils.getDownNodes(graph, tail).contains(myLeftChild)) {
           addEdge(graph, tail, myLeftChild);
         }
-        else if (myMergeWithOldCommit) {
+        else {
           replaceEdge(graph, tail, myLeftChild);
         }
       }
