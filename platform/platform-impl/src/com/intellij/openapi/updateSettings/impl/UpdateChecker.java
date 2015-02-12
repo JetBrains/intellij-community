@@ -214,7 +214,7 @@ public final class UpdateChecker {
       String updateUrl = uriBuilder.toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
-      info = HttpRequests.request(updateUrl).forceHttps(settings.SECURE_CONNECTION).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
+      info = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
         @Override
         public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
           try {
@@ -285,7 +285,7 @@ public final class UpdateChecker {
     outer:
     for (String host : hosts) {
       try {
-        boolean forceHttps = host == null && updateSettings.SECURE_CONNECTION;
+        boolean forceHttps = host == null && updateSettings.canUseSecureConnection();
         List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator);
         for (IdeaPluginDescriptor descriptor : list) {
           PluginId id = descriptor.getPluginId();
@@ -405,7 +405,7 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.SECURE_CONNECTION, updatedPlugins, incompatiblePlugins).show();
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
         }
       };
 
