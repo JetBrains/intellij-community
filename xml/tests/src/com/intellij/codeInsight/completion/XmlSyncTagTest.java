@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,13 +29,11 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    WebEditorOptions.getInstance().setSyncTagEditing(true);
     myFixture.setCaresAboutInjection(false);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    WebEditorOptions.getInstance().setSyncTagEditing(false);
     super.tearDown();
   }
 

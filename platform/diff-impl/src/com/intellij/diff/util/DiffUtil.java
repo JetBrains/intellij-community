@@ -256,9 +256,9 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
-    String[] titles = request.getContentTitles();
+    List<String> titles = request.getContentTitles();
 
-    List<JComponent> components = new ArrayList<JComponent>(titles.length);
+    List<JComponent> components = new ArrayList<JComponent>(titles.size());
     for (String title : titles) {
       components.add(createTitle(title));
     }
@@ -268,8 +268,8 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request, @NotNull List<? extends Editor> editors) {
-    DiffContent[] contents = request.getContents();
-    String[] titles = request.getContentTitles();
+    List<DiffContent> contents = request.getContents();
+    List<String> titles = request.getContentTitles();
 
     List<Charset> charsets = ContainerUtil.map(contents, new Function<DiffContent, Charset>() {
       @Override
@@ -289,10 +289,10 @@ public class DiffUtil {
     boolean equalCharsets = isEqualElements(charsets);
     boolean equalSeparators = isEqualElements(separators);
 
-    List<JComponent> result = new ArrayList<JComponent>(contents.length);
+    List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
-    for (int i = 0; i < contents.length; i++) {
-      result.add(createTitle(titles[i], contents[i], equalCharsets, equalSeparators, editors.get(i)));
+    for (int i = 0; i < contents.size(); i++) {
+      result.add(createTitle(titles.get(i), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
     }
 
     return result;

@@ -1453,7 +1453,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (myMatchingVisitor.getResult()) {
         final PsiTypeElement checkType = instanceOf.getCheckType();
         if (checkType != null) {
-          myMatchingVisitor.setResult(matchType(checkType, instanceOf2.getCheckType()));
+          myMatchingVisitor.setResult(myMatchingVisitor.match(checkType, instanceOf2.getCheckType()));
         }
       }
     }

@@ -49,6 +49,7 @@ import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -272,14 +273,14 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         String afterRevisionTitle = getRevisionTitle(aRev, "Server version");
 
         String title = FileUtil.toSystemDependentName(file.getPresentableUrl());
-        String[] titles = new String[]{beforeRevisionTitle, "Base Version", afterRevisionTitle};
+        List<String> titles = ContainerUtil.list(beforeRevisionTitle, "Base Version", afterRevisionTitle);
 
         // Yep, we hope that it's a text file. And that charset wasn't changed.
-        DiffContent[] contents = new DiffContent[]{
+        List<DiffContent> contents = ContainerUtil.list(
           createTextContent(mergeData.CURRENT, file),
           createTextContent(mergeData.ORIGINAL, file),
           createTextContent(mergeData.LAST, file)
-        };
+        );
 
         SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
 

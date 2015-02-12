@@ -142,7 +142,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
   @NotNull
   protected boolean[] checkForceReadOnly() {
-    int contentCount = myRequest.getContents().length;
+    int contentCount = myRequest.getContents().size();
     boolean[] result = new boolean[contentCount];
 
     if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.FORCE_READ_ONLY, myRequest, myContext)) {

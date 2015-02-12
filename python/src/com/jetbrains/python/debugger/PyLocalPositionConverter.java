@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -166,8 +168,14 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
-  private static int convertRemoteLineToLocal(VirtualFile vFile, int line) {
-    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+  private static int convertRemoteLineToLocal(final VirtualFile vFile, int line) {
+    final Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+      @Override
+      public Document compute() {
+        return FileDocumentManager.getInstance().getDocument(vFile);
+      }
+    });
+
     line--;
     if (document != null) {
       while (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {

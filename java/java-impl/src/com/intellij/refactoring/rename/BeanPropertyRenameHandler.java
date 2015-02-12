@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -55,6 +56,14 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     final BeanProperty property = getProperty(dataContext);
     assert property != null;
     PsiNamedElement element = property.getPsiElement();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final String newName = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+      assert newName != null;
+      doRename(property, newName, false, false);
+      return;
+    }
+
     if (PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
       new PropertyRenameDialog(property, editor).show();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,11 +132,11 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JCheckBox myUseSecureConnection;
 
     public UpdatesSettingsPanel() {
-      final ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      final String majorVersion = appInfo.getMajorVersion();
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      String majorVersion = appInfo.getMajorVersion();
       String versionNumber = "";
       if (majorVersion != null && majorVersion.trim().length() > 0) {
-        final String minorVersion = appInfo.getMinorVersion();
+        String minorVersion = appInfo.getMinorVersion();
         if (minorVersion != null && minorVersion.trim().length() > 0) {
           versionNumber = majorVersion + "." + minorVersion;
         }
@@ -163,6 +164,11 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       UpdateSettings settings = UpdateSettings.getInstance();
       //noinspection unchecked
       myUpdateChannels.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
+
+      if (!NetUtils.isSniEnabled()) {
+        myUseSecureConnection.setEnabled(false);
+        myUseSecureConnection.setToolTipText(IdeBundle.message("update.sni.disabled.notification"));
+      }
     }
 
     private void updateLastCheckedLabel() {

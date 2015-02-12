@@ -229,7 +229,7 @@ public class InjectorUtils {
   public static BaseInjection findCommentInjection(@NotNull PsiElement context, @NotNull String supportId, @Nullable Ref<PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
-    if (file == null || file.getFileType().isBinary()) return null;
+    if (file == null) return null;
     TreeMap<TextRange, BaseInjection> map = getInjectionMap(file);
     if (map == null) return null;
     Map.Entry<TextRange, BaseInjection> entry = map.lowerEntry(target.getTextRange());

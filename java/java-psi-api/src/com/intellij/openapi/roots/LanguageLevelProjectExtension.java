@@ -42,12 +42,16 @@ public abstract class LanguageLevelProjectExtension {
    * @return null if the property is not set yet (e.g. after migration).
    */
   @Nullable
-  public Boolean isDefault() {
+  public Boolean getDefault() {
     return myDefault;
   }
 
   public void setDefault(@Nullable Boolean value) {
     myDefault = value;
+  }
+
+  public boolean isDefault() {
+    return myDefault != null && myDefault;
   }
 
   public abstract void languageLevelsChanged();

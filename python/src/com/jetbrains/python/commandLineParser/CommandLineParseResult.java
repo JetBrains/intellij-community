@@ -38,7 +38,7 @@ public final class CommandLineParseResult {
   @NotNull
   private final WordWithPosition myCommand;
 
-  CommandLineParseResult(
+  public CommandLineParseResult(
     @NotNull final WordWithPosition command,
     @NotNull final Collection<Pair<CommandLinePartType, WordWithPosition>> parts) {
     myCommand = command;

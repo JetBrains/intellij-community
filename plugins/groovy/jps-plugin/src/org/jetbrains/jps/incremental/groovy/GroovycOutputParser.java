@@ -184,6 +184,10 @@ public abstract class GroovycOutputParser {
         LOG.debug("Error message: " + message);
         return true;
       }
+      if (message.getMessageText().contains(GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED)) {
+        LOG.debug("Stub failed message: " + message);
+        return true;
+      }
     }
     if (getStdErr().length() > 0) {
       LOG.debug("Non-empty stderr: '" + getStdErr() + "'");

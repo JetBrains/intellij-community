@@ -145,7 +145,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   @Nls
   @Override
   public String getDisplayName() {
-    return "XML";
+    return "HTML";
   }
 
   @Nullable

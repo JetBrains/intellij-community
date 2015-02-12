@@ -63,15 +63,20 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     }
 
     PsiFile aFile = createDummyFile(prefix + text, fileType);
-    PsiElement[] children = aFile.getChildren();
-    for (PsiElement aChildren : children) {
-      if (aChildren instanceof PsiComment) {
-        PsiComment comment = (PsiComment)aChildren;
-        DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), null);
-        return comment;
-      }
-    }
-    throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
+    return findPsiCommentChild(aFile);
+  }
+
+  @NotNull
+  @Override
+  public PsiComment createBlockCommentFromText(@NotNull Language language, @NotNull String text) throws IncorrectOperationException {
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+    assert commenter != null : language;
+    final String blockCommentPrefix = commenter.getBlockCommentPrefix();
+    final String blockCommentSuffix = commenter.getBlockCommentSuffix();
+
+    PsiFile aFile = PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", language,
+                                                                                          (blockCommentPrefix + text + blockCommentSuffix));
+    return findPsiCommentChild(aFile);
   }
 
   @Override
@@ -86,6 +91,10 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     assert prefix != null || (blockCommentPrefix != null && blockCommentSuffix != null);
 
     PsiFile aFile = PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", lang, prefix != null ? (prefix + text) : (blockCommentPrefix + text + blockCommentSuffix));
+    return findPsiCommentChild(aFile);
+  }
+
+  private PsiComment findPsiCommentChild(PsiFile aFile) {
     PsiElement[] children = aFile.getChildren();
     for (PsiElement aChildren : children) {
       if (aChildren instanceof PsiComment) {
@@ -94,7 +103,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
         return comment;
       }
     }
-    throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
+    throw new IncorrectOperationException("Incorrect comment \"" + aFile.getText() + "\".");
   }
 
   protected PsiFile createDummyFile(String text, final LanguageFileType fileType) {

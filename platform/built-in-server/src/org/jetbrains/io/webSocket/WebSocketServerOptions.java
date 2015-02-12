@@ -2,7 +2,6 @@ package org.jetbrains.io.webSocket;
 
 import com.intellij.util.Time;
 
-// see https://github.com/sockjs/sockjs-node
 public final class WebSocketServerOptions {
   // client will disconnect if server doesn't response (i.e. doesn't send any message or special heartbeat packet to client) in specified time
   public int heartbeatDelay = 25 * Time.SECOND;

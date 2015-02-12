@@ -22,6 +22,9 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.util.InvalidDataException;
@@ -30,6 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
   public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl");
@@ -76,7 +80,7 @@ import org.jetbrains.annotations.NotNull;
 
   private void writeExternal(final Element element) {
     element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
-    Boolean aBoolean = isDefault();
+    Boolean aBoolean = getDefault();
     if (aBoolean != null) {
       element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
@@ -116,21 +120,35 @@ import org.jetbrains.annotations.NotNull;
     LOG.warn("Calling deprecated LanguageLevelProjectExtensionImpl.reloadProjectOnLanguageLevelChange, while project reloading is not needed on language level changes");
   }
 
+  private void projectSdkChanged(@Nullable Sdk sdk) {
+    if (isDefault() && sdk != null) {
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      if (version != null) {
+        setLanguageLevel(version.getMaxLanguageLevel());
+      }
+    }
+  }
+
   public static class MyProjectExtension extends ProjectExtension {
-    private final Project myProject;
+    private final LanguageLevelProjectExtensionImpl myInstance;
 
     public MyProjectExtension(final Project project) {
-      myProject = project;
+      myInstance = ((LanguageLevelProjectExtensionImpl)getInstance(project));
     }
 
     @Override
     public void readExternal(final Element element) throws InvalidDataException {
-      ((LanguageLevelProjectExtensionImpl)getInstance(myProject)).readExternal(element);
+      myInstance.readExternal(element);
     }
 
     @Override
     public void writeExternal(final Element element) throws WriteExternalException {
-      ((LanguageLevelProjectExtensionImpl)getInstance(myProject)).writeExternal(element);
+      myInstance.writeExternal(element);
+    }
+
+    @Override
+    public void projectSdkChanged(@Nullable Sdk sdk) {
+      myInstance.projectSdkChanged(sdk);
     }
   }
-}
+  }

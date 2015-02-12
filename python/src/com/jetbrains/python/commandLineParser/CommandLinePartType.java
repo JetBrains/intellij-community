@@ -30,6 +30,11 @@ public enum CommandLinePartType {
    */
   OPTION,
   /**
+   * Option argument like --folder-to-delete=/
+   * Here root is option argument
+   */
+  OPTION_ARGUMENT,
+  /**
    * Some part of command line that {@link com.jetbrains.python.commandLineParser.CommandLineParser} does not understand
    */
   UNKNOWN
