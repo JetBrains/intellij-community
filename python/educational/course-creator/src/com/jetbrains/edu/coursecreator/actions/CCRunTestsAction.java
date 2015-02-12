@@ -18,6 +18,7 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -34,6 +35,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.StudyLanguageManager;
 import com.jetbrains.edu.coursecreator.format.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,8 +133,16 @@ public abstract class CCRunTestsAction extends AnAction {
         clearTestEnvironment(taskDir, project);
         for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
           final String name = entry.getKey();
+          StudyLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+          if (manager == null) {
+            return;
+          }
           createTestEnvironment(taskDir, name, entry.getValue(), project);
-          VirtualFile testFile = taskDir.findChild("tests.py");
+          FileTemplate testsTemplate = manager.getTestsTemplate(project);
+          if (testsTemplate == null) {
+            return;
+          }
+          VirtualFile testFile = taskDir.findChild(testsTemplate.getName());
           if (testFile == null) {
             return;
           }

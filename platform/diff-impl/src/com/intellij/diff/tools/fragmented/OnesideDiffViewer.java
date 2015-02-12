@@ -30,7 +30,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FoldingModelSupport.OnesideFoldingModel;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
@@ -43,6 +43,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,7 +61,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntFunction;
@@ -76,8 +79,8 @@ import java.util.List;
 public class OnesideDiffViewer extends TextDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(OnesideDiffViewer.class);
 
-  @NotNull private final EditorEx myEditor;
-  @NotNull private final Document myDocument;
+  @NotNull protected final EditorEx myEditor;
+  @NotNull protected final Document myDocument;
   @NotNull private final OnesideDiffPanel myPanel;
 
   @Nullable private final DocumentContent myActualContent1;
@@ -88,9 +91,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyStatusPanel myStatusPanel;
 
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
-  @NotNull private final OnesideFoldingModel myFoldingModel;
+  @NotNull private final MyFoldingModel myFoldingModel;
 
-  @NotNull private Side myMasterSide = Side.LEFT;
+  @NotNull protected Side myMasterSide = Side.LEFT;
 
   @Nullable private ChangedBlockData myChangedBlockData;
 
@@ -101,9 +104,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myStatusPanel = new MyStatusPanel();
 
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContent1 = contents[0] instanceof DocumentContent ? ((DocumentContent)contents[0]) : null;
-    myActualContent2 = contents[1] instanceof DocumentContent ? ((DocumentContent)contents[1]) : null;
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContent1 = contents.get(0) instanceof DocumentContent ? ((DocumentContent)contents.get(0)) : null;
+    myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
     assert myActualContent1 != null || myActualContent2 != null;
 
 
@@ -116,7 +119,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
     myPanel = new OnesideDiffPanel(myProject, contentPanel, myEditor, this, myContext);
 
-    myFoldingModel = new OnesideFoldingModel(myEditor, this);
+    myFoldingModel = new MyFoldingModel(myEditor, this);
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
@@ -131,20 +134,20 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @Override
-  public void onDispose() {
+  protected void onDispose() {
     updateContextHints();
     EditorFactory.getInstance().releaseEditor(myEditor);
     super.onDispose();
   }
 
-  private void processContextHints() {
+  protected void processContextHints() {
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
     if (side != null) myMasterSide = side;
 
     myScrollToLineHelper.processContext();
   }
 
-  private void updateContextHints() {
+  protected void updateContextHints() {
     myScrollToLineHelper.updateContext();
     myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
   }
@@ -215,7 +218,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
       }
 
       if (myActualContent2 == null) {
@@ -241,7 +244,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.<IntPair>emptyList(), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
       }
 
       final DocumentContent content1 = myActualContent1;
@@ -417,10 +420,32 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   /*
+   * This convertor returns -1 if exact matching is impossible
+   */
+  @CalledInAwt
+  protected int transferLineToOnesideStrict(@NotNull Side side, int line) {
+    if (myChangedBlockData == null) return -1;
+
+    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
+    return side.isLeft() ? lineConvertor.convertInv1(line) : lineConvertor.convertInv2(line);
+  }
+
+  /*
+   * This convertor returns -1 if exact matching is impossible
+   */
+  @CalledInAwt
+  protected int transferLineFromOnesideStrict(@NotNull Side side, int line) {
+    if (myChangedBlockData == null) return -1;
+
+    LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
+    return side.isLeft() ? lineConvertor.convert1(line) : lineConvertor.convert2(line);
+  }
+
+  /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
-  private int transferLineToOneside(@NotNull Side side, int line) {
+  protected int transferLineToOneside(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return line;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -431,7 +456,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
-  private Pair<int[], Side> transferLineFromOneside(int line) {
+  protected Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
     if (myChangedBlockData == null) {
@@ -517,7 +542,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  List<OnesideDiffChange> getDiffChanges() {
+  protected List<OnesideDiffChange> getDiffChanges() {
     return myChangedBlockData == null ? null : myChangedBlockData.getDiffChanges();
   }
 
@@ -987,7 +1012,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         myShouldScroll = !doScrollToContext(myNavigationContext);
       }
       if (myShouldScroll && myCaretPosition != null && myCaretPosition.length == 2) {
-        LogicalPosition twosidePosition = myMasterSide.selectN(myCaretPosition);
+        LogicalPosition twosidePosition = myMasterSide.selectNotNull(myCaretPosition);
         int onesideLine = transferLineToOneside(myMasterSide, twosidePosition.line);
         LogicalPosition position = new LogicalPosition(onesideLine, twosidePosition.column);
 
@@ -1078,6 +1103,29 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       if (!caretPosition[0].equals(myCaretPosition[0])) return false;
       if (!caretPosition[1].equals(myCaretPosition[1])) return false;
       return true;
+    }
+  }
+
+  private static class MyFoldingModel extends FoldingModelSupport {
+    public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(new EditorEx[]{editor}, disposable);
+    }
+
+    public void install(@Nullable List<IntPair> changedLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+      Iterator<int[]> it = map(changedLines, new Function<IntPair, int[]>() {
+        @Override
+        public int[] fun(IntPair line) {
+          return new int[]{
+            line.val1,
+            line.val2};
+        }
+      });
+      install(it, context, defaultExpanded, range);
+    }
+
+    @NotNull
+    public TIntFunction getLineNumberConvertor() {
+      return getLineConvertor(0);
     }
   }
 }

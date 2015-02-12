@@ -85,6 +85,8 @@ target('default': 'The default target') {
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
             home, null, paths, true)
+  String macZip = "$paths.artifacts/ideaIC-${snapshot}.mac.zip"
+  notifyArtifactBuilt(macZip)
 }
 
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
@@ -99,6 +101,8 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
              home, null, paths)
+  String macZip = "$paths.artifacts/ideaIC-${snapshot}.mac.zip"
+  notifyArtifactBuilt(macZip)
 }
 
 private void indexSearchableOptions() {
@@ -198,6 +202,7 @@ private layoutMac(Map _args, String home, Paths paths) {
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args.urlSchemes = ["idea"]
   args.mac_no_yjp = true
+  args.executable = "idea"
   layoutMacApp(target, home, args)
 }
 

@@ -33,7 +33,6 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -448,7 +447,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   private class ShowInExternalToolAction extends DumbAwareAction {
     public ShowInExternalToolAction() {
-      super("Show in external tool", null, AllIcons.General.ExternalToolsSmall);
+      EmptyAction.setupAction(this, "Diff.ShowInExternalTool", null);
     }
 
     @Override
@@ -583,6 +582,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyNextDifferenceAction extends NextDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
@@ -606,6 +610,8 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
+      if (!isNavigationEnabled() || !hasNextChange()) return;
+
       if (myIterationState != IterationState.NEXT) {
         // TODO: provide "change" word in chain UserData - for tests/etc
         if (iterable != null) iterable.notify("Press again to go to the next file");
@@ -620,6 +626,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
@@ -642,6 +653,8 @@ public abstract class DiffRequestProcessor implements Disposable {
         myIterationState = IterationState.NONE;
         return;
       }
+
+      if (!isNavigationEnabled() || !hasPrevChange()) return;
 
       if (myIterationState != IterationState.PREV) {
         if (iterable != null) iterable.notify("Press again to go to the previous file");

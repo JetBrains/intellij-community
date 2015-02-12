@@ -81,7 +81,7 @@ public class SimpleThreesideDiffChange {
   //
 
   private void createHighlighter(@NotNull ThreeSide side) {
-    Editor editor = side.selectN(myEditors);
+    Editor editor = side.selectNotNull(myEditors);
     Document document = editor.getDocument();
 
     TextDiffType type = getDiffType();
@@ -208,7 +208,7 @@ public class SimpleThreesideDiffChange {
   private static CharSequence getRangeContent(@NotNull MergeLineFragment fragment,
                                               @NotNull List<EditorEx> editors,
                                               @NotNull ThreeSide side) {
-    DocumentEx document = side.selectN(editors).getDocument();
+    DocumentEx document = side.selectNotNull(editors).getDocument();
     int line1 = fragment.getStartLine(side);
     int line2 = fragment.getEndLine(side);
     return DiffUtil.getLinesContent(document, line1, line2);

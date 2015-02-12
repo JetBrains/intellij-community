@@ -70,7 +70,7 @@ public enum Side {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull T left, @NotNull T right) {
+  public <T> T selectNotNull(@NotNull T left, @NotNull T right) {
     return isLeft() ? left : right;
   }
 
@@ -86,7 +86,7 @@ public enum Side {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull T[] array) {
+  public <T> T selectNotNull(@NotNull T[] array) {
     assert array.length == 2;
     return array[myIndex];
   }
@@ -98,7 +98,7 @@ public enum Side {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull List<T> list) {
+  public <T> T selectNotNull(@NotNull List<T> list) {
     assert list.size() == 2;
     return list.get(myIndex);
   }
@@ -109,7 +109,7 @@ public enum Side {
   }
 
   @NotNull
-  public <T> T selectN(@NotNull Couple<T> region) {
+  public <T> T selectNotNull(@NotNull Couple<T> region) {
     return isLeft() ? region.first : region.second;
   }
 

@@ -6,12 +6,16 @@ It does not have schema (yet!) but here is XML format it uses.
 
 <commandInfo-array> -- root
 <commandInfo args="args description" help="human readable text" name="command name"> -- info about command
-<option help="option help" numberOfArgs="number of values (nargs)" type="option type: Option.TYPES"> -- one entry for each option
+<option help="option help" numberOfArgs="number of values (nargs)" type="option_type (see below)"> -- one entry for each option
 <longNames>--each-for-one-long-opt-name</longNames>
 <shortNames>-each-for-one-short-name</shortNames>
+<choices>--each-for-one-available-value</choices>
 </option>
 </commandInfo>
 </commandInfo-array>
+
+"option_type" is only set if "numberOfArgs" > 0, and it can be: "int" (means integer),
+"choices" (means opt can have one of the values, provided in choices) or "str" that means "string" (option may have any value)
 
 Classes like DjangoCommandsInfo is used on Java side.
 
@@ -77,35 +81,45 @@ class XmlDumper(object):
         self.__command_element.setAttribute("args", command_args_text)
         self.__root.appendChild(self.__command_element)
 
-    def add_command_option(self, opt_type, choices, long_opt_names, short_opt_names, help_text, num_of_args):
+    def add_command_option(self, long_opt_names, short_opt_names, help_text, argument_info):
         """
         Adds command option
 
-        :param opt_type: "string", "int", "long", "float", "complex", "choice"
-        :param choices: list of choices for "choice" type
+        :param argument_info: None if option does not accept any arguments or tuple of (num_of_args, type_info) \
+                where num_of_args is int > 0 and type_info is str, representing type (only "int" and "string" are supported) \
+                or list of available types in case of choices
+
         :param long_opt_names:  list of long opt names
         :param short_opt_names: list of short opt names
         :param help_text: help text
-        :param num_of_args: number of arguments
 
-        :type opt_type str
-        :type choices list of string
         :type long_opt_names list of str
         :type short_opt_names list of str
         :type help_text str
-        :type num_of_args int
+        :type argument_info tuple
         """
         assert isinstance(self.__command_element, Element), "Add option in command only"
-        option = self.__document.createElement("option")
-        option.setAttribute("type", opt_type)
 
-        if choices:
-            self.__create_text_array(option, "choices", choices)
+        option = self.__document.createElement("option")
+
+        opt_type_to_report = None
+        num_of_args = 0
+
+        if argument_info:
+            (num_of_args, type_info) = argument_info
+            if isinstance(type_info, list):
+                self.__create_text_array(option, "choices", type_info)
+                opt_type_to_report = "choices"
+            else:
+                opt_type_to_report = "int" if str(type_info) == "int" else "str"
+
         if long_opt_names:
             self.__create_text_array(option, "longNames", long_opt_names)
         if short_opt_names:
             self.__create_text_array(option, "shortNames", short_opt_names)
 
+        if opt_type_to_report:
+            option.setAttribute("type", opt_type_to_report)
         option.setAttribute("help", help_text)
         if num_of_args:
             option.setAttribute("numberOfArgs", str(num_of_args))

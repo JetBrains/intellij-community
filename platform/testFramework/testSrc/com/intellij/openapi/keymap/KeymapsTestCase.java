@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control F6",         "PreviousTab", "ChangeTypeSignature"},
     { "shift control F11",        "ToggleBookmark", "FocusTracer"},
     { "shift control G",          "FindUsagesInFile", "ClassTemplateNavigation", "GoToClass"},
-    { "shift control I",          "QuickImplementations", "Debugger.Inspect"},
+    { "shift control I",          "QuickImplementations", "XDebugger.Inspect"},
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", },
     { "shift control UP",         "ResizeToolWindowUp", "MethodUp"},
@@ -297,7 +297,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
     { "shift control DOWN",       "EditorDuplicate", "ResizeToolWindowDown", },
     { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
-    { "shift control F7",         "HighlightUsagesInFile", "Debugger.NewWatch"},
+    { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
     { "shift control UP",         "EditorDuplicate", "ResizeToolWindowUp", },
     { "shift control alt P",      "Print", "Graph.Print"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},

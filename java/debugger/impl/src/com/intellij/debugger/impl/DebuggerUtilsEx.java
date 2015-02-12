@@ -50,6 +50,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -65,8 +66,6 @@ import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");
-
-  private static final int MAX_LABEL_SIZE = 255;
 
   /**
    * @param context
@@ -594,8 +593,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String truncateString(final String str) {
-    if (str.length() > MAX_LABEL_SIZE) {
-      return str.substring(0, MAX_LABEL_SIZE) + "...";
+    // leave a small gap over XValueNode.MAX_VALUE_LENGTH to detect oversize
+    if (str.length() > XValueNode.MAX_VALUE_LENGTH + 5) {
+      return str.substring(0, XValueNode.MAX_VALUE_LENGTH + 5);
     }
     return str;
   }
@@ -633,17 +633,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @Nullable
   public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
-    if (position.getFile().getVirtualFile() == null) {
+    VirtualFile file = position.getFile().getVirtualFile();
+    if (file == null) {
+      file = position.getFile().getOriginalFile().getVirtualFile();
+    }
+    if (file == null) {
       return null;
     }
-    return new JavaXSourcePosition(position);
+    return new JavaXSourcePosition(position, file);
   }
 
   private static class JavaXSourcePosition implements XSourcePosition {
     private final SourcePosition mySourcePosition;
+    @NotNull private final VirtualFile myFile;
 
-    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition) {
+    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
       mySourcePosition = sourcePosition;
+      myFile = file;
     }
 
     @Override
@@ -659,13 +665,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
-      return mySourcePosition.getFile().getVirtualFile();
+      return myFile;
     }
 
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      return XSourcePositionImpl.createOpenFileDescriptor(project, this);
+      return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
   }
 

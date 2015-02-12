@@ -44,15 +44,15 @@ import java.util.List;
  * @apiName diff
  * @apiGroup Platform
  *
- * @apiParam (properties) {String} [fileType] The file type name of the contents (see <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/fileTypes/FileType.java">FileType.getName()</a>).
+ * @apiParam {String} [fileType] The file type name of the contents (see <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/fileTypes/FileType.java">FileType.getName()</a>).
  * You can get registered file types using <a href="#api-Platform-about">/rest/about?registeredFileTypes</a> request.
- * @apiParam (properties) {String} [windowTitle=Diff Service] The title of the diff window.
- * @apiParam (properties) {Boolean} [focused=true] Whether to focus project window.
+ * @apiParam {String} [windowTitle=Diff Service] The title of the diff window.
+ * @apiParam {Boolean} [focused=true] Whether to focus project window.
  *
- * @apiParam (properties) {Object[]{2..}} contents The list of the contents to diff.
- * @apiParam (properties) {String} [contents.title] The title of the content.
- * @apiParam (properties) {String} [contents.fileType] The file type name of the content.
- * @apiParam (properties) {String} contents.content The data of the content.
+ * @apiParam {Object[]{2..}} contents The list of the contents to diff.
+ * @apiParam {String} [contents.title] The title of the content.
+ * @apiParam {String} [contents.fileType] The file type name of the content.
+ * @apiParam {String} contents.content The data of the content.
  *
  * @apiUse DiffRequestExample
  */
@@ -107,7 +107,7 @@ final class DiffHttpService extends RestService {
       return "Empty request";
     }
 
-    Project project = guessProject();
+    Project project = getLastFocusedOrOpenedProject();
     if (project == null) {
       // Argument for @NotNull parameter 'project' of com/intellij/openapi/components/ServiceManager.getService must not be null
       project = ProjectManager.getInstance().getDefaultProject();
@@ -120,8 +120,7 @@ final class DiffHttpService extends RestService {
       @Override
       public void run() {
         DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"),
-                                                                               contents.toArray(new DiffContent[contents.size()]),
-                                                                               ArrayUtil.toStringArray(titles)));
+                                                                               contents, titles));
         if (finalFocused) {
           ProjectUtil.focusProjectWindow(finalProject, true);
         }

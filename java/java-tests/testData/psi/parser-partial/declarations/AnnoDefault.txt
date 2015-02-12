@@ -13,7 +13,6 @@ PsiJavaFile:AnnoDefault.java
           <empty list>
     PsiWhiteSpace(' ')
     PsiIdentifier:foo('foo')
-    PsiWhiteSpace(' ')
     PsiParameterList:()
       PsiJavaToken:LPARENTH('(')
       PsiJavaToken:RPARENTH(')')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +32,7 @@ import java.net.*;
 public class NetUtils {
   private static final Logger LOG = Logger.getInstance(NetUtils.class);
 
-  private NetUtils() {
-  }
+  private NetUtils() { }
 
   public static boolean canConnectToSocket(String host, int port) {
     return canConnectToSocket(host, port, false);
@@ -223,5 +223,9 @@ public class NetUtils {
     }
 
     return total;
+  }
+
+  public static boolean isSniEnabled() {
+    return SystemInfo.isJavaVersionAtLeast("1.7") && SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
   }
 }

@@ -22,12 +22,18 @@ import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
-public abstract class BasePasteHandler extends EditorWriteActionHandler {
+public class BasePasteHandler extends EditorWriteActionHandler {
   protected Transferable myTransferable;
+
+  @Override
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    return !editor.isViewer();
+  }
 
   @Override
   public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {

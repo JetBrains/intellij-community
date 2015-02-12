@@ -45,18 +45,26 @@ public interface PermanentGraph<CommitId> {
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
 
   enum SortType {
-    Normal("Off"),
-    Bek("Standard"),
-    LinearBek("Linear");
+    Normal("Off", "Sort commits topologically and by date."),
+    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)."),
+    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased.");
 
-    private final String myPresentation;
+    @NotNull private final String myPresentation;
+    @NotNull private final String myDescription;
 
-    SortType(String presentation) {
+    SortType(@NotNull String presentation, @NotNull String description) {
       myPresentation = presentation;
+      myDescription = description;
     }
 
-    public String getPresentation() {
+    @NotNull
+    public String getName() {
       return myPresentation;
+    }
+
+    @NotNull
+    public String getDescription() {
+      return myDescription;
     }
   }
 }

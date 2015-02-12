@@ -64,9 +64,8 @@ binding.setVariable("isEap", {
 
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
-binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
-                                        "-Djsse.enableSNIExtension=false " +
-                                        "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
+binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
+                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
@@ -272,7 +271,9 @@ binding.setVariable("classPathLibs", [
 
 binding.setVariable("platformApiModules", [
   "analysis-api",
+  "built-in-server-api",
   "core-api",
+  "diff-api",
   "dvcs-api",
   "editor-ui-api",
   "external-system-api",
@@ -280,60 +281,57 @@ binding.setVariable("platformApiModules", [
   "jps-model-api",
   "lang-api",
   "lvcs-api",
-  "projectModel-api",
   "platform-api",
+  "projectModel-api",
+  "remote-servers-agent-rt",
+  "remote-servers-api",
   "structure-view-api",
   "usageView",
-  "diff-api",
-  "vcs-api",
   "vcs-api-core",
+  "vcs-api",
   "vcs-log-api",
   "vcs-log-graph-api",
   "xdebugger-api",
-  "remote-servers-api",
-  "remote-servers-agent-rt",
   "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
-  "xml-structure-view-api",
-  "built-in-server-api"
+  "xml-structure-view-api"
 ])
-
 
 binding.setVariable("platformImplementationModules", [
   "analysis-impl",
+  "built-in-server",
   "core-impl",
+  "diff-impl",
   "dvcs-impl",
   "editor-ui-ex",
   "images",
   "indexing-impl",
   "jps-model-impl",
   "jps-model-serialization",
+  "json",
   "lang-impl",
   "lvcs-impl",
-  "projectModel-impl",
   "platform-impl",
+  "projectModel-impl",
+  "protocol-reader-runtime",
+  "RegExpSupport",
+  "relaxng",
+  "remote-servers-impl",
+  "script-debugger-backend",
+  "script-debugger-ui",
+  "smRunner",
+  "spellchecker",
   "structure-view-impl",
-  "diff-impl",
+  "testRunner",
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
-  "testRunner",
-  "smRunner",
-  "relaxng",
-  "RegExpSupport",
-  "spellchecker",
   "xdebugger-impl",
-  "remote-servers-impl",
-  "xml",
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
-  "json",
-  "protocol-reader-runtime",
-  "script-debugger-backend",
-  "script-debugger-ui",
-  "built-in-server"
+  "xml"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->

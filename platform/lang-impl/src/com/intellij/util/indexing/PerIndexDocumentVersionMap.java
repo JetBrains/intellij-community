@@ -67,6 +67,9 @@ public class PerIndexDocumentVersionMap {
     }
   }
 
+  public void clearForDocument(@NotNull Document document) {
+    document.putUserData(KEY, new ArrayList<IdVersionInfo>());
+  }
   public void clear() {
     mapVersion++;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             presentation = new JavaValuePresentation(value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
             if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
-              node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
+              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer())
+                .getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
+              if (evaluator != null) {
+                node.setFullValueEvaluator(evaluator);
+              }
             }
             else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new XFullValueEvaluator() {
@@ -380,7 +384,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       public Priority getPriority() {
         if (navigatable instanceof XInlineSourcePosition) {
-          return Priority.LOW;
+          return Priority.LOWEST;
         }
         return Priority.NORMAL;
       }
@@ -540,6 +544,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void setRenderer(NodeRenderer nodeRenderer, final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myValueDescriptor.setRenderer(nodeRenderer);
+    reBuild(node);
+  }
+
+  public void reBuild(final XValueNodeImpl node) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     myCurrentChildrenStart = 0;
     node.getTree().getLaterInvocator().offer(new Runnable() {
       @Override

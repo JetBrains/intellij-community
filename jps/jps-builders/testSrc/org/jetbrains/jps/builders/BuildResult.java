@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -93,7 +94,8 @@ public class BuildResult implements MessageHandler {
         for (String output : outputs) {
           hashCodeToOutputPath.put(FileUtil.pathHashCode(output), output);
         }
-        stream.println(" " + source + " -> " + StringUtil.join(outputs, ","));
+        String sourceToCompare = SystemInfo.isFileSystemCaseSensitive ? source : source.toLowerCase(Locale.US);
+        stream.println(" " + sourceToCompare + " -> " + StringUtil.join(outputs, ","));
       }
       stream.println("End Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
     }

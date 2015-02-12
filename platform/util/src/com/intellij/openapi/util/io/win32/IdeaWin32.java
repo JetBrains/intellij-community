@@ -71,10 +71,11 @@ public class IdeaWin32 {
   public FileInfo getInfo(@NotNull String path) {
     path = path.replace('/', '\\');
     if (DEBUG_ENABLED) {
+      LOG.debug("getInfo(" + path + ")");
       long t = System.nanoTime();
       FileInfo result = getInfo0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("getInfo(" + path + "): " + t + " mks");
+      LOG.debug("  " + t + " mks");
       return result;
     }
     else {
@@ -86,10 +87,11 @@ public class IdeaWin32 {
   public String resolveSymLink(@NotNull String path) {
     path = path.replace('/', '\\');
     if (DEBUG_ENABLED) {
+      LOG.debug("resolveSymLink(" + path + ")");
       long t = System.nanoTime();
       String result = resolveSymLink0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("resolveSymLink(" + path + "): " + t + " mks");
+      LOG.debug("  " + t + " mks");
       return result;
     }
     else {
@@ -101,10 +103,11 @@ public class IdeaWin32 {
   public FileInfo[] listChildren(@NotNull String path) {
     path = path.replace('/', '\\');
     if (DEBUG_ENABLED) {
+      LOG.debug("list(" + path + ")");
       long t = System.nanoTime();
       FileInfo[] children = listChildren0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("list(" + path + "): " + (children == null ? -1 : children.length) + " children, " + t + " mks");
+      LOG.debug("  " + (children == null ? -1 : children.length) + " children, " + t + " mks");
       return children;
     }
     else {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public abstract class CustomPortServerManager {
-  public static final ExtensionPointName<CustomPortServerManager> EP_NAME = ExtensionPointName.create("com.intellij.customPortServerManager");
+  public static final ExtensionPointName<CustomPortServerManager> EP_NAME = ExtensionPointName.create("org.jetbrains.customPortServerManager");
 
   public abstract void cannotBind(Exception e, int port);
 
@@ -40,6 +40,7 @@ public abstract class CustomPortServerManager {
   /**
    * This server will accept only XML-RPC requests if this method returns not-null map of XMl-RPC handlers
    */
+  @Nullable
   public Map<String, Object> createXmlRpcHandlers() {
     return null;
   }

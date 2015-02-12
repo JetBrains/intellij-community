@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
@@ -53,6 +54,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 
 /**
@@ -162,6 +165,12 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         myModulesConfigurator.processModuleCompilerOutputChanged(getCompilerOutputUrl());
       }
     });
+    myProjectJdkConfigurable.addChangeListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk());
+      }
+    });
   }
 
   @Override
@@ -178,7 +187,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       myProjectJdkConfigurable.reset();
       final String compilerOutput = getOriginalCompilerOutputUrl();
       if (compilerOutput != null) {
-        myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
+        myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(compilerOutput)));
       }
       myLanguageLevelCombo.reset(myProject);
 
@@ -217,7 +226,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
             //file doesn't exist yet
           }
           canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-          compilerProjectExtension.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+          compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
         }
         else {
           compilerProjectExtension.setCompilerOutputPointer(null);
@@ -277,7 +286,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       return true;
     }
     final String compilerOutput = getOriginalCompilerOutputUrl();
-    if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
+    if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtilCore.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
     if (myProjectName != null) {
@@ -294,7 +303,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   private void createUIComponents() {
-    myLanguageLevelCombo = new LanguageLevelCombo();
+    myLanguageLevelCombo = new LanguageLevelCombo(JavaCoreBundle.message("default.language.level.description"));
     final JTextField textField = new JTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
@@ -305,6 +314,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   public String getCompilerOutputUrl() {
-    return VfsUtil.pathToUrl(myProjectCompilerOutput.getText().trim());
+    return VfsUtilCore.pathToUrl(myProjectCompilerOutput.getText().trim());
   }
 }

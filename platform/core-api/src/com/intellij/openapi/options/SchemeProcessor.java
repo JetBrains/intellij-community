@@ -33,6 +33,10 @@ public interface SchemeProcessor<T extends ExternalizableScheme> {
 
   Parent writeScheme(@NotNull T scheme) throws WriteExternalException;
 
+  @Deprecated
+  /**
+   * @deprecated Implement {@link BaseSchemeProcessor#getState(ExternalizableScheme)}
+   */
   boolean shouldBeSaved(@NotNull T scheme);
 
   void initScheme(@NotNull T scheme);

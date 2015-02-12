@@ -401,10 +401,6 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testShebang() { //PY-12775
-    doTest();
-  }
-
   public void testParenthesisAroundGeneratorExpression() {
     doTest();
   }
@@ -483,10 +479,40 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-12748
   public void testIndentCommentariesInsideFromImportStatement() {
-      doTest();
+    doTest();
   }
 
   public void testClosingParenthesisInFromImportStatementWithNoHangingIndent() {
+    doTest();
+  }
+
+  // PY-12932
+  public void testCommentedCodeFragmentIgnored() {
+    doTest();
+  }
+
+  // PY-12932
+  public void testTrailingComment() {
+    doTest();
+  }
+
+  // PY-12938
+  public void testDoubleHashCommentIgnored() {
+    doTest();
+  }
+
+  // PY-12938
+  public void testDocCommentIgnored() {
+    doTest();
+  }
+
+  // PY-12775
+  public void testShebangCommentIgnored() {
+    doTest();
+  }
+
+  // PY-13232
+  public void testWhitespaceInsertedAfterHashSignInMultilineComment() {
     doTest();
   }
 

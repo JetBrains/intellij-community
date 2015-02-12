@@ -84,7 +84,8 @@ public class PositionManagerImpl implements PositionManager {
           return;
         }
 
-        if (!classHasName(psiClass)) {
+        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+        if (className == null) {
           final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
 
           if (parent == null) {
@@ -107,7 +108,7 @@ public class PositionManagerImpl implements PositionManager {
           });
         }
         else {
-          waitPrepareFor.set(JVMNameUtil.getNonAnonymousClassName(psiClass));
+          waitPrepareFor.set(className);
           waitRequestor.set(requestor);
         }
       }
@@ -116,10 +117,6 @@ public class PositionManagerImpl implements PositionManager {
       return null;  // no suitable class found for this name
     }
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
-  }
-
-  private static boolean classHasName(PsiClass psiClass) {
-    return !PsiUtil.isLocalOrAnonymousClass(psiClass) && JVMNameUtil.getNonAnonymousClassName(psiClass) != null;
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -244,7 +241,8 @@ public class PositionManagerImpl implements PositionManager {
         final PsiClass psiClass = JVMNameUtil.getClassAt(position);
         if (psiClass != null) {
           classAtPositionRef.set(psiClass);
-          if (!classHasName(psiClass)) {
+          String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          if (className == null) {
             isLocalOrAnonymous.set(Boolean.TRUE);
             final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
             if (topLevelClass != null) {
@@ -253,19 +251,13 @@ public class PositionManagerImpl implements PositionManager {
                 requiredDepth.set(getNestingDepth(psiClass));
                 baseClassNameRef.set(parentClassName);
               }
-              else {
-                LOG.error("The name of a parent " + topLevelClass + " of a local (anonymous) class " + psiClass + " is null");
-              }
             }
             else {
               LOG.error("Local or anonymous class has no non-local parent");
             }
           }
           else {
-            final String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-            if (className != null) {
-              baseClassNameRef.set(className);
-            }
+            baseClassNameRef.set(className);
           }
         }
       }
@@ -363,7 +355,7 @@ public class PositionManagerImpl implements PositionManager {
             continue;
           }
           int locationLine = lnumber - 1;
-          PsiFile psiFile = position.getFile();
+          PsiFile psiFile = position.getFile().getOriginalFile();
           if (psiFile instanceof PsiCompiledFile) {
             locationLine = bytecodeToSourceLine(psiFile, locationLine);
             if (locationLine < 0) continue;

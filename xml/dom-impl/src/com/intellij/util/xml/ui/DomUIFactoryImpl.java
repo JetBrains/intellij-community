@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -177,7 +176,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
                                                                   true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());
         LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0,
                                                             document.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                            HighlightInfoProcessor.getEmpty());
+                                                            new DefaultHighlightInfoProcessor());
         return new HighlightingPass[]{ghp, lip};
       }
 

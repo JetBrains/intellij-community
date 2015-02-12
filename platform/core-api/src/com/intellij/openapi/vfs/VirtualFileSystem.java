@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.util.KeyedLazyInstanceEP;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +31,11 @@ import java.io.IOException;
  * @see VirtualFileManager
  */
 public abstract class VirtualFileSystem {
-  protected VirtualFileSystem() {
-  }
+  protected VirtualFileSystem() { }
 
   /**
    * Gets the protocol for this file system. Protocols should differ for all file systems.
-   * Should be the same as corresponding {@link com.intellij.util.KeyedLazyInstanceEP#key}.
+   * Should be the same as corresponding {@link KeyedLazyInstanceEP#key}.
    *
    * @return String representing the protocol
    * @see VirtualFile#getUrl
@@ -46,15 +47,11 @@ public abstract class VirtualFileSystem {
 
   /**
    * Searches for the file specified by given path. Path is a string which uniquely identifies file within given
-   * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>LocalFileSystem</code> it is an absolute file path with file separator characters (File.separatorChar)
-   * replaced to the forward slash ('/').<p>
-   * <p/>
-   * Example: to find a <code>{@link VirtualFile}</code> corresponding to the physical file with the specified path one
-   * can use the following code: <code>LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));</code>
+   * {@link VirtualFileSystem}. Format of the path depends on the concrete file system.
+   * For {@code LocalFileSystem} it is an absolute path (both Unix- and Windows-style separator chars are allowed).
    *
    * @param path the path to find file by
-   * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
+   * @return a virtual file if found, {@code null} otherwise
    */
   @Nullable
   public abstract VirtualFile findFileByPath(@NotNull @NonNls String path);
@@ -75,7 +72,7 @@ public abstract class VirtualFileSystem {
    * Refreshes the cached information for all files in this file system from the physical file system.<p>
    * <p/>
    * If <code>asynchronous</code> is <code>false</code> this method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
    *                     otherwise will be performed immediately
@@ -93,7 +90,7 @@ public abstract class VirtualFileSystem {
    * corresponding to it.<p>
    * <p/>
    * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param path the path
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
@@ -117,11 +114,9 @@ public abstract class VirtualFileSystem {
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
-  @Deprecated
-  /**
-   * Deprecated. Current implementation blindly calls plain refresh against the file passed
-   */
-  public void forceRefreshFile(final boolean asynchronous, @NotNull VirtualFile file) {
+  /** @deprecated. Current implementation blindly calls plain refresh against the file passed (to be removed in IDEA 15) */
+  @SuppressWarnings("unused")
+  public void forceRefreshFile(boolean asynchronous, @NotNull VirtualFile file) {
     file.refresh(asynchronous, false);
   }
 
@@ -168,7 +163,7 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#copy(Object,VirtualFile,String)
    */
   @NotNull
-  protected abstract VirtualFile copyFile(final Object requestor,
+  protected abstract VirtualFile copyFile(Object requestor,
                                           @NotNull VirtualFile virtualFile,
                                           @NotNull VirtualFile newParent,
                                           @NotNull String copyName) throws IOException;

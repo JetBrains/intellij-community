@@ -1,0 +1,8 @@
+<root>
+  <item name='org.junit.rules.TestWatcher void finished(org.junit.runner.Description) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.junit.rules.TestWatcher void starting(org.junit.runner.Description) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

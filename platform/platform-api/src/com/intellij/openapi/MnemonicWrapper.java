@@ -33,6 +33,9 @@ import java.lang.reflect.Method;
  */
 abstract class MnemonicWrapper<T extends Component> implements Runnable, PropertyChangeListener {
   public static MnemonicWrapper getWrapper(Component component) {
+    if (component == null || component.getClass().getName().equals("com.intellij.openapi.wm.impl.StripeButton")) {
+      return null;
+    }
     for (PropertyChangeListener listener : component.getPropertyChangeListeners()) {
       if (listener instanceof MnemonicWrapper) {
         MnemonicWrapper wrapper = (MnemonicWrapper)listener;

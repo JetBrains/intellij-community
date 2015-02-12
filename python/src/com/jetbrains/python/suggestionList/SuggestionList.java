@@ -166,7 +166,14 @@ public class SuggestionList {
       return null; // Nothing is selected if list is invisible
     }
     final Object value = myList.getSelectedValue();
-    return ((value == null) ? "" : getElement(value).mySuggestion.getText());
+    return ((value == null) ? null : getElement(value).mySuggestion.getText());
+  }
+
+  /**
+   * @return true if no suggestion list is displayed now.
+   */
+  public final synchronized boolean isClosed() {
+    return myListPopUp == null || myListPopUp.isDisposed();
   }
 
   /**

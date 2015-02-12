@@ -157,7 +157,7 @@ public class DiffUtil {
 
     if (enableFolding) {
       editor.getSettings().setFoldingOutlineShown(true);
-      editor.getSettings().setCodeFoldingEnabled(false);
+      editor.getSettings().setAutoCodeFoldingEnabled(false);
     }
     else {
       editor.getSettings().setFoldingOutlineShown(false);
@@ -256,9 +256,9 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
-    String[] titles = request.getContentTitles();
+    List<String> titles = request.getContentTitles();
 
-    List<JComponent> components = new ArrayList<JComponent>(titles.length);
+    List<JComponent> components = new ArrayList<JComponent>(titles.size());
     for (String title : titles) {
       components.add(createTitle(title));
     }
@@ -268,8 +268,8 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request, @NotNull List<? extends Editor> editors) {
-    DiffContent[] contents = request.getContents();
-    String[] titles = request.getContentTitles();
+    List<DiffContent> contents = request.getContents();
+    List<String> titles = request.getContentTitles();
 
     List<Charset> charsets = ContainerUtil.map(contents, new Function<DiffContent, Charset>() {
       @Override
@@ -289,10 +289,10 @@ public class DiffUtil {
     boolean equalCharsets = isEqualElements(charsets);
     boolean equalSeparators = isEqualElements(separators);
 
-    List<JComponent> result = new ArrayList<JComponent>(contents.length);
+    List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
-    for (int i = 0; i < contents.length; i++) {
-      result.add(createTitle(titles[i], contents[i], equalCharsets, equalSeparators, editors.get(i)));
+    for (int i = 0; i < contents.size(); i++) {
+      result.add(createTitle(titles.get(i), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
     }
 
     return result;
@@ -360,13 +360,7 @@ public class DiffUtil {
   @NotNull
   private static JComponent createTitlePanel(@NotNull String title) {
     if (title.isEmpty()) title = " "; // do not collapse
-    JTextField field = new JTextField(title);
-    field.setEditable(false);
-    field.setBorder(null);
-    field.setFont(UIUtil.getLabelFont());
-    field.setBackground(UIUtil.TRANSPARENT_COLOR);
-    field.setOpaque(false);
-    return field;
+    return new JLabel(title); // TODO: allow to copy text
   }
 
   @NotNull
@@ -597,6 +591,7 @@ public class DiffUtil {
                                        @NotNull Document document2,
                                        int oLine1,
                                        int oLine2) {
+    if (line1 == line2 && oLine1 == oLine2) return;
     if (line1 == line2) {
       insertLines(document1, line1, document2, oLine1, oLine2);
     }

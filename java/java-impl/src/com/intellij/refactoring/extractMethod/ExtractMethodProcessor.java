@@ -1713,14 +1713,17 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (duplicates != null && !duplicates.isEmpty()) {
       return true;
     }
-    final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
-    duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
-    if (duplicates != null && !duplicates.isEmpty()) {
-      myDuplicates      = duplicates;
-      myExtractedMethod = suggester.getExtractedMethod();
-      myMethodCall      = suggester.getMethodCall();
-      myVariableDatum   = suggester.getVariableData();
-      return null;
+
+    if (myExtractedMethod != null) {
+      final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
+      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
+      if (duplicates != null && !duplicates.isEmpty()) {
+        myDuplicates      = duplicates;
+        myExtractedMethod = suggester.getExtractedMethod();
+        myMethodCall      = suggester.getMethodCall();
+        myVariableDatum   = suggester.getVariableData();
+        return null;
+      }
     }
     return false;
   }

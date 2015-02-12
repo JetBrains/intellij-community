@@ -363,6 +363,7 @@ public class DaemonListeners implements Disposable {
   
   static boolean isUnderIgnoredAction(@Nullable Object action) {
     return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
+           action == DocumentRunnable.IgnoreDocumentRunnable.class ||
            ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
   }
 
@@ -434,9 +435,7 @@ public class DaemonListeners implements Disposable {
 
     @Override
     public void writeActionFinished(Object action) {
-      if (myDaemonWasRunning) {
-        stopDaemon(true, "Write action finish");
-      }
+      stopDaemon(true, "Write action finish");
     }
   }
 

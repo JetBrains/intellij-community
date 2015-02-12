@@ -329,4 +329,38 @@ public class StringUtilTest extends TestCase {
     assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\r"));
     assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\n"));
   }
+
+  public void testFormatFileSize() {
+    assertEquals("0B", StringUtil.formatFileSize(0));
+    assertEquals("1B", StringUtil.formatFileSize(1));
+    assertEquals("2.15G", StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("9.22E", StringUtil.formatFileSize(Long.MAX_VALUE));
+
+    assertEquals("60.10K", StringUtil.formatFileSize(60100));
+
+    assertEquals("1.23K", StringUtil.formatFileSize(1234));
+    assertEquals("12.35K", StringUtil.formatFileSize(12345));
+    assertEquals("123.46K", StringUtil.formatFileSize(123456));
+    assertEquals("1.23M", StringUtil.formatFileSize(1234567));
+    assertEquals("12.35M", StringUtil.formatFileSize(12345678));
+    assertEquals("123.46M", StringUtil.formatFileSize(123456789));
+    assertEquals("1.23G", StringUtil.formatFileSize(1234567890));
+  }
+
+  public void testFormatDuration() {
+    assertEquals("0ms", StringUtil.formatDuration(0));
+    assertEquals("1ms", StringUtil.formatDuration(1));
+    assertEquals("3w 3d 20h 31m 23s 647ms", StringUtil.formatDuration(Integer.MAX_VALUE));
+    assertEquals("31ep 7714ml 2c 59yr 5mo 0w 3d 7h 12m 55s 807ms", StringUtil.formatDuration(Long.MAX_VALUE));
+
+    assertEquals("1m 0s 100ms", StringUtil.formatDuration(60100));
+
+    assertEquals("1s 234ms", StringUtil.formatDuration(1234));
+    assertEquals("12s 345ms", StringUtil.formatDuration(12345));
+    assertEquals("2m 3s 456ms", StringUtil.formatDuration(123456));
+    assertEquals("20m 34s 567ms", StringUtil.formatDuration(1234567));
+    assertEquals("3h 25m 45s 678ms", StringUtil.formatDuration(12345678));
+    assertEquals("1d 10h 17m 36s 789ms", StringUtil.formatDuration(123456789));
+    assertEquals("2w 0d 6h 56m 7s 890ms", StringUtil.formatDuration(1234567890));
+  }
 }

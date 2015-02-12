@@ -15,11 +15,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCDocumentListener;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.StudyLanguageManager;
 import com.jetbrains.edu.coursecreator.format.*;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +94,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       }
     }
     generateJson(project);
-    packCourse(baseDir, lessons);
+    packCourse(baseDir, lessons, course);
     resetTaskFiles(taskFiles);
     synchronize(project);
   }
@@ -120,7 +123,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
     file = userFileDir.findChild(name);
     assert file != null;
-    String answerFileName = file.getNameWithoutExtension() + ".answer";
+    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
     VirtualFile answerFile = answerFileDir.findChild(answerFileName);
     if (answerFile == null) {
       return;
@@ -143,7 +146,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(0, document.getTextLength(), answerDocument.getText());
+            document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
           }
         });
       }
@@ -156,6 +159,17 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceTaskWindow(project, document, answerPlaceholder);
     }
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+      }
+    }, "x", "qwe");
     document.removeDocumentListener(listener);
   }
 
@@ -192,11 +206,11 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
   }
 
-  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Map<String, Lesson> lessons) {
+  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Map<String, Lesson> lessons, @NotNull final Course course) {
     try {
       File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-
+      final StudyLanguageManager manager = CCUtils.getStudyLanguageManager(course);
       for (Map.Entry<String, Lesson> entry : lessons.entrySet()) {
         final VirtualFile lessonDir = baseDir.findChild(entry.getKey());
         if (lessonDir == null) continue;
@@ -204,13 +218,22 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           @Override
           public boolean accept(File pathname) {
             String name = pathname.getName();
-            return !name.contains(".answer") && !name.contains("__pycache__") && !name.contains("_windows") && !name.contains(".pyc");
+            String nameWithoutExtension = FileUtil.getNameWithoutExtension(pathname);
+            if (nameWithoutExtension.endsWith(".answer") || name.contains("_windows")) {
+              return false;
+            }
+            return manager == null || manager.packFile(pathname);
           }
         }, null);
       }
-      ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "hints"), "hints", null, null);
-      ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "course.json"), "course.json", null, null);
-      ZipUtil.addFileOrDirRecursively(zos, null, new File(baseDir.getPath(), "test_helper.py"), "test_helper.py", null, null);
+      packFile("hints", zos, baseDir);
+      packFile("course.json", zos, baseDir);
+      if (manager != null) {
+        String[] additionalFilesToPack = manager.getAdditionalFilesToPack();
+        for (String filename: additionalFilesToPack) {
+          packFile(filename, zos, baseDir);
+        }
+      }
       zos.close();
       Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
     }
@@ -256,6 +279,21 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     @Override
     protected boolean useLength() {
       return true;
+    }
+  }
+
+  private static void packFile(@NotNull final String filename,
+                               @NotNull final ZipOutputStream zipOutputStream,
+                               @NotNull final VirtualFile baseDir) {
+    try {
+      File file = new File(baseDir.getPath(), filename);
+      if (!file.exists()) {
+        return;
+      }
+      ZipUtil.addFileOrDirRecursively(zipOutputStream, null, file, filename, null, null);
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 }

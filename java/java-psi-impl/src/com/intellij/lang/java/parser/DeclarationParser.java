@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -767,7 +767,10 @@ public class DeclarationParser {
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
+    PsiBuilder.Marker classRef = null;
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+      classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
+    }
     if (classRef == null) {
       error(builder, JavaErrorMessages.message("expected.class.reference"));
     }

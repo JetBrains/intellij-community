@@ -142,8 +142,12 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
         targetId = edge.getTargetId();
       }
       if (edge.getType().isNormalEdge()) {
-        if (printElementType == DOWN_ARROW) targetId = convertToNodeId(edge.getDownNodeIndex());
-        else targetId = convertToNodeId(edge.getUpNodeIndex());
+        if (printElementType == DOWN_ARROW) {
+          targetId = convertToNodeId(edge.getDownNodeIndex());
+        }
+        else {
+          targetId = convertToNodeId(edge.getUpNodeIndex());
+        }
       }
       if (targetId == null) return null;
 
@@ -198,7 +202,14 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       CommitId commitToJump = null;
       Integer nodeId = answer.getCommitToJump();
       if (nodeId != null) commitToJump = myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
-      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump, answer.getGraphUpdater());
+      final Runnable graphUpdater = answer.getGraphUpdater();
+      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), commitToJump, graphUpdater == null ? null : new Runnable() {
+        @Override
+        public void run() {
+          graphUpdater.run();
+          updatePrintElementGenerator();
+        }
+      });
     }
   }
 

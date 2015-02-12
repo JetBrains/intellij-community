@@ -16,26 +16,39 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class SimpleDiffRequest extends ContentDiffRequest {
   @Nullable private final String myTitle;
-  @NotNull private final DiffContent[] myContents;
-  @NotNull private final String[] myContentTitles;
+  @NotNull private final List<DiffContent> myContents;
+  @NotNull private final List<String> myContentTitles;
 
   public SimpleDiffRequest(@Nullable String title,
                            @NotNull DiffContent content1,
                            @NotNull DiffContent content2,
-                           @NotNull String title1,
-                           @NotNull String title2) {
-    this(title, new DiffContent[]{content1, content2}, new String[]{title1, title2});
+                           @Nullable String title1,
+                           @Nullable String title2) {
+    this(title, ContainerUtil.list(content1, content2), ContainerUtil.list(title1, title2));
   }
 
   public SimpleDiffRequest(@Nullable String title,
-                           @NotNull DiffContent[] contents,
-                           @NotNull String[] titles) {
-    assert contents.length == titles.length;
+                           @NotNull DiffContent content1,
+                           @NotNull DiffContent content2,
+                           @NotNull DiffContent content3,
+                           @Nullable String title1,
+                           @Nullable String title2,
+                           @Nullable String title3) {
+    this(title, ContainerUtil.list(content1, content2, content3), ContainerUtil.list(title1, title2, title3));
+  }
+
+  public SimpleDiffRequest(@Nullable String title,
+                           @NotNull List<DiffContent> contents,
+                           @NotNull List<String> titles) {
+    assert contents.size() == titles.size();
 
     myTitle = title;
     myContents = contents;
@@ -44,13 +57,13 @@ public class SimpleDiffRequest extends ContentDiffRequest {
 
   @NotNull
   @Override
-  public DiffContent[] getContents() {
+  public List<DiffContent> getContents() {
     return myContents;
   }
 
   @NotNull
   @Override
-  public String[] getContentTitles() {
+  public List<String> getContentTitles() {
     return myContentTitles;
   }
 

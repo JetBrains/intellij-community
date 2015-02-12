@@ -16,13 +16,13 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +50,9 @@ public class EditorHelper {
     if (file == null) return null;//SCR44414
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
+    
+    performPostponedFormattingIfNeeded(file);
+    
     OpenFileDescriptor descriptor = new OpenFileDescriptor(element.getProject(), virtualFile, offset);
     Project project = element.getProject();
     if (offset == -1 && !switchToText) {
@@ -59,5 +62,17 @@ public class EditorHelper {
       FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
     }
     return FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+  }
+
+  private static void performPostponedFormattingIfNeeded(PsiFile file) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      Document doc = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+      if (doc != null) {
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+        if (psiDocumentManager.isDocumentBlockedByPsi(doc)) {
+          psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
+        }
+      }
+    }
   }
 }

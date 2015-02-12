@@ -64,6 +64,7 @@ public class BuiltInServer implements Disposable {
     return port;
   }
 
+  @NotNull
   static ServerBootstrap createServerBootstrap(@NotNull EventLoopGroup eventLoopGroup,
                                                @NotNull final ChannelRegistrar channelRegistrar,
                                                @Nullable Map<String, Object> xmlRpcHandlers) {
@@ -175,8 +176,12 @@ public class BuiltInServer implements Disposable {
 
     @Override
     protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException {
-      return (request.method() == HttpMethod.POST || request.method() == HttpMethod.OPTIONS) &&
-             XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
+      if (handlers.isEmpty()) {
+        // not yet initialized, for example, P2PTransport could add handlers after we bound.
+        return false;
+      }
+
+      return request.method() == HttpMethod.POST && XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
     }
   }
 }

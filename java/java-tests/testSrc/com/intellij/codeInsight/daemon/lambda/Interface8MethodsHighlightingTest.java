@@ -47,6 +47,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest(false, false);
   }
 
+  public void testStaticMethodAccessibleThroughStaticImportButExplicitlyQualified() throws Exception {
+    doTest(true, false);
+  }
+
   public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() throws Exception {
     myFixture.addClass("package p; public interface Foo {" +
                        "    static void foo() {}" +

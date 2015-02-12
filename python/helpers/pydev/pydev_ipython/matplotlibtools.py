@@ -61,16 +61,13 @@ def is_interactive_backend(backend):
         return matplotlib.is_interactive()
 
 
-def patch_use(interpreter=None):
+def patch_use(enable_gui_function):
     """ Patch matplotlib function 'use' """
     matplotlib = sys.modules['matplotlib']
     def patched_use(*args, **kwargs):
         matplotlib.real_use(*args, **kwargs)
         gui, backend = find_gui_and_backend()
-        if interpreter:
-            interpreter.enableGui(gui)
-        else:
-            do_enable_gui(gui)
+        enable_gui_function(gui)
 
     setattr(matplotlib, "real_use", getattr(matplotlib, "use"))
     setattr(matplotlib, "use", patched_use)
@@ -86,27 +83,24 @@ def patch_is_interactive():
     setattr(matplotlib, "is_interactive", patched_is_interactive)
 
 
-def activate_matplotlib(interpreter=None):
-    """Set interactive to True for interactive backends."""
-    def activate_matplotlib_inner():
-        matplotlib = sys.modules['matplotlib']
-        gui, backend = find_gui_and_backend()
-        is_interactive = is_interactive_backend(backend)
-        if is_interactive:
-            if interpreter:
-                interpreter.enableGui(gui)
-            else:
-                do_enable_gui(gui)
-            if not matplotlib.is_interactive():
-                sys.stdout.write("Backend %s is interactive backend. Turning interactive mode on.\n" % backend)
-            matplotlib.interactive(True)
-        else:
-            if matplotlib.is_interactive():
-                sys.stdout.write("Backend %s is non-interactive backend. Turning interactive mode off.\n" % backend)
-            matplotlib.interactive(False)
-        patch_use(interpreter)
-        patch_is_interactive()
-    return activate_matplotlib_inner
+def activate_matplotlib(enable_gui_function):
+    """Set interactive to True for interactive backends.
+    enable_gui_function - Function which enables gui, should be run in the main thread.
+    """
+    matplotlib = sys.modules['matplotlib']
+    gui, backend = find_gui_and_backend()
+    is_interactive = is_interactive_backend(backend)
+    if is_interactive:
+        enable_gui_function(gui)
+        if not matplotlib.is_interactive():
+            sys.stdout.write("Backend %s is interactive backend. Turning interactive mode on.\n" % backend)
+        matplotlib.interactive(True)
+    else:
+        if matplotlib.is_interactive():
+            sys.stdout.write("Backend %s is non-interactive backend. Turning interactive mode off.\n" % backend)
+        matplotlib.interactive(False)
+    patch_use(enable_gui_function)
+    patch_is_interactive()
 
 
 def flag_calls(func):

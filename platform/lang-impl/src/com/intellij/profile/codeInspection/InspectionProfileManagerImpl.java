@@ -102,9 +102,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
         return profile;
       }
 
+      @NotNull
       @Override
-      public boolean shouldBeSaved(@NotNull InspectionProfileImpl scheme) {
-        return !scheme.isProjectLevel() && scheme.wasInitialized();
+      public State getState(@NotNull InspectionProfileImpl scheme) {
+        return scheme.isProjectLevel() ? State.NON_PERSISTENT : (scheme.wasInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED);
       }
 
       @Override

@@ -37,7 +37,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
   private boolean myAutoCloseTag = true;
-  private boolean mySyncTagEditing = false;
+  private boolean mySyncTagEditing = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myInsertQuotesForAttributeValue = true;
 

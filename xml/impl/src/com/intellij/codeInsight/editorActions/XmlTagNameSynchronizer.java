@@ -17,6 +17,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
@@ -41,6 +43,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,7 +142,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
   }
 
   private static class TagNameSynchronizer extends DocumentAdapter {
-    private final PsiDocumentManager myDocumentManager;
+    private final PsiDocumentManagerBase myDocumentManager;
     private final Language myLanguage;
 
     private enum State {INITIAL, TRACKING, APPLYING}
@@ -155,7 +158,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final Document document = editor.getDocument();
       document.addDocumentListener(this, disposable);
       document.putUserData(SYNCHRONIZER_KEY, this);
-      myDocumentManager = PsiDocumentManager.getInstance(project);
+      myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     }
 
     @Override
@@ -167,9 +170,25 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       final Document document = event.getDocument();
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();
+      final CharSequence fragment = event.getNewFragment();
+      final int newLength = event.getNewLength();
+
+      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
+        // xml completion inserts extra space after tag name to ensure correct parsing
+        // we need to ignore it
+        return;
+      }
+
+      for (int i = 0; i < newLength; i++) {
+        if (!XmlUtil.isValidTagNameChar(fragment.charAt(i))) {
+          clearMarkers();
+          return;
+        }
+      }
+
       if (myState == State.INITIAL) {
         final PsiFile file = myDocumentManager.getPsiFile(document);
-        if (file == null) return;
+        if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
 
         final SmartList<RangeMarker> leaders = new SmartList<RangeMarker>();
         for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
@@ -209,22 +228,6 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
         myState = State.TRACKING;
       }
       if (myMarkers.isEmpty()) return;
-
-      final CharSequence fragment = event.getNewFragment();
-      final int newLength = event.getNewLength();
-
-      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
-        // xml completion inserts extra space after tag name to ensure correct parsing
-        // we need to ignore it
-        return;
-      }
-
-      for (int i = 0; i < newLength; i++) {
-        if (!XmlUtil.isValidTagNameChar(fragment.charAt(i))) {
-          clearMarkers();
-          return;
-        }
-      }
 
       boolean fitsInMarker = fitsInMarker(offset, oldLength);
       if (!fitsInMarker) {
@@ -287,14 +290,24 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       myState = State.APPLYING;
 
       final Document document = myEditor.getDocument();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
+      final Runnable apply = new Runnable() {
         public void run() {
           for (Couple<RangeMarker> couple : myMarkers) {
             final RangeMarker leader = couple.first;
             final RangeMarker support = couple.second;
             final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
+          }
+        }
+      };
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          if (lookup != null) {
+            lookup.performGuardedChange(apply);
+          } else {
+            apply.run();
           }
         }
       });

@@ -28,6 +28,7 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -50,17 +51,16 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
+import javax.script.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author gregsh
@@ -71,12 +71,22 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
   private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
+  private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
   static class Engines {
-    static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newLinkedHashMap();
-    static  {
-      for (ScriptEngineFactory factory : new ScriptEngineManager().getEngineFactories()) {
-        ourEngines.put(factory.getLanguageName(), factory);
-      }
+    static final List<ScriptEngineFactory> ourEngines = new CopyOnWriteArrayList<ScriptEngineFactory>();
+    static {
+      PooledThreadExecutor.INSTANCE.submit(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              ourEngines.addAll(new ScriptEngineManager().getEngineFactories());
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+          }
+        });
     }
   }
 
@@ -89,11 +99,11 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     if (Engines.ourEngines.size() == 1) {
-      runConsole(e, Engines.ourEngines.values().iterator().next());
+      runConsole(e, Engines.ourEngines.get(0));
     }
     else {
       DefaultActionGroup actions = new DefaultActionGroup(
-        ContainerUtil.map(Engines.ourEngines.values(), new NotNullFunction<ScriptEngineFactory, AnAction>() {
+        ContainerUtil.map(Engines.ourEngines, new NotNullFunction<ScriptEngineFactory, AnAction>() {
           @NotNull
           @Override
           public AnAction fun(final ScriptEngineFactory engine) {
@@ -122,7 +132,8 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         FileEditorManager.getInstance(project).openFile(virtualFile, true);
       }
     }
-    catch (IOException ignored) {
+    catch (IOException ex) {
+      LOG.error(ex);
     }
   }
 
@@ -140,7 +151,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
   @Nullable
   private static ScriptEngine findScriptEngine(@NotNull VirtualFile file) {
-    for (ScriptEngineFactory factory : Engines.ourEngines.values()) {
+    for (ScriptEngineFactory factory : Engines.ourEngines) {
       if (factory.getExtensions().contains(file.getExtension())) {
         return factory.getScriptEngine();
       }
@@ -152,7 +163,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull ScriptEngine engine) {
-
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
     if (selectedRange.getLength() == 0) {
@@ -171,6 +181,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
     try {
       class IDE {
+        private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
         public final Application application = ApplicationManager.getApplication();
         public final Project project = project_;
         public void print(Object o) {
@@ -179,18 +190,26 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         public void error(Object o) {
           printInContent(descriptor, o, ConsoleViewContentType.ERROR_OUTPUT);
         }
+        public Object put(Object key, Object value) {
+          return value == null ? bindings.remove(key) : bindings.put(key, value);
+        }
+        public Object get(Object key) {
+          return bindings.get(key);
+        }
       }
 
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
-      engine.getBindings(ScriptContext.ENGINE_SCOPE).put("IDE", new IDE());
+      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+      if (bindings.get("IDE") == null) bindings.put("IDE", new IDE());
       Object o = engine.eval(profile == null ? command : profile + "\n" + command);
       consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Exception e) {
-      consoleView.print(ExceptionUtil.getRootCause(e).getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
+      Throwable ex = ExceptionUtil.getRootCause(e);
+      consoleView.print(ex.getClass().getSimpleName() + ": " + ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
     }
     selectContent(descriptor);
@@ -220,11 +239,12 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    JComponent consoleComponent = new JPanel(new BorderLayout());
-    consoleComponent.add(consoleView.getComponent(), BorderLayout.CENTER);
-    consoleComponent.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(),
-                         BorderLayout.WEST);
-    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, null, consoleComponent, file.getName()) {
+    JComponent panel = new JPanel(new BorderLayout());
+    panel.add(consoleView.getComponent(), BorderLayout.CENTER);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    toolbar.setTargetComponent(consoleView.getComponent());
+    panel.add(toolbar.getComponent(), BorderLayout.WEST);
+    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, null, panel, file.getName()) {
       @Override
       public boolean isContentReuseProhibited() {
         return true;
@@ -245,10 +265,10 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     //    rerunRunnable.run();
     //  }
     //});
-    toolbarActions.add(new CloseAction(executor, descriptor, project));
     for (AnAction action : consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
+    toolbarActions.add(new CloseAction(executor, descriptor, project));
     psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     return descriptor;

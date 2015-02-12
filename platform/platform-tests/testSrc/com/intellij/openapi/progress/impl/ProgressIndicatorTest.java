@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,9 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     catch(ProcessCanceledException ex) {
       boolean isInternal = SystemProperties.getBooleanProperty("idea.is.internal", false);
-      assertTrue("Should have no stackframe", isInternal ? ex.getStackTrace().length != 0 : ex.getStackTrace().length == 0);
+      boolean isTest = SystemProperties.getBooleanProperty("idea.is.unit.test", false);
+      boolean hasStackFrame = ex.getStackTrace().length != 0;
+      assertTrue("Should have no stackframe", (isInternal || isTest) == hasStackFrame);
     }
   }
 
@@ -112,7 +114,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }, "", false, getProject(), null, "");
     long averageDelay = PlatformTestUtil.averageAmongMedians(times.toNativeArray(), 5);
     System.out.println("averageDelay = " + averageDelay);
-    assertTrue(averageDelay < ProgressManagerImpl.CHECK_CANCELED_DELAY_MILLIS*3);
+    assertTrue(averageDelay < CoreProgressManager.CHECK_CANCELED_DELAY_MILLIS *3);
   }
 
   public void testProgressIndicatorUtilsScheduleWithWriteActionPriority() throws Throwable {
@@ -133,7 +135,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     });
     UIUtil.dispatchAllInvocationEvents();
     while (!insideReadAction.get()) {
-      ;
+
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -200,41 +202,42 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     final ProgressIndicatorBase myIndicator = new ProgressIndicatorBase();
     taskCanceled = taskSucceeded = false;
     exception = null;
-    Future<?> future = ProgressManagerImpl.runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(), "xxx") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          assertFalse(ApplicationManager.getApplication().isDispatchThread());
-          assertSame(indicator, myIndicator);
-          while (System.currentTimeMillis() < end) {
-            ProgressManager.checkCanceled();
+    Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+      new Task.Backgroundable(getProject(), "xxx") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            assertFalse(ApplicationManager.getApplication().isDispatchThread());
+            assertSame(indicator, myIndicator);
+            while (System.currentTimeMillis() < end) {
+              ProgressManager.checkCanceled();
+            }
+          }
+          catch (ProcessCanceledException e) {
+            exception = e;
+            checkCanceledCalled = true;
+            throw e;
+          }
+          catch (RuntimeException e) {
+            exception = e;
+            throw e;
+          }
+          catch (Error e) {
+            exception = e;
+            throw e;
           }
         }
-        catch (ProcessCanceledException e) {
-          exception = e;
-          checkCanceledCalled = true;
-          throw e;
-        }
-        catch (RuntimeException e) {
-          exception = e;
-          throw e;
-        }
-        catch (Error e) {
-          exception = e;
-          throw e;
-        }
-      }
 
-      @Override
-      public void onCancel() {
-        taskCanceled = true;
-      }
+        @Override
+        public void onCancel() {
+          taskCanceled = true;
+        }
 
-      @Override
-      public void onSuccess() {
-        taskSucceeded = true;
-      }
-    }, myIndicator, null);
+        @Override
+        public void onSuccess() {
+          taskSucceeded = true;
+        }
+      }, myIndicator, null);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -315,11 +318,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
       @Override
       public void run() {
-        assertFalse(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
         ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
         assertTrue(indicator != null && !indicator.isCanceled());
         indicator.cancel();
-        assertTrue(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
         assertTrue(indicator.isCanceled());
         final ProgressIndicatorEx nested = new ProgressIndicatorBase();
         nested.addStateDelegate(new ProgressIndicatorStub() {
@@ -331,7 +334,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
           @Override
           public void run() {
-            assertFalse(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+            assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
             ProgressIndicator indicator2 = ProgressIndicatorProvider.getGlobalProgressIndicator();
             assertTrue(indicator2 != null && !indicator2.isCanceled());
             assertSame(indicator2, nested);
@@ -342,7 +345,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         ProgressIndicator indicator3 = ProgressIndicatorProvider.getGlobalProgressIndicator();
         assertSame(indicator, indicator3);
 
-        assertTrue(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
       }
     }, new EmptyProgressIndicator());
     assertFalse(checkCanceledCalled);
@@ -385,10 +388,10 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
         @Override
         public void run() {
-          assertFalse(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+          assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
           assertTrue(!progress.isCanceled());
           progress.cancel();
-          assertTrue(ProgressManagerImpl.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+          assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
           assertTrue(progress.isCanceled());
           while (true) { // wait for PCE
             ProgressManager.checkCanceled();

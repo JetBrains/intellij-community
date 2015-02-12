@@ -25,6 +25,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -184,11 +186,13 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
   public static String getRealTaskFileName(String name) {
-    if (!name.contains(".answer")) {
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
+    String extension = FileUtilRt.getExtension(name);
+    if (!nameWithoutExtension.endsWith(".answer")) {
       return null;
     }
     int nameEnd = name.indexOf(".answer");
-    return name.substring(0, nameEnd) + ".py";
+    return name.substring(0, nameEnd) + "." + extension;
   }
 
   public static boolean setCCActionAvailable(@NotNull AnActionEvent e) {

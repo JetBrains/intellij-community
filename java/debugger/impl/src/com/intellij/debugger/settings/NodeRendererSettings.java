@@ -78,9 +78,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private final ClassRenderer myClassRenderer = new ClassRenderer();
   private final HexRenderer myHexRenderer = new HexRenderer();
   private final ToStringRenderer myToStringRenderer = new ToStringRenderer();
-  private final CompoundReferenceRenderer myColorRenderer;
-  private final CompoundReferenceRenderer myImageRenderer;
-  private final CompoundReferenceRenderer myIconRenderer;
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
@@ -109,16 +106,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
   
   public NodeRendererSettings() {
-    myColorRenderer = new ColorObjectRenderer(this);
-    myImageRenderer = new ImageObjectRenderer(this);
-    myIconRenderer = new IconObjectRenderer(this);
     // default configuration
     myHexRenderer.setEnabled(false);
     myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
-    myColorRenderer.setEnabled(true);
-    myImageRenderer.setEnabled(true);
-    myIconRenderer.setEnabled(true);
   }
   
   public static NodeRendererSettings getInstance() {
@@ -288,9 +279,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       }
     });
     Collections.addAll(allRenderers, myAlternateCollectionRenderers);
-    allRenderers.add(myColorRenderer);
-    allRenderers.add(myImageRenderer);
-    allRenderers.add(myIconRenderer);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
     allRenderers.add(myClassRenderer);

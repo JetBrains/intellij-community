@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 
@@ -30,7 +31,7 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
   private final CustomPortServerManager user;
   private final ServerBootstrap bootstrap;
 
-  public SubServer(CustomPortServerManager user, EventLoopGroup eventLoopGroup) {
+  public SubServer(@NotNull CustomPortServerManager user, @NotNull EventLoopGroup eventLoopGroup) {
     this.user = user;
     user.setManager(this);
     bootstrap = BuiltInServer.createServerBootstrap(eventLoopGroup, channelRegistrar, user.createXmlRpcHandlers());

@@ -27,9 +27,8 @@ public interface CommandInterfacePresenter extends Presenter {
   /**
    * Called by view when user types new text or text changed by some other reason
    *
-   * @param inForcedTextMode text changed not by user but by calling {@link com.jetbrains.python.commandInterface.CommandInterfaceView#forceText(String)}
    */
-  void textChanged(boolean inForcedTextMode);
+  void textChanged();
 
   /**
    * Called by view when user requests for completion (like tab)
@@ -39,14 +38,13 @@ public interface CommandInterfacePresenter extends Presenter {
   void completionRequested(@Nullable String valueFromSuggestionList);
 
   /**
-   * Called by view when user asks for suggestions (CTRL+Space)
+   * Called by view when user asks for suggestions (like CTRL+Space)
    */
   void suggestionRequested();
 
   /**
-   * Called by view when user wants to execute command (Enter is presed)
+   * Called by view when user wants to execute command (like enter)
    *
-   * @param valueFromSuggestionList value selected from suggestion list (if any selected)
    */
-  void executionRequested(@Nullable String valueFromSuggestionList);
+  void executionRequested();
 }

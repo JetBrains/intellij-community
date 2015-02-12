@@ -36,8 +36,8 @@ import java.io.IOException;
  * @apiGroup Platform
  * @apiDescription Checkout a repository from source control and then open an IDEA project from it.
  *
- * @apiParam (properties) {Object} vcs The map of the VCS.
- * @apiParam (properties) {String} project The path to project to be opened.
+ * @apiParam {Object} vcs The map of the VCS.
+ * @apiParam {String} project The path to project to be opened.
  *
  * @apiUse OpenProjectSetRequestExample
  * @apiUse OpenProjectSetRequestExampleMulti

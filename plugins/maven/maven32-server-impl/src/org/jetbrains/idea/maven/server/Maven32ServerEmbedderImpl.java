@@ -342,10 +342,6 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
   public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
-    if(repositorySession instanceof DefaultRepositorySystemSession) {
-      //((DefaultRepositorySystemSession)repositorySession).setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
-      ((DefaultRepositorySystemSession)repositorySession).setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-    }
 
     request.getProjectBuildingRequest().setRepositorySession(repositorySession);
 

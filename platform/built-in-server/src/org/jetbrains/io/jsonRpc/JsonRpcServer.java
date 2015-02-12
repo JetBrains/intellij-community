@@ -6,7 +6,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -23,12 +22,10 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
-import org.jetbrains.io.webSocket.Client;
-import org.jetbrains.io.webSocket.ExceptionHandler;
-import org.jetbrains.io.webSocket.MessageServer;
-import org.jetbrains.io.webSocket.WebSocketServer;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -58,15 +55,13 @@ public class JsonRpcServer implements MessageServer {
   };
 
   private final AtomicInteger messageIdCounter = new AtomicInteger();
-  private final WebSocketServer webSocketServer;
-  private final ExceptionHandler exceptionHandler;
+  private final ClientManager clientManager;
   private final Gson gson;
 
   private final Map<String, NotNullLazyValue> domains = new THashMap<String, NotNullLazyValue>();
 
-  public JsonRpcServer(@NotNull WebSocketServer webSocketServer, @NotNull ExceptionHandler exceptionHandler) {
-    this.webSocketServer = webSocketServer;
-    this.exceptionHandler = exceptionHandler;
+  public JsonRpcServer(@NotNull ClientManager clientManager) {
+    this.clientManager = clientManager;
     gson = new GsonBuilder().registerTypeAdapter(CharSequenceBackedByArray.class, new JsonSerializer<CharSequenceBackedByArray>() {
       @Override
       public JsonElement serialize(CharSequenceBackedByArray src, Type typeOfSrc, JsonSerializationContext context) {
@@ -93,7 +88,7 @@ public class JsonRpcServer implements MessageServer {
   }
 
   @Override
-  public void message(@NotNull Client client, String message) throws IOException {
+  public void message(@NotNull Client client, @NotNull String message) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("IN " + message);
     }
@@ -103,17 +98,16 @@ public class JsonRpcServer implements MessageServer {
     int messageId = reader.peek() == JsonToken.NUMBER ? reader.nextInt() : -1;
     String domainName = reader.nextString();
     if (domainName.length() == 1) {
-      AsyncResult asyncResult = webSocketServer.removeAsyncResult(client, messageId);
+      AsyncPromise<Object> promise = client.messageCallbackMap.remove(messageId);
       if (domainName.charAt(0) == 'r') {
-        if (asyncResult == null) {
+        if (promise == null) {
           LOG.error("Response with id " + messageId + " was already processed");
           return;
         }
-        //noinspection unchecked
-        asyncResult.setDone(JsonUtil.nextAny(reader));
+        promise.setResult(JsonUtil.nextAny(reader));
       }
       else {
-        asyncResult.setRejected();
+        promise.setError(Promise.createError("error"));
       }
       return;
     }
@@ -158,10 +152,7 @@ public class JsonRpcServer implements MessageServer {
           method.setAccessible(true);
           Object result = method.invoke(isStatic ? null : domain, parameters);
           if (messageId != -1) {
-            ByteBuf response = encodeMessage(messageId, null, null, new Object[]{result});
-            if (response != null) {
-              webSocketServer.sendResponse(client, response);
-            }
+            client.send(encodeMessage(messageId, null, null, null, new Object[]{result}));
           }
           return;
         }
@@ -175,88 +166,65 @@ public class JsonRpcServer implements MessageServer {
   }
 
   public void sendResponse(int messageId, @NotNull Client client, @Nullable CharSequence rawMessage) {
-    ByteBuf response = encodeMessage(messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY);
-    assert response != null;
-    webSocketServer.sendResponse(client, response);
+    client.send(encodeMessage(messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
   }
 
   public void sendErrorResponse(int messageId, @NotNull Client client, @Nullable CharSequence rawMessage) {
-    ByteBuf response = encodeMessage(messageId, "e", null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY);
-    assert response != null;
-    webSocketServer.sendResponse(client, response);
+    client.send(encodeMessage(messageId, "e", null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
   }
 
-  public void send(String domain, String name) {
-    send(domain, name, null);
+  public void sendToClients(@NotNull String domain, @NotNull String name) {
+    sendToClients(domain, name, null);
   }
 
-  public <T> void send(String domain, String command, @Nullable final List<AsyncResult<Pair<Client, T>>> results, Object... params) {
-    if (webSocketServer.hasClients()) {
-      send(results == null ? -1 : messageIdCounter.getAndIncrement(), domain, command, results, params);
+  public <T> void sendToClients(@NotNull String domain, @NotNull String command, @Nullable List<AsyncPromise<Pair<Client, T>>> results, Object... params) {
+    if (clientManager.hasClients()) {
+      sendToClients(results == null ? -1 : messageIdCounter.getAndIncrement(), domain, command, results, params);
     }
   }
 
-  @Nullable
-  private ByteBuf encodeMessage(int messageId, @Nullable String domain, @Nullable String command, Object[] params) {
-    return encodeMessage(messageId, domain, command, null, params);
+  private <T> void sendToClients(int messageId, @Nullable String domain, @Nullable String command, @Nullable List<AsyncPromise<Pair<Client, T>>> results, Object[] params) {
+    clientManager.send(messageId, encodeMessage(messageId, domain, command, null, params), results);
   }
 
-  @Nullable
+  public boolean sendWithRawPart(@NotNull Client client, @NotNull String domain, @NotNull String command, @Nullable CharSequence rawMessage, Object... params) {
+    client.send(encodeMessage(-1, domain, command, rawMessage, params));
+    return true;
+  }
+
+  public void send(@NotNull Client client, @NotNull String domain, @NotNull String command, Object... params) {
+    sendWithRawPart(client, domain, command, null, params);
+  }
+
+  @NotNull
+  public <T> Promise<T> call(@NotNull Client client, @NotNull String domain, @NotNull String command, Object... params) {
+    int messageId = messageIdCounter.getAndIncrement();
+    ByteBuf message = encodeMessage(messageId, domain, command, null, params);
+    AsyncPromise<T> result = client.send(messageId, message);
+    LOG.assertTrue(result != null);
+    return result;
+  }
+
+  @NotNull
   private ByteBuf encodeMessage(int messageId,
                                 @Nullable String domain,
                                 @Nullable String command,
-                                @Nullable CharSequence rawMessage,
+                                @Nullable CharSequence rawData,
                                 @Nullable Object[] params) {
     StringBuilder sb = new StringBuilder();
     try {
-      encodeCall(sb, messageId, domain, command, params, rawMessage);
+      doEncodeMessage(sb, messageId, domain, command, params == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : params, rawData);
       if (LOG.isDebugEnabled()) {
         LOG.debug("OUT " + sb.toString());
       }
       return Unpooled.copiedBuffer(sb, CharsetUtil.UTF_8);
     }
     catch (IOException e) {
-      exceptionHandler.exceptionCaught(e);
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
-  public boolean sendWithRawPart(Client client, String domain, String command, @Nullable CharSequence rawMessage, Object... params) {
-    ByteBuf message = encodeMessage(-1, domain, command, rawMessage, params);
-    if (message != null) {
-      webSocketServer.send(client, -1, message);
-    }
-    return message != null;
-  }
-
-  public void send(Client client, String domain, String command, Object... params) {
-    sendWithRawPart(client, domain, command, null, params);
-  }
-
-  public <T> AsyncResult<T> call(Client client, String domain, String command, Object... params) {
-    int messageId = messageIdCounter.getAndIncrement();
-    ByteBuf message = encodeMessage(messageId, domain, command, params);
-    if (message == null) {
-      return new AsyncResult.Rejected<T>();
-    }
-
-    AsyncResult<T> result = webSocketServer.send(client, messageId, message);
-    return result == null ? new AsyncResult.Rejected<T>() : result;
-  }
-
-  private <T> void send(int messageId, @Nullable String domain, @Nullable String command, @Nullable final List<AsyncResult<Pair<Client, T>>> results, Object[] params) {
-    ByteBuf message = encodeMessage(messageId, domain, command, params);
-    if (message != null) {
-      doSend(messageId, results, message);
-    }
-  }
-
-  protected  <T> void doSend(int messageId, List<AsyncResult<Pair<Client, T>>> results, ByteBuf message) {
-    webSocketServer.send(messageId, message, results);
-  }
-
-  private void encodeCall(StringBuilder sb, int id, @Nullable String domain, @Nullable String command, @Nullable Object[] params, @Nullable CharSequence rawData)
-    throws IOException {
+  private void doEncodeMessage(@NotNull StringBuilder sb, int id, @Nullable String domain, @Nullable String command, @NotNull Object[] params, @Nullable CharSequence rawData) throws IOException {
     sb.append('[');
     boolean hasPrev = false;
     if (id != -1) {
@@ -282,15 +250,11 @@ public class JsonRpcServer implements MessageServer {
       }
     }
 
-    encodeParameters(sb, params == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : params, rawData);
+    encodeParameters(sb, params, rawData);
     sb.append(']');
   }
 
-  private void encodeParameters(StringBuilder sb, Object[] params, @Nullable CharSequence rawData) throws IOException {
-    if (params.length == 0 && rawData == null) {
-      return;
-    }
-
+  private void encodeParameters(@NotNull StringBuilder sb, @NotNull Object[] params, @Nullable CharSequence rawData) throws IOException {
     JsonWriter writer = null;
     sb.append(',').append('[');
     boolean hasPrev = false;

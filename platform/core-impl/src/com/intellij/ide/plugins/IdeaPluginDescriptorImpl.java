@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -591,7 +591,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return CommonBundle.messageOrDefault(bundle, createDescriptionKey(myId), myDescriptionChildText == null ? "" : myDescriptionChildText);
   }
 
-  public void insertDependency(final IdeaPluginDescriptor d) {
+  public void insertDependency(@NotNull IdeaPluginDescriptor d) {
     PluginId[] deps = new PluginId[getDependentPluginIds().length + 1];
     deps[0] = d.getPluginId();
     System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);

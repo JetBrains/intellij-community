@@ -75,8 +75,6 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("METHOD_CALL_CHAIN_WRAP", WRAPPING_CALL_CHAIN, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_CALL_CHAIN);
 
-    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", ApplicationBundle.message("wrapping.align.in.columns"), WRAPPING_FIELDS_VARIABLES_GROUPS);
-
     addOption("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), WRAPPING_IF_STATEMENT, BRACE_OPTIONS, BRACE_VALUES);
     addOption("ELSE_ON_NEW_LINE", ApplicationBundle.message("wrapping.else.on.new.line"), WRAPPING_IF_STATEMENT);
     addOption("SPECIAL_ELSE_IF_TREATMENT", ApplicationBundle.message("wrapping.special.else.if.braces.treatment"), WRAPPING_IF_STATEMENT);
@@ -111,7 +109,9 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("ASSIGNMENT_WRAP", WRAPPING_ASSIGNMENT, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_ASSIGNMENT", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_ASSIGNMENT);
     addOption("PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.assignment.sign.on.next.line"), WRAPPING_ASSIGNMENT);
-    addOption("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS", ApplicationBundle.message("wrapping.assignment.align.consecutive.variable.declarations"), WRAPPING_ASSIGNMENT);
+
+    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", ApplicationBundle.message("wrapping.align.fields.in.columns"), WRAPPING_FIELDS_VARIABLES_GROUPS);
+    addOption("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS", ApplicationBundle.message("wrapping.align.variables.in.columns"), WRAPPING_FIELDS_VARIABLES_GROUPS);
 
     addOption("TERNARY_OPERATION_WRAP", WRAPPING_TERNARY_OPERATION, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_TERNARY_OPERATION", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_TERNARY_OPERATION);

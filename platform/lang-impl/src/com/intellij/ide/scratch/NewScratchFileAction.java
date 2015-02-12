@@ -66,10 +66,6 @@ import java.util.concurrent.TimeUnit;
 public class NewScratchFileAction extends DumbAwareAction {
   public static final int MAX_VISIBLE_SIZE = 20;
 
-  public NewScratchFileAction() {
-    super("New Scratch File...", null, null);
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isEnabled(e));

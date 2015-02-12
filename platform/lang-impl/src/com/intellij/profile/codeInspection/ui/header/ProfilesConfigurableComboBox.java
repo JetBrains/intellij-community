@@ -77,7 +77,12 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
     mySaveListener.setDelegate(inputValidator);
     mySubmitNameComponent.setText(initialValue);
     myCardLayout.show(myComboBoxPanel, EDIT_CARD);
-    mySubmitNameComponent.requestFocus();
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        mySubmitNameComponent.requestFocus();
+      }
+    });
   }
 
   public void reset(final Collection<Profile> profiles) {

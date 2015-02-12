@@ -454,6 +454,43 @@ class Test {
 }
 '''
   }
+
+  public void testNullQualifiedName() {
+    def text = '''
+public class Test {
+
+  public static void main(String[] args) {
+    class Super {
+    }
+
+    /**
+     * {@link Su<caret>}
+     */
+    Super aSuper = new Super();
+
+  }
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+public class Test {
+
+  public static void main(String[] args) {
+    class Super {
+    }
+
+    /**
+     * {@link Super}
+     */
+    Super aSuper = new Super();
+
+  }
+}
+'''
+
+  }
   
   public void testShortNameIfImplicitlyImported() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED

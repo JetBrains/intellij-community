@@ -10,9 +10,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -148,10 +148,10 @@ public class SvnDiffViewer implements DiffViewer {
       return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage());
     }
 
-    DiffContent[] contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
+    List<DiffContent> contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
 
-    Map<String, PropertyValue> before = getProperties(contents[0]);
-    Map<String, PropertyValue> after = getProperties(contents[1]);
+    Map<String, PropertyValue> before = getProperties(contents.get(0));
+    Map<String, PropertyValue> after = getProperties(contents.get(1));
 
     if (before.isEmpty() && after.isEmpty()) return null;
 
@@ -192,6 +192,7 @@ public class SvnDiffViewer implements DiffViewer {
   //
 
   private void updatePropertiesPanel() {
+    boolean wasFocused = myContext.isFocused();
     if (!mySettings.isHideProperties()) {
       mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
       myNotificationPanel.setContent(null);
@@ -200,6 +201,7 @@ public class SvnDiffViewer implements DiffViewer {
       mySplitter.setSecondComponent(null);
       myNotificationPanel.setContent(createNotification());
     }
+    if (wasFocused) myContext.requestFocus();
   }
 
   @NotNull
@@ -278,9 +280,9 @@ public class SvnDiffViewer implements DiffViewer {
   // Actions
   //
 
-  private class ToggleHidePropertiesAction extends ToggleAction implements DumbAware { // TODO: shortcut
+  private class ToggleHidePropertiesAction extends ToggleAction implements DumbAware {
     public ToggleHidePropertiesAction() {
-      super("Show SVN properties", null, AllIcons.Actions.Preview);
+      EmptyAction.setupAction(this, "Subversion.TogglePropertiesDiff", null);
     }
 
     @Override

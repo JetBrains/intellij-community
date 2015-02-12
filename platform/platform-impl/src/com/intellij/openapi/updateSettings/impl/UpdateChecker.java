@@ -68,10 +68,6 @@ import java.util.*;
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
 
-  public enum DownloadPatchResult {
-    SUCCESS, FAILED, CANCELED
-  }
-
   public static final NotificationGroup NOTIFICATIONS =
     new NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true);
 
@@ -218,7 +214,7 @@ public final class UpdateChecker {
       String updateUrl = uriBuilder.toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
-      info = HttpRequests.request(updateUrl).forceHttps(settings.SECURE_CONNECTION).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
+      info = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
         @Override
         public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
           try {
@@ -289,7 +285,7 @@ public final class UpdateChecker {
     outer:
     for (String host : hosts) {
       try {
-        boolean forceHttps = host == null && updateSettings.SECURE_CONNECTION;
+        boolean forceHttps = host == null && updateSettings.canUseSecureConnection();
         List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator);
         for (IdeaPluginDescriptor descriptor : list) {
           PluginId id = descriptor.getPluginId();
@@ -409,7 +405,7 @@ public final class UpdateChecker {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.SECURE_CONNECTION, updatedPlugins, incompatiblePlugins).show();
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
         }
       };
 
@@ -535,28 +531,15 @@ public final class UpdateChecker {
     return "";
   }
 
-  public static DownloadPatchResult installPlatformUpdate(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) {
-    final Ref<DownloadPatchResult> result = Ref.create(DownloadPatchResult.CANCELED);
-
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+  public static void installPlatformUpdate(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) throws IOException {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Void, IOException>() {
       @Override
-      public void run() {
-        try {
-          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          downloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
-          result.set(DownloadPatchResult.SUCCESS);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          result.set(DownloadPatchResult.FAILED);
-          Notifications.Bus.notify(new Notification("Updater", "Failed to download patch file", e.getMessage(), NotificationType.ERROR));
-        }
+      public Void compute() throws IOException {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        downloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
+        return null;
       }
-    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
-      return DownloadPatchResult.CANCELED;
-    }
-
-    return result.get();
+    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null);
   }
 
   private static void downloadAndInstallPatch(PatchInfo patch, BuildNumber toBuild, boolean forceHttps, final ProgressIndicator indicator) throws IOException {
@@ -566,7 +549,7 @@ public final class UpdateChecker {
 
     String bundledJdk = "";
     String jdkMacRedist = System.getProperty("idea.java.redist");
-    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0 ){
+    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0) {
       bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
     }
 

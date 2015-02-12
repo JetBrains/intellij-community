@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -165,7 +166,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         if ( PsiUtil.isRawSubstitutor(qContainingClass, psiSubstitutor)) {
           if (targetParameters.length == method.getParameterList().getParametersCount() + 1) {
             final PsiType pType = substitutor.substitute(targetParameters[0].getType());
-            PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(PsiUtil.captureToplevelWildcards(pType, myExpression));
+            PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(PsiImplUtil.normalizeWildcardTypeByPosition(pType, myExpression));
             PsiClass paramClass = resolveResult.getElement();
             LOG.assertTrue(paramClass != null);
             psiSubstitutor = TypeConversionUtil.getClassSubstitutor(qContainingClass, paramClass, resolveResult.getSubstitutor());
