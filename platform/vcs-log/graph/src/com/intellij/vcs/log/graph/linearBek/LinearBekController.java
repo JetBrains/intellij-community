@@ -27,8 +27,8 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.BekBaseLinearGraphController;
-import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.BekBaseController;
+import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
@@ -37,13 +37,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class LinearBekController extends CascadeLinearGraphController {
+public class LinearBekController extends CascadeController {
   private static final Logger LOG = Logger.getInstance(LinearBekController.class);
   @NotNull private final LinearBekGraph myCompiledGraph;
   private final LinearBekGraphBuilder myLinearBekGraphBuilder;
   private final BekGraphLayout myBekGraphLayout;
 
-  public LinearBekController(@NotNull BekBaseLinearGraphController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
+  public LinearBekController(@NotNull BekBaseController controller, @NotNull PermanentGraphInfo permanentGraphInfo) {
     super(controller, permanentGraphInfo);
     myCompiledGraph = new LinearBekGraph(getDelegateGraph());
     myBekGraphLayout = new BekGraphLayout(permanentGraphInfo.getPermanentGraphLayout(), controller.getBekIntMap());
@@ -231,7 +231,7 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   @NotNull
   private LinearGraph getDelegateGraph() {
-    return getDelegateLinearGraphController().getCompiledGraph();
+    return getDelegateController().getCompiledGraph();
   }
 
   @NotNull

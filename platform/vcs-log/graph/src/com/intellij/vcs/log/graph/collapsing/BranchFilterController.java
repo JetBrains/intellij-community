@@ -18,20 +18,20 @@ package com.intellij.vcs.log.graph.collapsing;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class BranchFilterGraphController extends CascadeLinearGraphController {
+public class BranchFilterController extends CascadeController {
   @NotNull private CollapsedGraph myCollapsedGraph;
   private final Set<Integer> myIdsOfVisibleBranches;
 
-  public BranchFilterGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
-                                     @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
-                                     @Nullable Set<Integer> idsOfVisibleBranches) {
+  public BranchFilterController(@NotNull CascadeController delegateLinearGraphController,
+                                @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+                                @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     myIdsOfVisibleBranches = idsOfVisibleBranches;
     updateCollapsedGraph();
@@ -40,7 +40,7 @@ public class BranchFilterGraphController extends CascadeLinearGraphController {
   private void updateCollapsedGraph() {
     UnsignedBitSet initVisibility =
       BranchMatchedNodesGenerator.generateVisibleNodes(myPermanentGraphInfo.getPermanentLinearGraph(), myIdsOfVisibleBranches);
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), initVisibility);
+    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
   @NotNull
@@ -65,6 +65,6 @@ public class BranchFilterGraphController extends CascadeLinearGraphController {
   @Nullable
   @Override
   protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
-    return CollapsedLinearGraphController.convertToDelegate(graphElement, myCollapsedGraph);
+    return CollapsedController.convertToDelegate(graphElement, myCollapsedGraph);
   }
 }

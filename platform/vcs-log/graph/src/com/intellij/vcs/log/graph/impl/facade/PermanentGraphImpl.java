@@ -21,8 +21,8 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.collapsing.BranchFilterGraphController;
-import com.intellij.vcs.log.graph.collapsing.CollapsedLinearGraphController;
+import com.intellij.vcs.log.graph.collapsing.BranchFilterController;
+import com.intellij.vcs.log.graph.collapsing.CollapsedController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
@@ -99,24 +99,24 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> visibleHeads,
                                                    @Nullable Set<CommitId> matchingCommits) {
-    CascadeLinearGraphController baseController;
+    CascadeController baseController;
     if (sortType == SortType.Normal) {
-      baseController = new BaseLinearGraphController(this);
+      baseController = new BaseController(this);
     }
     else if (sortType == SortType.LinearBek) {
-      baseController = new LinearBekController(new BekBaseLinearGraphController(this, myBekIntMap), this);
+      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap), this);
     }
     else {
-      baseController = new BekBaseLinearGraphController(this, myBekIntMap);
+      baseController = new BekBaseController(this, myBekIntMap);
     }
 
     LinearGraphController controller;
     if (matchingCommits != null) {
-      controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
+      controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
     }
     else if (sortType == SortType.LinearBek) {
       if (visibleHeads != null) {
-        controller = new BranchFilterGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads));
+        controller = new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads));
       }
       else {
         controller = baseController;
@@ -127,7 +127,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       if (visibleHeads != null) {
         idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(visibleHeads);
       }
-      controller = new CollapsedLinearGraphController(baseController, this, idOfVisibleBranches);
+      controller = new CollapsedController(baseController, this, idOfVisibleBranches);
     }
 
     return new VisibleGraphImpl<CommitId>(controller, this);

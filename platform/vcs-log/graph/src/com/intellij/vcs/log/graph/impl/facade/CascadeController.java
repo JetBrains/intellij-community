@@ -22,13 +22,12 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CascadeLinearGraphController implements LinearGraphController {
-  @Nullable private final CascadeLinearGraphController myDelegateLinearGraphController;
+public abstract class CascadeController implements LinearGraphController {
+  @Nullable private final CascadeController myDelegateController;
   @NotNull protected final PermanentGraphInfo myPermanentGraphInfo;
 
-  protected CascadeLinearGraphController(@Nullable CascadeLinearGraphController delegateLinearGraphController,
-                                         @NotNull PermanentGraphInfo permanentGraphInfo) {
-    myDelegateLinearGraphController = delegateLinearGraphController;
+  protected CascadeController(@Nullable CascadeController delegateController, @NotNull PermanentGraphInfo permanentGraphInfo) {
+    myDelegateController = delegateController;
     myPermanentGraphInfo = permanentGraphInfo;
   }
 
@@ -36,8 +35,8 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   @Override
   public LinearGraphAnswer performLinearGraphAction(@NotNull LinearGraphAction action) {
     LinearGraphAnswer answer = performAction(action);
-    if (answer == null && myDelegateLinearGraphController != null) {
-      answer = myDelegateLinearGraphController.performLinearGraphAction(
+    if (answer == null && myDelegateController != null) {
+      answer = myDelegateController.performLinearGraphAction(
         new VisibleGraphImpl.LinearGraphActionImpl(convertToDelegate(action.getAffectedElement()), action.getType()));
       answer = delegateGraphChanged(answer);
     }
@@ -59,9 +58,9 @@ public abstract class CascadeLinearGraphController implements LinearGraphControl
   }
 
   @NotNull
-  protected CascadeLinearGraphController getDelegateLinearGraphController() {
-    assert myDelegateLinearGraphController != null;
-    return myDelegateLinearGraphController;
+  protected CascadeController getDelegateController() {
+    assert myDelegateController != null;
+    return myDelegateController;
   }
 
   @NotNull

@@ -21,7 +21,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
@@ -29,23 +29,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class CollapsedLinearGraphController extends CascadeLinearGraphController {
+public class CollapsedController extends CascadeController {
   @NotNull private CollapsedGraph myCollapsedGraph;
 
-  public CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
-                                        @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
-                                        @Nullable Set<Integer> IdsOfVisibleBranches) {
+  public CollapsedController(@NotNull CascadeController delegateLinearGraphController,
+                             @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+                             @Nullable Set<Integer> IdsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     UnsignedBitSet initVisibility =
       BranchMatchedNodesGenerator.generateVisibleNodes(permanentGraphInfo.getPermanentLinearGraph(), IdsOfVisibleBranches);
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), initVisibility);
+    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
   @NotNull
   @Override
   protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer.getGraphChanges() != null) {
-      LinearGraph delegateGraph = getDelegateLinearGraphController().getCompiledGraph();
+      LinearGraph delegateGraph = getDelegateController().getCompiledGraph();
       myCollapsedGraph = CollapsedGraph.updateInstance(myCollapsedGraph, delegateGraph);
 
       // some new edges and node appeared, so we expand them

@@ -46,7 +46,7 @@ import java.util.Set;
 class CollapsedActionManager {
 
   @Nullable
-  public static LinearGraphAnswer performAction(@NotNull CollapsedLinearGraphController graphController,
+  public static LinearGraphAnswer performAction(@NotNull CollapsedController graphController,
                                                 @NotNull LinearGraphAction action) {
     ActionContext context = new ActionContext(graphController.getCollapsedGraph(), graphController.getPermanentGraphInfo(), action);
 

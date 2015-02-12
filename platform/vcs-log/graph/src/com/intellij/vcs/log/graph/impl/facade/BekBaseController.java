@@ -32,11 +32,11 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
-public class BekBaseLinearGraphController extends CascadeLinearGraphController {
+public class BekBaseController extends CascadeController {
   @NotNull private final BekIntMap myBekIntMap;
   @NotNull private final LinearGraph myBekGraph;
 
-  public BekBaseLinearGraphController(@NotNull PermanentGraphInfo permanentGraphInfo, @NotNull BekIntMap bekIntMap) {
+  public BekBaseController(@NotNull PermanentGraphInfo permanentGraphInfo, @NotNull BekIntMap bekIntMap) {
     super(null, permanentGraphInfo);
     myBekIntMap = bekIntMap;
     myBekGraph = new BekLinearGraph();
