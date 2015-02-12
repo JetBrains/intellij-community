@@ -314,12 +314,12 @@ class LinearBekGraphBuilder {
 
   private static class GraphEdgeComparator implements Comparator<GraphEdge> {
     @Override
-    public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-      Integer d1 = o1.getDownNodeIndex();
-      Integer d2 = o2.getDownNodeIndex();
+    public int compare(@NotNull GraphEdge e1, @NotNull GraphEdge e2) {
+      Integer d1 = e1.getDownNodeIndex();
+      Integer d2 = e2.getDownNodeIndex();
 
       if (d1 == null) {
-        if (d2 == null) return 0;
+        if (d2 == null) return e1.hashCode() - e2.hashCode();
         return 1;
       }
       if (d2 == null) return -1;
