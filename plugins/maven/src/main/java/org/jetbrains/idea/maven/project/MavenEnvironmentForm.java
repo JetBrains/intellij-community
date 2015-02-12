@@ -31,6 +31,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -144,7 +145,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   public void getData(MavenGeneralSettings data) {
-    mavenHomeField.setText(resolveMavenHome(data.getMavenHome()));
+    final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
+    mavenHomeField.setText(ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome()));
     mavenHomeField.addCurrentTextToHistory();
     updateMavenVersionLabel();
     userSettingsFileOverrider.reset(data.getUserSettingsFile());
