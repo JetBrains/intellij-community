@@ -279,8 +279,7 @@ public class PathManager {
   @Nullable
   private static String extractRoot(URL resourceURL, String resourcePath) {
     if (!(StringUtil.startsWithChar(resourcePath, '/') || StringUtil.startsWithChar(resourcePath, '\\'))) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("precondition failed: " + resourcePath);
+      log("precondition failed: " + resourcePath);
       return null;
     }
 
@@ -302,8 +301,7 @@ public class PathManager {
     }
 
     if (resultPath == null) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("cannot extract: " + resourcePath + " from " + resourceURL);
+      log("cannot extract: " + resourcePath + " from " + resourceURL);
       return null;
     }
 
@@ -331,7 +329,13 @@ public class PathManager {
 
               Properties sysProperties = System.getProperties();
               for (String key : properties.keySet()) {
-                if (sysProperties.getProperty(key, null) == null) {  // do not override already defined properties
+                if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+                  log(propFile.getPath() + ": '" + PROPERTY_HOME_PATH + "' and '" + PROPERTY_HOME + "' properties cannot be redefined");
+                }
+                else if (sysProperties.getProperty(key, null) != null) {
+                  log(propFile.getPath() + ": '" + key + "' already defined");
+                }
+                else {
                   String value = substituteVars(properties.get(key));
                   sysProperties.setProperty(key, value);
                 }
@@ -342,8 +346,7 @@ public class PathManager {
             }
           }
           catch (IOException e) {
-            //noinspection UseOfSystemOutOrSystemErr
-            System.err.println("Problem reading from property file: " + propFile.getPath());
+            log("Problem reading from property file: " + propFile.getPath());
           }
         }
       }
@@ -391,8 +394,7 @@ public class PathManager {
       }
 
       if (value == null) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("Unknown property: " + key);
+        log("Unknown property: " + key);
         value = "";
       }
 
@@ -447,6 +449,11 @@ public class PathManager {
   }
 
   // helpers
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void log(String x) {
+    System.err.println(x);
+  }
 
   private static String getAbsolutePath(String path) {
     path = FileUtil.expandUserHome(path);
