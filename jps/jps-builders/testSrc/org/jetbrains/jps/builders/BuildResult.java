@@ -94,7 +94,7 @@ public class BuildResult implements MessageHandler {
         for (String output : outputs) {
           hashCodeToOutputPath.put(FileUtil.pathHashCode(output), output);
         }
-        String sourceToCompare = SystemInfo.isFileSystemCaseSensitive ? source.toLowerCase(Locale.US) : source;
+        String sourceToCompare = SystemInfo.isFileSystemCaseSensitive ? source : source.toLowerCase(Locale.US);
         stream.println(" " + sourceToCompare + " -> " + StringUtil.join(outputs, ","));
       }
       stream.println("End Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
