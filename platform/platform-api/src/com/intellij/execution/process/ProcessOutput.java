@@ -60,18 +60,28 @@ public class ProcessOutput {
 
   @NotNull
   public List<String> getStdoutLines() {
-    return splitLines(getStdout());
+    return getStdoutLines(true);
+  }
+
+  @NotNull
+  public List<String> getStdoutLines(boolean excludeEmptyLines) {
+    return splitLines(getStdout(), excludeEmptyLines);
   }
 
   @NotNull
   public List<String> getStderrLines() {
-    return splitLines(getStderr());
+    return getStderrLines(true);
   }
 
   @NotNull
-  private static List<String> splitLines(String s) {
+  public List<String> getStderrLines(boolean excludeEmptyLines) {
+    return splitLines(getStderr(), excludeEmptyLines);
+  }
+
+  @NotNull
+  private static List<String> splitLines(String s, boolean excludeEmptyLines) {
     String converted = StringUtil.convertLineSeparators(s);
-    return StringUtil.split(converted, "\n");
+    return StringUtil.split(converted, "\n", true, excludeEmptyLines);
   }
 
   /**

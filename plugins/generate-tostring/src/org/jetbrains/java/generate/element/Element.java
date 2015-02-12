@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.generate.element;
 
+import com.intellij.psi.PsiField;
+
 /**
  * This is an Element.
  * <p/>
@@ -27,7 +29,8 @@ public interface Element {
     /**
      * Get's the elements accessor.
      * <p/>
-     * <br/>If the element is a field the accessor is just the name of the field - example: <code>myField</code>
+     * <br/>If the element is a field the accessor is just the of the field or name of it's accessor with () when useAccessor property is on
+     * {@link ElementFactory#newFieldElement(PsiField, boolean)} - example: <code>myField</code> or <code>getMyField()</code>
      * <br/>If the element is a method the accessor is the methodname with () - example: <code>getMyField()</code>
      *
      * @return the accessor, null if none exists (only for a method with parameters).
@@ -171,5 +174,10 @@ public interface Element {
      */
     String getTypeQualifiedName();
 
+  /**
+   * 
+   * @return type canonical text
+   */
+    String getType();
 
 }

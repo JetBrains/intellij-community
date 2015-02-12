@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.PyClass;
  * @author yole
  */
 public class PyClassInheritorsSearch extends ExtensibleQueryFactory<PyClass, PyClassInheritorsSearch.SearchParameters> {
-  public static PyClassInheritorsSearch INSTANCE = new PyClassInheritorsSearch();
+  public static final PyClassInheritorsSearch INSTANCE = new PyClassInheritorsSearch();
 
   public static class SearchParameters {
     private final PyClass mySuperClass;

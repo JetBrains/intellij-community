@@ -117,7 +117,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     if (b.isSelected()) {
       final boolean enabled = b.isEnabled();
       g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledShadowColor" : "RadioButton.darcula.selectionDisabledShadowColor"));// ? Gray._30 : Gray._60);
-      final int yOff = UIUtil.isUnderDarcula() ? 2:1;
+      final int yOff = 1 + JBUI.scale(1);
       g.fillOval(w/2 - rad/2, h/2 - rad/2 + yOff , rad, rad);
       g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledColor" : "RadioButton.darcula.selectionDisabledColor")); //Gray._170 : Gray._120);
       g.fillOval(w/2 - rad/2, h/2 - rad/2 -1 + yOff, rad, rad);

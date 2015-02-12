@@ -88,6 +88,8 @@ public class AsanaIntegrationTest extends GenericSubtypeTestCase {
   }
 
   public void testParsingTaskList() throws Exception {
+    // Don't forget to extract summary here, even though it doesn't happen actually when myRepository#getIssues is called
+    myRepository.setDownloadTasksInSeparateRequests(false);
     Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(TASK_LIST_RESPONSE, 50);
     List<Task> expected = ContainerUtil.<Task>newArrayList(
       new GenericTask("5479650606120", "Task #1", myRepository),

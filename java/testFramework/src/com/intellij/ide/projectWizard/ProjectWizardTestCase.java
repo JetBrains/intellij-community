@@ -173,23 +173,24 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-        Sdk defaultJdk = new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome());
-        Sdk otherJdk = new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome());
-        jdkTable.addJdk(otherJdk);
-        jdkTable.addJdk(defaultJdk);
-        mySdks.add(defaultJdk);
-        mySdks.add(otherJdk);
+        addSdk(new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
+        addSdk(new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome()));
 
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println(Arrays.asList(jdkTable.getAllJdks()));
+        System.out.println(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
 
         if (getName().contains("DefaultSdk")) {
           Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-          ProjectRootManager.getInstance(defaultProject).setProjectSdk(defaultJdk);
+          ProjectRootManager.getInstance(defaultProject).setProjectSdk(
+            new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
         }
       }
     });
+  }
+
+  protected void addSdk(Sdk sdk) {
+    ProjectJdkTable.getInstance().addJdk(sdk);
+    mySdks.add(sdk);
   }
 
   @Override

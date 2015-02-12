@@ -1,6 +1,7 @@
 package com.intellij.psi.resolve;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
@@ -44,5 +45,16 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
 
   private PsiReference configure() throws Exception {
     return configureByFile("codeFragment/" + getTestName(false) + ".java");
+  }
+
+  public void testResolveScopeWithFragmentContext() throws Exception {
+    PsiElement physical = configureByFile("codeFragment/LocalVariable.java").getElement();
+    JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(myProject)
+      .createExpressionCodeFragment("ref", physical, null, true);
+    fragment.forceResolveScope(new JavaSourceFilterScope(physical.getResolveScope()));
+    assertFalse(fragment.getResolveScope().equals(physical.getResolveScope()));
+
+    PsiExpression lightExpr = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("xxx.xxx", fragment);
+    assertEquals(lightExpr.getResolveScope(), fragment.getResolveScope());
   }
 }

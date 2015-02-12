@@ -430,11 +430,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
   }
 
-  private static int findRowContainingFile(@NotNull ListModel listModel, @Nullable final VirtualFile toSelect) {
-    if (toSelect == null) {
-      return -1;
-    }
-
+  private static int findRowContainingFile(@NotNull ListModel listModel, @NotNull final VirtualFile toSelect) {
     for (int i = 0; i < listModel.getSize(); i++) {
       Object item = listModel.getElementAt(i);
       if (item instanceof Change && matches((Change)item, toSelect)) {
@@ -444,11 +440,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     return -1;
   }
 
-  private int findRowContainingFile(@NotNull TreeNode root, @Nullable final VirtualFile toSelect) {
-    if (toSelect == null) {
-      return -1;
-    }
-
+  private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
     final Ref<Integer> row = Ref.create(-1);
     TreeUtil.traverse(root, new TreeUtil.Traverse() {
       @Override

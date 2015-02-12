@@ -23,13 +23,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpressionSelector {
   public IntroduceFieldPostfixTemplate() {
-    super("field", "myField = expr", JAVA_PSI_INFO, selectorWithChooser(IS_NON_VOID));
+    super("field", "myField = expr", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }
 
   @Override

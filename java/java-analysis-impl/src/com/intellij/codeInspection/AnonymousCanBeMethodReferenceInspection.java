@@ -21,10 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -67,12 +65,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
       @Override
       public void visitAnonymousClass(PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, new Condition<PsiClassType>() {
-          @Override
-          public boolean value(PsiClassType type) {
-            return LambdaUtil.isFunctionalType(type);
-          }
-        })) {
+        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true)) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
           final PsiCallExpression callExpression =

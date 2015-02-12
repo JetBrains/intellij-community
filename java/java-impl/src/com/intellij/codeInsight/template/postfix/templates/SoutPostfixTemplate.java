@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class SoutPostfixTemplate extends StringBasedPostfixTemplate {
   public SoutPostfixTemplate() {
-    super("sout", "System.out.println(expr)", JAVA_PSI_INFO, IS_NON_VOID);
+    super("sout", "System.out.println(expr)", selectorTopmost(IS_NON_VOID));
   }
 
 

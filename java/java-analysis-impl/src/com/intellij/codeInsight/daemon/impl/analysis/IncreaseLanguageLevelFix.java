@@ -27,6 +27,8 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -96,6 +98,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     }
     else {
       LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
     }
   }
 

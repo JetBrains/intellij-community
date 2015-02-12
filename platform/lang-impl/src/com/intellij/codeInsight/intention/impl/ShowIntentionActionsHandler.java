@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
@@ -45,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +109,16 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, IntentionAction action) {
     try {
       Project project = psiFile.getProject();
+      if (action instanceof SuppressIntentionActionFromFix) {
+        final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
+        if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {
+          return false;
+        }
+        if (!(editor instanceof EditorWindow) && shouldBeAppliedToInjectionHost == ThreeState.NO) {
+          return false;
+        }
+      }
+      
       if (action instanceof PsiElementBaseIntentionAction) {
         if (!inProject || psiElement == null || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
       }

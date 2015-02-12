@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
 import groovy.lang.GroovyObject;
+import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
@@ -382,7 +383,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
-      GsonBuilder.class
+      GsonBuilder.class,
+      ShortTypeHandling.class
     );
   }
 
@@ -564,10 +566,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
     for (IdeaSourceDirectory dir : dirs) {
       ExternalSystemSourceType dirSourceType = type;
-      if (dir.isGenerated() && !dirSourceType.isGenerated()) {
-        final ExternalSystemSourceType generatedType =
-          ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
-        dirSourceType = generatedType != null ? generatedType : dirSourceType;
+      try {
+        if (dir.isGenerated() && !dirSourceType.isGenerated()) {
+          final ExternalSystemSourceType generatedType =
+            ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
+          dirSourceType = generatedType != null ? generatedType : dirSourceType;
+        }
+      }
+      catch (UnsupportedMethodException e) {
+        // org.gradle.tooling.model.idea.IdeaSourceDirectory.isGenerated method supported only since Gradle 2.2
+        LOG.warn(e.getMessage());
       }
       contentRoot.storePath(dirSourceType, dir.getDirectory().getAbsolutePath());
     }

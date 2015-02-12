@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaVersionService {
   public static JavaVersionService getInstance() {
@@ -33,6 +34,7 @@ public class JavaVersionService {
     return PsiUtil.getLanguageLevel(element).isAtLeast(version.getMaxLanguageLevel());
   }
 
+  @Nullable
   public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     return JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element));
   }

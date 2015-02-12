@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Properties;
@@ -53,8 +52,10 @@ public abstract class FileTemplateManager{
   public static final String PROJECT_NAME_VARIABLE = "PROJECT_NAME";
 
   public static FileTemplateManager getInstance(@NotNull Project project){
-    return ServiceManager.getService(project, FileTemplateManager.class);
+    return ServiceManager.getService(project, FileTemplateManager.class).checkInitialized();
   }
+
+  protected FileTemplateManager checkInitialized() { return this; }
 
   /** Use {@link #getInstance(Project)} instead */
   @Deprecated
@@ -74,7 +75,6 @@ public abstract class FileTemplateManager{
   /**
    * @return Project scheme, or null if manager is created for default project.
    */
-  @Nullable
   public abstract FileTemplatesScheme getProjectScheme();
 
   public abstract FileTemplate[] getTemplates(String category);

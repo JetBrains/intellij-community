@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
@@ -60,13 +61,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g.fillRect(0, (c.getHeight() - h)/2, w, h);
     }
     g.setColor(new JBColor(Gray._165, Gray._88));
-    GraphicsUtil.setupAAPainting(g);
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     g.translate(0, (c.getHeight() - h) / 2);
     int x = -offset;
-    final int R = h - 1;
-    final int R2 = h;
+    final int R = JBUI.scale(8);
+    final int R2 = JBUI.scale(9);
     final int off = JBUI.scale(1);
-    final Area aaa = new Area(new RoundRectangle2D.Double(off, off, w - 2*off-1, h - 2*off-1, R, R));
+    final Area aaa = new Area(new RoundRectangle2D.Double(off, off, w - 2*off, h - 2*off, R, R));
     while (x < Math.max(c.getWidth(), c.getHeight())) {
       Path2D.Double path = new Path2D.Double();
       int ww = getPeriodLength() / 2;
@@ -84,12 +85,12 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
     offset = (offset + 1) % getPeriodLength();
     Area area = new Area(new Rectangle2D.Double(0, 0, w, h));
-    area.subtract(new Area(new RoundRectangle2D.Double(off, off, w - 2*off - 1, h - 2*off - 1, R, R)));
+    area.subtract(new Area(new RoundRectangle2D.Double(off, off, w - 2*off, h - 2*off, R, R)));
     ((Graphics2D)g).setPaint(Gray._128);
     if (c.isOpaque()) {
       ((Graphics2D)g).fill(area);
     }
-    area.subtract(new Area(new RoundRectangle2D.Double(0, 0, w-1, h-1, R2, R2)));
+    area.subtract(new Area(new RoundRectangle2D.Double(0, 0, w, h, R2, R2)));
     ((Graphics2D)g).setPaint(c.getParent().getBackground());
     if (c.isOpaque()) {
       ((Graphics2D)g).fill(area);
@@ -106,6 +107,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         paintString(g, b.left, b.top, barRectWidth, barRectHeight, boxRect.y, boxRect.height);
       }
     }
+    config.restore();
   }
 
   @Override
@@ -118,7 +120,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       super.paintDeterminate(g, c);
       return;
     }
-    GraphicsUtil.setupAAPainting(g);
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     Insets b = progressBar.getInsets(); // area for border
     final int w = progressBar.getWidth();
     final int h = progressBar.getPreferredSize().height;
@@ -137,8 +139,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g.fillRect(0, 0, w, h);
     }
 
-    final int R = h - 1;
-    final int R2 = h;
+    final int R = JBUI.scale(8);
+    final int R2 = JBUI.scale(9);
     final int off = JBUI.scale(1);
 
 
@@ -148,7 +150,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     g2.setColor(c.getParent().getBackground());
     g2.fill(new RoundRectangle2D.Double(off, off, w - 2*off - off, h - 2*off - off, R, R));
     g2.setColor(progressBar.getForeground());
-    g2.fill(new RoundRectangle2D.Double(2*off,2*off, amountFull - JBUI.scale(5), h - JBUI.scale(5), R-1, R-1));
+    g2.fill(new RoundRectangle2D.Double(2*off,2*off, amountFull - JBUI.scale(5), h - JBUI.scale(5), JBUI.scale(7), JBUI.scale(7)));
     g2.translate(0, -(c.getHeight() - h)/2);
 
     // Deal with possible text painting
@@ -157,7 +159,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
                   barRectWidth, barRectHeight,
                   amountFull, b);
     }
-
+    config.restore();
   }
 
   private void paintString(Graphics g, int x, int y, int w, int h, int fillStart, int amountFull) {

@@ -68,7 +68,7 @@
       <string>@@class_path@@</string>
 
       <key>JVMVersion</key>
-      <string>1.6*</string>
+      <string>1.6*,1.7+</string>
 
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>

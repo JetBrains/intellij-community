@@ -57,7 +57,7 @@ public class EditorImplTest extends AbstractEditorTest {
                           "\t}\n" +
                           "}</selection>");
     CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
-    EditorTestUtil.configureSoftWraps(myEditor, 32);
+    configureSoftWraps(32);
     Document document = myEditor.getDocument();
     for (int i = document.getLineCount() - 1; i >= 0; i--) {
       document.insertString(document.getLineStartOffset(i), "//");
@@ -71,7 +71,7 @@ public class EditorImplTest extends AbstractEditorTest {
          "next <caret>line\n" +
          "last line");
     foldOccurrences("FOLDED_REGION", "...");
-    EditorTestUtil.configureSoftWraps(myEditor, 16); // wrap right at folded region start
+    configureSoftWraps(16); // wrap right at folded region start
     verifySoftWrapPositions(16);
 
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
@@ -82,7 +82,7 @@ public class EditorImplTest extends AbstractEditorTest {
 
   public void testInsertingFirstTab() throws Exception {
     initText(" <caret>space-indented line");
-    EditorTestUtil.configureSoftWraps(myEditor, 100);
+    configureSoftWraps(100);
     myEditor.getSettings().setUseTabCharacter(true);
 
     executeAction(IdeActions.ACTION_EDITOR_TAB);
@@ -113,10 +113,21 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testNavigationIntoFoldedRegionWithSoftWrapsEnabled() throws Exception {
     initText("something");
     addCollapsedFoldRegion(4, 8, "...");
-    EditorTestUtil.configureSoftWraps(myEditor, 1000);
+    configureSoftWraps(1000);
     
     myEditor.getCaretModel().moveToOffset(5);
     
     assertEquals(new VisualPosition(0, 5), myEditor.getCaretModel().getVisualPosition());
+  }
+  
+  public void testPositionCalculationForMultilineFoldingWithEmptyPlaceholder() throws Exception {
+    initText("line1\n" +
+             "line2\n" +
+             "line3\n" +
+             "line4");
+    addCollapsedFoldRegion(6, 17, "");
+    configureSoftWraps(1000);
+    
+    assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(2, 0)));
   }
 }

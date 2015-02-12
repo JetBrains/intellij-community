@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,18 +44,30 @@ public class MethodEvaluator implements Evaluator {
   private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
   private final boolean myCheckDefaultInterfaceMethod;
+  private final boolean myMustBeVararg;
 
-  public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, Evaluator[] argumentEvaluators) {
-    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false);
+  public MethodEvaluator(Evaluator objectEvaluator,
+                         JVMName className,
+                         String methodName,
+                         JVMName signature,
+                         Evaluator[] argumentEvaluators) {
+    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false, false);
   }
 
-  public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, Evaluator[] argumentEvaluators, boolean checkDefaultInterfaceMethod) {
+  public MethodEvaluator(Evaluator objectEvaluator,
+                         JVMName className,
+                         String methodName,
+                         JVMName signature,
+                         Evaluator[] argumentEvaluators,
+                         boolean checkDefaultInterfaceMethod,
+                         boolean mustBeVararg) {
     myObjectEvaluator = new DisableGC(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;
     myArgumentEvaluators = argumentEvaluators;
     myCheckDefaultInterfaceMethod = checkDefaultInterfaceMethod;
+    myMustBeVararg = mustBeVararg;
   }
 
   @Override
@@ -141,6 +153,19 @@ public class MethodEvaluator implements Evaluator {
         if (jdiMethod == null || jdiMethod.argumentTypeNames().size() != args.size()) {
           for (Method method : _refType.methodsByName(myMethodName)) {
             if (method.argumentTypeNames().size() == args.size()) {
+              jdiMethod = method;
+              break;
+            }
+          }
+        }
+      }
+      else if (myMustBeVararg && jdiMethod != null && !jdiMethod.isVarArgs() && jdiMethod.isBridge()) {
+        // see IDEA-129869, avoid bridge methods for varargs
+        int retTypePos = signature.lastIndexOf(")");
+        if (retTypePos >= 0) {
+          String signatureNoRetType = signature.substring(0, retTypePos + 1);
+          for (Method method : _refType.visibleMethods()) {
+            if (method.name().equals(myMethodName) && method.signature().startsWith(signatureNoRetType) && !method.isBridge() && !method.isAbstract()) {
               jdiMethod = method;
               break;
             }

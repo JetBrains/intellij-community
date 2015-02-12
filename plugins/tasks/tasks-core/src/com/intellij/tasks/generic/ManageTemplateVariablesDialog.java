@@ -44,6 +44,10 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
   }
 
   private static class TemplateVariablesTable extends ListTableWithButtons<TemplateVariable> {
+    public TemplateVariablesTable() {
+      getTableView().getEmptyText().setText("No variables");
+    }
+
     @Override
     protected ListTableModel createListModel() {
       final ColumnInfo name = new ElementsColumnInfoBase<TemplateVariable>("Name") {

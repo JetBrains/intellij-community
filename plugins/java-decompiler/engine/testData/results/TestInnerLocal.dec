@@ -1,0 +1,98 @@
+public class TestInnerLocal {
+   public static void testStaticMethod() {
+      class Inner {
+         final String x;
+
+         public Inner(String var1) {
+            this.x = var1;// 22
+         }
+      }
+
+      new Inner("test");// 25
+   }
+
+   public void testMethod() {
+      class Inner {
+         final String x;
+
+         public Inner(String var2) {
+            this.x = var2;// 34
+         }
+      }
+
+      new Inner("test");// 37
+   }
+
+   static class Inner1Static {
+      final String x;
+
+      public Inner1Static(String var1) {
+         this.x = var1;// 53
+      }
+
+      public static class Inner2Static {
+         final String x;
+
+         public Inner2Static(String var1) {
+            this.x = var1;// 59
+         }
+      }
+   }
+
+   class Inner1 {
+      final String x;
+
+      public Inner1(String var2) {
+         this.x = var2;// 46
+      }
+   }
+}
+
+class 'TestInnerLocal$1Inner' {
+   method '<init> (Ljava/lang/String;)V' {
+      6      6
+   }
+}
+
+class 'TestInnerLocal' {
+   method 'testStaticMethod ()V' {
+      4      10
+   }
+
+   method 'testMethod ()V' {
+      5      22
+   }
+}
+
+class 'TestInnerLocal$2Inner' {
+   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
+      b      18
+   }
+}
+
+class 'TestInnerLocal$Inner1Static' {
+   method '<init> (Ljava/lang/String;)V' {
+      6      29
+   }
+}
+
+class 'TestInnerLocal$Inner1Static$Inner2Static' {
+   method '<init> (Ljava/lang/String;)V' {
+      6      36
+   }
+}
+
+class 'TestInnerLocal$Inner1' {
+   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
+      b      45
+   }
+}
+
+Lines mapping:
+22 <-> 7
+25 <-> 11
+34 <-> 19
+37 <-> 23
+46 <-> 46
+53 <-> 30
+59 <-> 37

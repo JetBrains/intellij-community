@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +29,8 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
 
   public StringBasedPostfixTemplate(@NotNull String name,
                                     @NotNull String example,
-                                    @NotNull PostfixTemplatePsiInfo psiInfo,
-                                    @NotNull Condition<PsiElement> typeChecker) {
-    super(name, example, psiInfo, typeChecker);
+                                    @NotNull PostfixTemplateExpressionSelector selector) {
+    super(name, example, selector);
   }
 
   @Override

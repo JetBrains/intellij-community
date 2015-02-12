@@ -17,6 +17,7 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
+import com.intellij.util.io.DataInputOutputUtil;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -32,11 +33,11 @@ public abstract class Change {
   }
 
   protected Change(DataInput in) throws IOException {
-    myId = in.readLong();
+    myId = DataInputOutputUtil.readLONG(in);
   }
 
   public void write(DataOutput out) throws IOException {
-    out.writeLong(myId);
+    DataInputOutputUtil.writeLONG(out, myId);
   }
 
   public long getId() {

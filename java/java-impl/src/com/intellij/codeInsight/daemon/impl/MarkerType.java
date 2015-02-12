@@ -115,7 +115,7 @@ public class MarkerType {
     return interfaceMethod != null ? interfaceMethod : parent;
   }
 
-  public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for overriding methods";
+  public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
   public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {

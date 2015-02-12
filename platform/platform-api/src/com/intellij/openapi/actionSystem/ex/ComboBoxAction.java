@@ -231,7 +231,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       };
 
       myPopup = createPopup(onDispose);
-      myPopup.show(new RelativePoint(this, new Point(0, getHeight() - 1)));
+      myPopup.show(new RelativePoint(this, new Point(-1, getHeight())));
     }
 
     @Nullable
@@ -352,7 +352,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       int width = isEmpty ? JBUI.scale(10) + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
       if (isSmallVariant()) width += JBUI.scale(4);
-      return new Dimension(width, JBUI.scale(isSmallVariant() ? 19 : 21));
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(19) : super.getPreferredSize().height);
     }
 
     @Override
@@ -425,7 +425,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
       else {
-        paintComponent(g);
+        super.paint(g);
       }
     }
       final Insets insets = super.getInsets();

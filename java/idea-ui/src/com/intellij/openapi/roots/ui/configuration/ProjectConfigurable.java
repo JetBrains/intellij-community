@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +121,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   private void init(final ProjectSdksModel model) {
     myPanel = new JPanel(new GridBagLayout());
-    myPanel.setPreferredSize(new Dimension(700, 500));
+    myPanel.setPreferredSize(JBUI.size(700, 500));
 
     if (((ProjectEx)myProject).getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
       final JPanel namePanel = new JPanel(new BorderLayout());
@@ -138,7 +138,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       nameFieldPanel.add(myProjectName);
 
       namePanel.add(nameFieldPanel, BorderLayout.CENTER);
-      final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       wrapper.add(namePanel);
       wrapper.setAlignmentX(0);
       myPanel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
@@ -149,7 +149,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
                                                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                                                   new Insets(4, 4, 0, 0), 0, 0));
+                                                                                   new Insets(4, 0, 0, 0), 0, 0));
 
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
@@ -223,8 +223,9 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
           compilerProjectExtension.setCompilerOutputPointer(null);
         }
 
-        final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
-        LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
+        LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
+        extension.setLanguageLevel(myLanguageLevelCombo.getSelectedLevel());
+        extension.setDefault(myLanguageLevelCombo.isDefault());
         myProjectJdkConfigurable.apply();
 
         if (myProjectName != null) {

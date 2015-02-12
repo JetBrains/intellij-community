@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.impl.ui.XValueTextProvider;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
@@ -69,21 +69,14 @@ public abstract class XFetchValueActionBase extends AnAction {
       return;
     }
 
-    ValueCollector valueCollector = new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
+    ValueCollector valueCollector = createCollector(e);
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof XValueNodeImpl) {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
         if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
-          String rawValue;
-          if (valueNode.getValueContainer() instanceof XValueTextProvider) {
-            rawValue = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
-          }
-          else {
-            rawValue = valueNode.getRawValue();
-          }
-          valueCollector.add(StringUtil.notNullize(rawValue));
+          valueCollector.add(StringUtil.notNullize(DebuggerUIUtil.getNodeRawValue(valueNode)));
         }
         else {
           new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
@@ -97,7 +90,12 @@ public abstract class XFetchValueActionBase extends AnAction {
     valueCollector.finish(e.getProject());
   }
 
-  private final class ValueCollector {
+  @NotNull
+  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
+  }
+
+  protected class ValueCollector {
     private final List<String> values = new SmartList<String>();
     private final XDebuggerTree myTree;
     private volatile boolean processed;
@@ -112,8 +110,12 @@ public abstract class XFetchValueActionBase extends AnAction {
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handle(project, StringUtil.join(values, "\n"), myTree);
+        handleInCollector(project, StringUtil.join(values, "\n"), myTree);
       }
+    }
+
+    public void handleInCollector(final Project project, final String value, XDebuggerTree tree) {
+      handle(project, value, tree);
     }
 
     public int acquire() {

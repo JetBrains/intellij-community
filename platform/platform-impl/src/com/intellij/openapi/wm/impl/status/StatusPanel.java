@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -97,7 +97,7 @@ class StatusPanel extends JPanel {
 
     setOpaque(false);
 
-    myTextPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
+    myTextPanel.setBorder(JBUI.Borders.empty(0, 5, 0, 0));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {

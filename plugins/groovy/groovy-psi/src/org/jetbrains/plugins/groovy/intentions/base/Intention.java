@@ -90,7 +90,7 @@ public abstract class Intention implements IntentionAction {
     }
 
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+    if (selectionModel.hasSelection()) {
       int start = selectionModel.getSelectionStart();
       int end = selectionModel.getSelectionEnd();
 

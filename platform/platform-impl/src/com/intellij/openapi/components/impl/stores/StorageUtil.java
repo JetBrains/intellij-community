@@ -149,7 +149,7 @@ public class StorageUtil {
         throw e;
       }
       else {
-        throw new ReadOnlyModificationException(virtualFile);
+        throw new ReadOnlyModificationException(virtualFile, e);
       }
     }
     finally {
@@ -177,8 +177,8 @@ public class StorageUtil {
     try {
       virtualFile.delete(requestor);
     }
-    catch (FileNotFoundException ignored) {
-      throw new ReadOnlyModificationException(virtualFile);
+    catch (FileNotFoundException e) {
+      throw new ReadOnlyModificationException(virtualFile, e);
     }
     finally {
       token.finish();

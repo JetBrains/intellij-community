@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package com.intellij.project.model.impl.library;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.impl.libraries.JarDirectories;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -136,11 +134,6 @@ public class JpsLibraryDelegate implements LibraryEx {
 
   @Override
   public void dispose() {
-  }
-
-  @Override
-  public Library cloneLibrary(RootModelImpl rootModel) {
-    throw new UnsupportedOperationException("'cloneLibrary' not implemented in " + getClass().getName());
   }
 
   @NotNull

@@ -846,8 +846,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           Element historyElement = file.getChild(HistoryEntry.TAG);
-          VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
-          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          final VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
+          Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+            @Override
+            public Document compute() {
+              return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+            }
+          });
           final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), historyElement);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));

@@ -20,12 +20,12 @@
  */
 package com.intellij.refactoring.extractclass;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess;
@@ -64,7 +64,7 @@ public class ExtractEnumProcessor {
             @Override
             public void fixUsage() throws IncorrectOperationException {
               final PsiReferenceExpression expression = (PsiReferenceExpression)element;
-              final String link = PropertyUtil.suggestGetterName("value", expression.getType()) + "()";
+              final String link = GenerateMembersUtil.suggestGetterName("value", expression.getType(), myProject) + "()";
               MutationUtils.replaceExpression(expression.getReferenceName() + "." + link, expression);
             }
           });

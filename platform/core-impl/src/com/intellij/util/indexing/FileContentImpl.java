@@ -95,8 +95,9 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
       project = DefaultProjectFactory.getInstance().getDefaultProject();
     }
     final Language language = ((LanguageFileType)getFileTypeWithoutSubstitution()).getLanguage();
-    final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, getFile(), project);
-    return PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, text, false, false, true);
+    final VirtualFile file = getFile();
+    final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+    return PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, text, false, false, true, file);
   }
 
   public static class IllegalDataException extends RuntimeException {

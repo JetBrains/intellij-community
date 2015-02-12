@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.profile.Profile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 
 import javax.swing.*;
@@ -36,17 +37,21 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
   private final CardLayout myCardLayout;
   private final ValidatedTextField mySubmitNameComponent;
   private final SaveInputComponentValidator.Wrapper mySaveListener;
+  private final JPanel myComboBoxPanel;
 
   public ProfilesConfigurableComboBox(final ListCellRendererWrapper<Profile> comboBoxItemsRenderer) {
+    myComboBoxPanel = new JPanel();
+
     myCardLayout = new CardLayout();
-    setLayout(myCardLayout);
+    myComboBoxPanel.setLayout(myCardLayout);
+    setBorder(IdeBorderFactory.createEmptyBorder(new Insets(4, 0, 6, 0)));
 
     myProfilesComboBox = new JComboBox();
-    add(myProfilesComboBox, COMBO_CARD);
+    myComboBoxPanel.add(myProfilesComboBox, COMBO_CARD);
 
     mySaveListener = new SaveInputComponentValidator.Wrapper();
     mySubmitNameComponent = new ValidatedTextField(mySaveListener);
-    add(mySubmitNameComponent, EDIT_CARD);
+    myComboBoxPanel.add(mySubmitNameComponent, EDIT_CARD);
 
     myProfilesComboBox.setRenderer(comboBoxItemsRenderer);
     myProfilesComboBox.addActionListener(new ActionListener() {
@@ -59,6 +64,10 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
       }
     });
 
+    setLayout(new BorderLayout());
+    add(mySubmitNameComponent.getHintLabel(), BorderLayout.NORTH);
+    add(myComboBoxPanel, BorderLayout.CENTER);
+
     showComboBoxCard();
   }
 
@@ -67,8 +76,13 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
   public void showEditCard(final String initialValue, final SaveInputComponentValidator inputValidator) {
     mySaveListener.setDelegate(inputValidator);
     mySubmitNameComponent.setText(initialValue);
-    myCardLayout.show(this, EDIT_CARD);
-    mySubmitNameComponent.requestFocus();
+    myCardLayout.show(myComboBoxPanel, EDIT_CARD);
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        mySubmitNameComponent.requestFocus();
+      }
+    });
   }
 
   public void reset(final Collection<Profile> profiles) {
@@ -88,15 +102,11 @@ public abstract class ProfilesConfigurableComboBox extends JPanel {
     return (InspectionProfileImpl)myProfilesComboBox.getSelectedItem();
   }
 
-  public JPanel getHintLabel() {
-    return mySubmitNameComponent.getHintLabel();
-  }
-
   public void selectProfile(Profile inspectionProfile) {
     myProfilesComboBox.setSelectedItem(inspectionProfile);
   }
 
   public void showComboBoxCard() {
-    myCardLayout.show(this, COMBO_CARD);
+    myCardLayout.show(myComboBoxPanel, COMBO_CARD);
   }
 }

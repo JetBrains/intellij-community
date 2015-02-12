@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,12 +121,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
     JPanel treePanel = new JPanel(new BorderLayout());
     treePanel.add(ScrollPaneFactory.createScrollPane(myFrameworksTree), BorderLayout.CENTER);
-    treePanel.setMinimumSize(new Dimension(200, 300));
+    treePanel.setMinimumSize(JBUI.size(200, 300));
 
     splitter.setFirstComponent(treePanel);
     myOptionsPanel = new JPanel(new CardLayout());
     JPanel emptyCard = new JPanel();
-    emptyCard.setPreferredSize(new Dimension(400, 100));
+    emptyCard.setPreferredSize(JBUI.size(400, 100));
     myOptionsPanel.add(EMPTY_CARD, emptyCard);
 
     splitter.setSecondComponent(myOptionsPanel);

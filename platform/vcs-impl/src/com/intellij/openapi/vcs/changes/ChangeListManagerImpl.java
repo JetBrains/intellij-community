@@ -58,10 +58,8 @@ import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.Rethrow;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;

@@ -19,6 +19,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.SwingHelper;
@@ -28,10 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -65,7 +67,6 @@ public class SliderSelectorAction extends DumbAwareAction {
     label.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 0));
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(label, BorderLayout.NORTH);
-    result.add(wrapper, BorderLayout.WEST);
 
     final JSlider slider = new JSlider(SwingConstants.HORIZONTAL, myConfiguration.getMin(), myConfiguration.getMax(), myConfiguration.getSelected());
     slider.setMinorTickSpacing(1);
@@ -75,35 +76,52 @@ public class SliderSelectorAction extends DumbAwareAction {
     UIUtil.setSliderIsFilled(slider, true);
     slider.setPaintLabels(true);
     slider.setLabelTable(myConfiguration.getDictionary());
-    result.add(slider, BorderLayout.CENTER);
-    final Runnable[] closeMe = new Runnable[1];
-    if (myConfiguration.isShowOk()) {
-      final JButton done = new JButton("Done");
-      result.add(SwingHelper.wrapWithoutStretch(done), BorderLayout.SOUTH);
-      done.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (closeMe[0] != null) closeMe[0].run();
-        }
-      });
+
+    if (! myConfiguration.isShowOk()) {
+      result.add(wrapper, BorderLayout.WEST);
+      result.add(slider, BorderLayout.CENTER);
+    } else {
+      result.add(wrapper, BorderLayout.WEST);
+      result.add(slider, BorderLayout.CENTER);
     }
 
-    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider).setMovable(true).createPopup();
-    final Runnable finalRunnable = new Runnable() {
+    final Runnable saveSelection = new Runnable() {
       @Override
       public void run() {
         int value = slider.getModel().getValue();
         myConfiguration.getResultConsumer().consume(value);
       }
     };
-    closeMe[0] = new Runnable() {
-      @Override
-      public void run() {
-        finalRunnable.run();
-        popup.closeOk(null);
-      }
-    };
-    popup.setFinalRunnable(finalRunnable);
+    final Ref<JBPopup> popupRef = new Ref<JBPopup>(null);
+    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider)
+      .setMovable(true)
+      .setCancelOnWindowDeactivation(true)
+      .setCancelKeyEnabled(myConfiguration.isShowOk())
+      .setKeyboardActions(Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          saveSelection.run();
+          popupRef.get().closeOk(null);
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
+      .createPopup();
+
+    popupRef.set(popup);
+    if (myConfiguration.isShowOk()) {
+      final JButton done = new JButton("Done");
+      final JBPanel doneWrapper = new JBPanel(new BorderLayout());
+      doneWrapper.add(done, BorderLayout.NORTH);
+      result.add(doneWrapper, BorderLayout.EAST);
+      done.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          saveSelection.run();
+          popup.closeOk(null);
+        }
+      });
+    } else {
+      popup.setFinalRunnable(saveSelection);
+    }
     InputEvent inputEvent = e.getInputEvent();
     show(e, result, popup, inputEvent);
   }

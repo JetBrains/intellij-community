@@ -49,7 +49,7 @@ public class BraceHighlighter implements StartupActivity {
         Editor editor = e.getEditor();
         final SelectionModel selectionModel = editor.getSelectionModel();
         // Don't update braces in case of the active selection.
-        if (editor.getProject() != project || selectionModel.hasSelection() || selectionModel.hasBlockSelection()) {
+        if (editor.getProject() != project || selectionModel.hasSelection()) {
           return;
         }
 

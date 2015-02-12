@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,12 +153,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     return getNode().getCopyableUserData(key);
   }
 
   @Override
-  public <T> void putCopyableUserData(Key<T> key, T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
     getNode().putCopyableUserData(key, value);
   }
 
@@ -176,18 +176,17 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Nullable
-  protected PsiElement findChildByType(IElementType type) {
+  protected <T extends PsiElement> T findChildByType(IElementType type) {
     ASTNode node = getNode().findChildByType(type);
-    return node == null ? null : node.getPsi();
+    return node == null ? null : (T)node.getPsi();
   }
 
-
   @Nullable
-  protected PsiElement findLastChildByType(IElementType type) {
+  protected <T extends PsiElement> T findLastChildByType(IElementType type) {
     PsiElement child = getLastChild();
     while (child != null) {
       final ASTNode node = child.getNode();
-      if (node != null && node.getElementType() == type) return child;
+      if (node != null && node.getElementType() == type) return (T)child;
       child = child.getPrevSibling();
     }
     return null;
@@ -196,14 +195,14 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
 
   @NotNull
-  protected PsiElement findNotNullChildByType(IElementType type) {
-    return notNullChild(findChildByType(type));
+  protected <T extends PsiElement> T findNotNullChildByType(IElementType type) {
+    return notNullChild(this.<T>findChildByType(type));
   }
 
   @Nullable
-  protected PsiElement findChildByType(TokenSet type) {
+  protected <T extends PsiElement> T findChildByType(TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
-    return node == null ? null : node.getPsi();
+    return node == null ? null : (T)node.getPsi();
   }
 
   @NotNull
@@ -263,10 +262,10 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
-    return (T[])ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, new Function<ASTNode, PsiElement>() {
+    return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, new Function<ASTNode, T>() {
       @Override
-      public PsiElement fun(final ASTNode s) {
-        return s.getPsi();
+      public T fun(final ASTNode s) {
+        return (T)s.getPsi();
       }
     });
   }

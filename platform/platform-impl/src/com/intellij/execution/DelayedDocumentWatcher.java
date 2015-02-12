@@ -15,7 +15,6 @@
  */
 package com.intellij.execution;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -55,7 +54,7 @@ public class DelayedDocumentWatcher {
   private final Project myProject;
   private final Alarm myAlarm;
   private final int myDelayMillis;
-  private final Consumer<Set<VirtualFile>> myConsumer;
+  private final Consumer<Integer> myModificationStampConsumer;
   private final Condition<VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
   private final Runnable myAlarmRunnable;
@@ -63,16 +62,16 @@ public class DelayedDocumentWatcher {
   private final Set<VirtualFile> myChangedFiles = new THashSet<VirtualFile>();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
-  private int myEventCount = 0;
+  private int myModificationStamp = 0;
 
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
-                                @NotNull Consumer<Set<VirtualFile>> consumer,
+                                @NotNull Consumer<Integer> modificationStampConsumer,
                                 @Nullable Condition<VirtualFile> changedFileFilter) {
     myProject = project;
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
     myDelayMillis = delayMillis;
-    myConsumer = consumer;
+    myModificationStampConsumer = modificationStampConsumer;
     myChangedFileFilter = changedFileFilter;
     myListener = new MyDocumentAdapter();
     myAlarmRunnable = new MyRunnable();
@@ -84,8 +83,8 @@ public class DelayedDocumentWatcher {
   }
 
   public void activate() {
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
     if (myConnection == null) {
+      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
       myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
         @Override
@@ -103,11 +102,15 @@ public class DelayedDocumentWatcher {
   }
 
   public void deactivate() {
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
     if (myConnection != null) {
+      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
       myConnection.disconnect();
       myConnection = null;
     }
+  }
+
+  public boolean isUpToDate(int modificationStamp) {
+    return myModificationStamp == modificationStamp;
   }
 
   private class MyDocumentAdapter extends DocumentAdapter {
@@ -136,19 +139,18 @@ public class DelayedDocumentWatcher {
 
       myAlarm.cancelRequest(myAlarmRunnable);
       myAlarm.addRequest(myAlarmRunnable, myDelayMillis);
-      myEventCount++;
+      myModificationStamp++;
     }
   }
 
   private class MyRunnable implements Runnable {
     @Override
     public void run() {
-      final int oldEventCount = myEventCount;
-      final Set<VirtualFile> copy = ImmutableSet.copyOf(myChangedFiles);
-      asyncCheckErrors(copy, new Consumer<Boolean>() {
+      final int oldModificationStamp = myModificationStamp;
+      asyncCheckErrors(myChangedFiles, new Consumer<Boolean>() {
         @Override
         public void consume(Boolean errorsFound) {
-          if (myEventCount != oldEventCount) {
+          if (myModificationStamp != oldModificationStamp) {
             // 'documentChanged' event was raised during async checking files for errors
             // Do nothing in that case, this method will be invoked subsequently.
             return;
@@ -159,7 +161,7 @@ public class DelayedDocumentWatcher {
             return;
           }
           myChangedFiles.clear();
-          myConsumer.consume(copy);
+          myModificationStampConsumer.consume(myModificationStamp);
         }
       });
     }
@@ -218,5 +220,4 @@ public class DelayedDocumentWatcher {
     }
     return WolfTheProblemSolver.getInstance(myProject).hasSyntaxErrors(file);
   }
-
 }

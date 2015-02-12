@@ -438,7 +438,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     };
 
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteAccessAllowed()) {
+    if (application.isWriteAccessAllowed() && !application.isUnitTestMode()) {
       application.invokeLater(cleanupRunnable);
     }
     else {

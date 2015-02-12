@@ -32,7 +32,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   private List<Icon> myIcons;
   private int myDefaultOptionIndex = -1;
 
-  public BaseListPopupStep(@Nullable String title, T[] values) {
+  public BaseListPopupStep(@Nullable String title, T... values) {
     this(title, values, new Icon[]{});
   }
 

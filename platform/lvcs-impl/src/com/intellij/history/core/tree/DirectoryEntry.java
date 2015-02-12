@@ -19,6 +19,7 @@ package com.intellij.history.core.tree;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -38,7 +39,7 @@ public class DirectoryEntry extends Entry {
 
   public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general constructor*/) throws IOException {
     super(in);
-    int count = in.readInt();
+    int count = DataInputOutputUtil.readINT(in);
     myChildren = new ArrayList<Entry>(count);
     while (count-- > 0) {
       unsafeAddChild(StreamUtil.readEntry(in));
@@ -48,7 +49,7 @@ public class DirectoryEntry extends Entry {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    out.writeInt(myChildren.size());
+    DataInputOutputUtil.writeINT(out, myChildren.size());
     for (Entry child : myChildren) {
       StreamUtil.writeEntry(out, child);
     }

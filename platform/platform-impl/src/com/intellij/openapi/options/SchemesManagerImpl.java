@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
@@ -305,7 +306,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       mySchemes.remove(existing);
 
-      if (isExternalizable(existing)) {
+      if (existing instanceof ExternalizableScheme) {
         //noinspection unchecked
         myProcessor.onSchemeDeleted((E)existing);
       }
@@ -456,11 +457,30 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   public void save() {
     boolean hasSchemes = false;
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+    List<E> schemesToSave = new SmartList<E>();
     for (T scheme : mySchemes) {
-      //noinspection CastConflictsWithInstanceof,unchecked
-      if (scheme instanceof ExternalizableScheme && myProcessor.shouldBeSaved((E)scheme)) {
+      if (scheme instanceof ExternalizableScheme) {
+        //noinspection CastConflictsWithInstanceof,unchecked
+        E eScheme = (E)scheme;
+        BaseSchemeProcessor.State state;
+        if (myProcessor instanceof BaseSchemeProcessor) {
+          state = ((BaseSchemeProcessor<E>)myProcessor).getState(eScheme);
+        }
+        else {
+          //noinspection deprecation
+          state = myProcessor.shouldBeSaved(eScheme) ? BaseSchemeProcessor.State.POSSIBLY_CHANGED : BaseSchemeProcessor.State.NON_PERSISTENT;
+        }
+
+        if (state == BaseSchemeProcessor.State.NON_PERSISTENT) {
+          continue;
+        }
+
         hasSchemes = true;
-        ExternalizableScheme eScheme = (ExternalizableScheme)scheme;
+
+        if (state != BaseSchemeProcessor.State.UNCHANGED) {
+          schemesToSave.add(eScheme);
+        }
+
         String fileName = eScheme.getExternalInfo().getCurrentFileName();
         if (fileName != null && !isRenamed(eScheme)) {
           nameGenerator.addExistingName(fileName);
@@ -482,30 +502,22 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       return;
     }
 
-    for (final T scheme : mySchemes) {
-      if (!isExternalizable(scheme)) {
-        continue;
+    for (final E scheme : schemesToSave) {
+      try {
+        saveScheme(scheme, nameGenerator);
       }
-
-      @SuppressWarnings("unchecked")
-      E eScheme = (E)scheme;
-      if (myProcessor.shouldBeSaved(eScheme)) {
-        try {
-          saveScheme(eScheme, nameGenerator);
+      catch (final Exception e) {
+        Application app = ApplicationManager.getApplication();
+        if (app.isUnitTestMode() || app.isCommandLine()) {
+          LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
         }
-        catch (final Exception e) {
-          Application app = ApplicationManager.getApplication();
-          if (app.isUnitTestMode() || app.isCommandLine()) {
-            LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
-          }
-          else {
-            app.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
-              }
-            });
-          }
+        else {
+          app.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
+            }
+          });
         }
       }
     }
@@ -538,7 +550,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myFilesToDelete.remove(fileNameWithoutExtension);
 
     // stream provider always use LF separator
-    BufferExposingByteArrayOutputStream byteOut = StorageUtil.writeToBytes(element, "\n");
+    final BufferExposingByteArrayOutputStream byteOut = StorageUtil.writeToBytes(element, "\n");
 
     // if another new scheme uses old name of this scheme, so, we must not delete it (as part of rename operation)
     boolean renamed = currentFileNameWithoutExtension != null && fileNameWithoutExtension != currentFileNameWithoutExtension && nameGenerator.value(currentFileNameWithoutExtension);
@@ -564,12 +576,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         file = DirectoryBasedStorage.getFile(fileName, myDir, this);
       }
 
-      OutputStream out = file.getOutputStream(this);
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
       try {
-        byteOut.writeTo(out);
+        OutputStream out = file.getOutputStream(this);
+        try {
+          byteOut.writeTo(out);
+        }
+        finally {
+          out.close();
+        }
       }
       finally {
-        out.close();
+        token.finish();
       }
     }
     else if (renamed) {

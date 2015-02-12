@@ -57,7 +57,7 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
 
     addSeparator(actions);
     add("Git.Branches", manager, actions);
-    add("Git.Push", manager, actions);
+    add("Vcs.Push", manager, actions);
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
 
@@ -93,7 +93,7 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
 
   private static void add(String actionName, ActionManager manager, List<AnAction> actions) {
     final AnAction action = manager.getAction(actionName);
-    assert action != null;
+    assert action != null : "Can not find action " + actionName;
     actions.add(action);
   }
 }

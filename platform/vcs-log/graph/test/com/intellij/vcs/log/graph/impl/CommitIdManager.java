@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl;
 
 import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.parser.SimpleCommitListParser;
+import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public abstract class CommitIdManager<CommitId> {
     @NotNull
     @Override
     public List<GraphCommit<String>> parseCommitList(@NotNull String in) {
-      return SimpleCommitListParser.parseStringCommitList(in);
+      return CommitParser.parseStringCommitList(in);
     }
 
     @NotNull
@@ -36,19 +36,31 @@ public abstract class CommitIdManager<CommitId> {
     public String toStr(String commit) {
       return commit;
     }
+
+    @NotNull
+    @Override
+    public Integer toInt(@NotNull String commit) {
+      return CommitParser.createHash(commit);
+    }
   };
 
   public static final CommitIdManager<Integer> INTEGER_COMMIT_ID_MANAGER = new CommitIdManager<Integer>() {
     @NotNull
     @Override
     public List<GraphCommit<Integer>> parseCommitList(@NotNull String in) {
-      return SimpleCommitListParser.parseIntegerCommitList(in);
+      return CommitParser.parseIntegerCommitList(in);
     }
 
     @NotNull
     @Override
     public String toStr(Integer commit) {
       return Integer.toHexString(commit);
+    }
+
+    @NotNull
+    @Override
+    public Integer toInt(@NotNull Integer commit) {
+      return commit;
     }
   };
 
@@ -57,6 +69,9 @@ public abstract class CommitIdManager<CommitId> {
 
   @NotNull
   public abstract String toStr(CommitId commit);
+
+  @NotNull
+  public abstract Integer toInt(@NotNull CommitId commit);
 
   @NotNull
   public Function<CommitId, String> getToStrFunction() {

@@ -59,9 +59,4 @@ public interface ImageEditor extends Disposable, VirtualFileListener, ImageCompo
      */
     boolean isDisposed();
 
-    ImageZoomModel getZoomModel();
-
-    void setGridVisible(boolean visible);
-
-    boolean isGridVisible();
 }

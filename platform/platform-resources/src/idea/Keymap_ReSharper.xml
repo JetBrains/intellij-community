@@ -7,7 +7,6 @@
     <action id="ClassNameCompletion">
       <keyboard-shortcut first-keystroke="shift alt ENTER"/>
     </action>
-    <action id="Console.TableResult.Reload"/>
     <action id="ExtractMethod">
       <keyboard-shortcut first-keystroke="control R" second-keystroke="M"/>
     </action>

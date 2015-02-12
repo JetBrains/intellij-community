@@ -186,7 +186,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         });
       }
       else {
-        builder.setCommandButton(new InplaceButton(new IconButton("Close", AllIcons.Actions.CloseNew, AllIcons.Actions.CloseNewHovered), actionListener));
+        builder.setCommandButton(new InplaceButton(new IconButton("Close", AllIcons.Actions.Close, AllIcons.Actions.CloseHovered), actionListener));
       }
     }
 

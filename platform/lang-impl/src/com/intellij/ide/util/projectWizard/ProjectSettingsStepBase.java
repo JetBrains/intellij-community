@@ -48,7 +48,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   protected final DirectoryProjectGenerator myProjectGenerator;
   private final NullableConsumer<ProjectSettingsStepBase> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
-  protected final File myProjectDirectory;
+  protected File myProjectDirectory;
   private JButton myCreateButton;
   private JLabel myErrorLabel;
 
@@ -59,7 +59,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    myProjectDirectory = FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
+    myProjectDirectory = findSequentNonExistingUntitled();
   }
 
   @Override
@@ -259,11 +259,16 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   private LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
+    myProjectDirectory = findSequentNonExistingUntitled();
     myLocationField.setText(myProjectDirectory.toString());
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
                                             null, descriptor);
     return LabeledComponent.create(myLocationField, "Location");
+  }
+
+  private static File findSequentNonExistingUntitled() {
+    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
   }
 }

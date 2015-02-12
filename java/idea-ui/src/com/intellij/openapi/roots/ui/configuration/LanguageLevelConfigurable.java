@@ -21,6 +21,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,14 +45,16 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
         getLanguageLevelExtension().setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
       }
     });
-    myLanguageLevelCombo.insertItemAt(LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL, 0);
 
-    myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level")),
+    JLabel label = new JLabel(ProjectBundle.message("module.module.language.level"));
+    label.setLabelFor(myLanguageLevelCombo);
+    myPanel.add(label,
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
     myPanel.add(myLanguageLevelCombo,
                 new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 12, 0), 0, 0));
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     return myPanel;
@@ -79,4 +82,8 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   public abstract LanguageLevelModuleExtensionImpl getLanguageLevelExtension();
+
+  public void addProjectDefault(LanguageLevel projectDefault) {
+    myLanguageLevelCombo.addProjectDefault(projectDefault.getPresentableText());
+  }
 }

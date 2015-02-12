@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
@@ -946,13 +947,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
     selectTemplate(lastSelectedGroup, lastSelectedKey);
   }
 
-  private void selectTemplate(final String lastSelectedGroup, final String lastSelectedKey) {
+  void selectNode(@NotNull String searchQuery) {
+    ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(searchQuery);
+  }
+
+  private void selectTemplate(@Nullable final String groupName, @Nullable final String templateKey) {
     TreeUtil.traverseDepth(myTreeRoot, new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {
         Object o = ((DefaultMutableTreeNode)node).getUserObject();
-        if (lastSelectedKey == null && o instanceof TemplateGroup && Comparing.equal(lastSelectedGroup, ((TemplateGroup)o).getName()) ||
-            o instanceof TemplateImpl && Comparing.equal(lastSelectedKey, ((TemplateImpl)o).getKey()) && Comparing.equal(lastSelectedGroup, ((TemplateImpl)o).getGroupName())) {
+        if (templateKey == null && o instanceof TemplateGroup && Comparing.equal(groupName, ((TemplateGroup)o).getName()) ||
+            o instanceof TemplateImpl && Comparing.equal(templateKey, ((TemplateImpl)o).getKey()) && Comparing.equal(groupName, ((TemplateImpl)o).getGroupName())) {
           setSelectedNode((DefaultMutableTreeNode)node);
           return false;
         }

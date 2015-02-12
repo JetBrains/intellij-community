@@ -37,6 +37,7 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
 
   private final AtomicBoolean myLogsDisposed = new AtomicBoolean(false);
   private final Disposable myLogsDisposable;
+  private boolean myMainHandlerVisible = false;
 
   public DeploymentLogManagerImpl(@NotNull Project project, @NotNull Runnable changeListener) {
     myProject = project;
@@ -50,6 +51,15 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
         disposeLogs();
       }
     });
+  }
+
+  public DeploymentLogManagerImpl withMainHandlerVisible(boolean mainHandlerVisible) {
+    myMainHandlerVisible = mainHandlerVisible;
+    return this;
+  }
+
+  public boolean isMainHandlerVisible() {
+    return myMainHandlerVisible;
   }
 
   @NotNull

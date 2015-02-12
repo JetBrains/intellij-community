@@ -57,20 +57,16 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
     
     dotted = patch_qt_on_import + '.'
     original_import = __import__
-    import sys
-    original_exc_info = sys.exc_info
 
-    def patched_exc_info():
-        type, value, traceback = original_exc_info()
-        if type == ImportError:
-            #we should not show frame added by patched_import call
-            return type, value, traceback.tb_next
-        return type, value, traceback
+    from _pydev_imps._pydev_sys_patch import patch_sys_module, patch_reload, cancel_patches_in_sys_module
+
+    patch_sys_module()
+    patch_reload()
 
     def patched_import(name, *args, **kwargs):
         if patch_qt_on_import == name or name.startswith(dotted):
             builtins.__import__ = original_import
-            sys.exc_info = original_exc_info
+            cancel_patches_in_sys_module()
             _internal_patch_qt() # Patch it only when the user would import the qt module
         return original_import(name, *args, **kwargs)
     
@@ -79,7 +75,6 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
     except ImportError:
         import __builtin__ as builtins
     builtins.__import__ = patched_import
-    sys.exc_info = patched_exc_info
 
     
 def _internal_patch_qt():

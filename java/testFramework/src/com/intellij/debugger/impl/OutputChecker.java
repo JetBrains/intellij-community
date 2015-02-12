@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,6 +207,9 @@ public class OutputChecker {
         result = result.replaceAll("file.*AppletPage.*\\.html", "file:/!APPLET_HTML!");
         result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
         result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
+
+        // unquote extra params
+        result = result.replaceAll("\"(-D.*)\"", "$1");
 
         result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");

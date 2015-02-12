@@ -83,12 +83,13 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     // Collect all possible editors
     List<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
     boolean doNotShowTextEditor = false;
-    final boolean dumb = DumbService.getInstance(project).isDumb();
     for (final FileEditorProvider provider : myProviders) {
-      boolean canUseProvider = !dumb || DumbService.isDumbAware(provider);
-      if (canUseProvider && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
+          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+            return false;
+          }
           return provider.accept(project, file);
         }
       })) {
@@ -190,6 +191,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     return mySelectedProviders;
   }
 
+  @SuppressWarnings("unused")
   public void setSelectedProviders(Map<String, String> selectedProviders) {
     mySelectedProviders.clear();
     mySelectedProviders.putAll(selectedProviders);

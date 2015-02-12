@@ -16,13 +16,12 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.vcs.VcsTaskHandler;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -40,18 +39,17 @@ public class BranchInfo {
   @Attribute("original")
   public boolean original;
 
-  public static List<BranchInfo> fromTaskInfo(VcsTaskHandler.TaskInfo taskInfo, boolean original) {
-    ArrayList<BranchInfo> list = new ArrayList<BranchInfo>();
-    for (Map.Entry<String, Collection<String>> entry : taskInfo.branches.entrySet()) {
-      for (String repository : entry.getValue()) {
-        BranchInfo branchInfo = new BranchInfo();
-        branchInfo.name = entry.getKey();
-        branchInfo.repository = repository;
-        branchInfo.original = original;
-        list.add(branchInfo);
+  public static List<BranchInfo> fromTaskInfo(final VcsTaskHandler.TaskInfo taskInfo, final boolean original) {
+    return ContainerUtil.map(taskInfo.getRepositories(), new Function<String, BranchInfo>() {
+      @Override
+      public BranchInfo fun(String s) {
+        BranchInfo info = new BranchInfo();
+        info.name = taskInfo.getName();
+        info.repository = s;
+        info.original = original;
+        return info;
       }
-    }
-    return list;
+    });
   }
 
   @Override

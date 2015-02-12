@@ -47,12 +47,19 @@ public abstract class GetterSetterPrototypeProvider {
   public abstract boolean isReadOnly(PsiField field);
 
   public static PsiMethod[] generateGetterSetters(PsiField field, boolean generateGetter) {
+    return generateGetterSetters(field, generateGetter, true);
+  }
+
+  public static PsiMethod[] generateGetterSetters(PsiField field,
+                                                  boolean generateGetter,
+                                                  boolean invalidTemplate) {
     for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field) : GenerateMembersUtil.generateSetterPrototype(field)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, invalidTemplate) :
+                           GenerateMembersUtil.generateSetterPrototype(field, invalidTemplate)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {

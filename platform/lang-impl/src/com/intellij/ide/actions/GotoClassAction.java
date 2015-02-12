@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -29,7 +29,6 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -53,34 +52,38 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    assert project != null;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
+
     if (!DumbService.getInstance(project).isDumb()) {
       super.actionPerformed(e);
     }
     else {
-      DumbService.getInstance(project)
-        .showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
-      ActionManager.getInstance()
-        .tryToExecute(ActionManager.getInstance().getAction(GotoFileAction.ID), ActionCommand.getInputEvent(GotoFileAction.ID),
-                      e.getData(PlatformDataKeys.CONTEXT_COMPONENT), e.getPlace(), true);
+      DumbService.getInstance(project).showDumbModeNotification(IdeBundle.message("go.to.class.dumb.mode.message"));
+      AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
+      InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
+      Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      ActionManager.getInstance().tryToExecute(action, event, component, e.getPlace(), true);
     }
   }
 
   @Override
-  public void gotoActionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    assert project != null;
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    if (project == null) return;
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.class");
     final GotoClassModel2 model = new GotoClassModel2(project);
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
@@ -93,17 +96,20 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
         AccessToken token = ReadAction.start();
         try {
           if (element instanceof PsiElement) {
-            final PsiElement psiElement = getElement(((PsiElement)element), popup);
-            final VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
-            if (popup.getLinePosition() != -1 && file != null) {
-              Navigatable n = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition()).setUseCurrentWindow(
-                popup.isOpenInCurrentWindowRequested());
+            PsiElement psiElement = getElement(((PsiElement)element), popup);
+            psiElement = psiElement.getNavigationElement();
+            VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+
+            if (file != null && popup.getLinePosition() != -1) {
+              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition());
+              Navigatable n = descriptor.setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
               if (n.canNavigate()) {
                 n.navigate(true);
                 return;
               }
             }
-            if (psiElement != null && file != null && popup.getMemberPattern() != null) {
+
+            if (file != null && popup.getMemberPattern() != null) {
               NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
               Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
               if (member != null) {
@@ -121,10 +127,11 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
           token.finish();
         }
       }
-    }, "Classes matching pattern", true);
+    }, IdeBundle.message("go.to.class.toolwindow.title"), true);
   }
 
-  @Nullable private static Navigatable findMember(String pattern, PsiElement psiElement, VirtualFile file) {
+  @Nullable
+  private static Navigatable findMember(String pattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
@@ -144,8 +151,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       Object target = null;
       for (TreeElement treeElement : element.getChildren()) {
         if (treeElement instanceof StructureViewTreeElement) {
-          final ItemPresentation presentation = treeElement.getPresentation();
-          String presentableText = presentation == null ? null : presentation.getPresentableText();
+          String presentableText = treeElement.getPresentation().getPresentableText();
           if (presentableText != null) {
             final int degree = matcher.matchingDegree(presentableText);
             if (degree > max) {
@@ -181,6 +187,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return null;
   }
 
+  @NotNull
   private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {

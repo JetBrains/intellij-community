@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,16 +31,13 @@ import java.util.List;
 /**
  * @author max
  */
-public class PropertiesFileTest extends LightPlatformTestCase {
+public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase {
   private Property myPropertyToAdd;
-
-  public PropertiesFileTest() {
-    PlatformTestCase.initPlatformLangPrefix();    
-  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    PlatformTestCase.initPlatformLangPrefix();
     myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");
   }
 
@@ -73,8 +71,8 @@ public class PropertiesFileTest extends LightPlatformTestCase {
 
     List<IProperty> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
-    assertPropertyEquals(properties.get(0), "xxx", "yyy");
-    assertPropertyEquals(properties.get(1), myPropertyToAdd.getName(), myPropertyToAdd.getValue());
+    assertPropertyEquals(properties.get(1), "xxx", "yyy");
+    assertPropertyEquals(properties.get(0), myPropertyToAdd.getName(), myPropertyToAdd.getValue());
   }
   public void testDeleteProperty() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\n#s\nzzz=ttt\n\n");

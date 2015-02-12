@@ -169,6 +169,6 @@ public abstract class PythonRemoteInterpreterManager {
     }
   }
 
-  public abstract void runVagrant(String vagrantFolder) throws ExecutionException;
+  public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
 }
 

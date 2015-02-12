@@ -65,8 +65,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     for (final MemberInfo memberInfo : myDelegateMethodInfos) {
       if (!memberInfo.isChecked()) continue;
       final PsiMethod method = (PsiMethod)memberInfo.getMember();
-      final Project project = method.getProject();
-      final String getterName = PropertyUtil.suggestGetterName(field);
+      final String getterName = GenerateMembersUtil.suggestGetterName(field);
       final int[] paramPermutation = DelegationUtils.getParameterPermutation(method);
       final PsiMethod delegatedMethod = DelegationUtils.getDelegatedMethod(method);
       LOG.assertTrue(!DelegationUtils.isAbstract(method));

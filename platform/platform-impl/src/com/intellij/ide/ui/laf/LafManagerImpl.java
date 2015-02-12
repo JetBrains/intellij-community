@@ -64,6 +64,7 @@ import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.synth.Region;
@@ -556,10 +557,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void patchHiDPI(UIDefaults defaults) {
     if (JBUI.isHiDPI()) {
+      List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
+                                           "Tree.rightChildIndent");
       for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
-        if (entry.getValue() instanceof DimensionUIResource) {
-          DimensionUIResource size = (DimensionUIResource)entry.getValue();
-          entry.setValue(JBUI.size(size).asUIResource());
+        Object value = entry.getValue();
+        String key = entry.getKey().toString();
+        if (value instanceof DimensionUIResource) {
+          entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
+        } else if (value instanceof InsetsUIResource) {
+          entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
+        } else if (value instanceof Integer) {
+          if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
+            entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
+          }
         }
       }
     }

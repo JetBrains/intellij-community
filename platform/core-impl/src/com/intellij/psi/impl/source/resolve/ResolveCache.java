@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,14 +77,10 @@ public class ResolveCache {
     for (int i = 0; i < myMaps.length; i++) {
       myMaps[i] = createWeakMap();
     }
-    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+    messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         clearCache(isPhysical);
-      }
-
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
       }
     });
   }

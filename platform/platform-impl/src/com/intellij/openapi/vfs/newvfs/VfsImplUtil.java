@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,10 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -34,22 +32,26 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
 
   private static final String FILE_SEPARATORS = "/" + File.separator;
 
-  private VfsImplUtil() { }
+  private VfsImplUtil() {
+  }
 
   @Nullable
   public static NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
@@ -176,34 +178,40 @@ public class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
-  private static final Map<String, Set<String>> ourDominatorsMap = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Set<String>> ourDominatorsMap = newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
 
   @NotNull
-  public static <T extends ArchiveHandler> T getHandler(@NotNull VirtualFile entryFile,
-                                                        @NotNull ArchiveFileSystem vfs,
+  public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
+                                                        @NotNull VirtualFile entryFile,
+                                                        @NotNull Function<String, T> producer) {
+    String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
+    return getHandler(vfs, localPath, producer);
+  }
+
+  @NotNull
+  public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
+                                                        @NotNull String localPath,
                                                         @NotNull Function<String, T> producer) {
     checkSubscription();
 
-    String rootPath = vfs.extractRootPath(entryFile.getPath());
-    rootPath = vfs.extractLocalPath(rootPath);
     ArchiveHandler handler;
     boolean refresh = false;
 
     synchronized (ourLock) {
-      Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlers.get(rootPath);
+      Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlers.get(localPath);
       if (record == null) {
-        handler = producer.fun(rootPath);
+        handler = producer.fun(localPath);
         record = Pair.create(vfs, handler);
-        ourHandlers.put(rootPath, record);
+        ourHandlers.put(localPath, record);
 
-        final String finalRootPath = rootPath;
-        forEachDirectoryComponent(rootPath, new Processor<String>() {
+        final String finalRootPath = localPath;
+        forEachDirectoryComponent(localPath, new Processor<String>() {
           @Override
           public boolean process(String containingDirectoryPath) {
             Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
             if (handlers == null) {
-              ourDominatorsMap.put(containingDirectoryPath, handlers = new THashSet<String>());
+              ourDominatorsMap.put(containingDirectoryPath, handlers = ContainerUtil.newTroveSet());
             }
             handlers.add(finalRootPath);
             return true;
@@ -230,7 +238,7 @@ public class VfsImplUtil {
 
   private static void forEachDirectoryComponent(String rootPath, Processor<String> processor) {
     int index = rootPath.lastIndexOf('/');
-    while(index > 0) {
+    while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);
       if (!processor.process(containingDirectoryPath)) return;
       index = rootPath.lastIndexOf('/', index - 1);
@@ -240,8 +248,8 @@ public class VfsImplUtil {
   private static void checkSubscription() {
     if (ourSubscribed.getAndSet(true)) return;
 
-    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    Application app = ApplicationManager.getApplication();
+    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         InvalidationState state = null;
@@ -257,22 +265,25 @@ public class VfsImplUtil {
               continue;
             }
 
-            VirtualFile file = event.getFile();
             String path = event.getPath();
             if (event instanceof VFilePropertyChangeEvent) {
               path = ((VFilePropertyChangeEvent)event).getOldPath();
-            } else if (event instanceof VFileMoveEvent) {
+            }
+            else if (event instanceof VFileMoveEvent) {
               path = ((VFileMoveEvent)event).getOldPath();
             }
+
+            VirtualFile file = event.getFile();
             if (file == null || !file.isDirectory()) {
-              if (state == null) state = new InvalidationState();
-              state.invalidateHandlerForPath(path);
-            } else {
+              state = InvalidationState.invalidate(state, path);
+            }
+            else {
               Collection<String> affectedPaths = ourDominatorsMap.get(path);
               if (affectedPaths != null) {
-                affectedPaths = new ArrayList<String>(affectedPaths); // defensive copying, we will modify original during invalidate
-                if (state == null) state = new InvalidationState();
-                for (String affectedPath : affectedPaths) state.invalidateHandlerForPath(affectedPath);
+                affectedPaths = ContainerUtil.newArrayList(affectedPaths);  // defensive copying; original may be updated on invalidation
+                for (String affectedPath : affectedPaths) {
+                  state = InvalidationState.invalidate(state, affectedPath);
+                }
               }
             }
           }
@@ -286,38 +297,39 @@ public class VfsImplUtil {
   private static class InvalidationState {
     private Map<String, VirtualFile> rootsToRefresh;
 
-    boolean invalidateHandlerForPath(final String path) {
+    @Nullable
+    public static InvalidationState invalidate(@Nullable InvalidationState state, final String path) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
       if (handlerPair != null) {
         forEachDirectoryComponent(path, new Processor<String>() {
           @Override
           public boolean process(String containingDirectoryPath) {
             Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-            if (handlers != null) {
-              if(handlers.remove(path) && handlers.size() == 0) {
-                ourDominatorsMap.remove(containingDirectoryPath);
-              }
+            if (handlers != null && handlers.remove(path) && handlers.size() == 0) {
+              ourDominatorsMap.remove(containingDirectoryPath);
             }
             return true;
           }
         });
-        registerPathToRefresh(handlerPair, path);
+
+        if (state == null) state = new InvalidationState();
+        state.registerPathToRefresh(path, handlerPair.first);
       }
-      return handlerPair != null;
+
+      return state;
     }
 
-    private void registerPathToRefresh(Pair<ArchiveFileSystem, ArchiveHandler> handlerPair, String path) {
-      String rootPath = handlerPair.first.convertLocalToRootPath(path);
-      NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, handlerPair.first);
+    private void registerPathToRefresh(String path, ArchiveFileSystem vfs) {
+      NewVirtualFile root = ManagingFS.getInstance().findRoot(vfs.composeRootPath(path), vfs);
       if (root != null) {
         if (rootsToRefresh == null) rootsToRefresh = ContainerUtil.newHashMap();
         rootsToRefresh.put(path, root);
       }
     }
 
-    void scheduleRefresh() {
+    public void scheduleRefresh() {
       if (rootsToRefresh != null) {
-        for(VirtualFile root:rootsToRefresh.values()) {
+        for (VirtualFile root : rootsToRefresh.values()) {
           ((NewVirtualFile)root).markDirtyRecursively();
         }
         ZipFileCache.reset(rootsToRefresh.keySet());

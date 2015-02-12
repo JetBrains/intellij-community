@@ -27,11 +27,8 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
 import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.xml.DOMConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,9 +58,9 @@ public class BuildMain {
   private static final String PRELOAD_PROJECT_PATH = "preload.project.path";
   private static final String PRELOAD_CONFIG_PATH = "preload.config.path";
   
-  private static final String LOG_CONFIG_FILE_NAME = "build-log.xml";
+  private static final String LOG_CONFIG_FILE_NAME = "build-log.properties";
   private static final String LOG_FILE_NAME = "build.log";
-  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
+  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.properties";
   private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
   private static final Logger LOG;
   static {
@@ -82,7 +79,10 @@ public class BuildMain {
 
   public static void main(String[] args){
     final long processStart = System.currentTimeMillis();
-    System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
+    final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
+    System.out.println(startMessage);
+    LOG.info(startMessage);
+    
     final String host = args[HOST_ARG];
     final int port = Integer.parseInt(args[PORT_ARG]);
     final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
@@ -90,6 +90,7 @@ public class BuildMain {
     final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
     Utils.setSystemRoot(systemDir);
 
+    final long connectStart = System.currentTimeMillis();
     // IDEA-123132, let's try again
     for (int attempt = 0; attempt < 3; attempt++) {
       try {
@@ -125,8 +126,12 @@ public class BuildMain {
     }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
 
     final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
+
+    
     final boolean success = future.isSuccess();
     if (success) {
+      LOG.info("Connection to IDE established in " + (System.currentTimeMillis() - connectStart) + " ms");
+
       final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
       final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null); 
       if (projectPathToPreload != null && globalsPathToPreload != null) {
@@ -331,7 +336,7 @@ public class BuildMain {
       String text = FileUtil.loadFile(configFile);
       final String logFile = logDir != null? new File(logDir, LOG_FILE_NAME).getAbsolutePath() : LOG_FILE_NAME;
       text = StringUtil.replace(text, LOG_FILE_MACRO, StringUtil.replace(logFile, "\\", "\\\\"));
-      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
+      PropertyConfigurator.configure(new ByteArrayInputStream(text.getBytes("UTF-8")));
     }
     catch (IOException e) {
       System.err.println("Failed to configure logging: ");
@@ -340,7 +345,6 @@ public class BuildMain {
     }
 
     Logger.setFactory(MyLoggerFactory.class);
-    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
   }
 
   private static void ensureLogConfigExists(final File logConfig) throws IOException {

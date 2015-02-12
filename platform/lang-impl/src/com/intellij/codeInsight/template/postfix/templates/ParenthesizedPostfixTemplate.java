@@ -16,21 +16,17 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
-
 public class ParenthesizedPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
-  public ParenthesizedPostfixTemplate(PostfixTemplatePsiInfo psiInfo, Condition<PsiElement> condition) {
-    super("par", "(expr)", psiInfo, selectorWithChooser(condition));
-  }
+  private final PostfixTemplatePsiInfo myPsiInfo;
 
-
-  public ParenthesizedPostfixTemplate(PostfixTemplatePsiInfo psiInfo) {
-    super("par", "(expr)", psiInfo, selectorWithChooser());
+  public ParenthesizedPostfixTemplate(PostfixTemplatePsiInfo psiInfo,
+                                      @NotNull PostfixTemplateExpressionSelector selector) {
+    super("par", "(expr)", selector);
+    myPsiInfo = psiInfo;
   }
 
   @Override

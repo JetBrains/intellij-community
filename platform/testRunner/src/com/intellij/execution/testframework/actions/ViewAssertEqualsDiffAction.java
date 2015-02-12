@@ -16,6 +16,11 @@
 
 package com.intellij.execution.testframework.actions;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.impl.DiffRequestProcessor;
+import com.intellij.diff.impl.DiffWindowBase;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestTreeView;
@@ -25,10 +30,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction {
@@ -43,19 +50,21 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
 
   public static boolean openDiff(DataContext context, @Nullable DiffHyperlink currentHyperlink) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (testProxy != null) {
       DiffHyperlink diffViewerProvider = testProxy.getDiffViewerProvider();
       if (diffViewerProvider != null) {
-        final Project project = CommonDataKeys.PROJECT.getData(context);
         final List<DiffHyperlink> providers = collectAvailableProviders(TestTreeView.MODEL_DATA_KEY.getData(context));
-        if (providers.size() > 1) {
-          new MyAssertEqualsDiffChain(providers, diffViewerProvider, currentHyperlink).openMultiDiff(project);
+        int index = Math.max(0, providers.indexOf(diffViewerProvider));
+        if (currentHyperlink != null) {
+          index = Math.max(index, providers.indexOf(currentHyperlink));
         }
-        else {
-          diffViewerProvider.openDiff(project);
-        }
+        new MyDiffWindow(project, providers, index).show();
         return true;
       }
+    }
+    if (currentHyperlink != null) {
+      new MyDiffWindow(project, currentHyperlink).show();
     }
     return false;
   }
@@ -105,51 +114,41 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     presentation.setVisible(enabled);
   }
 
-  private static class MyAssertEqualsDiffChain implements AbstractTestProxy.AssertEqualsDiffChain {
+  private static class MyDiffWindow extends DiffWindowBase {
+    @NotNull private final List<DiffHyperlink> myRequests;
+    private final int myIndex;
 
+    public MyDiffWindow(@Nullable Project project, @NotNull DiffHyperlink request) {
+      this(project, Collections.singletonList(request), 0);
+    }
 
-    private final List<DiffHyperlink> myProviders;
-    private DiffHyperlink myProvider;
+    public MyDiffWindow(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
+      super(project, DiffDialogHints.DEFAULT);
+      myRequests = requests;
+      myIndex = index;
+    }
 
-    public MyAssertEqualsDiffChain(List<DiffHyperlink> providers,
-                                   DiffHyperlink provider, 
-                                   DiffHyperlink hyperlink) {
-      myProviders = providers;
-      if (hyperlink != null) {
-        for (DiffHyperlink viewProvider : providers) {
-          if (hyperlink.equals(viewProvider)) {
-            provider = viewProvider;
-            break;
-          }
-        }
+    @NotNull
+    @Override
+    protected DiffRequestProcessor createProcessor() {
+      return new MyTestDiffRequestProcessor(myProject, myRequests, myIndex);
+    }
+
+    private class MyTestDiffRequestProcessor extends TestDiffRequestProcessor {
+      public MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
+        super(project, requests, index);
+        putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY, "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
       }
-      myProvider = provider;
-    }
 
-    @Override
-    public DiffHyperlink getPrevious() {
-      final int prevIdx = (myProviders.size() + myProviders.indexOf(myProvider) - 1) % myProviders.size();
-      return myProviders.get(prevIdx);
-    }
+      @Override
+      protected void setWindowTitle(@NotNull String title) {
+        getWrapper().setTitle(title);
+      }
 
-    @Override
-    public DiffHyperlink getCurrent() {
-      return myProvider;
-    }
-
-    @Override
-    public DiffHyperlink getNext() {
-      final int nextIdx = (myProviders.indexOf(myProvider) + 1) % myProviders.size();
-      return myProviders.get(nextIdx);
-    }
-
-    @Override
-    public void setCurrent(DiffHyperlink provider) {
-      myProvider = provider;
-    }
-
-    public void openMultiDiff(Project project) {
-      myProvider.openMultiDiff(project, this);
+      @Override
+      protected void onAfterNavigate() {
+        DiffUtil.closeWindow(getWrapper().getWindow(), true, true);
+      }
     }
   }
 }

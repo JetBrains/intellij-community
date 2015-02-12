@@ -10,7 +10,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-core-3.0.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/maven-core-3.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -19,7 +19,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

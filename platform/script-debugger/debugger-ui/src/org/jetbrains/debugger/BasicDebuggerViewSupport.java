@@ -17,7 +17,9 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilter {
+public class BasicDebuggerViewSupport extends MemberFilterBase implements DebuggerViewSupport {
+  protected final Promise<MemberFilter> defaultMemberFilterPromise = Promise.<MemberFilter>resolve(this);
+
   public static final DebuggerViewSupport INSTANCE = new BasicDebuggerViewSupport();
 
   @Nullable
@@ -88,36 +90,14 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
 
   @NotNull
   @Override
-  public MemberFilter createMemberFilter(@NotNull VariableContext context) {
-    return this;
-  }
-
-  @Override
-  public boolean isMemberVisible(@NotNull Variable variable, boolean filterFunctions) {
-    return true;
+  public Promise<MemberFilter> getMemberFilter(@NotNull VariableContext context) {
+    return defaultMemberFilterPromise;
   }
 
   @NotNull
   @Override
   public List<Variable> getAdditionalVariables() {
     return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public String getName(@NotNull Variable variable) {
-    return variable.getName();
-  }
-
-  @Override
-  public boolean hasNameMappings() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public String normalizeMemberName(@NotNull Variable variable) {
-    return variable.getName();
   }
 
   @Override

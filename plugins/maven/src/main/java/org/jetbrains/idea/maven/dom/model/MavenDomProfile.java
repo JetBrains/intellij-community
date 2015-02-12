@@ -19,11 +19,14 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
+import org.jetbrains.idea.maven.dom.model.presentation.MavenProfilePresentationProvider;
 
+@Presentation(icon = "MavenIcons.ProfilesClosed", provider = MavenProfilePresentationProvider.class)
 public interface MavenDomProfile extends MavenDomElement, MavenDomProjectModelBase {
   @NotNull
   @Required

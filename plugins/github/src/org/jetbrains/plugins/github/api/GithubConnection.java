@@ -351,9 +351,7 @@ public class GithubConnection {
         throw new GithubAuthenticationException("Request response: " + error.getMessage());
       case HttpStatus.SC_BAD_REQUEST:
       case HttpStatus.SC_UNPROCESSABLE_ENTITY:
-        if (body != null) {
-          LOG.info(body);
-        }
+        LOG.info("body message:" + body);
         throw getStatusCodeException(response);
       default:
         throw getStatusCodeException(response);

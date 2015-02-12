@@ -109,7 +109,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     setFocusTraversalPolicy(layoutFocusTraversalPolicy);
 
     setupCloseAction();
-    new MnemonicHelper().register(this);
+    MnemonicHelper.init(this);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, new Insets(8, 8, 8, 8));
 

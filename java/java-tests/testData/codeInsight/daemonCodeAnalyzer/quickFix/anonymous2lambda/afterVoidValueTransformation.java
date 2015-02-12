@@ -1,9 +1,10 @@
 // "Replace with lambda" "true"
-import javax.swing.*;
 class Test {
   String c = null;
 
   public void main(String[] args){
-    SwingUtilities.invokeLater(() -> c.substring(0).toString());
+    invokeLater(() -> c.substring(0).toString());
   }
+  
+  public void invokeLater(Runnable r) {}
 }

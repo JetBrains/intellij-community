@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -54,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
-
+  public static final Key<Boolean> ENFORCING_TAG = Key.create("xml.insert.handler.enforcing.tag");
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   @Override
@@ -62,11 +63,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     Project project = context.getProject();
     Editor editor = context.getEditor();
     // Need to insert " " to prevent creating tags like <tagThis is my text
+    editor.getDocument().putUserData(ENFORCING_TAG, Boolean.TRUE);
     final int offset = editor.getCaretModel().getOffset();
     editor.getDocument().insertString(offset, " ");
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiElement current = context.getFile().findElementAt(context.getStartOffset());
     editor.getDocument().deleteString(offset, offset + 1);
+    editor.getDocument().putUserData(ENFORCING_TAG, null);
 
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 

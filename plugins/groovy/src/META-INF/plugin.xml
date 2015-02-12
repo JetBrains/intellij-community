@@ -1098,6 +1098,15 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection"/>
 
+    <localInspection language="Groovy"
+                     groupPath="Groovy"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupKey="groovy.probable.bugs"
+                     key="equals.between.inconvertible.types"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
+
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
@@ -1552,7 +1561,8 @@
   </extensions>
 
   <actions>
-    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" text="Execute Groovy Code"
+    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
+            text="Execute Groovy Code"
             description="Execute Groovy code in console">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>

@@ -55,7 +55,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
                                             @NotNull ErrorTreeElementKind kind,
                                             @Nullable GroupingElement parent,
                                             String[] message,
-                                            Navigatable navigatable,
+                                            @NotNull Navigatable navigatable,
                                             String exportText, String rendererTextPrefix) {
     super(kind, parent, message, navigatable, exportText, rendererTextPrefix);
     myNotification = notification;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,8 +191,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
+  /**
+   * @deprecated to be removed in IDEA 15 (please use ModifiableModel base interface directly)
+   */
   public interface ModifiableModelEx extends ModifiableModel {
-    Library createLibrary(String name, @Nullable PersistentLibraryKind type);
   }
 
   public class LibraryModel implements ModifiableModelEx, JDOMExternalizable {

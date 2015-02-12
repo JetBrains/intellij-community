@@ -16,13 +16,23 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   public GenerateSetterHandler() {
     super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
+  }
+
+  @Nullable
+  @Override
+  protected JComponent getHeaderPanel(final Project project) {
+    return getHeaderPanel(project, SetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.equals.hashcode.template"));
   }
 
   @Override

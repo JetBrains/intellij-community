@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,38 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiDocTag extends PsiElement, PsiNamedElement{
+/**
+ * Represents a JavaDoc tag (either an inline tag or a block tag).
+ */
+public interface PsiDocTag extends PsiElement, PsiNamedElement {
   PsiDocTag[] EMPTY_ARRAY = new PsiDocTag[0];
 
+  /**
+   * Returns the doc comment in which the tag is contained.
+   */
   PsiDocComment getContainingComment();
+
+  /**
+   * Returns the token representing the name of this JavaDoc tag.
+   */
   PsiElement getNameElement();
+
+  /**
+   * Returns the name of this JavaDoc tag.
+   */
   @Override
   @NonNls @NotNull String getName();
+
+  /**
+   * Returns the list of all elements representing the contents of a tag.
+   */
   PsiElement[] getDataElements();
+
+  /**
+   * Returns the element specifying what exactly is being documented by this tag
+   * (for example, the parameter name for a param tag or the exception name for a throws tag).
+   *
+   * @return the element, or null if the tag structure does not include such an element.
+   */
   @Nullable PsiDocTagValue getValueElement();
 }

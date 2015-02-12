@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,19 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author pti
@@ -73,7 +77,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   protected void doOKAction() {
     super.doOKAction();
 
-    ProgressManager.getInstance().run(new Task.Modal(null, IdeBundle.message("progress.downloading.plugins"), true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.downloading.plugins"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         UpdateChecker.saveDisabledToUpdatePlugins();
@@ -106,8 +110,14 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
       foundPluginsPanel.addStateListener(new DetectedPluginsPanel.Listener() {
         @Override
         public void stateChanged() {
-          boolean allSkipped = foundPluginsPanel.getSkippedPlugins().size() == myUploadedPlugins.size();
-          getOKAction().setEnabled(!allSkipped);
+          final Set<String> skipped = foundPluginsPanel.getSkippedPlugins();
+          final PluginDownloader any = ContainerUtil.find(myUploadedPlugins, new Condition<PluginDownloader>() {
+            @Override
+            public boolean value(PluginDownloader plugin) {
+              return !skipped.contains(plugin.getPluginId());
+            }
+          });
+          getOKAction().setEnabled(any != null);
         }
       });
       myPluginsPanel.add(foundPluginsPanel, BorderLayout.CENTER);

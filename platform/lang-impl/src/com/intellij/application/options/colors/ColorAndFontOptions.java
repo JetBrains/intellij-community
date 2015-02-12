@@ -1108,7 +1108,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public InnerSearchableConfigurable findSubConfigurable(@NotNull final Class pageClass) {
+  public SearchableConfigurable findSubConfigurable(@NotNull Class pageClass) {
     if (mySubPanelFactories == null) {
       buildConfigurables();
     }
@@ -1121,16 +1121,22 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public NewColorAndFontPanel findPage(String pageName) {
+  public SearchableConfigurable findSubConfigurable(String pageName) {
     if (mySubPanelFactories == null) {
       buildConfigurables();
     }
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       if (configurable.getDisplayName().equals(pageName)) {
-        return configurable.createPanel();
+        return configurable;
       }
     }
     return null;
+  }
+
+  @Nullable
+  public NewColorAndFontPanel findPage(String pageName) {
+    InnerSearchableConfigurable child = (InnerSearchableConfigurable)findSubConfigurable(pageName);
+    return child == null ? null : child.createPanel();
   }
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {

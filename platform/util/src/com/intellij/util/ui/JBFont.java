@@ -36,9 +36,7 @@ public class JBFont extends Font {
     }
     Font scaled = font;
     if (tryToScale) {
-      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("win.systemFixed.font.height");
-      float scale = value instanceof Integer ? ((Integer)value).floatValue() / 12f : 1f;
-      scaled = font.deriveFont(font.getSize() / scale * JBUI.scale(1f));
+      scaled = font.deriveFont(font.getSize() * JBUI.scale(1f));
     }
 
     if (font instanceof UIResource) {
@@ -46,10 +44,19 @@ public class JBFont extends Font {
     }
 
     return new JBFont(scaled);
-
   }
 
+  public JBFont asBold() {
+    return deriveFont(BOLD, getSize());
+  }
 
+  public JBFont asItalic() {
+    return deriveFont(ITALIC, getSize());
+  }
+
+  public JBFont asPlain() {
+    return deriveFont(PLAIN, getSize());
+  }
 
   @Override
   public JBFont deriveFont(int style, float size) {

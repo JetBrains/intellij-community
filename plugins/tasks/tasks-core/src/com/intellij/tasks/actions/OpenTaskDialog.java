@@ -52,7 +52,7 @@ import java.util.Set;
  */
 public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
-  public static final String START_FROM_BRANCH = "start.from.branch";
+  private static final String START_FROM_BRANCH = "start.from.branch";
 
   private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState("", "-- do not update --");
 
@@ -174,7 +174,7 @@ public class OpenTaskDialog extends DialogWrapper {
               });
             }
             if (info == null) {
-              info = handler.getActiveTask();
+              info = tasks[0];
             }
             myBranchFrom.setSelectedItem(info);
             myBranchFrom.addActionListener(new ActionListener() {
@@ -256,7 +256,7 @@ public class OpenTaskDialog extends DialogWrapper {
           taskManager.createBranch(localTask, activeTask, myBranchName.getText());
         }
       };
-      if (item != null && !item.equals(myVcsTaskHandler.getActiveTask())) {
+      if (item != null) {
         myVcsTaskHandler.switchToTask(item, createBranch);
       }
       else {

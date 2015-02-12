@@ -116,6 +116,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
     if (rowIndex < myItems.size()) {
       myColumnInfos[columnIndex].setValue(getItem(rowIndex), aValue);
     }
+    fireTableCellUpdated(rowIndex, columnIndex);
   }
 
   /**

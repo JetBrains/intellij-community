@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,5 +52,19 @@ public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implem
   @Override
   public T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException {
     throw new AbstractMethodError();
+  }
+
+  public enum State {
+    UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
+  }
+
+  @Override
+  public boolean shouldBeSaved(@NotNull T scheme) {
+    return true;
+  }
+
+  @NotNull
+  public State getState(@NotNull T scheme) {
+    return shouldBeSaved(scheme) ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
   }
 }

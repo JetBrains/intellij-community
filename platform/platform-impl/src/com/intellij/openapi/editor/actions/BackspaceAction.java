@@ -52,26 +52,6 @@ public class BackspaceAction extends EditorAction {
         // since the latter have trouble finding the right location of caret movement in the case of multi-shred injected fragments
         editor = ((EditorWindow)editor).getDelegate();
       }
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasBlockSelection()) {
-        final LogicalPosition start = selectionModel.getBlockStart();
-        final LogicalPosition end = selectionModel.getBlockEnd();
-        int column = Math.min(start.column, end.column);
-        int startLine = Math.min(start.line, end.line);
-        int endLine = Math.max(start.line, end.line);
-        EditorModificationUtil.deleteBlockSelection(editor);
-        if (column > 0 && start.column == end.column) {
-          for (int i = startLine; i <= endLine; i++) {
-            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
-            doBackSpaceAtCaret(editor);
-          }
-          column--;
-        }
-        final int newColumn = Math.max(column, 0);
-        selectionModel.setBlockSelection(new LogicalPosition(startLine, newColumn), new LogicalPosition(endLine, newColumn));
-        return;
-      }
-
       doBackSpaceAtCaret(editor);
     }
   }

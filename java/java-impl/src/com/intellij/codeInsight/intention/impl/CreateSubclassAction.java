@@ -85,7 +85,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(position);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
-        psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+        psiClass.hasModifierProperty(PsiModifier.FINAL) || psiClass.getContainingFile().getContainingDirectory() == null) {
       return false;
     }
     if (!isSupportedLanguage(psiClass)) return false;

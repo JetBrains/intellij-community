@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -388,9 +388,9 @@ public class UIUtil {
     }
   }
 
-  public static boolean isRetina (GraphicsDevice device) {
+  public static boolean isRetina (Graphics2D graphics) {
     if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-      return DetectRetinaKit.isOracleMacRetinaDevice(device);
+      return DetectRetinaKit.isMacRetina(graphics);
     } else {
       return isRetina();
     }
@@ -1794,9 +1794,9 @@ public class UIUtil {
 
       // Wrong values prevent IDE from start
       // So we have to be careful
-      if (registryLcdContrastValue < 140) {
+      if (registryLcdContrastValue < 100) {
         LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
-        registryLcdContrastValue = 140;
+        registryLcdContrastValue = 100;
       } else if (registryLcdContrastValue > 250) {
         LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
         registryLcdContrastValue = 250;
@@ -1808,6 +1808,14 @@ public class UIUtil {
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
+      return RetinaImage.create(width, height, type);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, type);
+  }
+
+  public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
+    if (DetectRetinaKit.isMacRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -2048,7 +2056,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@NotNull JComponent c, Condition<Component> condition) {
+  public static Component findParentByCondition(@NotNull Component c, Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2368,6 +2376,7 @@ public class UIUtil {
       runnable.run();
     }
     else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(runnable);
     }
   }
@@ -2377,8 +2386,9 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -2399,8 +2409,9 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
     final Ref<T> result = Ref.create();
@@ -2418,15 +2429,16 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      final Ref<Throwable> ref = new Ref<Throwable>();
+      final Ref<Throwable> ref = Ref.create();
       SwingUtilities.invokeAndWait(new Runnable() {
         @Override
         public void run() {
@@ -3364,5 +3376,33 @@ public class UIUtil {
     graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
     component.paint(graphics);
     return image;
+  }
+
+  /**
+   * Indicates whether the specified component is scrollable or it contains a scrollable content.
+   */
+  public static boolean hasScrollPane(@NotNull Component component) {
+    return hasComponentOfType(component, JScrollPane.class);
+  }
+
+  /**
+   * Indicates whether the specified component is instance of one of the specified types
+   * or it contains an instance of one of the specified types.
+   */
+  public static boolean hasComponentOfType(Component component, Class<?>... types) {
+    for (Class<?> type : types) {
+      if (type.isAssignableFrom(component.getClass())) {
+        return true;
+      }
+    }
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        if (hasComponentOfType(container.getComponent(i), types)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

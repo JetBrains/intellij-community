@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
 package com.intellij.util.diff;
 
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public interface ShallowNodeComparator<OT, NT> {
-  ThreeState deepEqual(OT oldNode, NT newNode);
-  boolean typesEqual(OT oldNode, NT newNode);
-  boolean hashCodesEqual(OT oldNode, NT newNode);
+  @NotNull
+  ThreeState deepEqual(@NotNull OT oldNode, @NotNull NT newNode);
+  boolean typesEqual(@NotNull OT oldNode, @NotNull NT newNode);
+  boolean hashCodesEqual(@NotNull OT oldNode, @NotNull NT newNode);
 }

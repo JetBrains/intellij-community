@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,6 @@ import java.util.List;
 public class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
   private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
   private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
-  private static final Key<String> FORMAT_KEY = Key.create("Image.format");
 
   private static final List<String> supportedExtensions = Arrays.asList(ImageIO.getReaderFormatNames());
   @NotNull
@@ -67,7 +67,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     add(createLabel(image, imageFileSize), BorderLayout.SOUTH);
 
     setBackground(UIUtil.getToolTipBackground());
-    setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+    setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(JBColor.BLACK), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
   }
 
   @Override
@@ -98,37 +98,16 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     final int i = colorModel.getPixelSize();
     return new JLabel(String.format("%dx%d, %dbpp, %s", width, height, i, StringUtil.formatFileSize(imageFileSize)));
   }
-
-  @SuppressWarnings({"AutoUnboxing"})
+  
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
     SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
     if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || SoftReference.dereference(imageRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
-        InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-        ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-        try {
-          Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
-          if (imageReaders.hasNext()) {
-            ImageReader imageReader = imageReaders.next();
-            try {
-              file.putUserData(FORMAT_KEY, imageReader.getFormatName());
-              ImageReadParam param = imageReader.getDefaultReadParam();
-              imageReader.setInput(imageInputStream, true, true);
-              int minIndex = imageReader.getMinIndex();
-              BufferedImage image = imageReader.read(minIndex, param);
-              file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
-              return true;
-            }
-            finally {
-              imageReader.dispose();
-            }
-          }
-        }
-        finally {
-          imageInputStream.close();
-        }
+        final BufferedImage image = readImageFromBytes(content);
+        file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
+        return true;
       }
       finally {
         // We perform loading no more needed
@@ -136,6 +115,31 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
       }
     }
     return false;
+  }
+
+  @NotNull
+  public static BufferedImage readImageFromBytes(@NotNull byte[] content) throws IOException {
+    InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
+    ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
+    try {
+      Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
+      if (imageReaders.hasNext()) {
+        ImageReader imageReader = imageReaders.next();
+        try {
+          ImageReadParam param = imageReader.getDefaultReadParam();
+          imageReader.setInput(imageInputStream, true, true);
+          int minIndex = imageReader.getMinIndex();
+          return imageReader.read(minIndex, param);
+        }
+        finally {
+          imageReader.dispose();
+        }
+      }
+    }
+    finally {
+      imageInputStream.close();
+    }
+    throw new IOException("Can't read image from given content");
   }
 
   public static JComponent getPreviewComponent(@Nullable final PsiElement parent) {

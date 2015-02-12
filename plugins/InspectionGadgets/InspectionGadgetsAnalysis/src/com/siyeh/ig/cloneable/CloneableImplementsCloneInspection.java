@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -78,19 +77,18 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) {
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final StringBuilder cloneMethod = new StringBuilder("public ");
-      cloneMethod.append(element.getText());
-      cloneMethod.append(" clone() throws java.lang.CloneNotSupportedException {\nreturn (");
-      cloneMethod.append(element.getText());
-      cloneMethod.append(") super.clone();\n}");
-      final PsiMethod method = factory.createMethodFromText(cloneMethod.toString(), element);
+      final String cloneMethod =
+        "public " + element.getText() + " clone() throws java.lang.CloneNotSupportedException {\n" +
+        "return (" + element.getText() + ") super.clone();\n" +
+        "}";
+      final PsiMethod method = factory.createMethodFromText(cloneMethod, element);
       parent.add(method);
     }
   }

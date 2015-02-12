@@ -32,6 +32,7 @@ import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.help.HelpManager;
@@ -339,16 +340,21 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     final SimpleDiffRequest r = new SimpleDiffRequest(myProject, m.getTitle());
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
-      public void run(@NotNull ProgressIndicator i) {
-        RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
-        p.processingLeftRevision();
-        DiffContent left = m.getLeftDiffContent(p);
+      public void run(@NotNull final ProgressIndicator i) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
+            p.processingLeftRevision();
+            DiffContent left = m.getLeftDiffContent(p);
 
-        p.processingRightRevision();
-        DiffContent right = m.getRightDiffContent(p);
+            p.processingRightRevision();
+            DiffContent right = m.getRightDiffContent(p);
 
-        r.setContents(left, right);
-        r.setContentTitles(m.getLeftTitle(p), m.getRightTitle(p));
+            r.setContents(left, right);
+            r.setContentTitles(m.getLeftTitle(p), m.getRightTitle(p));
+          }
+        });
       }
     }.queue();
 

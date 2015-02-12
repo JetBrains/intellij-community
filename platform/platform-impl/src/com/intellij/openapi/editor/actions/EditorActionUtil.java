@@ -198,8 +198,12 @@ public class EditorActionUtil {
       }
     }
 
+    int newSpacesEnd = lineStart + buf.length();
     if (newCaretOffset >= spacesEnd) {
       newCaretOffset += buf.length() - (spacesEnd - lineStart);
+    }
+    else if (newCaretOffset >= lineStart && newCaretOffset < spacesEnd && newCaretOffset > newSpacesEnd) {
+      newCaretOffset = newSpacesEnd;
     }
 
     if (buf.length() > 0) {
@@ -308,16 +312,14 @@ public class EditorActionUtil {
    *
    * @param isWithSelection if true - sets selection from old caret position to the new one, if false - clears selection
    *
-   * @see com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineStartIgnoringSoftWraps(com.intellij.openapi.editor.Editor)
+   * @see EditorActionUtil#moveCaretToLineStartIgnoringSoftWraps(Editor)
    */
   public static void moveCaretToLineStart(@NotNull Editor editor, boolean isWithSelection) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     EditorSettings editorSettings = editor.getSettings();
 
     int logCaretLine = caretModel.getLogicalPosition().line;
@@ -544,9 +546,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
 
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
@@ -621,9 +621,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
 
     int offset = caretModel.getOffset();
     if (offset == document.getTextLength()) {
@@ -715,9 +713,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
 
     int offset = editor.getCaretModel().getOffset();
     if (offset == 0) return;
@@ -771,9 +767,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int lineNumber = visibleArea.y / lineHeight;
     if (visibleArea.y % lineHeight > 0) {
@@ -789,9 +783,7 @@ public class EditorActionUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                          ? selectionModel.getBlockStart()
-                                          : caretModel.getLogicalPosition();
+    LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int lineNumber = (visibleArea.y + visibleArea.height) / lineHeight - 1;
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
@@ -805,16 +797,31 @@ public class EditorActionUtil {
       public void invokePopup(final EditorMouseEvent event) {
         if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
           ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-          MouseEvent e = event.getMouseEvent();
-          final Component c = e.getComponent();
-          if (c != null && c.isShowing()) {
-            popupMenu.getComponent().show(c, e.getX(), e.getY());
-          }
-          e.consume();
+          showEditorPopup(event, group);
         }
       }
     };
+  }
+
+  public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
+    return new EditorPopupHandler() {
+      @Override
+      public void invokePopup(final EditorMouseEvent event) {
+        showEditorPopup(event, group);
+      }
+    };
+  }
+
+  private static void showEditorPopup(final EditorMouseEvent event, @NotNull final ActionGroup group) {
+    if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
+      MouseEvent e = event.getMouseEvent();
+      final Component c = e.getComponent();
+      if (c != null && c.isShowing()) {
+        popupMenu.getComponent().show(c, e.getX(), e.getY());
+      }
+      e.consume();
+    }
   }
 
   public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {
@@ -833,8 +840,8 @@ public class EditorActionUtil {
   /**
    * This method moves caret to the nearest preceding visual line start, which is not a soft line wrap
    *
-   * @see com.intellij.openapi.editor.ex.util.EditorUtil#calcCaretLineRange(com.intellij.openapi.editor.Editor)
-   * @see com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineStart(com.intellij.openapi.editor.Editor, boolean)
+   * @see EditorUtil#calcCaretLineRange(Editor)
+   * @see EditorActionUtil#moveCaretToLineStart(Editor, boolean)
    */
   public static void moveCaretToLineStartIgnoringSoftWraps(@NotNull Editor editor) {
     editor.getCaretModel().moveToLogicalPosition(EditorUtil.calcCaretLineRange(editor).first);

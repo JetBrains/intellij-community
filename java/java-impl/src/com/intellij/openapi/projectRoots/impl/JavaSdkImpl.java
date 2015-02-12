@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,12 +30,13 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
@@ -51,12 +54,13 @@ import java.util.regex.Pattern;
  */
 public class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
-  // do not use javaw.exe for Windows because of issues with encoding
-  @NonNls private static final String VM_EXE_NAME = "java";
-  @NonNls private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
-  @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
-  @NonNls private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
+
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
+
+  private static final String VM_EXE_NAME = "java";   // do not use JavaW.exe for Windows because of issues with encoding
+  private static final Pattern VERSION_STRING_PATTERN = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
+  private static final String JAVA_VERSION_PREFIX = "java version ";
+  private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
 
   public JavaSdkImpl() {
     super("JavaSDK");
@@ -83,7 +87,6 @@ public class JavaSdkImpl extends JavaSdk {
     return AllIcons.General.AddJdk;
   }
 
-  @NonNls
   @Override
   @Nullable
   public String getDefaultDocumentationUrl(@NotNull final Sdk sdk) {
@@ -119,7 +122,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  @NonNls
   public String getToolsPath(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
     final boolean isJdk1_x = versionString != null && (versionString.contains("1.0") || versionString.contains("1.1"));
@@ -128,11 +130,6 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
-    /*
-    if ("64".equals(System.getProperty("sun.arch.data.model"))) {
-      return getBinPath(sdk) + File.separator + System.getProperty("os.arch") + File.separator + VM_EXE_NAME;
-    }
-    */
     return getBinPath(sdk) + File.separator + VM_EXE_NAME;
   }
 
@@ -150,8 +147,8 @@ public class JavaSdkImpl extends JavaSdk {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
-      if (new File("/usr/libexec/java_home").exists()) {
-        final String path = ExecUtil.execAndReadLine("/usr/libexec/java_home");
+      if (new File("/usr/libexec/java_home").canExecute()) {
+        String path = ExecUtil.execAndReadLine(new GeneralCommandLine("/usr/libexec/java_home"));
         if (path != null && new File(path).exists()) {
           return path;
         }
@@ -180,6 +177,7 @@ public class JavaSdkImpl extends JavaSdk {
         return javaHome.getAbsolutePath();
       }
     }
+
     return null;
   }
 
@@ -239,20 +237,27 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    FileChooserDescriptor descriptor = super.getHomeChooserDescriptor();
+    final FileChooserDescriptor baseDescriptor = super.getHomeChooserDescriptor();
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(baseDescriptor) {
+      @Override
+      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        if (files.length > 0 && JrtFileSystem.isModularJdk(files[0].getPath()) && !JrtFileSystem.isSupported()) {
+          throw new Exception(LangBundle.message("jrt.not.available.message"));
+        }
+        baseDescriptor.validateSelectedFiles(files);
+      }
+    };
     descriptor.putUserData(KEY, Boolean.TRUE);
     return descriptor;
   }
 
-  @NonNls public static final String MAC_HOME_PATH = "/Home";
-
   @Override
   public String adjustSelectedSdkHome(String homePath) {
     if (SystemInfo.isMac) {
-      File home = new File(homePath, MAC_HOME_PATH);
+      File home = new File(homePath, "/Home");
       if (home.exists()) return home.getPath();
 
-      home = new File(new File(homePath, "Contents"), "Home");
+      home = new File(homePath, "Contents/Home");
       if (home.exists()) return home.getPath();
     }
 
@@ -261,14 +266,20 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return checkForJdk(new File(path));
+    if (!checkForJdk(new File(path))) {
+      return false;
+    }
+    if (JrtFileSystem.isModularJdk(path) && !JrtFileSystem.isSupported()) {
+      return false;
+    }
+    return true;
   }
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     final String suggestedName;
     if (currentSdkName != null && !currentSdkName.isEmpty()) {
-      final Matcher matcher = myVersionStringPattern.matcher(currentSdkName);
+      final Matcher matcher = VERSION_STRING_PATTERN.matcher(currentSdkName);
       final boolean replaceNameWithVersion = matcher.matches();
       if (replaceNameWithVersion){
         // user did not change name -> set it automatically
@@ -315,13 +326,16 @@ public class JavaSdkImpl extends JavaSdk {
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    final File jdkHome = new File(sdk.getHomePath());
+    String homePath = sdk.getHomePath();
+    assert homePath != null : sdk;
+
+    File jdkHome = new File(homePath);
     List<VirtualFile> classes = findClasses(jdkHome, false);
     VirtualFile sources = findSources(jdkHome);
     VirtualFile docs = findDocs(jdkHome, "docs/api");
+    SdkModificator sdkModificator = sdk.getSdkModificator();
 
-    final SdkModificator sdkModificator = sdk.getSdkModificator();
-    final Set<VirtualFile> previousRoots = new LinkedHashSet<VirtualFile>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
+    Set<VirtualFile> previousRoots = new LinkedHashSet<VirtualFile>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
     sdkModificator.removeRoots(OrderRootType.CLASSES);
     previousRoots.removeAll(new HashSet<VirtualFile>(classes));
     for (VirtualFile aClass : classes) {
@@ -330,14 +344,16 @@ public class JavaSdkImpl extends JavaSdk {
     for (VirtualFile root : previousRoots) {
       sdkModificator.addRoot(root, OrderRootType.CLASSES);
     }
-    if(sources != null){
+
+    if (sources != null) {
       sdkModificator.addRoot(sources, OrderRootType.SOURCES);
     }
-    final VirtualFile javaFxSources = findSources(jdkHome, "javafx-src");
+    VirtualFile javaFxSources = findSources(jdkHome, "javafx-src");
     if (javaFxSources != null) {
       sdkModificator.addRoot(javaFxSources, OrderRootType.SOURCES);
     }
-    if(docs != null){
+
+    if (docs != null) {
       sdkModificator.addRoot(docs, JavadocOrderRootType.getInstance());
     }
     else if (SystemInfo.isMac) {
@@ -366,12 +382,14 @@ public class JavaSdkImpl extends JavaSdk {
           sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl(url), JavadocOrderRootType.getInstance());
         }
       }
-    } else {
-      if (getVersion(sdk) == JavaSdkVersion.JDK_1_7) {
-        sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl("http://docs.oracle.com/javafx/2/api/"), JavadocOrderRootType.getInstance());
-      }
     }
+    else if (getVersion(sdk) == JavaSdkVersion.JDK_1_7) {
+      VirtualFile url = VirtualFileManager.getInstance().findFileByUrl("http://docs.oracle.com/javafx/2/api/");
+      sdkModificator.addRoot(url, JavadocOrderRootType.getInstance());
+    }
+
     attachJdkAnnotations(sdkModificator);
+
     sdkModificator.commitChanges();
   }
 
@@ -399,19 +417,14 @@ public class JavaSdkImpl extends JavaSdk {
   private final Map<String, String> myCachedVersionStrings = new HashMap<String, String>();
 
   @Override
-  public final String getVersionString(final String sdkHome) {
-    if (myCachedVersionStrings.containsKey(sdkHome)) {
-      return myCachedVersionStrings.get(sdkHome);
+  public final String getVersionString(String sdkHome) {
+    String versionString = myCachedVersionStrings.get(sdkHome);
+    if (versionString == null) {
+      versionString = getJdkVersion(sdkHome);
+      if (!StringUtil.isEmpty(versionString)) {
+        myCachedVersionStrings.put(sdkHome, versionString);
+      }
     }
-    String versionString = getJdkVersion(sdkHome);
-    if (versionString != null && versionString.isEmpty()) {
-      versionString = null;
-    }
-
-    if (versionString != null){
-      myCachedVersionStrings.put(sdkHome, versionString);
-    }
-
     return versionString;
   }
 
@@ -464,17 +477,22 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static List<VirtualFile> findClasses(File file, boolean isJre) {
-    List<VirtualFile> result = ContainerUtil.newArrayList();
+    List<File> roots = JavaSdkUtil.getJdkClassesRoots(file, isJre);
+    List<String> urls = ContainerUtil.newArrayListWithCapacity(roots.size() + 1);
+    if (JrtFileSystem.isModularJdk(file.getPath())) {
+      urls.add(VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()) + JrtFileSystem.SEPARATOR));
+    }
+    for (File root : roots) {
+      urls.add(VfsUtil.getUrlForLibraryRoot(root));
+    }
 
-    List<File> rootFiles = JavaSdkUtil.getJdkClassesRoots(file, isJre);
-    for (File child : rootFiles) {
-      String url = VfsUtil.getUrlForLibraryRoot(child);
+    List<VirtualFile> result = ContainerUtil.newArrayListWithCapacity(urls.size());
+    for (String url : urls) {
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
       }
     }
-
     return result;
   }
 

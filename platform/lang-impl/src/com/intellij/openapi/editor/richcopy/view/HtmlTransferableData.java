@@ -83,7 +83,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
       else {
         myFontFamily = myDefaultFontFamily = -1;
       }
-      myResultBuffer.append("font-size:").append(mySyntaxInfo.getFontSize()).append("pt;\">");
+      myResultBuffer.append(String.format("font-size:%.1fpt;\">", mySyntaxInfo.getFontSize()));
 
       mySyntaxInfo.processOutputInfo(this);
 

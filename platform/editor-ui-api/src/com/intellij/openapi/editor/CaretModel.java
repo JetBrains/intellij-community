@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,16 @@ import java.util.List;
  * May support several carets existing simultaneously in a document. {@link #supportsMultipleCarets()} method can be used to find out
  * whether particular instance of CaretModel does it. If it does, query and update methods for caret position operate on a certain 'primary'
  * caret. There exists a way to perform the same operation(s) on each caret - see
- * {@link #runForEachCaret(com.intellij.openapi.editor.CaretAction)} method. Within its context, query and update methods operate on the
+ * {@link #runForEachCaret(CaretAction)} method. Within its context, query and update methods operate on the
  * current caret in that iteration. This behaviour can change in future though, so using caret and selection query and update methods in
- * actions that need to operate on multiple carets is discouraged - methods on {@link com.intellij.openapi.editor.Caret} instances obtained
+ * actions that need to operate on multiple carets is discouraged - methods on {@link Caret} instances obtained
  * via {@link #getAllCarets()} or {@link #runForEachCaret(CaretAction)} should be used instead.
  * <p>
  * How 'primary' caret is determined by the model is not defined (currently it's the most recently added caret, but that can change).
  * <p>
  * At all times at least one caret will exist in a document.
  * <p>
- * Update methods, {@link #runBatchCaretOperation(Runnable)} and {@link #runForEachCaret(com.intellij.openapi.editor.CaretAction)} methods
+ * Update methods, {@link #runBatchCaretOperation(Runnable)} and {@link #runForEachCaret(CaretAction)} methods
  * should only be run from EDT. Query methods can be run from any thread, when called not from EDT, those methods are 'not aware' of
  * 'runForEachCaret' scope - they will always return information about primary caret.
  *
@@ -49,9 +49,8 @@ public interface CaretModel {
    *
    * @param columnShift    the number of columns to move the caret by.
    * @param lineShift      the number of lines to move the caret by.
-   * @param withSelection  if true, the caret move should extend the range or block selection in the document.
-   * @param blockSelection if true and <code>withSelection</code> is true, the caret move should extend
-   *                       the block selection in the document. This parameter is ignored when multiple carets are supported by the model.
+   * @param withSelection  if true, the caret move should extend the selection range in the document.
+   * @param blockSelection This parameter is currently ignored.
    * @param scrollToCaret  if true, the document should be scrolled so that the caret is visible after the move.
    */
   void moveCaretRelatively(int columnShift,
@@ -160,7 +159,8 @@ public interface CaretModel {
   TextAttributes getTextAttributes();
 
   /**
-   * Tells whether multiple coexisting carets are supported by this CaretModel instance.
+   * Tells whether multiple coexisting carets are supported by this CaretModel instance. Multiple carets
+   * are not supported when the corresponding Editor instance is a facade over a Swing JTextArea component.
    */
   boolean supportsMultipleCarets();
 
@@ -168,7 +168,7 @@ public interface CaretModel {
    * Returns current caret - the one, query and update methods in the model operate at the moment. In the current implementation this is
    * either an iteration-current caret within the context of {@link #runForEachCaret(CaretAction)} method, or the 'primary' caret without that
    * context. Users {@link #runForEachCaret(CaretAction)} method should use caret parameter passed to
-   * {@link com.intellij.openapi.editor.CaretAction#perform(Caret)} method instead of this method, as the definition of current caret (as
+   * {@link CaretAction#perform(Caret)} method instead of this method, as the definition of current caret (as
    * well as caret instance operated on by model methods) can potentially change.
    */
   @NotNull
@@ -247,14 +247,14 @@ public interface CaretModel {
   /**
    * Returns the current positions of all carets and their selections. The order of entries in the returned list does not necessarily
    * correspond to the order of {@link #getAllCarets()} method results. Passing the result of this method to
-   * {@link #setCaretsAndSelections(java.util.List)} will restore the state of carets, including the internal caret order, in particular,
+   * {@link #setCaretsAndSelections(List)} will restore the state of carets, including the internal caret order, in particular,
    * the caret, that was primary when this method was called, will be the primary one after corresponding
-   * {@link #setCaretsAndSelections(java.util.List)} invocation.
+   * {@link #setCaretsAndSelections(List)} invocation.
    * <p>
    * If multiple carets are not supported, the behaviour is unspecified.
    *
    * @see #supportsMultipleCarets()
-   * @see #setCaretsAndSelections(java.util.List)
+   * @see #setCaretsAndSelections(List)
    */
   @NotNull
   List<CaretState> getCaretsAndSelections();

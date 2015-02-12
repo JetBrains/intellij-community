@@ -16,9 +16,13 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -28,6 +32,15 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
 
   public GenerateGetterAndSetterHandler(){
     super(CodeInsightBundle.message("generate.getter.setter.title"));
+  }
+
+  @Nullable
+  @Override
+  protected JComponent getHeaderPanel(Project project) {
+    final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(getHeaderPanel(project, GetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.getter.template")), BorderLayout.NORTH);
+    panel.add(getHeaderPanel(project, SetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.setter.template")), BorderLayout.SOUTH);
+    return panel;
   }
 
   @Override

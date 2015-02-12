@@ -530,7 +530,7 @@ public abstract class ChooseByNameBase {
                   return;
                 }
 
-                if (oppositeComponent != null) {
+                if (oppositeComponent != null && myProject != null) {
                   ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
                   ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
                   if (toolWindow != null) {
@@ -897,7 +897,7 @@ public abstract class ChooseByNameBase {
     myTextPopup.setSize(bounds.getSize());
     myTextPopup.setLocation(bounds.getLocation());
 
-    new MnemonicHelper().register(myTextFieldPanel);
+    MnemonicHelper.init(myTextFieldPanel);
     if (myProject != null && !myProject.isDefault()) {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
     }

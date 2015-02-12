@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -161,8 +160,9 @@ public final class UpdateChecker {
     }
     else if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
       Exception e = result.getError();
-      if (e != null) LOG.warn(e);
-      showErrorMessage(manualCheck, IdeBundle.message(e instanceof InterruptedIOException ? "updates.timeout.error" : "updates.error.connection.failed"));
+      if (e != null) LOG.debug(e);
+      String cause = e != null ? e.getMessage() : "internal error";
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", cause));
       return;
     }
 
@@ -306,12 +306,12 @@ public final class UpdateChecker {
         }
       }
       catch (IOException e) {
+        LOG.debug(e);
         if (host != null) {
-          LOG.warn("failed to load plugin descriptions from " + host, e);
+          LOG.info("failed to load plugin descriptions from " + host + ": " + e.getMessage());
         }
         else {
-          LOG.warn(e);
-          showErrorMessage(manualCheck, e.getMessage());
+          showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.getMessage()));
         }
       }
     }
@@ -363,6 +363,7 @@ public final class UpdateChecker {
   }
 
   private static void showErrorMessage(boolean showDialog, final String message) {
+    LOG.info(message);
     if (showDialog) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
@@ -370,9 +371,6 @@ public final class UpdateChecker {
           Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title"));
         }
       });
-    }
-    else {
-      LOG.warn(message);
     }
   }
 
@@ -568,7 +566,7 @@ public final class UpdateChecker {
 
     String bundledJdk = "";
     String jdkMacRedist = System.getProperty("idea.java.redist");
-    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0 ){
+    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0) {
       bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
     }
 

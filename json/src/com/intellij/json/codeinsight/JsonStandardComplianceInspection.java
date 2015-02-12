@@ -62,9 +62,9 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
       @Override
       public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
-        if (stringLiteral.getText().startsWith("'")) {
-          holder
-            .registerProblem(stringLiteral, JsonBundle.message("msg.compliance.problem.single.quoted.strings"), new AddDoubleQuotesFix());
+        if (JsonPsiUtil.getElementTextWithoutHostEscaping(stringLiteral).startsWith("'")) {
+          holder.registerProblem(stringLiteral, JsonBundle.message("msg.compliance.problem.single.quoted.strings"),
+                                 new AddDoubleQuotesFix());
         }
         // May be illegal property key as well
         super.visitStringLiteral(stringLiteral);
@@ -72,10 +72,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
       @Override
       public void visitLiteral(@NotNull JsonLiteral literal) {
-        if (literal.getParent() instanceof JsonFile) {
-          holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.top.level.value"));
-        }
-        if (JsonPsiUtil.isPropertyKey(literal) && !(literal.getText().startsWith("\""))) {
+        if (JsonPsiUtil.isPropertyKey(literal) && !JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"")) {
           holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.property.key"), new AddDoubleQuotesFix());
         }
       }

@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private final EditorImpl myEditor;
   
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
-  private final boolean mySupportsMultipleCarets = Registry.is("editor.allow.multiple.carets");
 
   private TextAttributes myTextAttributes;
 
@@ -123,7 +121,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void moveCaretRelatively(final int columnShift, final int lineShift, final boolean withSelection, final boolean blockSelection, final boolean scrollToCaret) {
-    getCurrentCaret().moveCaretRelatively(columnShift, lineShift, withSelection, blockSelection, scrollToCaret);
+    getCurrentCaret().moveCaretRelatively(columnShift, lineShift, withSelection, scrollToCaret);
   }
 
   @Override
@@ -200,7 +198,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public TextAttributes getTextAttributes() {
     if (myTextAttributes == null) {
       myTextAttributes = new TextAttributes();
-      myTextAttributes.setBackgroundColor(myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR));
+      if (myEditor.getSettings().isCaretRowShown()) {
+        myTextAttributes.setBackgroundColor(myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR));
+      }
     }
 
     return myTextAttributes;
@@ -212,7 +212,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public boolean supportsMultipleCarets() {
-    return mySupportsMultipleCarets;
+    return true;
   }
 
   @Override
@@ -308,9 +308,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void removeSecondaryCarets() {
     EditorImpl.assertIsDispatchThread();
-    if (!supportsMultipleCarets()) {
-      return;
-    }
     ListIterator<CaretImpl> caretIterator = myCarets.listIterator(myCarets.size() - 1);
     while (caretIterator.hasPrevious()) {
       CaretImpl caret = caretIterator.previous();
@@ -330,10 +327,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
     EditorImpl.assertIsDispatchThread();
-    if (!supportsMultipleCarets()) {
-      action.perform(getPrimaryCaret());
-      return;
-    }
     if (myCurrentCaret != null) {
       throw new IllegalStateException("Current caret is defined, cannot operate on other ones");
     }
@@ -363,7 +356,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   private void mergeOverlappingCaretsAndSelections() {
-    if (!supportsMultipleCarets() || myCarets.size() <= 1) {
+    if (myCarets.size() <= 1) {
       return;
     }
     LinkedList<CaretImpl> carets = new LinkedList<CaretImpl>(myCarets);

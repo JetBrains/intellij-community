@@ -2,7 +2,7 @@
 
 #  Gant -- A Groovy way of scripting Ant tasks.
 #
-#  Copyright © 2006-9 Russel Winder
+#  Copyright © 2006–2010, 2013  Russel Winder
 #
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
 #  compliance with the License. You may obtain a copy of the License at
@@ -14,12 +14,9 @@
 #  implied. See the License for the specific language governing permissions and limitations under the
 #  License.
 #
-#  Author : Russel Winder <russel.winder@concertant.com>
+#  Author : Russel Winder <russel@winder.org.uk>
 
-#  Gant initiation script for Linux and UNIX -- stand alone version.
-
-#  This version does not require a GROOVY_HOME to be set since it has all the necessary jars in the
-#  $GANT_HOME/lib directory.
+#  Gant initiation script for Linux and UNIX -- requires Groovy version.
 
 #  Solaris 10 does not have readlink as standard -- though some people will have the version from
 #  Sunfreeware which is the same as the version on Ubuntu, Cygwin, MSYS, etc.  Mac OS X has a version of
@@ -27,9 +24,9 @@
 #
 #  This function attempts to just do the right thing.
 
-doReadLink ( ) {
+doReadLink() {
     case `uname` in
-        Darwin )
+        Darwin)
             gantLocation=`dirname $1`
             gantPath=`readlink "$1"`
             if [ "$gantPath" = "" ]
@@ -46,7 +43,7 @@ doReadLink ( ) {
                 cd $currentDirectory
             fi
             ;;
-        SunOS )
+        SunOS)
             readlinkPath=`which readlink`
             if [ `expr "$readlinkPath" : '\([^ ]*\)'` = "no" ]
             then
@@ -56,7 +53,7 @@ doReadLink ( ) {
                 readlinkValue=`readlink -f $1`
             fi
             ;;
-        * )
+        *)
             readlinkValue=`readlink -f $1`
             ;;
     esac
@@ -77,9 +74,20 @@ then
     GANT_HOME=`dirname $GANT_HOME`
 fi
 
-#  Force GROOVY_HOME to be GANT_HOME so that the startGroovy code does the right thing.
+#  If GROOVY_HOME is not set, deduce a path -- this is needed in order to discover the location of the
+#  startGroovy script.  Assume the executable is in $GROOVY_HOME/bin.
 
-GROOVY_HOME="$GANT_HOME"
+if [ -z "$GROOVY_HOME" ]
+then
+    GROOVY_HOME=`which groovy`
+    if [ -h $GROOVY_HOME ]
+    then
+        doReadLink $GROOVY_HOME GROOVY_HOME
+        GROOVY_HOME=$readlinkValue
+    fi
+    GROOVY_HOME=`dirname "$GROOVY_HOME"`
+    GROOVY_HOME=`dirname "$GROOVY_HOME"`
+fi
 
 #  If ANT_HOME is not set, deduce a path -- this is needed in order to discover the location of the jars
 #  associated with the Ant installation.  Assume the executable is in $ANT_HOME/bin.

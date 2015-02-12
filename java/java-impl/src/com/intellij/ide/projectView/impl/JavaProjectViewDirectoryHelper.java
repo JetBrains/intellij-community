@@ -20,8 +20,10 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.TreeViewUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
@@ -61,6 +63,10 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   @Nullable
   @Override
   public String getNodeName(final ViewSettings settings, final Object parentValue, final PsiDirectory directory) {
+    if (JrtFileSystem.isRoot(directory.getVirtualFile())) {
+      return LangBundle.message("jrt.node.short");
+    }
+
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
     PsiPackage parentPackage;

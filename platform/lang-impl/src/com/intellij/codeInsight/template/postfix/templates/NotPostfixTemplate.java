@@ -16,29 +16,27 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
-
 public class NotPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
-  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info, @NotNull Condition<PsiElement> typeChecker) {
-    super("not", "!expr", info, selectorWithChooser(typeChecker));
-  }
+  @NotNull
+  private final PostfixTemplatePsiInfo myPsiInfo;
 
-  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info) {
-    super("not", "!expr", info, selectorWithChooser());
+  public NotPostfixTemplate(@NotNull PostfixTemplatePsiInfo info,
+                            @NotNull PostfixTemplateExpressionSelector selector) {
+    super("not", "!expr", selector);
+    myPsiInfo = info;
   }
 
   public NotPostfixTemplate(@NotNull String name,
                             @NotNull String key,
                             @NotNull String example,
                             @NotNull PostfixTemplatePsiInfo info,
-                            @NotNull Condition<PsiElement> typeChecker
-  ) {
-    super(name, key, example, info, selectorWithChooser(typeChecker));
+                            @NotNull PostfixTemplateExpressionSelector selector) {
+    super(name, key, example, selector);
+    myPsiInfo = info;
   }
 
   @Override

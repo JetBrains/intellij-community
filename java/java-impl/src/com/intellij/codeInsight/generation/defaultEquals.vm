@@ -1,30 +1,27 @@
-#set($classInstanceName = $helper.getUniqueLocalVarName($instanceName, $members, $settings))
-#set($paramName = $helper.getUniqueLocalVarName($baseParamName, $members, $settings))
+#parse("equalsHelper.vm")
 public boolean equals(##
 #if ($settings.generateFinalParameters)
   final ##
 #end
 Object $paramName){
 #addEqualsPrologue()
-#if ($members.size() > 0)
+#if ($fields.size() > 0)
 
   #addClassInstance()
 
-  #foreach($field in $members)
-    #if (!$field.static)
-      #if ($field.array)
-        #addArrayEquals($field)
-      #elseif ($field.primitive)
-        #if ($field.double || $field.float)
-          #addDoubleFieldComparison($field)
-        #else 
-          #addPrimitiveFieldComparison($field)
-        #end
-      #elseif ($field.enum)
+  #foreach($field in $fields)
+    #if ($field.array)
+      #addArrayEquals($field)
+    #elseif ($field.primitive)
+      #if ($field.double || $field.float)
+        #addDoubleFieldComparison($field)
+      #else 
         #addPrimitiveFieldComparison($field)
-      #else
-        #addFieldComparison($field)
       #end
+    #elseif ($field.enum)
+      #addPrimitiveFieldComparison($field)
+    #else
+      #addFieldComparison($field)
     #end
   #end
 #end
@@ -32,55 +29,30 @@ Object $paramName){
   return true;
 }
 ##
-#macro(addClassInstance)
-  #if ($settings.generateFinalLocals)
-    final ##
-  #end
-  $classname $classInstanceName = ($classname)$paramName;
-#end
-##
-#macro(addEqualsPrologue)
-  if(this == $paramName) return true;
-  #if (!$superHasEquals)
-    #addInstanceOfToText()
-  #else 
-    #addInstanceOfToText()
-    if(!super.equals($paramName)) return false;
-  #end
-#end
-##
-#macro(addInstanceOfToText)
-  #if ($checkParameterWithInstanceof)
-    if(!($paramName instanceof $classname)) return false;
-  #else 
-    if($paramName == null || getClass() != ${paramName}.getClass()) return false;
-  #end
-#end
-##
 #macro(addPrimitiveFieldComparison $field)
- if($field.name != ${classInstanceName}.$field.name) return false;
+ if($field.accessor != ${classInstanceName}.$field.accessor) return false;
 #end
 ##
 #macro(addDoubleFieldComparison $field)
   #if ($field.double)
-    if(Double.compare(${classInstanceName}.$field.name, $field.name) != 0)return false;
+    if(Double.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0)return false;
   #else
-    if(Float.compare(${classInstanceName}.$field.name, $field.name) != 0)return false;
+    if(Float.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0)return false;
   #end
 #end
 ##
 #macro(addFieldComparison $field)
   #if ($field.notNull)
-    if(!${field.name}.equals(${classInstanceName}.$field.name))return false;
+    if(!${field.accessor}.equals(${classInstanceName}.$field.accessor))return false;
   #else
-    if($field.name != null ? !${field.name}.equals(${classInstanceName}.$field.name) : ${classInstanceName}.$field.name != null)return false;
+    if($field.accessor != null ? !${field.accessor}.equals(${classInstanceName}.$field.accessor) : ${classInstanceName}.$field.accessor != null)return false;
   #end
 #end
 ##
 #macro(addArrayEquals $field) 
   #if ($field.nestedArray)
     #if ($java_version > 4)
-      if(!java.util.Arrays.deepEquals($field.name, ${classInstanceName}.$field.name)) return false;
+      if(!java.util.Arrays.deepEquals($field.accessor, ${classInstanceName}.$field.accessor)) return false;
     #else
       // Compare nested arrays - values of $field.name here
     #end
@@ -89,5 +61,5 @@ Object $paramName){
   #if ($field.objectArray)
     // Probably incorrect - comparing Object[] arrays with Arrays.equals
   #end
-  if(!java.util.Arrays.equals($field.name, ${classInstanceName}.$field.name)) return false;
+  if(!java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)) return false;
 #end

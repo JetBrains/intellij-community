@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -60,26 +61,51 @@ public class ChangesComparatorTest {
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/A.java", "~/project/A.java"));
     assertEquals("Equal paths should compare to 0", 0, compare("~/project/aaa/A.java", "~/project/aaa/A.java"));
   }
+  
+  @Test
+  public void testEmptyPaths() throws Exception {
+    assertEquals(0, compare("", ""));
+  }
+
+  @Test
+  public void testSamePrefixFolder() throws Exception {
+    assertEquals(-1, compare("~/project/aaa/", "~/project/aaa-qwe/"));
+    assertEquals(-1, compare("~/project/aaa/A.java", "~/project/aaa-qwe/A.java"));
+    assertEquals(1, compare("~/project/zzz-qwe.java", "~/project/zzz/"));
+  }
+
+  @Test
+  public void testRootDirectory() throws Exception {
+    assertEquals(0, compare("A.java", "A.java"));
+    assertEquals(0, compare("/aaa/", "/aaa/"));
+    assertEquals(-1, compare("/aaa/", "/aaa-qwe/"));
+    assertEquals(-1, compare("/aaa/", "/ZZ.java"));
+  }
+
+  @Test
+  public void testAssociativeBug() throws Exception {
+    assertEquals(1, compare("/folder/aaa-qwerty/", "/folder/aaa/"));
+    assertEquals(1, compare("/folder/aaa/.gitignore", "/folder/aaa/"));
+    assertEquals(-1, compare("/folder/aaa/.gitignore", "/folder/aaa-qwerty/"));
+    assertEquals(1, compare("/folder/aaa-qwerty/qwerty", "/folder/aaa/qwerty/"));
+  }
 
   private static int compare(String path1, String path2) throws Exception {
-    return compare(change(path1), change(path2));
+    int compare1 = compare(change(path1), change(path2));
+    int compare2 = compare(change(path2), change(path1));
+    assert compare1 == -compare2;
+    return compare1;
   }
 
   private static int compare(Change c1, Change c2) {
     int result = ChangesComparator.getInstance(false).compare(c1, c2);
-    if (result > 0) {
-      return 1;
-    }
-    if (result < 0) {
-      return -1;
-    }
-    return 0;
+    return Integer.signum(result);
   }
 
   @NotNull
   private static Change change(@NotNull String path) throws Exception {
-    ContentRevision before = new MockContentRevision(new FilePathImpl(new File(path), false), VcsRevisionNumber.NULL);
-    ContentRevision after = new MockContentRevision(new FilePathImpl(new File(path), false), VcsRevisionNumber.NULL);
+    ContentRevision before = new MockContentRevision(new FilePathImpl(new File(path), StringUtil.endsWithChar(path, '/')), VcsRevisionNumber.NULL);
+    ContentRevision after = new MockContentRevision(new FilePathImpl(new File(path), StringUtil.endsWithChar(path, '/')), VcsRevisionNumber.NULL);
     return new Change(before, after);
   }
 

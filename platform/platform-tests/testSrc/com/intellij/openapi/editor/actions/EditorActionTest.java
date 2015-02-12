@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.datatransfer.StringSelection;
@@ -166,5 +167,31 @@ public class EditorActionTest extends AbstractEditorTest {
     init("class Foo { String s = \"a\\<caret>nb\"; }", TestFileType.JAVA);
     executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
     checkResultByText("class Foo { String s = \"a\\<caret>b\"; }");
+  }
+  
+  public void testUpWithSelectionOnCaretInsideSelection() throws Exception {
+    initText("blah blah\n" +
+             "blah <selection>bl<caret>ah</selection>\n" +
+             "blah blah");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("blah bl<selection><caret>ah\n" +
+                      "blah blah</selection>\n" +
+                      "blah blah");
+  }
+  
+  public void testDownWithSelectionOnCaretInsideSelection() throws Exception {
+    initText("blah blah\n" +
+             "blah <selection>bl<caret>ah</selection>\n" +
+             "blah blah");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("blah blah\n" +
+                      "blah <selection>blah\n" +
+                      "blah bl<caret></selection>ah");
+  }
+  
+  public void testCaretComesBeforeTextOnUnindent() throws IOException {
+    initText("      <caret>  text");
+    unindent();
+    checkResultByText("    <caret>text");
   }
 }

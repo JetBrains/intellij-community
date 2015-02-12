@@ -192,12 +192,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   }
 
   @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType instanceof LanguageFileType &&
-           isMyLanguage(((LanguageFileType)fileType).getLanguage());
-  }
-
-  @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language.isKindOf(getFileType().getLanguage());
   }

@@ -74,11 +74,6 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
                                                                       scheme.writeExternal(element);
                                                                       return element;
                                                                     }
-
-                                                                    @Override
-                                                                    public boolean shouldBeSaved(@NotNull final QuickList scheme) {
-                                                                      return true;
-                                                                    }
                                                                   },
                                                                   RoamingType.PER_USER);
 

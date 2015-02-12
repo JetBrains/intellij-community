@@ -216,7 +216,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ) {
       DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
       if (arrayVar instanceof DfaVariableValue) {
-        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar));
+        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar, true));
       }
     }
   }
@@ -688,6 +688,21 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(switchStmt);
+  }
+
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    startElement(expression);
+
+    PsiExpression qualifier = expression.getQualifierExpression();
+    if (qualifier != null) {
+      qualifier.accept(this);
+      addInstruction(new FieldReferenceInstruction(qualifier, "Method reference qualifier"));
+    }
+
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullness.NOT_NULL), expression));
+
+    finishElement(expression);
   }
 
   @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {

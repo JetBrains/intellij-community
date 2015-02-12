@@ -45,6 +45,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.ProjectScope;
@@ -272,7 +273,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private LookupElement[] processPackage(@NotNull PsiPackage aPackage) {
     final ArrayList<LookupElement> list = ContainerUtil.newArrayList();
     final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
-    final GlobalSearchScope scope = getScope(getElement().getContainingFile());
+    final GlobalSearchScope scope = getScope(getJavaContextFile());
     for (final PsiPackage subPackage : aPackage.getSubPackages(scope)) {
       final String shortName = subPackage.getQualifiedName().substring(startOffset);
       if (PsiNameHelper.getInstance(subPackage.getProject()).isIdentifier(shortName)) {
@@ -351,9 +352,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    PsiFile file = getElement().getContainingFile();
+    PsiFile file = getJavaContextFile();
     final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
     return (JavaResolveResult) resolveCache.resolveWithCaching(this, MyResolver.INSTANCE, false, false,file)[0];
+  }
+
+  private PsiFile getJavaContextFile() {
+    return myJavaClassReferenceSet.getProvider().getContextFile(getElement());
   }
 
   @NotNull
@@ -424,7 +429,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         }
 
         final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), psiElement, containingFile);
-        containingFile.processDeclarations(processor, ResolveState.initial(), null, psiElement);
+        PsiClass contextClass = myJavaClassReferenceSet.getProvider().getContextClass(psiElement);
+        if (contextClass != null) {
+          PsiScopesUtil.treeWalkUp(processor, contextClass, null);
+        }
+        else {
+          containingFile.processDeclarations(processor, ResolveState.initial(), null, psiElement);
+        }
 
         if (processor.getResult().length == 1) {
           final JavaResolveResult javaResolveResult = processor.getResult()[0];
@@ -500,7 +511,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final TextRange range = new TextRange(references[0].getRangeInElement().getStartOffset(),
                                           getRangeInElement().getEndOffset());
     final String qualifiedName = range.substring(getElement().getText());
-    final CreateClassOrPackageFix action = CreateClassOrPackageFix.createFix(qualifiedName, getScope(getElement().getContainingFile()), getElement(), contextPackage,
+    final CreateClassOrPackageFix action = CreateClassOrPackageFix.createFix(qualifiedName, getScope(getJavaContextFile()), getElement(), contextPackage,
                                                                              kind, extendClass, templateName);
     if (action != null) {
       QuickFixAction.registerQuickFixAction(info, action);

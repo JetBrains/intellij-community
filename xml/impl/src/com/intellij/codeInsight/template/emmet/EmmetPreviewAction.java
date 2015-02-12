@@ -60,9 +60,4 @@ public class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwa
            ZenCodingTemplate.findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, CustomTemplateCallback.getOffset(editor)), 
                                                             false) != null;
   }
-
-  @Override
-  protected boolean isValidForLookup() {
-    return true;
-  }
 }

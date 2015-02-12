@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final String text = (String)infos[0];
-    return new UnnecessaryCallToStringValueOfFix(text);
+    return new UnnecessaryToStringCallFix(text);
   }
 
   @NonNls
@@ -62,11 +63,11 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     return expression.getText();
   }
 
-  private static class UnnecessaryCallToStringValueOfFix extends InspectionGadgetsFix {
+  private static class UnnecessaryToStringCallFix extends InspectionGadgetsFix {
 
     private final String replacementText;
 
-    UnnecessaryCallToStringValueOfFix(String replacementText) {
+    UnnecessaryToStringCallFix(String replacementText) {
       this.replacementText = replacementText;
     }
 
@@ -97,17 +98,17 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryCallToStringValueOfVisitor();
+    return new UnnecessaryToStringCallVisitor();
   }
 
-  private static class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
+  private static class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String referenceName = methodExpression.getReferenceName();
-      if (!"toString".equals(referenceName) || ExpressionUtils.isConversionToStringNecessary(expression)) {
+      if (!"toString".equals(referenceName)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -116,14 +117,19 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null) {
-        if (qualifier.getType() instanceof PsiArrayType) {
-          // do not warn on nonsensical code
-          return;
-        }
-        else if (qualifier instanceof PsiSuperExpression) {
-          return;
-        }
+      if (qualifier == null) {
+        return;
+      }
+      if (qualifier.getType() instanceof PsiArrayType) {
+        // do not warn on nonsensical code
+        return;
+      }
+      else if (qualifier instanceof PsiSuperExpression) {
+        return;
+      }
+      final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.Throwable");
+      if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
+        return;
       }
       registerMethodCallError(expression, calculateReplacementText(qualifier));
     }

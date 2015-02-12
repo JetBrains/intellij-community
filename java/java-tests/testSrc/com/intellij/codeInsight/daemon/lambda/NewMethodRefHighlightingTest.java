@@ -342,6 +342,30 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRawReferenceTypeWithReceiver() throws Exception {
+    doTest();
+  }
+
+  public void testMethodReferenceTypeArgumentsApplicability() throws Exception {
+    doTest();
+  }
+
+  public void testTypeNameInterfaceSuperMethodReferenceApplicability() throws Exception {
+    doTest();
+  }
+
+  public void testNewParameterizedReferenceOnRawType() throws Exception {
+    doTest();
+  }
+
+  public void testArrayTypeNewReifiable() throws Exception {
+    doTest();
+  }
+
+  public void testReturnTypeApplocabilityIfCapturedWildcardInferred() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

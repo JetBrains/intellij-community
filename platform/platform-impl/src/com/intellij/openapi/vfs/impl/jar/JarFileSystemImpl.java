@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,25 +105,19 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @NotNull
   @Override
-  protected String convertLocalToRootPath(@NotNull String localPath) {
+  protected String composeRootPath(@NotNull String localPath) {
     return localPath + JAR_SEPARATOR;
   }
 
   @NotNull
   @Override
   protected JarHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(entryFile, this, new Function<String, JarHandler>() {
+    return VfsImplUtil.getHandler(this, entryFile, new Function<String, JarHandler>() {
       @Override
-      public JarHandler fun(String rootPath) {
-        return new JarHandler(extractLocalPath(rootPath));
+      public JarHandler fun(String localPath) {
+        return new JarHandler(localPath);
       }
     });
-  }
-
-  @Nullable
-  @Override
-  public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
-    return findFileByPath(convertLocalToRootPath(file.getPath()));
   }
 
   @Override

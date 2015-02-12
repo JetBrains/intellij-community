@@ -2000,7 +2000,7 @@ class Thinlet extends Container //java
 						}
 					}
 				}
-			} catch (<error descr="Cannot resolve symbol 'InterruptedException'">InterruptedException</error> ie) {} //ie.printStackTrace();
+			} catch (InterruptedException ie) {} //ie.printStackTrace();
 		}
 	}
 
@@ -5234,7 +5234,7 @@ class Thinlet extends Container //java
 			mediatracker.<error descr="Cannot resolve method 'addImage(Image, int)'">addImage</error>(image, 1);
 			try {
 				mediatracker.<error descr="Cannot resolve method 'waitForID(int, int)'">waitForID</error>(1, 50);
-			} catch (<error descr="Cannot resolve symbol 'InterruptedException'">InterruptedException</error> ie) { }
+			} catch (InterruptedException ie) { }
 			//imagepool.put(path, image);
 		}
 		//<java

@@ -3,6 +3,7 @@ package org.jetbrains.rpc;
 import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.ChannelBufferToString;
 import org.jetbrains.io.SimpleChannelInboundHandlerAdapter;
 
 import java.nio.CharBuffer;

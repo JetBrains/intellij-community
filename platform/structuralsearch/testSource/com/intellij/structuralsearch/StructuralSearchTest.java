@@ -1233,6 +1233,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "find sym finds declaration",
       2, findMatchesCount(s133_2, s134, true)
     );
+    final String in = "class C {" +
+                      "  {" +
+                      "    int i = 0;" +
+                      "    i += 1;" +
+                      "    i = 3;" +
+                      "    int j = i;" +
+                      "    i();" +
+                      "  }" +
+                      "  void i() {}" +
+                      "}";
+    final String pattern1 = "'_:[read]";
+    assertEquals("Find reads of symbol (including operator assignment)", 2, findMatchesCount(in, pattern1));
+
+    final String pattern2 = "'_:[write && regex( i )]";
+    assertEquals("Find writes of symbol", 3, findMatchesCount(in, pattern2));
   }
 
   public void testSearchGenerics() {
@@ -1900,14 +1915,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "fields of class read",
-      findMatchesCount(s117,s118_2),
-      2
+      2,
+      findMatchesCount(s117,s118_2)
     );
 
     assertEquals(
       "fields of class written",
-      findMatchesCount(s117,s118_3),
-      2
+      2,
+      findMatchesCount(s117,s118_3)
     );
 
     final String s119 = "try { a.b(); } catch(IOException e) { c(); } catch(Exception ex) { d(); }";
@@ -2461,6 +2476,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                            "@Deprecated\n" +
                            "package one.two;";
     assertEquals("Find annotation on package statement", 1, findMatchesCount(source4, "@'_Annotation", true));
+
+    final String source5 ="class A {" +
+                          "  boolean a(Object o) {" +
+                          "    return o instanceof @HH String;" +
+                          "  }" +
+                          "}";
+    assertEquals("Find annotation on instanceof expression", 1, findMatchesCount(source5, "'_a instanceof @HH String"));
+    assertEquals("Match annotation correctly on instanceof expression", 0, findMatchesCount(source5, "'_a instanceof @GG String"));
   }
 
   public void testBoxingAndUnboxing() {

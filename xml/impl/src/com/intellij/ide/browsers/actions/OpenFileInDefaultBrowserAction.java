@@ -17,6 +17,7 @@ package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.browsers.*;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -79,6 +80,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    UsageTrigger.trigger("OpenInBrowser.default");
     BaseOpenInBrowserAction.open(e, findUsingBrowser());
   }
 }

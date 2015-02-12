@@ -34,6 +34,7 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
 
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 
+  private boolean myEnabled = true;
   private String  mySchemeName = ACTIVE_GLOBAL_SCHEME_MARKER;
 
   @NotNull
@@ -68,5 +69,13 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
 
   public void setSchemeName(@Nullable String schemeName) {
     mySchemeName = schemeName;
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 }

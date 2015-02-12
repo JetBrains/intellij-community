@@ -27,14 +27,18 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.psi.PsiType;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 
 public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     private static final Namer<TemplateResource> NAMER = new Namer<TemplateResource>() {
@@ -77,13 +81,19 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         }
     };
   private final Project myProject;
+  private final TemplatesManager myTemplatesManager;
 
   public TemplatesPanel(Project project) {
+    this(project, ToStringTemplatesManager.getInstance());
+  }
+
+  public TemplatesPanel(Project project, TemplatesManager templatesManager) {
         super(NAMER, FACTORY, CLONER, COMPARER,
-                new ArrayList<TemplateResource>(ToStringTemplatesManager.getInstance().getAllTemplates()));
+                new ArrayList<TemplateResource>(templatesManager.getAllTemplates()));
 
         //ServiceManager.getService(project, MasterDetailsStateService.class).register("ToStringTemplates.UI", this);
     myProject = project;
+    myTemplatesManager = templatesManager;
   }
 
     @Nls
@@ -104,7 +114,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
     @Override
     public boolean isModified() {
-        return super.isModified() || !Comparing.equal(ToStringTemplatesManager.getInstance().getDefaultTemplate(), getSelectedItem());
+        return super.isModified() || !Comparing.equal(myTemplatesManager.getDefaultTemplate(), getSelectedItem());
     }
 
     @Override
@@ -113,16 +123,20 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
     }
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
-        return new GenerateTemplateConfigurable(item, myProject);
+        return new GenerateTemplateConfigurable(item, Collections.<String, PsiType>emptyMap(), myProject, onMultipleFields());
+    }
+
+    protected boolean onMultipleFields() {
+      return true;
     }
 
     @Override
     public void apply() throws ConfigurationException {
         super.apply();
-        ToStringTemplatesManager.getInstance().setTemplates(getItems());
+        myTemplatesManager.setTemplates(getItems());
         final TemplateResource selection = getSelectedItem();
         if (selection != null) {
-            ToStringTemplatesManager.getInstance().setDefaultTemplate(selection);
+            myTemplatesManager.setDefaultTemplate(selection);
         }
     }
 }

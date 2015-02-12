@@ -65,9 +65,11 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   private final FileTypeManagerEx myTypeManager;
   private final Project myProject;
 
+  /** Null for default project. */
   @Nullable
   private final FileTemplatesScheme myProjectScheme;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
+  private boolean myInitialized;
 
   private final FTManager myInternalTemplatesManager;
   private final FTManager myDefaultTemplatesManager;
@@ -130,19 +132,27 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void setCurrentScheme(@NotNull FileTemplatesScheme scheme) {
-    setScheme(scheme, true);
+    for (FTManager child : myAllManagers) {
+      child.saveTemplates();
+    }
+    setScheme(scheme);
   }
 
-  private void setScheme(@NotNull FileTemplatesScheme scheme, boolean saveBefore) {
-    if (saveBefore) {
-      for (FTManager child : myAllManagers) {
-        child.saveTemplates();
-      }
-    }
+  private void setScheme(@NotNull FileTemplatesScheme scheme) {
     myScheme = scheme;
     for (FTManager manager : myAllManagers) {
       manager.setScheme(scheme);
     }
+    myInitialized = true;
+  }
+
+  @Override
+  protected FileTemplateManager checkInitialized() {
+    if (!myInitialized) {
+      // loadState() not called; init default scheme
+      setScheme(myScheme);
+    }
+    return this;
   }
 
   @Nullable
@@ -436,7 +446,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
-    setScheme(myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT, false);
+    FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
+    setScheme(scheme);
   }
 
   public static class State {

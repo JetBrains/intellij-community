@@ -93,6 +93,11 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
     return true;
   }
 
+  @Override
+  public void reinit() {
+    myMinWidth = -1;
+  }
+
   private static class HeightProvider implements Computable<Integer> {
 
     public int myHeight;

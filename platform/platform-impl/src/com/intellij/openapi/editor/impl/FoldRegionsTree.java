@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,8 @@ import java.util.*;
 * User: cdr
 */
 abstract class FoldRegionsTree {
+  private static final Key<Boolean> VISIBLE = Key.create("visible.fold.region");
+  
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
   //sorted using RangeMarker.BY_START_OFFSET comparator
@@ -81,18 +84,29 @@ abstract class FoldRegionsTree {
     List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
     List<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
     List<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
-    Set<FoldRegion> distinctRegions = new THashSet<FoldRegion>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
-    FoldRegion currentCollapsed = null;
+    
+    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<FoldRegion, FoldRegion>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
     for (FoldRegion region : myRegions) {
       if (!region.isValid()) {
         continue;
       }
-      if (!distinctRegions.add(region)) {
-        region.dispose();
-        continue;
+      if (distinctRegions.contains(region)) {
+        if (region.getUserData(VISIBLE) == null) {
+          region.dispose();
+          continue;
+        }
+        else {
+          FoldRegion identicalRegion = distinctRegions.remove(region);
+          identicalRegion.dispose();
+        }
       }
-
-      allValid.add(region);
+      distinctRegions.put(region, region);
+    }
+    
+    for (FoldRegion region : myRegions) {
+      if (region.isValid()) {
+        allValid.add(region);
+      }
     }
 
     if (allValid.size() < myRegions.size()) {
@@ -100,6 +114,7 @@ abstract class FoldRegionsTree {
     }
     Collections.sort(myRegions, RangeMarker.BY_START_OFFSET); // the order could have changed due to document changes 
 
+    FoldRegion currentCollapsed = null;
     for (FoldRegion region : myRegions) {
       if (!region.isExpanded()) {
         removeRegionsWithSameStartOffset(visible, region);
@@ -108,10 +123,14 @@ abstract class FoldRegionsTree {
 
       if (currentCollapsed == null || !contains(currentCollapsed, region)) {
         visible.add(region);
+        region.putUserData(VISIBLE, Boolean.TRUE);
         if (!region.isExpanded()) {
           currentCollapsed = region;
           topLevels.add(region);
         }
+      }
+      else {
+        region.putUserData(VISIBLE, null);
       }
     }
 

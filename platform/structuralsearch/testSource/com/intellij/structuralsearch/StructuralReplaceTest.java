@@ -449,7 +449,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
 
-    String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext();) {\n" +
+    /*String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext();) {\n" +
                  "      String str = iterator.next();\n" +
                  "      System.out.println( str );\n" +
                  "}";
@@ -470,7 +470,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       "for with foreach",
       expectedResult20,
       actualResult
-    );
+    );*/
 
     String s58 = "class A {\n" +
                  "  static Set<String> b_MAP = new HashSet<String>();\n" +

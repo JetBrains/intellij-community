@@ -21,6 +21,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,6 +50,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
 
    public void testDiffWithReturnTypeOnlyInHierarchy() throws Exception {
     doTest("i", "There is already method <b><code>Super setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only");
+  }
+
+  public void testPostfixExpressionUsedInAssignment() throws Exception {
+    doTest("i", "Unable to proceed with postfix/prefix expression when it's result type is used");
   }
 
   public void testHideOverriderMethod() throws Exception {
@@ -123,10 +128,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
         public FieldDescriptor[] getSelectedFields() {
           return new FieldDescriptor[]{new FieldDescriptorImpl(
             field,
-            PropertyUtil.suggestGetterName(field),
-            PropertyUtil.suggestSetterName(field),
-            isToEncapsulateGet() ? PropertyUtil.generateGetterPrototype(field) : null,
-            isToEncapsulateSet() ? PropertyUtil.generateSetterPrototype(field) : null
+            GenerateMembersUtil.suggestGetterName(field),
+            GenerateMembersUtil.suggestSetterName(field),
+            isToEncapsulateGet() ? GenerateMembersUtil.generateGetterPrototype(field) : null,
+            isToEncapsulateSet() ? GenerateMembersUtil.generateSetterPrototype(field) : null
           )};
         }
 

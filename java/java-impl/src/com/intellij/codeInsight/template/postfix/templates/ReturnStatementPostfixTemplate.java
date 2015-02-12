@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class ReturnStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public ReturnStatementPostfixTemplate() {
-    super("return", "return expr", JAVA_PSI_INFO, IS_NON_VOID);
+    super("return", "return expr", selectorTopmost(IS_NON_VOID));
   }
 
   @Nullable

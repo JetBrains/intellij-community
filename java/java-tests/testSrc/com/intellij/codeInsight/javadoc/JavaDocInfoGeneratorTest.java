@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +170,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testLambdaParameter() throws Exception {
-    doTestLamabdaParameter();
+    doTestLambdaParameter();
   }
 
   private void doTestField() throws Exception {
@@ -185,7 +185,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(method);
   }
 
-  private void doTestLamabdaParameter() throws Exception {
+  private void doTestLambdaParameter() throws Exception {
     PsiClass psiClass = getTestClass();
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.findChildOfType(psiClass, PsiLambdaExpression.class);
     assertNotNull(lambdaExpression);
@@ -212,6 +212,14 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
     assertNotNull(info);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(info.trim()));
+  }
+
+  public void testInheritedParameter() throws Exception {
+    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
+    PsiClass innerClass = outerClass.findInnerClassByName("Impl", false);
+    PsiParameter parameter = innerClass.getMethods()[0].getParameterList().getParameters()[0];
+    verifyJavaDoc(parameter);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
@@ -59,15 +58,17 @@ import java.util.Set;
  */
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
-  private static final boolean ourScheduleCacheUpdateInDumbMode = SystemProperties.getBooleanProperty(
-    "idea.schedule.cache.update.in.dumb.mode", true);
+
+  private static final boolean ourScheduleCacheUpdateInDumbMode =
+    SystemProperties.getBooleanProperty("idea.schedule.cache.update.in.dumb.mode", true);
+
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
 
-  protected final List<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
-  protected final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
+  @SuppressWarnings("deprecation") protected final List<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
+  @SuppressWarnings("deprecation") protected final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
 
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<LocalFileSystem.WatchRequest>();
   private final boolean myDoLogCachesUpdate;
@@ -120,19 +121,23 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     myDoLogCachesUpdate = ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
+  @SuppressWarnings({"deprecation", "unused"})
   public void registerRootsChangeUpdater(CacheUpdater updater) {
     myRootsChangeUpdaters.add(updater);
   }
 
+  @SuppressWarnings({"deprecation", "unused"})
   public void unregisterRootsChangeUpdater(CacheUpdater updater) {
     boolean removed = myRootsChangeUpdaters.remove(updater);
     LOG.assertTrue(removed);
   }
 
+  @SuppressWarnings({"deprecation", "unused"})
   public void registerRefreshUpdater(CacheUpdater updater) {
     myRefreshCacheUpdaters.add(updater);
   }
 
+  @SuppressWarnings({"deprecation", "unused"})
   public void unregisterRefreshUpdater(CacheUpdater updater) {
     boolean removed = myRefreshCacheUpdaters.remove(updater);
     LOG.assertTrue(removed);
@@ -273,33 +278,45 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
 
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
+      flat.add(module.getModuleFilePath());
+
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
       addRootsToTrack(moduleRootManager.getContentRootUrls(), recursive, flat);
+
       if (includeSourceRoots) {
         addRootsToTrack(moduleRootManager.getSourceRootUrls(), recursive, flat);
       }
-      flat.add(module.getModuleFilePath());
 
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
-        if (entry instanceof LibraryOrderEntry) {
-          final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          if (library != null) {
-            for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-              addRootsToTrack(library.getUrls(orderRootType), recursive, flat);
-            }
-          }
-        }
-        else if (entry instanceof JdkOrderEntry) {
+        if (entry instanceof LibraryOrSdkOrderEntry) {
+          final LibraryOrSdkOrderEntry libSdkEntry = (LibraryOrSdkOrderEntry)entry;
           for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-            addRootsToTrack(((JdkOrderEntry)entry).getRootUrls(orderRootType), recursive, flat);
+            addRootsToTrack(libSdkEntry.getRootUrls(orderRootType), recursive, flat);
           }
         }
       }
     }
 
     return Pair.create(recursive, flat);
+  }
+
+  private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
+    for (String url : urls) {
+      if (url != null) {
+        final String protocol = VirtualFileManager.extractProtocol(url);
+        if (protocol == null || LocalFileSystem.PROTOCOL.equals(protocol)) {
+          recursive.add(extractLocalPath(url));
+        }
+        else if (JarFileSystem.PROTOCOL.equals(protocol)) {
+          flat.add(extractLocalPath(url));
+        }
+        else if (StandardFileSystems.JRT_PROTOCOL.equals(protocol)) {
+          recursive.add(extractLocalPath(url));
+        }
+      }
+    }
   }
 
   @Override
@@ -315,22 +332,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
 
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRootsChangeUpdaters);
-    } else {
-      dumbService.queueCacheUpdate(myRootsChangeUpdaters);
     }
-  }
-
-  private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
-    for (String url : urls) {
-      if (url != null) {
-        final String protocol = VirtualFileManager.extractProtocol(url);
-        if (protocol == null || LocalFileSystem.PROTOCOL.equals(protocol)) {
-          recursive.add(extractLocalPath(url));
-        }
-        else if (JarFileSystem.PROTOCOL.equals(protocol)) {
-          flat.add(extractLocalPath(url));
-        }
-      }
+    else {
+      dumbService.queueCacheUpdate(myRootsChangeUpdaters);
     }
   }
 

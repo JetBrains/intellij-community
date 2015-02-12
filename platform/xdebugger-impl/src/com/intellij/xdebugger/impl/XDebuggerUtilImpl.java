@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,6 +275,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
     PsiElement element;
     int offset = lineStart;
+
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+    }
+
     while (offset < lineEnd) {
       element = file.findElementAt(offset);
       if (element != null) {

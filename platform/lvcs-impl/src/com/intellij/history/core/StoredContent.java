@@ -19,6 +19,7 @@ package com.intellij.history.core;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInput;
@@ -58,12 +59,12 @@ public class StoredContent extends Content {
   }
 
   public StoredContent(DataInput in) throws IOException {
-    myContentId = in.readInt();
+    myContentId = DataInputOutputUtil.readINT(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    out.writeInt(myContentId);
+    DataInputOutputUtil.writeINT(out, myContentId);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,7 +286,7 @@ public class SecondaryFunctionsHelper {
                   cexpr2.getExprType().type == CodeConstants.TYPE_BOOLEAN) {
 
                 if (cexpr1.getIntValue() == 0 && cexpr2.getIntValue() != 0) {
-                  return new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, Arrays.asList(lstOperands.get(0)), fexpr.bytecode);
+                  return new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, lstOperands.get(0), fexpr.bytecode);
                 }
                 else if (cexpr1.getIntValue() != 0 && cexpr2.getIntValue() == 0) {
                   return lstOperands.get(0);
@@ -407,8 +407,7 @@ public class SecondaryFunctionsHelper {
             case FunctionExprent.FUNCTION_COR:
               List<Exprent> operands = fparam.getLstOperands();
               for (int i = 0; i < operands.size(); i++) {
-                Exprent newparam = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT,
-                                                       Arrays.asList(operands.get(i)), operands.get(i).bytecode);
+                Exprent newparam = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, operands.get(i), operands.get(i).bytecode);
 
                 Exprent retparam = propagateBoolNot(newparam);
                 operands.set(i, retparam == null ? newparam : retparam);

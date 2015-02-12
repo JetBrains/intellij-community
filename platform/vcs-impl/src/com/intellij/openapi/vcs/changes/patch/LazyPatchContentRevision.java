@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -42,12 +44,17 @@ public class LazyPatchContentRevision implements ContentRevision {
 
   public String getContent() {
     if (myContent == null) {
-      final Document doc = FileDocumentManager.getInstance().getDocument(myVf);
-      if (doc == null) {
+      final String localContext = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          final Document doc = FileDocumentManager.getInstance().getDocument(myVf);
+          return doc == null ? null : doc.getText();
+        }
+      });
+      if (localContext == null) {
         myPatchApplyFailed = true;
         return null;
       }
-      final String localContext = doc.getText();
 
       final GenericPatchApplier applier = new GenericPatchApplier(localContext, myPatch.getHunks());
       if (applier.execute()) {

@@ -264,28 +264,28 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<artifactId>m1</artifactId>" +
                                      "<version>1</version>");
 
-    VirtualFile m2 = createModulePom("m2",
+    final VirtualFile m2 = createModulePom("m2",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m2</artifactId>" +
                                      "<version>1</version>");
     importProject(m1);
     assertModules("m1");
 
-    myProjectsManager.performScheduledImportInTests(); // ensure no pending imports
+    resolveDependenciesAndImport(); // ensure no pending imports
 
     getMavenImporterSettings().setImportAutomatically(autoImport);
 
-    myProjectsManager.addManagedFiles(Arrays.asList(m2));
+    myProjectsManager.addManagedFiles(Collections.singletonList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    resolveDependenciesAndImport();
 
     assertModules("m1", "m2");
 
     configConfirmationForYesAnswer();
 
-    myProjectsManager.removeManagedFiles(Arrays.asList(m2));
+    myProjectsManager.removeManagedFiles(Collections.singletonList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    resolveDependenciesAndImport();
 
     assertModules("m1");
   }
@@ -745,7 +745,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     waitForReadingCompletion();
 
-    myProjectsManager.performScheduledImportInTests();
+    resolveDependenciesAndImport();
     assertModules("project");
   }
 

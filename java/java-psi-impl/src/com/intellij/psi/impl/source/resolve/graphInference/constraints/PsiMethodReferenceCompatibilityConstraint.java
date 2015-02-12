@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -63,16 +64,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
 
-    if (!myExpression.isExact()) {
-      for (PsiParameter parameter : targetParameters) {
-        if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
-          return false;
-        }
-      }
-    } else {
+    if (myExpression.isExact()) {
       final PsiMember applicableMember = myExpression.getPotentiallyApplicableMember();
       LOG.assertTrue(applicableMember != null);
-      
+
       final PsiClass applicableMemberContainingClass = applicableMember.getContainingClass();
       final PsiClass containingClass = qualifierResolveResult.getContainingClass();
 
@@ -90,7 +85,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       final PsiParameter[] parameters = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getParameterList().getParameters() : PsiParameter.EMPTY_ARRAY;
       if (targetParameters.length == parameters.length + 1) {
-        specialCase(session, constraints, substitutor, targetParameters, true);
+        final PsiType qualifierType = PsiMethodReferenceUtil.getQualifierType(myExpression);
+        final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
+        if (qualifierClass != null) {
+          session.initBounds(myExpression, qualifierClass.getTypeParameters());
+          final PsiType pType = substitutor.substitute(targetParameters[0].getType());
+          constraints.add(new StrictSubtypingConstraint(session.substituteWithInferenceVariables(qualifierType), pType));
+        }
         for (int i = 1; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(session.substituteWithInferenceVariables(psiSubstitutor.substitute(parameters[i - 1].getType())),
                                                           substitutor.substitute(targetParameters[i].getType())));
@@ -123,6 +124,14 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return true;
     }
 
+    //------   non exact method references   --------------------
+
+    for (PsiParameter parameter : targetParameters) {
+      if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
+        return false;
+      }
+    }
+
     final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
     final PsiType added = map.put(myExpression, session.startWithFreshVars(groundTargetType));
     final JavaResolveResult resolve;
@@ -148,14 +157,28 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       final PsiType referencedMethodReturnType;
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null, method);
-      PsiClass qContainingClass = qualifierResolveResult.getContainingClass();
+      final PsiClass qContainingClass = qualifierResolveResult.getContainingClass();
       PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       if (qContainingClass != null) {
+        // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
+        // the type to search is the result of capture conversion (5.1.10) applied to T;
+        // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
         if ( PsiUtil.isRawSubstitutor(qContainingClass, psiSubstitutor)) {
-          psiSubstitutor = PsiSubstitutor.EMPTY;
+          if (targetParameters.length == method.getParameterList().getParametersCount() + 1) {
+            final PsiType pType = substitutor.substitute(targetParameters[0].getType());
+            PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(PsiImplUtil.normalizeWildcardTypeByPosition(pType, myExpression));
+            PsiClass paramClass = resolveResult.getElement();
+            LOG.assertTrue(paramClass != null);
+            psiSubstitutor = TypeConversionUtil.getClassSubstitutor(qContainingClass, paramClass, resolveResult.getSubstitutor());
+            LOG.assertTrue(psiSubstitutor != null);
+          }
+          else {
+            psiSubstitutor = PsiSubstitutor.EMPTY;
+          }
         }
+
         if (qContainingClass.isInheritor(containingClass, true)) {
-          psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, PsiSubstitutor.EMPTY);
+          psiSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, psiSubstitutor);
           LOG.assertTrue(psiSubstitutor != null);
         }
       }
@@ -202,50 +225,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (targetParameters.length == parameters.length + 1 && !method.isVarArgs() && 
-          PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType, ContainerUtil.newHashSet(containingClass.getTypeParameters()))) { //todo specification bug?
-        specialCase(session, constraints, substitutor, targetParameters, false);
-      }
-      constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(psiSubstitutor.substitute(referencedMethodReturnType))));
+      constraints.add(new TypeCompatibilityConstraint(returnType,
+                                                      session.substituteWithInferenceVariables(psiSubstitutor.substitute(referencedMethodReturnType))));
     }
     
     return true;
-  }
-
-  private void specialCase(InferenceSession session,
-                           List<ConstraintFormula> constraints,
-                           PsiSubstitutor substitutor,
-                           PsiParameter[] targetParameters,
-                           boolean ignoreRaw) {
-    final PsiElement qualifier = myExpression.getQualifier();
-    PsiType qualifierType = null;
-    if (qualifier instanceof PsiTypeElement) {
-      qualifierType = ((PsiTypeElement)qualifier).getType();
-      final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
-      if (qualifierClass != null) {
-        qualifierType = JavaPsiFacade.getElementFactory(myExpression.getProject()).createType(qualifierClass, PsiSubstitutor.EMPTY);
-      }
-    }
-    else if (qualifier instanceof PsiExpression) {
-      qualifierType = ((PsiExpression)qualifier).getType();
-      if (qualifierType == null && qualifier instanceof PsiReferenceExpression) {
-        final JavaResolveResult resolveResult = ((PsiReferenceExpression)qualifier).advancedResolve(false);
-        final PsiElement res = resolveResult.getElement();
-        if (res instanceof PsiClass) {
-          PsiClass containingClass = (PsiClass)res;
-          final boolean isRawSubst = !ignoreRaw && !myExpression.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor());
-          qualifierType = JavaPsiFacade.getElementFactory(res.getProject()).createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor());
-        }
-      }
-    }
-
-    final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
-    if (qualifierClass != null) {
-      session.initBounds(myExpression, qualifierClass.getTypeParameters());
-      constraints.add(new StrictSubtypingConstraint(session.substituteWithInferenceVariables(qualifierType),
-                                                    session.substituteWithInferenceVariables(substitutor.substitute(targetParameters[0].getType()))));
-    }
   }
 
   @Override

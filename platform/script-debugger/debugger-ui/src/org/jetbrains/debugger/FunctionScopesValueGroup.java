@@ -27,7 +27,7 @@ class FunctionScopesValueGroup extends XValueGroup {
     node.setAlreadySorted(true);
 
     value.resolve()
-      .done(new ValueNodeConsumer<FunctionValue>(node) {
+      .done(new ObsolescentConsumer<FunctionValue>(node) {
       @Override
       public void consume(FunctionValue value) {
         Scope[] scopes = value.getScopes();

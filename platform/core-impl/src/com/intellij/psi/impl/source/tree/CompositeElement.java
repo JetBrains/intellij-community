@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public class CompositeElement extends TreeElement {
     return myModificationsCount;
   }
 
+  @NotNull
   @Override
   public CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
@@ -261,6 +262,7 @@ public class CompositeElement extends TreeElement {
     return StringFactory.createShared(textToCharArray());
   }
 
+  @NotNull
   @Override
   public CharSequence getChars() {
     return getText();
@@ -448,6 +450,7 @@ public class CompositeElement extends TreeElement {
     return 0; //ChildRole.NONE;
   }
 
+  @NotNull
   @Override
   public ASTNode[] getChildren(@Nullable TokenSet filter) {
     int count = countChildren(filter);

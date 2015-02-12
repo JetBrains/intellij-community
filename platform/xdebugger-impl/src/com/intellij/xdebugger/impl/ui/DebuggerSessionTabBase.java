@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,10 @@ public abstract class DebuggerSessionTabBase extends RunTab {
         public void run() {
           ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
             .getToolWindowByDescriptor(myRunContentDescriptor);
-          if (toolWindow != null && !toolWindow.isVisible()) {
-            toolWindow.show(onShowCallback);
+          if (toolWindow != null) {
+            if (!toolWindow.isVisible()) {
+              toolWindow.show(onShowCallback);
+            }
             //noinspection ConstantConditions
             toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
           }

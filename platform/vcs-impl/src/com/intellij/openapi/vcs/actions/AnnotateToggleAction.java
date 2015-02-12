@@ -251,7 +251,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     }
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
-    final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation, editorGutter);
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
     final List<AnAction> additionalActions = new ArrayList<AnAction>();
@@ -260,7 +259,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     }
     additionalActions.add(new CopyRevisionNumberFromAnnotateAction(getUpToDateLineNumber, fileAnnotation));
     final AnnotationPresentation presentation =
-      new AnnotationPresentation(highlighting, switcher, editorGutter, gutters,
+      new AnnotationPresentation(fileAnnotation, switcher, editorGutter,
                                  additionalActions.toArray(new AnAction[additionalActions.size()]));
 
     final Couple<Map<String, Color>> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
@@ -293,12 +292,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     if (historyIds != null) {
       gutters.add(new HistoryIdColumn(fileAnnotation, editor, presentation, bgColorMap, historyIds));
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting, bgColorMap));
+    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, bgColorMap));
     final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, editor, presentation, bgColorMap, actionGroup));
 
-    presentation.addAction(new ShowHideAdditionalInfoAction(gutters, editorGutter, actionGroup));
+    presentation.addAction(new AnnotateCurrentRevisionAction(fileAnnotation, vcs));
+    presentation.addAction(new AnnotatePreviousRevisionAction(fileAnnotation, vcs));
     addActionsFromExtensions(presentation, fileAnnotation);
 
     for (AnAction action : presentation.getActions()) {

@@ -47,6 +47,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -59,6 +60,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -812,6 +814,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     myKeymapList.setSelectedItem(mySelectedKeymap);
+    myActionsTree.reset(mySelectedKeymap, getCurrentQuickListIds());
   }
 
   @Override
@@ -858,7 +861,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (!Comparing.equal(mySelectedKeymap, keymapManager.getActiveKeymap())) {
       return true;
     }
-    Keymap[] managerKeymaps = keymapManager.getAllKeymaps();
+    Keymap[] managerKeymaps = ContainerUtil.filter(keymapManager.getAllKeymaps(), new Condition<Keymap>() {
+      @Override
+      public boolean value(Keymap keymap) {
+        return !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+      }
+    }).toArray(new Keymap[]{});
     Keymap[] panelKeymaps = new Keymap[myKeymapListModel.getSize()];
     for(int i = 0; i < myKeymapListModel.getSize(); i++){
       panelKeymaps[i] = (Keymap)myKeymapListModel.getElementAt(i);

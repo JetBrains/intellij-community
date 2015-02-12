@@ -32,7 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -104,7 +107,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
       type = ((GrSafeCastExpression)parent).getType();
     }
     else if (parent instanceof GrAssignmentExpression &&
-        PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getRValue(), expression, false)) {
+             PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getRValue(), expression, false)) {
       final PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)parent).getLValue(), false);
       if (lValue instanceof GrReferenceExpression) {
         type = ((GrReferenceExpression)lValue).getNominalType();
@@ -203,8 +206,9 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
     final GroovyResolveResult[] constructorCandidates = PsiUtil.getConstructorCandidates(type, getCallArgumentTypes(), getElement());
 
-    if (constructorCandidates.length == 0 && classResolveResult.getElement() != null) {
-      return new GroovyResolveResult[]{new GroovyResolveResultImpl(classResolveResult)};
+    if (constructorCandidates.length == 0) {
+      final GroovyResolveResult result = GroovyResolveResultImpl.from(classResolveResult);
+      if (result != GroovyResolveResult.EMPTY_RESULT) return new GroovyResolveResult[]{result};
     }
     return constructorCandidates;
   }

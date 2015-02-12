@@ -1,0 +1,95 @@
+package org.jetbrains.idea.svn.difftool.properties;
+
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.requests.ContentDiffRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.properties.PropertyData;
+
+import java.util.List;
+
+public class SvnPropertiesDiffRequest extends ContentDiffRequest {
+  @NotNull private final DiffContent[] myContents;
+  @NotNull private final String[] myContentTitles;
+  @NotNull private final String myWindowTitle;
+
+  public SvnPropertiesDiffRequest(@NotNull String windowTitle,
+                                  @NotNull DiffContent content1,
+                                  @NotNull DiffContent content2,
+                                  @NotNull String title1,
+                                  @NotNull String title2) {
+    myWindowTitle = windowTitle;
+    myContents = new DiffContent[]{content1, content2};
+    myContentTitles = new String[]{title1, title2};
+
+    assert content1 instanceof PropertyContent || content1 instanceof EmptyContent;
+    assert content2 instanceof PropertyContent || content2 instanceof EmptyContent;
+    assert content1 instanceof PropertyContent || content2 instanceof PropertyContent;
+  }
+
+  public SvnPropertiesDiffRequest(@Nullable List<PropertyData> before, @Nullable List<PropertyData> after,
+                                  @Nullable String title1, @Nullable String title2) {
+    assert before != null || after != null;
+
+    myContents = new DiffContent[]{createContent(before), createContent(after)};
+    myWindowTitle = "Svn Properties Diff";
+    myContentTitles = new String[]{title1, title2};
+  }
+
+  @NotNull
+  public DiffContent createContent(@Nullable List<PropertyData> content) {
+    if (content == null) return new EmptyContent();
+
+    return new PropertyContent(content);
+  }
+
+  @NotNull
+  @Override
+  public String getTitle() {
+    return myWindowTitle;
+  }
+
+  @NotNull
+  @Override
+  public String[] getContentTitles() {
+    return myContentTitles;
+  }
+
+  @NotNull
+  @Override
+  public DiffContent[] getContents() {
+    return myContents;
+  }
+
+  public static class PropertyContent implements DiffContent {
+    @NotNull private final List<PropertyData> myProperties;
+
+    public PropertyContent(@NotNull List<PropertyData> properties) {
+      myProperties = properties;
+    }
+
+    @NotNull
+    public List<PropertyData> getProperties() {
+      return myProperties;
+    }
+
+    @Nullable
+    @Override
+    public FileType getContentType() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public OpenFileDescriptor getOpenFileDescriptor() {
+      return null;
+    }
+
+    @Override
+    public void onAssigned(boolean isAssigned) {
+    }
+  }
+}

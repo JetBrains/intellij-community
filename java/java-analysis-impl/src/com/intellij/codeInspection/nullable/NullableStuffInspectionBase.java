@@ -53,6 +53,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_EXTERNAL_SUPER_NOTNULL = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REQUIRE_NOTNULL_FIELDS_INITIALIZED = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = false;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
@@ -67,7 +68,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       String name = child.getAttributeValue("name");
       String value = child.getAttributeValue("value");
       if ("IGNORE_EXTERNAL_SUPER_NOTNULL".equals(name) && "false".equals(value) ||
-          "REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED".equals(name) && "false".equals(value)) {
+          "REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED".equals(name) && "false".equals(value) ||
+          "REQUIRE_NOTNULL_FIELDS_INITIALIZED".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
     }
@@ -178,12 +180,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           }
 
           List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
-          if (annotated.isDeclaredNotNull && initializers.isEmpty()) {
-            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-            if (annotation != null) {
-              holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
-                                     "Not-null fields must be initialized",
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          if (REQUIRE_NOTNULL_FIELDS_INITIALIZED) {
+            if (annotated.isDeclaredNotNull && initializers.isEmpty()) {
+              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+              if (annotation != null) {
+                holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
+                                       "Not-null fields must be initialized",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              }
             }
           }
 

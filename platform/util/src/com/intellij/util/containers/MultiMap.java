@@ -351,6 +351,16 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   @NotNull
+  public static <K, V> MultiMap<K, V> createWeakKey() {
+    return new MultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Map<K, Collection<V>> createMap() {
+        return new WeakHashMap<K, Collection<V>>();
+      }
+    };
+  }
+
   public static <K, V> MultiMap<K, V> create(int i, float v) {
     return new MultiMap<K, V>(i, v);
   }

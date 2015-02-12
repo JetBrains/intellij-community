@@ -198,13 +198,13 @@ public class VcsRootProblemNotifier {
   private static String makeTitle(@NotNull Collection<VcsRootError> unregisteredRoots, @NotNull Collection<VcsRootError> invalidRoots) {
     String title;
     if (unregisteredRoots.isEmpty()) {
-      title = "Invalid Vcs root " + pluralize("mapping", invalidRoots.size());
+      title = "Invalid VCS root " + pluralize("mapping", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
-      title = "Unregistered Vcs " + pluralize("root", unregisteredRoots.size()) + " detected";
+      title = "Unregistered VCS " + pluralize("root", unregisteredRoots.size()) + " detected";
     }
     else {
-      title = "Vcs root configuration problems";
+      title = "VCS root configuration problems";
     }
     return title;
   }

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.daemon.lambda
-
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 /**
@@ -58,4 +58,20 @@ class Foo {{ Object o = StringBuilder::append.<caret> }}
     assertEmpty(myFixture.completeBasic())
     myFixture.checkResult(text)
   }
+
+  public void "test suggest lambda signature"() {
+    myFixture.configureByText "a.java", """
+interface I {
+  void m(int x);
+}
+
+class Test {
+  public static void main(String[] args) {
+    I i = <caret>
+  }
+}"""
+    def items = myFixture.completeBasic()
+    assert items.find { LookupElementPresentation.renderElement(it).itemText == 'x -> {}' }
+  }
+
 }
