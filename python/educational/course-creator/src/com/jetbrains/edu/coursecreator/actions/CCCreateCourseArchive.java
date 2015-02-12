@@ -134,7 +134,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final TaskFile taskFile = taskFiles.getValue();
     TaskFile taskFileSaved = new TaskFile();
     taskFile.copy(taskFileSaved);
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getTaskWindows()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
       answerPlaceholder.setLength(answerPlaceholder.getReplacementLength());
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -151,9 +151,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     InsertionListener listener = new InsertionListener(taskFile);
     document.addDocumentListener(listener);
     taskFilesCopy.put(taskFile, taskFileSaved);
-    Collections.sort(taskFile.getTaskWindows());
-    for (int i = taskFile.getTaskWindows().size() - 1; i >= 0; i--) {
-      final AnswerPlaceholder answerPlaceholder = taskFile.getTaskWindows().get(i);
+    Collections.sort(taskFile.getAnswerPlaceholders());
+    for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
+      final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceTaskWindow(project, document, answerPlaceholder);
     }
     document.removeDocumentListener(listener);

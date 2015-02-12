@@ -88,7 +88,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    String taskWindowText = myPanel.getTaskWindowText();
+    String taskWindowText = myPanel.getAnswerPlaceholderText();
     myAnswerPlaceholder.setTaskText(StringUtil.notNullize(taskWindowText));
     if (myPanel.createHint()) {
       String hintName = myPanel.getHintName();

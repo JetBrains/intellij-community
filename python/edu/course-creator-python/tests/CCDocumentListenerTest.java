@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
 import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
+import com.jetbrains.edu.coursecreator.format.TaskFile;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ public class CCDocumentListenerTest extends CCTestCase {
     assertNotNull(taskFile);
     CCCreateCourseArchive.InsertionListener listener = new CCCreateCourseArchive.InsertionListener(taskFile);
     document.addDocumentListener(listener);
-    List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     for (AnswerPlaceholder tw : answerPlaceholders) {
       replaceTaskWindow(myFixture.getProject(), document, tw);
     }

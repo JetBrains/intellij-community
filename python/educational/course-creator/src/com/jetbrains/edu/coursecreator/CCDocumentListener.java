@@ -4,8 +4,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
 import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
+import com.jetbrains.edu.coursecreator.format.TaskFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public abstract class CCDocumentListener extends DocumentAdapter {
   public void beforeDocumentChange(DocumentEvent e) {
     Document document = e.getDocument();
     myTaskWindows.clear();
-    for (AnswerPlaceholder answerPlaceholder : myTaskFile.getTaskWindows()) {
+    for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
       int twStart = answerPlaceholder.getRealStartOffset(document);
       int length = useLength() ? answerPlaceholder.getLength() : answerPlaceholder.getReplacementLength();
       int twEnd = twStart + length;

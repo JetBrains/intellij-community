@@ -20,7 +20,7 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
   }
 
   @Override
-  protected AnswerPlaceholder getNextTaskWindow(@NotNull final AnswerPlaceholder window) {
+  protected AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window) {
     int index = window.getIndex();
     List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
     if (StudyUtils.indexIsValid(index, windows)) {

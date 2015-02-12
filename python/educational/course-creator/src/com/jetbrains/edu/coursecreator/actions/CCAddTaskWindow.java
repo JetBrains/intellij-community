@@ -29,7 +29,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
 
 
   private static boolean areTaskWindowsIntersect(@NotNull final TaskFile taskFile, @NotNull final Document document, int start, int end) {
-    List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     for (AnswerPlaceholder existingAnswerPlaceholder : answerPlaceholders) {
       int twStart = existingAnswerPlaceholder.getRealStartOffset(document);
       int twEnd = existingAnswerPlaceholder.getReplacementLength() + twStart;
@@ -78,12 +78,12 @@ public class CCAddTaskWindow extends DumbAwareAction {
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder(lineNumber, realStart, length, model.getSelectedText());
     CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(),
                                                             task.getIndex(), file.getVirtualFile().getNameWithoutExtension(),
-                                                            taskFile.getTaskWindows().size() + 1);
+                                                            taskFile.getAnswerPlaceholders().size() + 1);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    int index = taskFile.getTaskWindows().size() + 1;
+    int index = taskFile.getAnswerPlaceholders().size() + 1;
     taskFile.addTaskWindow(answerPlaceholder, index);
     taskFile.sortTaskWindows();
     answerPlaceholder.drawHighlighter(editor, false);

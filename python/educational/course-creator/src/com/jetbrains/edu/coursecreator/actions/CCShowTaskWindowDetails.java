@@ -29,7 +29,7 @@ public class CCShowTaskWindowDetails extends CCTaskWindowAction {
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
     CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(), task.getIndex(),
                                                             file.getVirtualFile().getNameWithoutExtension(),
-                                                            taskFile.getTaskWindows().size() + 1);
+                                                            taskFile.getAnswerPlaceholders().size() + 1);
     dlg.setTitle("Edit Answer Placeholder");
     dlg.show();
   }

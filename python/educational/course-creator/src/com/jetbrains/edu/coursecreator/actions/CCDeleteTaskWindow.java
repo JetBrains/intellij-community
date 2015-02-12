@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.TaskFile;
-import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class CCDeleteTaskWindow extends CCTaskWindowAction {
     final Course course = service.getCourse();
     TaskFile taskFile = state.getTaskFile();
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    final List<AnswerPlaceholder> answerPlaceholders = taskFile.getTaskWindows();
+    final List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     if (answerPlaceholders.contains(answerPlaceholder)) {
       answerPlaceholder.removeResources(project);
       answerPlaceholders.remove(answerPlaceholder);

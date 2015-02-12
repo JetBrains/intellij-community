@@ -269,7 +269,7 @@ public abstract class CCRunTestsAction extends AnAction {
       try {
         final VirtualFile windowsFile = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(windowsFile.getPath()));
-        for (AnswerPlaceholder answerPlaceholder : taskFile.getTaskWindows()) {
+        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
           int start = answerPlaceholder.getRealStartOffset(document);
           String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getReplacementLength()));
           printWriter.println("#educational_plugin_window = " + windowDescription);

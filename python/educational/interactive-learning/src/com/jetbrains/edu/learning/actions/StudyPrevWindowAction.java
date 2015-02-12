@@ -23,7 +23,7 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
 
   @Nullable
   @Override
-  protected AnswerPlaceholder getNextTaskWindow(@NotNull final AnswerPlaceholder window) {
+  protected AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window) {
     int prevIndex = window.getIndex() - 1;
     List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
     if (StudyUtils.indexIsValid(prevIndex, windows)) {

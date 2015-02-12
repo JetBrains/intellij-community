@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.course.AnswerPlaceholder;
+import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
             if (selectedAnswerPlaceholder == null) {
               return;
             }
-            final AnswerPlaceholder nextAnswerPlaceholder = getNextTaskWindow(selectedAnswerPlaceholder);
+            final AnswerPlaceholder nextAnswerPlaceholder = getNextAnswerPlaceholder(selectedAnswerPlaceholder);
             if (nextAnswerPlaceholder == null) {
               return;
             }
@@ -47,7 +47,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
       }
 
   @Nullable
-  protected abstract AnswerPlaceholder getNextTaskWindow(@NotNull final AnswerPlaceholder window);
+  protected abstract AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

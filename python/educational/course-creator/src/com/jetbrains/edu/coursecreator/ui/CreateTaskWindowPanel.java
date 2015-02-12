@@ -66,7 +66,7 @@ public class CreateTaskWindowPanel extends JPanel {
     myHintText.setText(hintText);
   }
 
-  public String getTaskWindowText() {
+  public String getAnswerPlaceholderText() {
     return myTaskWindowText.getText();
   }
 

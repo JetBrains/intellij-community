@@ -123,7 +123,7 @@ public class TaskFile implements Stateful {
    * @return task window located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public AnswerPlaceholder getTaskWindow(@NotNull final Document document, @NotNull final LogicalPosition pos) {
+  public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;

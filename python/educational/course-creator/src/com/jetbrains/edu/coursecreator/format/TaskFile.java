@@ -23,7 +23,7 @@ public class TaskFile {
     task_windows.add(answerPlaceholder);
   }
 
-  public List<AnswerPlaceholder> getTaskWindows() {
+  public List<AnswerPlaceholder> getAnswerPlaceholders() {
     return task_windows;
   }
 
@@ -37,7 +37,7 @@ public class TaskFile {
    * @return task window located in specified position or null if there is no task window in this position
    */
   @Nullable
-  public AnswerPlaceholder getTaskWindow(@NotNull final Document document, @NotNull final LogicalPosition pos) {
+  public AnswerPlaceholder getAnswerPlaceholder(@NotNull final Document document, @NotNull final LogicalPosition pos) {
     int line = pos.line;
     if (line >= document.getLineCount()) {
       return null;
@@ -62,15 +62,15 @@ public class TaskFile {
     for (AnswerPlaceholder answerPlaceholder : task_windows) {
       AnswerPlaceholder savedWindow = new AnswerPlaceholder(answerPlaceholder.getLine(), answerPlaceholder.getStart(),
                                               answerPlaceholder.getLength(), "");
-      target.getTaskWindows().add(savedWindow);
+      target.getAnswerPlaceholders().add(savedWindow);
       savedWindow.setIndex(answerPlaceholder.getIndex());
       savedWindow.setReplacementLength(answerPlaceholder.getReplacementLength());
     }
   }
 
   public void update(@NotNull final TaskFile source) {
-    for (AnswerPlaceholder answerPlaceholder : source.getTaskWindows()) {
-      AnswerPlaceholder answerPlaceholderUpdated = getTaskWindow(answerPlaceholder.getIndex());
+    for (AnswerPlaceholder answerPlaceholder : source.getAnswerPlaceholders()) {
+      AnswerPlaceholder answerPlaceholderUpdated = getAnswerPlaceholder(answerPlaceholder.getIndex());
       if (answerPlaceholderUpdated == null) {
         break;
       }
@@ -82,7 +82,7 @@ public class TaskFile {
   }
 
  @Nullable
- private AnswerPlaceholder getTaskWindow(int index) {
+ private AnswerPlaceholder getAnswerPlaceholder(int index) {
     for (AnswerPlaceholder answerPlaceholder : task_windows) {
       if (answerPlaceholder.getIndex() == index) {
         return answerPlaceholder;
