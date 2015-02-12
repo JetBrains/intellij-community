@@ -152,14 +152,14 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   protected Couple<Pair<FileEditor, FileEditorProvider>> createEditors() {
-    DiffContent[] contents = myRequest.getContents();
+    List<DiffContent> contents = myRequest.getContents();
 
     Pair<FileEditor, FileEditorProvider> pair1;
     Pair<FileEditor, FileEditorProvider> pair2;
 
     try {
-      pair1 = createEditor(contents[0]);
-      pair2 = createEditor(contents[1]);
+      pair1 = createEditor(contents.get(0));
+      pair2 = createEditor(contents.get(1));
       return Couple.of(pair1, pair2);
     }
     catch (IOException e) {
@@ -247,9 +247,9 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     try {
       indicator.checkCanceled();
 
-      DiffContent[] contents = myRequest.getContents();
+      List<DiffContent> contents = myRequest.getContents();
 
-      if (contents[0] instanceof EmptyContent) {
+      if (contents.get(0) instanceof EmptyContent) {
         return new Runnable() {
           @Override
           public void run() {
@@ -259,7 +259,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         };
       }
 
-      if (contents[1] instanceof EmptyContent) {
+      if (contents.get(1) instanceof EmptyContent) {
         return new Runnable() {
           @Override
           public void run() {
@@ -270,7 +270,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
       }
 
       // TODO: compare text with image by-byte?
-      if (!(contents[0] instanceof BinaryFileContent) || !(contents[1] instanceof BinaryFileContent)) {
+      if (!(contents.get(0) instanceof BinaryFileContent) || !(contents.get(1) instanceof BinaryFileContent)) {
         return new Runnable() {
           @Override
           public void run() {
@@ -279,8 +279,8 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         };
       }
 
-      final BinaryFileContent content1 = (BinaryFileContent)contents[0];
-      final BinaryFileContent content2 = (BinaryFileContent)contents[1];
+      final BinaryFileContent content1 = (BinaryFileContent)contents.get(0);
+      final BinaryFileContent content2 = (BinaryFileContent)contents.get(1);
       byte[] bytes1 = content1.getBytes();
       byte[] bytes2 = content2.getBytes();
 
@@ -396,13 +396,13 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 2) return false;
 
-    if (!canShowContent(contents[0], context)) return false;
-    if (!canShowContent(contents[1], context)) return false;
+    if (!canShowContent(contents.get(0), context)) return false;
+    if (!canShowContent(contents.get(1), context)) return false;
 
-    return wantShowContent(contents[0], context) || wantShowContent(contents[1], context);
+    return wantShowContent(contents.get(0), context) || wantShowContent(contents.get(1), context);
   }
 
   public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {

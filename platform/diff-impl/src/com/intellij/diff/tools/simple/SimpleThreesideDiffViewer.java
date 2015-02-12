@@ -162,15 +162,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     try {
       indicator.checkCanceled();
 
-      DiffContent[] rawContents = myRequest.getContents();
-      final DocumentContent[] contents = new DocumentContent[3];
+      List<DiffContent> contents = myRequest.getContents();
       final Document[] documents = new Document[3];
-      contents[0] = (DocumentContent)rawContents[0];
-      contents[1] = (DocumentContent)rawContents[1];
-      contents[2] = (DocumentContent)rawContents[2];
-      documents[0] = contents[0].getDocument();
-      documents[1] = contents[1].getDocument();
-      documents[2] = contents[2].getDocument();
+      documents[0] = ((DocumentContent)contents.get(0)).getDocument();
+      documents[1] = ((DocumentContent)contents.get(1)).getDocument();
+      documents[2] = ((DocumentContent)contents.get(2)).getDocument();
 
       DocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
         @Override

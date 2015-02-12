@@ -111,16 +111,16 @@ public class ExternalDiffToolUtil {
   }
 
   public static void execute(@NotNull ExternalDiffSettings settings,
-                             @NotNull DiffContent[] contents,
-                             @NotNull String[] titles,
+                             @NotNull List<DiffContent> contents,
+                             @NotNull List<String> titles,
                              @Nullable String windowTitle)
     throws IOException, ExecutionException {
-    assert contents.length == 2 || contents.length == 3;
-    assert titles.length == contents.length;
+    assert contents.size() == 2 || contents.size() == 3;
+    assert titles.size() == contents.size();
 
     List<String> files = new ArrayList<String>();
-    for (int i = 0; i < contents.length; i++) {
-      files.add(createFile(contents[i], titles[i], windowTitle));
+    for (int i = 0; i < contents.size(); i++) {
+      files.add(createFile(contents.get(i), titles.get(i), windowTitle));
     }
 
     CommandLineTokenizer parameterTokenizer = new CommandLineTokenizer(settings.getDiffParameters(), true);

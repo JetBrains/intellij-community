@@ -104,9 +104,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myStatusPanel = new MyStatusPanel();
 
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContent1 = contents[0] instanceof DocumentContent ? ((DocumentContent)contents[0]) : null;
-    myActualContent2 = contents[1] instanceof DocumentContent ? ((DocumentContent)contents[1]) : null;
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContent1 = contents.get(0) instanceof DocumentContent ? ((DocumentContent)contents.get(0)) : null;
+    myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
     assert myActualContent1 != null || myActualContent2 != null;
 
 

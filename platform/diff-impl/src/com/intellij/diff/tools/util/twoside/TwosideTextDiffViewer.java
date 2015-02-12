@@ -87,9 +87,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   public TwosideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContent1 = contents[0] instanceof DocumentContent ? ((DocumentContent)contents[0]) : null;
-    myActualContent2 = contents[1] instanceof DocumentContent ? ((DocumentContent)contents[1]) : null;
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContent1 = contents.get(0) instanceof DocumentContent ? ((DocumentContent)contents.get(0)) : null;
+    myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
     assert myActualContent1 != null || myActualContent2 != null;
 
 
@@ -353,13 +353,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 2) return false;
 
-    if (!canShowContent(contents[0])) return false;
-    if (!canShowContent(contents[1])) return false;
+    if (!canShowContent(contents.get(0))) return false;
+    if (!canShowContent(contents.get(1))) return false;
 
-    if (contents[0] instanceof EmptyContent && contents[1] instanceof EmptyContent) return false;
+    if (contents.get(0) instanceof EmptyContent && contents.get(1) instanceof EmptyContent) return false;
 
     return true;
   }
@@ -412,7 +412,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     int editorHeight = myEditor1.getComponent().getHeight();
     int dividerOffset = divider.getLocationOnScreen().y;
     int editorOffset = myEditor1.getComponent().getLocationOnScreen().y;
-    return  (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
+    return (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
   }
 
   private class MyEditorFocusListener extends FocusAdapter {

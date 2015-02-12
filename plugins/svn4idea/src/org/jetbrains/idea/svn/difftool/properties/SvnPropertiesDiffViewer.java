@@ -51,14 +51,14 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
     myContext = context;
     myRequest = request;
 
-    String[] titles = request.getContentTitles();
+    List<String> titles = request.getContentTitles();
 
-    DiffContent[] contents = request.getContents();
-    myProperties1 = getProperties(contents[0]);
-    myProperties2 = getProperties(contents[1]);
+    List<DiffContent> contents = request.getContents();
+    myProperties1 = getProperties(contents.get(0));
+    myProperties2 = getProperties(contents.get(1));
     assert myProperties1 != null || myProperties2 != null;
 
-    PropertiesTableModel model = new PropertiesTableModel(titles[0], titles[1], this);
+    PropertiesTableModel model = new PropertiesTableModel(titles.get(0), titles.get(1), this);
     myTable = new PropertiesTableView(model);
     myTable.getTableHeader().setReorderingAllowed(false);
     myTable.setIntercellSpacing(new Dimension(0, 1));

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 class DifDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull private final DiffContext myContext;
@@ -49,9 +50,9 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
     myContext = context;
     myRequest = request;
 
-    DiffContent[] contents = request.getContents();
-    DiffElement element1 = createDiffElement(contents[0]);
-    DiffElement element2 = createDiffElement(contents[1]);
+    List<DiffContent> contents = request.getContents();
+    DiffElement element1 = createDiffElement(contents.get(0));
+    DiffElement element2 = createDiffElement(contents.get(1));
     DirDiffTableModel model = new DirDiffTableModel(context.getProject(), element1, element2, new DirDiffSettings());
 
     myPanel = new DirDiffPanel(model, new DirDiffWindow((DirDiffFrame)null) {
@@ -102,11 +103,11 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 2) return false;
 
-    if (!canShowContent(contents[0])) return false;
-    if (!canShowContent(contents[1])) return false;
+    if (!canShowContent(contents.get(0))) return false;
+    if (!canShowContent(contents.get(1))) return false;
 
     return true;
   }
