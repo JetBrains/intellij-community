@@ -60,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.html.HTMLDocument;
@@ -142,7 +141,7 @@ public abstract class PluginManagerMain implements Disposable {
 
     myTablePanel.add(installedScrollPane, BorderLayout.CENTER);
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myPanelDescription);
-    myPanelDescription.setBorder(new EmptyBorder(0, 7, 0, 0));
+    myPanelDescription.setBorder(JBUI.Borders.emptyLeft(7));
 
     final JPanel header = new JPanel(new BorderLayout()) {
       @Override
@@ -156,7 +155,7 @@ public abstract class PluginManagerMain implements Disposable {
     header.setBorder(new CustomLineBorder(1, 1, 0, 1));
     final JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
-    mySortLabel.setBorder(new EmptyBorder(1, 1, 1, 5));
+    mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
     mySortLabel.setIcon(AllIcons.General.SplitDown);
     mySortLabel.setHorizontalTextPosition(SwingConstants.LEADING);
     header.add(mySortLabel, BorderLayout.EAST);
