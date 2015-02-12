@@ -108,19 +108,24 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
   @Nullable
   @Override
   protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
+    return convertToDelegate(graphElement, myCollapsedGraph);
+  }
+
+  @Nullable
+  public static GraphElement convertToDelegate(@NotNull GraphElement graphElement, CollapsedGraph collapsedGraph) {
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();
-      if (upIndex != null && downIndex != null && myCollapsedGraph.isMyCollapsedEdge(upIndex, downIndex)) return null;
+      if (upIndex != null && downIndex != null && collapsedGraph.isMyCollapsedEdge(upIndex, downIndex)) return null;
 
-      Integer convertedUpIndex = upIndex == null ? null : myCollapsedGraph.convertToDelegateNodeIndex(upIndex);
-      Integer convertedDownIndex = downIndex == null ? null : myCollapsedGraph.convertToDelegateNodeIndex(downIndex);
+      Integer convertedUpIndex = upIndex == null ? null : collapsedGraph.convertToDelegateNodeIndex(upIndex);
+      Integer convertedDownIndex = downIndex == null ? null : collapsedGraph.convertToDelegateNodeIndex(downIndex);
 
       return new GraphEdge(convertedUpIndex, convertedDownIndex, ((GraphEdge)graphElement).getTargetId(),
                            ((GraphEdge)graphElement).getType());
     }
     else if (graphElement instanceof GraphNode) {
-      return new GraphNode(myCollapsedGraph.convertToDelegateNodeIndex((((GraphNode)graphElement).getNodeIndex())),
+      return new GraphNode(collapsedGraph.convertToDelegateNodeIndex((((GraphNode)graphElement).getNodeIndex())),
                            ((GraphNode)graphElement).getType());
     }
     return null;

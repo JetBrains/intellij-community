@@ -21,6 +21,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.collapsing.BranchFilterGraphController;
 import com.intellij.vcs.log.graph.collapsing.CollapsedLinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
@@ -114,7 +115,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchedCommits));
     }
     else if (sortType == SortType.LinearBek) {
-      controller = baseController;
+      if (headsOfVisibleBranches != null) {
+        controller = new BranchFilterGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(headsOfVisibleBranches));
+      }
+      else {
+        controller = baseController;
+      }
     }
     else {
       Set<Integer> idOfVisibleBranches = null;
