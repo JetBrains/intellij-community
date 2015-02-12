@@ -19,7 +19,6 @@ import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import org.junit.Test
-import kotlin.test.assertTrue
 
 class LinearBekExpandTest {
   fun runTest(beforeLinearBekBuilder: TestGraphBuilder.() -> Unit, afterExpansionBuilder: TestGraphBuilder.() -> Unit, fromNodeToExpand: Int, toNodeToExpand: Int) {
@@ -145,5 +144,30 @@ class LinearBekExpandTest {
       8(9)
       9()
     }, afterLinearBek)
+  }
+
+  /*
+  0
+  |\
+  | 1
+  | |\
+  |/ 2
+  3 /
+  |/
+  4
+  */
+  Test fun replaceDottedEdgeTest() {
+    val builder: TestGraphBuilder.() -> Unit = {
+      0(3, 1)
+      1(3, 2)
+      2(4)
+      3(4)
+      4()
+    }
+    val afterLinearBek = runLinearBek(builder)
+
+    afterLinearBek.expandEdge(GraphEdge.createNormalEdge(2, 3, GraphEdgeType.DOTTED))
+
+    assertEquals(builder, afterLinearBek)
   }
 }
