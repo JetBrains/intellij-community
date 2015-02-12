@@ -146,7 +146,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   public void getData(MavenGeneralSettings data) {
     final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
-    mavenHomeField.setText(ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome()));
+    final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
+    mavenHomeField.setText(mavenHome != null ? FileUtil.toSystemIndependentName(mavenHome): null);
     mavenHomeField.addCurrentTextToHistory();
     updateMavenVersionLabel();
     userSettingsFileOverrider.reset(data.getUserSettingsFile());
