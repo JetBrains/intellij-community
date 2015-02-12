@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xml.util.XmlStringUtil;
@@ -85,13 +86,6 @@ public abstract class PluginManagerMain implements Disposable {
 
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
-  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
-                                                    "    <style type=\"text/css\">" +
-                                                    "        p {" +
-                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
-                                                    "        }" +
-                                                    "    </style>" +
-                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   @NonNls private static final String HTML_PREFIX = "<a href=\"";
@@ -236,6 +230,20 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginTable;
   }
 
+  private static String getTextPrefix() {
+    final int fontSize = JBUI.scale(12);
+    final int m1 = JBUI.scale(2);
+    final int m2 = JBUI.scale(5);
+    return String.format(
+           "<html><head>" +
+           "    <style type=\"text/css\">" +
+           "        p {" +
+           "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
+           "        }" +
+           "    </style>" +
+           "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
+           fontSize, m1, m1, fontSize, m2, m2);
+  }
 
   public PluginTableModel getPluginsModel() {
     return pluginsModel;
@@ -485,13 +493,13 @@ public abstract class PluginManagerMain implements Disposable {
 
   private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {
     if (text != null) {
-      text.insert(0, TEXT_PREFIX);
+      text.insert(0, getTextPrefix());
       text.append(TEXT_SUFFIX);
       pane.setText(SearchUtil.markup(text.toString(), filter).trim());
       pane.setCaretPosition(0);
     }
     else {
-      pane.setText(TEXT_PREFIX + TEXT_SUFFIX);
+      pane.setText(getTextPrefix() + TEXT_SUFFIX);
     }
   }
 
