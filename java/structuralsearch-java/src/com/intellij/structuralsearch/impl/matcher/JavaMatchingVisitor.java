@@ -48,18 +48,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitComment(PsiComment comment) {
-    PsiElement comment2 = null;
+    PsiComment comment2 = null;
 
     if (!(myMatchingVisitor.getElement() instanceof PsiComment)) {
       if (myMatchingVisitor.getElement() instanceof PsiMember) {
         final PsiElement[] children = myMatchingVisitor.getElement().getChildren();
         if (children[0] instanceof PsiComment) {
-          comment2 = children[0];
+          comment2 = (PsiComment)children[0];
         }
       }
     }
     else {
-      comment2 = myMatchingVisitor.getElement();
+      comment2 = (PsiComment)myMatchingVisitor.getElement();
     }
 
     if (comment2 == null) {
@@ -70,10 +70,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final Object userData = comment.getUserData(CompiledPattern.HANDLER_KEY);
 
     if (userData instanceof String) {
-      String str = (String)userData;
+      final String str = (String)userData;
       int end = comment2.getTextLength();
 
-      if (((PsiComment)comment2).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+      if (comment2.getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
         end -= 2;
       }
       myMatchingVisitor.setResult(((SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(str)).handle(
@@ -362,7 +362,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitField(PsiField psiField) {
-    if (!checkHierarchy((PsiField)myMatchingVisitor.getElement(), psiField)) {
+    final PsiDocComment comment = psiField.getDocComment();
+    final PsiField other = (PsiField)myMatchingVisitor.getElement();
+    if (comment != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other));
+      if (!myMatchingVisitor.getResult()) return;
+    }
+    if (!checkHierarchy(other, psiField)) {
       myMatchingVisitor.setResult(false);
       return;
     }
