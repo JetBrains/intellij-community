@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -191,7 +192,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     PsiFile containingFile = element.getContainingFile();
     int fileLength = containingFile.getTextLength();
     FileViewProvider viewProvider = containingFile.getViewProvider();
-    PsiElement elementAtOffset = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
+    PsiElement elementAtOffset = viewProvider.findElementAt(offset, LanguageUtil.getRootLanguage(element));
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
