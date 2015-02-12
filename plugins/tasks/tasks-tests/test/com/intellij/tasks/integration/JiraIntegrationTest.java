@@ -28,12 +28,15 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
+import java.net.URL;
+import java.util.*;
 
 import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0;
 import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0_ALPHA;
@@ -48,6 +51,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * JIRA 4.4.5, REST API 2.0.alpha1
    */
   @NonNls private static final String JIRA_4_TEST_SERVER_URL = "http://idea-qa-task-2.labs.intellij.net:8014";
+  private static final Object JIRA_4_STATE_UPDATES_PROJECT = "UT";
+
   /**
    * JIRA 5.0.6, REST API 2.0
    */
@@ -129,9 +134,66 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   //  assertNull(client.getState().getCredentials(AuthScope.ANY));
   //}
 
-  public void testSetTaskState() throws Exception {
-    changeStateAndCheck(JIRA_4_TEST_SERVER_URL, "PRJONE-8");
-    changeStateAndCheck(JIRA_5_TEST_SERVER_URL, "UT-8");
+  public void testSetTaskStateInJira5() throws Exception {
+    myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
+
+    Task task = myRepository.findTask("UT-8");
+    assertNotNull("Test task not found", task);
+    // set required initial state, if was left wrong
+    if (task.getState() != TaskState.REOPENED) {
+      myRepository.setTaskState(task, TaskState.REOPENED);
+    }
+    try {
+      //assertEquals("Wrong initial state of test issue: " + key, TaskState.REOPENED, task.getState());
+      myRepository.setTaskState(task, TaskState.RESOLVED);
+      task = myRepository.findTask("UT-8");
+      assertEquals(task.getState(), TaskState.RESOLVED);
+    }
+    finally {
+      try {
+        // always attempt to restore original state of the issue
+        myRepository.setTaskState(task, TaskState.REOPENED);
+      }
+      catch (Exception ignored) {
+        // empty
+      }
+    }
+  }
+
+  // Our test server with JIRA 4.x poorly handles frequent state updates of single dedicated issue. As a workaround
+  // we create new issue for every test run via XML-RPC API (REST API 2.0 alpha 1 doesn't have such functionality),
+  // and change then its state.
+  public void testSetTaskStateInJira4() throws Exception {
+    myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
+
+    final Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+    final String subject = String.format("Test issue created for state updates (%1$tY-%1$tm-%1$td %1tH:%1$tM UTC)", utc);
+    final String issueKey = createIssueViaXmlRpc("UT", subject);
+
+    final Task original = myRepository.findTask(issueKey);
+    assertNotNull(original);
+    myRepository.setTaskState(original, TaskState.IN_PROGRESS);
+    final Task updated = myRepository.findTask(issueKey);
+    assertNotNull(updated);
+    assertEquals(TaskState.IN_PROGRESS, updated.getState());
+  }
+
+  @NotNull
+  private String createIssueViaXmlRpc(@NotNull String project, @NotNull String summary) throws Exception {
+
+    final URL url = new URL(myRepository.getUrl() + "/rpc/xmlrpc");
+    final XmlRpcClient xmlRpcClient = new XmlRpcClient(url);
+    final Map<String, Object> issue = new Hashtable<String, Object>();
+    issue.put("summary", summary);
+    issue.put("project", project);
+    issue.put("assignee", myRepository.getUsername());
+    issue.put("type", 1); // Bug
+    issue.put("state", 1); // Open
+
+    final Vector<Object> params = new Vector<Object>(Arrays.asList("", issue)); // empty token because of HTTP basic auth
+    final Hashtable result = (Hashtable)xmlRpcClient.execute(new XmlRpcRequest("jira1.createIssue", params),
+                                                             new CommonsXmlRpcTransport(url, myRepository.getHttpClient()));
+    return (String)result.get("key");
   }
 
   public void testSetTimeSpend() throws Exception {
@@ -159,31 +221,6 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertEquals(comment, last.get("comment").getAsString());
     // don't depend on concrete response format: zero hours stripping, zero padding and so on
     assertEquals(minutes * 60, last.get("timeSpentSeconds").getAsInt());
-  }
-
-  private void changeStateAndCheck(String url, String key) throws Exception {
-    myRepository.setUrl(url);
-    Task task = myRepository.findTask(key);
-    assertNotNull("Test task not found", task);
-    // set required initial state, if was left wrong
-    if (task.getState() != TaskState.REOPENED) {
-      myRepository.setTaskState(task, TaskState.REOPENED);
-    }
-    try {
-      //assertEquals("Wrong initial state of test issue: " + key, TaskState.REOPENED, task.getState());
-      myRepository.setTaskState(task, TaskState.RESOLVED);
-      task = myRepository.findTask(key);
-      assertEquals(task.getState(), TaskState.RESOLVED);
-    }
-    finally {
-      try {
-        // always attempt to restore original state of the issue
-        myRepository.setTaskState(task, TaskState.REOPENED);
-      }
-      catch (Exception ignored) {
-        // empty
-      }
-    }
   }
 
   public void testParseVersionNumbers() throws Exception {
