@@ -152,18 +152,13 @@ public class InspectionToolRegistrar {
     ensureInitialized();
 
     final List<InspectionToolWrapper> tools = ContainerUtil.newArrayListWithCapacity(myInspectionToolFactories.size());
-    final Set<Factory<InspectionToolWrapper>> broken = ContainerUtil.newHashSet();
     for (final Factory<InspectionToolWrapper> factory : myInspectionToolFactories) {
       ProgressManager.checkCanceled();
       final InspectionToolWrapper toolWrapper = factory.create();
       if (toolWrapper != null && checkTool(toolWrapper) == null) {
         tools.add(toolWrapper);
       }
-      else {
-        broken.add(factory);
-      }
     }
-    myInspectionToolFactories.removeAll(broken);
 
     return tools;
   }
