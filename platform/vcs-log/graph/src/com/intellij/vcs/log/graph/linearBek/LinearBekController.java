@@ -150,18 +150,12 @@ public class LinearBekController extends CascadeLinearGraphController {
 
   @Nullable
   private LinearGraphAnswer highlightNode(GraphNode node) {
-    SortedSet<Integer> toCollapse = collectNodesToCollapse(node);
-
+    Set<LinearBekGraphBuilder.MergeFragment> toCollapse = collectFragmentsToCollapse(node);
     if (toCollapse.isEmpty()) return null;
 
     Set<Integer> toHighlight = ContainerUtil.newHashSet();
-
-    LinearBekGraphBuilder builder = new LinearBekGraphBuilder(new LinearBekGraph(myCompiledGraph), myBekGraphLayout);
-    for (Integer i : toCollapse) {
-      LinearBekGraphBuilder.MergeFragment fragment = builder.collapseFragment(i);
-      if (fragment != null) {
-        toHighlight.addAll(fragment.getAllNodes());
-      }
+    for (LinearBekGraphBuilder.MergeFragment fragment : toCollapse) {
+      toHighlight.addAll(fragment.getAllNodes());
     }
 
     return LinearGraphUtils.createSelectedAnswer(myCompiledGraph, toHighlight);
@@ -187,7 +181,6 @@ public class LinearBekController extends CascadeLinearGraphController {
     return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, null, null, null);
   }
 
-  @NotNull
   private SortedSet<Integer> collectNodesToCollapse(GraphNode node) {
     SortedSet<Integer> toCollapse = new TreeSet<Integer>(new Comparator<Integer>() {
       @Override
@@ -195,6 +188,16 @@ public class LinearBekController extends CascadeLinearGraphController {
         return o2.compareTo(o1);
       }
     });
+    for (LinearBekGraphBuilder.MergeFragment f : collectFragmentsToCollapse(node)) {
+      toCollapse.add(f.getParent());
+      toCollapse.addAll(f.getTailsAndBody());
+    }
+    return toCollapse;
+  }
+
+  @NotNull
+  private Set<LinearBekGraphBuilder.MergeFragment> collectFragmentsToCollapse(GraphNode node) {
+    Set<LinearBekGraphBuilder.MergeFragment> result = ContainerUtil.newHashSet();
 
     int mergesCount = 0;
 
@@ -207,14 +210,13 @@ public class LinearBekController extends CascadeLinearGraphController {
       LinearBekGraphBuilder.MergeFragment fragment = myLinearBekGraphBuilder.getFragment(i);
       if (fragment == null) continue;
 
-      toCollapse.add(i);
-      toCollapse.addAll(fragment.getTailsAndBody());
+      result.add(fragment);
       toProcess.addAll(fragment.getTailsAndBody());
 
       mergesCount++;
       if (mergesCount > 10) break;
     }
-    return toCollapse;
+    return result;
   }
 
   @Nullable
