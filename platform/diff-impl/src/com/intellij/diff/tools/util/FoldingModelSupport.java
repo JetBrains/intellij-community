@@ -423,19 +423,6 @@ public class FoldingModelSupport {
       }
     }
 
-    private void updatePairedRegion(@NotNull FoldRegion region, int index, int pairedIndex) {
-      FoldRegion pairedRegion = null;
-      for (FoldedBlock folding : myFoldings) {
-        if (folding.getRegion(index) == region) {
-          pairedRegion = folding.getRegion(pairedIndex);
-          break;
-        }
-      }
-      if (pairedRegion == null) return;
-      if (!region.isValid() || !pairedRegion.isValid()) return;
-      pairedRegion.setExpanded(region.isExpanded());
-    }
-
     protected class MyListener implements FoldingListener {
       private final int myIndex;
       @NotNull List<FoldRegion> myModifiedRegions = new ArrayList<FoldRegion>();
@@ -452,6 +439,7 @@ public class FoldingModelSupport {
 
       @Override
       public void onFoldProcessingEnd() {
+        if (myModifiedRegions.isEmpty()) return;
         myDuringSynchronize = true;
         try {
           for (int i = 0; i < myCount; i++) {
@@ -460,8 +448,14 @@ public class FoldingModelSupport {
             myEditors[pairedIndex].getFoldingModel().runBatchFoldingOperation(new Runnable() {
               @Override
               public void run() {
-                for (final FoldRegion region : myModifiedRegions) {
-                  updatePairedRegion(region, myIndex, pairedIndex);
+                for (FoldedBlock folding : myFoldings) {
+                  FoldRegion region = folding.getRegion(myIndex);
+                  if (region == null || !region.isValid()) continue;
+                  if (myModifiedRegions.contains(region)) {
+                    FoldRegion pairedRegion = folding.getRegion(pairedIndex);
+                    if (pairedRegion == null || !pairedRegion.isValid()) continue;
+                    pairedRegion.setExpanded(region.isExpanded());
+                  }
                 }
               }
             });
@@ -495,7 +489,7 @@ public class FoldingModelSupport {
           if (folding.myRegions[myLeft].isExpanded() || folding.myRegions[myRight].isExpanded()) continue;
           int line1 = myEditors[myLeft].getDocument().getLineNumber(folding.myRegions[myLeft].getStartOffset());
           int line2 = myEditors[myRight].getDocument().getLineNumber(folding.myRegions[myRight].getStartOffset());
-          handler.process(line1, line2);
+          if (!handler.process(line1, line2)) return;
         }
       }
 
