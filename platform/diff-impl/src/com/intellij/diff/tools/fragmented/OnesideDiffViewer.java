@@ -42,6 +42,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
+import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -59,7 +60,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.LightweightHint;
@@ -70,7 +70,6 @@ import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -978,13 +977,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     protected boolean myShouldScroll = true;
 
     @Nullable private ScrollToPolicy myScrollToChange;
-    @Nullable private EditorPosition myEditorPosition;
+    @Nullable private EditorsVisiblePositions myEditorPosition;
     @Nullable private LogicalPosition[] myCaretPosition;
     @Nullable private DiffNavigationContext myNavigationContext;
 
     public void processContext() {
       myScrollToChange = myRequest.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE);
-      myEditorPosition = myRequest.getUserData(EditorPosition.KEY);
+      myEditorPosition = myRequest.getUserData(EditorsVisiblePositions.KEY);
       myCaretPosition = myRequest.getUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION);
       myNavigationContext = myRequest.getUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT);
     }
@@ -996,10 +995,10 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       carets[0] = getPosition(pair.first[0], position.column);
       carets[1] = getPosition(pair.first[1], position.column);
 
-      EditorPosition editorsPosition = new EditorPosition(carets, DiffUtil.getScrollingPoint(myEditor));
+      EditorsVisiblePositions editorsPosition = new EditorsVisiblePositions(position, DiffUtil.getScrollingPosition(myEditor));
 
       myRequest.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, null);
-      myRequest.putUserData(EditorPosition.KEY, editorsPosition);
+      myRequest.putUserData(EditorsVisiblePositions.KEY, editorsPosition);
       myRequest.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, carets);
       myRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, null);
     }
@@ -1018,8 +1017,8 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
         myEditor.getCaretModel().moveToLogicalPosition(position);
 
-        if (myEditorPosition != null && myEditorPosition.isSame(myCaretPosition)) {
-          DiffUtil.scrollToPoint(myEditor, myEditorPosition.myPoint);
+        if (myEditorPosition != null && myEditorPosition.isSame(position)) {
+          DiffUtil.scrollToPoint(myEditor, myEditorPosition.myPoints[0]);
         }
         else {
           myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -1082,27 +1081,6 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       if (line == -1) return false;
 
       return doScrollToLine(Side.RIGHT, new LogicalPosition(line, 0));
-    }
-  }
-
-  private static class EditorPosition {
-    public static final Key<EditorPosition> KEY = Key.create("Diff.OnesideEditorPosition");
-
-    @NotNull public final LogicalPosition[] myCaretPosition;
-    @NotNull public final Point myPoint;
-
-    public EditorPosition(@NotNull LogicalPosition[] caretPosition, @NotNull Point point) {
-      myCaretPosition = caretPosition;
-      myPoint = point;
-    }
-
-    public boolean isSame(@Nullable LogicalPosition[] caretPosition) {
-      // TODO: allow small fluctuations ?
-      if (caretPosition == null) return true;
-      if (caretPosition.length != 2) return false;
-      if (!caretPosition[0].equals(myCaretPosition[0])) return false;
-      if (!caretPosition[1].equals(myCaretPosition[1])) return false;
-      return true;
     }
   }
 

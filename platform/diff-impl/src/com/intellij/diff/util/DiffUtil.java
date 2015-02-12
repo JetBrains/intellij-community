@@ -175,6 +175,10 @@ public class DiffUtil {
     editor.reinitSettings();
   }
 
+  //
+  // Scrolling
+  //
+
   public static void scrollEditor(@Nullable final Editor editor, int line) {
     scrollEditor(editor, line, 0);
   }
@@ -210,10 +214,60 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static Point getScrollingPoint(@Nullable Editor editor) {
+  public static Point getScrollingPosition(@Nullable Editor editor) {
     if (editor == null) return new Point(0, 0);
     ScrollingModel model = editor.getScrollingModel();
     return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
+  }
+
+  @NotNull
+  public static LogicalPosition getCaretPosition(@Nullable Editor editor) {
+    return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
+  }
+
+  @NotNull
+  public static Point[] getScrollingPositions(@NotNull List<? extends Editor> editors) {
+    Point[] carets = new Point[editors.size()];
+    for (int i = 0; i < editors.size(); i++) {
+      carets[i] = getScrollingPosition(editors.get(i));
+    }
+    return carets;
+  }
+
+  @NotNull
+  public static LogicalPosition[] getCaretPositions(@NotNull List<? extends Editor> editors) {
+    LogicalPosition[] carets = new LogicalPosition[editors.size()];
+    for (int i = 0; i < editors.size(); i++) {
+      carets[i] = getCaretPosition(editors.get(i));
+    }
+    return carets;
+  }
+
+  public static class EditorsVisiblePositions {
+    public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
+
+    @NotNull public final LogicalPosition[] myCaretPosition;
+    @NotNull public final Point[] myPoints;
+
+    public EditorsVisiblePositions(@NotNull LogicalPosition caretPosition, @NotNull Point points) {
+      myCaretPosition = new LogicalPosition[]{caretPosition};
+      myPoints = new Point[]{points};
+    }
+
+    public EditorsVisiblePositions(@NotNull LogicalPosition[] caretPosition, @NotNull Point[] points) {
+      myCaretPosition = caretPosition;
+      myPoints = points;
+    }
+
+    public boolean isSame(@Nullable LogicalPosition... caretPosition) {
+      // TODO: allow small fluctuations ?
+      if (caretPosition == null) return true;
+      if (myCaretPosition.length != caretPosition.length) return false;
+      for (int i = 0; i < caretPosition.length; i++) {
+        if (!caretPosition[i].equals(myCaretPosition[i])) return false;
+      }
+      return true;
+    }
   }
 
   //
