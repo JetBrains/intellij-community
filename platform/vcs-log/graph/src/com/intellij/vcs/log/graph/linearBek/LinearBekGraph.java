@@ -23,7 +23,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,44 +75,29 @@ public class LinearBekGraph implements LinearGraph {
   }
 
   public Collection<GraphEdge> expandEdge(@NotNull final GraphEdge edge) {
+    Set<GraphEdge> result = ContainerUtil.newHashSet();
+
     assert edge.getType() == GraphEdgeType.DOTTED;
-    final Integer tail = edge.getUpNodeIndex();
-    final Integer firstChild = edge.getDownNodeIndex();
+    myDottedEdges.removeEdge(edge);
+
+    Integer tail = edge.getUpNodeIndex();
+    Integer firstChild = edge.getDownNodeIndex();
     assert tail != null : "Collapsed from to an unloaded node";
     assert firstChild != null : "Collapsed edge to an unloaded node";
 
-    myDottedEdges.removeEdge(edge);
-
-    Set<GraphEdge> addedEdges = ContainerUtil.newHashSet();
-    addedEdges.addAll(myGraph.getAdjacentEdges(tail, EdgeFilter.NORMAL_DOWN));
-    addedEdges.addAll(myGraph.getAdjacentEdges(firstChild, EdgeFilter.NORMAL_UP));
-
-    for (GraphEdge hiddenEdge : addedEdges) {
-      myHiddenEdges.removeEdge(hiddenEdge);
-    }
-    if (edge.getType() == GraphEdgeType.DOTTED) {
-      myHiddenEdges.removeEdge(edge);
-    }
-
-    List<GraphEdge> downDottedEdges =
-      ContainerUtil.filter(myHiddenEdges.getAdjacentEdges(tail, EdgeFilter.ALL), new Condition<GraphEdge>() {
-        @Override
-        public boolean value(GraphEdge graphEdge) {
-          return LinearGraphUtils.isEdgeDown(graphEdge, tail);
-        }
-      });
-    List<GraphEdge> upDottedEdges = ContainerUtil.filter(myHiddenEdges.getAdjacentEdges(firstChild, EdgeFilter.ALL), new Condition<GraphEdge>() {
-      @Override
-      public boolean value(GraphEdge graphEdge) {
-        return LinearGraphUtils.isEdgeUp(graphEdge, firstChild);
+    List<GraphEdge> downDottedEdges = myHiddenEdges.getAdjacentEdges(tail, EdgeFilter.NORMAL_DOWN);
+    List<GraphEdge> upDottedEdges = myHiddenEdges.getAdjacentEdges(firstChild, EdgeFilter.NORMAL_UP);
+    for (GraphEdge e : ContainerUtil.concat(downDottedEdges, upDottedEdges)) {
+      myHiddenEdges.removeEdge(e);
+      if (e.getType() == GraphEdgeType.DOTTED) {
+        result.addAll(expandEdge(e));
       }
-    });
-    for (GraphEdge graphEdge : ContainerUtil.concat(downDottedEdges, upDottedEdges)) {
-      assert graphEdge.getType() == GraphEdgeType.DOTTED;
-      addedEdges.addAll(expandEdge(graphEdge));
+      else {
+        result.add(e);
+      }
     }
 
-    return addedEdges;
+    return result;
   }
 
   public static class WorkingLinearBekGraph extends LinearBekGraph {
