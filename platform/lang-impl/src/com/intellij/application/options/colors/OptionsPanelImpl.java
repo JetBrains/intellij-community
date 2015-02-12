@@ -183,8 +183,8 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   @Override
-  public Runnable showOption(String attribute) {
-    final int index = getAttributeIndex(attribute);
+  public Runnable showOption(String attributeDisplayName) {
+    final int index = getAttributeIndex(attributeDisplayName, true);
     return index < 0 ? null : new Runnable() {
       @Override
       public void run() {
@@ -194,11 +194,11 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     };
   }
 
-  private int getAttributeIndex(final String option) {
+  private int getAttributeIndex(final String option, final boolean byDisplayNamePlease) {
     return ContainerUtil.indexOf(myListModel.getItems(), new Condition<EditorSchemeAttributeDescriptor>() {
       @Override
       public boolean value(EditorSchemeAttributeDescriptor o) {
-        return StringUtil.naturalCompare(o.toString(), option) == 0;
+        return StringUtil.naturalCompare(byDisplayNamePlease ? o.toString() : o.getType(), option) == 0;
       }
     });
   }
@@ -212,8 +212,8 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   @Override
-  public void selectOption(String attribute) {
-    int index = getAttributeIndex(attribute);
+  public void selectOption(String attributeType) {
+    int index = getAttributeIndex(attributeType, false);
     if (index < 0) return;
     ListScrollingUtil.selectItem(myOptionsList, index);
   }

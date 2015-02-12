@@ -249,23 +249,11 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    ColorAndFontDescription that = (ColorAndFontDescription)o;
-
-    if (!myGroup.equals(that.myGroup)) return false;
-    if (!myType.equals(that.myType)) return false;
-
-    return true;
+    return this == o;
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + myGroup.hashCode();
-    result = 31 * result + myType.hashCode();
-    return result;
+    return System.identityHashCode(this);
   }
 }
