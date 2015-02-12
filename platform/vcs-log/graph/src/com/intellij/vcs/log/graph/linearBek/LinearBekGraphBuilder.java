@@ -74,16 +74,16 @@ class LinearBekGraphBuilder {
   }
 
   @Nullable
-  private MergeFragment getFragment(int firstChild, int secondChild, int parent) {
-    MergeFragment fragment = new MergeFragment(parent, firstChild, secondChild);
+  private MergeFragment getFragment(int leftChild, int rightChild, int parent) {
+    MergeFragment fragment = new MergeFragment(parent, leftChild, rightChild);
 
-    int x = myGraphLayout.getLayoutIndex(firstChild);
-    int y = myGraphLayout.getLayoutIndex(secondChild);
-    int k = 1;
+    int leftLi = myGraphLayout.getLayoutIndex(leftChild);
+    int rightLi = myGraphLayout.getLayoutIndex(rightChild);
+    int rowsCount = 1;
     int blockSize = 1;
 
     PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE, new GraphEdgeComparator());
-    queue.addAll(myLinearBekGraph.getAdjacentEdges(secondChild, EdgeFilter.NORMAL_DOWN));
+    queue.addAll(myLinearBekGraph.getAdjacentEdges(rightChild, EdgeFilter.NORMAL_DOWN));
 
     @Nullable Set<Integer> magicSet = null;
 
@@ -97,34 +97,34 @@ class LinearBekGraphBuilder {
         continue; // allow very long edges down
       }
 
-      if (next == firstChild) {
+      if (next == leftChild) {
         // found first child
         fragment.addTail(upNodeIndex);
         fragment.setMergeWithOldCommit(true);
       }
-      else if (next == secondChild + k) {
+      else if (next == rightChild + rowsCount) {
         // all is fine, continuing
-        k++;
+        rowsCount++;
         blockSize++;
         queue.addAll(myLinearBekGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
         fragment.addBody(upNodeIndex);
       }
-      else if (next > secondChild + k && next < firstChild) {
-        k = next - secondChild + 1;
+      else if (next > rightChild + rowsCount && next < leftChild) {
+        rowsCount = next - rightChild + 1;
         blockSize++;
         queue.addAll(myLinearBekGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
         fragment.addBody(upNodeIndex);
       }
-      else if (next > firstChild) {
+      else if (next > leftChild) {
 
         int li = myGraphLayout.getLayoutIndex(next);
-        if (x > y && !fragment.isMergeWithOldCommit()) {
+        if (leftLi > rightLi && !fragment.isMergeWithOldCommit()) {
 
-          if (next > firstChild + MAGIC_SET_SIZE) {
+          if (next > leftChild + MAGIC_SET_SIZE) {
             return null;
           }
           if (magicSet == null) {
-            magicSet = calculateMagicSet(firstChild);
+            magicSet = calculateMagicSet(leftChild);
           }
 
           if (magicSet.contains(next)) {
@@ -136,20 +136,20 @@ class LinearBekGraphBuilder {
 
         }
         else {
-          if ((li > x && li < y) || (li == x)) {
+          if ((li > leftLi && li < rightLi) || (li == leftLi)) {
             fragment.addTailEdge(upNodeIndex, next);
           }
           else {
-            if (li >= y) {
+            if (li >= rightLi) {
               return null;
             }
             else {
-              if (next > firstChild + MAGIC_SET_SIZE) {
+              if (next > leftChild + MAGIC_SET_SIZE) {
                 fragment.addTail(upNodeIndex);
               }
               else {
                 if (magicSet == null) {
-                  magicSet = calculateMagicSet(firstChild);
+                  magicSet = calculateMagicSet(leftChild);
                 }
 
                 if (magicSet.contains(next)) {
@@ -193,21 +193,20 @@ class LinearBekGraphBuilder {
     return magicSet;
   }
 
-  // todo well, name
   public static class MergeFragment {
     private final int myParent;
-    private final int myFirstChild;
-    private final int mySecondChild;
+    private final int myLeftChild;
+    private final int myRightChild;
 
     private boolean myMergeWithOldCommit = false;
     @NotNull private final IntIntMultiMap myTailEdges = new IntIntMultiMap();
     @NotNull private final TIntHashSet myBlockBody = new TIntHashSet();
     @NotNull private final TIntHashSet myTails = new TIntHashSet();
 
-    private MergeFragment(int parent, int firstChild, int secondChild) {
+    private MergeFragment(int parent, int leftChild, int rightChild) {
       myParent = parent;
-      myFirstChild = firstChild;
-      mySecondChild = secondChild;
+      myLeftChild = leftChild;
+      myRightChild = rightChild;
     }
 
     public boolean isMergeWithOldCommit() {
@@ -256,8 +255,8 @@ class LinearBekGraphBuilder {
     public Set<Integer> getAllNodes() {
       Set<Integer> nodes = ContainerUtil.newHashSet();
       nodes.add(myParent);
-      nodes.add(myFirstChild);
-      nodes.add(mySecondChild);
+      nodes.add(myLeftChild);
+      nodes.add(myRightChild);
       nodes.addAll(getTailsAndBody());
       return nodes;
     }
@@ -272,14 +271,14 @@ class LinearBekGraphBuilder {
       TIntIterator it = myTails.iterator();
       while (it.hasNext()) {
         int tail = it.next();
-        if (!LinearGraphUtils.getDownNodes(graph, tail).contains(myFirstChild)) {
-          addEdge(graph, tail, myFirstChild);
+        if (!LinearGraphUtils.getDownNodes(graph, tail).contains(myLeftChild)) {
+          addEdge(graph, tail, myLeftChild);
         }
         else if (myMergeWithOldCommit) {
-          replaceEdge(graph, tail, myFirstChild);
+          replaceEdge(graph, tail, myLeftChild);
         }
       }
-      removeEdge(graph, myParent, myFirstChild);
+      removeEdge(graph, myParent, myLeftChild);
     }
 
     private static void addEdge(LinearBekGraph graph, int up, int down) {
