@@ -65,7 +65,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                           @NotNull Editor editor,
                           int startOffset,
                           int endOffset) {
-    super(file.getProject(), editor.getDocument(), "External annotators", file, editor, new TextRange(startOffset, endOffset), false, HighlightInfoProcessor.getEmpty());
+    super(file.getProject(), editor.getDocument(), "External annotators", file, editor, new TextRange(startOffset, endOffset), false, new DefaultHighlightInfoProcessor());
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
 
     myExternalToolPassFactory = externalToolPassFactory;
