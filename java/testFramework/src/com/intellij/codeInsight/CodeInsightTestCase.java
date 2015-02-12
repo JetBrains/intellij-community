@@ -575,7 +575,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor, getProject());
   }
   protected void caretUp() {
-    LightPlatformCodeInsightTestCase.caretUp(myEditor);
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, myEditor, getProject());
   }
 
   protected void deleteLine() {
