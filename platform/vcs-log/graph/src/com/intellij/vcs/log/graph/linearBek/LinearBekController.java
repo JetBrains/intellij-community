@@ -16,8 +16,10 @@
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -64,20 +66,30 @@ public class LinearBekController extends CascadeLinearGraphController {
     if (action.getAffectedElement() != null) {
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
         GraphElement graphElement = action.getAffectedElement().getGraphElement();
-        if (graphElement instanceof GraphEdge) {
-          return expandEdge((GraphEdge)graphElement);
+        if (graphElement instanceof GraphNode) {
+          LinearGraphAnswer answer = collapseNode((GraphNode)graphElement);
+          if (answer != null) return answer;
+          for (GraphEdge dottedEdge : getAllAdjacentDottedEdges((GraphNode)graphElement)) {
+            LinearGraphAnswer expandedAnswer = expandEdge(dottedEdge);
+            if (expandedAnswer != null) return expandedAnswer;
+          }
         }
-        else if (graphElement instanceof GraphNode) {
-          return collapseNode((GraphNode)graphElement);
+        else if (graphElement instanceof GraphEdge) {
+          return expandEdge((GraphEdge)graphElement);
         }
       }
       else if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         GraphElement graphElement = action.getAffectedElement().getGraphElement();
-        if (graphElement instanceof GraphEdge) {
-          return highlightEdge((GraphEdge)graphElement);
+        if (graphElement instanceof GraphNode) {
+          LinearGraphAnswer answer = highlightNode((GraphNode)graphElement);
+          if (answer != null) return answer;
+          for (GraphEdge dottedEdge : getAllAdjacentDottedEdges((GraphNode)graphElement)) {
+            LinearGraphAnswer highlightAnswer = highlightEdge(dottedEdge);
+            if (highlightAnswer != null) return highlightAnswer;
+          }
         }
-        else if (graphElement instanceof GraphNode) {
-          return highlightNode((GraphNode)graphElement);
+        else if (graphElement instanceof GraphEdge) {
+          return highlightEdge((GraphEdge)graphElement);
         }
       }
     }
@@ -88,6 +100,16 @@ public class LinearBekController extends CascadeLinearGraphController {
       return expandAll();
     }
     return null;
+  }
+
+  @NotNull
+  private List<GraphEdge> getAllAdjacentDottedEdges(GraphNode graphElement) {
+    return ContainerUtil.filter(myCompiledGraph.getAdjacentEdges(graphElement.getNodeIndex(), EdgeFilter.ALL), new Condition<GraphEdge>() {
+      @Override
+      public boolean value(GraphEdge graphEdge) {
+        return graphEdge.getType() == GraphEdgeType.DOTTED;
+      }
+    });
   }
 
   @NotNull
