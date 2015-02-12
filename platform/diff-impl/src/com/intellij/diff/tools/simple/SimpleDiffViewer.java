@@ -28,7 +28,6 @@ import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.FoldingModelSupport.SimpleFoldingModel;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
@@ -38,6 +37,7 @@ import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -55,8 +55,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -75,7 +77,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<SimpleDiffChange>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
 
-  @Nullable private final SimpleFoldingModel myFoldingModel;
+  @Nullable private final MyFoldingModel myFoldingModel;
   @NotNull private final ModifierProvider myModifierProvider;
 
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -147,10 +149,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Nullable
-  private SimpleFoldingModel createFoldingModel(@Nullable EditorEx editor1, @Nullable EditorEx editor2) {
+  private MyFoldingModel createFoldingModel(@Nullable EditorEx editor1, @Nullable EditorEx editor2) {
     if (editor1 == null || editor2 == null) return null;
 
-    return new SimpleFoldingModel(editor1, editor2, this);
+    return new MyFoldingModel(editor1, editor2, this);
   }
 
   @Override
@@ -959,6 +961,35 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       for (SimpleDiffChange change : myDiffChanges) {
         change.update();
       }
+    }
+  }
+
+  private static class MyFoldingModel extends FoldingModelSupport {
+    private final MyPaintable myPaintable = new MyPaintable(0, 1);
+
+    public MyFoldingModel(@NotNull EditorEx editor1, @NotNull EditorEx editor2, @NotNull Disposable disposable) {
+      super(new EditorEx[]{editor1, editor2}, disposable);
+    }
+
+    public void install(@Nullable final List<LineFragment> fragments,
+                        @NotNull UserDataHolder context,
+                        boolean defaultExpanded,
+                        final int range) {
+      Iterator<int[]> it = map(fragments, new Function<LineFragment, int[]>() {
+        @Override
+        public int[] fun(LineFragment fragment) {
+          return new int[]{
+            fragment.getStartLine1(),
+            fragment.getEndLine1(),
+            fragment.getStartLine2(),
+            fragment.getEndLine2()};
+        }
+      });
+      install(it, context, defaultExpanded, range);
+    }
+
+    public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
+      myPaintable.paintOnDivider(gg, divider);
     }
   }
 }
