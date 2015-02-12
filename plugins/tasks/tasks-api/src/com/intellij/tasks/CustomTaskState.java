@@ -61,8 +61,15 @@ public class CustomTaskState {
     return myId.hashCode();
   }
 
+  @NotNull
+  public static CustomTaskState fromPredefined(@NotNull TaskState state) {
+    final CustomTaskState result = new CustomTaskState(state.name(), state.getPresentableName());
+    result.setPredefined(true);
+    return result;
+  }
+
   @Nullable
-  public TaskState asPredefinedTaskState() {
+  public TaskState asPredefined() {
     if (isPredefined()) {
       try {
         return TaskState.valueOf(getId());

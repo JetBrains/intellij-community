@@ -180,7 +180,7 @@ public abstract class TaskRepository {
     return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(), new Function<TaskState, CustomTaskState>() {
       @Override
       public CustomTaskState fun(TaskState state) {
-        return state.asCustomTaskState();
+        return CustomTaskState.fromPredefined(state);
       }
     });
   }

@@ -18,7 +18,7 @@ package com.intellij.tasks;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Predefined common task states used before {@link CustomTaskState} was introduced.
+ * Predefined common task states were used before {@link CustomTaskState} was introduced.
  *
  * @author Dmitry Avdeev
  */
@@ -31,16 +31,14 @@ public enum TaskState {
 
   OTHER("Other");
 
-  String myPresentableName;
+  private String myPresentableName;
 
   TaskState(@NotNull String presentableName) {
     myPresentableName = presentableName;
   }
 
   @NotNull
-  public CustomTaskState asCustomTaskState() {
-    final CustomTaskState result = new CustomTaskState(name(), myPresentableName);
-    result.setPredefined(true);
-    return result;
+  public String getPresentableName() {
+    return myPresentableName;
   }
 }
