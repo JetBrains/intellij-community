@@ -180,4 +180,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk = null;
   }
 
+  void addChangeListener(ActionListener listener) {
+    myCbProjectJdk.addActionListener(listener);
+  }
 }

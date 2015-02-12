@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,6 +54,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 
 /**
@@ -160,6 +163,12 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       protected void textChanged(DocumentEvent e) {
         if (myFreeze) return;
         myModulesConfigurator.processModuleCompilerOutputChanged(getCompilerOutputUrl());
+      }
+    });
+    myProjectJdkConfigurable.addChangeListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk());
       }
     });
   }
@@ -294,7 +303,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   private void createUIComponents() {
-    myLanguageLevelCombo = new LanguageLevelCombo();
+    myLanguageLevelCombo = new LanguageLevelCombo(JavaCoreBundle.message("default.language.level.description"));
     final JTextField textField = new JTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);

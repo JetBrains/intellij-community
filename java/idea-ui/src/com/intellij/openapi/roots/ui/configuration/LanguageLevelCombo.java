@@ -15,16 +15,13 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
@@ -38,12 +35,13 @@ import javax.swing.*;
 @SuppressWarnings("unchecked")
 public class LanguageLevelCombo extends ComboBox {
 
-  /** Default from current SDK */
+  /** Default from current SDK or project*/
   @Nullable
   private LanguageLevel myDefaultLevel;
-  private Pair<String, String> myProjectDefault;
+  private final String myDefaultItem;
 
-  public LanguageLevelCombo() {
+  public LanguageLevelCombo(String defaultItem) {
+    myDefaultItem = defaultItem;
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
@@ -53,11 +51,10 @@ public class LanguageLevelCombo extends ComboBox {
         if (value instanceof LanguageLevel) {
           append(((LanguageLevel)value).getPresentableText());
         }
-        else if (value instanceof Pair) {
-          Pair<String, String> pair = (Pair<String, String>)value;
-          append(pair.first);
-          if (pair.second != null) {
-            append(" (" + pair.second + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        else if (value instanceof String) {    // default for SDK or project
+          append((String)value);
+          if (myDefaultLevel != null) {
+            append(" (" + myDefaultLevel.getPresentableText() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
       }
@@ -69,32 +66,40 @@ public class LanguageLevelCombo extends ComboBox {
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
-    myDefaultLevel = null;
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
-    if (sdk != null) {
-      JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
-      if (version != null) {
-        myDefaultLevel = version.getMaxLanguageLevel();
-      }
-    }
-    Pair<String, String> item = null;
-    if (myDefaultLevel != null) {
-      item = Pair.create(JavaCoreBundle.message("default.language.level.description"), myDefaultLevel.getPresentableText());
-      addItem(item);
-    }
-    else if (project.isDefault()) {
-      item = Pair.create(JavaCoreBundle.message("default.language.level.description"), null);
-      addItem(item);
-      myDefaultLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
-    }
+    sdkUpdated(sdk);
 
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
-    if (item != null && extension.isDefault()) {
-      setSelectedItem(item);
+    if (myDefaultLevel != null && extension.isDefault()) {
+      setSelectedItem(myDefaultItem);
     }
     else {
       setSelectedItem(extension.getLanguageLevel());
     }
+  }
+
+  void sdkUpdated(Sdk sdk) {
+    LanguageLevel newLevel = null;
+    if (sdk != null) {
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      if (version != null) {
+        newLevel = version.getMaxLanguageLevel();
+      }
+    }
+    updateDefaultLevel(newLevel);
+  }
+
+  void updateDefaultLevel(LanguageLevel newLevel) {
+    if (newLevel == null) {
+      if (getSelectedItem() == myDefaultItem) {
+        setSelectedItem(myDefaultLevel);
+      }
+      removeItem(myDefaultItem);
+    }
+    else if (!(getItemAt(0) instanceof String)) {
+      insertItemAt(myDefaultItem, 0);
+    }
+    myDefaultLevel = newLevel;
   }
 
   public LanguageLevel getSelectedLevel() {
@@ -108,11 +113,6 @@ public class LanguageLevelCombo extends ComboBox {
 
   @Override
   public void setSelectedItem(Object anObject) {
-    super.setSelectedItem(anObject == null ? myProjectDefault : anObject);
-  }
-
-  void addProjectDefault(String projectLevel) {
-    myProjectDefault = Pair.create(ProjectBundle.message("project.language.level.combo.item"), projectLevel);
-    insertItemAt(myProjectDefault, 0);
+    super.setSelectedItem(anObject == null ? myDefaultItem : anObject);
   }
 }
