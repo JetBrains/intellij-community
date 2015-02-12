@@ -49,7 +49,7 @@ import java.util.zip.ZipInputStream;
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 
-  private static final String URL = "https://download.jetbrains.com/idea/project_templates/";
+  private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
