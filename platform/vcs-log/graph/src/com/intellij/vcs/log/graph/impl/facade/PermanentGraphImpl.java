@@ -97,8 +97,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   @Override
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
-                                                   @Nullable Set<CommitId> headsOfVisibleBranches,
-                                                   @Nullable Set<CommitId> matchedCommits) {
+                                                   @Nullable Set<CommitId> visibleHeads,
+                                                   @Nullable Set<CommitId> matchingCommits) {
     CascadeLinearGraphController baseController;
     if (sortType == SortType.Normal) {
       baseController = new BaseLinearGraphController(this);
@@ -111,12 +111,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     }
 
     LinearGraphController controller;
-    if (matchedCommits != null) {
-      controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchedCommits));
+    if (matchingCommits != null) {
+      controller = new FilterLinearGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
     }
     else if (sortType == SortType.LinearBek) {
-      if (headsOfVisibleBranches != null) {
-        controller = new BranchFilterGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(headsOfVisibleBranches));
+      if (visibleHeads != null) {
+        controller = new BranchFilterGraphController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads));
       }
       else {
         controller = baseController;
@@ -124,8 +124,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     }
     else {
       Set<Integer> idOfVisibleBranches = null;
-      if (headsOfVisibleBranches != null) {
-        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(headsOfVisibleBranches);
+      if (visibleHeads != null) {
+        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(visibleHeads);
       }
       controller = new CollapsedLinearGraphController(baseController, this, idOfVisibleBranches);
     }
