@@ -5,14 +5,15 @@ lombok-intellij-plugin
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.8.8) released on 28.09.2014**
+**Last version (0.9.0) released on 12.02.2015**
 
 Twelfth version of plugin released. Bugfixes and initial support for some cool lombok and delombok refactoring actions with Intellij!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 11.1.5, 12.1.7, 13.1.5, 14 
+Tested and supports IntelliJ versions: 12.1.7, 13.1.5, 14.0.3 and 14.1 EAP 
 
+Support for IntelliJ 11.1.5 by plugin version 0.9.0
 Support for IntelliJ 10.5.4 by plugin version 0.8.7
 
 With this plugin your IntelliJ can recognize all of generated getters, setters and some other things from lombok project, so that you get code completion and are able to work without errors stating the methods don't exists.
