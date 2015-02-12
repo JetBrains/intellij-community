@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +40,8 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -164,6 +165,25 @@ public class StartupUtil {
       return false;
     }
 
+    File logDir = new File(PathManager.getLogPath());
+    boolean logOk = false;
+    if (logDir.isDirectory() || logDir.mkdirs()) {
+      try {
+        File ideTempFile = new File(logDir, "idea_log_check.txt");
+        write(ideTempFile, "log check");
+        delete(ideTempFile);
+        logOk = true;
+      }
+      catch (IOException ignored) { }
+    }
+    if (!logOk) {
+      String message = "Log path '" + logDir.getPath() + "' is inaccessible.\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_LOG_PATH + "' property please make sure it is correct,\n" +
+                       "otherwise please re-install the IDE.";
+      Main.showMessage("Invalid Log Path", message, true);
+      return false;
+    }
+
     File ideTempDir = new File(PathManager.getTempPath());
     String tempInaccessible = null;
 
@@ -173,7 +193,7 @@ public class StartupUtil {
     else {
       try {
         File ideTempFile = new File(ideTempDir, "idea_tmp_check.sh");
-        FileUtil.writeToFile(ideTempFile, "#!/bin/sh\nexit 0");
+        write(ideTempFile, "#!/bin/sh\nexit 0");
 
         if (SystemInfo.isWindows || SystemInfo.isMac) {
           tempInaccessible = null;
@@ -185,9 +205,7 @@ public class StartupUtil {
           tempInaccessible = "cannot execute test script";
         }
 
-        if (!FileUtilRt.delete(ideTempFile)) {
-          ideTempFile.deleteOnExit();
-        }
+        delete(ideTempFile);
       }
       catch (Exception e) {
         tempInaccessible = e.getClass().getSimpleName() + ": " + e.getMessage();
@@ -203,6 +221,18 @@ public class StartupUtil {
     }
 
     return true;
+  }
+
+  private static void write(File file, String content) throws IOException {
+    FileWriter writer = new FileWriter(file);
+    try { writer.write(content); }
+    finally { writer.close(); }
+  }
+
+  private static void delete(File ideTempFile) {
+    if (!FileUtilRt.delete(ideTempFile)) {
+      ideTempFile.deleteOnExit();
+    }
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
