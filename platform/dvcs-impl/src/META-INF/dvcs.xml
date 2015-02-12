@@ -21,6 +21,14 @@
       <reference id="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar"/>
     </group>
+
+    <group>
+      <reference ref="Vcs.CherryPick"/>
+      <reference ref="Vcs.Push"/>
+      <separator/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
   </actions>
   <project-components>
     <component>
