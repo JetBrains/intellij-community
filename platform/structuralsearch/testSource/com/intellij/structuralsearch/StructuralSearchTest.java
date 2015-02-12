@@ -1676,7 +1676,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // javadoc comment for method
     assertEquals(
       "javadoc comment for method",
-      3,
+      2,
       findMatchesCount(s57, s58_3)
     );
 

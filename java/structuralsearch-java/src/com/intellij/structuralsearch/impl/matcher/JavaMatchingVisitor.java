@@ -1673,6 +1673,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     myMatchingVisitor.getMatchContext().pushResult();
 
     try {
+      final PsiDocComment docComment = method.getDocComment();
+      if (docComment != null) {
+        myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, method2));
+        if (!myMatchingVisitor.getResult()) return;
+      }
       if (method.hasTypeParameters()) {
         myMatchingVisitor.setResult(
           myMatchingVisitor.match(method.getTypeParameterList(), ((PsiMethod)myMatchingVisitor.getElement()).getTypeParameterList()));
