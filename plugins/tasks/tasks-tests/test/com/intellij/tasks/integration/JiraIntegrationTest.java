@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0;
@@ -60,6 +61,11 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * JIRA 5.0.6, REST API 2.0
    */
   @NonNls private static final String JIRA_5_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8015";
+
+  private static final SimpleDateFormat SHORT_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+  static {
+    SHORT_TIMESTAMP_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
 
   private JiraRepository myRepository;
 
@@ -132,7 +138,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
 
   public void testSetTaskStateInJira5() throws Exception {
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
-    changeTaskStateAndCheck(createIssueViaRestApi("UT", "Test issue created for state updates: " + TaskUtil.formatDate(new Date())));
+    final String id = createIssueViaRestApi("BTSU", "Test issue for state updates (" + SHORT_TIMESTAMP_FORMAT.format(new Date()) + ")");
+    changeTaskStateAndCheck(id);
   }
 
   // We can use XML-RPC in JIRA 5+ too, but nonetheless it's useful to have REST-based implementation as well
@@ -165,9 +172,11 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
 
   public void testSetTaskStateInJira4() throws Exception {
     myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
-    changeTaskStateAndCheck(createIssueViaXmlRpc("UT", "Test issue created for state updates: " + TaskUtil.formatDate(new Date())));
+    final String id = createIssueViaXmlRpc("BTSU", "Test issue for state updates (" + SHORT_TIMESTAMP_FORMAT.format(new Date()) + ")");
+    changeTaskStateAndCheck(id);
   }
 
+  @SuppressWarnings("UseOfObsoleteCollectionType")
   @NotNull
   private String createIssueViaXmlRpc(@NotNull String project, @NotNull String summary) throws Exception {
     final URL url = new URL(myRepository.getUrl() + "/rpc/xmlrpc");
