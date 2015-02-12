@@ -546,7 +546,7 @@ public class FoldingModelSupport {
           FoldedRange range = ranges.get(myIndex[index]);
           if (range.myEndLine <= start) continue;
           if (range.myStartLine >= end) return null;
-          if (range.myStartLine < end && range.myEndLine > start) {
+          if (range.myStartLine <= start && range.myEndLine >= end) {
             return range.myExpanded;
           }
         }
