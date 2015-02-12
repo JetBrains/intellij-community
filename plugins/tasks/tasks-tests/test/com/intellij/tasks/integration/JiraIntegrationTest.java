@@ -28,10 +28,14 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
 import com.intellij.tasks.jira.JiraVersion;
+import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.xmlrpc.CommonsXmlRpcTransport;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcRequest;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +55,6 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * JIRA 4.4.5, REST API 2.0.alpha1
    */
   @NonNls private static final String JIRA_4_TEST_SERVER_URL = "http://idea-qa-task-2.labs.intellij.net:8014";
-  private static final Object JIRA_4_STATE_UPDATES_PROJECT = "UT";
 
   /**
    * JIRA 5.0.6, REST API 2.0
@@ -124,63 +127,49 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     }
   }
 
-  // TODO move to on-Demand-specific tests
-  //public void testBasicAuthenticationDisabling() throws Exception {
-  //  assertTrue("Basic authentication should be enabled at first", myRepository.isUseHttpAuthentication());
-  //  myRepository.findTask("PRJONE-1");
-  //  assertFalse("Basic authentication should be disabled once JSESSIONID cookie was received", myRepository.isUseHttpAuthentication());
-  //  HttpClient client = myRepository.getHttpClient();
-  //  assertFalse(client.getParams().isAuthenticationPreemptive());
-  //  assertNull(client.getState().getCredentials(AuthScope.ANY));
-  //}
+  // Our test servers poorly handles frequent state updates of single dedicated issue. As a workaround
+  // we create new issue for every test run (via XML-RPC API in JIRA 4.x and REST API in JIRA 5+)
 
   public void testSetTaskStateInJira5() throws Exception {
     myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
+    changeTaskStateAndCheck(createIssueViaRestApi("UT", "Test issue created for state updates: " + TaskUtil.formatDate(new Date())));
+  }
 
-    Task task = myRepository.findTask("UT-8");
-    assertNotNull("Test task not found", task);
-    // set required initial state, if was left wrong
-    if (task.getState() != TaskState.REOPENED) {
-      myRepository.setTaskState(task, TaskState.REOPENED);
-    }
+  // We can use XML-RPC in JIRA 5+ too, but nonetheless it's useful to have REST-based implementation as well
+  private String createIssueViaRestApi(@NotNull String project, @NotNull String summary) throws Exception {
+    final HttpClient client = myRepository.getHttpClient();
+    final PostMethod method = new PostMethod(myRepository.getUrl() + "/rest/api/latest/issue");
     try {
-      //assertEquals("Wrong initial state of test issue: " + key, TaskState.REOPENED, task.getState());
-      myRepository.setTaskState(task, TaskState.RESOLVED);
-      task = myRepository.findTask("UT-8");
-      assertEquals(task.getState(), TaskState.RESOLVED);
+      // For simplicity assume that project, summary and username don't contain illegal characters
+      @Language("JSON")
+      final String json = "{\"fields\": {\n" +
+                          "  \"project\": {\n" +
+                          "    \"key\": \"" + project + "\"\n" +
+                          "  },\n" +
+                          "  \"issuetype\": {\n" +
+                          "    \"name\": \"Bug\"\n" +
+                          "  },\n" +
+                          "  \"assignee\": {\n" +
+                          "    \"name\": \"" + myRepository.getUsername() + "\"\n" +
+                          "  },\n" +
+                          "  \"summary\": \"" + summary + "\"\n" +
+                          "}}";
+      method.setRequestEntity(new StringRequestEntity(json, "application/json", "utf-8"));
+      client.executeMethod(method);
+      return new Gson().fromJson(method.getResponseBodyAsString(), JsonObject.class).get("id").getAsString();
     }
     finally {
-      try {
-        // always attempt to restore original state of the issue
-        myRepository.setTaskState(task, TaskState.REOPENED);
-      }
-      catch (Exception ignored) {
-        // empty
-      }
+      method.releaseConnection();
     }
   }
 
-  // Our test server with JIRA 4.x poorly handles frequent state updates of single dedicated issue. As a workaround
-  // we create new issue for every test run via XML-RPC API (REST API 2.0 alpha 1 doesn't have such functionality),
-  // and change then its state.
   public void testSetTaskStateInJira4() throws Exception {
     myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
-
-    final Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-    final String subject = String.format("Test issue created for state updates (%1$tY-%1$tm-%1$td %1tH:%1$tM UTC)", utc);
-    final String issueKey = createIssueViaXmlRpc("UT", subject);
-
-    final Task original = myRepository.findTask(issueKey);
-    assertNotNull(original);
-    myRepository.setTaskState(original, TaskState.IN_PROGRESS);
-    final Task updated = myRepository.findTask(issueKey);
-    assertNotNull(updated);
-    assertEquals(TaskState.IN_PROGRESS, updated.getState());
+    changeTaskStateAndCheck(createIssueViaXmlRpc("UT", "Test issue created for state updates: " + TaskUtil.formatDate(new Date())));
   }
 
   @NotNull
   private String createIssueViaXmlRpc(@NotNull String project, @NotNull String summary) throws Exception {
-
     final URL url = new URL(myRepository.getUrl() + "/rpc/xmlrpc");
     final XmlRpcClient xmlRpcClient = new XmlRpcClient(url);
     final Map<String, Object> issue = new Hashtable<String, Object>();
@@ -194,6 +183,15 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     final Hashtable result = (Hashtable)xmlRpcClient.execute(new XmlRpcRequest("jira1.createIssue", params),
                                                              new CommonsXmlRpcTransport(url, myRepository.getHttpClient()));
     return (String)result.get("key");
+  }
+
+  private void changeTaskStateAndCheck(@NotNull String issueKey) throws Exception {
+    final Task original = myRepository.findTask(issueKey);
+    assertNotNull(original);
+    myRepository.setTaskState(original, TaskState.IN_PROGRESS);
+    final Task updated = myRepository.findTask(issueKey);
+    assertNotNull(updated);
+    assertEquals(TaskState.IN_PROGRESS, updated.getState());
   }
 
   public void testSetTimeSpend() throws Exception {
