@@ -105,6 +105,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
         }
       });
 
+    mavenHomeField.addDocumentListener(listener);
+
     setAnchor(mavenHomeComponent.getLabel());
   }
 
