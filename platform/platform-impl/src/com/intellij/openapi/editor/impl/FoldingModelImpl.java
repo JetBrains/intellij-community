@@ -368,9 +368,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myEditor.updateCaretCursor();
     myEditor.recalculateSizeAndRepaint();
-    if (myEditor.getGutterComponentEx().isFoldingOutlineShown()) {
-      myEditor.getGutterComponentEx().repaint();
-    }
+    myEditor.getGutterComponentEx().updateSize();
+    myEditor.getGutterComponentEx().repaint();
 
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
