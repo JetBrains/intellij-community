@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/lib/groovy-all-2.3.9.jar!/"/>
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/groovy-all-2.3.9-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
