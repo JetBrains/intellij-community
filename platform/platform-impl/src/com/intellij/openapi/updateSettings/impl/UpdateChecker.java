@@ -68,10 +68,6 @@ import java.util.*;
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
 
-  public enum DownloadPatchResult {
-    SUCCESS, FAILED, CANCELED
-  }
-
   public static final NotificationGroup NOTIFICATIONS =
     new NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true);
 
@@ -535,28 +531,15 @@ public final class UpdateChecker {
     return "";
   }
 
-  public static DownloadPatchResult installPlatformUpdate(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) {
-    final Ref<DownloadPatchResult> result = Ref.create(DownloadPatchResult.CANCELED);
-
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+  public static void installPlatformUpdate(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) throws IOException {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Void, IOException>() {
       @Override
-      public void run() {
-        try {
-          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          downloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
-          result.set(DownloadPatchResult.SUCCESS);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          result.set(DownloadPatchResult.FAILED);
-          Notifications.Bus.notify(new Notification("Updater", "Failed to download patch file", e.getMessage(), NotificationType.ERROR));
-        }
+      public Void compute() throws IOException {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        downloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
+        return null;
       }
-    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
-      return DownloadPatchResult.CANCELED;
-    }
-
-    return result.get();
+    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null);
   }
 
   private static void downloadAndInstallPatch(PatchInfo patch, BuildNumber toBuild, boolean forceHttps, final ProgressIndicator indicator) throws IOException {
