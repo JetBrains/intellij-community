@@ -606,12 +606,17 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     if (Math.abs(myCaretInfo.y - oldCaretInfo.y) <= 2 * lineHeight) {
       int minY = Math.min(oldCaretInfo.y, myCaretInfo.y);
       int maxY = Math.max(oldCaretInfo.y + oldCaretInfo.height, myCaretInfo.y + myCaretInfo.height);
+      if (myEditor.myUseNewRendering) myEditor.myView.invalidateLines(myEditor.yPositionToVisibleLine(minY), myEditor.yPositionToVisibleLine(maxY) - 1);
       content.repaintEditorComponent(0, minY, updateWidth, maxY - minY);
       gutter.repaint(0, minY, gutter.getWidth(), maxY - minY);
     }
     else {
+      if (myEditor.myUseNewRendering) myEditor.myView.invalidateLines(myEditor.yPositionToVisibleLine(oldCaretInfo.y), 
+                                                                         myEditor.yPositionToVisibleLine(oldCaretInfo.y + oldCaretInfo.height));
       content.repaintEditorComponent(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
       gutter.repaint(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
+      if (myEditor.myUseNewRendering) myEditor.myView.invalidateLines(myEditor.yPositionToVisibleLine(myCaretInfo.y),
+                                                                         myEditor.yPositionToVisibleLine(myCaretInfo.y + myCaretInfo.height));
       content.repaintEditorComponent(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
       gutter.repaint(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
     }
@@ -793,7 +798,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
     // and height in accordance with the number of occupied visual lines.
     VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
-    int y = myEditor.visualPositionToXY(visualPosition).y;
+    int y = myEditor.myUseNewRendering ? myEditor.visibleLineToY(visualPosition.line) :  myEditor.visualPositionToXY(visualPosition).y;
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
     List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
