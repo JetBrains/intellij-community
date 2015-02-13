@@ -71,12 +71,28 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
 
   // inspired by IDEA-134286
   public void test_detached_HEAD() throws IOException {
+    String head = getToDetachedHead();
+    GitBranchState state = readState();
+    assertEquals("Detached HEAD is not detected", GitRepository.State.DETACHED, state.getState());
+    assertEquals("Detached HEAD hash is incorrect", head, state.getCurrentRevision());
+  }
+
+  // inspired by IDEA-135966
+  public void test_no_local_branches() throws IOException {
+    String head = getToDetachedHead();
+    git("branch -D master");
+    GitBranchState state = readState();
+    assertEquals("Detached HEAD is not detected", GitRepository.State.DETACHED, state.getState());
+    assertEquals("Detached HEAD hash is incorrect", head, state.getCurrentRevision());
+    assertTrue("There should be no local branches", state.getLocalBranches().isEmpty());
+  }
+
+  @NotNull
+  private static String getToDetachedHead() throws IOException {
     makeCommit("file.txt");
     makeCommit("file.txt");
     git("checkout HEAD^");
-    GitBranchState state = readState();
-    assertEquals("Detached HEAD is not detected", GitRepository.State.DETACHED, state.getState());
-    assertEquals("Detached HEAD hash is incorrect", last(), state.getCurrentRevision());
+    return last();
   }
 
   @NotNull

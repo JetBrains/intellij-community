@@ -87,13 +87,21 @@ class GitRepositoryReader {
 
     GitLocalBranch currentBranch;
     String currentRevision;
-    if (localBranches.isEmpty() && headInfo.content != null) {
+    if (!headInfo.isBranch) {
+      currentBranch = null;
+      currentRevision = headInfo.content;
+    }
+    else if (!localBranches.isEmpty()) {
+      currentBranch = findCurrentBranch(headInfo, state, localBranches);
+      currentRevision = getCurrentRevision(headInfo, currentBranch);
+    }
+    else if (headInfo.content != null) {
       currentBranch = new GitLocalBranch(headInfo.content, GitBranch.DUMMY_HASH);
       currentRevision = null;
     }
     else {
-      currentBranch = findCurrentBranch(headInfo, state, localBranches);
-      currentRevision = getCurrentRevision(headInfo, currentBranch);
+      currentBranch = null;
+      currentRevision = null;
     }
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
   }
