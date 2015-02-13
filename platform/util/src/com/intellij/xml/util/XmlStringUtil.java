@@ -21,17 +21,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.xml.CommonXmlStrings.*;
 /**
  * @author yole
  */
 public class XmlStringUtil {
-
-  public static final String CDATA_START ="<![CDATA[";
-  public static final String CDATA_END ="]]>";
-  public static final String HTML_START = "<html>";
-  public static final String BODY_START = "<body>";
-  public static final String HTML_END = "</html>";
-  public static final String BODY_END = "</body>";
 
   private XmlStringUtil() {
   }
@@ -74,19 +68,19 @@ public class XmlStringUtil {
           entity = escapeWhiteSpace ? "&#9;" : null;
           break;
         case '\"':
-          entity = "&quot;";
+          entity = QUOT;
           break;
         case '<':
-          entity = "&lt;";
+          entity = LT;
           break;
         case '>':
-          entity = "&gt;";
+          entity = GT;
           break;
         case '&':
-          entity = "&amp;";
+          entity = AMP;
           break;
         case 160: // unicode char for &nbsp;
-          entity = convertNoBreakSpace ? "&nbsp;" : null;
+          entity = convertNoBreakSpace ? NBSP : null;
           break;
         default:
           entity = null;
