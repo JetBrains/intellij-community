@@ -237,6 +237,8 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     }
     return result;
   }
+
+  @Nullable
   public static TextRange trailingSpaces(String s) {
     if (s == null) {
       return null;
