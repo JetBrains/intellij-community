@@ -22,8 +22,8 @@
 
   <project-components>
     <component>
-      <implementation-class>com.jetbrains.edu.learning.StudyTaskManager</implementation-class>
-      <interface-class>com.jetbrains.edu.learning.StudyTaskManager</interface-class>
+      <implementation-class>com.jetbrains.edu.learning.StudyProjectComponent</implementation-class>
+      <interface-class>com.jetbrains.edu.learning.StudyProjectComponent</interface-class>
     </component>
   </project-components>
 
@@ -72,5 +72,7 @@
         serviceImplementation="com.jetbrains.edu.learning.StudyInstructionPainter" overrides="true"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>
+    <projectService serviceInterface="com.jetbrains.edu.learning.StudyTaskManager"
+                    serviceImplementation="com.jetbrains.edu.learning.StudyTaskManager"/>
   </extensions>
 </idea-plugin>

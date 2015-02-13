@@ -4,23 +4,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,14 +23,10 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.CourseInfo;
-import com.jetbrains.edu.learning.StudyLanguageManager;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.stepic.StudyStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,76 +51,59 @@ public class StudyProjectGenerator {
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
     final Course course = StudyStepicConnector.getCourse(mySelectedCourseInfo);
     if (course == null) return;
-    flushCourse(course);
-    StudyGenerator.initCourse(course, false);
-    final File courseDirectory = new File(myCoursesDir, course.getName());
-    StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-    course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
-    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     StudyTaskManager.getInstance(project).setCourse(course);
-    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(new OpenFirstTaskListener(project, course));
-  }
-
-  private static class OpenFirstTaskListener extends ToolWindowManagerAdapter {
-    private final Project myProject;
-    private final Course myCourse;
-    private boolean myInitialized = false;
-
-    OpenFirstTaskListener(@NotNull final Project project, @NotNull final Course course) {
-      myProject = project;
-      myCourse = course;
-    }
-
-    public void stateChanged() {
-      final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
-      if (projectViewPane == null || myInitialized) return;
-      JTree tree = projectViewPane.getTree();
-      if (tree == null) {
-        return;
-      }
-      tree.updateUI();
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+    flushCourse(course);
+    ApplicationManager.getApplication().invokeLater(
+      new Runnable() {
         @Override
         public void run() {
-          LocalFileSystem.getInstance().refresh(false);
-          final Lesson firstLesson = StudyUtils.getFirst(myCourse.getLessons());
-          final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
-          final VirtualFile taskDir = firstTask.getTaskDir(myProject);
-          if (taskDir == null) return;
-          final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
-          VirtualFile activeVirtualFile = null;
-          for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
-            final String name = entry.getKey();
-            final TaskFile taskFile = entry.getValue();
-            final VirtualFile virtualFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(name);
-            if (virtualFile != null) {
-              FileEditorManager.getInstance(myProject).openFile(virtualFile, true);
-              if (!taskFile.getAnswerPlaceholders().isEmpty()) {
-                activeVirtualFile = virtualFile;
-              }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              StudyGenerator.initCourse(course, false);
+              final File courseDirectory = new File(myCoursesDir, course.getName());
+              StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+              course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
+              VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+              StudyProjectComponent.getInstance(project).registerStudyToolwindow(course);
+              openFirstTask(course, project);
+
             }
-          }
-          if (activeVirtualFile != null) {
-            final PsiFile file = PsiManager.getInstance(myProject).findFile(activeVirtualFile);
-            ProjectView.getInstance(myProject).select(file, activeVirtualFile, true);
-          } else {
-            String first = StudyUtils.getFirst(taskFiles.keySet());
-            if (first != null) {
-              NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
-              if (firstFile != null) {
-                FileEditorManager.getInstance(myProject).openFile(firstFile, true);
-              }
-            }
-          }
-          myInitialized = true;
-        }
-      }, ModalityState.current(), new Condition() {
-        @Override
-        public boolean value(Object o) {
-          return myProject.isDisposed();
+          });
         }
       });
+  }
+
+  private static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
+    LocalFileSystem.getInstance().refresh(false);
+    final Lesson firstLesson = StudyUtils.getFirst(course.getLessons());
+    final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
+    final VirtualFile taskDir = firstTask.getTaskDir(project);
+    if (taskDir == null) return;
+    final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
+    VirtualFile activeVirtualFile = null;
+    for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+      final String name = entry.getKey();
+      final TaskFile taskFile = entry.getValue();
+      final VirtualFile virtualFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(name);
+      if (virtualFile != null) {
+        FileEditorManager.getInstance(project).openFile(virtualFile, true);
+        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+          activeVirtualFile = virtualFile;
+        }
+      }
+    }
+    if (activeVirtualFile != null) {
+      final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
+      ProjectView.getInstance(project).select(file, activeVirtualFile, true);
+    } else {
+      String first = StudyUtils.getFirst(taskFiles.keySet());
+      if (first != null) {
+        NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
+        if (firstFile != null) {
+          FileEditorManager.getInstance(project).openFile(firstFile, true);
+        }
+      }
     }
   }
 

@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning.courseGeneration;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -102,13 +101,7 @@ public class StudyGenerator {
    */
   public static void createCourse(@NotNull final Course course, @NotNull final VirtualFile baseDir, @NotNull final File resourceRoot,
                                   @NotNull final Project project) {
-    ApplicationManager.getApplication().invokeLater(
-      new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
+
               try {
                 final List<Lesson> lessons = course.getLessons();
                 for (int i = 0; i < lessons.size(); i++) {
@@ -116,7 +109,7 @@ public class StudyGenerator {
                   lesson.setIndex(i);
                   createLesson(lesson, baseDir, resourceRoot, project);
                 }
-                baseDir.createChildDirectory(this, StudyNames.SANDBOX_DIR);
+                baseDir.createChildDirectory(project, StudyNames.SANDBOX_DIR);
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
@@ -130,10 +123,6 @@ public class StudyGenerator {
               catch (IOException e) {
                 LOG.error(e);
               }
-            }
-          });
-        }
-      });
   }
 
   /**
