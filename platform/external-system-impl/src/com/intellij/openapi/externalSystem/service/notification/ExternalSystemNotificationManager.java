@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -57,6 +56,22 @@ import java.util.Set;
  */
 public class ExternalSystemNotificationManager {
   @NotNull private static final Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+
+  private static final Navigatable NON_NAVIGATABLE = new Navigatable() {
+    @Override
+    public void navigate(boolean requestFocus) {
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return false;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return false;
+    }
+  };
 
   @NotNull private final SequentialTaskExecutor myUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
 
@@ -262,7 +277,7 @@ public class ExternalSystemNotificationManager {
 
     final Navigatable navigatable = notificationData.getNavigatable() != null
                                     ? notificationData.getNavigatable()
-                                    : virtualFile != null ? new OpenFileDescriptor(myProject, virtualFile, line, column) : null;
+                                    : virtualFile != null ? new OpenFileDescriptor(myProject, virtualFile, line, column) : NON_NAVIGATABLE;
 
     final ErrorTreeElementKind kind =
       ErrorTreeElementKind.convertMessageFromCompilerErrorType(notificationData.getNotificationCategory().getMessageCategory());
