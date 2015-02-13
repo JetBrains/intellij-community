@@ -6,7 +6,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Lesson implements StudyStateful {
+public class Lesson {
   @Transient
   String id;
   @Transient
@@ -38,24 +38,6 @@ public class Lesson implements StudyStateful {
 
   public void setIndex(int index) {
     myIndex = index;
-  }
-
-  @Transient
-  public StudyStatus getStatus() {
-    for (Task task : taskList) {
-      StudyStatus taskStatus = task.getStatus();
-      if (taskStatus == StudyStatus.Unchecked || taskStatus == StudyStatus.Failed) {
-        return StudyStatus.Unchecked;
-      }
-    }
-    return StudyStatus.Solved;
-  }
-
-  @Override
-  public void setStatus(StudyStatus status) {
-    for (Task task : taskList) {
-      task.setStatus(status);
-    }
   }
 
   public List<Task> getTaskList() {

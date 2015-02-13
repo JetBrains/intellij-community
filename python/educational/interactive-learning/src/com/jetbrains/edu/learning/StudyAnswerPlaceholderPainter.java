@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
@@ -33,7 +34,9 @@ public class StudyAnswerPlaceholderPainter {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes defaultTestAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
                                                                     EffectType.BOXED, Font.PLAIN);
-    final JBColor color = answerPlaceholder.getColor();
+    final Project project = editor.getProject();
+    assert project != null;
+    final JBColor color = StudyTaskManager.getInstance(project).getColor(answerPlaceholder);
     int startOffset = answerPlaceholder.getRealStartOffset(document);
     RangeHighlighter
       highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + answerPlaceholder.getLength(), HighlighterLayer.LAST + 1,

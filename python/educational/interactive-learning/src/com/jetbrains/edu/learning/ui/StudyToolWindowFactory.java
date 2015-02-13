@@ -9,9 +9,9 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,10 +25,11 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
     JPanel contentPanel = new JPanel();
-    if (StudyTaskManager.getInstance(project).getCourse() != null) {
+    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    if (taskManager.getCourse() != null) {
       contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
       contentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+
       Course course = taskManager.getCourse();
       if (course == null) {
         return;
@@ -47,11 +48,12 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       int lessonsCompleted = 0;
       List<Lesson> lessons = course.getLessons();
       for (Lesson lesson : lessons) {
-        if (lesson.getStatus() == StudyStatus.Solved) {
+        StudyStatus status = taskManager.getStatus(lesson);
+        if (status == StudyStatus.Solved) {
           lessonsCompleted++;
         }
         taskNum += lesson.getTaskList().size();
-        taskSolved += getTaskSolved(lesson);
+        taskSolved += getSolvedTasks(lesson, taskManager);
       }
       String completedLessons = String.format("%d of %d lessons completed", lessonsCompleted, course.getLessons().size());
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
@@ -71,10 +73,10 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
   }
 
-  private static int getTaskSolved(@NotNull final Lesson lesson) {
+  private static int getSolvedTasks(@NotNull final Lesson lesson, StudyTaskManager taskManager) {
     int solved = 0;
     for (Task task : lesson.getTaskList()) {
-      if (task.getStatus() == StudyStatus.Solved) {
+      if (taskManager.getStatus(task) == StudyStatus.Solved) {
         solved += 1;
       }
     }

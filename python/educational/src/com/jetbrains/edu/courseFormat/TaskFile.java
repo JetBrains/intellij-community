@@ -15,7 +15,7 @@ import java.util.List;
  * which is visible to student in project view
  */
 
-public class TaskFile implements StudyStateful {
+public class TaskFile {
   @SerializedName("placeholders")
   private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
   private int myIndex = -1;
@@ -29,29 +29,6 @@ public class TaskFile implements StudyStateful {
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
   private boolean myHighlightErrors = false;
-
-  /**
-   * @return if all the windows in task file are marked as resolved
-   */
-  @Transient
-  public StudyStatus getStatus() {
-    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
-      StudyStatus windowStatus = answerPlaceholder.getStatus();
-      if (windowStatus == StudyStatus.Failed) {
-        return StudyStatus.Failed;
-      }
-      if (windowStatus == StudyStatus.Unchecked) {
-        return StudyStatus.Unchecked;
-      }
-    }
-    return StudyStatus.Solved;
-  }
-
-  public void setStatus(@NotNull final StudyStatus status) {
-    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
-      answerPlaceholder.setStatus(status);
-    }
-  }
 
   @Nullable
   @Transient
@@ -142,10 +119,6 @@ public class TaskFile implements StudyStateful {
 
   public boolean isUserCreated() {
     return myUserCreated;
-  }
-
-  public boolean hasFailedTaskWindows() {
-    return myAnswerPlaceholders.size() > 0 && getStatus() == StudyStatus.Failed;
   }
 
   public boolean isTrackChanges() {

@@ -31,13 +31,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
-import com.jetbrains.edu.learning.StudyDocumentListener;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
@@ -191,7 +188,9 @@ public class StudyCheckAction extends DumbAwareAction {
                                                                          final StudyEditor selectedEditor) {
     final Task task = studyState.getTask();
     final VirtualFile taskDir = studyState.getTaskDir();
-    final StudyStatus statusBeforeCheck = task.getStatus();
+
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    final StudyStatus statusBeforeCheck = taskManager.getStatus(task);
     return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
       @Override
       public void onSuccess() {
@@ -204,8 +203,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
       @Override
       public void onCancel() {
-        StudyStatus currentStatus = task.getStatus();
-        task.setStatus(statusBeforeCheck);
+        taskManager.setStatus(task, statusBeforeCheck);
         deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
       }
@@ -226,7 +224,7 @@ public class StudyCheckAction extends DumbAwareAction {
         }
         final String failedMessage = testRunner.getTestsOutput(output);
         if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
-          task.setStatus(StudyStatus.Solved);
+          taskManager.setStatus(task, StudyStatus.Solved);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -239,12 +237,12 @@ public class StudyCheckAction extends DumbAwareAction {
             @Override
             public void run() {
               if (taskDir == null) return;
-              task.setStatus(StudyStatus.Failed);
+              taskManager.setStatus(task, StudyStatus.Failed);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
                 final TaskFile taskFile = entry.getValue();
                 if (taskFile.getAnswerPlaceholders().size() < 2) {
-                  taskFile.setStatus(StudyStatus.Failed);
+                  taskManager.setStatus(taskFile, StudyStatus.Failed);
                   continue;
                 }
                 CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
@@ -276,11 +274,12 @@ public class StudyCheckAction extends DumbAwareAction {
     Editor editor = studyState.getEditor();
     TaskFile taskFileToNavigate = selectedTaskFile;
     VirtualFile fileToNavigate = studyState.getVirtualFile();
-    if (!selectedTaskFile.hasFailedTaskWindows()) {
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    if (!taskManager.hasFailedTaskWindows(selectedTaskFile)) {
       for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
         String name = entry.getKey();
         TaskFile taskFile = entry.getValue();
-        if (taskFile.hasFailedTaskWindows()) {
+        if (taskManager.hasFailedTaskWindows(taskFile)) {
           taskFileToNavigate = taskFile;
           VirtualFile virtualFile = taskDir.findChild(name);
           if (virtualFile == null) {

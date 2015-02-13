@@ -27,7 +27,9 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +90,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     if (!resetDocument(project, document, taskFile, name)) {
       return false;
     }
-    resetTaskWindows(taskFile);
+    resetTaskWindows(taskFile, project);
     ProjectView.getInstance(project).refresh();
     StudyUtils.updateStudyToolWindow(project);
     return true;
@@ -104,9 +106,11 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     Disposer.register(project, balloon);
   }
 
-  private static void resetTaskWindows(TaskFile selectedTaskFile) {
+  private static void resetTaskWindows(TaskFile selectedTaskFile, Project project) {
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
       answerPlaceholder.reset();
+      taskManager.setStatus(answerPlaceholder, StudyStatus.Unchecked);
     }
   }
 

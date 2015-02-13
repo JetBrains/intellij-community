@@ -2,8 +2,14 @@ package com.jetbrains.edu.learning.navigation;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.jetbrains.edu.courseFormat.*;
+import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -54,9 +60,12 @@ public class StudyNavigator {
     return lesson.getCourse().getLessons().get(lesson.getIndex() - 1);
   }
 
-  public static  void navigateToFirstFailedTaskWindow(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
+  public static void navigateToFirstFailedTaskWindow(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
+    final Project project = editor.getProject();
+    if (project == null) return;
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      if (answerPlaceholder.getStatus() != StudyStatus.Failed) {
+      final StudyStatus status = StudyTaskManager.getInstance(project).getStatus(answerPlaceholder);
+      if (status != StudyStatus.Failed) {
         continue;
       }
       navigateToTaskWindow(editor, answerPlaceholder, taskFile);

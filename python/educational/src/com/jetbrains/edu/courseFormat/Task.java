@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * Implementation of task which contains task files, tests, input file for tests
  */
-public class Task implements StudyStateful {
+public class Task {
   private String name;
   private int myIndex;
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
@@ -63,26 +63,6 @@ public class Task implements StudyStateful {
 
   public Map<String, TaskFile> getTaskFiles() {
     return taskFiles;
-  }
-
-  @Transient
-  public StudyStatus getStatus() {
-    for (TaskFile taskFile : taskFiles.values()) {
-      StudyStatus taskFileStatus = taskFile.getStatus();
-      if (taskFileStatus == StudyStatus.Unchecked) {
-        return StudyStatus.Unchecked;
-      }
-      if (taskFileStatus == StudyStatus.Failed) {
-        return StudyStatus.Failed;
-      }
-    }
-    return StudyStatus.Solved;
-  }
-
-  public void setStatus(@NotNull final StudyStatus status) {
-    for (TaskFile taskFile : taskFiles.values()) {
-      taskFile.setStatus(status);
-    }
   }
 
   public List<UserTest> getUserTests() {

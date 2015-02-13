@@ -12,9 +12,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.edu.StudyNames;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,20 +95,37 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     return name.contains(StudyNames.SANDBOX_DIR) ? 0 : 3;
   }
 
-  private static void setStudyAttributes(StudyStateful stateful, PresentationData data, String additionalName) {
-    StudyStatus taskStatus = stateful.getStatus();
+  private void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
+    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(lesson);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, stateful instanceof Lesson ? InteractiveLearningIcons.Lesson : InteractiveLearningIcons.Task);
+        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Lesson);
+        break;
+      }
+      case Solved: {
+        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)), InteractiveLearningIcons.LessonCompl);
+        break;
+      }
+      case Failed: {
+        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.Lesson);
+      }
+    }
+  }
+
+  private void setStudyAttributes(Task task, PresentationData data, String additionalName) {
+    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
+    switch (taskStatus) {
+      case Unchecked: {
+        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Task);
         break;
       }
       case Solved: {
         updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)),
-                           stateful instanceof Lesson ? InteractiveLearningIcons.LessonCompl : InteractiveLearningIcons.TaskCompl);
+                           InteractiveLearningIcons.TaskCompl);
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, stateful instanceof Lesson ? InteractiveLearningIcons.Lesson : InteractiveLearningIcons.TaskProbl);
+        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.TaskProbl);
       }
     }
   }

@@ -3,7 +3,6 @@ package com.jetbrains.edu.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
-import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Implementation of windows which user should type in
  */
 
-public class AnswerPlaceholder implements Comparable, StudyStateful {
+public class AnswerPlaceholder implements Comparable {
 
   @Expose private int line = 0;
   @Expose private int start = 0;
@@ -21,19 +20,10 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
   @Expose private String possibleAnswer = "";
   @Expose private int length = 0;
   private int myIndex = -1;
-  private StudyStatus myStatus = StudyStatus.Unchecked;
   private String myTaskText;
   private MyInitialState myInitialState;
 
   @Transient private TaskFile myTaskFile;
-
-  public StudyStatus getStatus() {
-    return myStatus;
-  }
-
-  public void setStatus(StudyStatus status) {
-    myStatus = status;
-  }
 
   public int getIndex() {
     return myIndex;
@@ -101,16 +91,6 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
     myTaskFile = taskFile;
   }
 
-  public JBColor getColor() {
-    if (myStatus == StudyStatus.Solved) {
-      return JBColor.GREEN;
-    }
-    if (myStatus == StudyStatus.Failed) {
-      return JBColor.RED;
-    }
-    return JBColor.BLUE;
-  }
-
   public int getRealStartOffset(@NotNull final Document document) {
     return document.getLineStartOffset(line) + start;
   }
@@ -123,7 +103,6 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
     return isLengthValid && isStartValid;
   }
 
-  @Override
   public int compareTo(@NotNull Object o) {
     AnswerPlaceholder answerPlaceholder = (AnswerPlaceholder)o;
     if (answerPlaceholder.getTaskFile() != myTaskFile) {
@@ -140,7 +119,6 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
    * Returns window to its initial state
    */
   public void reset() {
-    myStatus = StudyStatus.Unchecked;
     line = myInitialState.myLine;
     start = myInitialState.myStart;
     length = myInitialState.myLength;
@@ -159,5 +137,31 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
       myLength = length;
       myStart = start;
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AnswerPlaceholder position = (AnswerPlaceholder)o;
+
+    if (getStart() != position.getStart()) return false;
+    if (getLength() != position.getLength()) return false;
+    if (getIndex() != position.getIndex()) return false;
+    if (getLine() != position.getLine()) return false;
+    if (!getHint().equals(position.getHint())) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = getHint().hashCode();
+    result = 31 * result + getLine();
+    result = 31 * result + getStart();
+    result = 31 * result + getLength();
+    result = 31 * result + getIndex();
+    return result;
   }
 }

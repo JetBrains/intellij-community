@@ -9,11 +9,16 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBColor;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * Implementation of class which contains all the information
@@ -30,18 +35,100 @@ import org.jetbrains.annotations.Nullable;
     )}
 )
 public class StudyTaskManager implements PersistentStateComponent<StudyTaskManager>, DumbAware {
-  public Course myCourse;
+  private Course myCourse;
+  public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
+
+  private StudyTaskManager() {
+  }
 
   public void setCourse(@NotNull final Course course) {
     myCourse = course;
   }
 
-  private StudyTaskManager() {
-  }
-
   @Nullable
   public Course getCourse() {
     return myCourse;
+  }
+
+  public void setStatus(AnswerPlaceholder placeholder, StudyStatus status) {
+    if (myStudyStatusMap == null) {
+      myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
+    }
+    myStudyStatusMap.put(placeholder, status);
+  }
+
+  public void setStatus(Task task, StudyStatus status) {
+    for (TaskFile taskFile : task.getTaskFiles().values()) {
+      setStatus(taskFile, status);
+    }
+  }
+
+  public void setStatus(TaskFile file, StudyStatus status) {
+    for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
+      setStatus(answerPlaceholder, status);
+    }
+  }
+
+  public StudyStatus getStatus(AnswerPlaceholder placeholder) {
+    StudyStatus status = myStudyStatusMap.get(placeholder);
+    if (status == null) {
+      status = StudyStatus.Unchecked;
+      myStudyStatusMap.put(placeholder, status);
+    }
+    return status;
+  }
+
+
+  public StudyStatus getStatus(@NotNull final Lesson lesson) {
+    for (Task task : lesson.getTaskList()) {
+      StudyStatus taskStatus = getStatus(task);
+      if (taskStatus == StudyStatus.Unchecked || taskStatus == StudyStatus.Failed) {
+        return StudyStatus.Unchecked;
+      }
+    }
+    return StudyStatus.Solved;
+  }
+
+  public StudyStatus getStatus(@NotNull final Task task) {
+    for (TaskFile taskFile : task.getTaskFiles().values()) {
+      StudyStatus taskFileStatus = getStatus(taskFile);
+      if (taskFileStatus == StudyStatus.Unchecked) {
+        return StudyStatus.Unchecked;
+      }
+      if (taskFileStatus == StudyStatus.Failed) {
+        return StudyStatus.Failed;
+      }
+    }
+    return StudyStatus.Solved;
+  }
+
+  private StudyStatus getStatus(@NotNull final TaskFile file) {
+    for (AnswerPlaceholder answerPlaceholder : file.getAnswerPlaceholders()) {
+      StudyStatus windowStatus = getStatus(answerPlaceholder);
+      if (windowStatus == StudyStatus.Failed) {
+        return StudyStatus.Failed;
+      }
+      if (windowStatus == StudyStatus.Unchecked) {
+        return StudyStatus.Unchecked;
+      }
+    }
+    return StudyStatus.Solved;
+  }
+
+
+  public JBColor getColor(@NotNull final AnswerPlaceholder placeholder) {
+    final StudyStatus status = getStatus(placeholder);
+    if (status == StudyStatus.Solved) {
+      return JBColor.GREEN;
+    }
+    if (status == StudyStatus.Failed) {
+      return JBColor.RED;
+    }
+    return JBColor.BLUE;
+  }
+
+  public boolean hasFailedTaskWindows(@NotNull final TaskFile taskFile) {
+    return taskFile.getAnswerPlaceholders().size() > 0 && getStatus(taskFile) == StudyStatus.Failed;
   }
 
   @Nullable
