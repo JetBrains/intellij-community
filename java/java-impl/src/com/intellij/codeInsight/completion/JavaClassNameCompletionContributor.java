@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
@@ -50,6 +52,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
+  private static final ElementPattern<PsiElement> IN_EXTENDS_IMPLEMENTS =
+    psiElement().inside(psiElement(PsiReferenceList.class).withParent(psiClass()));
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
@@ -86,6 +90,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     final PsiElement insertedElement = parameters.getPosition();
 
     final ElementFilter filter =
+      IN_EXTENDS_IMPLEMENTS.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)) :
       IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
       JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement) ? new AnnotationTypeFilter() :
       TrueFilter.INSTANCE;

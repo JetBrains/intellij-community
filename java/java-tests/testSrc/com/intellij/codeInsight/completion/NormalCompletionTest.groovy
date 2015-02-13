@@ -843,6 +843,11 @@ public class ListUtils {
     assertStringItems 'Inner'
   }
 
+  public void testNoThisClassInExtends() throws Throwable {
+    configure()
+    assertStringItems 'Fooxxxx2'
+  }
+
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop2() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop3() throws Throwable { doPrimitiveTypeTest() }
