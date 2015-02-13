@@ -25,12 +25,28 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class XmlStringUtil {
-  @NonNls private static final String HTML_HEADER = "<html>";
-  @NonNls private static final String BODY_HEADER = "<body>";
-  @NonNls private static final String HTML_FOOTER = "</html>";
-  @NonNls private static final String BODY_FOOTER = "</body>";
+
+  public static final String CDATA_START ="<![CDATA[";
+  public static final String CDATA_END ="]]>";
+  public static final String HTML_START = "<html>";
+  public static final String BODY_START = "<body>";
+  public static final String HTML_END = "</html>";
+  public static final String BODY_END = "</body>";
 
   private XmlStringUtil() {
+  }
+
+  @NotNull
+  public static String wrapInCDATA(@NotNull String str) {
+    StringBuilder sb = new StringBuilder();
+    int cur = 0, next, len = str.length();
+    while (cur < len) {
+      next = StringUtil.indexOf(str, CDATA_END, cur);
+      sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next)).append(CDATA_END);
+      if (next < len) sb.append(escapeString(CDATA_END));
+      cur = next + CDATA_END.length();
+    }
+    return sb.toString();
   }
 
   public static String escapeString(@Nullable String str) {
@@ -105,20 +121,20 @@ public class XmlStringUtil {
 
   @NotNull
   public static String wrapInHtml(@NotNull CharSequence result) {
-    return HTML_HEADER + result + HTML_FOOTER;
+    return HTML_START + result + HTML_END;
   }
 
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
-    return StringUtil.startsWithIgnoreCase(tooltip, HTML_HEADER) &&
-           StringUtil.endsWithIgnoreCase(tooltip, HTML_FOOTER);
+    return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
+           StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
   }
 
   @NotNull
   public static String stripHtml(@NotNull String toolTip) {
-    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+    toolTip = StringUtil.trimStart(toolTip, HTML_START);
+    toolTip = StringUtil.trimStart(toolTip, BODY_START);
+    toolTip = StringUtil.trimEnd(toolTip, HTML_END);
+    toolTip = StringUtil.trimEnd(toolTip, BODY_END);
     return toolTip;
   }
 }

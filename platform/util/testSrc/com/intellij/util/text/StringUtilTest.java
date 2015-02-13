@@ -18,6 +18,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.xml.util.XmlStringUtil;
 import junit.framework.TestCase;
 
 import java.nio.CharBuffer;
@@ -362,5 +363,12 @@ public class StringUtilTest extends TestCase {
     assertEquals("3h 25m 45s 678ms", StringUtil.formatDuration(12345678));
     assertEquals("1d 10h 17m 36s 789ms", StringUtil.formatDuration(123456789));
     assertEquals("2w 0d 6h 56m 7s 890ms", StringUtil.formatDuration(1234567890));
+  }
+
+  public void testXmlWrapInCDATA() {
+    assertEquals("<![CDATA[abcd]]>", XmlStringUtil.wrapInCDATA("abcd"));
+    assertEquals("<![CDATA[abcd]]>]]&gt;", XmlStringUtil.wrapInCDATA("abcd]]>"));
+    assertEquals("<![CDATA[abcd]]>]]&gt;<![CDATA[efgh]]>", XmlStringUtil.wrapInCDATA("abcd]]>efgh"));
+    assertEquals("<![CDATA[123<![CDATA[wow<&>]]>]]&gt;<![CDATA[]]>]]&gt;<![CDATA[<![CDATA[123]]>", XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
   }
 }
