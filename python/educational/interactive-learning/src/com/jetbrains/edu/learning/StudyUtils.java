@@ -205,7 +205,7 @@ public class StudyUtils {
 
   @Nullable
   public static Sdk findSdk(@NotNull final Task task, @NotNull final Project project) {
-    final Language language = task.getLesson().getCourse().getLanguage();
+    final Language language = task.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).findSdk(project);
   }
 
@@ -233,13 +233,13 @@ public class StudyUtils {
 
   @NotNull
   public static StudyTestRunner getTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    final Language language = task.getLesson().getCourse().getLanguage();
+    final Language language = task.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).getTestRunner(task, taskDir);
   }
 
   public static RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final Task currentTask,
                                                @NotNull final ProcessHandler handler) {
-    final Language language = currentTask.getLesson().getCourse().getLanguage();
+    final Language language = currentTask.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
   }
 
@@ -248,7 +248,7 @@ public class StudyUtils {
                                               @NotNull final String filePath,
                                               @NotNull final String sdkPath,
                                               @NotNull final Task currentTask) {
-    final Language language = currentTask.getLesson().getCourse().getLanguage();
+    final Language language = currentTask.getLesson().getCourse().getLanguageById();
     StudyExecutor.INSTANCE.forLanguage(language).setCommandLineParameters(cmd, project, filePath, sdkPath, currentTask);
   }
 
@@ -259,7 +259,7 @@ public class StudyUtils {
   }
 
   public static void showNoSdkNotification(@NotNull final Task currentTask, @NotNull final Project project) {
-    final Language language = currentTask.getLesson().getCourse().getLanguage();
+    final Language language = currentTask.getLesson().getCourse().getLanguageById();
     StudyExecutor.INSTANCE.forLanguage(language).showNoSdkNotification(project);
   }
 
@@ -273,5 +273,14 @@ public class StudyUtils {
     final JButton checkButton = studyEditor.getCheckButton();
     balloon.showInCenterOf(checkButton);
     Disposer.register(project, balloon);
+  }
+
+  /**
+   * returns language manager which contains all the information about language specific file names
+   */
+  @Nullable
+  public static StudyLanguageManager getLanguageManager(@NotNull final Course course) {
+    Language language = course.getLanguageById();
+    return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
   }
 }

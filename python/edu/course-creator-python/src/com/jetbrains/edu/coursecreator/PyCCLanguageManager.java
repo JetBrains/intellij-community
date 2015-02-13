@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class PyStudyLanguageManager implements StudyLanguageManager {
+public class PyCCLanguageManager implements CCLanguageManager {
   @Nullable
   @Override
   public String getDefaultTaskFileExtension() {

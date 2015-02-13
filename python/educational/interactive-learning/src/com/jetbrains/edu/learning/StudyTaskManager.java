@@ -194,20 +194,28 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (!resourceDirectory.exists()) {
       return;
     }
+    StudyLanguageManager manager = StudyUtils.getLanguageManager(myCourse);
+    if (manager == null) {
+      LOG.info("Study Language Manager is null for " + myCourse.getLanguageById().getDisplayName());
+      return;
+    }
     final File[] files = resourceDirectory.listFiles();
     if (files == null) return;
     for (File file : files) {
-      if (file.getName().equals(StudyNames.TEST_HELPER)) {
-        copyFile(file, new File(myProject.getBasePath(), StudyNames.TEST_HELPER));
+      String testHelper = manager.getTestHelperFileName();
+      if (file.getName().equals(testHelper)) {
+        copyFile(file, new File(myProject.getBasePath(), testHelper));
       }
       if (file.getName().startsWith(StudyNames.LESSON)) {
         final File[] tasks = file.listFiles();
         if (tasks == null) continue;
         for (File task : tasks) {
           final File taskDescr = new File(task, StudyNames.TASK_HTML);
-          final File taskTests = new File(task, StudyNames.TASK_TESTS);
+          String testFileName = manager.getTestFileName();
+          final File taskTests = new File(task, testFileName);
           copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_HTML));
-          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_TESTS));
+          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
+                                       testFileName));
         }
       }
     }

@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -23,9 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.StudyLanguageManager;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.Lesson;
 import com.jetbrains.edu.coursecreator.format.Task;
@@ -74,22 +73,21 @@ public class CCCreateTask extends DumbAwareAction {
       public void run() {
         final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
-          Language language = Language.findLanguageByID(course.getLanguage());
-          if (language == null) {
+          CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+          if (manager == null) {
             return;
           }
-          final StudyLanguageManager studyLanguageManager = StudyLanguageManager.INSTANCE.forLanguage(language);
-          CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
 
+          CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final Task task = new Task(taskName);
           task.setIndex(size + 1);
           lesson.addTask(task, taskDirectory);
 
-          createFromTemplateAndOpen(taskDirectory, studyLanguageManager.getTestsTemplate(project), view);
+          createFromTemplateAndOpen(taskDirectory, manager.getTestsTemplate(project), view);
           createFromTemplateAndOpen(taskDirectory, FileTemplateManager.getInstance(project).getInternalTemplate("task.html"), view);
-          String defaultExtension = studyLanguageManager.getDefaultTaskFileExtension();
+          String defaultExtension = manager.getDefaultTaskFileExtension();
           if (defaultExtension != null) {
-            FileTemplate taskFileTemplate = studyLanguageManager.getTaskFileTemplateForExtension(project,
+            FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project,
                                                                                           defaultExtension);
             createFromTemplateAndOpen(taskDirectory, taskFileTemplate, view);
             if (taskFileTemplate != null) {

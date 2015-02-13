@@ -61,8 +61,8 @@ public class CCUtils {
   }
 
   @Nullable
-  public static StudyLanguageManager getStudyLanguageManager(@NotNull final Course course) {
+  public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
     Language language = Language.findLanguageByID(course.getLanguage());
-    return language == null ? null :  StudyLanguageManager.INSTANCE.forLanguage(language);
+    return language == null ? null :  CCLanguageManager.INSTANCE.forLanguage(language);
   }
 }

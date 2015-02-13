@@ -113,10 +113,13 @@ public class Course {
     myUpToDate = upToDate;
   }
 
-  public Language getLanguage() {
+  public Language getLanguageById() {
     return Language.findLanguageByID(myLanguage);
   }
 
+  public String getLanguage() {
+    return myLanguage;
+  }
   public void setLanguage(@NotNull final String language) {
     myLanguage = language;
   }

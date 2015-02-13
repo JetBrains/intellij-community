@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public interface StudyLanguageManager {
-  LanguageExtension<StudyLanguageManager> INSTANCE = new LanguageExtension<StudyLanguageManager>("Edu.StudyLanguageManager");
+public interface CCLanguageManager {
+  LanguageExtension<CCLanguageManager> INSTANCE = new LanguageExtension<CCLanguageManager>("Edu.CCLanguageManager");
 
   @Nullable
   String getDefaultTaskFileExtension();
