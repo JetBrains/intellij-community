@@ -134,7 +134,6 @@ public class FileUtilRt {
 
       });
       initSuccess = true;
-      LOG.info("Using NIO-based file deletion");
     }
     catch (Throwable ignored) {
       LOG.info("Was not able to detect NIO API");
