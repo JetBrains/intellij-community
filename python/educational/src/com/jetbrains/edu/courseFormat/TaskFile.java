@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,23 +23,12 @@ public class TaskFile implements StudyStateful {
 
   public String name;
   public String text;
-  private Task myTask;
+  @Transient private Task myTask;
   @Transient
   private AnswerPlaceholder mySelectedAnswerPlaceholder = null;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
   private boolean myHighlightErrors = false;
-
-  public void init(final Task task, boolean isRestarted) {
-    myTask = task;
-    for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
-      answerPlaceholder.init(this, isRestarted);
-    }
-    Collections.sort(myAnswerPlaceholders);
-    for (int i = 0; i < myAnswerPlaceholders.size(); i++) {
-      myAnswerPlaceholders.get(i).setIndex(i);
-    }
-  }
 
   /**
    * @return if all the windows in task file are marked as resolved
@@ -96,8 +84,14 @@ public class TaskFile implements StudyStateful {
     myIndex = index;
   }
 
+  @Transient
   public Task getTask() {
     return myTask;
+  }
+
+  @Transient
+  public void setTask(Task task) {
+    myTask = task;
   }
 
   /**

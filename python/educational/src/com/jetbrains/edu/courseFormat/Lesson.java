@@ -20,19 +20,12 @@ public class Lesson implements StudyStateful {
   private String name;
 
   public List<Task> taskList = new ArrayList<Task>();
+
+  @Transient
   private Course myCourse = null;
   private int myIndex = -1;
   private LessonInfo myLessonInfo = new LessonInfo();
 
-
-  public void init(final Course course, boolean isRestarted) {
-    myCourse = course;
-    myLessonInfo.setTaskNum(taskList.size());
-    myLessonInfo.setTaskUnchecked(taskList.size());
-    for (Task task : taskList) {
-      task.init(this, isRestarted);
-    }
-  }
 
   public String getName() {
     return name;
@@ -76,7 +69,13 @@ public class Lesson implements StudyStateful {
     return taskList;
   }
 
+  @Transient
   public Course getCourse() {
     return myCourse;
+  }
+
+  @Transient
+  public void setCourse(Course course) {
+    myCourse = course;
   }
 }

@@ -24,21 +24,9 @@ public class Task implements StudyStateful {
   private String text;
   private String testsText;
 
-  private Lesson myLesson;
+  @Transient private Lesson myLesson;
   private List<UserTest> userTests = new ArrayList<UserTest>();
 
-
-  /**
-   * Initializes state of task file
-   *
-   * @param lesson lesson which task belongs to
-   */
-  public void init(final Lesson lesson, boolean isRestarted) {
-    myLesson = lesson;
-    for (TaskFile taskFile : taskFiles.values()) {
-      taskFile.init(this, isRestarted);
-    }
-  }
 
   public String getName() {
     return name;
@@ -120,10 +108,15 @@ public class Task implements StudyStateful {
     return taskFiles.get(fileName);
   }
 
+  @Transient
   public Lesson getLesson() {
     return myLesson;
   }
 
+  @Transient
+  public void setLesson(Lesson lesson) {
+    myLesson = lesson;
+  }
 
   @Nullable
   public VirtualFile getTaskDir(Project project) {

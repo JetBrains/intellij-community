@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.ui.JBColor;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,14 +25,7 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
   private MyInitialState myInitialState;
 
 
-  private TaskFile myTaskFile;
-
-  public void init(final TaskFile file, boolean isRestarted) {
-    if (!isRestarted) {
-      myInitialState = new MyInitialState(line, length, start);
-    }
-    myTaskFile = file;
-  }
+  @Transient private TaskFile myTaskFile;
 
   public StudyStatus getStatus() {
     return myStatus;
@@ -97,8 +91,14 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
     myInitialState = initialState;
   }
 
+  @Transient
   public TaskFile getTaskFile() {
     return myTaskFile;
+  }
+
+  @Transient
+  public void setTaskFile(TaskFile taskFile) {
+    myTaskFile = taskFile;
   }
 
   public JBColor getColor() {
@@ -146,7 +146,7 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
     length = myInitialState.myLength;
   }
 
-  private static class MyInitialState {
+  public static class MyInitialState {
     public int myLine = -1;
     public int myLength = -1;
     public int myStart = -1;

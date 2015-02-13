@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.learning.courseGeneration;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,15 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.StudyNames;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.courseFormat.info.LessonInfo;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -135,4 +135,57 @@ public class StudyGenerator {
         }
       });
   }
+
+  /**
+   * Initializes state of course
+   */
+  public static void initCourse(@NotNull final Course course, boolean isRestarted) {
+    for (Lesson lesson : course.lessons) {
+      initLesson(lesson, course, isRestarted);
+    }
+  }
+
+  public static void initLesson(@NotNull final Lesson lesson, final Course course, boolean isRestarted) {
+    lesson.setCourse(course);
+    final LessonInfo info = lesson.getLessonInfo();
+    final List<Task> taskList = lesson.getTaskList();
+    info.setTaskNum(taskList.size());
+    info.setTaskUnchecked(taskList.size());
+    for (Task task : taskList) {
+      initTask(task, lesson, isRestarted);
+    }
+  }
+
+  /**
+   * Initializes state of task file
+   *
+   * @param lesson lesson which task belongs to
+   */
+  public static void initTask(@NotNull final Task task, final Lesson lesson, boolean isRestarted) {
+    task.setLesson(lesson);
+    for (TaskFile taskFile : task.getTaskFiles().values()) {
+      initTaskFile(taskFile, task, isRestarted);
+    }
+  }
+
+  public static void initTaskFile(@NotNull final TaskFile taskFile, final Task task, boolean isRestarted) {
+    taskFile.setTask(task);
+    final List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
+    for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
+      initAnswerPlaceholder(answerPlaceholder, taskFile, isRestarted);
+    }
+    Collections.sort(answerPlaceholders);
+    for (int i = 0; i < answerPlaceholders.size(); i++) {
+      answerPlaceholders.get(i).setIndex(i);
+    }
+  }
+
+  public static void initAnswerPlaceholder(@NotNull final AnswerPlaceholder placeholder, final TaskFile file, boolean isRestarted) {
+    if (!isRestarted) {
+      placeholder.setInitialState(new AnswerPlaceholder.MyInitialState(placeholder.getLine(), placeholder.getLength(),
+                                                                       placeholder.getStart()));
+    }
+    placeholder.setTaskFile(file);
+  }
+
 }

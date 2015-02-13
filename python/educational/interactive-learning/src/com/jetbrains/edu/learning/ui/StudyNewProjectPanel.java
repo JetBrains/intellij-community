@@ -4,8 +4,8 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.CourseInfo;
-import com.jetbrains.edu.learning.StudyProjectGenerator;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

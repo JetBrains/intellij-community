@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.learning.courseGeneration;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,6 +28,10 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.CourseInfo;
+import com.jetbrains.edu.learning.StudyLanguageManager;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.stepic.StudyStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +61,7 @@ public class StudyProjectGenerator {
     final Course course = StudyStepicConnector.getCourse(mySelectedCourseInfo);
     if (course == null) return;
     flushCourse(course);
-    course.init(false);
+    StudyGenerator.initCourse(course, false);
     final File courseDirectory = new File(myCoursesDir, course.getName());
     StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
     course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());

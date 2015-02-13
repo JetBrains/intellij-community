@@ -16,15 +16,6 @@ public class Course {
   private boolean myUpToDate;
   private String myLanguage;
 
-  /**
-   * Initializes state of course
-   */
-  public void init(boolean isRestarted) {
-    for (Lesson lesson : lessons) {
-      lesson.init(this, isRestarted);
-    }
-  }
-
   public List<Lesson> getLessons() {
     return lessons;
   }

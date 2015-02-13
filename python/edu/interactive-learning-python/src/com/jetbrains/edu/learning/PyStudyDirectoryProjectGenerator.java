@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.InteractiveLearningPythonIcons;

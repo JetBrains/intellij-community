@@ -33,6 +33,7 @@ import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
+import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.ui.StudyCondition;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jdom.Element;
@@ -99,7 +100,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   public void loadState(Element el) {
     myCourse = XmlSerializer.deserialize(el.getChild(COURSE_ELEMENT), Course.class);
     if (myCourse != null) {
-      myCourse.init(true);
+      StudyGenerator.initCourse(myCourse, true);
     }
   }
 
@@ -366,7 +367,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               if (StudyUtils.indexIsValid(taskIndex, tasks)) {
                 final Task task = tasks.get(taskIndex);
                 final TaskFile taskFile = new TaskFile();
-                taskFile.init(task, false);
+                StudyGenerator.initTaskFile(taskFile, task, false);
                 taskFile.setUserCreated(true);
                 task.getTaskFiles().put(createdFile.getName(), taskFile);
               }
