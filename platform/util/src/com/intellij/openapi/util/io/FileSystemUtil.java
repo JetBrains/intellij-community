@@ -397,6 +397,7 @@ public class FileSystemUtil {
     }
 
     private static final int[] LINUX_32 =  {16, 44, 72, 24, 28};
+    private static final int[] LINUX_32_PPC = {16, 48, 80, 24, 28};
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
@@ -416,7 +417,7 @@ public class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP, false);
 
     private JnaUnixMediatorImpl() throws Exception {
-      myOffsets = SystemInfo.isLinux ? (SystemInfo.is32Bit ? LINUX_32 : LINUX_64) :
+      myOffsets = SystemInfo.isLinux ? (SystemInfo.is32Bit ? ("ppc".equals(SystemInfo.OS_ARCH) ? LINUX_32_PPC : LINUX_32) : LINUX_64) :
                   SystemInfo.isMac | SystemInfo.isFreeBSD ? (SystemInfo.is32Bit ? BSD_32 : BSD_64) :
                   SystemInfo.isSolaris ? (SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64) :
                   null;
@@ -430,7 +431,7 @@ public class FileSystemUtil {
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, buffer) : myLibC.lstat(path, buffer);
+      int res = SystemInfo.isLinux ? myLibC.__lxstat64(1, path, buffer) : myLibC.lstat(path, buffer);
       if (res != 0) return null;
 
       int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -455,7 +456,7 @@ public class FileSystemUtil {
     }
 
     private boolean loadFileStatus(@NotNull String path, Memory buffer) {
-      return (SystemInfo.isLinux ? myLibC.__xstat64(0, path, buffer) : myLibC.stat(path, buffer)) == 0;
+      return (SystemInfo.isLinux ? myLibC.__xstat64(1, path, buffer) : myLibC.stat(path, buffer)) == 0;
     }
 
     @Override
