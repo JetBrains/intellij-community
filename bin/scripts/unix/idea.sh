@@ -125,7 +125,7 @@ IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 # Collect JVM options and properties.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
-  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=\"$@@product_uc@@_PROPERTIES\""
+  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
 MAIN_CLASS_NAME="$@@product_uc@@_MAIN_CLASS_NAME"
@@ -133,41 +133,18 @@ if [ -z "$MAIN_CLASS_NAME" ]; then
   MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
-VM_OPTIONS_FILES_0=$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions
-VM_OPTIONS_FILES_1=$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions
-VM_OPTIONS_FILES_2=$@@product_uc@@_VM_OPTIONS
-
 VM_OPTIONS=""
 VM_OPTIONS_FILES_USED=""
-
-if [ -r "$VM_OPTIONS_FILES_0" ]; then
-  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_0" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
-  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
-    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+for vm_opts_file in "$@@product_uc@@_VM_OPTIONS" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"; do
+  if [ -r "$vm_opts_file" ]; then
+    VM_OPTIONS_DATA=`"$CAT" "$vm_opts_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+    VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+    if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+      VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+    fi
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$vm_opts_file"
   fi
-  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_0"
-fi
-
-if [ -r "$VM_OPTIONS_FILES_1" ]; then
-  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_1" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
-  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
-    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
-  fi
-  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_1"
-fi
-
-if [ -r "$VM_OPTIONS_FILES_2" ]; then
-  VM_OPTIONS_DATA=`"$CAT" "$VM_OPTIONS_FILES_2" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
-  if [ -n "$VM_OPTIONS_FILES_USED" ]; then
-    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
-  fi
-  VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$VM_OPTIONS_FILES_2"
-fi
-
-VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILES_USED\""
+done
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
@@ -178,23 +155,28 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-COMMON_JVM_ARGS="-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log \"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
-ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi
-export CLASSPATH
-
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH
 
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
 while true ; do
-  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME "$@"
+  LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/bin/java" \
+    $AGENT \
+    "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
+    -classpath "$CLASSPATH" \
+    $VM_OPTIONS "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
+    "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
+    -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
+    $IDE_PROPERTIES_PROPERTY \
+    $IDE_JVM_ARGS \
+    $REQUIRED_JVM_ARGS \
+    $MAIN_CLASS_NAME \
+    "$@"
   test $? -ne 88 && break
 done
