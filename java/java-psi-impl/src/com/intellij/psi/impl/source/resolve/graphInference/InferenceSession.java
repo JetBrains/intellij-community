@@ -308,7 +308,7 @@ public class InferenceSession {
           if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
             collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)arg);
           }
-        } else if (arg instanceof PsiLambdaExpression) {
+        } else if (arg instanceof PsiLambdaExpression && !isProperType(retrieveNonPrimitiveEqualsBounds(myInferenceVariables).substitute(parameterType))) {
           collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType);
         }
       }
