@@ -21,7 +21,6 @@ import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -30,7 +29,7 @@ import java.io.IOException;
  */
 
 public class AnswerPlaceholder implements Comparable, Stateful {
-  private static final String WINDOW_POSTFIX = "_window.py";
+  private static final String WINDOW_POSTFIX = "_window";
   private static final Logger LOG = Logger.getInstance(AnswerPlaceholder.class);
   private int line = 0;
   private int start = 0;
@@ -104,7 +103,7 @@ public class AnswerPlaceholder implements Comparable, Stateful {
         g.setColor(color);
         Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
         Point pointEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getEndOffset()));
-        g.drawRect(point.x, point.y - 2, (pointEnd.x - point.x), editor.getLineHeight() + 1);
+        g.drawRect(point.x, point.y, (pointEnd.x - point.x), editor.getLineHeight() + 1);
       }
     });
     editor.getCaretModel().moveToOffset(startOffset);
@@ -205,7 +204,7 @@ public class AnswerPlaceholder implements Comparable, Stateful {
 
     try {
       final VirtualFile windowCopy =
-        answerFile.copy(this, answerFile.getParent(), answerFile.getNameWithoutExtension() + myIndex + WINDOW_POSTFIX);
+        answerFile.copy(this, answerFile.getParent(), answerFile.getNameWithoutExtension() + myIndex + WINDOW_POSTFIX + "." + answerFile.getExtension());
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {

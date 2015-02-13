@@ -359,6 +359,7 @@
       <reference ref="Vcs.RollbackChangedLines"/>
       <reference ref="WelcomeScreen.GetFromVcs"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
+      <separator/>
 
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>

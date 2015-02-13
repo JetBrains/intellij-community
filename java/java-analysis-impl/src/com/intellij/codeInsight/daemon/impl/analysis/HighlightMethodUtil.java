@@ -152,7 +152,7 @@ public class HighlightMethodUtil {
                                           : includeRealPositionInfo ? method.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE;
       HighlightInfo highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, methodSignature,
                                                               returnType, JavaErrorMessages.message("incompatible.return.type"),
-                                                              toHighlight, languageLevel);
+                                                              toHighlight, PsiUtil.getLanguageLevel(method));
       if (highlightInfo != null) return highlightInfo;
     }
 

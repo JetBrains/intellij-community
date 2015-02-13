@@ -958,7 +958,13 @@ class Foo {
 
         joinAutopopup()
         joinCompletion()
-        myFixture.checkResult(result)
+        try {
+          myFixture.checkResult(result)
+        }
+        catch (e) {
+          println "actions: $a1 $a2"
+          throw e
+        }
         assert !lookup
       }
     }
@@ -972,7 +978,13 @@ class Foo {
 
       joinAutopopup()
       joinCompletion()
-      myFixture.checkResult(result)
+      try {
+        myFixture.checkResult(result)
+      }
+      catch (e) {
+        println "actions: $a1"
+        throw e
+      }
       assert !lookup
     }
 
@@ -985,7 +997,13 @@ class Foo {
 
       joinAutopopup()
       joinCompletion()
-      myFixture.checkResult(result)
+      try {
+        myFixture.checkResult(result)
+      }
+      catch (e) {
+        println "actions: $a1"
+        throw e
+      }
       assert !lookup
     }
 

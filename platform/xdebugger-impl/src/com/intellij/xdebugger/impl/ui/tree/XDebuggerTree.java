@@ -43,6 +43,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -321,7 +322,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
       if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
-        return selectedNodes[0].getRawValue();
+        return DebuggerUIUtil.getNodeRawValue(selectedNodes[0]);
       }
     }
     return null;

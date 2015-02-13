@@ -9,7 +9,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.StudyLanguageManager;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.format.Course;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public class CreateTaskFileDialog extends DialogWrapper {
       }
     }.installOn(myList);
 
-    StudyLanguageManager manager = CCUtils.getStudyLanguageManager(myCourse);
+    CCLanguageManager manager = CCUtils.getStudyLanguageManager(myCourse);
     if (manager != null) {
       String extension = manager.getDefaultTaskFileExtension();
       ListScrollingUtil.selectItem(myList, FileTypeManager.getInstance().getFileTypeByExtension(extension != null ? extension : "txt"));

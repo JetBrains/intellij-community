@@ -19,7 +19,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 
-class TestGraphBuilderTest : AbstractTestWithTextFile("testGraphBuilder")  {
+class TestGraphBuilderTest : AbstractTestWithTextFile("testGraphBuilder") {
 
   fun runTest(testName: String, builder: TestGraphBuilder.() -> Unit) {
     val actual = graph(builder).asString()

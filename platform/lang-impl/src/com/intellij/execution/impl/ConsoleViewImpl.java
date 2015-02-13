@@ -1433,6 +1433,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         int offset = next.getStartOffset();
         scrollTo(offset);
         final HyperlinkInfo hyperlinkInfo = EditorHyperlinkSupport.getHyperlinkInfo(next);
+        if (hyperlinkInfo instanceof BrowserHyperlinkInfo) {
+          return;
+        }
         if (hyperlinkInfo instanceof HyperlinkInfoBase) {
           VisualPosition position = myEditor.offsetToVisualPosition(offset);
           Point point = myEditor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));

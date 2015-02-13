@@ -2,7 +2,6 @@ package org.jetbrains.io.jsonRpc;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.JsonReaderEx;
-import org.jetbrains.io.webSocket.Client;
 
 import java.io.IOException;
 

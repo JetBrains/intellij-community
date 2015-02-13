@@ -31,7 +31,18 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     myVcs = vcs;
   }
 
-  @NotNull
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (getRevisions() == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    e.getPresentation().setVisible(true);
+
+    super.update(e);
+  }
+
+  @Nullable
   protected abstract List<VcsFileRevision> getRevisions();
 
   @Nullable
@@ -54,6 +65,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     List<VcsFileRevision> revisions = getRevisions();
+    assert getRevisions() != null;
 
     if (currentLine < 0 || currentLine >= revisions.size()) return null;
     return revisions.get(currentLine);

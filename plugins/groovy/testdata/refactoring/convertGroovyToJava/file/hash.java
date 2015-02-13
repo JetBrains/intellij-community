@@ -42,14 +42,14 @@ final MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
 
 long start = java.lang.System.currentTimeMillis();
 
-org.codehaus.groovy.runtime.DefaultGroovyMethods.eachByte(f, MB, new groovy.lang.Closure<java.lang.Object>(this, this) {
+org.codehaus.groovy.runtime.ResourceGroovyMethods.eachByte(f, MB, new groovy.lang.Closure<java.lang.Object>(this, this) {
 public void doCall(java.lang.Byte[] buf, int bytesRead) {
 messageDigest.update(buf, 0, bytesRead);
 }
 
 });
 
-java.lang.String sha1Hex = org.codehaus.groovy.runtime.DefaultGroovyMethods.padLeft(new BigInteger(1, messageDigest.digest()).toString(16), 40, "0");
+java.lang.String sha1Hex = org.codehaus.groovy.runtime.StringGroovyMethods.padLeft(new BigInteger(1, messageDigest.digest()).toString(16), 40, "0");
 long delta = java.lang.System.currentTimeMillis() - start;
 
 println(sha1Hex + " took " + java.lang.String.valueOf(delta) + " ms to calculate");

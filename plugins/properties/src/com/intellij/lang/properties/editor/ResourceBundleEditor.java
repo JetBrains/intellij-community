@@ -33,16 +33,13 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
-import com.intellij.lang.properties.psi.impl.PropertyImpl;
-import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
-import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -56,8 +53,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -77,11 +72,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -117,9 +111,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
-
-  private final Alarm myAlarmUpdate = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private Pair<String, String> myChangedProperties;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -596,7 +587,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         }
         final String newKey = getPropertyKey(event.getNewChild());
         childrenChanged(event);
-        myChangedProperties = Pair.create(oldKey, newKey);
       }
 
       @Override
@@ -632,7 +622,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (myBackSlashPressed.contains(propertiesFile)) {
       text += "\\";
     }
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     document.replaceString(0, document.getTextLength(), text);
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.FALSE);
   }
 
   @NotNull

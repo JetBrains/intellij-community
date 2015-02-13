@@ -27,7 +27,6 @@ import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleNode
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
-import com.intellij.openapi.util.Condition
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.utils.TimestampGetter
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
@@ -37,8 +36,6 @@ import kotlin.test.assertNull
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import com.intellij.vcs.log.graph.utils.impl.FullIntList
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 
@@ -57,7 +54,7 @@ public trait BaseTestGraphBuilder {
   class SimpleNode(val nodeId: Int, val type: GraphNodeType = GraphNodeType.USUAL)
 }
 
-public class TestGraphBuilder: BaseTestGraphBuilder {
+public class TestGraphBuilder : BaseTestGraphBuilder {
   private val nodes = ArrayList<NodeWithEdges>()
 
   public fun done(): LinearGraph = TestLinearGraph(nodes)
@@ -77,6 +74,7 @@ public class TestGraphBuilder: BaseTestGraphBuilder {
   private fun newNode(node: SimpleNode, edges: List<SimpleEdge> = listOf()) {
     nodes add NodeWithEdges(node.nodeId, edges, node.type)
   }
+
   fun node(id: Int, vararg edge: Int) {
     nodes add NodeWithEdges(id, edge.map {
       SimpleEdge(it, GraphEdgeType.USUAL)
@@ -87,17 +85,17 @@ public class TestGraphBuilder: BaseTestGraphBuilder {
     nodes add NodeWithEdges(id, edge.toList())
   }
 
-  private class TestLinearGraph(buildNodes: List<NodeWithEdges>): LinearGraph {
+  private class TestLinearGraph(buildNodes: List<NodeWithEdges>) : LinearGraph {
     private val nodes: List<GraphNode>
     private val nodeIndexToId: Map<Int, Int>
     private val nodeIdToIndex: Map<Int, Int>
     private val edges = MultiMap<Int, GraphEdge>()
 
-    val SimpleEdge.toIndex: Int?  get() = toNode?.let{ nodeIdToIndex[it]}
+    val SimpleEdge.toIndex: Int?  get() = toNode?.let { nodeIdToIndex[it] }
 
     ;{
       val idsMap = HashMap<Int, Int>()
-      nodes = buildNodes.map2 { (index, it) ->
+      nodes = buildNodes.map2 {(index, it) ->
         idsMap[index] = it.nodeId
         GraphNode(index, it.type)
       }
@@ -133,7 +131,7 @@ public class TestGraphBuilder: BaseTestGraphBuilder {
         = edges[nodeIndex].filter {
       if (it.getType().isNormalEdge()) {
         (LinearGraphUtils.isEdgeUp(it, nodeIndex) && filter.upNormal)
-        || (LinearGraphUtils.isEdgeDown(it, nodeIndex) && filter.downNormal)
+            || (LinearGraphUtils.isEdgeDown(it, nodeIndex) && filter.downNormal)
       } else {
         filter.special
       }
@@ -150,8 +148,7 @@ private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
   if (edge.getType().isNormalEdge()) {
     if (nodeIndex == edge.getUpNodeIndex()) {
       assertTrue(getAdjacentEdges(edge.getDownNodeIndex(), EdgeFilter.NORMAL_UP).contains(edge))
-    }
-    else {
+    } else {
       assertTrue(nodeIndex == edge.getDownNodeIndex())
       assertTrue(getAdjacentEdges(edge.getUpNodeIndex(), EdgeFilter.NORMAL_DOWN).contains(edge))
     }
@@ -170,11 +167,11 @@ private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
 }
 
 public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuilder {
-  for(nodeIndex in 0..nodesCount() - 1) {
+  for (nodeIndex in 0..nodesCount() - 1) {
     val node = getGraphNode(nodeIndex)
     append(getNodeId(nodeIndex))
     assertEquals(nodeIndex, node.getNodeIndex(),
-      "nodeIndex: $nodeIndex, but for node with this index(nodeId: ${getNodeId(nodeIndex)}) nodeIndex: ${node.getNodeIndex()}"
+        "nodeIndex: $nodeIndex, but for node with this index(nodeId: ${getNodeId(nodeIndex)}) nodeIndex: ${node.getNodeIndex()}"
     )
     when (node.getType()) {
       GraphNodeType.UNMATCHED -> append(".UNM")
@@ -193,11 +190,9 @@ public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = Stri
       if (it.getUpNodeIndex() == nodeIndex) {
         val startId = if (it.getType().isNormalEdge()) {
           getNodeId(it.getDownNodeIndex()).toString()
-        }
-        else if (it.getTargetId() != null) {
+        } else if (it.getTargetId() != null) {
           it.getTargetId().toString()
-        }
-        else {
+        } else {
           "null"
         }
 
@@ -252,12 +247,11 @@ class TestPermanentGraphInfo(
     override fun getTimestamp(index: Int) = commitInfo.getTimestamp(graph.getNodeId(index))
   }
 
-  val graphLayout = GraphLayoutBuilder.build(graph) { (x, y) ->
+  val graphLayout = GraphLayoutBuilder.build(graph) {(x, y) ->
     if (headsOrder.isEmpty()) {
       graph.getNodeId(x) - graph.getNodeId(y)
-    }
-    else {
-      val t = if (headsOrder.indexOf(x) == -1) x else if(headsOrder.indexOf(y) == -1) y else -1
+    } else {
+      val t = if (headsOrder.indexOf(x) == -1) x else if (headsOrder.indexOf(y) == -1) y else -1
       if (t != -1) throw IllegalStateException("Not found headsOrder for $t node by id")
       headsOrder.indexOf(x) - headsOrder.indexOf(y)
     }

@@ -269,7 +269,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteMethodCallAtReturn() throws Exception { doTest(); }
   
   public void testGenericMethodBody() throws Exception { doTest(); }
-  
+
+  public void testDefaultMethodBody() { doTest(); }
+
   public void testArrayInitializerRBracket() throws Exception { doTest(); }
   
   public void testReturnInLambda() { doTest(); }

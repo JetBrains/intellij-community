@@ -1260,7 +1260,7 @@
     <option name="Unresolved reference access">
       <value>
         <option name="FOREGROUND" value="ffffff" />
-        <option name="BACKGROUND" value="412817" />
+        <!--<option name="BACKGROUND" value="412817" />-->
         <option name="EFFECT_COLOR" value="808080" />
         <option name="EFFECT_TYPE" value="1" />
       </value>

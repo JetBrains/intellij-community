@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Ref;
@@ -147,6 +148,14 @@ public class GradleInstallationManager {
     if (sdk == null && gradleJvm != null) {
       throw new ExternalSystemJdkException(
         String.format("Invalid Gradle JDK configuration found. <a href='%s'>Open Gradle Settings</a> \n",
+                      OpenExternalSystemSettingsCallback.ID),
+        linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
+    }
+
+    final File sdkHomePath = sdk != null && sdk.getHomePath() != null ? new File(sdk.getHomePath()) : null;
+    if (sdkHomePath != null && JdkUtil.checkForJre(sdkHomePath.getPath()) && !JdkUtil.checkForJdk(sdkHomePath)) {
+      throw new ExternalSystemJdkException(
+        String.format("Please, use JDK instead of JRE for Gradle importer. <a href='%s'>Open Gradle Settings</a> \n",
                       OpenExternalSystemSettingsCallback.ID),
         linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
     }

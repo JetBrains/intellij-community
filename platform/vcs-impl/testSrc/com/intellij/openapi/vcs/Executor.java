@@ -205,7 +205,7 @@ public class Executor {
     return stdout;
   }
 
-  protected static List<String> splitCommandInParameters(String command) {
+  public static List<String> splitCommandInParameters(String command) {
     List<String> split = new ArrayList<String>();
 
     boolean insideParam = false;
@@ -263,7 +263,7 @@ public class Executor {
                                                                                " executable." : ""));
   }
 
-  protected static String findEnvValue(String programNameForLog, Collection<String> envs) {
+  public static String findEnvValue(String programNameForLog, Collection<String> envs) {
     for (String env : envs) {
       String val = System.getenv(env);
       if (val != null && new File(val).canExecute()) {
@@ -274,7 +274,7 @@ public class Executor {
     return null;
   }
 
-  protected static void debug(String msg) {
+  public static void debug(String msg) {
     if (!StringUtil.isEmptyOrSpaces(msg)) {
       LOG.info(msg);
     }

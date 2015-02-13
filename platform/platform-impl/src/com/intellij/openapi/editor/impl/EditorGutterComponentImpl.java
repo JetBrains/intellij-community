@@ -380,6 +380,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
+    if (!myEditor.getSettings().isCaretRowShown()) return;
     final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
     Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     if (caretRowColor != null) {
@@ -637,11 +638,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         if (renderer == null) {
           return;
         }
-        if (myEditor.getFoldingModel().isOffsetCollapsed(highlighter.getStartOffset())) {
+        if (!isHighlighterVisible(highlighter)) {
           return;
         }
-        VisualPosition visualPosition = myEditor.offsetToVisualPosition(highlighter.getStartOffset());
-        int line = EditorUtil.calcSurroundingRange(myEditor, visualPosition, visualPosition).getFirst().line;
+        int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(myEditor, highlighter.getStartOffset());
+        int line = myEditor.getDocument().getLineNumber(lineStartOffset);
         List<GutterMark> renderers = myLineToGutterRenderers.get(line);
         if (renderers == null) {
           renderers = new SmartList<GutterMark>();
@@ -675,6 +676,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myLineMarkerAreaWidth = myIconsAreaWidth + FREE_PAINTERS_AREA_WIDTH;
   }
 
+  private boolean isHighlighterVisible(RangeHighlighter highlighter) {
+    int startOffset = highlighter instanceof RangeHighlighterEx ? 
+                      ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset() : 
+                      highlighter.getStartOffset();
+    int endOffset = highlighter instanceof RangeHighlighterEx ? 
+                    ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() : 
+                    highlighter.getEndOffset();
+    FoldRegion foldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    return foldRegion == null || foldRegion.getEndOffset() < endOffset;
+  }
+
   private void paintGutterRenderers(final Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
     Graphics2D g2 = (Graphics2D)g;
 
@@ -698,22 +710,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintIcons(final int firstVisibleLine, final int lastVisibleLine, final Graphics g) {
-    myLineToGutterRenderers.forEachKey(new TIntProcedure() {
-      @Override
-      public boolean execute(int line) {
-        if (firstVisibleLine > line || lastVisibleLine < line) return true;
-        if (isLineCollapsed(line)) return true;
-        List<GutterMark> renderers = myLineToGutterRenderers.get(line);
+    for (int line = firstVisibleLine; line <= lastVisibleLine; line++) {
+      List<GutterMark> renderers = myLineToGutterRenderers.get(line);
+      if (renderers != null) {
         paintIconRow(line, renderers, g);
-        return true;
       }
-    });
-  }
-
-  private boolean isLineCollapsed(final int line) {
-    int startOffset = myEditor.getDocument().getLineStartOffset(line);
-    final FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
-    return region != null && region.getEndOffset() >= myEditor.getDocument().getLineEndOffset(line);
+    }
   }
 
   private void paintIconRow(int line, List<GutterMark> row, final Graphics g) {

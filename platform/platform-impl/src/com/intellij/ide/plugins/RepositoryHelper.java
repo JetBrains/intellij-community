@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
-    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().SECURE_CONNECTION;
+    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
     return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
 

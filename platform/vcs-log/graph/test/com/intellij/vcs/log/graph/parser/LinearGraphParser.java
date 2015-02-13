@@ -137,12 +137,12 @@ public class LinearGraphParser {
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       List<GraphEdge> result = ContainerUtil.newArrayList();
 
-      for(GraphEdge upEdge : myUpEdges.get(nodeIndex)) {
+      for (GraphEdge upEdge : myUpEdges.get(nodeIndex)) {
         if (upEdge.getType().isNormalEdge() && filter.upNormal) result.add(upEdge);
         if (!upEdge.getType().isNormalEdge() && filter.special) result.add(upEdge);
       }
 
-      for(GraphEdge downEdge : myDownEdges.get(nodeIndex)) {
+      for (GraphEdge downEdge : myDownEdges.get(nodeIndex)) {
         if (downEdge.getType().isNormalEdge() && filter.downNormal) result.add(downEdge);
         if (!downEdge.getType().isNormalEdge() && filter.special) result.add(downEdge);
       }
@@ -158,15 +158,14 @@ public class LinearGraphParser {
 
     @Override
     public int getNodeId(int nodeIndex) {
-      assert nodeIndex > 0 && nodeIndex < nodesCount() : "Bad nodeIndex: "+ nodeIndex;
+      assert nodeIndex > 0 && nodeIndex < nodesCount() : "Bad nodeIndex: " + nodeIndex;
       return nodeIndex;
     }
 
     @Override
     @Nullable
     public Integer getNodeIndex(int nodeId) {
-      if (nodeId >= 0 && nodeId < nodesCount())
-        return nodeId;
+      if (nodeId >= 0 && nodeId < nodesCount()) return nodeId;
       return null;
     }
   }

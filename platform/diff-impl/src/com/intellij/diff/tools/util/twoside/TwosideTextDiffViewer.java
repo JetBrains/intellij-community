@@ -30,6 +30,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +44,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,9 +87,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   public TwosideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContent1 = contents[0] instanceof DocumentContent ? ((DocumentContent)contents[0]) : null;
-    myActualContent2 = contents[1] instanceof DocumentContent ? ((DocumentContent)contents[1]) : null;
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContent1 = contents.get(0) instanceof DocumentContent ? ((DocumentContent)contents.get(0)) : null;
+    myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
     assert myActualContent1 != null || myActualContent2 != null;
 
 
@@ -353,13 +353,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 2) return false;
 
-    if (!canShowContent(contents[0])) return false;
-    if (!canShowContent(contents[1])) return false;
+    if (!canShowContent(contents.get(0))) return false;
+    if (!canShowContent(contents.get(1))) return false;
 
-    if (contents[0] instanceof EmptyContent && contents[1] instanceof EmptyContent) return false;
+    if (contents.get(0) instanceof EmptyContent && contents.get(1) instanceof EmptyContent) return false;
 
     return true;
   }
@@ -412,7 +412,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     int editorHeight = myEditor1.getComponent().getHeight();
     int dividerOffset = divider.getLocationOnScreen().y;
     int editorOffset = myEditor1.getComponent().getLocationOnScreen().y;
-    return  (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
+    return (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
   }
 
   private class MyEditorFocusListener extends FocusAdapter {
@@ -445,31 +445,28 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     protected boolean myShouldScroll = true;
 
     @Nullable private ScrollToPolicy myScrollToChange;
-    @Nullable private EditorsPosition myEditorsPosition;
+    @Nullable private EditorsVisiblePositions myEditorsPosition;
     @Nullable private LogicalPosition[] myCaretPosition;
     @Nullable private Pair<Side, Integer> myScrollToLine;
     @Nullable private DiffNavigationContext myNavigationContext;
 
     public void processContext() {
       myScrollToChange = myRequest.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE);
-      myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
+      myEditorsPosition = myRequest.getUserData(EditorsVisiblePositions.KEY);
       myCaretPosition = myRequest.getUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION);
       myScrollToLine = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_LINE);
       myNavigationContext = myRequest.getUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT);
     }
 
     public void updateContext() {
-      LogicalPosition[] carets = new LogicalPosition[2];
-      carets[0] = getPosition(myEditor1);
-      carets[1] = getPosition(myEditor2);
+      List<EditorEx> allEditors = ContainerUtil.list(myEditor1, myEditor2); // we want all editors, not only NotNull ones
+      LogicalPosition[] carets = DiffUtil.getCaretPositions(allEditors);
+      Point[] points = DiffUtil.getScrollingPositions(allEditors);
 
-      Point point1 = DiffUtil.getScrollingPoint(myEditor1);
-      Point point2 = DiffUtil.getScrollingPoint(myEditor2);
-
-      EditorsPosition editorsPosition = new EditorsPosition(carets, point1, point2);
+      EditorsVisiblePositions editorsPosition = new EditorsVisiblePositions(carets, points);
 
       myRequest.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, null);
-      myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
+      myRequest.putUserData(EditorsVisiblePositions.KEY, editorsPosition);
       myRequest.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, carets);
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, null);
       myRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, null);
@@ -515,8 +512,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
         try {
           disableSyncScrollSupport(true);
 
-          DiffUtil.scrollToPoint(myEditor1, myEditorsPosition.myPoint1);
-          DiffUtil.scrollToPoint(myEditor2, myEditorsPosition.myPoint2);
+          DiffUtil.scrollToPoint(myEditor1, myEditorsPosition.myPoints[0]);
+          DiffUtil.scrollToPoint(myEditor2, myEditorsPosition.myPoints[1]);
         }
         finally {
           disableSyncScrollSupport(false);
@@ -536,34 +533,6 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
       myCurrentSide = side;
       DiffUtil.scrollEditor(getCurrentEditor(), line);
-      return true;
-    }
-
-    @NotNull
-    private LogicalPosition getPosition(@Nullable Editor editor) {
-      return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
-    }
-  }
-
-  private static class EditorsPosition {
-    public static final Key<EditorsPosition> KEY = Key.create("Diff.EditorsPosition");
-
-    @NotNull public final LogicalPosition[] myCaretPosition;
-    @NotNull public final Point myPoint1;
-    @NotNull public final Point myPoint2;
-
-    public EditorsPosition(@NotNull LogicalPosition[] caretPosition, @NotNull Point point1, @NotNull Point point2) {
-      myCaretPosition = caretPosition;
-      myPoint1 = point1;
-      myPoint2 = point2;
-    }
-
-    public boolean isSame(@Nullable LogicalPosition[] caretPosition) {
-      // TODO: allow small fluctuations ?
-      if (caretPosition == null) return true;
-      if (caretPosition.length != 2) return false;
-      if (!caretPosition[0].equals(myCaretPosition[0])) return false;
-      if (!caretPosition[1].equals(myCaretPosition[1])) return false;
       return true;
     }
   }

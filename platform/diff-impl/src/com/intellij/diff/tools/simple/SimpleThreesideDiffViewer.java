@@ -30,7 +30,6 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.FoldingModelSupport.SimpleThreesideFoldingModel;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
@@ -38,6 +37,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,8 +49,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.CalledInAwt;
@@ -61,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 // TODO: extract common methods with Twoside
@@ -76,7 +79,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
 
-  @NotNull private final SimpleThreesideFoldingModel myFoldingModel;
+  @NotNull private final MyFoldingModel myFoldingModel;
 
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -85,7 +88,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new SimpleThreesideFoldingModel(myEditors.toArray(new EditorEx[3]), this);
+    myFoldingModel = new MyFoldingModel(myEditors.toArray(new EditorEx[3]), this);
   }
 
   @Override
@@ -159,15 +162,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     try {
       indicator.checkCanceled();
 
-      DiffContent[] rawContents = myRequest.getContents();
-      final DocumentContent[] contents = new DocumentContent[3];
+      List<DiffContent> contents = myRequest.getContents();
       final Document[] documents = new Document[3];
-      contents[0] = (DocumentContent)rawContents[0];
-      contents[1] = (DocumentContent)rawContents[1];
-      contents[2] = (DocumentContent)rawContents[2];
-      documents[0] = contents[0].getDocument();
-      documents[1] = contents[1].getDocument();
-      documents[2] = contents[2].getDocument();
+      documents[0] = ((DocumentContent)contents.get(0)).getDocument();
+      documents[1] = ((DocumentContent)contents.get(1)).getDocument();
+      documents[2] = ((DocumentContent)contents.get(2)).getDocument();
 
       DocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
         @Override
@@ -213,23 +212,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         }
       };
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
       return new Runnable() {
         @Override
         public void run() {
           clearDiffPresentation();
           myPanel.addDiffErrorNotification();
-        }
-      };
-    }
-    catch (final Error e) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
-          throw e;
         }
       };
     }
@@ -556,7 +545,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         if (!helper.process(diffChange.getStartLine(left), diffChange.getStartLine(right))) return;
         if (!helper.process(diffChange.getEndLine(left), diffChange.getEndLine(right))) return;
       }
-      helper.process(left.selectNotNull(myEditors).getDocument().getLineCount(), right.selectNotNull(myEditors).getDocument().getLineCount());
+      helper
+        .process(left.selectNotNull(myEditors).getDocument().getLineCount(), right.selectNotNull(myEditors).getDocument().getLineCount());
     }
   }
 
@@ -650,6 +640,41 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     @NotNull
     public CharSequence[] getSequences() {
       return mySequences;
+    }
+  }
+
+  private static class MyFoldingModel extends FoldingModelSupport {
+    private final MyPaintable myPaintable1 = new MyPaintable(0, 1);
+    private final MyPaintable myPaintable2 = new MyPaintable(1, 2);
+
+    public MyFoldingModel(@NotNull EditorEx[] editors, @NotNull Disposable disposable) {
+      super(editors, disposable);
+      assert editors.length == 3;
+    }
+
+    public void install(@Nullable List<MergeLineFragment> fragments, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+      Iterator<int[]> it = map(fragments, new Function<MergeLineFragment, int[]>() {
+        @Override
+        public int[] fun(MergeLineFragment fragment) {
+          return new int[]{
+            fragment.getStartLine(ThreeSide.LEFT),
+            fragment.getEndLine(ThreeSide.LEFT),
+            fragment.getStartLine(ThreeSide.BASE),
+            fragment.getEndLine(ThreeSide.BASE),
+            fragment.getStartLine(ThreeSide.RIGHT),
+            fragment.getEndLine(ThreeSide.RIGHT)};
+        }
+      });
+      install(it, context, defaultExpanded, range);
+    }
+
+    public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {
+      MyPaintable paintable = side.selectNotNull(myPaintable1, myPaintable2);
+      paintable.paintOnDivider(gg, divider);
+    }
+
+    public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
+      myPaintable2.paintOnScrollbar(gg, width);
     }
   }
 }

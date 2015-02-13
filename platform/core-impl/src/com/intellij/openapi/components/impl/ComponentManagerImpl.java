@@ -357,7 +357,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private static class HeadlessHolder {
     private static final boolean myHeadless = ApplicationManager.getApplication().isHeadlessEnvironment();
   }
-  private boolean isHeadless() {
+  private static boolean isHeadless() {
     return HeadlessHolder.myHeadless;
   }
 

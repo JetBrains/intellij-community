@@ -32,7 +32,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CodeSmellDetector;
@@ -109,8 +108,6 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   @Override
   public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    final FileDocumentManager fileManager = FileDocumentManager.getInstance();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
 
@@ -126,19 +123,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
             progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
             progress.setFraction((double)i / (double)filesToCheck.size());
 
-            final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-              @Override
-              public PsiFile compute() {
-                return manager.findFile(file);
-              }
-            });
-            if (psiFile != null) {
-              final Document document = fileManager.getDocument(file);
-              if (document != null) {
-                final List<CodeSmellInfo> codeSmells = findCodeSmells(psiFile, progress, document);
-                result.addAll(codeSmells);
-              }
-            }
+            result.addAll(findCodeSmells(file, progress));
           }
         }
         catch (ProcessCanceledException e) {
@@ -158,7 +143,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   @NotNull
-  private List<CodeSmellInfo> findCodeSmells(@NotNull final PsiFile psiFile, @NotNull final ProgressIndicator progress, @NotNull final Document document) {
+  private List<CodeSmellInfo> findCodeSmells(@NotNull final VirtualFile file, @NotNull final ProgressIndicator progress) {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
@@ -173,13 +158,19 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     ProgressManager.getInstance().runProcess(new Runnable() {
       @Override
       public void run() {
-        List<HighlightInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
-          public List<HighlightInfo> compute() {
-            return codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
+          public void run() {
+            final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+            if (psiFile != null) {
+              final Document document = FileDocumentManager.getInstance().getDocument(file);
+              if (document != null) {
+                List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
+                collectErrorsAndWarnings(infos, result, document);
+              }
+            }
           }
         });
-        collectErrorsAndWarnings(infos, result, document);
       }
     }, daemonIndicator);
 

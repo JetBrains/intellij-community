@@ -152,18 +152,7 @@ public class JavaCompletionUtil {
       return type;
     }
 
-    T result = (T)type.accept(new PsiTypeVisitor<PsiType>() {
-
-      @Override
-      public PsiType visitArrayType(final PsiArrayType arrayType) {
-        return new PsiArrayType(originalize(arrayType.getComponentType()));
-      }
-
-      @Override
-      public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType capturedWildcardType) {
-        return PsiCapturedWildcardType.create(originalize(capturedWildcardType.getWildcard()), capturedWildcardType.getContext());
-      }
-
+    T result = new PsiTypeMapper() {
       @Override
       public PsiType visitClassType(final PsiClassType classType) {
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
@@ -176,29 +165,7 @@ public class JavaCompletionUtil {
         return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalize(substitutor));
       }
 
-      @Override
-      public PsiType visitEllipsisType(final PsiEllipsisType ellipsisType) {
-        return new PsiEllipsisType(originalize(ellipsisType.getComponentType()));
-      }
-
-      @Override
-      public PsiType visitPrimitiveType(final PsiPrimitiveType primitiveType) {
-        return primitiveType;
-      }
-
-      @Override
-      public PsiType visitType(final PsiType type) {
-        return type;
-      }
-
-      @Override
-      public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
-        final PsiType bound = wildcardType.getBound();
-        final PsiManager manager = wildcardType.getManager();
-        if (bound == null) return PsiWildcardType.createUnbounded(manager);
-        return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, bound) : PsiWildcardType.createSuper(manager, bound);
-      }
-    });
+    }.mapType(type);
     if (result == null) {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
     }

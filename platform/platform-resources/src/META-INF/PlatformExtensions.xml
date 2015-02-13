@@ -358,7 +358,7 @@
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
     <localInspection shortName="InconsistentLineSeparators" bundle="messages.InspectionsBundle" key="inconsistent.line.separators"
-                     groupKey="group.names.portability.issues" enabledByDefault="false" level="WARNING"
+                     groupName="General" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeStyle.InconsistentLineSeparatorsInspection"/>
     <search.topHitProvider implementation="com.intellij.platform.DefaultPlatformTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.UISimpleSettingsProvider"/>

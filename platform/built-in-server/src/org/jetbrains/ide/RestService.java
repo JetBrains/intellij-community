@@ -62,7 +62,7 @@ public abstract class RestService extends HttpRequestHandler {
     @NotNull
     @Override
     protected Gson compute() {
-      return new GsonBuilder().setPrettyPrinting().create();
+      return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     }
   };
 

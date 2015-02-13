@@ -16,12 +16,12 @@
 
 package com.intellij.codeInsight;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -29,12 +29,10 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.Consumer;
 
-import java.util.Calendar;
-
 public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   private CodeInsightTestFixture myFixture;
-  private Module myJava6Module;
+  private Module myJava3Module;
   private Module myJava7Module;
   private Module myJava8Module;
 
@@ -48,7 +46,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     super.tearDown();
     myFixture.tearDown();
     myFixture = null;
-    myJava6Module = null;
+    myJava3Module = null;
     myJava7Module = null;
     myJava8Module = null;
   }
@@ -61,18 +59,19 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/multipleJdks");
     final JavaModuleFixtureBuilder[] builders = new JavaModuleFixtureBuilder[3];
     builders[0] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    builders[0].setLanguageLevel(LanguageLevel.JDK_1_3);
     builders[1] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builders[2] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     myFixture.setUp();
-    myJava6Module = builders[0].getFixture().getModule();
+    myJava3Module = builders[0].getFixture().getModule();
     myJava7Module = builders[1].getFixture().getModule();
     myJava8Module = builders[2].getFixture().getModule();
-    ModuleRootModificationUtil.updateModel(myJava6Module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(myJava3Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.addModuleOrderEntry(myJava7Module);
         model.setSdk(IdeaTestUtil.getMockJdk17());
-        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java6";
+        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java3";
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
     });
@@ -152,6 +151,12 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest3Modules();
   }
 
+  public void testLanguageLevelInReturnTypeCheck() throws Exception {
+    final String name = getTestName(false);
+    myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
@@ -160,7 +165,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   private void doTest3Modules() {
     final String name = getTestName(false);
-    myFixture.configureByFiles("java6/p/" + name + ".java", "java7/p/" + name + ".java", "java8/p/" + name + ".java");
+    myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java", "java8/p/" + name + ".java");
     myFixture.checkHighlighting();
   }
 

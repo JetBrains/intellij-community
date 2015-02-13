@@ -36,6 +36,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -495,6 +496,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         }
       }
     }
+  }
+
+  @TestOnly
+  public static boolean isCanceledThread(@NotNull Thread thread) {
+    return threadsUnderCanceledIndicator.contains(thread);
   }
 
   @NotNull
