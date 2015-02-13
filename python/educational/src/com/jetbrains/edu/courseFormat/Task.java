@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.StudyNames;
-import com.jetbrains.edu.courseFormat.info.LessonInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,14 +79,9 @@ public class Task implements StudyStateful {
     return StudyStatus.Solved;
   }
 
-  public void setStatus(@NotNull final StudyStatus status, @NotNull final StudyStatus oldStatus) {
-    LessonInfo lessonInfo = myLesson.getLessonInfo();
-    if (status != oldStatus) {
-      lessonInfo.update(oldStatus, -1);
-      lessonInfo.update(status, +1);
-    }
+  public void setStatus(@NotNull final StudyStatus status) {
     for (TaskFile taskFile : taskFiles.values()) {
-      taskFile.setStatus(status, oldStatus);
+      taskFile.setStatus(status);
     }
   }
 

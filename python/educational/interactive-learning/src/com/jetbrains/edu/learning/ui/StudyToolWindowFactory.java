@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.StudyStatus;
-import com.jetbrains.edu.courseFormat.info.LessonInfo;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,9 +50,8 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
         if (lesson.getStatus() == StudyStatus.Solved) {
           lessonsCompleted++;
         }
-        LessonInfo lessonInfo = lesson.getLessonInfo();
-        taskNum += lessonInfo.getTaskNum();
-        taskSolved += lessonInfo.getTaskSolved();
+        taskNum += lesson.getTaskList().size();
+        taskSolved += getTaskSolved(lesson);
       }
       String completedLessons = String.format("%d of %d lessons completed", lessonsCompleted, course.getLessons().size());
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
@@ -70,6 +69,16 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       Content content = contentFactory.createContent(contentPanel, "", true);
       toolWindow.getContentManager().addContent(content);
     }
+  }
+
+  private static int getTaskSolved(@NotNull final Lesson lesson) {
+    int solved = 0;
+    for (Task task : lesson.getTaskList()) {
+      if (task.getStatus() == StudyStatus.Solved) {
+        solved += 1;
+      }
+    }
+    return solved;
   }
 
   private static void addStatistics(String statistics, JPanel contentPanel) {

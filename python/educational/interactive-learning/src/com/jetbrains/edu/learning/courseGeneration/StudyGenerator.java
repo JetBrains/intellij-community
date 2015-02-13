@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.StudyNames;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.courseFormat.info.LessonInfo;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,10 +135,7 @@ public class StudyGenerator {
 
   public static void initLesson(@NotNull final Lesson lesson, final Course course, boolean isRestarted) {
     lesson.setCourse(course);
-    final LessonInfo info = lesson.getLessonInfo();
     final List<Task> taskList = lesson.getTaskList();
-    info.setTaskNum(taskList.size());
-    info.setTaskUnchecked(taskList.size());
     for (Task task : taskList) {
       initTask(task, lesson, isRestarted);
     }

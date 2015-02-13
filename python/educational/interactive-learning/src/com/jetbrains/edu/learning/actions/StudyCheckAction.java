@@ -205,7 +205,7 @@ public class StudyCheckAction extends DumbAwareAction {
       @Override
       public void onCancel() {
         StudyStatus currentStatus = task.getStatus();
-        task.setStatus(statusBeforeCheck, currentStatus);
+        task.setStatus(statusBeforeCheck);
         deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
       }
@@ -226,7 +226,7 @@ public class StudyCheckAction extends DumbAwareAction {
         }
         final String failedMessage = testRunner.getTestsOutput(output);
         if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
-          task.setStatus(StudyStatus.Solved, statusBeforeCheck);
+          task.setStatus(StudyStatus.Solved);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -239,12 +239,12 @@ public class StudyCheckAction extends DumbAwareAction {
             @Override
             public void run() {
               if (taskDir == null) return;
-              task.setStatus(StudyStatus.Failed, statusBeforeCheck);
+              task.setStatus(StudyStatus.Failed);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
                 final TaskFile taskFile = entry.getValue();
                 if (taskFile.getAnswerPlaceholders().size() < 2) {
-                  taskFile.setStatus(StudyStatus.Failed, StudyStatus.Unchecked);
+                  taskFile.setStatus(StudyStatus.Failed);
                   continue;
                 }
                 CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {

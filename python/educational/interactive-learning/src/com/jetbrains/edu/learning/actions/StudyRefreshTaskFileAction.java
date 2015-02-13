@@ -21,8 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.StudyNames;
-import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.courseFormat.info.LessonInfo;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -86,10 +88,9 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     if (!resetDocument(project, document, taskFile, name)) {
       return false;
     }
-    updateLessonInfo(taskFile.getTask());
-    StudyUtils.updateStudyToolWindow(project);
     resetTaskWindows(taskFile);
     ProjectView.getInstance(project).refresh();
+    StudyUtils.updateStudyToolWindow(project);
     return true;
   }
 
@@ -109,12 +110,6 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
   }
 
-  private static void updateLessonInfo(Task currentTask) {
-    StudyStatus oldStatus = currentTask.getStatus();
-    LessonInfo lessonInfo = currentTask.getLesson().getLessonInfo();
-    lessonInfo.update(oldStatus, -1);
-    lessonInfo.update(StudyStatus.Unchecked, +1);
-  }
 
   private static boolean resetDocument(@NotNull final Project project,
                                        @NotNull final Document document,

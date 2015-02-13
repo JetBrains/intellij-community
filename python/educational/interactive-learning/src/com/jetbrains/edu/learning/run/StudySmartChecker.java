@@ -66,7 +66,7 @@ public class StudySmartChecker {
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
         final ProcessOutput output = handler.runProcess();
         boolean res = testRunner.getTestsOutput(output).equals(StudyTestRunner.TEST_OK);
-        userAnswerPlaceholder.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed, StudyStatus.Unchecked);
+        userAnswerPlaceholder.setStatus(res ? StudyStatus.Solved : StudyStatus.Failed);
         StudyUtils.deleteFile(windowCopy);
         if (fileWindows != null) {
           StudyUtils.deleteFile(fileWindows);

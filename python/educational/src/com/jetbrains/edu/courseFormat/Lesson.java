@@ -2,7 +2,6 @@ package com.jetbrains.edu.courseFormat;
 
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.courseFormat.info.LessonInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +23,6 @@ public class Lesson implements StudyStateful {
   @Transient
   private Course myCourse = null;
   private int myIndex = -1;
-  private LessonInfo myLessonInfo = new LessonInfo();
-
 
   public String getName() {
     return name;
@@ -43,10 +40,6 @@ public class Lesson implements StudyStateful {
     myIndex = index;
   }
 
-  public LessonInfo getLessonInfo() {
-    return myLessonInfo;
-  }
-
   @Transient
   public StudyStatus getStatus() {
     for (Task task : taskList) {
@@ -59,9 +52,9 @@ public class Lesson implements StudyStateful {
   }
 
   @Override
-  public void setStatus(StudyStatus status, StudyStatus oldStatus) {
+  public void setStatus(StudyStatus status) {
     for (Task task : taskList) {
-      task.setStatus(status, oldStatus);
+      task.setStatus(status);
     }
   }
 

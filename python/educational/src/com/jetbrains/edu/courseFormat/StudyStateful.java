@@ -2,5 +2,5 @@ package com.jetbrains.edu.courseFormat;
 
 public interface StudyStateful {
   StudyStatus getStatus();
-  void setStatus(StudyStatus status, StudyStatus oldStatus);
+  void setStatus(StudyStatus status);
 }

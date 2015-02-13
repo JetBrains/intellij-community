@@ -47,9 +47,9 @@ public class TaskFile implements StudyStateful {
     return StudyStatus.Solved;
   }
 
-  public void setStatus(@NotNull final StudyStatus status, @NotNull final StudyStatus oldStatus) {
+  public void setStatus(@NotNull final StudyStatus status) {
     for (AnswerPlaceholder answerPlaceholder : myAnswerPlaceholders) {
-      answerPlaceholder.setStatus(status, oldStatus);
+      answerPlaceholder.setStatus(status);
     }
   }
 

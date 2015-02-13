@@ -16,6 +16,7 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
   @Expose private int line = 0;
   @Expose private int start = 0;
   @Expose private String hint = "";
+
   @SerializedName("possible_answer")
   @Expose private String possibleAnswer = "";
   @Expose private int length = 0;
@@ -24,14 +25,13 @@ public class AnswerPlaceholder implements Comparable, StudyStateful {
   private String myTaskText;
   private MyInitialState myInitialState;
 
-
   @Transient private TaskFile myTaskFile;
 
   public StudyStatus getStatus() {
     return myStatus;
   }
 
-  public void setStatus(StudyStatus status, StudyStatus oldStatus) {
+  public void setStatus(StudyStatus status) {
     myStatus = status;
   }
 
