@@ -45,7 +45,7 @@ public class LambdaHighlightingUtil {
     if (signatures.size() == 1) {
       return null;
     }
-    return "Multiple non-overriding abstract methods found";
+    return "Multiple non-overriding abstract methods found in interface " + HighlightUtil.formatClass(psiClass);
   }
 
   @Nullable
