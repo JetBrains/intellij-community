@@ -212,7 +212,8 @@ public class FileUtilRt {
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator, final boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
-    if (basePath.equals(ensureEnds(filePath, separator))) return ".";
+    if (caseSensitive? basePath.equals(ensureEnds(filePath, separator)) : basePath.equalsIgnoreCase(ensureEnds(filePath, separator))) return ".";
+
     int len = 0;
     int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abc/base" and file="/temp/ab"
     final CharComparingStrategy charComparingStrategy = caseSensitive? CharComparingStrategy.IDENTITY : CharComparingStrategy.CASE_INSENSITIVE;
