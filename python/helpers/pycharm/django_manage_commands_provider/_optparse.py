@@ -5,7 +5,6 @@ This module encapsulates Django semi-public API knowledge, and not very stable b
 """
 from optparse import Option
 import django
-from django.apps import registry
 from django.conf import settings
 from django.core.management import ManagementUtility, get_commands, BaseCommand
 
