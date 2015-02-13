@@ -1,10 +1,11 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.learning.editor;
 
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyHighlightErrorFilter extends HighlightErrorFilter{
@@ -18,7 +19,7 @@ public class StudyHighlightErrorFilter extends HighlightErrorFilter{
     if (virtualFile == null) {
       return true;
     }
-    TaskFile taskFile = StudyTaskManager.getInstance(element.getProject()).getTaskFile(virtualFile);
+    TaskFile taskFile = StudyUtils.getTaskFile(element.getProject(), virtualFile);
     return taskFile == null || taskFile.isHighlightErrors();
   }
 }

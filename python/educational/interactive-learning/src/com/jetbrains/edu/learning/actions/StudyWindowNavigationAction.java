@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
@@ -29,8 +28,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
         final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
         final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
         if (openedFile != null) {
-          final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-          final TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+          final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
           if (selectedTaskFile != null) {
             final AnswerPlaceholder selectedAnswerPlaceholder = selectedTaskFile.getSelectedAnswerPlaceholder();
             if (selectedAnswerPlaceholder == null) {

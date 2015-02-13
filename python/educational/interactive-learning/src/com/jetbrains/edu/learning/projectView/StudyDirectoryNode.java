@@ -53,7 +53,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       TaskFile file = null;
       for (PsiElement child : myValue.getChildren()) {
         VirtualFile virtualFile = child.getContainingFile().getVirtualFile();
-        file = studyTaskManager.getTaskFile(virtualFile);
+        file = StudyUtils.getTaskFile(myProject, virtualFile);
         if (file != null) {
           break;
         }
@@ -132,7 +132,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
         VirtualFile childFile = child.getContainingFile().getVirtualFile();
-        taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(childFile);
+        taskFile = StudyUtils.getTaskFile(myProject, childFile);
         if (taskFile != null) {
           virtualFile = childFile;
           break;

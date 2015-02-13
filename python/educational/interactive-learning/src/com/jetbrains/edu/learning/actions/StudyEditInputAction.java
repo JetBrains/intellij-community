@@ -52,7 +52,7 @@ public class StudyEditInputAction extends DumbAwareAction {
       final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
       StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
       assert openedFile != null;
-      TaskFile taskFile = studyTaskManager.getTaskFile(openedFile);
+      TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
       assert taskFile != null;
       final Task currentTask = taskFile.getTask();
       tabbedPane = new JBEditorTabs(project, ActionManager.getInstance(), IdeFocusManager.findInstance(), project);

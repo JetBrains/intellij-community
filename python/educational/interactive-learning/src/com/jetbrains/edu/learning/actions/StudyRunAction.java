@@ -45,7 +45,7 @@ public class StudyRunAction extends DumbAwareAction {
     GeneralCommandLine cmd = new GeneralCommandLine();
     cmd.withWorkDirectory(openedFile.getParent().getCanonicalPath());
 
-    TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+    TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
     assert selectedTaskFile != null;
     final Task currentTask = selectedTaskFile.getTask();
     final Sdk sdk = StudyUtils.findSdk(currentTask, project);

@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-public class StudyPainter {
-  private StudyPainter() {
+public class StudyAnswerPlaceholderPainter {
+  private StudyAnswerPlaceholderPainter() {
 
   }
 

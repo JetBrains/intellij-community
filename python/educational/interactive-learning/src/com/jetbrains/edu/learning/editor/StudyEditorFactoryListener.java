@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.learning.editor;
 
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,14 +15,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.StudyDocumentListener;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 
-class StudyEditorFactoryListener implements EditorFactoryListener {
+public class StudyEditorFactoryListener implements EditorFactoryListener {
 
   /**
    * draws selected task window if there is one located in mouse position
@@ -42,10 +44,10 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       final AnswerPlaceholder answerPlaceholder = myTaskFile.getAnswerPlaceholder(editor.getDocument(), pos);
       if (answerPlaceholder != null) {
         myTaskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
-        StudyPainter.drawAnswerPlaceholder(editor, answerPlaceholder);
+        StudyAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder);
       }
       else {
-        StudyPainter.drawAllWindows(editor, myTaskFile);
+        StudyAnswerPlaceholderPainter.drawAllWindows(editor, myTaskFile);
       }
     }
   }
@@ -68,14 +70,13 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
               final Document document = editor.getDocument();
               final VirtualFile openedFile = FileDocumentManager.getInstance().getFile(document);
               if (openedFile != null) {
-                final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-                final TaskFile taskFile = taskManager.getTaskFile(openedFile);
+                final TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
                 if (taskFile != null) {
                   StudyNavigator.navigateToFirstTaskWindow(editor, taskFile);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   StudyEditor.addDocumentListener(document, new StudyDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
-                  StudyPainter.drawAllWindows(editor, taskFile);
+                  StudyAnswerPlaceholderPainter.drawAllWindows(editor, taskFile);
                 }
               }
             }

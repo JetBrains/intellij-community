@@ -34,6 +34,7 @@ import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
+import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.ui.StudyCondition;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jdom.Element;
@@ -316,37 +317,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   public static StudyTaskManager getInstance(@NotNull final Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
     return ModuleServiceManager.getService(module, StudyTaskManager.class);
-  }
-
-  @Nullable
-  public TaskFile getTaskFile(@NotNull final VirtualFile file) {
-    if (myCourse == null) {
-      return null;
-    }
-    final VirtualFile taskDir = file.getParent();
-    if (taskDir == null) {
-      return null;
-    }
-    final String taskDirName = taskDir.getName();
-    if (taskDirName.contains(StudyNames.TASK_DIR)) {
-      final VirtualFile lessonDir = taskDir.getParent();
-      if (lessonDir != null) {
-        int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
-        List<Lesson> lessons = myCourse.getLessons();
-        if (!StudyUtils.indexIsValid(lessonIndex, lessons)) {
-          return null;
-        }
-        final Lesson lesson = lessons.get(lessonIndex);
-        int taskIndex = StudyUtils.getIndex(taskDirName, StudyNames.TASK_DIR);
-        final List<Task> tasks = lesson.getTaskList();
-        if (!StudyUtils.indexIsValid(taskIndex, tasks)) {
-          return null;
-        }
-        final Task task = tasks.get(taskIndex);
-        return task.getFile(file.getName());
-      }
-    }
-    return null;
   }
 
   private class FileCreatedByUserListener extends VirtualFileAdapter {

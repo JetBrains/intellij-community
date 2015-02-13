@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.StudyNames;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
             if (virtualFile == null) {
               return nodes;
             }
-            final TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(virtualFile);
+            final TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
             if (taskFile != null) {
               nodes.add(node);
             }

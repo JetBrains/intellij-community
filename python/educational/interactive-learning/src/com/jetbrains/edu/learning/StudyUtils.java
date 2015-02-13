@@ -30,11 +30,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.StudyNames;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.run.StudyExecutor;
+import com.jetbrains.edu.learning.run.StudyTestRunner;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.util.Collection;
+import java.util.List;
 
 public class StudyUtils {
   private StudyUtils() {
@@ -286,5 +286,37 @@ public class StudyUtils {
   public static StudyLanguageManager getLanguageManager(@NotNull final Course course) {
     Language language = course.getLanguageById();
     return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
+  }
+
+  @Nullable
+  public static TaskFile getTaskFile(@NotNull final Project project, @NotNull final VirtualFile file) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return null;
+    }
+    final VirtualFile taskDir = file.getParent();
+    if (taskDir == null) {
+      return null;
+    }
+    final String taskDirName = taskDir.getName();
+    if (taskDirName.contains(StudyNames.TASK_DIR)) {
+      final VirtualFile lessonDir = taskDir.getParent();
+      if (lessonDir != null) {
+        int lessonIndex = getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
+        List<Lesson> lessons = course.getLessons();
+        if (!indexIsValid(lessonIndex, lessons)) {
+          return null;
+        }
+        final Lesson lesson = lessons.get(lessonIndex);
+        int taskIndex = getIndex(taskDirName, StudyNames.TASK_DIR);
+        final List<Task> tasks = lesson.getTaskList();
+        if (!indexIsValid(taskIndex, tasks)) {
+          return null;
+        }
+        final Task task = tasks.get(taskIndex);
+        return task.getFile(file.getName());
+      }
+    }
+    return null;
   }
 }

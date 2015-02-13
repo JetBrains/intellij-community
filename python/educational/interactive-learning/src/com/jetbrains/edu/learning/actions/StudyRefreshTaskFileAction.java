@@ -23,7 +23,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.StudyNames;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.courseFormat.info.LessonInfo;
-import com.jetbrains.edu.learning.StudyPainter;
+import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -66,8 +66,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
-    StudyPainter.drawAllWindows(editor, taskFile);
-    StudyPainter.createGuardedBlocks(editor, taskFile);
+    StudyAnswerPlaceholderPainter.drawAllWindows(editor, taskFile);
+    StudyAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

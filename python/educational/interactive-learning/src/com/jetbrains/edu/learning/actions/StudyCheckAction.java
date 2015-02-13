@@ -34,9 +34,14 @@ import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.StudyDocumentListener;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import com.jetbrains.edu.learning.run.StudySmartChecker;
+import com.jetbrains.edu.learning.run.StudyTestRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +101,7 @@ public class StudyCheckAction extends DumbAwareAction {
       FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       if (fileEditor instanceof StudyEditor) {
         StudyEditor studyEditor = (StudyEditor)fileEditor;
-        StudyPainter.drawAllWindows(studyEditor.getEditor(), taskFile);
+        StudyAnswerPlaceholderPainter.drawAllWindows(studyEditor.getEditor(), taskFile);
       }
     }
   }

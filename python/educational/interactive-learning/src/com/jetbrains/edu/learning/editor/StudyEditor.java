@@ -36,7 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyDocumentListener;
-import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +110,7 @@ public class StudyEditor implements TextEditor {
     myComponent = myDefaultEditor.getComponent();
     final JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    myTaskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
+    myTaskFile = StudyUtils.getTaskFile(project, file);
     if (myTaskFile != null) {
       final Task currentTask = myTaskFile.getTask();
       final String taskText = currentTask.getText();
