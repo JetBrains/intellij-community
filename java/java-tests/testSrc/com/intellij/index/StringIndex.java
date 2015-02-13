@@ -51,6 +51,10 @@ public class StringIndex {
     myIndex.update(Math.abs(path.hashCode()), toInput(path, content)).compute();
   }
 
+  public void flush() throws StorageException {
+    myIndex.flush();
+  }
+
   public void dispose() {
     myIndex.dispose();
   }

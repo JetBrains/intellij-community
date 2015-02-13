@@ -59,20 +59,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdate() throws StorageException, IOException {
-    final File storageFile = FileUtil.createTempFile("indextest", "storage");
-    final File metaIndexFile = FileUtil.createTempFile("indextest_inputs", "storage");
-    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, new EnumeratorStringDescriptor(), new EnumeratorStringDescriptor(), 16 * 1024);
-    final StringIndex index = new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<String>> create() {
-        try {
-          return createMetaIndex(metaIndexFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    StringIndex index = createIndex(new EnumeratorStringDescriptor())
 
     try {
 // build index
@@ -119,6 +106,44 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  public void testUpdateWithCustomEqualityPolicy() {
+    def index = createIndex(new CaseInsensitiveEnumeratorStringDescriptor())
+    try {
+      index.update("a.java", "x", null)
+      assertDataEquals(index.getFilesByWord("x"), "a.java")
+      index.flush() //todo: this should not be required but the following line will fail without it
+      assertDataEquals(index.getFilesByWord("X"), "a.java")
+
+      index.update("b.java", "y", null)
+      assertDataEquals(index.getFilesByWord("y"), "b.java")
+      index.update("c.java", "Y", null)
+      index.flush() //todo: this should not be required but the following line will fail without it
+      assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
+    }
+    finally {
+      index.dispose()
+    }
+  }
+
+  private static StringIndex createIndex(EnumeratorStringDescriptor keyDescriptor) {
+    final File storageFile = FileUtil.createTempFile("indextest", "storage");
+    final File metaIndexFile = FileUtil.createTempFile("indextest_inputs", "storage");
+    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024);
+    final StringIndex index = new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
+      @Override
+      public PersistentHashMap<Integer, Collection<String>> create() {
+        try {
+          return createMetaIndex(metaIndexFile);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+    });
+    index
+  }
+  
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
@@ -142,7 +167,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
-    assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
+    assertSameElements(actual, expected);
   }
 
   public void testCollectedPsiWithChangedDocument() throws IOException {
