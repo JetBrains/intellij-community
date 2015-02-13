@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
@@ -86,9 +85,9 @@ public class TaskUiUtil {
    * indeed a rather common task.
    */
   public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
-    protected final ComboBox myComboBox;
+    protected final JComboBox myComboBox;
 
-    public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull ComboBox comboBox) {
+    public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull JComboBox comboBox) {
       super(project, title, ModalityState.any());
       myComboBox = comboBox;
     }
