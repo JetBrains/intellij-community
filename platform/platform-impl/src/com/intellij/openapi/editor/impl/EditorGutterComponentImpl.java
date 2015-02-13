@@ -380,6 +380,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
+    if (!myEditor.getSettings().isCaretRowShown()) return;
     final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
     Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     if (caretRowColor != null) {

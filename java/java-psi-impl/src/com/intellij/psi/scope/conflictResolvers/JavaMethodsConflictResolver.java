@@ -602,7 +602,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                  @NotNull PsiMethod method2) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && method1.getTypeParameters().length > 0 && myArgumentsList instanceof PsiExpressionList) {
       final PsiElement parent = myArgumentsList.getParent();
-      if (parent instanceof PsiCallExpression && ((PsiCallExpression)parent).getTypeArguments().length == 0) {
+      if (parent instanceof PsiCallExpression) {
         return InferenceSession.isMoreSpecific(method2, method1, ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }

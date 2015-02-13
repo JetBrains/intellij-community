@@ -421,6 +421,13 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
+    if (NIO_FILE_API_AVAILABLE) {
+      return deleteRecursivelyNIO(file);
+    }
+    return deleteRecursively(file);
+  }
+
+  private static boolean deleteRecursively(@NotNull File file) {
     FileAttributes attributes = FileSystemUtil.getAttributes(file);
     if (attributes == null) return true;
 
@@ -428,7 +435,7 @@ public class FileUtil extends FileUtilRt {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
-          if (!delete(child)) return false;
+          if (!deleteRecursively(child)) return false;
         }
       }
     }

@@ -52,7 +52,7 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   } 
 
   public void testClone() throws Exception {
-    doTestFunctionalInterface("Multiple non-overriding abstract methods found");
+    doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
   }
 
   public void testTwoMethodsSameSignature() throws Exception {
@@ -64,11 +64,11 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   }
   
   public void testTwoMethodsNoSubSignature() throws Exception {
-    doTestFunctionalInterface("Multiple non-overriding abstract methods found");
+    doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
   }
   
   public void testTwoMethodsNoSubSignature1() throws Exception {
-    doTestFunctionalInterface("Multiple non-overriding abstract methods found");
+    doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
   } 
   
   public void testTwoMethodsSameSubstSignature() throws Exception {

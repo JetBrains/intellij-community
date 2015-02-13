@@ -36,7 +36,7 @@ class Test2 {
   }
 
   {
-    F f = <error descr="Multiple non-overriding abstract methods found">() -> g()</error>;
+    F f = <error descr="Multiple non-overriding abstract methods found in interface Test2.F">() -> g()</error>;
   }
 
   void g() {}

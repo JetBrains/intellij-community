@@ -16,10 +16,9 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -38,25 +37,13 @@ public class ObjectObjectPersistentMultiMapletTest extends UsefulTestCase {
   public void testReplaceWithEqualButNotSameKey() throws IOException {
     File file = FileUtil.createTempFile(getTestDirectoryName(), null);
     ObjectObjectPersistentMultiMaplet<String, IntValueStreamable> maplet =
-      new ObjectObjectPersistentMultiMaplet<String, IntValueStreamable>(file, new CaseInsensitiveStringDescriptor(),
+      new ObjectObjectPersistentMultiMaplet<String, IntValueStreamable>(file, new CaseInsensitiveEnumeratorStringDescriptor(),
                                                                         new IntValueExternalizer(),
                                                                         COLLECTION_FACTORY);
     maplet.put("a", new IntValueStreamable(1));
     assertEquals(1, assertOneElement(maplet.get("a")).value);
     maplet.replace("A", Collections.singletonList(new IntValueStreamable(2)));
     assertEquals(2, assertOneElement(maplet.get("a")).value);
-  }
-
-  private static class CaseInsensitiveStringDescriptor extends EnumeratorStringDescriptor {
-    @Override
-    public int getHashCode(String value) {
-      return StringUtil.stringHashCodeInsensitive(value);
-    }
-
-    @Override
-    public boolean isEqual(String val1, String val2) {
-      return val1.equalsIgnoreCase(val2);
-    }
   }
 
   private static class IntValueStreamable implements Streamable {
