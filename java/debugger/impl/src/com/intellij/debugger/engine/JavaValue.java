@@ -27,6 +27,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.ToStringBasedRenderer;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -260,7 +261,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           renderer.renderStringValue(myValue, "\"\\", XValueNode.MAX_VALUE_LENGTH);
           return;
         }
-        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer) {
+        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer ||
+                 myValueDescriptor.getLastRenderer() instanceof ToStringBasedRenderer) {
           value = StringUtil.wrapWithDoubleQuote(truncateToMaxLength(myValue));
         }
         else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer) {
