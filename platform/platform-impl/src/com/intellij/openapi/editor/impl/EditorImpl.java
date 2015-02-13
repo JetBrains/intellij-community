@@ -332,8 +332,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
-    boolean forceSoftWraps = !myUseNewRendering && !mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced(myDocument);
-    if (forceSoftWraps) {
+    if (shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
     }
@@ -567,10 +566,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean shouldSoftWrapsBeForced(Document document) {
+  private boolean shouldSoftWrapsBeForced() {
+    if (myUseNewRendering || mySettings.isUseSoftWraps() ||
+        // Disable checking for files in intermediate states - e.g. for files during refactoring.
+        (myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument))) {
+      return false;
+    }
     int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
-    for (int i = 0; i < document.getLineCount(); i++) {
-      if (document.getLineEndOffset(i) - document.getLineStartOffset(i) > lineWidthLimit) {
+    for (int i = 0; i < myDocument.getLineCount(); i++) {
+      if (myDocument.getLineEndOffset(i) - myDocument.getLineStartOffset(i) > lineWidthLimit) {
         return true;
       }
     }
