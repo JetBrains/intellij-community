@@ -77,12 +77,14 @@ public class FileUtilRt {
   private static Method ourFilesWalkMethod;
   private static Method ourFileToPathMethod;
   private static Object ourDeletionVisitor;
+  private static Class ourNoSuchFileExceptionClass;
   static {
     boolean initSuccess = false;
     try {
       final Class<?> pathClass = Class.forName("java.nio.file.Path");
       final Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
       final Class<?> filesClass = Class.forName("java.nio.file.Files");
+      ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
 
       ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
       ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
@@ -140,6 +142,7 @@ public class FileUtilRt {
       ourFilesWalkMethod = null;
       ourFilesDeleteIfExistsMethod = null;
       ourDeletionVisitor = null;
+      ourNoSuchFileExceptionClass = null;
     }
     NIO_FILE_API_AVAILABLE = initSuccess;
   }
@@ -642,6 +645,13 @@ public class FileUtilRt {
       */
       final Object pathObject = ourFileToPathMethod.invoke(file);
       ourFilesWalkMethod.invoke(null, pathObject, ourDeletionVisitor);
+    }
+    catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause == null || !ourNoSuchFileExceptionClass.isInstance(cause)) {
+        LOG.info(e);
+        return false;
+      }
     }
     catch (Exception e) {
       LOG.info(e);
