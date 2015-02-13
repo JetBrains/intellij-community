@@ -30,7 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -69,7 +69,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
         IElementType tokenType = element.getNode().getElementType();
         if (TokenSets.KEYWORDS.contains(tokenType)) {
           if (highlightKeyword(element, tokenType)) {
-            addInfo(element, DefaultHighlighter.KEYWORD);
+            addInfo(element, GroovySyntaxHighlighter.KEYWORD);
           }
         }
         else if (!(element instanceof GroovyPsiElement || element instanceof PsiErrorElement)) {
@@ -127,7 +127,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
     if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
-      return DefaultHighlighter.ANNOTATION;
+      return GroovySyntaxHighlighter.ANNOTATION;
     }
 
     PsiElement parent = element.getParent();

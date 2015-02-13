@@ -159,7 +159,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
-    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps() 
+    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps() && !((EditorImpl) myEditor).myUseNewRendering 
            && (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
   }
 

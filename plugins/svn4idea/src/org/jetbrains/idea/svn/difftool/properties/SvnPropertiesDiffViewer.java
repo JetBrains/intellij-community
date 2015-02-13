@@ -126,6 +126,10 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
     String text1 = value1 != null ? value1.toString() : null;
     String text2 = value2 != null ? value2.toString() : null;
 
+    // TODO: show differences in line separators ?
+    if (text1 != null) text1 = StringUtil.convertLineSeparators(text1);
+    if (text2 != null) text2 = StringUtil.convertLineSeparators(text2);
+
     List<? extends LineFragment> fragments = compareValues(text1, text2);
 
     return new PropertyDiffRecord(name, text1, text2, fragments);
@@ -235,10 +239,6 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
                               @Nullable String after,
                               @NotNull List<? extends LineFragment> fragments) {
       assert before != null || after != null;
-
-      // TODO: show differences in line separators ?
-      if (before != null) before = StringUtil.convertLineSeparators(before);
-      if (after != null) after = StringUtil.convertLineSeparators(after);
 
       myName = name;
       myBefore = before;

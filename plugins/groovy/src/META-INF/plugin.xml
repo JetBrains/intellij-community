@@ -223,6 +223,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
+
     <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
 
     <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>

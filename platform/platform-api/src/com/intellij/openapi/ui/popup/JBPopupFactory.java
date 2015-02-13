@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +173,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createActionGroupPopup(@Nullable String title,
+  public abstract ListPopup createActionGroupPopup(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
@@ -190,7 +191,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createActionGroupPopup(String title,
+  public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
@@ -210,7 +211,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createActionGroupPopup(String title,
+  public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
@@ -219,7 +220,7 @@ public abstract class JBPopupFactory {
                                                    int maxRowCount);
 
   @NotNull
-  public abstract ListPopup createActionGroupPopup(String title,
+  public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    boolean showNumbers,
