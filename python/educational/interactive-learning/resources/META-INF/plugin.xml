@@ -36,6 +36,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
   <actions>

@@ -26,20 +26,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ContainingBranchesGetter {
-  @NotNull
-  private final LiteLinearGraph myGraph;
+  @NotNull private final LiteLinearGraph myGraph;
 
-  @NotNull
-  private final Set<Integer> myBranchNodeIndexes;
+  @NotNull private final Set<Integer> myBranchNodeIndexes;
 
-  @NotNull
-  private final DfsUtil myDfsUtil = new DfsUtil();
+  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
 
-  @NotNull
-  private final Flags myTempFlags;
+  @NotNull private final Flags myTempFlags;
 
-  public ContainingBranchesGetter(@NotNull LiteLinearGraph graph,
-                                  @NotNull Set<Integer> branchNodeIndexes) {
+  public ContainingBranchesGetter(@NotNull LiteLinearGraph graph, @NotNull Set<Integer> branchNodeIndexes) {
     myGraph = graph;
     myBranchNodeIndexes = branchNodeIndexes;
     myTempFlags = new BitSetFlags(graph.nodesCount());
@@ -70,7 +65,6 @@ public class ContainingBranchesGetter {
   }
 
   private void checkAndAdd(int nodeIndex, Set<Integer> result) {
-    if (myBranchNodeIndexes.contains(nodeIndex))
-      result.add(nodeIndex);
+    if (myBranchNodeIndexes.contains(nodeIndex)) result.add(nodeIndex);
   }
 }

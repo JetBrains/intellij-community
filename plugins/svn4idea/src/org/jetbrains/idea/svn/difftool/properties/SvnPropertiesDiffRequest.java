@@ -1,10 +1,11 @@
 package org.jetbrains.idea.svn.difftool.properties;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyData;
@@ -12,8 +13,8 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 import java.util.List;
 
 public class SvnPropertiesDiffRequest extends ContentDiffRequest {
-  @NotNull private final DiffContent[] myContents;
-  @NotNull private final String[] myContentTitles;
+  @NotNull private final List<DiffContent> myContents;
+  @NotNull private final List<String> myContentTitles;
   @NotNull private final String myWindowTitle;
 
   public SvnPropertiesDiffRequest(@NotNull String windowTitle,
@@ -22,8 +23,8 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
                                   @NotNull String title1,
                                   @NotNull String title2) {
     myWindowTitle = windowTitle;
-    myContents = new DiffContent[]{content1, content2};
-    myContentTitles = new String[]{title1, title2};
+    myContents = ContainerUtil.list(content1, content2);
+    myContentTitles = ContainerUtil.list(title1, title2);
 
     assert content1 instanceof PropertyContent || content1 instanceof EmptyContent;
     assert content2 instanceof PropertyContent || content2 instanceof EmptyContent;
@@ -34,9 +35,9 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
                                   @Nullable String title1, @Nullable String title2) {
     assert before != null || after != null;
 
-    myContents = new DiffContent[]{createContent(before), createContent(after)};
+    myContents = ContainerUtil.list(createContent(before), createContent(after));
     myWindowTitle = "Svn Properties Diff";
-    myContentTitles = new String[]{title1, title2};
+    myContentTitles = ContainerUtil.list(title1, title2);
   }
 
   @NotNull
@@ -54,13 +55,13 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
 
   @NotNull
   @Override
-  public String[] getContentTitles() {
+  public List<String> getContentTitles() {
     return myContentTitles;
   }
 
   @NotNull
   @Override
-  public DiffContent[] getContents() {
+  public List<DiffContent> getContents() {
     return myContents;
   }
 

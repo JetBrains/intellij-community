@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -571,10 +572,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     caretRight(getEditor());
   }
   protected void caretRight(Editor editor) {
-    LightPlatformCodeInsightTestCase.caretRight(editor);
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor, getProject());
   }
   protected void caretUp() {
-    LightPlatformCodeInsightTestCase.caretUp(myEditor);
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, myEditor, getProject());
   }
 
   protected void deleteLine() {

@@ -30,6 +30,11 @@ public abstract class OutputReader extends BaseOutputReader {
 
   private final Semaphore myReadFullySemaphore = new Semaphore();
 
+  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy) {
+    super(inputStream, charset, sleepingPolicy);
+    start();
+  }
+
   public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     super(inputStream, charset);
     start();

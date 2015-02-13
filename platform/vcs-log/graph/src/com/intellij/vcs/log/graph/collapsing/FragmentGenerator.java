@@ -21,14 +21,17 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class FragmentGenerator {
 
   public static class GreenFragment {
     @Nullable private final Integer myUpRedNode;
     @Nullable private final Integer myDownRedNode;
-    @NotNull  private final Set<Integer> myMiddleGreenNodes;
+    @NotNull private final Set<Integer> myMiddleGreenNodes;
 
     private GreenFragment(@Nullable Integer upRedNode, @Nullable Integer downRedNode, @NotNull Set<Integer> middleGreenNodes) {
       myUpRedNode = upRedNode;
@@ -52,10 +55,8 @@ public class FragmentGenerator {
     }
   }
 
-  @NotNull
-  private final LiteLinearGraph myGraph;
-  @NotNull
-  private final Condition<Integer> myRedNodes;
+  @NotNull private final LiteLinearGraph myGraph;
+  @NotNull private final Condition<Integer> myRedNodes;
 
   public FragmentGenerator(@NotNull LiteLinearGraph graph, @NotNull Condition<Integer> redNodes) {
     myGraph = graph;
@@ -110,13 +111,11 @@ public class FragmentGenerator {
     Integer upRedNode = getNearRedNode(startNode, maxWalkSize, true);
     Integer downRedNode = getNearRedNode(startNode, maxWalkSize, false);
 
-    Set<Integer> upPart = upRedNode != null ?
-                          getMiddleNodes(upRedNode, startNode, false) :
-                          getWalkNodes(startNode, true, createStopFunction(maxWalkSize));
+    Set<Integer> upPart =
+      upRedNode != null ? getMiddleNodes(upRedNode, startNode, false) : getWalkNodes(startNode, true, createStopFunction(maxWalkSize));
 
-    Set<Integer> downPart = downRedNode != null ?
-                            getMiddleNodes(startNode, downRedNode, false) :
-                            getWalkNodes(startNode, false, createStopFunction(maxWalkSize));
+    Set<Integer> downPart =
+      downRedNode != null ? getMiddleNodes(startNode, downRedNode, false) : getWalkNodes(startNode, false, createStopFunction(maxWalkSize));
 
     Set<Integer> middleNodes = ContainerUtil.union(upPart, downPart);
     if (upRedNode != null) middleNodes.remove(upRedNode);
@@ -150,6 +149,7 @@ public class FragmentGenerator {
   private static Condition<Integer> createStopFunction(final int maxNodeCount) {
     return new Condition<Integer>() {
       private int count = maxNodeCount;
+
       @Override
       public boolean value(Integer integer) {
         count--;

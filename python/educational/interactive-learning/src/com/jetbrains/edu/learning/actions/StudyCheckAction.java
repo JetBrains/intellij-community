@@ -50,7 +50,7 @@ import java.util.Map;
 public class StudyCheckAction extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(StudyCheckAction.class.getName());
-  private static final String ANSWERS_POSTFIX = "_answers.py";
+  private static final String ANSWERS_POSTFIX = "_answers";
   public static final String ACTION_ID = "CheckAction";
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
@@ -337,7 +337,7 @@ public class StudyCheckAction extends DumbAwareAction {
     VirtualFile copy = null;
     try {
 
-      copy = file.copy(this, taskDir, file.getNameWithoutExtension() + ANSWERS_POSTFIX);
+      copy = file.copy(this, taskDir, file.getNameWithoutExtension() + ANSWERS_POSTFIX + "." + file.getExtension());
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document document = documentManager.getDocument(copy);
       if (document != null) {

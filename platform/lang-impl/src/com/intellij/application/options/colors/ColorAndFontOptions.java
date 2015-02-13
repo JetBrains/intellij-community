@@ -585,34 +585,34 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  private static void addEditorSettingDescription(@NotNull List<EditorSchemeAttributeDescriptor> array,
+  @Nullable
+  private static String calcType(@Nullable ColorKey backgroundKey, @Nullable ColorKey foregroundKey) {
+    if (foregroundKey != null) {
+      return foregroundKey.getExternalName();
+    }
+    else if (backgroundKey != null) {
+      return backgroundKey.getExternalName();
+    }
+    return null;
+  }
+
+  private static void addEditorSettingDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
                                                   String name,
                                                   String group,
                                                   @Nullable ColorKey backgroundKey,
                                                   @Nullable ColorKey foregroundKey,
-                                                  EditorColorsScheme scheme) {
-    String type = null;
-    if (foregroundKey != null) {
-      type = foregroundKey.getExternalName();
-    }
-    else {
-      if (backgroundKey != null) {
-        type = backgroundKey.getExternalName();
-      }
-    }
-    ColorAndFontDescription descr = new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, type, scheme);
-    array.add(descr);
+                                                  @NotNull EditorColorsScheme scheme) {
+    list.add(new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, calcType(backgroundKey, foregroundKey), scheme));
   }
 
-  private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> array,
+  private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
                                             String name,
                                             String group,
                                             @NotNull TextAttributesKey key,
                                             @NotNull MyColorScheme scheme,
                                             Icon icon,
                                             String toolTip) {
-    ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip);
-    array.add(descr);
+    list.add(new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip));
   }
 
   @Override

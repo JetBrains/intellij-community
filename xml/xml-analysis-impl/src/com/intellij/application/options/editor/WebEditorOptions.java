@@ -47,7 +47,6 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public WebEditorOptions() {
     setTagTreeHighlightingEnabled(!ApplicationManager.getApplication().isUnitTestMode());
-    setSyncTagEditing(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
   public static WebEditorOptions getInstance() {

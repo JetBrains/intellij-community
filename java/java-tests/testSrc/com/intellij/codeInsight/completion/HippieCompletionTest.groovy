@@ -219,6 +219,26 @@ foo->bar
     myFixture.checkResult 'foo fox foo<caret>bar'
   }
 
+  public void "test multiple carets"() {
+    myFixture.configureByText "a.txt", "fox food floor f<caret> f<caret>"
+    complete()
+    myFixture.checkResult "fox food floor floor<caret> floor<caret>"
+    complete()
+    myFixture.checkResult "fox food floor food<caret> food<caret>"
+    complete()
+    myFixture.checkResult "fox food floor fox<caret> fox<caret>"
+  }
+
+  public void "test multiple carets backward"() {
+    myFixture.configureByText "a.txt", "f<caret> f<caret> fox food floor"
+    backComplete()
+    myFixture.checkResult "fox<caret> fox<caret> fox food floor"
+    backComplete()
+    myFixture.checkResult "food<caret> food<caret> fox food floor"
+    backComplete()
+    myFixture.checkResult "floor<caret> floor<caret> fox food floor"
+  }
+
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }

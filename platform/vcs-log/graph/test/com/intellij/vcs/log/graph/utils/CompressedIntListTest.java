@@ -32,14 +32,13 @@ public class CompressedIntListTest {
   private static String toStr(@NotNull IntList intList) {
     StringBuilder s = new StringBuilder();
     for (int i = 0; i < intList.size(); i++) {
-      if (i != 0)
-        s.append(", ");
+      if (i != 0) s.append(", ");
       s.append(intList.get(i));
     }
     return s.toString();
   }
 
-  private static IntList toDataList(final int ... list) {
+  private static IntList toDataList(final int... list) {
     return new IntList() {
       @Override
       public int size() {
@@ -53,7 +52,7 @@ public class CompressedIntListTest {
     };
   }
 
-  protected void runTest(int ... list) {
+  protected void runTest(int... list) {
     IntList intList = CompressedIntList.newInstance(list, 3);
     String expected = toStr(toDataList(list));
     assertEquals(expected, toStr(intList));
@@ -107,7 +106,7 @@ public class CompressedIntListTest {
 
     runTest(-2 * BYTE3_MAX, 0, -2 * BYTE3_MAX);
     runTest(-2 * BYTE2_MAX, 0, -2 * BYTE2_MAX);
-    runTest(-2 * BYTE_MAX,  0, -2 * BYTE_MAX);
+    runTest(-2 * BYTE_MAX, 0, -2 * BYTE_MAX);
 
     runTest(BYTE_MAX, 0, BYTE_MAX);
     runTest(BYTE2_MAX, 0, BYTE2_MAX);
@@ -115,7 +114,7 @@ public class CompressedIntListTest {
 
     runTest(2 * BYTE3_MAX, 0, 2 * BYTE3_MAX);
     runTest(2 * BYTE2_MAX, 0, 2 * BYTE2_MAX);
-    runTest(2 * BYTE_MAX,  0, 2 * BYTE_MAX);
+    runTest(2 * BYTE_MAX, 0, 2 * BYTE_MAX);
   }
 
   @Test

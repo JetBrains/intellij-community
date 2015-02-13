@@ -36,7 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.StudyLanguageManager;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.format.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +133,7 @@ public abstract class CCRunTestsAction extends AnAction {
         clearTestEnvironment(taskDir, project);
         for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
           final String name = entry.getKey();
-          StudyLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+          CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
           if (manager == null) {
             return;
           }

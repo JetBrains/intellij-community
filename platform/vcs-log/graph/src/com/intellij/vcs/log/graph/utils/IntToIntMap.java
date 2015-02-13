@@ -20,7 +20,9 @@ package com.intellij.vcs.log.graph.utils;
  */
 public interface IntToIntMap {
   int shortSize();
+
   int longSize();
+
   int getLongIndex(int shortIndex); // must be very fast
 
   /**

@@ -15,12 +15,8 @@
  */
 package com.intellij.vcs.log.graph.impl.print
 
-import com.intellij.openapi.util.Pair
 import com.intellij.util.NotNullFunction
-import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.*
-import com.intellij.vcs.log.graph.api.GraphLayout
-import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode

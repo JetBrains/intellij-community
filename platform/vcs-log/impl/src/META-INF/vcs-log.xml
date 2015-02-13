@@ -32,6 +32,16 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
+
+    <group>
+      <reference ref="Vcs.Log.CreatePatch"/>
+      <reference ref="Vcs.Log.GoToRef"/>
+      <reference ref="Vcs.Log.QuickSettings"/>
+      <reference ref="Vcs.Log.IntelliSortChooser"/>
+      <separator/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
   </actions>
 
 </idea-plugin>

@@ -50,10 +50,8 @@ public class PositionUtil {
     int r = CIRCLE_RADIUS;
     int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
     int y0 = HEIGHT_CELL / 2;
-    if (type == SimplePrintElement.Type.DOWN_ARROW)
-      y0 = PrintParameters.HEIGHT_CELL - r;
-    if (type == SimplePrintElement.Type.UP_ARROW)
-      y0 = r;
+    if (type == SimplePrintElement.Type.DOWN_ARROW) y0 = PrintParameters.HEIGHT_CELL - r;
+    if (type == SimplePrintElement.Type.UP_ARROW) y0 = r;
 
     return distance(x0, y0, x, y) <= r;
   }

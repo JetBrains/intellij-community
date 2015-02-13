@@ -28,7 +28,8 @@ import java.util.Set;
 public class BranchMatchedNodesGenerator {
 
   @NotNull
-  public static UnsignedBitSet generateVisibleNodes(@NotNull PermanentLinearGraphImpl permanentGraph, @Nullable Set<Integer> headNodeIndexes) {
+  public static UnsignedBitSet generateVisibleNodes(@NotNull PermanentLinearGraphImpl permanentGraph,
+                                                    @Nullable Set<Integer> headNodeIndexes) {
     if (headNodeIndexes == null) {
       UnsignedBitSet nodesVisibility = new UnsignedBitSet();
       nodesVisibility.set(0, permanentGraph.nodesCount() - 1, true);
@@ -41,14 +42,11 @@ public class BranchMatchedNodesGenerator {
     return generator.myNodesVisibility;
   }
 
-  @NotNull
-  private final LiteLinearGraph myGraph;
+  @NotNull private final LiteLinearGraph myGraph;
 
-  @NotNull
-  private final UnsignedBitSet myNodesVisibility;
+  @NotNull private final UnsignedBitSet myNodesVisibility;
 
-  @NotNull
-  private final DfsUtil myDfsUtil = new DfsUtil();
+  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
 
   BranchMatchedNodesGenerator(@NotNull LiteLinearGraph graph) {
     myGraph = graph;

@@ -536,7 +536,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor) {
     executeAction(actionId, editor, getProject());
   }
-  protected static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
+  public static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {

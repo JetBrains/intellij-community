@@ -33,7 +33,6 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -160,8 +159,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   private FrameDiffTool getFittedTool() {
     List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
     for (DiffTool tool : myToolOrder) {
-      if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        tools.add((FrameDiffTool)tool);
+      try {
+        if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
+          tools.add((FrameDiffTool)tool);
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
 
@@ -174,8 +178,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   private List<FrameDiffTool> getAvailableFittedTools() {
     List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
     for (DiffTool tool : myAvailableTools) {
-      if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        tools.add((FrameDiffTool)tool);
+      try {
+        if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
+          tools.add((FrameDiffTool)tool);
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
 
@@ -238,7 +247,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState = createState();
       myState.init();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
       myState = new ErrorState(new ErrorDiffRequest("Error: can't show diff"), getFittedTool());
       myState.init();
@@ -655,7 +664,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (!isNavigationEnabled() || !hasNextChange()) return;
+      if (!isNavigationEnabled() || !hasPrevChange()) return;
 
       if (myIterationState != IterationState.PREV) {
         if (iterable != null) iterable.notify("Press again to go to the previous file");

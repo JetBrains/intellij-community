@@ -532,13 +532,16 @@ public class FileUtilRt {
     }
   }
 
+  /**
+   * Warning! this method is _not_ symlinks-aware. Consider using com.intellij.openapi.util.io.FileUtil.delete()
+   * @param file file or directory to delete
+   * @return true if the file did not exist or was successfully deleted 
+   */
   public static boolean delete(@NotNull File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (!delete(child)) return false;
-        }
+    File[] files = file.listFiles();
+    if (files != null) {
+      for (File child : files) {
+        if (!delete(child)) return false;
       }
     }
 

@@ -22,6 +22,9 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    if (session.getInferenceVariable(myT) != null) {
+      return true;
+    }
     if (!LambdaUtil.isFunctionalType(myT)) {
       return false;
     }

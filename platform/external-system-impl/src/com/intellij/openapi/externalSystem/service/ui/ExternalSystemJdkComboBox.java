@@ -18,10 +18,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
@@ -46,6 +43,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
   @Nullable
   private Project myProject;
+  private boolean suggestJre = true;
 
   public ExternalSystemJdkComboBox() {
     this(null);
@@ -94,6 +92,11 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     myProject = project;
   }
 
+  public ExternalSystemJdkComboBox withoutJre() {
+    suggestJre = false;
+    return this;
+  }
+
   public void refreshData(@Nullable String selectedValue) {
     Map<String, JdkComboBoxItem> jdkMap = collectComboBoxItem();
     if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
@@ -140,16 +143,17 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
       result.put(name, new JdkComboBoxItem(name, name, comment, ((SdkType)projectJdk.getSdkType()).sdkHasValidPath(projectJdk)));
     }
 
-    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    assert internalJdk.getHomePath() != null;
-
-    result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-               new JdkComboBoxItem(
-                 ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-                 ExternalSystemBundle.message("external.system.java.internal.jre"),
-                 buildComment(internalJdk),
-                 true
-               ));
+    if(suggestJre) {
+      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      assert internalJdk.getHomePath() != null;
+      result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
+                 new JdkComboBoxItem(
+                   ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
+                   ExternalSystemBundle.message("external.system.java.internal.jre"),
+                   buildComment(internalJdk),
+                   true
+                 ));
+    }
 
     if (myProject != null) {
       final Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();

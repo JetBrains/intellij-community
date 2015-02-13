@@ -17,7 +17,6 @@ package com.intellij.vcs.log.graph.api.permanent;
 
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import org.jetbrains.annotations.NotNull;
 

@@ -28,6 +28,7 @@ import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +44,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,8 +88,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public ThreesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
 
-    DiffContent[] contents = myRequest.getContents();
-    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents[0], (DocumentContent)contents[1], (DocumentContent)contents[2]);
+    List<DiffContent> contents = myRequest.getContents();
+    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents.get(0), (DocumentContent)contents.get(1), (DocumentContent)contents.get(2));
 
 
     myEditors = createEditors();
@@ -310,12 +310,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (!(request instanceof ContentDiffRequest)) return false;
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 3) return false;
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 3) return false;
 
-    if (!canShowContent(contents[0])) return false;
-    if (!canShowContent(contents[1])) return false;
-    if (!canShowContent(contents[2])) return false;
+    if (!canShowContent(contents.get(0))) return false;
+    if (!canShowContent(contents.get(1))) return false;
+    if (!canShowContent(contents.get(2))) return false;
 
     return true;
   }
@@ -360,8 +360,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      DiffContent[] contents = myRequest.getContents();
-      String[] titles = myRequest.getContentTitles();
+      List<DiffContent> contents = myRequest.getContents();
+      List<String> titles = myRequest.getContentTitles();
 
       DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(), mySide1.selectNotNull(contents), mySide2.selectNotNull(contents),
                                                   mySide1.selectNotNull(titles), mySide1.selectNotNull(titles));
@@ -417,32 +417,25 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     protected boolean myShouldScroll = true;
 
     @Nullable private ScrollToPolicy myScrollToChange;
-    @Nullable private EditorsPosition myEditorsPosition;
+    @Nullable private EditorsVisiblePositions myEditorsPosition;
     @Nullable private LogicalPosition[] myCaretPosition;
     @Nullable private Pair<ThreeSide, Integer> myScrollToLine;
 
     public void processContext() {
       myScrollToChange = myRequest.getUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE);
-      myEditorsPosition = myRequest.getUserData(EditorsPosition.KEY);
+      myEditorsPosition = myRequest.getUserData(EditorsVisiblePositions.KEY);
       myCaretPosition = myRequest.getUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION);
       myScrollToLine = myRequest.getUserData(DiffUserDataKeys.SCROLL_TO_LINE_THREESIDE);
     }
 
     public void updateContext() {
-      LogicalPosition[] carets = new LogicalPosition[3];
-      carets[0] = getPosition(myEditors.get(0));
-      carets[1] = getPosition(myEditors.get(1));
-      carets[2] = getPosition(myEditors.get(2));
+      LogicalPosition[] carets = DiffUtil.getCaretPositions(myEditors);
+      Point[] points = DiffUtil.getScrollingPositions(myEditors);
 
-      Point[] points = new Point[3];
-      points[0] = DiffUtil.getScrollingPoint(myEditors.get(0));
-      points[1] = DiffUtil.getScrollingPoint(myEditors.get(1));
-      points[2] = DiffUtil.getScrollingPoint(myEditors.get(2));
-
-      EditorsPosition editorsPosition = new EditorsPosition(carets, points);
+      EditorsVisiblePositions editorsPosition = new EditorsVisiblePositions(carets, points);
 
       myRequest.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, null);
-      myRequest.putUserData(EditorsPosition.KEY, editorsPosition);
+      myRequest.putUserData(EditorsVisiblePositions.KEY, editorsPosition);
       myRequest.putUserData(DiffUserDataKeysEx.EDITORS_CARET_POSITION, carets);
       myRequest.putUserData(DiffUserDataKeys.SCROLL_TO_LINE_THREESIDE, null);
     }
@@ -506,33 +499,6 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
       myCurrentSide = side;
       DiffUtil.scrollEditor(getCurrentEditor(), line);
-      return true;
-    }
-
-    @NotNull
-    private LogicalPosition getPosition(@Nullable Editor editor) {
-      return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
-    }
-  }
-
-  private static class EditorsPosition {
-    public static final Key<EditorsPosition> KEY = Key.create("Diff.EditorsPosition");
-
-    @NotNull public final LogicalPosition[] myCaretPosition;
-    @NotNull public final Point[] myPoints;
-
-    public EditorsPosition(@NotNull LogicalPosition[] caretPosition, @NotNull Point[] points) {
-      myCaretPosition = caretPosition;
-      myPoints = points;
-    }
-
-    public boolean isSame(@Nullable LogicalPosition[] caretPosition) {
-      // TODO: allow small fluctuations ?
-      if (caretPosition == null) return true;
-      if (caretPosition.length != 3) return false;
-      if (!caretPosition[0].equals(myCaretPosition[0])) return false;
-      if (!caretPosition[1].equals(myCaretPosition[1])) return false;
-      if (!caretPosition[2].equals(myCaretPosition[2])) return false;
       return true;
     }
   }

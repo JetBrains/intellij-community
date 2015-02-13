@@ -37,7 +37,7 @@ public class GroovyEditorHighlighter extends LayeredLexerEditorHighlighter {
   private void registerGroovydocHighlighter() {
     // Register GroovyDoc Highlighter
     SyntaxHighlighter groovyDocHighlighter = new GroovyDocSyntaxHighlighter();
-    final LayerDescriptor groovyDocLayer = new LayerDescriptor(groovyDocHighlighter, "\n", DefaultHighlighter.DOC_COMMENT_CONTENT);
+    final LayerDescriptor groovyDocLayer = new LayerDescriptor(groovyDocHighlighter, "\n", GroovySyntaxHighlighter.DOC_COMMENT_CONTENT);
     registerLayer(GroovyDocElementTypes.GROOVY_DOC_COMMENT, groovyDocLayer);
   }
 

@@ -30,17 +30,12 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 class BekBranchCreator {
-  @NotNull
-  private final LinearGraph myPermanentGraph;
-  @NotNull
-  private final GraphLayoutImpl myGraphLayout;
-  @NotNull
-  private final Flags myDoneNodes;
+  @NotNull private final LinearGraph myPermanentGraph;
+  @NotNull private final GraphLayoutImpl myGraphLayout;
+  @NotNull private final Flags myDoneNodes;
 
-  @NotNull
-  private final DfsUtil myDfsUtil = new DfsUtil();
-  @NotNull
-  private final BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
+  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
+  @NotNull private final BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
 
   public BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
     myPermanentGraph = permanentGraph;
@@ -77,8 +72,7 @@ class BekBranchCreator {
           int downNode = downNodes.get(i);
 
           if (myDoneNodes.get(downNode)) {
-            if (myGraphLayout.getLayoutIndex(downNode) < startLayout)
-              myEdgeRestrictions.addRestriction(currentNode, downNode);
+            if (myGraphLayout.getLayoutIndex(downNode) < startLayout) myEdgeRestrictions.addRestriction(currentNode, downNode);
           }
           else if (currentLayout <= myGraphLayout.getLayoutIndex(downNode)) {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,10 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author max
@@ -147,23 +144,17 @@ public class InspectionToolRegistrar {
   }
 
   @NotNull
-  @TestOnly
   public List<InspectionToolWrapper> createTools() {
     ensureInitialized();
 
     final List<InspectionToolWrapper> tools = ContainerUtil.newArrayListWithCapacity(myInspectionToolFactories.size());
-    final Set<Factory<InspectionToolWrapper>> broken = ContainerUtil.newHashSet();
     for (final Factory<InspectionToolWrapper> factory : myInspectionToolFactories) {
       ProgressManager.checkCanceled();
       final InspectionToolWrapper toolWrapper = factory.create();
       if (toolWrapper != null && checkTool(toolWrapper) == null) {
         tools.add(toolWrapper);
       }
-      else {
-        broken.add(factory);
-      }
     }
-    myInspectionToolFactories.removeAll(broken);
 
     return tools;
   }

@@ -20,10 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 
 public class UnsignedBitSet implements Cloneable {
-  @NotNull
-  private final BitSet myPositiveSet;
-  @NotNull
-  private final BitSet myNegativeSet;
+  @NotNull private final BitSet myPositiveSet;
+  @NotNull private final BitSet myNegativeSet;
 
   public UnsignedBitSet(@NotNull BitSet positiveSet, @NotNull BitSet negativeSet) {
     myPositiveSet = positiveSet;
@@ -39,21 +37,26 @@ public class UnsignedBitSet implements Cloneable {
   }
 
   public void set(int bitIndex, boolean value) {
-    if (bitIndex >= 0)
+    if (bitIndex >= 0) {
       myPositiveSet.set(bitIndex, value);
-    else
+    }
+    else {
       myNegativeSet.set(toPositive(bitIndex), value);
+    }
   }
 
   // boundaries included
   public void set(int fromIndex, int toIndex, boolean value) {
-    if (fromIndex > toIndex)
+    if (fromIndex > toIndex) {
       throw new IndexOutOfBoundsException("fromIndex: " + fromIndex +
                                           " > toIndex: " + toIndex);
-    if (fromIndex >= 0)
+    }
+    if (fromIndex >= 0) {
       myPositiveSet.set(fromIndex, toIndex + 1, value);
-    else if (toIndex < 0)
+    }
+    else if (toIndex < 0) {
       myNegativeSet.set(toPositive(toIndex), toPositive(fromIndex) + 1, value);
+    }
     else {
       myPositiveSet.set(0, toIndex + 1, value);
       myNegativeSet.set(toPositive(-1), toPositive(fromIndex) + 1, value);
@@ -61,10 +64,12 @@ public class UnsignedBitSet implements Cloneable {
   }
 
   public boolean get(int bitIndex) {
-    if (bitIndex >= 0)
+    if (bitIndex >= 0) {
       return myPositiveSet.get(bitIndex);
-    else
+    }
+    else {
       return myNegativeSet.get(toPositive(bitIndex));
+    }
   }
 
   @Override

@@ -120,8 +120,7 @@ final class DiffHttpService extends RestService {
       @Override
       public void run() {
         DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"),
-                                                                               contents.toArray(new DiffContent[contents.size()]),
-                                                                               ArrayUtil.toStringArray(titles)));
+                                                                               contents, titles));
         if (finalFocused) {
           ProjectUtil.focusProjectWindow(finalProject, true);
         }

@@ -152,7 +152,12 @@ public class StudyProjectGenerator {
             LOG.error("ERROR copying file " + name);
           }
         }
-        final File testsFile = new File(taskDirectory, "tests.py");
+        StudyLanguageManager languageManager = StudyUtils.getLanguageManager(course);
+        if (languageManager == null) {
+          LOG.info("Language manager is null for " + course.getLanguageById().getDisplayName());
+          return;
+        }
+        final File testsFile = new File(taskDirectory, languageManager.getTestFileName());
         FileUtil.createIfDoesntExist(testsFile);
         try {
           FileUtil.writeToFile(testsFile, task.getTestsText());

@@ -69,6 +69,9 @@ public class AllIcons {
     public static final Icon Exit = IconLoader.getIcon("/actions/exit.png"); // 16x16
     public static final Icon Expandall = IconLoader.getIcon("/actions/expandall.png"); // 16x16
     public static final Icon Export = IconLoader.getIcon("/actions/export.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon FileStatus = IconLoader.getIcon("/actions/fileStatus.png"); // 16x16
     public static final Icon Filter_small = IconLoader.getIcon("/actions/filter_small.png"); // 16x16
     public static final Icon Find = IconLoader.getIcon("/actions/find.png"); // 16x16

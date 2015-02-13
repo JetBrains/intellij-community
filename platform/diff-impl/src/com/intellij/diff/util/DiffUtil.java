@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
@@ -79,6 +80,8 @@ import java.util.BitSet;
 import java.util.List;
 
 public class DiffUtil {
+  private static final Logger LOG = Logger.getInstance(DiffUtil.class);
+
   @NotNull public static final String DIFF_CONFIG = StoragePathMacros.APP_CONFIG + "/diff.xml";
 
   //
@@ -175,6 +178,10 @@ public class DiffUtil {
     editor.reinitSettings();
   }
 
+  //
+  // Scrolling
+  //
+
   public static void scrollEditor(@Nullable final Editor editor, int line) {
     scrollEditor(editor, line, 0);
   }
@@ -210,10 +217,60 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static Point getScrollingPoint(@Nullable Editor editor) {
+  public static Point getScrollingPosition(@Nullable Editor editor) {
     if (editor == null) return new Point(0, 0);
     ScrollingModel model = editor.getScrollingModel();
     return new Point(model.getHorizontalScrollOffset(), model.getVerticalScrollOffset());
+  }
+
+  @NotNull
+  public static LogicalPosition getCaretPosition(@Nullable Editor editor) {
+    return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
+  }
+
+  @NotNull
+  public static Point[] getScrollingPositions(@NotNull List<? extends Editor> editors) {
+    Point[] carets = new Point[editors.size()];
+    for (int i = 0; i < editors.size(); i++) {
+      carets[i] = getScrollingPosition(editors.get(i));
+    }
+    return carets;
+  }
+
+  @NotNull
+  public static LogicalPosition[] getCaretPositions(@NotNull List<? extends Editor> editors) {
+    LogicalPosition[] carets = new LogicalPosition[editors.size()];
+    for (int i = 0; i < editors.size(); i++) {
+      carets[i] = getCaretPosition(editors.get(i));
+    }
+    return carets;
+  }
+
+  public static class EditorsVisiblePositions {
+    public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
+
+    @NotNull public final LogicalPosition[] myCaretPosition;
+    @NotNull public final Point[] myPoints;
+
+    public EditorsVisiblePositions(@NotNull LogicalPosition caretPosition, @NotNull Point points) {
+      myCaretPosition = new LogicalPosition[]{caretPosition};
+      myPoints = new Point[]{points};
+    }
+
+    public EditorsVisiblePositions(@NotNull LogicalPosition[] caretPosition, @NotNull Point[] points) {
+      myCaretPosition = caretPosition;
+      myPoints = points;
+    }
+
+    public boolean isSame(@Nullable LogicalPosition... caretPosition) {
+      // TODO: allow small fluctuations ?
+      if (caretPosition == null) return true;
+      if (myCaretPosition.length != caretPosition.length) return false;
+      for (int i = 0; i < caretPosition.length; i++) {
+        if (!caretPosition[i].equals(myCaretPosition[i])) return false;
+      }
+      return true;
+    }
   }
 
   //
@@ -256,9 +313,9 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
-    String[] titles = request.getContentTitles();
+    List<String> titles = request.getContentTitles();
 
-    List<JComponent> components = new ArrayList<JComponent>(titles.length);
+    List<JComponent> components = new ArrayList<JComponent>(titles.size());
     for (String title : titles) {
       components.add(createTitle(title));
     }
@@ -268,8 +325,8 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request, @NotNull List<? extends Editor> editors) {
-    DiffContent[] contents = request.getContents();
-    String[] titles = request.getContentTitles();
+    List<DiffContent> contents = request.getContents();
+    List<String> titles = request.getContentTitles();
 
     List<Charset> charsets = ContainerUtil.map(contents, new Function<DiffContent, Charset>() {
       @Override
@@ -289,10 +346,10 @@ public class DiffUtil {
     boolean equalCharsets = isEqualElements(charsets);
     boolean equalSeparators = isEqualElements(separators);
 
-    List<JComponent> result = new ArrayList<JComponent>(contents.length);
+    List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
-    for (int i = 0; i < contents.length; i++) {
-      result.add(createTitle(titles[i], contents[i], equalCharsets, equalSeparators, editors.get(i)));
+    for (int i = 0; i < contents.size(); i++) {
+      result.add(createTitle(titles.get(i), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
     }
 
     return result;
@@ -783,7 +840,12 @@ public class DiffUtil {
 
     final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
     for (T tool : tools) {
-      if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
+      try {
+        if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     if (suppressedTools.isEmpty()) return tools;

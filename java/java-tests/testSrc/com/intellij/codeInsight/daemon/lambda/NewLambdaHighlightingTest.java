@@ -99,6 +99,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNestedLambdaWithInferenceVariableAsTargetType() throws Exception {
+    doTest();
+  }
+
   public void testIDEA127596() throws Exception {
     doTest();
   }

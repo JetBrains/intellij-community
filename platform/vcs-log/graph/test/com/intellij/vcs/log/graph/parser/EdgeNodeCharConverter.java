@@ -47,16 +47,14 @@ public class EdgeNodeCharConverter {
   @NotNull
   public static GraphNodeType parseGraphNodeType(char type) {
     GraphNodeType nodeType = GRAPH_NODE_TYPE_MAP.get(type);
-    if (nodeType == null)
-      throw new IllegalStateException("Illegal char for graph node type: " + type);
+    if (nodeType == null) throw new IllegalStateException("Illegal char for graph node type: " + type);
     return nodeType;
   }
 
   @NotNull
   public static GraphEdgeType parseGraphEdgeType(char type) {
     GraphEdgeType nodeType = GRAPH_EDGE_TYPE_MAP.get(type);
-    if (nodeType == null)
-      throw new IllegalStateException("Illegal char for graph edge type: " + type);
+    if (nodeType == null) throw new IllegalStateException("Illegal char for graph edge type: " + type);
     return nodeType;
   }
 

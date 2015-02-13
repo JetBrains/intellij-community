@@ -33,7 +33,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -127,11 +126,11 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(markers);
     TIntObjectHashMap<List<MergeableLineMarkerInfo>> sameLineMarkers = new TIntObjectHashMap<List<MergeableLineMarkerInfo>>();
     for (MergeableLineMarkerInfo info : forMerge) {
-      final LogicalPosition position = editor.offsetToLogicalPosition(info.startOffset);
-      List<MergeableLineMarkerInfo> infos = sameLineMarkers.get(position.line);
+      int line = editor.getDocument().getLineNumber(info.startOffset);
+      List<MergeableLineMarkerInfo> infos = sameLineMarkers.get(line);
       if (infos == null) {
         infos = new ArrayList<MergeableLineMarkerInfo>();
-        sameLineMarkers.put(position.line, infos);
+        sameLineMarkers.put(line, infos);
       }
       infos.add(info);
     }

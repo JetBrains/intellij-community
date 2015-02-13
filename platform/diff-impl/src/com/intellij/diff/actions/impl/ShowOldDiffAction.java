@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class ShowOldDiffAction extends DumbAwareAction {
   @NonNls public static final Object DO_NOT_TRY_MIGRATE = "doNotTryMigrate";
 
@@ -54,8 +56,8 @@ public class ShowOldDiffAction extends DumbAwareAction {
       return;
     }
 
-    DiffContent[] contents = ((ContentDiffRequest)request).getContents();
-    if (contents.length != 2) {
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    if (contents.size() != 2) {
       e.getPresentation().setEnabled(false);
       return;
     }
@@ -78,12 +80,12 @@ public class ShowOldDiffAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     ContentDiffRequest request = (ContentDiffRequest)e.getRequiredData(DiffDataKeys.DIFF_REQUEST);
-    DiffContent[] contents = request.getContents();
-    String[] titles = request.getContentTitles();
+    List<DiffContent> contents = request.getContents();
+    List<String> titles = request.getContentTitles();
 
     SimpleDiffRequest newRequest = new SimpleDiffRequest(e.getProject(), request.getTitle());
-    newRequest.setContentTitles(titles[0], titles[1]);
-    newRequest.setContents(convert(e.getProject(), contents[0]), convert(e.getProject(), contents[1]));
+    newRequest.setContentTitles(titles.get(0), titles.get(1));
+    newRequest.setContents(convert(e.getProject(), contents.get(0)), convert(e.getProject(), contents.get(1)));
     newRequest.addHint(DO_NOT_TRY_MIGRATE);
 
     DiffManager.getInstance().getDiffTool().show(newRequest);

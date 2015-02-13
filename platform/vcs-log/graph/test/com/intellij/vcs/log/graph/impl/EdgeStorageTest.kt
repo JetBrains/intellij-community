@@ -21,11 +21,8 @@ import com.intellij.vcs.log.graph.collapsing.EdgeStorage
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
-import java.util.ArrayList
 import com.intellij.vcs.log.graph.utils.sortR
-import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.asString
-import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper
 
@@ -44,6 +41,7 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
     createEdge(edge.mainId, edge.additionId ?: EdgeStorage.NULL_ID, edge.edgeType)
     return this
   }
+
   fun EdgeStorage.remove(edge: FullEdge): EdgeStorage {
     removeEdge(edge.mainId, edge.additionId ?: EdgeStorage.NULL_ID, edge.edgeType)
     return this
@@ -52,7 +50,7 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
   fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
   fun EdgeStorage.asString(): String = getKnownIds().sortR().map {
-      adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
+    adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
   }.joinToString("|-")
 
   val EdgeStorage.adapter: EdgeStorageWrapper  get() = EdgeStorageWrapper(this, nodeIndexById, nodeIdByIndex)

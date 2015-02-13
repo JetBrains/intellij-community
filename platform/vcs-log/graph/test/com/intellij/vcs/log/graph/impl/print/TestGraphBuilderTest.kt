@@ -15,9 +15,7 @@
  */
 package com.intellij.vcs.log.graph.impl.print
 
-import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.*
-import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import org.junit.Test
 
