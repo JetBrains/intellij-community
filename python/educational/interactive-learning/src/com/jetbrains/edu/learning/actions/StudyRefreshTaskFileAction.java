@@ -19,12 +19,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.jetbrains.edu.learning.StudyNames;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.courseFormat.info.LessonInfo;
+import com.jetbrains.edu.learning.StudyPainter;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -63,15 +66,16 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
-    taskFile.drawAllWindows(editor);
-    taskFile.createGuardedBlocks(editor);
+    StudyPainter.drawAllWindows(editor, taskFile);
+    StudyPainter.createGuardedBlocks(editor, taskFile);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
       }
     });
-    taskFile.navigateToFirstTaskWindow(editor);
+
+    StudyNavigator.navigateToFirstTaskWindow(editor, taskFile);
     showBalloon(project, "You can start again now", MessageType.INFO);
   }
 
@@ -121,7 +125,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     clearDocument(document);
     Task task = taskFile.getTask();
     String lessonDir = StudyNames.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
-    String taskDir = Task.TASK_DIR + String.valueOf(task.getIndex() + 1);
+    String taskDir = StudyNames.TASK_DIR + String.valueOf(task.getIndex() + 1);
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {

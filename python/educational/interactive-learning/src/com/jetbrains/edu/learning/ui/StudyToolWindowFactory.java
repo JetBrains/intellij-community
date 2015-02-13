@@ -7,11 +7,11 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.info.LessonInfo;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.course.Course;
-import com.jetbrains.edu.learning.course.Lesson;
-import com.jetbrains.edu.learning.course.LessonInfo;
-import com.jetbrains.edu.learning.course.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

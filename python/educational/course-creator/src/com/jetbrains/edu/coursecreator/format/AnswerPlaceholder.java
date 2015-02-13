@@ -27,9 +27,10 @@ public class AnswerPlaceholder implements Comparable<AnswerPlaceholder> {
   @Expose private String hint;
   @Expose private String possible_answer;
   @Expose private int length;
+  private int myIndex;
+
   private String myTaskText;
   private int myReplacementLength;
-  private int myIndex;
 
   public String getHint() {
     return hint;

@@ -27,11 +27,12 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.actions.*;
-import com.jetbrains.edu.learning.course.Course;
-import com.jetbrains.edu.learning.course.Lesson;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.ui.StudyCondition;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jdom.Element;
@@ -326,7 +327,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
       return null;
     }
     final String taskDirName = taskDir.getName();
-    if (taskDirName.contains(Task.TASK_DIR)) {
+    if (taskDirName.contains(StudyNames.TASK_DIR)) {
       final VirtualFile lessonDir = taskDir.getParent();
       if (lessonDir != null) {
         int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
@@ -335,7 +336,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
           return null;
         }
         final Lesson lesson = lessons.get(lessonIndex);
-        int taskIndex = StudyUtils.getIndex(taskDirName, Task.TASK_DIR);
+        int taskIndex = StudyUtils.getIndex(taskDirName, StudyNames.TASK_DIR);
         final List<Task> tasks = lesson.getTaskList();
         if (!StudyUtils.indexIsValid(taskIndex, tasks)) {
           return null;
@@ -352,8 +353,8 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     public void fileCreated(@NotNull VirtualFileEvent event) {
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
-      if (taskDir != null && taskDir.getName().contains(Task.TASK_DIR)) {
-        int taskIndex = StudyUtils.getIndex(taskDir.getName(), Task.TASK_DIR);
+      if (taskDir != null && taskDir.getName().contains(StudyNames.TASK_DIR)) {
+        int taskIndex = StudyUtils.getIndex(taskDir.getName(), StudyNames.TASK_DIR);
         final VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null && lessonDir.getName().contains(StudyNames.LESSON_DIR)) {
           int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);

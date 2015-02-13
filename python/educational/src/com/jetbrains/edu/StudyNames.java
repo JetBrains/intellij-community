@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu;
 
 import org.jetbrains.annotations.NonNls;
 
 @NonNls
 public class StudyNames {
   public static final String TASK_HTML = "task.html";
+  public static final String TASK_TESTS = "tests.py";
   public static final String LESSON = "lesson";
+  public static final String TEST_HELPER = "test_helper.py";
+  public static final String USER_TESTER = "user_tester.py";
   public static final String LESSON_DIR = "lesson";
   public static final String TEST_TAB_NAME = "test";
   public static final String USER_TEST_INPUT = "input";
   public static final String USER_TEST_OUTPUT = "output";
+  public static final String WINDOW_POSTFIX = "_window.py";
+  public static final String TASK_DIR = "task";
+  public static final String USER_TESTS = "userTests";
+  public static final String SANDBOX_DIR = "Sandbox";
 
   private StudyNames() {
   }

@@ -3,9 +3,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyDocumentListener;
-import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 
 import java.util.ArrayList;
 import java.util.List;

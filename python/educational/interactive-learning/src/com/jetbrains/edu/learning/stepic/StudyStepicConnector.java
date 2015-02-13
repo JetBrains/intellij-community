@@ -5,7 +5,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.HttpRequests;
-import com.jetbrains.edu.learning.course.*;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.CourseInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;

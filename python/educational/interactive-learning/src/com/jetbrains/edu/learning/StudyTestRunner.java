@@ -4,7 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.course.Task;
+import com.jetbrains.edu.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class StudyTestRunner {

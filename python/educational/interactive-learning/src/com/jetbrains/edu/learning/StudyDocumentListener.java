@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

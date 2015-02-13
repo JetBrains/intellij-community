@@ -14,10 +14,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.jetbrains.edu.learning.StudyNames;
+import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +60,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (lessonDir == null) {
       return;
     }
-    String taskDirName = Task.TASK_DIR + String.valueOf(nextTaskIndex + 1);
+    String taskDirName = StudyNames.TASK_DIR + String.valueOf(nextTaskIndex + 1);
     VirtualFile taskDir = lessonDir.findChild(taskDirName);
     if (taskDir == null) {
       return;

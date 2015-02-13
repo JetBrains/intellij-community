@@ -20,12 +20,12 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.edu.learning.StudyNames;
+import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.UserTest;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.UserTest;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyTestContentPanel;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,7 @@ public class StudyEditInputAction extends DumbAwareAction {
           if (newSelection.getIcon() != null) {
             int tabCount = tabbedPane.getTabCount();
             VirtualFile taskDir = openedFile.getParent();
-            VirtualFile testsDir = taskDir.findChild(Task.USER_TESTS);
+            VirtualFile testsDir = taskDir.findChild(StudyNames.USER_TESTS);
             assert testsDir != null;
             UserTest userTest = createUserTest(testsDir, currentTask);
             userTest.setEditable(true);

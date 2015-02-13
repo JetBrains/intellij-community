@@ -30,15 +30,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.jetbrains.edu.learning.StudyDocumentListener;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTestRunner;
-import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.StudyStatus;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.StudyStatus;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +96,7 @@ public class StudyCheckAction extends DumbAwareAction {
       FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       if (fileEditor instanceof StudyEditor) {
         StudyEditor studyEditor = (StudyEditor)fileEditor;
-        taskFile.drawAllWindows(studyEditor.getEditor());
+        StudyPainter.drawAllWindows(studyEditor.getEditor(), taskFile);
       }
     }
   }
@@ -303,7 +301,8 @@ public class StudyCheckAction extends DumbAwareAction {
         IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true);
       }
     });
-    taskFileToNavigate.navigateToFirstFailedTaskWindow(editor);
+
+    StudyNavigator.navigateToFirstFailedTaskWindow(editor, taskFileToNavigate);
   }
 
   private void runSmartTestProcess(@NotNull final VirtualFile taskDir,
@@ -325,7 +324,8 @@ public class StudyCheckAction extends DumbAwareAction {
       if (!answerPlaceholder.isValid(document)) {
         continue;
       }
-      answerPlaceholder.smartCheck(project, answerFile, answerTaskFile, taskFile, testRunner, virtualFile, document);
+      StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
+                                   virtualFile, document);
     }
     StudyUtils.deleteFile(answerFile);
   }

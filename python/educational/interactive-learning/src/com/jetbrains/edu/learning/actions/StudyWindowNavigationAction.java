@@ -6,11 +6,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
-import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
             if (nextAnswerPlaceholder == null) {
               return;
             }
-            selectedTaskFile.navigateToTaskWindow(selectedEditor, nextAnswerPlaceholder);
+            StudyNavigator.navigateToTaskWindow(selectedEditor, nextAnswerPlaceholder, selectedTaskFile);
             selectedTaskFile.setSelectedAnswerPlaceholder(nextAnswerPlaceholder);
             }
           }

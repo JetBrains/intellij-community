@@ -1,8 +1,8 @@
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.Course;
 import com.jetbrains.python.PythonHelpersLocator;
 import junit.framework.TestCase;
 

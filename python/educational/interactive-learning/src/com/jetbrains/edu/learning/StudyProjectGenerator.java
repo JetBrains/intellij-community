@@ -24,7 +24,10 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.edu.learning.course.*;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.stepic.StudyStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +59,7 @@ public class StudyProjectGenerator {
     flushCourse(course);
     course.init(false);
     final File courseDirectory = new File(myCoursesDir, course.getName());
-    course.create(baseDir, courseDirectory, project);
+    StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
     course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     StudyTaskManager.getInstance(project).setCourse(course);
