@@ -60,10 +60,14 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    myFixture.tearDown();
-    myFixture = null;
-    myModule = null;
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myModule = null;
+      super.tearDown();
+    }
   }
 
   protected void doTest() {
