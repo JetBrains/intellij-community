@@ -86,6 +86,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA126056() { doTest(); }
   public void testIDEA125254() { doTest(); }
   public void testIDEA124961() { doTest(); }
+  public void testIDEA124961_1_8_0_40() { doTest(); }
   public void testIDEA126109() { doTest(); }
   public void testIDEA126809() { doTest(); }
   public void testIDEA124424() { doTest(); }
