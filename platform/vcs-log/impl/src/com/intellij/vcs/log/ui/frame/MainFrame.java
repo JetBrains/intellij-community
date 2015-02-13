@@ -25,6 +25,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -186,7 +187,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          myUI.hideAll();
+          myUI.collapseAll();
         }
 
         @Override
@@ -195,13 +196,23 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
           if (!myFilterUi.getFilters().isEmpty()) {
             e.getPresentation().setEnabled(false);
           }
+          if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
+            e.getPresentation().setIcon(VcsLogIcons.CollapseMerges);
+            e.getPresentation().setText("Collapse all merges");
+            e.getPresentation().setDescription("Collapse all merges");
+          }
+          else {
+            e.getPresentation().setIcon(VcsLogIcons.CollapseBranches);
+            e.getPresentation().setText("Collapse all linear branches");
+            e.getPresentation().setDescription("Collapse all linear branches");
+          }
         }
       };
 
     AnAction expandBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myUI.showAll();
+        myUI.expandAll();
       }
 
       @Override
@@ -209,6 +220,16 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         super.update(e);
         if (!myFilterUi.getFilters().isEmpty()) {
           e.getPresentation().setEnabled(false);
+        }
+        if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
+          e.getPresentation().setIcon(VcsLogIcons.ExpandMerges);
+          e.getPresentation().setText("Expand all merges");
+          e.getPresentation().setDescription("Expand all merges");
+        }
+        else {
+          e.getPresentation().setIcon(VcsLogIcons.ExpandBranches);
+          e.getPresentation().setText("Expand all linear branches");
+          e.getPresentation().setDescription("Expand all linear branches");
         }
       }
     };

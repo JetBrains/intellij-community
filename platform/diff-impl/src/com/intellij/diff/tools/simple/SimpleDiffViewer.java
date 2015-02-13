@@ -252,23 +252,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         }
       };
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
       return new Runnable() {
         @Override
         public void run() {
           clearDiffPresentation();
           myPanel.addDiffErrorNotification();
-        }
-      };
-    }
-    catch (final Error e) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
-          throw e;
         }
       };
     }

@@ -67,20 +67,20 @@ public class CommitParser {
 
   @NotNull
   public static List<GraphCommit<String>> parseStringCommitList(@NotNull String input) {
-    List<GraphCommit<String>> vcsCommitParentses = new ArrayList<GraphCommit<String>>();
-    for(String line : toLines(input)) {
-      vcsCommitParentses.add(CommitParser.parseCommitParentsAsString(line));
+    List<GraphCommit<String>> vcsCommitParents = new ArrayList<GraphCommit<String>>();
+    for (String line : toLines(input)) {
+      vcsCommitParents.add(CommitParser.parseCommitParentsAsString(line));
     }
-    return vcsCommitParentses;
+    return vcsCommitParents;
   }
 
   @NotNull
   public static List<GraphCommit<Integer>> parseIntegerCommitList(@NotNull String input) {
-    List<GraphCommit<Integer>> vcsCommitParentses = new ArrayList<GraphCommit<Integer>>();
-    for(String line : toLines(input)) {
-      vcsCommitParentses.add(CommitParser.parseCommitParentsAsInteger(line));
+    List<GraphCommit<Integer>> vcsCommitParents = new ArrayList<GraphCommit<Integer>>();
+    for (String line : toLines(input)) {
+      vcsCommitParents.add(CommitParser.parseCommitParentsAsInteger(line));
     }
-    return vcsCommitParentses;
+    return vcsCommitParents;
   }
 
 }

@@ -20,5 +20,6 @@ package com.intellij.vcs.log.graph.utils;
  */
 public interface IntList {
   int size();
+
   int get(int index);
 }

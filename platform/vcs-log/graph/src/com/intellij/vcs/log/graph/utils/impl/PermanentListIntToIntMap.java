@@ -29,10 +29,8 @@ public class PermanentListIntToIntMap extends AbstractIntToIntMap implements Int
 
   @NotNull
   public static IntToIntMap newInstance(@NotNull final Flags visibleIndexes, int shortSize, int blockSize) {
-    if (shortSize < 0)
-      throw new NegativeArraySizeException("shortSize < 0: " + shortSize);
-    if (shortSize == 0)
-      return createEmptyIntToIntMap(visibleIndexes);
+    if (shortSize < 0) throw new NegativeArraySizeException("shortSize < 0: " + shortSize);
+    if (shortSize == 0) return createEmptyIntToIntMap(visibleIndexes);
 
     int[] strongShortIndexes = new int[(shortSize - 1) / blockSize + 1];
 
@@ -41,8 +39,7 @@ public class PermanentListIntToIntMap extends AbstractIntToIntMap implements Int
 
       if (visibleIndexes.get(longIndex)) {
         currentShortIndex++;
-        if (currentShortIndex % blockSize == 0)
-          strongShortIndexes[currentShortIndex / blockSize] = longIndex;
+        if (currentShortIndex % blockSize == 0) strongShortIndexes[currentShortIndex / blockSize] = longIndex;
       }
     }
 
@@ -74,15 +71,13 @@ public class PermanentListIntToIntMap extends AbstractIntToIntMap implements Int
     };
   }
 
-  @NotNull
-  private final Flags myVisibleIndexes;
+  @NotNull private final Flags myVisibleIndexes;
 
   private final int myLongSize;
   private final int myShortSize;
 
   private final int myBlockSize;
-  @NotNull
-  private final int[] myStrongShortIndexes;
+  @NotNull private final int[] myStrongShortIndexes;
 
   private PermanentListIntToIntMap(@NotNull Flags visibleIndexes, int shortSize, int blockSize, @NotNull int[] strongShortIndexes) {
     myVisibleIndexes = visibleIndexes;
@@ -111,13 +106,11 @@ public class PermanentListIntToIntMap extends AbstractIntToIntMap implements Int
 
     int sub = shortIndex - strongIndex * myBlockSize;
     for (int longIndex = myStrongShortIndexes[strongIndex]; longIndex < myLongSize; longIndex++) {
-      if (myVisibleIndexes.get(longIndex))
-        sub--;
-      if (sub == -1)
-        return longIndex;
+      if (myVisibleIndexes.get(longIndex)) sub--;
+      if (sub == -1) return longIndex;
     }
-    throw new IllegalStateException("Not found long index for short index: " + shortIndex
-                                    + ". Long & short size is: " + myLongSize + ", " + myShortSize + ".");
+    throw new IllegalStateException(
+      "Not found long index for short index: " + shortIndex + ". Long & short size is: " + myLongSize + ", " + myShortSize + ".");
   }
 
 }

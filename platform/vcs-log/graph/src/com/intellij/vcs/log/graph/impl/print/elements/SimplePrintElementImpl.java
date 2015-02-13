@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SimplePrintElementImpl extends PrintElementWithGraphElement implements SimplePrintElement {
 
-  @NotNull
-  private final Type myType;
+  @NotNull private final Type myType;
 
   public SimplePrintElementImpl(int rowIndex,
                                 int positionInCurrentRow,

@@ -21,7 +21,6 @@ import java.util.Map;
  */
 public class Task implements Stateful {
   public static final String TASK_DIR = "task";
-  private static final String ourTestFile = "tests.py";
   private String name;
   private String text;
   private String testsText;
@@ -74,10 +73,6 @@ public class Task implements Stateful {
 
   public List<UserTest> getUserTests() {
     return userTests;
-  }
-
-  public String getTestFile() {
-    return ourTestFile;
   }
 
   public String getText() {

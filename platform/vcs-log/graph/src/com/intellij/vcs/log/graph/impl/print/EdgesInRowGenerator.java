@@ -31,11 +31,9 @@ public class EdgesInRowGenerator {
 
   private final int WALK_SIZE;
 
-  @NotNull
-  private final LinearGraph myGraph;
+  @NotNull private final LinearGraph myGraph;
 
-  @NotNull
-  private final SLRUMap<Integer, GraphEdges> cacheNU = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
+  @NotNull private final SLRUMap<Integer, GraphEdges> cacheNU = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
   private final SLRUMap<Integer, GraphEdges> cacheND = new SLRUMap<Integer, GraphEdges>(CACHE_SIZE, CACHE_SIZE * 2);
 
   public EdgesInRowGenerator(@NotNull LinearGraph graph) {
@@ -153,8 +151,7 @@ public class EdgesInRowGenerator {
 
   private static class GraphEdges {
     // this must be mutably set
-    @NotNull
-    private final Set<GraphEdge> myEdges;
+    @NotNull private final Set<GraphEdge> myEdges;
     private final int myRow;
 
     private GraphEdges(int row) {

@@ -28,7 +28,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="Edu">
-    <StudyLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyStudyLanguageManager" language="Python"/>
+    <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
   </extensions>
 
   <application-components>

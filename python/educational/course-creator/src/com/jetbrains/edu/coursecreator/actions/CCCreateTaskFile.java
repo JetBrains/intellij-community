@@ -21,7 +21,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.StudyLanguageManager;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.format.Lesson;
 import com.jetbrains.edu.coursecreator.format.Task;
@@ -68,15 +68,15 @@ public class CCCreateTaskFile extends DumbAwareAction {
     if (type == null) {
       return;
     }
-    final StudyLanguageManager studyLanguageManager = CCUtils.getStudyLanguageManager(course);
-    if (studyLanguageManager == null) {
+    final CCLanguageManager CCLanguageManager = CCUtils.getStudyLanguageManager(course);
+    if (CCLanguageManager == null) {
       return;
     }
     final String extension = type.getDefaultExtension();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final FileTemplate taskTemplate = studyLanguageManager.getTaskFileTemplateForExtension(project, extension);
+        final FileTemplate taskTemplate = CCLanguageManager.getTaskFileTemplateForExtension(project, extension);
         final String answerFileName = taskFileName + ".answer." + extension;
         try {
           if (taskTemplate == null) {

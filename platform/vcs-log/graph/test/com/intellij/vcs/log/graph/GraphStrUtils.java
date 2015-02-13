@@ -35,19 +35,19 @@ import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar;
 
 public class GraphStrUtils {
 
-  public static final Comparator<GraphElement> GRAPH_ELEMENT_COMPARATOR = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
-    @NotNull
-    @Override
-    public Integer fun(Integer nodeIndex) {
-      return 0;
-    }
-  });
+  public static final Comparator<GraphElement> GRAPH_ELEMENT_COMPARATOR =
+    new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Integer nodeIndex) {
+        return 0;
+      }
+    });
 
   public static <CommitId> String commitsInfoToStr(PermanentCommitsInfo<CommitId> commitsInfo, int size, Function<CommitId, String> toStr) {
     StringBuilder s = new StringBuilder();
     for (int i = 0; i < size; i++) {
-      if (i != 0)
-        s.append("\n");
+      if (i != 0) s.append("\n");
 
       CommitId commitId = commitsInfo.getCommitId(i);
       int commitIndex = commitsInfo.getNodeId(commitId);
@@ -63,8 +63,7 @@ public class GraphStrUtils {
   public static String permanentGraphLayoutModelToStr(GraphLayout graphLayout, int nodesCount) {
     StringBuilder s = new StringBuilder();
     for (int nodeIndex = 0; nodeIndex < nodesCount; nodeIndex++) {
-      if (nodeIndex != 0)
-        s.append("\n");
+      if (nodeIndex != 0) s.append("\n");
 
       s.append(graphLayout.getLayoutIndex(nodeIndex)).append(CommitParser.SEPARATOR).append(graphLayout.getOneOfHeadNodeIndex(nodeIndex));
     }
@@ -74,8 +73,7 @@ public class GraphStrUtils {
   public static String containingBranchesGetterToStr(ContainingBranchesGetter containingBranchesGetter, int nodesCount) {
     StringBuilder s = new StringBuilder();
     for (int nodeIndex = 0; nodeIndex < nodesCount; nodeIndex++) {
-      if (nodeIndex != 0)
-        s.append("\n");
+      if (nodeIndex != 0) s.append("\n");
 
       List<Integer> branchNodeIndexes = new ArrayList<Integer>(containingBranchesGetter.getBranchNodeIndexes(nodeIndex));
       if (branchNodeIndexes.isEmpty()) {
@@ -86,10 +84,12 @@ public class GraphStrUtils {
       Collections.sort(branchNodeIndexes);
       boolean first = true;
       for (int branchNodeIndex : branchNodeIndexes) {
-        if (first)
+        if (first) {
           first = false;
-        else
+        }
+        else {
           s.append(" ");
+        }
 
         s.append(branchNodeIndex);
       }
@@ -100,8 +100,7 @@ public class GraphStrUtils {
   public static String edgesInRowToStr(@NotNull EdgesInRowGenerator edgesInRowGenerator, int nodesCount) {
     StringBuilder s = new StringBuilder();
     for (int i = 0; i < nodesCount; i++) {
-      if (i > 0)
-        s.append("\n");
+      if (i > 0) s.append("\n");
       Set<GraphEdge> edgesInRow = edgesInRowGenerator.getEdgesInRow(i);
       s.append(edgesToStr(edgesInRow));
     }
@@ -109,8 +108,7 @@ public class GraphStrUtils {
   }
 
   public static String edgesToStr(@NotNull Set<GraphEdge> edges) {
-    if (edges.isEmpty())
-      return "none";
+    if (edges.isEmpty()) return "none";
 
     List<GraphEdge> sortedEdges = new ArrayList<GraphEdge>(edges);
     Collections.sort(sortedEdges, GRAPH_ELEMENT_COMPARATOR);

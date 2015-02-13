@@ -28,8 +28,7 @@ import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphEleme
 fun LinearGraph.asString(sorted: Boolean = false): String {
   val s = StringBuilder()
   for (nodeIndex in 0..nodesCount() - 1) {
-    if (nodeIndex > 0)
-      s.append("\n");
+    if (nodeIndex > 0) s.append("\n");
     val node = getGraphNode(nodeIndex)
     s.append(node.asString()).append(CommitParser.SEPARATOR)
 
@@ -48,7 +47,7 @@ fun Int?.asString() = if (this == null) "n" else toString()
 
 fun GraphEdge.asString(): String = "${getUpNodeIndex().asString()}:${getDownNodeIndex().asString()}:${getTargetId().asString()}_${toChar(getType())}"
 
-fun GraphElement.asString(): String = when(this) {
+fun GraphElement.asString(): String = when (this) {
   is GraphNode -> asString()
   is GraphEdge -> asString()
   else -> throw IllegalArgumentException("Uncown type of PrintElement: $this")
@@ -61,7 +60,7 @@ fun PrintElementWithGraphElement.asString(): String {
   val color = getColorId()
   val pos = getPositionInCurrentRow()
   val sel = if (isSelected()) "Select" else "Unselect"
-  return when(this) {
+  return when (this) {
     is SimplePrintElement -> {
       val t = getType()
       "Simple:${t}|-$row:${pos}|-$color:${sel}($element)"
@@ -83,16 +82,14 @@ fun PrintElementGenerator.asString(size: Int): String {
   val s = StringBuilder()
 
   for (row in 0..size - 1) {
-    if (row > 0)
-      s.append("\n")
+    if (row > 0) s.append("\n")
     val elements = getPrintElements(row).sortBy {
       val pos = it.getPositionInCurrentRow()
       if (it is SimplePrintElement) {
         1024 * pos + it.getType().ordinal()
       } else if (it is EdgePrintElement) {
         1024 * pos + (it.getType().ordinal() + 1) * 64 + it.getPositionInOtherRow()
-      } else
-        0
+      } else 0
     }
     elements.map { it.asString() }.joinTo(s, separator = "\n  ")
   }

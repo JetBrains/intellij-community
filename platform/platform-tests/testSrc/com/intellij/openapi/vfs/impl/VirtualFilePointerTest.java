@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
@@ -150,6 +151,26 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     catch (IOException e) {
       fail();
     }
+  }
+
+  public void testUrlsHavingOnlyStartingSlashInCommon() throws Exception {
+    VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
+    VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
+    final LightVirtualFile root = new LightVirtualFile("/");
+    LightVirtualFile a = createLightFile(root, "a");
+    LightVirtualFile b = createLightFile(root, "b");
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
+  }
+
+  @NotNull
+  private static LightVirtualFile createLightFile(final LightVirtualFile parent, final String name) {
+    return new LightVirtualFile(name) {
+      @Override
+      public VirtualFile getParent() {
+        return parent;
+      }
+    };
   }
 
   public void testPathNormalization() throws Exception {

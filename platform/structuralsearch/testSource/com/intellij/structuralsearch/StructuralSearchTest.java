@@ -170,17 +170,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s55 = " a = b.class; ";
   private static final String s56 = "'T.class";
 
-  private static final String s57 = "{ /** @author Maxim */ class C { " +
+  private static final String s57 = "/** @author Maxim */ class C {" +
+                                    "  private int value; " +
                                     "} " +
                                     "class D {" +
-                                    "/** @serializable */ private int value; " +
-                                    "/** @since 1.4 */ void a() {} "+
+                                    "  /** @serializable */ private int value;" +
+                                    "private int value2; " +
+                                    "  /** @since 1.4 */ void a() {} "+
                                     "}" +
                                     "class F { " +
-                                    "/** @since 1.4 */ void a() {} "+
-                                    "/** @serializable */ private int value2; " +
+                                    "  /** @since 1.4 */ void a() {} "+
+                                    "  /** @serializable */ private int value2; " +
                                     "}" +
-                                    "class G { /** @param a*/ void a() {} } }";
+                                    "class G { /** @param a*/ void a() {} }";
   private static final String s57_2 = "/** @author Maxim */ class C { " +
                                       "} " +
                                       "class D {" +
@@ -193,7 +195,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                       "}" +
                                       "class G { /** @param a*/ void a() {} }";
   private static final String s58 = "/** @'T '_T2 */ class '_ { }";
-  private static final String s58_2 = "class '_ { /** @serializable '_ */ '_ '_; }";
+  private static final String s58_2 = "class '_ { /** @serializable '_* */ '_ '_; }";
   private static final String s58_3 = "class '_ { /** @'T 1.4 */ '_ '_() {} }";
   private static final String s58_4 = "/** @'T '_T2 */";
   private static final String s58_5 = "/** @'T '_T2? */";
@@ -1674,7 +1676,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // javadoc comment for method
     assertEquals(
       "javadoc comment for method",
-      3,
+      2,
       findMatchesCount(s57, s58_3)
     );
 

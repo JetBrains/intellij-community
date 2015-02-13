@@ -33,10 +33,8 @@ import java.util.Collection;
 
 public abstract class AbstractPrintElementGenerator implements PrintElementGenerator {
 
-  @NotNull
-  protected final LinearGraph myLinearGraph;
-  @NotNull
-  protected final PrintElementManager myPrintElementManager;
+  @NotNull protected final LinearGraph myLinearGraph;
+  @NotNull protected final PrintElementManager myPrintElementManager;
 
   protected AbstractPrintElementGenerator(@NotNull LinearGraph linearGraph, @NotNull PrintElementManager printElementManager) {
     myLinearGraph = linearGraph;
@@ -75,7 +73,8 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
     if (type == EdgePrintElement.Type.DOWN) {
       positionInCurrentRow = shortEdge.myUpPosition;
       positionInOtherRow = shortEdge.myDownPosition;
-    } else {
+    }
+    else {
       positionInCurrentRow = shortEdge.myDownPosition;
       positionInOtherRow = shortEdge.myUpPosition;
     }
@@ -91,8 +90,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
 
     int rowIndex = printElement.getRowIndex();
     for (PrintElementWithGraphElement printElementWithGE : getPrintElements(rowIndex)) {
-      if (printElementWithGE.equals(printElement))
-        return printElementWithGE;
+      if (printElementWithGE.equals(printElement)) return printElementWithGE;
     }
     throw new IllegalStateException("Not found graphElement for this printElement: " + printElement);
   }
@@ -105,8 +103,7 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
   protected abstract Collection<SimpleRowElement> getSimpleRowElements(int rowIndex);
 
   protected static class ShortEdge {
-    @NotNull
-    public final GraphEdge myEdge;
+    @NotNull public final GraphEdge myEdge;
     public final int myUpPosition;
     public final int myDownPosition;
 
@@ -118,10 +115,8 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
   }
 
   protected static class SimpleRowElement {
-    @NotNull
-    public final GraphElement myElement;
-    @NotNull
-    public final SimplePrintElement.Type myType;
+    @NotNull public final GraphElement myElement;
+    @NotNull public final SimplePrintElement.Type myType;
     public final int myPosition;
 
     public SimpleRowElement(@NotNull GraphElement element, @NotNull SimplePrintElement.Type type, int position) {

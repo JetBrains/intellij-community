@@ -20,5 +20,6 @@ public interface BekIntMap {
 
   // usualIndex == id
   int getBekIndex(int usualIndex);
+
   int getUsualIndex(int bekIndex);
 }

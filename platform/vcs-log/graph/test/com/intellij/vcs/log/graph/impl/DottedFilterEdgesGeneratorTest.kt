@@ -30,7 +30,7 @@ public class DottedFilterEdgesGeneratorTest {
 
   fun LinearGraph.assert(upIndex: Int = 0, downIndex: Int = nodesCount() - 1, result: TestGraphBuilder.() -> Unit) {
     val nodesVisibility = UnsignedBitSet()
-    for(nodeIndex in 0..nodesCount() - 1) {
+    for (nodeIndex in 0..nodesCount() - 1) {
       val graphNode = getGraphNode(nodeIndex)
       nodesVisibility.set(getNodeId(nodeIndex), graphNode.getType() == GraphNodeType.USUAL)
     }
@@ -82,9 +82,9 @@ public class DottedFilterEdgesGeneratorTest {
   3 4 5
  */
   Test fun downTree() = graph {
-    0(1,2)
-    1.UNM(3,4)
-    2.UNM(4,5)
+    0(1, 2)
+    1.UNM(3, 4)
+    2.UNM(4, 5)
     3()
     4()
     5()
@@ -104,7 +104,7 @@ public class DottedFilterEdgesGeneratorTest {
  */
   Test fun upTree() = graph {
     0(3)
-    1(3,4)
+    1(3, 4)
     2(4)
     3.UNM(5)
     4.UNM(5)

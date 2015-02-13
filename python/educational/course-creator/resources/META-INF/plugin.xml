@@ -38,7 +38,7 @@
   </project-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
     </extensionPoint>
   </extensionPoints>
 

@@ -46,7 +46,8 @@ public class PermanentLinearGraphBuilder<CommitId> {
       List parents = commit.getParents();
       if (parents.size() == 1 && parents.get(0).equals(nextCommitHashIndex)) {
         simpleNodes.set(nodeIndex, true);
-      } else {
+      }
+      else {
         longEdgesCount += parents.size();
       }
     }
@@ -56,8 +57,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   @Nullable
   private static <CommitId> CommitId nextCommitHashIndex(List<? extends GraphCommit<CommitId>> commits, int nodeIndex) {
-    if (nodeIndex < commits.size() - 1)
-      return commits.get(nodeIndex + 1).getId();
+    if (nodeIndex < commits.size() - 1) return commits.get(nodeIndex + 1).getId();
     return null;
   }
 
@@ -107,7 +107,8 @@ public class PermanentLinearGraphBuilder<CommitId> {
         if (myLongEdges[edgeIndex] == -1) {
           myLongEdges[edgeIndex] = downNodeIndex;
           return;
-        } else {
+        }
+        else {
           throw new IllegalStateException("Edge was set early!. Up node: " + upNodeIndex + ", down node: " + downNodeIndex);
         }
       }
@@ -119,8 +120,7 @@ public class PermanentLinearGraphBuilder<CommitId> {
     GraphCommit<CommitId> commit = myCommits.get(nodeIndex);
 
     List<Integer> upNodes = upAdjacentNodes.remove(commit.getId());
-    if (upNodes == null)
-      upNodes = Collections.emptyList();
+    if (upNodes == null) upNodes = Collections.emptyList();
 
     int edgeIndex = myNodeToEdgeIndex[nodeIndex];
     for (Integer upNodeIndex : upNodes) {

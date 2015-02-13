@@ -196,7 +196,7 @@ class FilePointerPartNode {
     // else there is no match
     // split
     // try to make "/" start the splitted part
-    if (index > start && index != path.length() && path.charAt(index-1)== '/') index--;
+    if (index > start + 1 && index != path.length() && path.charAt(index - 1) == '/') index--;
     String pathRest = path.substring(index);
     FilePointerPartNode newNode = pathRest.isEmpty() ? this : new FilePointerPartNode(pathRest, this, fileAndUrl);
     String commonPredecessor = StringUtil.first(part, index - start, false);

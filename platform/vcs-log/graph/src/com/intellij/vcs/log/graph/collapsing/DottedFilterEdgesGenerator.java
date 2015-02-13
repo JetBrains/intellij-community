@@ -40,7 +40,10 @@ public class DottedFilterEdgesGenerator {
   private final int myDownIndex;
   @NotNull private final ShiftNumber myNumbers;
 
-  private DottedFilterEdgesGenerator(@NotNull CollapsedGraph collapsedGraph, @NotNull CollapsedGraph.Modification modification, int upIndex, int downIndex) {
+  private DottedFilterEdgesGenerator(@NotNull CollapsedGraph collapsedGraph,
+                                     @NotNull CollapsedGraph.Modification modification,
+                                     int upIndex,
+                                     int downIndex) {
     myCollapsedGraph = collapsedGraph;
     myModification = modification;
     myLiteDelegateGraph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph());
@@ -99,19 +102,23 @@ public class DottedFilterEdgesGenerator {
             continue;
           }
 
-          if (nodeIsVisible(upNode))
+          if (nodeIsVisible(upNode)) {
             maxAdjNumber = Math.max(maxAdjNumber, myNumbers.getNumber(upNode));
-          else
+          }
+          else {
             nearlyUp = Math.max(nearlyUp, myNumbers.getNumber(upNode));
+          }
         }
 
         if (nearlyUp == maxAdjNumber || nearlyUp == Integer.MIN_VALUE) {
           myNumbers.setNumber(currentNodeIndex, maxAdjNumber);
-        } else {
+        }
+        else {
           addDottedEdge(currentNodeIndex, nearlyUp);
           myNumbers.setNumber(currentNodeIndex, nearlyUp);
         }
-      } else {
+      }
+      else {
         // node currentNodeIndex invisible
 
         int nearlyUp = Integer.MIN_VALUE;
@@ -139,19 +146,23 @@ public class DottedFilterEdgesGenerator {
             continue;
           }
 
-          if (nodeIsVisible(downNode))
+          if (nodeIsVisible(downNode)) {
             minAdjNumber = Math.min(minAdjNumber, myNumbers.getNumber(downNode));
-          else
+          }
+          else {
             nearlyDown = Math.min(nearlyDown, myNumbers.getNumber(downNode));
+          }
         }
 
         if (nearlyDown == minAdjNumber || nearlyDown == Integer.MAX_VALUE) {
           myNumbers.setNumber(currentNodeIndex, minAdjNumber);
-        } else {
+        }
+        else {
           addDottedEdge(currentNodeIndex, nearlyDown);
           myNumbers.setNumber(currentNodeIndex, nearlyDown);
         }
-      } else {
+      }
+      else {
         // node currentNodeIndex invisible
 
         int nearlyDown = Integer.MAX_VALUE;
@@ -167,7 +178,6 @@ public class DottedFilterEdgesGenerator {
       }
     }
   }
-
 
 
   static class ShiftNumber {

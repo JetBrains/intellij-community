@@ -118,14 +118,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myTemplateContext.clear();
 
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
-
-    Collections.sort(groups, new Comparator<TemplateGroup>() {
-      @Override
-      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    List<TemplateGroup> groups = getSortedGroups(templateSettings);
 
     initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
     myExpandByDefaultPanel.setSelectedChar(templateSettings.getDefaultShortcutChar());
@@ -137,6 +130,19 @@ public class TemplateListPanel extends JPanel implements Disposable {
     });
 
     myUpdateNeeded = true;
+  }
+
+  @NotNull
+  private static List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
+    List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
+
+    Collections.sort(groups, new Comparator<TemplateGroup>() {
+      @Override
+      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
+    return groups;
   }
 
   public void apply() throws ConfigurationException {
@@ -186,7 +192,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       return true;
     }
 
-    List<TemplateGroup> originalGroups = templateSettings.getTemplateGroups();
+    List<TemplateGroup> originalGroups = getSortedGroups(templateSettings);
     List<TemplateGroup> newGroups = getTemplateGroups();
 
     List<TemplateImpl> originalGroup = collectTemplates(originalGroups);

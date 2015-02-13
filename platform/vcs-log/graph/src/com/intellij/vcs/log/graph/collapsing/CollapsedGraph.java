@@ -98,7 +98,7 @@ public class CollapsedGraph {
   }
 
   // todo proper name
-  public boolean hasCollapsedEdge(int upNodeIndex, int downNodeIndex) {
+  public boolean isMyCollapsedEdge(int upNodeIndex, int downNodeIndex) {
     return new EdgeStorageWrapper(myEdgeStorage, myDelegatedGraph).hasEdge(upNodeIndex, downNodeIndex);
   }
 

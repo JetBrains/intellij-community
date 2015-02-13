@@ -24,8 +24,7 @@ public class SmartDeltaCompressor implements IntList {
 
   @NotNull
   public static SmartDeltaCompressor newInstance(@NotNull IntList deltaList) {
-    if (deltaList.size() < 0)
-      throw new NegativeArraySizeException("size < 0: " + deltaList.size());
+    if (deltaList.size() < 0) throw new NegativeArraySizeException("size < 0: " + deltaList.size());
 
     int bytesAfterCompression = countBytesAfterCompression(deltaList);
     byte[] deltas = new byte[bytesAfterCompression];
@@ -43,8 +42,7 @@ public class SmartDeltaCompressor implements IntList {
 
       for (int rem = 0; rem < 64; rem++) {
         int index = main * 64 + rem;
-        if (index >= size)
-          break;
+        if (index >= size) break;
         int sizeOf = sizeOf(deltaList.get(index));
         writeDelta(offset, deltaList.get(index), sizeOf, deltas);
 
@@ -55,10 +53,8 @@ public class SmartDeltaCompressor implements IntList {
          * 2 -> 01
          * 1 -> 00
          */
-        if (sizeOf == 3 || sizeOf == 4)
-          majorBits[main] |= mask;
-        if (sizeOf == 2 || sizeOf == 4)
-          minorBits[main] |= mask;
+        if (sizeOf == 3 || sizeOf == 4) majorBits[main] |= mask;
+        if (sizeOf == 2 || sizeOf == 4) minorBits[main] |= mask;
 
         offset += sizeOf;
       }
@@ -97,7 +93,7 @@ public class SmartDeltaCompressor implements IntList {
     long major = myMajorBits[main] << shift;
     long minor = myMinorBits[main] << shift;
 
-    int sizeOf = (int) (2 * (major >>> 63) + (minor >>> 63) + 1);
+    int sizeOf = (int)(2 * (major >>> 63) + (minor >>> 63) + 1);
 
     int endIndex = myStrongIndexes[main] + 2 * Long.bitCount(major) + Long.bitCount(minor) + rem + 1;
 

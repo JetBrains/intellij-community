@@ -40,19 +40,15 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
   }
 
   /**
-   *
-   * @param blockSize
-   *    memory usage is: longSize / blockSize;
-   *    getLongIndex access need: log(longSize) + blockSize
-   *    getShortIndex access need: blockSize
+   * @param blockSize memory usage is: longSize / blockSize;
+   *                  getLongIndex access need: log(longSize) + blockSize
+   *                  getShortIndex access need: blockSize
    */
   @NotNull
   public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize, int blockSize) {
-    if (longSize < 0)
-      throw new NegativeArraySizeException("size < 0: " + longSize);
+    if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
-    if (longSize == 0)
-      return IDIntToIntMap.EMPTY;
+    if (longSize == 0) return IDIntToIntMap.EMPTY;
 
     int sumSize = (longSize - 1) / blockSize + 1;
     ListIntToIntMap listIntToIntMap = new ListIntToIntMap(thisIsVisible, longSize, blockSize, new int[sumSize]);
@@ -60,8 +56,7 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     return listIntToIntMap;
   }
 
-  @NotNull
-  final BooleanFunction<Integer> myThisIsVisible;
+  @NotNull final BooleanFunction<Integer> myThisIsVisible;
 
   private final int myLongSize;
 
@@ -97,23 +92,22 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     int b = mySubSumOfBlocks.length - 1;
     while (b > a) {
       int middle = (a + b) / 2;
-      if (mySubSumOfBlocks[middle] <= shortIndex)
+      if (mySubSumOfBlocks[middle] <= shortIndex) {
         a = middle + 1;
-      else
+      }
+      else {
         b = middle;
+      }
     }
     assert a == b;
 
     int blockIndex = a;
     int prefVisibleCount = 0;
-    if (blockIndex > 0)
-      prefVisibleCount = mySubSumOfBlocks[blockIndex - 1];
+    if (blockIndex > 0) prefVisibleCount = mySubSumOfBlocks[blockIndex - 1];
 
     for (int longIndex = blockIndex * myBlockSize; longIndex < myLongSize; longIndex++) {
-      if (myThisIsVisible.fun(longIndex))
-        prefVisibleCount++;
-      if (prefVisibleCount > shortIndex)
-        return longIndex;
+      if (myThisIsVisible.fun(longIndex)) prefVisibleCount++;
+      if (prefVisibleCount > shortIndex) return longIndex;
     }
 
     throw new IllegalAccessError("This should never happen!");
@@ -125,25 +119,25 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
 
     int blockIndex = getRelevantSumIndex(longIndex);
     int countVisible = calculateSumForBlock(blockIndex, longIndex);
-    if (countVisible > 0)
+    if (countVisible > 0) {
       return countVisible - 1;
-    else
+    }
+    else {
       return 0;
+    }
   }
 
   // for calculate sum used blocks with index less that blockIndex
   private int calculateSumForBlock(int blockIndex, int lastLongIndex) {
     int sum = 0;
-    if (blockIndex > 0)
-      sum = mySubSumOfBlocks[blockIndex - 1];
+    if (blockIndex > 0) sum = mySubSumOfBlocks[blockIndex - 1];
 
     for (int longIndex = blockIndex * myBlockSize; longIndex <= lastLongIndex; longIndex++) {
-      if (myThisIsVisible.fun(longIndex))
-        sum++;
+      if (myThisIsVisible.fun(longIndex)) sum++;
     }
     return sum;
   }
-  
+
   private void updateSumWithCorrectPrevious(int blockIndex) {
     int endIndex = Math.min(myLongSize, (blockIndex + 1) * myBlockSize);
 
@@ -157,12 +151,14 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     int endSumIndex = getRelevantSumIndex(endLongIndex);
     int prevEndSum = mySubSumOfBlocks[endSumIndex];
 
-    for (int blockIndex = startSumIndex; blockIndex <= endSumIndex; blockIndex++)
+    for (int blockIndex = startSumIndex; blockIndex <= endSumIndex; blockIndex++) {
       updateSumWithCorrectPrevious(blockIndex);
+    }
 
     int sumDelta = mySubSumOfBlocks[endSumIndex] - prevEndSum;
-    for (int blockIndex = endSumIndex + 1; blockIndex < mySubSumOfBlocks.length; blockIndex++)
+    for (int blockIndex = endSumIndex + 1; blockIndex < mySubSumOfBlocks.length; blockIndex++) {
       mySubSumOfBlocks[blockIndex] += sumDelta;
+    }
   }
 
 

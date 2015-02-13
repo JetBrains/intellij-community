@@ -22,7 +22,7 @@ import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCDocumentListener;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.StudyLanguageManager;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.format.*;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
@@ -210,7 +210,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     try {
       File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-      final StudyLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+      final CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
       for (Map.Entry<String, Lesson> entry : lessons.entrySet()) {
         final VirtualFile lessonDir = baseDir.findChild(entry.getKey());
         if (lessonDir == null) continue;
