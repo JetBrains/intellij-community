@@ -18,6 +18,7 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -30,13 +31,13 @@ public class CCRenameTask extends CCRename {
 
   @Override
   public String getFolderName() {
-    return "task";
+    return EduNames.TASK;
   }
 
   @Override
   public boolean processRename(Project project, PsiDirectory directory, Course course) {
     PsiDirectory lessonDir = directory.getParent();
-    if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
+    if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
       return false;
     }
     final CCProjectService service = CCProjectService.getInstance(project);

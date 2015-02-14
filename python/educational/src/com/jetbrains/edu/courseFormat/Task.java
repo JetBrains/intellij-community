@@ -97,8 +97,8 @@ public class Task {
 
   @Nullable
   public VirtualFile getTaskDir(Project project) {
-    String lessonDirName = EduNames.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
-    String taskDirName = EduNames.TASK_DIR + String.valueOf(myIndex + 1);
+    String lessonDirName = EduNames.LESSON + String.valueOf(myLesson.getIndex() + 1);
+    String taskDirName = EduNames.TASK + String.valueOf(myIndex + 1);
     VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);

@@ -34,6 +34,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
@@ -183,7 +184,7 @@ public abstract class CCRunTestsAction extends AnAction {
         LOG.debug("idea directory doesn't exist");
         return;
       }
-      VirtualFile courseResourceDir = ideaDir.findChild("course");
+      VirtualFile courseResourceDir = ideaDir.findChild(EduNames.COURSE);
       if (courseResourceDir != null) {
         courseResourceDir.delete(project);
       }
@@ -210,9 +211,9 @@ public abstract class CCRunTestsAction extends AnAction {
   //some tests could compare task files after user modifications with initial task files
   private static void createResourceFiles(@NotNull final VirtualFile file, @NotNull final Project project) {
     VirtualFile taskDir = file.getParent();
-    int index = CCProjectService.getIndex(taskDir.getName(), "task");
+    int index = CCProjectService.getIndex(taskDir.getName(), EduNames.TASK);
     VirtualFile lessonDir = taskDir.getParent();
-    int lessonIndex = CCProjectService.getIndex(lessonDir.getName(), "lesson");
+    int lessonIndex = CCProjectService.getIndex(lessonDir.getName(), EduNames.LESSON);
     Course course = CCProjectService.getInstance(project).getCourse();
     if (course == null) {
       return;
@@ -220,7 +221,7 @@ public abstract class CCRunTestsAction extends AnAction {
     VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
     assert ideaDir != null;
     try {
-      VirtualFile courseResourceDir = findOrCreateDir(project, ideaDir, "course");
+      VirtualFile courseResourceDir = findOrCreateDir(project, ideaDir, EduNames.COURSE);
       VirtualFile lessonResourceDir = findOrCreateDir(project, courseResourceDir, lessonDir.getName());
       VirtualFile taskResourceDir = findOrCreateDir(project, lessonResourceDir, taskDir.getName());
       if (CCProjectService.indexIsValid(lessonIndex, course.getLessons())) {

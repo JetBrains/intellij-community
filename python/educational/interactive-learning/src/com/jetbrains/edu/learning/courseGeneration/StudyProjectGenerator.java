@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -114,11 +115,11 @@ public class StudyProjectGenerator {
 
     int lessonIndex = 1;
     for (Lesson lesson : course.lessons) {
-      final File lessonDirectory = new File(courseDirectory, "lesson"+String.valueOf(lessonIndex));
+      final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
       FileUtil.createDirectory(lessonDirectory);
       int taskIndex = 1;
       for (Task task : lesson.taskList) {
-        final File taskDirectory = new File(lessonDirectory, "task" + String.valueOf(taskIndex));
+        final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(taskIndex));
         FileUtil.createDirectory(taskDirectory);
         for (Map.Entry<String, TaskFile> taskFileEntry : task.taskFiles.entrySet()) {
           final String name = taskFileEntry.getKey();

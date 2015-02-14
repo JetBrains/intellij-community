@@ -6,11 +6,12 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CCDirectoryNode extends PsiDirectoryNode {
@@ -67,12 +68,10 @@ public class CCDirectoryNode extends PsiDirectoryNode {
   @Override
   public int getTypeSortWeight(boolean sortByType) {
     String name = myValue.getName();
-    String lessonDirName = "lesson";
-    String taskDirName = "task";
-    if (name.startsWith(lessonDirName) || name.startsWith(taskDirName)) {
-      String logicalName = name.contains(lessonDirName) ? lessonDirName : taskDirName;
-      int index = CCUtils.getIndex(name, logicalName) + 1;
-      return index != -1 ? index : 0;
+    if (name.startsWith(EduNames.LESSON) || name.startsWith(EduNames.TASK)) {
+      String logicalName = name.contains(EduNames.LESSON) ? EduNames.LESSON : EduNames.TASK;
+      int index = EduUtils.getIndex(name, logicalName) + 1;
+      return index != -1 ? index + 1: 0;
     }
     return 0;
   }

@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduTaskWindowDeleteHandler;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.TaskFile;
@@ -33,7 +34,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
       return;
     }
     final VirtualFile taskDir = virtualFile.getParent();
-    if (taskDir == null || !taskDir.getName().contains("task")) {
+    if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
       return;
     }
     final VirtualFile lessonDir = taskDir.getParent();

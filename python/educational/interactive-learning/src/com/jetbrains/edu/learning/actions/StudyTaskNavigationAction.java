@@ -52,7 +52,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
       return;
     }
     VirtualFile projectDir = project.getBaseDir();
-    String lessonDirName = EduNames.LESSON_DIR + String.valueOf(lessonIndex + 1);
+    String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex + 1);
     if (projectDir == null) {
       return;
     }
@@ -60,7 +60,7 @@ abstract public class StudyTaskNavigationAction extends DumbAwareAction {
     if (lessonDir == null) {
       return;
     }
-    String taskDirName = EduNames.TASK_DIR + String.valueOf(nextTaskIndex + 1);
+    String taskDirName = EduNames.TASK + String.valueOf(nextTaskIndex + 1);
     VirtualFile taskDir = lessonDir.findChild(taskDirName);
     if (taskDir == null) {
       return;

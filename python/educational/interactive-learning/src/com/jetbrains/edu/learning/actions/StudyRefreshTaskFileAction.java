@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
@@ -123,8 +124,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     taskFile.setTrackChanges(false);
     clearDocument(document);
     Task task = taskFile.getTask();
-    String lessonDir = EduNames.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
-    String taskDir = EduNames.TASK_DIR + String.valueOf(task.getIndex() + 1);
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex() + 1);
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex() + 1);
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {
@@ -171,9 +172,9 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
       StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
       if (studyState.isValid()) {
-        StudyUtils.enableAction(event, true);
+        EduUtils.enableAction(event, true);
       }
     }
-    StudyUtils.enableAction(event, false);
+    EduUtils.enableAction(event, false);
   }
 }

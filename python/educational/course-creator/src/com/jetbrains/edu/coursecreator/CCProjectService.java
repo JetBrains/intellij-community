@@ -33,6 +33,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +110,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
       return null;
     }
     String taskDirName = taskDir.getName();
-    if (!taskDirName.contains("task")) {
+    if (!taskDirName.contains(EduNames.TASK)) {
       return null;
     }
     VirtualFile lessonDir = taskDir.getParent();
@@ -116,7 +118,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
       return null;
     }
     String lessonDirName = lessonDir.getName();
-    if (!lessonDirName.contains("lesson")) {
+    if (!lessonDirName.contains(EduNames.LESSON)) {
       return null;
     }
     Lesson lesson = myLessonsMap.get(lessonDirName);
@@ -166,17 +168,17 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     VirtualFile taskDir = file.getParent();
     if (taskDir != null) {
       String taskDirName = taskDir.getName();
-      if (taskDirName.contains("task")) {
+      if (taskDirName.contains(EduNames.TASK)) {
         VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null) {
           String lessonDirName = lessonDir.getName();
-          int lessonIndex = getIndex(lessonDirName, "lesson");
+          int lessonIndex = getIndex(lessonDirName, EduNames.LESSON);
           List<Lesson> lessons = myCourse.getLessons();
           if (!indexIsValid(lessonIndex, lessons)) {
             return false;
           }
           Lesson lesson = lessons.get(lessonIndex);
-          int taskIndex = getIndex(taskDirName, "task");
+          int taskIndex = getIndex(taskDirName, EduNames.TASK);
           List<Task> tasks = lesson.getTaskList();
           if (!indexIsValid(taskIndex, tasks)) {
             return false;
@@ -213,10 +215,10 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
       return false;
     }
     if (getInstance(project).getCourse() == null) {
-      CCUtils.enableAction(e, false);
+      EduUtils.enableAction(e, false);
       return false;
     }
-    CCUtils.enableAction(e, true);
+    EduUtils.enableAction(e, true);
     return true;
   }
 

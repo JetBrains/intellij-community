@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -287,11 +288,11 @@ public class StudyProjectComponent implements ProjectComponent {
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-      if (taskDir != null && taskDir.getName().contains(EduNames.TASK_DIR)) {
-        int taskIndex = StudyUtils.getIndex(taskDir.getName(), EduNames.TASK_DIR);
+      if (taskDir != null && taskDir.getName().contains(EduNames.TASK)) {
+        int taskIndex = EduUtils.getIndex(taskDir.getName(), EduNames.TASK);
         final VirtualFile lessonDir = taskDir.getParent();
-        if (lessonDir != null && lessonDir.getName().contains(EduNames.LESSON_DIR)) {
-          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), EduNames.LESSON_DIR);
+        if (lessonDir != null && lessonDir.getName().contains(EduNames.LESSON)) {
+          int lessonIndex = EduUtils.getIndex(lessonDir.getName(), EduNames.LESSON);
           if (course != null) {
             List<Lesson> lessons = course.getLessons();
             if (StudyUtils.indexIsValid(lessonIndex, lessons)) {

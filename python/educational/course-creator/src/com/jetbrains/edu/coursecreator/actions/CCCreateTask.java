@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -59,10 +61,10 @@ public class CCCreateTask extends DumbAwareAction {
     final int size = lesson.getTaskList().size();
     final String taskName;
     if (showDialog) {
-      taskName = Messages.showInputDialog("Name:", "Task Name", null, "task" + (size + 1), null);
+      taskName = Messages.showInputDialog("Name:", "Task Name", null, EduNames.TASK + (size + 1), null);
     }
     else {
-      taskName = "task" + (size + 1);
+      taskName = EduNames.TASK + (size + 1);
     }
 
     if (taskName == null) {
@@ -71,14 +73,14 @@ public class CCCreateTask extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
+        final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories(EduNames.TASK + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
           CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
           if (manager == null) {
             return;
           }
 
-          CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
+          EduUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final Task task = new Task(taskName);
           task.setIndex(size + 1);
           service.addTask(task, taskDirectory);

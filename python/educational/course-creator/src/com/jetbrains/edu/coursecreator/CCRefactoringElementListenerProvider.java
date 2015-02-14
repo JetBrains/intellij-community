@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -69,11 +70,11 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       if (course == null) {
         return;
       }
-      if (taskDir == null || !taskDir.getName().contains("task")) {
+      if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
         return;
       }
       PsiDirectory lessonDir = taskDir.getParent();
-      if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
+      if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
         return;
       }
       Lesson lesson = service.getLesson(lessonDir.getName());

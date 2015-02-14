@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
@@ -129,7 +130,7 @@ public class CCCreateTaskFile extends DumbAwareAction {
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    if (course != null && directory != null && !directory.getName().contains("task")) {
+    if (course != null && directory != null && !directory.getName().contains(EduNames.TASK)) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;

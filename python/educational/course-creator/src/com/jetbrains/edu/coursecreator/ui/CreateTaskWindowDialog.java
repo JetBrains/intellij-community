@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public class CreateTaskWindowDialog extends DialogWrapper {
     setTitle(ourTitle);
     myAnswerPlaceholder = answerPlaceholder;
     myPanel = new CreateTaskWindowPanel(this);
-    String generatedHintName = "lesson" + lessonIndex + "task" + taskIndex + taskFileName + "_" + taskWindowIndex;
+    String generatedHintName = EduNames.LESSON + lessonIndex + EduNames.TASK + taskIndex + taskFileName + "_" + taskWindowIndex;
     myPanel.setGeneratedHintName(generatedHintName);
     if (answerPlaceholder.getHint() != null) {
       setHintText(answerPlaceholder);

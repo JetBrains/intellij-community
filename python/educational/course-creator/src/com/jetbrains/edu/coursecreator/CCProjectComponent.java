@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -117,10 +118,10 @@ public class CCProjectComponent implements ProjectComponent {
       if (removedFile.getName().contains(".answer")) {
         deleteTaskFile(removedFile);
       }
-      if (removedFile.getName().contains("task")) {
+      if (removedFile.getName().contains(EduNames.TASK)) {
         deleteTask(removedFile);
       }
-      if (removedFile.getName().contains("lesson")) {
+      if (removedFile.getName().contains(EduNames.LESSON)) {
         deleteLesson(course, removedFile);
       }
     }
@@ -141,7 +142,7 @@ public class CCProjectComponent implements ProjectComponent {
     private void deleteTask(VirtualFile removedFile) {
       VirtualFile lessonDir = removedFile.getParent();
       final CCProjectService projectService = CCProjectService.getInstance(myProject);
-      if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
+      if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
         return;
       }
       VirtualFile courseDir = lessonDir.getParent();
@@ -163,11 +164,11 @@ public class CCProjectComponent implements ProjectComponent {
     private void deleteTaskFile(VirtualFile removedFile) {
       final CCProjectService projectService = CCProjectService.getInstance(myProject);
       final VirtualFile taskDir = removedFile.getParent();
-      if (taskDir == null || !taskDir.getName().contains("task")) {
+      if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
         return;
       }
       VirtualFile lessonDir = taskDir.getParent();
-      if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
+      if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
         return;
       }
       VirtualFile courseDir = lessonDir.getParent();
