@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.run.StudyExecutor;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.File;
+import java.util.List;
 
 public class PyStudyExecutor implements StudyExecutor {
 
@@ -62,7 +64,8 @@ public class PyStudyExecutor implements StudyExecutor {
                                                @NotNull final String filePath,
                                                @NotNull final String sdkPath,
                                                @NotNull final Task currentTask) {
-    if (!currentTask.getUserTests().isEmpty()) {
+    final List<UserTest> userTests = StudyTaskManager.getInstance(project).getUserTests(currentTask);
+    if (!userTests.isEmpty()) {
       StudyLanguageManager manager = StudyUtils.getLanguageManager(currentTask.getLesson().getCourse());
       if (manager != null) {
         cmd.addParameter(new File(project.getBaseDir().getPath(), manager.getUserTester()).getPath());

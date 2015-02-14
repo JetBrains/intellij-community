@@ -36,8 +36,10 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyDocumentListener;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +206,8 @@ public class StudyEditor implements TextEditor {
     myNextTaskButton = addButton(taskActionsPanel, StudyNextStudyTaskAction.ACTION_ID, AllIcons.Actions.Forward, StudyNextStudyTaskAction.SHORTCUT);
     myRefreshButton = addButton(taskActionsPanel, StudyRefreshTaskFileAction.ACTION_ID, AllIcons.Actions.Refresh, StudyRefreshTaskFileAction.SHORTCUT);
     final JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, InteractiveLearningIcons.ShowHint, StudyShowHintAction.SHORTCUT);
-    if (!taskFile.getTask().getUserTests().isEmpty()) {
+    final List<UserTest> userTests = StudyTaskManager.getInstance(myProject).getUserTests(taskFile.getTask());
+    if (!userTests.isEmpty()) {
       final JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
       runButton.addActionListener(new ActionListener() {
         @Override

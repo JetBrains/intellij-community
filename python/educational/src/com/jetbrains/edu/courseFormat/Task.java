@@ -7,9 +7,7 @@ import com.jetbrains.edu.StudyNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +22,6 @@ public class Task {
   private String testsText;
 
   @Transient private Lesson myLesson;
-  private List<UserTest> userTests = new ArrayList<UserTest>();
-
 
   public String getName() {
     return name;
@@ -59,18 +55,8 @@ public class Task {
     this.testsText = testsText;
   }
 
-
-
   public Map<String, TaskFile> getTaskFiles() {
     return taskFiles;
-  }
-
-  public List<UserTest> getUserTests() {
-    return userTests;
-  }
-
-  public void setUserTests(@NotNull final List<UserTest> userTests) {
-    this.userTests = userTests;
   }
 
   public boolean isTaskFile(@NotNull final String fileName) {
@@ -104,5 +90,31 @@ public class Task {
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Task task = (Task)o;
+
+    if (myIndex != task.myIndex) return false;
+    if (name != null ? !name.equals(task.name) : task.name != null) return false;
+    if (taskFiles != null ? !taskFiles.equals(task.taskFiles) : task.taskFiles != null) return false;
+    if (text != null ? !text.equals(task.text) : task.text != null) return false;
+    if (testsText != null ? !testsText.equals(task.testsText) : task.testsText != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + myIndex;
+    result = 31 * result + (taskFiles != null ? taskFiles.hashCode() : 0);
+    result = 31 * result + (text != null ? text.hashCode() : 0);
+    result = 31 * result + (testsText != null ? testsText.hashCode() : 0);
+    return result;
   }
 }

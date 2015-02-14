@@ -14,10 +14,14 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,6 +41,7 @@ import java.util.Map;
 public class StudyTaskManager implements PersistentStateComponent<StudyTaskManager>, DumbAware {
   private Course myCourse;
   public Map<AnswerPlaceholder, StudyStatus> myStudyStatusMap = new HashMap<AnswerPlaceholder, StudyStatus>();
+  public Map<Task, List<UserTest>> myUserTests = new HashMap<Task, List<UserTest>>();
 
   private StudyTaskManager() {
   }
@@ -56,6 +61,33 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
     }
     myStudyStatusMap.put(placeholder, status);
   }
+
+  public void addUserTest(@NotNull final Task task, UserTest userTest) {
+    List<UserTest> userTests = myUserTests.get(task);
+    if (userTests == null) {
+      userTests = new ArrayList<UserTest>();
+      myUserTests.put(task, userTests);
+    }
+    userTests.add(userTest);
+  }
+
+  public void setUserTests(@NotNull final Task task, @NotNull final List<UserTest> userTests) {
+    myUserTests.put(task, userTests);
+  }
+
+  @NotNull
+  public List<UserTest> getUserTests(@NotNull final Task task) {
+    final List<UserTest> userTests = myUserTests.get(task);
+    return userTests != null ? userTests : Collections.<UserTest>emptyList();
+  }
+
+  public void removeUserTest(@NotNull final Task task, @NotNull final UserTest userTest) {
+    final List<UserTest> userTests = myUserTests.get(task);
+    if (userTests != null) {
+      userTests.remove(userTest);
+    }
+  }
+
 
   public void setStatus(Task task, StudyStatus status) {
     for (TaskFile taskFile : task.getTaskFiles().values()) {
@@ -130,7 +162,6 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   public boolean hasFailedTaskWindows(@NotNull final TaskFile taskFile) {
     return taskFile.getAnswerPlaceholders().size() > 0 && getStatus(taskFile) == StudyStatus.Failed;
   }
-
   @Nullable
   @Override
   public StudyTaskManager getState() {

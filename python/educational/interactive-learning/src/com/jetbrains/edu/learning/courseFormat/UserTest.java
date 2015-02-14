@@ -1,4 +1,4 @@
-package com.jetbrains.edu.courseFormat;
+package com.jetbrains.edu.learning.courseFormat;
 
 public class UserTest {
   private String input;

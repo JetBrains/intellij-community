@@ -23,9 +23,9 @@ import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.StudyNames;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.courseFormat.UserTest;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyTestContentPanel;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class StudyEditInputAction extends DumbAwareAction {
     if (selectedEditor != null) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-      StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
+      final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
       assert openedFile != null;
       TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
       assert taskFile != null;
@@ -64,7 +64,7 @@ public class StudyEditInputAction extends DumbAwareAction {
             VirtualFile taskDir = openedFile.getParent();
             VirtualFile testsDir = taskDir.findChild(StudyNames.USER_TESTS);
             assert testsDir != null;
-            UserTest userTest = createUserTest(testsDir, currentTask);
+            UserTest userTest = createUserTest(testsDir, currentTask, studyTaskManager);
             userTest.setEditable(true);
             StudyTestContentPanel testContentPanel = new StudyTestContentPanel(userTest);
             TabInfo testTab = addTestTab(tabbedPane.getTabCount(), testContentPanel, currentTask, true);
@@ -74,7 +74,8 @@ public class StudyEditInputAction extends DumbAwareAction {
           }
         }
       });
-      List<UserTest> userTests = currentTask.getUserTests();
+
+      List<UserTest> userTests = studyTaskManager.getUserTests(currentTask);
       int i = 1;
       for (UserTest userTest : userTests) {
         String inputFileText = StudyUtils.getFileText(null, userTest.getInput(), false, "UTF-8");
@@ -101,7 +102,7 @@ public class StudyEditInputAction extends DumbAwareAction {
       StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
       assert selectedStudyEditor != null;
       hint.showInCenterOf(selectedStudyEditor.getComponent());
-      hint.addListener(new HintClosedListener(currentTask));
+      hint.addListener(new HintClosedListener(currentTask, studyTaskManager));
     }
   }
 
@@ -122,9 +123,11 @@ public class StudyEditInputAction extends DumbAwareAction {
     StudyUtils.synchronize();
   }
 
-  private static UserTest createUserTest(@NotNull final VirtualFile testsDir, @NotNull final Task currentTask) {
+  private static UserTest createUserTest(@NotNull final VirtualFile testsDir,
+                                         @NotNull final Task currentTask,
+                                         StudyTaskManager studyTaskManager) {
     UserTest userTest = new UserTest();
-    List<UserTest> userTests = currentTask.getUserTests();
+    List<UserTest> userTests = studyTaskManager.getUserTests(currentTask);
     int testNum = userTests.size() + 1;
     String inputName = StudyNames.USER_TEST_INPUT + testNum;
     File inputFile = new File(testsDir.getPath(), inputName);
@@ -132,7 +135,7 @@ public class StudyEditInputAction extends DumbAwareAction {
     File outputFile = new File(testsDir.getPath(), outputName);
     userTest.setInput(inputFile.getPath());
     userTest.setOutput(outputFile.getPath());
-    userTests.add(userTest);
+    studyTaskManager.addUserTest(currentTask, userTest);
     return userTest;
   }
 
@@ -155,13 +158,16 @@ public class StudyEditInputAction extends DumbAwareAction {
 
   private static class HintClosedListener extends JBPopupAdapter {
     private final Task myTask;
-    private HintClosedListener(@NotNull final Task task) {
+    private final StudyTaskManager myStudyTaskManager;
+
+    private HintClosedListener(@NotNull final Task task, StudyTaskManager studyTaskManager) {
       myTask = task;
+      myStudyTaskManager = studyTaskManager;
     }
 
     @Override
     public void onClosed(LightweightWindowEvent event) {
-      for (final UserTest userTest : myTask.getUserTests()) {
+      for (final UserTest userTest : myStudyTaskManager.getUserTests(myTask)) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
@@ -206,7 +212,10 @@ public class StudyEditInputAction extends DumbAwareAction {
       } else {
         LOG.error("failed to delete user tests");
       }
-      myTask.getUserTests().remove(userTest);
+      final Project project = e.getProject();
+      if (project != null) {
+        StudyTaskManager.getInstance(project).removeUserTest(myTask, userTest);
+      }
     }
   }
 }
