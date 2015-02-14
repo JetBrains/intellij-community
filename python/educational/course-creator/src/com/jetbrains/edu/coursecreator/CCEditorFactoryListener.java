@@ -1,17 +1,16 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduTaskWindowDeleteHandler;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -47,10 +46,10 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     CCProjectService.addDocumentListener(editor.getDocument(), listener);
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
-      .setReadonlyFragmentModificationHandler(editor.getDocument(), new TaskWindowDeleteHandler(editor));
+      .setReadonlyFragmentModificationHandler(editor.getDocument(), new EduTaskWindowDeleteHandler(editor));
     service.drawTaskWindows(virtualFile, editor);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
-    CCAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, false);
   }
 
   @Override
@@ -78,17 +77,4 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     }
   }
 
-  private static class TaskWindowDeleteHandler implements ReadonlyFragmentModificationHandler {
-
-    private final Editor myEditor;
-
-    public TaskWindowDeleteHandler(@NotNull final Editor editor) {
-      myEditor = editor;
-    }
-
-    @Override
-    public void handle(ReadOnlyFragmentModificationException e) {
-      HintManager.getInstance().showErrorHint(myEditor, "Delete answer placeholder before editing its borders");
-    }
-  }
 }

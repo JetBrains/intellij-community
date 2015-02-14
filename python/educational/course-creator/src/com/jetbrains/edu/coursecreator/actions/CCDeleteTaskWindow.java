@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCAnswerPlaceholderPainter;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ public class CCDeleteTaskWindow extends CCTaskWindowAction {
       final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
       CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor);
-      CCAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
+      EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, false);
     }
   }
 }

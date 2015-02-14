@@ -3,7 +3,7 @@ package com.jetbrains.edu.courseFormat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,8 +97,8 @@ public class Task {
 
   @Nullable
   public VirtualFile getTaskDir(Project project) {
-    String lessonDirName = StudyNames.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
-    String taskDirName = StudyNames.TASK_DIR + String.valueOf(myIndex + 1);
+    String lessonDirName = EduNames.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
+    String taskDirName = EduNames.TASK_DIR + String.valueOf(myIndex + 1);
     VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);

@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -171,14 +171,14 @@ public class StudyProjectComponent implements ProjectComponent {
       if (file.getName().equals(testHelper)) {
         copyFile(file, new File(myProject.getBasePath(), testHelper));
       }
-      if (file.getName().startsWith(StudyNames.LESSON)) {
+      if (file.getName().startsWith(EduNames.LESSON)) {
         final File[] tasks = file.listFiles();
         if (tasks == null) continue;
         for (File task : tasks) {
-          final File taskDescr = new File(task, StudyNames.TASK_HTML);
+          final File taskDescr = new File(task, EduNames.TASK_HTML);
           String testFileName = manager.getTestFileName();
           final File taskTests = new File(task, testFileName);
-          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), StudyNames.TASK_HTML));
+          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), EduNames.TASK_HTML));
           copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
                                        testFileName));
         }
@@ -287,11 +287,11 @@ public class StudyProjectComponent implements ProjectComponent {
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-      if (taskDir != null && taskDir.getName().contains(StudyNames.TASK_DIR)) {
-        int taskIndex = StudyUtils.getIndex(taskDir.getName(), StudyNames.TASK_DIR);
+      if (taskDir != null && taskDir.getName().contains(EduNames.TASK_DIR)) {
+        int taskIndex = StudyUtils.getIndex(taskDir.getName(), EduNames.TASK_DIR);
         final VirtualFile lessonDir = taskDir.getParent();
-        if (lessonDir != null && lessonDir.getName().contains(StudyNames.LESSON_DIR)) {
-          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
+        if (lessonDir != null && lessonDir.getName().contains(EduNames.LESSON_DIR)) {
+          int lessonIndex = StudyUtils.getIndex(lessonDir.getName(), EduNames.LESSON_DIR);
           if (course != null) {
             List<Lesson> lessons = course.getLessons();
             if (StudyUtils.indexIsValid(lessonIndex, lessons)) {

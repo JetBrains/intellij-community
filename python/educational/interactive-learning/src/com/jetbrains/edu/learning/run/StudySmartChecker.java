@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyDocumentListener;
@@ -40,7 +40,7 @@ public class StudySmartChecker {
     try {
       final int index = placeholder.getIndex();
       final VirtualFile windowCopy =
-        answerFile.copy(project, answerFile.getParent(), answerFile.getNameWithoutExtension() + index + StudyNames.WINDOW_POSTFIX);
+        answerFile.copy(project, answerFile.getParent(), answerFile.getNameWithoutExtension() + index + EduNames.WINDOW_POSTFIX);
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {

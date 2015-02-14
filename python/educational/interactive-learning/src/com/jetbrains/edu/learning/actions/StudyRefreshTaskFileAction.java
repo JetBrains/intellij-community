@@ -20,12 +20,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -70,8 +70,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
-    StudyAnswerPlaceholderPainter.drawAllWindows(editor, taskFile);
-    StudyAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
+    StudyUtils.drawAllWindows(editor, taskFile);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -123,8 +123,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     taskFile.setTrackChanges(false);
     clearDocument(document);
     Task task = taskFile.getTask();
-    String lessonDir = StudyNames.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
-    String taskDir = StudyNames.TASK_DIR + String.valueOf(task.getIndex() + 1);
+    String lessonDir = EduNames.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
+    String taskDir = EduNames.TASK_DIR + String.valueOf(task.getIndex() + 1);
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {

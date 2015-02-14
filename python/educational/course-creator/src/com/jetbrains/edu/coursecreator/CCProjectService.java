@@ -30,7 +30,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,7 +138,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     }
     List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
-      CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, editor, false);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, false, JBColor.BLUE);
     }
   }
 

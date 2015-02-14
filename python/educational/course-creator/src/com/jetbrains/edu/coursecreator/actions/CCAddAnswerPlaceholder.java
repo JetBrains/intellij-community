@@ -13,11 +13,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.JBColor;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCAnswerPlaceholderPainter;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.ui.CreateTaskWindowDialog;
 import org.jetbrains.annotations.NotNull;
@@ -93,8 +94,8 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     answerPlaceholder.setIndex(index);
     taskFile.addAnswerPlaceholder(answerPlaceholder);
     taskFile.sortAnswerPlaceholders();
-    CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, editor, false);
-    CCAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
+    EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, false, JBColor.BLUE);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder, false);
   }
 
   @Override

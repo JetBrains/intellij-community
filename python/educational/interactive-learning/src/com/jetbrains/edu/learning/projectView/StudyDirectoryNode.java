@@ -11,7 +11,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -53,7 +53,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
-    if (valueName.contains(StudyNames.TASK_DIR)) {
+    if (valueName.contains(EduNames.TASK_DIR)) {
       TaskFile file = null;
       for (PsiElement child : myValue.getChildren()) {
         VirtualFile virtualFile = child.getContainingFile().getVirtualFile();
@@ -67,16 +67,16 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         setStudyAttributes(task, data, task.getName());
       }
     }
-    if (valueName.contains(StudyNames.LESSON_DIR)) {
-      int lessonIndex = Integer.parseInt(valueName.substring(StudyNames.LESSON_DIR.length())) - 1;
+    if (valueName.contains(EduNames.LESSON_DIR)) {
+      int lessonIndex = Integer.parseInt(valueName.substring(EduNames.LESSON_DIR.length())) - 1;
       Lesson lesson = course.getLessons().get(lessonIndex);
       setStudyAttributes(lesson, data, lesson.getName());
     }
 
-    if (valueName.contains(StudyNames.SANDBOX_DIR)) {
+    if (valueName.contains(EduNames.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
-        if (!myValue.getParent().getName().contains(StudyNames.SANDBOX_DIR)) {
-          data.setPresentableText(StudyNames.SANDBOX_DIR);
+        if (!myValue.getParent().getName().contains(EduNames.SANDBOX_DIR)) {
+          data.setPresentableText(EduNames.SANDBOX_DIR);
           data.setIcon(InteractiveLearningIcons.Sandbox);
           return;
         }
@@ -88,11 +88,11 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public int getTypeSortWeight(boolean sortByType) {
     String name = myValue.getName();
-    if (name.contains(StudyNames.LESSON_DIR) || name.contains(StudyNames.TASK_DIR)) {
-      String logicalName = name.contains(StudyNames.LESSON_DIR) ? StudyNames.LESSON_DIR : StudyNames.TASK_DIR;
+    if (name.contains(EduNames.LESSON_DIR) || name.contains(EduNames.TASK_DIR)) {
+      String logicalName = name.contains(EduNames.LESSON_DIR) ? EduNames.LESSON_DIR : EduNames.TASK_DIR;
       return StudyUtils.getIndex(name, logicalName) + 1;
     }
-    return name.contains(StudyNames.SANDBOX_DIR) ? 0 : 3;
+    return name.contains(EduNames.SANDBOX_DIR) ? 0 : 3;
   }
 
   private void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
@@ -148,7 +148,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (myValue.getName().contains(StudyNames.TASK_DIR)) {
+    if (myValue.getName().contains(EduNames.TASK_DIR)) {
       TaskFile taskFile = null;
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
@@ -191,7 +191,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public boolean expandOnDoubleClick() {
-    if (myValue.getName().contains(StudyNames.TASK_DIR)) {
+    if (myValue.getName().contains(EduNames.TASK_DIR)) {
       return false;
     }
     return super.expandOnDoubleClick();

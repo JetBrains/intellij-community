@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
@@ -6,11 +6,11 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class TaskWindowDeleteHandler implements ReadonlyFragmentModificationHandler {
+public class EduTaskWindowDeleteHandler implements ReadonlyFragmentModificationHandler {
 
   private final Editor myEditor;
 
-  public TaskWindowDeleteHandler(@NotNull final Editor editor) {
+  public EduTaskWindowDeleteHandler(@NotNull final Editor editor) {
     myEditor = editor;
   }
 

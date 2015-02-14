@@ -20,7 +20,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -62,7 +62,7 @@ public class StudyEditInputAction extends DumbAwareAction {
           if (newSelection.getIcon() != null) {
             int tabCount = tabbedPane.getTabCount();
             VirtualFile taskDir = openedFile.getParent();
-            VirtualFile testsDir = taskDir.findChild(StudyNames.USER_TESTS);
+            VirtualFile testsDir = taskDir.findChild(EduNames.USER_TESTS);
             assert testsDir != null;
             UserTest userTest = createUserTest(testsDir, currentTask, studyTaskManager);
             userTest.setEditable(true);
@@ -129,9 +129,9 @@ public class StudyEditInputAction extends DumbAwareAction {
     UserTest userTest = new UserTest();
     List<UserTest> userTests = studyTaskManager.getUserTests(currentTask);
     int testNum = userTests.size() + 1;
-    String inputName = StudyNames.USER_TEST_INPUT + testNum;
+    String inputName = EduNames.USER_TEST_INPUT + testNum;
     File inputFile = new File(testsDir.getPath(), inputName);
-    String outputName = StudyNames.USER_TEST_OUTPUT + testNum;
+    String outputName = EduNames.USER_TEST_OUTPUT + testNum;
     File outputFile = new File(testsDir.getPath(), outputName);
     userTest.setInput(inputFile.getPath());
     userTest.setOutput(outputFile.getPath());
@@ -141,7 +141,7 @@ public class StudyEditInputAction extends DumbAwareAction {
 
   private TabInfo addTestTab(int nameIndex, final StudyTestContentPanel contentPanel, @NotNull final Task currentTask, boolean toBeClosable) {
     TabInfo testTab = toBeClosable ? createClosableTab(contentPanel, currentTask) : new TabInfo(contentPanel);
-    return testTab.setText(StudyNames.TEST_TAB_NAME + String.valueOf(nameIndex));
+    return testTab.setText(EduNames.TEST_TAB_NAME + String.valueOf(nameIndex));
   }
 
   private TabInfo createClosableTab(StudyTestContentPanel contentPanel, Task currentTask) {

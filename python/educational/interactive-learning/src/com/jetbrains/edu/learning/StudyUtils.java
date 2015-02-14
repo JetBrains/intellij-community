@@ -11,6 +11,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -28,8 +31,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduTaskWindowDeleteHandler;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.run.StudyExecutor;
@@ -201,7 +207,7 @@ public class StudyUtils {
     int taskNum = task.getIndex() + 1;
     int lessonNum = task.getLesson().getIndex() + 1;
     assert course != null;
-    final String pathToResource = FileUtil.join(course.getCourseDirectory(), StudyNames.LESSON_DIR + lessonNum, StudyNames.TASK_DIR + taskNum);
+    final String pathToResource = FileUtil.join(course.getCourseDirectory(), EduNames.LESSON_DIR + lessonNum, EduNames.TASK_DIR + taskNum);
     final File resourceFile = new File(pathToResource, copyName);
     FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
     return resourceFile;
@@ -299,16 +305,16 @@ public class StudyUtils {
       return null;
     }
     final String taskDirName = taskDir.getName();
-    if (taskDirName.contains(StudyNames.TASK_DIR)) {
+    if (taskDirName.contains(EduNames.TASK_DIR)) {
       final VirtualFile lessonDir = taskDir.getParent();
       if (lessonDir != null) {
-        int lessonIndex = getIndex(lessonDir.getName(), StudyNames.LESSON_DIR);
+        int lessonIndex = getIndex(lessonDir.getName(), EduNames.LESSON_DIR);
         List<Lesson> lessons = course.getLessons();
         if (!indexIsValid(lessonIndex, lessons)) {
           return null;
         }
         final Lesson lesson = lessons.get(lessonIndex);
-        int taskIndex = getIndex(taskDirName, StudyNames.TASK_DIR);
+        int taskIndex = getIndex(taskDirName, EduNames.TASK_DIR);
         final List<Task> tasks = lesson.getTaskList();
         if (!indexIsValid(taskIndex, tasks)) {
           return null;
@@ -319,4 +325,22 @@ public class StudyUtils {
     }
     return null;
   }
+
+
+  public static void drawAllWindows(Editor editor, TaskFile taskFile) {
+    editor.getMarkupModel().removeAllHighlighters();
+    final Project project = editor.getProject();
+    if (project == null) return;
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+      final JBColor color = taskManager.getColor(answerPlaceholder);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, true, color);
+    }
+    final Document document = editor.getDocument();
+    EditorActionManager.getInstance()
+      .setReadonlyFragmentModificationHandler(document, new EduTaskWindowDeleteHandler(editor));
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
+    editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
+  }
+
 }

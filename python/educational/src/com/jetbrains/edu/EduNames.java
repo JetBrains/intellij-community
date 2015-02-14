@@ -18,7 +18,7 @@ package com.jetbrains.edu;
 import org.jetbrains.annotations.NonNls;
 
 @NonNls
-public class StudyNames {
+public class EduNames {
   public static final String TASK_HTML = "task.html";
   public static final String TASK_TESTS = "tests.py";
   public static final String LESSON = "lesson";
@@ -33,7 +33,7 @@ public class StudyNames {
   public static final String USER_TESTS = "userTests";
   public static final String SANDBOX_DIR = "Sandbox";
 
-  private StudyNames() {
+  private EduNames() {
   }
 
 }

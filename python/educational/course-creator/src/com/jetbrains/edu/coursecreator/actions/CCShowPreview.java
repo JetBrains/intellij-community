@@ -33,11 +33,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.JBColor;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCAnswerPlaceholderPainter;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,7 +134,7 @@ public class CCShowPreview extends DumbAwareAction {
       }
     });
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, createdEditor, true);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));

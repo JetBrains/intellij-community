@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="core-impl" />
   </component>
 </module>

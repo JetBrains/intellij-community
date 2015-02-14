@@ -13,10 +13,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.ui.JBColor;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.StudyDocumentListener;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +46,13 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       final AnswerPlaceholder answerPlaceholder = myTaskFile.getAnswerPlaceholder(editor.getDocument(), pos);
       if (answerPlaceholder != null) {
         myTaskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
-        StudyAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder);
+        final Project project = editor.getProject();
+        assert project != null;
+        final JBColor color = StudyTaskManager.getInstance(project).getColor(answerPlaceholder);
+        EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, true, color);
       }
       else {
-        StudyAnswerPlaceholderPainter.drawAllWindows(editor, myTaskFile);
+        StudyUtils.drawAllWindows(editor, myTaskFile);
       }
     }
   }
@@ -76,7 +81,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   StudyEditor.addDocumentListener(document, new StudyDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
-                  StudyAnswerPlaceholderPainter.drawAllWindows(editor, taskFile);
+                  StudyUtils.drawAllWindows(editor, taskFile);
                 }
               }
             }

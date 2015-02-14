@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.StudyNames;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class StudyGenerator {
    */
   public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot,
                                 @NotNull final Project project) throws IOException {
-    VirtualFile taskDir = lessonDir.createChildDirectory(project, StudyNames.TASK_DIR + Integer.toString(task.getIndex() + 1));
+    VirtualFile taskDir = lessonDir.createChildDirectory(project, EduNames.TASK_DIR + Integer.toString(task.getIndex() + 1));
     StudyUtils.markDirAsSourceRoot(taskDir, project);
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     int i = 0;
@@ -82,7 +82,7 @@ public class StudyGenerator {
    */
   public static void createLesson(@NotNull final Lesson lesson, @NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
                                   @NotNull final Project project) throws IOException {
-    String lessonDirName = StudyNames.LESSON_DIR + Integer.toString(lesson.getIndex() + 1);
+    String lessonDirName = EduNames.LESSON_DIR + Integer.toString(lesson.getIndex() + 1);
     VirtualFile lessonDir = courseDir.createChildDirectory(project, lessonDirName);
     final List<Task> taskList = lesson.getTaskList();
     for (int i = 0; i < taskList.size(); i++) {
@@ -108,11 +108,11 @@ public class StudyGenerator {
                   lesson.setIndex(i);
                   createLesson(lesson, baseDir, resourceRoot, project);
                 }
-                baseDir.createChildDirectory(project, StudyNames.SANDBOX_DIR);
+                baseDir.createChildDirectory(project, EduNames.SANDBOX_DIR);
                 File[] files = resourceRoot.listFiles(new FilenameFilter() {
                   @Override
                   public boolean accept(File dir, String name) {
-                    return !name.contains(StudyNames.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
+                    return !name.contains(EduNames.LESSON_DIR) && !name.equals("course.json") && !name.equals("hints");
                   }
                 });
                 for (File file : files) {
