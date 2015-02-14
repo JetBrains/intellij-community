@@ -20,7 +20,7 @@ import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.ui.CreateTaskWindowDialog;
+import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
   }
 
 
-  private static boolean areTaskWindowsIntersect(@NotNull final TaskFile taskFile, @NotNull final Document document, int start, int end) {
+  private static boolean arePlaceholdersIntersect(@NotNull final TaskFile taskFile, @NotNull final Document document, int start, int end) {
     List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     for (AnswerPlaceholder existingAnswerPlaceholder : answerPlaceholders) {
       int twStart = existingAnswerPlaceholder.getRealStartOffset(document);
@@ -75,7 +75,7 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     if (taskFile == null) {
       return;
     }
-    if (areTaskWindowsIntersect(taskFile, document, start, end)) {
+    if (arePlaceholdersIntersect(taskFile, document, start, end)) {
       return;
     }
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
@@ -83,7 +83,7 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     answerPlaceholder.setStart(realStart);
     answerPlaceholder.setPossibleAnswer(model.getSelectedText());
 
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(),
+    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder, lesson.getIndex(),
                                                             task.getIndex(), file.getVirtualFile().getNameWithoutExtension(),
                                                             taskFile.getAnswerPlaceholders().size() + 1);
     dlg.show();
@@ -150,7 +150,7 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
       presentation.setEnabled(false);
       return;
     }
-    if (areTaskWindowsIntersect(taskFile, editor.getDocument(), start, end)) {
+    if (arePlaceholdersIntersect(taskFile, editor.getDocument(), start, end)) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;

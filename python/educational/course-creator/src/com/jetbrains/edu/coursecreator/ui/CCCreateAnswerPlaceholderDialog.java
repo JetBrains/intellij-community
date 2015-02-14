@@ -11,31 +11,33 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CreateTaskWindowDialog extends DialogWrapper {
+public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
 
   private static final String ourTitle = "Add Answer Placeholder";
   private final AnswerPlaceholder myAnswerPlaceholder;
-  private final CreateTaskWindowPanel myPanel;
+  private final CCCreateAnswerPlaceholderPanel myPanel;
   private final Project myProject;
 
   public Project getProject() {
     return myProject;
   }
 
-  public CreateTaskWindowDialog(@NotNull final Project project, @NotNull final AnswerPlaceholder answerPlaceholder, int lessonIndex,
-                                int taskIndex, String taskFileName, int taskWindowIndex) {
+  public CCCreateAnswerPlaceholderDialog(@NotNull final Project project,
+                                         @NotNull final AnswerPlaceholder answerPlaceholder,
+                                         int lessonIndex, int taskIndex, String taskFileName,
+                                         int answerPlaceholderIndex) {
     super(project, true);
     setTitle(ourTitle);
     myAnswerPlaceholder = answerPlaceholder;
-    myPanel = new CreateTaskWindowPanel(this);
-    String generatedHintName = EduNames.LESSON + lessonIndex + EduNames.TASK + taskIndex + taskFileName + "_" + taskWindowIndex;
+    myPanel = new CCCreateAnswerPlaceholderPanel(this);
+    String generatedHintName = EduNames.LESSON + lessonIndex + EduNames.TASK + taskIndex + taskFileName + "_" + answerPlaceholderIndex;
     myPanel.setGeneratedHintName(generatedHintName);
     if (answerPlaceholder.getHint() != null) {
       setHintText(answerPlaceholder);
     }
     myProject = project;
-    String taskWindowTaskText = answerPlaceholder.getTaskText();
-    myPanel.setTaskWindowText(taskWindowTaskText != null ? taskWindowTaskText : "");
+    String answerPlaceholderTaskText = answerPlaceholder.getTaskText();
+    myPanel.setAnswerPlaceholderText(answerPlaceholderTaskText != null ? answerPlaceholderTaskText : "");
     String hintName = answerPlaceholder.getHint();
     myPanel.setHintText(hintName != null ? hintName : "");
     init();
@@ -52,9 +54,9 @@ public class CreateTaskWindowDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    String taskWindowText = myPanel.getAnswerPlaceholderText();
-    myAnswerPlaceholder.setTaskText(StringUtil.notNullize(taskWindowText));
-    myAnswerPlaceholder.setLength(StringUtil.notNullize(taskWindowText).length());
+    String answerPlaceholderText = myPanel.getAnswerPlaceholderText();
+    myAnswerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
+    myAnswerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
     myAnswerPlaceholder.setHint(myPanel.getHintText());
     super.doOKAction();
   }

@@ -58,10 +58,10 @@
     <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
-    <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowTaskWindowDetails">
+    <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowAnswerPlaceholderDetails">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
-    <action id="DeleteTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCDeleteTaskWindow">
+    <action id="DeleteTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCDeleteAnswerPlaceholder">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
     <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">

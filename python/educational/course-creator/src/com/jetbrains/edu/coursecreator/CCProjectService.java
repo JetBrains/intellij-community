@@ -133,7 +133,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     return task.getTaskFile(fileName);
   }
 
-  public void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor) {
+  public void drawAnswerPlaceholders(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor) {
     TaskFile taskFile = getTaskFile(virtualFile);
     if (taskFile == null) {
       return;

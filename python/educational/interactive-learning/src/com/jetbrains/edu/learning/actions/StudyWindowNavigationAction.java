@@ -38,7 +38,7 @@ abstract public class StudyWindowNavigationAction extends DumbAwareAction {
             if (nextAnswerPlaceholder == null) {
               return;
             }
-            StudyNavigator.navigateToTaskWindow(selectedEditor, nextAnswerPlaceholder, selectedTaskFile);
+            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder, selectedTaskFile);
             selectedTaskFile.setSelectedAnswerPlaceholder(nextAnswerPlaceholder);
             }
           }

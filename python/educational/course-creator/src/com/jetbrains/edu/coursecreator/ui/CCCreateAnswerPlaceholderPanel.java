@@ -5,17 +5,17 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class CreateTaskWindowPanel extends JPanel {
+public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
-  private final CreateTaskWindowDialog myDialog;
+  private final CCCreateAnswerPlaceholderDialog myDialog;
   private JPanel myPanel;
   private JTextArea myHintText;
   private JCheckBox myCreateHintCheckBox;
   private JLabel myHintTextLabel;
-  private JTextField myTaskWindowText;
+  private JTextField myAnswerPlaceholderText;
   private String myGeneratedHintName = "";
 
-  public CreateTaskWindowPanel(CreateTaskWindowDialog dialog) {
+  public CCCreateAnswerPlaceholderPanel(CCCreateAnswerPlaceholderDialog dialog) {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
     myDialog = dialog;
@@ -32,7 +32,7 @@ public class CreateTaskWindowPanel extends JPanel {
       }
     });
 
-    myTaskWindowText.grabFocus();
+    myAnswerPlaceholderText.grabFocus();
   }
 
   private void enableHint(boolean isEnable) {
@@ -40,8 +40,8 @@ public class CreateTaskWindowPanel extends JPanel {
     myHintTextLabel.setEnabled(isEnable);
   }
 
-  public void setTaskWindowText(String taskWindowText) {
-    myTaskWindowText.setText(taskWindowText);
+  public void setAnswerPlaceholderText(String answerPlaceholderText) {
+    myAnswerPlaceholderText.setText(answerPlaceholderText);
   }
 
   public void setHintText(String hintText) {
@@ -49,7 +49,7 @@ public class CreateTaskWindowPanel extends JPanel {
   }
 
   public String getAnswerPlaceholderText() {
-    return myTaskWindowText.getText();
+    return myAnswerPlaceholderText.getText();
   }
 
   public String getHintText() {
@@ -69,6 +69,6 @@ public class CreateTaskWindowPanel extends JPanel {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myTaskWindowText;
+    return myAnswerPlaceholderText;
   }
 }

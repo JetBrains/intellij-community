@@ -77,7 +77,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
               if (openedFile != null) {
                 final TaskFile taskFile = StudyUtils.getTaskFile(project, openedFile);
                 if (taskFile != null) {
-                  StudyNavigator.navigateToFirstTaskWindow(editor, taskFile);
+                  StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
                   StudyEditor.addDocumentListener(document, new StudyDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);

@@ -17,7 +17,7 @@ import java.util.List;
  */
 public abstract class CCDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private final List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
+  private final List<AnswerPlaceholedrWrapper> myAnswerPlaceholders = new ArrayList<AnswerPlaceholedrWrapper>();
 
 
   public CCDocumentListener(TaskFile taskFile) {
@@ -30,12 +30,12 @@ public abstract class CCDocumentListener extends DocumentAdapter {
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
     Document document = e.getDocument();
-    myTaskWindows.clear();
+    myAnswerPlaceholders.clear();
     for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
       int twStart = answerPlaceholder.getRealStartOffset(document);
       int length = useLength() ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
       int twEnd = twStart + length;
-      myTaskWindows.add(new TaskWindowWrapper(answerPlaceholder, twStart, twEnd));
+      myAnswerPlaceholders.add(new AnswerPlaceholedrWrapper(answerPlaceholder, twStart, twEnd));
     }
   }
 
@@ -46,16 +46,16 @@ public abstract class CCDocumentListener extends DocumentAdapter {
       Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
-      for (TaskWindowWrapper taskWindowWrapper : myTaskWindows) {
-        int twStart = taskWindowWrapper.getTwStart();
+      for (AnswerPlaceholedrWrapper answerPlaceholedrWrapper : myAnswerPlaceholders) {
+        int twStart = answerPlaceholedrWrapper.getTwStart();
         if (twStart > offset) {
           twStart += change;
         }
-        int twEnd = taskWindowWrapper.getTwEnd();
+        int twEnd = answerPlaceholedrWrapper.getTwEnd();
         if (twEnd >= offset) {
           twEnd += change;
         }
-        AnswerPlaceholder answerPlaceholder = taskWindowWrapper.getAnswerPlaceholder();
+        AnswerPlaceholder answerPlaceholder = answerPlaceholedrWrapper.getAnswerPlaceholder();
         int line = document.getLineNumber(twStart);
         int start = twStart - document.getLineStartOffset(line);
         int length = twEnd - twStart;
@@ -64,7 +64,7 @@ public abstract class CCDocumentListener extends DocumentAdapter {
         if (useLength()) {
           answerPlaceholder.setLength(length);
         } else {
-          answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(start, start + length )));
+          answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(start, start + length)));
         }
       }
     }
@@ -72,12 +72,12 @@ public abstract class CCDocumentListener extends DocumentAdapter {
 
   protected abstract  boolean useLength();
 
-  private static class TaskWindowWrapper {
+  private static class AnswerPlaceholedrWrapper {
     public AnswerPlaceholder myAnswerPlaceholder;
     public int myTwStart;
     public int myTwEnd;
 
-    public TaskWindowWrapper(AnswerPlaceholder answerPlaceholder, int twStart, int twEnd) {
+    public AnswerPlaceholedrWrapper(AnswerPlaceholder answerPlaceholder, int twStart, int twEnd) {
       myAnswerPlaceholder = answerPlaceholder;
       myTwStart = twStart;
       myTwEnd = twEnd;

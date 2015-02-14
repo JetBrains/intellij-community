@@ -8,17 +8,17 @@ import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.ui.CreateTaskWindowDialog;
+import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
 
-public class CCShowTaskWindowDetails extends CCTaskWindowAction {
+public class CCShowAnswerPlaceholderDetails extends CCAnswerPlaceholderAction {
 
-  public CCShowTaskWindowDetails() {
+  public CCShowAnswerPlaceholderDetails() {
     super("Edit Answer Placeholder", "Edit answer placeholder", null);
   }
 
   @Override
-  protected void performTaskWindowAction(@NotNull CCState state) {
+  protected void performAnswerPlaceholderAction(@NotNull CCState state) {
     final Project project = state.getProject();
     final CCProjectService service = CCProjectService.getInstance(project);
     PsiFile file = state.getFile();
@@ -29,7 +29,7 @@ public class CCShowTaskWindowDetails extends CCTaskWindowAction {
     final Task task = service.getTask(taskDir.getVirtualFile().getPath());
     final TaskFile taskFile = state.getTaskFile();
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(), task.getIndex(),
+    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder, lesson.getIndex(), task.getIndex(),
                                                             file.getVirtualFile().getNameWithoutExtension(),
                                                             taskFile.getAnswerPlaceholders().size() + 1);
     dlg.setTitle("Edit Answer Placeholder");

@@ -6,11 +6,11 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class EduTaskWindowDeleteHandler implements ReadonlyFragmentModificationHandler {
+public class EduAnswerPlaceholderDeleteHandler implements ReadonlyFragmentModificationHandler {
 
   private final Editor myEditor;
 
-  public EduTaskWindowDeleteHandler(@NotNull final Editor editor) {
+  public EduAnswerPlaceholderDeleteHandler(@NotNull final Editor editor) {
     myEditor = editor;
   }
 

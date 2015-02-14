@@ -60,7 +60,7 @@ public class StudyNavigator {
     return lesson.getCourse().getLessons().get(lesson.getIndex() - 1);
   }
 
-  public static void navigateToFirstFailedTaskWindow(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
+  public static void navigateToFirstFailedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
     final Project project = editor.getProject();
     if (project == null) return;
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
@@ -68,26 +68,26 @@ public class StudyNavigator {
       if (status != StudyStatus.Failed) {
         continue;
       }
-      navigateToTaskWindow(editor, answerPlaceholder, taskFile);
+      navigateToAnswerPlaceholder(editor, answerPlaceholder, taskFile);
       break;
     }
   }
 
-  public static  void navigateToTaskWindow(@NotNull final Editor editor, @NotNull final AnswerPlaceholder answerPlaceholder,
-                                   @NotNull final TaskFile taskFile) {
+  public static  void navigateToAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder answerPlaceholder,
+                                                  @NotNull final TaskFile taskFile) {
     if (!answerPlaceholder.isValid(editor.getDocument())) {
       return;
     }
     taskFile.setSelectedAnswerPlaceholder(answerPlaceholder);
-    LogicalPosition taskWindowStart = new LogicalPosition(answerPlaceholder.getLine(), answerPlaceholder.getStart());
-    editor.getCaretModel().moveToLogicalPosition(taskWindowStart);
+    LogicalPosition placeholderStart = new LogicalPosition(answerPlaceholder.getLine(), answerPlaceholder.getStart());
+    editor.getCaretModel().moveToLogicalPosition(placeholderStart);
   }
 
 
-  public static  void navigateToFirstTaskWindow(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
+  public static  void navigateToFirstAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
     if (!taskFile.getAnswerPlaceholders().isEmpty()) {
       AnswerPlaceholder firstAnswerPlaceholder = StudyUtils.getFirst(taskFile.getAnswerPlaceholders());
-      navigateToTaskWindow(editor, firstAnswerPlaceholder, taskFile);
+      navigateToAnswerPlaceholder(editor, firstAnswerPlaceholder, taskFile);
     }
   }
 

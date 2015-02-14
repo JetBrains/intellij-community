@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class StudyDocumentListener extends DocumentAdapter {
   private final TaskFile myTaskFile;
-  private List<TaskWindowWrapper> myTaskWindows = new ArrayList<TaskWindowWrapper>();
+  private List<AnswerPlaceholderWrapper> myAnswerPlaceholders = new ArrayList<AnswerPlaceholderWrapper>();
 
   public StudyDocumentListener(@NotNull final TaskFile taskFile) {
     myTaskFile = taskFile;
@@ -34,11 +34,11 @@ public class StudyDocumentListener extends DocumentAdapter {
     }
     myTaskFile.setHighlightErrors(true);
     final Document document = e.getDocument();
-    myTaskWindows.clear();
+    myAnswerPlaceholders.clear();
     for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
       int twStart = answerPlaceholder.getRealStartOffset(document);
       int twEnd = twStart + answerPlaceholder.getLength();
-      myTaskWindows.add(new TaskWindowWrapper(answerPlaceholder, twStart, twEnd));
+      myAnswerPlaceholders.add(new AnswerPlaceholderWrapper(answerPlaceholder, twStart, twEnd));
     }
   }
 
@@ -52,16 +52,16 @@ public class StudyDocumentListener extends DocumentAdapter {
       final Document document = e.getDocument();
       int offset = e.getOffset();
       int change = event.getNewLength() - event.getOldLength();
-      for (TaskWindowWrapper taskWindowWrapper : myTaskWindows) {
-        int twStart = taskWindowWrapper.getTwStart();
+      for (AnswerPlaceholderWrapper answerPlaceholderWrapper : myAnswerPlaceholders) {
+        int twStart = answerPlaceholderWrapper.getTwStart();
         if (twStart > offset) {
           twStart += change;
         }
-        int twEnd = taskWindowWrapper.getTwEnd();
+        int twEnd = answerPlaceholderWrapper.getTwEnd();
         if (twEnd >= offset) {
           twEnd += change;
         }
-        final AnswerPlaceholder answerPlaceholder = taskWindowWrapper.getAnswerPlaceholder();
+        final AnswerPlaceholder answerPlaceholder = answerPlaceholderWrapper.getAnswerPlaceholder();
         int line = document.getLineNumber(twStart);
         int start = twStart - document.getLineStartOffset(line);
         int length = twEnd - twStart;
@@ -72,12 +72,12 @@ public class StudyDocumentListener extends DocumentAdapter {
     }
   }
 
-  private static class TaskWindowWrapper {
+  private static class AnswerPlaceholderWrapper {
     public AnswerPlaceholder myAnswerPlaceholder;
     public int myTwStart;
     public int myTwEnd;
 
-    public TaskWindowWrapper(AnswerPlaceholder answerPlaceholder, int twStart, int twEnd) {
+    public AnswerPlaceholderWrapper(AnswerPlaceholder answerPlaceholder, int twStart, int twEnd) {
       myAnswerPlaceholder = answerPlaceholder;
       myTwStart = twStart;
       myTwEnd = twEnd;

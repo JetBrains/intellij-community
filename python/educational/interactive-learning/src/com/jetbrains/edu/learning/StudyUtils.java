@@ -27,9 +27,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduTaskWindowDeleteHandler;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -292,7 +292,7 @@ public class StudyUtils {
     }
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
-      .setReadonlyFragmentModificationHandler(document, new EduTaskWindowDeleteHandler(editor));
+      .setReadonlyFragmentModificationHandler(document, new EduAnswerPlaceholderDeleteHandler(editor));
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
   }

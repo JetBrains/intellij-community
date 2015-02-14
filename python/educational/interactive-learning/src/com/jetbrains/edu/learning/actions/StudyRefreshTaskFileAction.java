@@ -80,7 +80,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
       }
     });
 
-    StudyNavigator.navigateToFirstTaskWindow(editor, taskFile);
+    StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
     showBalloon(project, "You can start again now", MessageType.INFO);
   }
 
@@ -91,7 +91,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     if (!resetDocument(project, document, taskFile, name)) {
       return false;
     }
-    resetTaskWindows(taskFile, project);
+    resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
     StudyUtils.updateStudyToolWindow(project);
     return true;
@@ -107,7 +107,7 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     Disposer.register(project, balloon);
   }
 
-  private static void resetTaskWindows(TaskFile selectedTaskFile, Project project) {
+  private static void resetAnswerPlaceholders(TaskFile selectedTaskFile, Project project) {
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
       answerPlaceholder.reset();

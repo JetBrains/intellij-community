@@ -159,7 +159,7 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
     return JBColor.BLUE;
   }
 
-  public boolean hasFailedTaskWindows(@NotNull final TaskFile taskFile) {
+  public boolean hasFailedAnswerPlaceholders(@NotNull final TaskFile taskFile) {
     return taskFile.getAnswerPlaceholders().size() > 0 && getStatus(taskFile) == StudyStatus.Failed;
   }
   @Nullable

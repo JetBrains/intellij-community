@@ -16,9 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-abstract public class CCTaskWindowAction extends DumbAwareAction {
+abstract public class CCAnswerPlaceholderAction extends DumbAwareAction {
 
-  protected CCTaskWindowAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  protected CCAnswerPlaceholderAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -65,10 +65,10 @@ abstract public class CCTaskWindowAction extends DumbAwareAction {
     if (state == null) {
       return;
     }
-    performTaskWindowAction(state);
+    performAnswerPlaceholderAction(state);
   }
 
-  protected abstract void performTaskWindowAction(@NotNull final CCState state);
+  protected abstract void performAnswerPlaceholderAction(@NotNull final CCState state);
 
   protected static class CCState {
     private TaskFile myTaskFile;

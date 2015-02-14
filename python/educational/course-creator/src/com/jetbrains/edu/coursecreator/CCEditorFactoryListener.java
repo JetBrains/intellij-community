@@ -9,9 +9,9 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduTaskWindowDeleteHandler;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +47,8 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     CCProjectService.addDocumentListener(editor.getDocument(), listener);
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
-      .setReadonlyFragmentModificationHandler(editor.getDocument(), new EduTaskWindowDeleteHandler(editor));
-    service.drawTaskWindows(virtualFile, editor);
+      .setReadonlyFragmentModificationHandler(editor.getDocument(), new EduAnswerPlaceholderDeleteHandler(editor));
+    service.drawAnswerPlaceholders(virtualFile, editor);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, false);
   }

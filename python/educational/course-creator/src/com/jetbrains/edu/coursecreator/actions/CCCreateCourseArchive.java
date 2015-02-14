@@ -154,7 +154,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     Collections.sort(taskFile.getAnswerPlaceholders(), new AnswerPlaceholderComparator());
     for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
-      replaceTaskWindow(project, document, answerPlaceholder);
+      replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
@@ -170,9 +170,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     document.removeDocumentListener(listener);
   }
 
-  private static void replaceTaskWindow(@NotNull final Project project,
-                                        @NotNull final Document document,
-                                        @NotNull final AnswerPlaceholder answerPlaceholder) {
+  private static void replaceAnswerPlaceholder(@NotNull final Project project,
+                                               @NotNull final Document document,
+                                               @NotNull final AnswerPlaceholder answerPlaceholder) {
     final String taskText = answerPlaceholder.getTaskText();
     final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
     final int offset = lineStartOffset + answerPlaceholder.getStart();

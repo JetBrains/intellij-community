@@ -13,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CCDeleteTaskWindow extends CCTaskWindowAction {
+public class CCDeleteAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
-  public CCDeleteTaskWindow() {
+  public CCDeleteAnswerPlaceholder() {
     super("Delete Answer Placeholder","Delete answer placeholder", null);
   }
 
   @Override
-  protected void performTaskWindowAction(@NotNull CCState state) {
+  protected void performAnswerPlaceholderAction(@NotNull CCState state) {
     Project project = state.getProject();
     PsiFile psiFile = state.getFile();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
@@ -32,7 +32,7 @@ public class CCDeleteTaskWindow extends CCTaskWindowAction {
       answerPlaceholders.remove(answerPlaceholder);
       final Editor editor = state.getEditor();
       editor.getMarkupModel().removeAllHighlighters();
-      CCProjectService.getInstance(project).drawTaskWindows(psiFile.getVirtualFile(), editor);
+      CCProjectService.getInstance(project).drawAnswerPlaceholders(psiFile.getVirtualFile(), editor);
       EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, false);
     }
   }
