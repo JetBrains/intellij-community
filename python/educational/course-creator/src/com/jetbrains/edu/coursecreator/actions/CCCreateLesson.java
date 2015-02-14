@@ -152,9 +152,9 @@ public class CCCreateLesson extends DumbAwareAction {
     }
     final CCProjectService service = CCProjectService.getInstance(project);
     Course course = service.getCourse();
-    if (directory != null && course != null && service.getLesson(directory.getName()) != null) {
-      EduUtils.enableAction(event, true);
-      return;
+
+    if (directory != null && course != null && project.getBaseDir().equals(directory)) {
+      EduUtils.enableAction(event, false);
     }
     EduUtils.enableAction(event, false);
   }
