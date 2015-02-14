@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -142,7 +143,7 @@ public abstract class CCRunTestsAction extends AnAction {
           if (testsTemplate == null) {
             return;
           }
-          VirtualFile testFile = taskDir.findChild(testsTemplate.getName());
+          VirtualFile testFile = taskDir.findChild(testsTemplate.getName() + "." + testsTemplate.getExtension());
           if (testFile == null) {
             return;
           }
@@ -156,7 +157,8 @@ public abstract class CCRunTestsAction extends AnAction {
                                             @NotNull final Project project) {
     try {
       String answerFileName = FileUtil.getNameWithoutExtension(fileName) + ".answer";
-      final VirtualFile answerFile = taskDir.findChild(answerFileName);
+      final String extension = FileUtilRt.getExtension(fileName);
+      final VirtualFile answerFile = taskDir.findChild(answerFileName + "." + extension);
       if (answerFile == null) {
         LOG.debug("could not find answer file " + answerFileName);
         return;
@@ -168,6 +170,10 @@ public abstract class CCRunTestsAction extends AnAction {
           documentManager.saveAllDocuments();
         }
       });
+      final VirtualFile oldTaskFile = taskDir.findChild(fileName);
+      if (oldTaskFile != null) {
+        oldTaskFile.delete(project);
+      }
       answerFile.copy(project, taskDir, fileName);
       flushWindows(taskFile, answerFile);
       createResourceFiles(answerFile, project);

@@ -53,11 +53,7 @@ public class PyCCRunTestsAction extends CCRunTestsAction {
     }
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(project).refresh();
-    VirtualFile courseDir = ideaDir.findChild("course");
-    if (courseDir == null) {
-      return;
-    }
-    configuration.setScriptParameters(PathUtil.toSystemDependentName(courseDir.getPath()) + " " + PathUtil.toSystemDependentName(userFile.getPath()));
+    configuration.setScriptParameters(PathUtil.toSystemDependentName(project.getBasePath()) + " " + PathUtil.toSystemDependentName(userFile.getPath()));
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ProgramRunnerUtil.executeConfiguration(project, settings, executor);
   }
