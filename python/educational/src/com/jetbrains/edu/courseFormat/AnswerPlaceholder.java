@@ -144,24 +144,29 @@ public class AnswerPlaceholder implements Comparable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    AnswerPlaceholder position = (AnswerPlaceholder)o;
+    AnswerPlaceholder that = (AnswerPlaceholder)o;
 
-    if (getStart() != position.getStart()) return false;
-    if (getLength() != position.getLength()) return false;
-    if (getIndex() != position.getIndex()) return false;
-    if (getLine() != position.getLine()) return false;
-    if (!getHint().equals(position.getHint())) return false;
+    if (getLine() != that.getLine()) return false;
+    if (getStart() != that.getStart()) return false;
+    if (getLength() != that.getLength()) return false;
+    if (getIndex() != that.getIndex()) return false;
+    if (getHint() != null ? !getHint().equals(that.getHint()) : that.getHint() != null) return false;
+    if (getPossibleAnswer() != null ? !getPossibleAnswer().equals(that.getPossibleAnswer()) : that.getPossibleAnswer() != null)
+      return false;
+    if (myTaskText != null ? !myTaskText.equals(that.myTaskText) : that.myTaskText != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = getHint().hashCode();
-    result = 31 * result + getLine();
+    int result = getLine();
     result = 31 * result + getStart();
+    result = 31 * result + (getHint() != null ? getHint().hashCode() : 0);
+    result = 31 * result + (getPossibleAnswer() != null ? getPossibleAnswer().hashCode() : 0);
     result = 31 * result + getLength();
     result = 31 * result + getIndex();
+    result = 31 * result + (myTaskText != null ? myTaskText.hashCode() : 0);
     return result;
   }
 }
