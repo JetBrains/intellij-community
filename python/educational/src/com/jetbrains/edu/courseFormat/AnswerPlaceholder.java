@@ -5,12 +5,13 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implementation of windows which user should type in
  */
 
-public class AnswerPlaceholder implements Comparable {
+public class AnswerPlaceholder {
 
   @Expose private int line = 0;
   @Expose private int start = 0;
@@ -61,7 +62,7 @@ public class AnswerPlaceholder implements Comparable {
     return hint;
   }
 
-  public void setHint(@NotNull final String hint) {
+  public void setHint(@Nullable final String hint) {
     this.hint = hint;
   }
 
@@ -81,6 +82,14 @@ public class AnswerPlaceholder implements Comparable {
     myInitialState = initialState;
   }
 
+  public String getTaskText() {
+    return myTaskText;
+  }
+
+  public void setTaskText(String taskText) {
+    myTaskText = taskText;
+  }
+
   @Transient
   public TaskFile getTaskFile() {
     return myTaskFile;
@@ -95,24 +104,16 @@ public class AnswerPlaceholder implements Comparable {
     return document.getLineStartOffset(line) + start;
   }
 
+  public int getPossibleAnswerLength() {
+    return possibleAnswer.length();
+  }
+
   public boolean isValid(@NotNull final Document document) {
     boolean isLineValid = line < document.getLineCount() && line >= 0;
     if (!isLineValid) return false;
     boolean isStartValid = start >= 0 && start < document.getLineEndOffset(line);
     boolean isLengthValid = (getRealStartOffset(document) + length) <= document.getTextLength();
     return isLengthValid && isStartValid;
-  }
-
-  public int compareTo(@NotNull Object o) {
-    AnswerPlaceholder answerPlaceholder = (AnswerPlaceholder)o;
-    if (answerPlaceholder.getTaskFile() != myTaskFile) {
-      throw new ClassCastException();
-    }
-    int lineDiff = line - answerPlaceholder.line;
-    if (lineDiff == 0) {
-      return start - answerPlaceholder.start;
-    }
-    return lineDiff;
   }
 
   /**

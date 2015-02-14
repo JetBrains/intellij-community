@@ -16,19 +16,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.CCDocumentListener;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
-import com.jetbrains.edu.coursecreator.format.*;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipOutputStream;
@@ -74,28 +74,24 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
     final VirtualFile baseDir = project.getBaseDir();
-    final Map<String, Lesson> lessons = course.getLessonsMap();
+    final Map<String, Lesson> lessons = service.getLessonsMap();
     //map to store initial task file
     final Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
-    for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
-      final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
-      if (lessonDir == null) continue;
-      for (Map.Entry<String, Task> task : lesson.getValue().myTasksMap.entrySet()) {
-        final VirtualFile taskDir = lessonDir.findChild(task.getKey());
-        if (taskDir == null) continue;
-        for (final Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              createUserFile(project, taskFiles, taskDir, taskDir, entry);
-            }
-          });
-        }
+
+    for (Map.Entry<String, Task> task : service.getTasksMap().entrySet()) {
+      final VirtualFile taskDir = LocalFileSystem.getInstance().findFileByPath(task.getKey());
+      if (taskDir == null) continue;
+      for (final Map.Entry<String, TaskFile> entry : task.getValue().getTaskFiles().entrySet()) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            createUserFile(project, taskFiles, taskDir, taskDir, entry);
+          }
+        });
       }
     }
     generateJson(project);
     packCourse(baseDir, lessons, course);
-    resetTaskFiles(taskFiles);
     synchronize(project);
   }
 
@@ -136,9 +132,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     if (document == null) return;
     final TaskFile taskFile = taskFiles.getValue();
     TaskFile taskFileSaved = new TaskFile();
-    taskFile.copy(taskFileSaved);
+    TaskFile.copy(taskFile, taskFileSaved);
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      answerPlaceholder.setLength(answerPlaceholder.getReplacementLength());
+      answerPlaceholder.setLength(answerPlaceholder.getPossibleAnswerLength());
     }
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
@@ -154,7 +150,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     InsertionListener listener = new InsertionListener(taskFile);
     document.addDocumentListener(listener);
     taskFilesCopy.put(taskFile, taskFileSaved);
-    Collections.sort(taskFile.getAnswerPlaceholders());
+    //Collections.sort(taskFile.getAnswerPlaceholders());
     for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceTaskWindow(project, document, answerPlaceholder);
@@ -196,14 +192,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   private static void synchronize(@NotNull final Project project) {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(project).refresh();
-  }
-
-  public static void resetTaskFiles(@NotNull final Map<TaskFile, TaskFile> taskFiles) {
-    for (Map.Entry<TaskFile, TaskFile> entry : taskFiles.entrySet()) {
-      TaskFile realTaskFile = entry.getKey();
-      TaskFile savedTaskFile = entry.getValue();
-      realTaskFile.update(savedTaskFile);
-    }
   }
 
   private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Map<String, Lesson> lessons, @NotNull final Course course) {

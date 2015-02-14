@@ -33,8 +33,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.coursecreator.CCAnswerPlaceholderPainter;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.format.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,13 +88,13 @@ public class CCShowPreview extends DumbAwareAction {
     if (lessonDir == null) {
       return;
     }
-    Course course = CCProjectService.getInstance(project).getCourse();
+    final CCProjectService service = CCProjectService.getInstance(project);
+    Course course = service.getCourse();
     if (course == null) {
       return;
     }
-    Lesson lesson = course.getLesson(lessonDir.getName());
-    Task task = lesson.getTask(taskDir.getName());
-    TaskFile taskFile = task.getTaskFile(file.getName());
+    Task task = service.getTask(taskDir.getVirtualFile().getPath());
+    TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
     if (taskFile == null) {
       return;
     }
@@ -129,7 +133,7 @@ public class CCShowPreview extends DumbAwareAction {
       }
     });
     for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      answerPlaceholder.drawHighlighter(createdEditor, true);
+      CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, createdEditor, true);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -142,6 +146,5 @@ public class CCShowPreview extends DumbAwareAction {
     createdEditor.setCaretEnabled(false);
     showPreviewFrame.setComponent(labeledEditor);
     showPreviewFrame.show();
-    CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
   }
 }

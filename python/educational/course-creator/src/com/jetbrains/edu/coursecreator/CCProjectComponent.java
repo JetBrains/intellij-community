@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.actions.CCRunTestsAction;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -115,10 +115,10 @@ public class CCProjectComponent implements ProjectComponent {
       }
       VirtualFile removedFile = event.getFile();
       if (removedFile.getName().contains(".answer")) {
-        deleteTaskFile(course, removedFile);
+        deleteTaskFile(removedFile);
       }
       if (removedFile.getName().contains("task")) {
-        deleteTask(course, removedFile);
+        deleteTask(removedFile);
       }
       if (removedFile.getName().contains("lesson")) {
         deleteLesson(course, removedFile);
@@ -130,15 +130,17 @@ public class CCProjectComponent implements ProjectComponent {
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
       }
-      Lesson lesson = course.getLesson(file.getName());
+      final CCProjectService projectService = CCProjectService.getInstance(myProject);
+      Lesson lesson = projectService.getLesson(file.getName());
       if (lesson != null) {
         course.getLessons().remove(lesson);
-        course.getLessonsMap().remove(file.getName());
+        projectService.getLessonsMap().remove(file.getName());
       }
     }
 
-    private void deleteTask(Course course, VirtualFile removedFile) {
+    private void deleteTask(VirtualFile removedFile) {
       VirtualFile lessonDir = removedFile.getParent();
+      final CCProjectService projectService = CCProjectService.getInstance(myProject);
       if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
         return;
       }
@@ -146,20 +148,20 @@ public class CCProjectComponent implements ProjectComponent {
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
       }
-      Lesson lesson = course.getLesson(lessonDir.getName());
+      Lesson lesson = projectService.getLesson(lessonDir.getName());
       if (lesson == null) {
         return;
       }
-      Task task = lesson.getTask(removedFile.getName());
+      Task task = projectService.getTask(removedFile.getPath());
       if (task == null) {
         return;
       }
       lesson.getTaskList().remove(task);
-      lesson.getTasksMap().remove(removedFile.getName());
+      projectService.getTasksMap().remove(removedFile.getPath());
     }
 
-    private void deleteTaskFile(Course course, VirtualFile removedFile) {
-
+    private void deleteTaskFile(VirtualFile removedFile) {
+      final CCProjectService projectService = CCProjectService.getInstance(myProject);
       final VirtualFile taskDir = removedFile.getParent();
       if (taskDir == null || !taskDir.getName().contains("task")) {
         return;
@@ -172,15 +174,15 @@ public class CCProjectComponent implements ProjectComponent {
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
       }
-      Lesson lesson = course.getLesson(lessonDir.getName());
+      Lesson lesson = projectService.getLesson(lessonDir.getName());
       if (lesson == null) {
         return;
       }
-      Task task = lesson.getTask(taskDir.getName());
+      Task task = projectService.getTask(taskDir.getPath());
       if (task == null) {
         return;
       }
-      TaskFile taskFile = task.getTaskFile(removedFile.getName());
+      TaskFile taskFile = projectService.getTaskFile(removedFile);
       if (taskFile == null) {
         return;
       }

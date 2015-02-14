@@ -6,11 +6,11 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
 import org.jetbrains.annotations.NotNull;
 
 public class CCDirectoryNode extends PsiDirectoryNode {
@@ -30,7 +30,8 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     //TODO:change presentable name for files with suffix _answer
 
     String valueName = myValue.getName();
-    final Course course = CCProjectService.getInstance(myProject).getCourse();
+    final CCProjectService service = CCProjectService.getInstance(myProject);
+    final Course course = service.getCourse();
     if (course == null) return;
     if (myProject.getBaseDir().equals(myValue.getVirtualFile())) {
       data.clearText();
@@ -38,7 +39,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
       data.addText(" (" + course.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
-    final Lesson lesson = course.getLesson(valueName);
+    final Lesson lesson = service.getLesson(valueName);
     if (lesson != null) {
       data.clearText();
       data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -48,13 +49,13 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     else {
       final PsiDirectory parentDir = myValue.getParentDirectory();
       if (parentDir != null) {
-        final Lesson parentLesson = course.getLesson(parentDir.getName());
+        final Lesson parentLesson = service.getLesson(parentDir.getName());
         if (parentLesson != null) {
-          final Task task = parentLesson.getTask(valueName);
+          final Task task = service.getTask(myValue.getVirtualFile().getPath());
           if (task != null) {
             data.clearText();
             data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            data.addText(" (" + task.name + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            data.addText(" (" + task.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             return;
           }
         }

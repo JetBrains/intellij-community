@@ -29,9 +29,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.xmlb.XmlSerializer;
-import com.jetbrains.edu.coursecreator.format.*;
-import org.jdom.Element;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,43 +46,50 @@ import java.util.Map;
          @Storage(file = "$PROJECT_CONFIG_DIR$/course_service.xml")
        }
 )
-public class CCProjectService implements PersistentStateComponent<Element> {
-
+public class CCProjectService implements PersistentStateComponent<CCProjectService> {
   private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
   private Course myCourse;
-  public static final String COURSE_ELEMENT = "course";
+
+  //directory name to Lesson
+  private Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
+
+  //directory path to Task
+  public Map<String, Task> myTasksMap = new HashMap<String, Task>();
+
   private static final Map<Document, CCDocumentListener> myDocumentListeners = new HashMap<Document, CCDocumentListener>();
 
-  public void setCourse(@NotNull final Course course) {
-    myCourse = course;
+  public Map<String, Lesson> getLessonsMap() {
+    return myLessonsMap;
   }
 
-  public Course getCourse() {
-    return myCourse;
+  public void setLessonsMap(Map<String, Lesson> lessonsMap) {
+    myLessonsMap = lessonsMap;
   }
 
-  @Override
-  public Element getState() {
-    final Element el = new Element("CCProjectService");
-    if (myCourse != null) {
-      Element courseElement = new Element(COURSE_ELEMENT);
-      XmlSerializer.serializeInto(myCourse, courseElement);
-      el.addContent(courseElement);
-    }
-    return el;
+  public Lesson getLesson(@NotNull final String name) {
+    return myLessonsMap.get(name);
   }
 
-  @Override
-  public void loadState(Element el) {
-    myCourse = XmlSerializer.deserialize(el.getChild(COURSE_ELEMENT), Course.class);
-    if (myCourse != null) {
-      myCourse.init();
-    }
+  public void addLesson(@NotNull final Lesson lesson, @NotNull final PsiDirectory directory) {
+    myLessonsMap.put(directory.getName(), lesson);
   }
 
-  public static CCProjectService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CCProjectService.class);
+  public Map<String, Task> getTasksMap() {
+    return myTasksMap;
   }
+
+  public void setTasksMap(Map<String, Task> tasksMap) {
+    myTasksMap = tasksMap;
+  }
+
+  public void addTask(@NotNull final Task task, PsiDirectory taskDirectory) {
+    myTasksMap.put(taskDirectory.getVirtualFile().getPath(), task);
+  }
+
+  public Task getTask(@NotNull final String name) {
+    return myTasksMap.get(name);
+  }
+
 
   public static void deleteProjectFile(File file, @NotNull final Project project) {
     if (!file.delete()) {
@@ -110,15 +117,16 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     if (!lessonDirName.contains("lesson")) {
       return null;
     }
-    Lesson lesson = myCourse.getLessonsMap().get(lessonDirName);
+    Lesson lesson = myLessonsMap.get(lessonDirName);
     if (lesson == null) {
       return null;
     }
-    Task task = lesson.getTask(taskDirName);
+    Task task = getTask(taskDir.getPath());
     if (task == null) {
       return null;
     }
-    return task.getTaskFile(virtualFile.getName());
+    String fileName = getRealTaskFileName(virtualFile.getName());
+    return task.getTaskFile(fileName);
   }
 
   public void drawTaskWindows(@NotNull final VirtualFile virtualFile, @NotNull final Editor editor) {
@@ -128,7 +136,7 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     }
     List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
-      answerPlaceholder.drawHighlighter(editor, false);
+      CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, editor, false);
     }
   }
 
@@ -185,6 +193,8 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     }
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
+
+  @Nullable
   public static String getRealTaskFileName(String name) {
     String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
     String extension = FileUtilRt.getExtension(name);
@@ -207,4 +217,27 @@ public class CCProjectService implements PersistentStateComponent<Element> {
     CCUtils.enableAction(e, true);
     return true;
   }
+
+  public Course getCourse() {
+    return myCourse;
+  }
+
+  public void setCourse(@NotNull final Course course) {
+    myCourse = course;
+  }
+
+  @Override
+  public CCProjectService getState() {
+    return this;
+  }
+
+  @Override
+  public void loadState(CCProjectService state) {
+    XmlSerializerUtil.copyBean(state, this);
+  }
+
+  public static CCProjectService getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, CCProjectService.class);
+  }
+
 }

@@ -2,6 +2,7 @@ package com.jetbrains.edu.courseFormat;
 
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,5 +53,9 @@ public class Lesson {
   @Transient
   public void setCourse(Course course) {
     myCourse = course;
+  }
+
+  public void addTask(@NotNull final Task task) {
+    taskList.add(task);
   }
 }

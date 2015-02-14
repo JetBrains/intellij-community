@@ -1,9 +1,6 @@
 package com.jetbrains.edu.coursecreator.ui;
 
-import com.intellij.ui.DocumentAdapter;
-
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -12,10 +9,8 @@ public class CreateTaskWindowPanel extends JPanel {
 
   private final CreateTaskWindowDialog myDialog;
   private JPanel myPanel;
-  private JTextField myHintName;
   private JTextArea myHintText;
   private JCheckBox myCreateHintCheckBox;
-  private JLabel myHintNameLabel;
   private JLabel myHintTextLabel;
   private JTextField myTaskWindowText;
   private String myGeneratedHintName = "";
@@ -38,28 +33,15 @@ public class CreateTaskWindowPanel extends JPanel {
     });
 
     myTaskWindowText.grabFocus();
-    myHintName.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myDialog.validateInput();
-      }
-    });
   }
 
   private void enableHint(boolean isEnable) {
-    myHintName.setEnabled(isEnable);
     myHintText.setEnabled(isEnable);
-    myHintNameLabel.setEnabled(isEnable);
     myHintTextLabel.setEnabled(isEnable);
-    myHintName.setText(myGeneratedHintName);
   }
 
   public void setTaskWindowText(String taskWindowText) {
     myTaskWindowText.setText(taskWindowText);
-  }
-
-  public void setHintName(String hintName) {
-    myHintName.setText(hintName);
   }
 
   public void setHintText(String hintText) {
@@ -70,16 +52,8 @@ public class CreateTaskWindowPanel extends JPanel {
     return myTaskWindowText.getText();
   }
 
-  public String getHintName() {
-    return myHintName.getText();
-  }
-
   public String getHintText() {
     return myHintText.getText();
-  }
-
-  public boolean createHint() {
-    return myHintName.isEnabled();
   }
 
   public void doClick() {
@@ -87,7 +61,6 @@ public class CreateTaskWindowPanel extends JPanel {
   }
 
   public void resetHint() {
-    myHintName.setText("");
     myHintText.setText("");
   }
 

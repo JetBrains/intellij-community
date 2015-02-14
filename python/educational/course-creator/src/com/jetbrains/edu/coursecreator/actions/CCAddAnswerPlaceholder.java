@@ -13,17 +13,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.coursecreator.CCAnswerPlaceholderPainter;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.format.*;
 import com.jetbrains.edu.coursecreator.ui.CreateTaskWindowDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CCAddTaskWindow extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CCAddTaskWindow.class);
+public class CCAddAnswerPlaceholder extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(CCAddAnswerPlaceholder.class);
 
-  public CCAddTaskWindow() {
+  public CCAddAnswerPlaceholder() {
     super("Add Answer Placeholder", "Add answer placeholder", null);
   }
 
@@ -32,7 +36,7 @@ public class CCAddTaskWindow extends DumbAwareAction {
     List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
     for (AnswerPlaceholder existingAnswerPlaceholder : answerPlaceholders) {
       int twStart = existingAnswerPlaceholder.getRealStartOffset(document);
-      int twEnd = existingAnswerPlaceholder.getReplacementLength() + twStart;
+      int twEnd = existingAnswerPlaceholder.getPossibleAnswerLength() + twStart;
       if ((start >= twStart && start < twEnd) || (end > twStart && end <= twEnd) ||
           (twStart >= start && twStart < end) || (twEnd > start && twEnd <= end)) {
         return true;
@@ -57,25 +61,27 @@ public class CCAddTaskWindow extends DumbAwareAction {
     final int start = model.getSelectionStart();
     final int end = model.getSelectionEnd();
     final int lineNumber = document.getLineNumber(start);
-    final int length = end - start;
     int realStart = start - document.getLineStartOffset(lineNumber);
 
     final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
     final PsiDirectory taskDir = file.getContainingDirectory();
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
 
-    final Lesson lesson = course.getLesson(lessonDir.getName());
-    final Task task = lesson.getTask(taskDir.getName());
-    final TaskFile taskFile = task.getTaskFile(file.getName());
+    final Lesson lesson = service.getLesson(lessonDir.getName());
+    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
+    final TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
     if (taskFile == null) {
       return;
     }
     if (areTaskWindowsIntersect(taskFile, document, start, end)) {
       return;
     }
-    final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder(lineNumber, realStart, length, model.getSelectedText());
+    final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
+    answerPlaceholder.setLine(lineNumber);
+    answerPlaceholder.setStart(realStart);
+    answerPlaceholder.setPossibleAnswer(model.getSelectedText());
+
     CreateTaskWindowDialog dlg = new CreateTaskWindowDialog(project, answerPlaceholder, lesson.getIndex(),
                                                             task.getIndex(), file.getVirtualFile().getNameWithoutExtension(),
                                                             taskFile.getAnswerPlaceholders().size() + 1);
@@ -84,10 +90,11 @@ public class CCAddTaskWindow extends DumbAwareAction {
       return;
     }
     int index = taskFile.getAnswerPlaceholders().size() + 1;
-    taskFile.addTaskWindow(answerPlaceholder, index);
-    taskFile.sortTaskWindows();
-    answerPlaceholder.drawHighlighter(editor, false);
-    answerPlaceholder.createGuardedBlocks(editor);
+    answerPlaceholder.setIndex(index);
+    taskFile.addAnswerPlaceholder(answerPlaceholder);
+    //taskFile.sortTaskWindows();
+    CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, editor, false);
+    CCAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
   }
 
   @Override
@@ -119,24 +126,23 @@ public class CCAddTaskWindow extends DumbAwareAction {
     int end = selectionModel.getSelectionEnd();
 
     final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
     final PsiDirectory taskDir = file.getContainingDirectory();
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
 
-    final Lesson lesson = course.getLesson(lessonDir.getName());
+    final Lesson lesson = service.getLesson(lessonDir.getName());
     if (lesson == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
-    final Task task = lesson.getTask(taskDir.getName());
+    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
     if (task == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
-    TaskFile taskFile = task.getTaskFile(file.getName());
+    TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
     if (taskFile == null) {
       LOG.info("could not find task file");
       presentation.setVisible(false);

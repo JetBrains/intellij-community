@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -159,7 +158,7 @@ public class StudyGenerator {
     for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
       initAnswerPlaceholder(answerPlaceholder, taskFile, isRestarted);
     }
-    Collections.sort(answerPlaceholders);
+    //Collections.sort(answerPlaceholders);
     for (int i = 0; i < answerPlaceholders.size(); i++) {
       answerPlaceholders.get(i).setIndex(i);
     }

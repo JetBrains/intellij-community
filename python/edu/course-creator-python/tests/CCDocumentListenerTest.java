@@ -5,9 +5,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive;
-import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,7 @@ public class CCDocumentListenerTest extends CCTestCase {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(offset, offset + answerPlaceholder.getReplacementLength(), taskText);
+            document.replaceString(offset, offset + answerPlaceholder.getPossibleAnswer().length(), taskText);
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });

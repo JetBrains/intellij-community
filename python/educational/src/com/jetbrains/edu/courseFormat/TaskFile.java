@@ -53,6 +53,10 @@ public class TaskFile {
     this.myAnswerPlaceholders = answerPlaceholders;
   }
 
+  public void addAnswerPlaceholder(AnswerPlaceholder answerPlaceholder) {
+    myAnswerPlaceholders.add(answerPlaceholder);
+  }
+
   public int getIndex() {
     return myIndex;
   }
@@ -111,7 +115,6 @@ public class TaskFile {
     }
     target.setAnswerPlaceholders(windowsCopy);
   }
-
 
   public void setUserCreated(boolean userCreated) {
     myUserCreated = userCreated;

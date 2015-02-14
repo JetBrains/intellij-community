@@ -22,12 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public class CCCreateTask extends DumbAwareAction {
   public static void createTask(final IdeView view, final Project project, final PsiDirectory lessonDir, boolean showDialog) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    final Lesson lesson = course.getLesson(lessonDir.getName());
+    final Lesson lesson = service.getLesson(lessonDir.getName());
     final int size = lesson.getTaskList().size();
     final String taskName;
     if (showDialog) {
@@ -81,7 +81,8 @@ public class CCCreateTask extends DumbAwareAction {
           CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final Task task = new Task(taskName);
           task.setIndex(size + 1);
-          lesson.addTask(task, taskDirectory);
+          service.addTask(task, taskDirectory);
+          lesson.addTask(task);
 
           createFromTemplateAndOpen(taskDirectory, manager.getTestsTemplate(project), view);
           createFromTemplateAndOpen(taskDirectory, FileTemplateManager.getInstance(project).getInternalTemplate("task.html"), view);
@@ -157,7 +158,7 @@ public class CCCreateTask extends DumbAwareAction {
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    if (course != null && directory != null && course.getLesson(directory.getName()) == null) {
+    if (course != null && directory != null && service.getLesson(directory.getName()) == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;

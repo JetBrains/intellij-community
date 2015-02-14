@@ -34,12 +34,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
-import com.jetbrains.edu.coursecreator.format.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -79,15 +78,15 @@ public abstract class CCRunTestsAction extends AnAction {
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
     if (course == null) return;
-    final Lesson lesson = course.getLesson(lessonDir.getName());
+    final Lesson lesson = service.getLesson(lessonDir.getName());
     if (lesson == null) return;
-    final Task task = lesson.getTask(taskDir.getName());
+    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
     if (task == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
-    TaskFile taskFile = task.getTaskFile(psiFile.getName());
+    TaskFile taskFile = service.getTaskFile(psiFile.getVirtualFile());
     if (taskFile == null) {
       LOG.info("could not find task file");
       presentation.setVisible(false);
@@ -126,7 +125,7 @@ public abstract class CCRunTestsAction extends AnAction {
         if (taskDir == null) {
           return;
         }
-        final Task task = getTask(course, taskDir);
+        final Task task = CCProjectService.getInstance(project).getTask(taskDir.getPath());
         if (task == null) {
           return;
         }
@@ -208,23 +207,6 @@ public abstract class CCRunTestsAction extends AnAction {
                                    @NotNull final VirtualFile taskDir,
                                    @NotNull final VirtualFile testFile);
 
-  @Nullable
-  private static Task getTask(@NotNull final Course course, @NotNull final VirtualFile taskDir) {
-    if (!taskDir.getName().contains("task")) {
-      return null;
-    }
-    VirtualFile lessonDir = taskDir.getParent();
-    if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
-      return null;
-    }
-    Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson == null) {
-      return null;
-    }
-    return lesson.getTask(taskDir.getName());
-  }
-
-
   //some tests could compare task files after user modifications with initial task files
   private static void createResourceFiles(@NotNull final VirtualFile file, @NotNull final Project project) {
     VirtualFile taskDir = file.getParent();
@@ -248,7 +230,6 @@ public abstract class CCRunTestsAction extends AnAction {
           HashMap<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             CCCreateCourseArchive.createUserFile(project, taskFilesCopy, taskResourceDir, taskDir, entry);
-            CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
           }
         }
       }
@@ -282,7 +263,7 @@ public abstract class CCRunTestsAction extends AnAction {
         printWriter = new PrintWriter(new FileOutputStream(windowsFile.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
           int start = answerPlaceholder.getRealStartOffset(document);
-          String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getReplacementLength()));
+          String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getPossibleAnswerLength()));
           printWriter.println("#educational_plugin_window = " + windowDescription);
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

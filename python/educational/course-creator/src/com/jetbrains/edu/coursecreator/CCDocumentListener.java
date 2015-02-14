@@ -4,8 +4,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.jetbrains.edu.coursecreator.format.AnswerPlaceholder;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
+import com.intellij.openapi.util.TextRange;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public abstract class CCDocumentListener extends DocumentAdapter {
     myTaskWindows.clear();
     for (AnswerPlaceholder answerPlaceholder : myTaskFile.getAnswerPlaceholders()) {
       int twStart = answerPlaceholder.getRealStartOffset(document);
-      int length = useLength() ? answerPlaceholder.getLength() : answerPlaceholder.getReplacementLength();
+      int length = useLength() ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
       int twEnd = twStart + length;
       myTaskWindows.add(new TaskWindowWrapper(answerPlaceholder, twStart, twEnd));
     }
@@ -63,7 +64,7 @@ public abstract class CCDocumentListener extends DocumentAdapter {
         if (useLength()) {
           answerPlaceholder.setLength(length);
         } else {
-          answerPlaceholder.setReplacementLength(length);
+          answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(start, start + length )));
         }
       }
     }

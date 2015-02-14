@@ -23,6 +23,12 @@ public class Task {
 
   @Transient private Lesson myLesson;
 
+  public Task() {}
+
+  public Task(@NotNull final String name) {
+    this.name = name;
+  }
+
   public String getName() {
     return name;
   }
@@ -59,8 +65,19 @@ public class Task {
     return taskFiles;
   }
 
+  @Nullable
+  public TaskFile getTaskFile(final String name) {
+    return name != null ? taskFiles.get(name) : null;
+  }
+
   public boolean isTaskFile(@NotNull final String fileName) {
     return taskFiles.get(fileName) != null;
+  }
+
+  public void addTaskFile(@NotNull final String name, int index) {
+    TaskFile taskFile = new TaskFile();
+    taskFile.setIndex(index);
+    taskFiles.put(name, taskFile);
   }
 
   @Nullable

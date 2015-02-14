@@ -55,7 +55,7 @@
     <action id="CreateTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCCreateTaskFile">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
-    <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddTaskWindow">
+    <action id="AddTaskWindow" class="com.jetbrains.edu.coursecreator.actions.CCAddAnswerPlaceholder">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CopyReference"/>
     </action>
     <action id="ShowTaskWindowDetails" class="com.jetbrains.edu.coursecreator.actions.CCShowTaskWindowDetails">

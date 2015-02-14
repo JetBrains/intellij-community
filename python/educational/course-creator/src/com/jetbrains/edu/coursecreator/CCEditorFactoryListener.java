@@ -12,10 +12,8 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 public class CCEditorFactoryListener implements EditorFactoryListener {
@@ -30,7 +28,8 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     if (virtualFile == null) {
       return;
     }
-    Course course = CCProjectService.getInstance(project).getCourse();
+    final CCProjectService service = CCProjectService.getInstance(project);
+    Course course = service.getCourse();
     if (course == null) {
       return;
     }
@@ -40,9 +39,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     }
     final VirtualFile lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
-    final Lesson lesson = course.getLesson(lessonDir.getName());
-    final Task task = lesson.getTask(taskDir.getName());
-    final TaskFile taskFile = task.getTaskFile(virtualFile.getName());
+    final TaskFile taskFile = service.getTaskFile(virtualFile);
     if (taskFile == null) {
       return;
     }
@@ -51,9 +48,9 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(editor.getDocument(), new TaskWindowDeleteHandler(editor));
-    CCProjectService.getInstance(project).drawTaskWindows(virtualFile, editor);
+    service.drawTaskWindows(virtualFile, editor);
     editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
-    taskFile.createGuardedBlocks(editor);
+    CCAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
   }
 
   @Override

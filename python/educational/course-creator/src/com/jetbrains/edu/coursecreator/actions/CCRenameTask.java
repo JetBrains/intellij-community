@@ -18,9 +18,10 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.coursecreator.CCProjectService;
 
 public class CCRenameTask extends CCRename {
   public CCRenameTask() {
@@ -38,11 +39,12 @@ public class CCRenameTask extends CCRename {
     if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return false;
     }
-    Lesson lesson = course.getLesson(lessonDir.getName());
+    final CCProjectService service = CCProjectService.getInstance(project);
+    Lesson lesson = service.getLesson(lessonDir.getName());
     if (lesson == null) {
       return false;
     }
-    Task task = lesson.getTask(directory.getName());
+    Task task = service.getTask(directory.getVirtualFile().getPath());
     if (task == null) {
       return false;
     }
