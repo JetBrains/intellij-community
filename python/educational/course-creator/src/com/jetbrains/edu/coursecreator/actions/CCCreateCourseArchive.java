@@ -29,6 +29,7 @@ import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipOutputStream;
@@ -150,7 +151,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     InsertionListener listener = new InsertionListener(taskFile);
     document.addDocumentListener(listener);
     taskFilesCopy.put(taskFile, taskFileSaved);
-    //Collections.sort(taskFile.getAnswerPlaceholders());
+    Collections.sort(taskFile.getAnswerPlaceholders(), new AnswerPlaceholderComparator());
     for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceTaskWindow(project, document, answerPlaceholder);

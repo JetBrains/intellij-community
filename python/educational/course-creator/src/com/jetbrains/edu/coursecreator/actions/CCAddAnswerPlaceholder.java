@@ -92,7 +92,7 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     int index = taskFile.getAnswerPlaceholders().size() + 1;
     answerPlaceholder.setIndex(index);
     taskFile.addAnswerPlaceholder(answerPlaceholder);
-    //taskFile.sortTaskWindows();
+    taskFile.sortAnswerPlaceholders();
     CCAnswerPlaceholderPainter.drawHighlighter(answerPlaceholder, editor, false);
     CCAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
   }

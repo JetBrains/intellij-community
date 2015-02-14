@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -138,5 +139,12 @@ public class TaskFile {
 
   public void setHighlightErrors(boolean highlightErrors) {
     myHighlightErrors = highlightErrors;
+  }
+
+  public void sortAnswerPlaceholders() {
+    Collections.sort(myAnswerPlaceholders, new AnswerPlaceholderComparator());
+    for (int i = 0; i < myAnswerPlaceholders.size(); i++) {
+      myAnswerPlaceholders.get(i).setIndex(i + 1);
+    }
   }
 }
