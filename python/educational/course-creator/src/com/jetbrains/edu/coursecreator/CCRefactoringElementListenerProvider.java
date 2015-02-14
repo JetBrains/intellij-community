@@ -92,9 +92,9 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
         }
       });
       Map<String, TaskFile> taskFiles = task.getTaskFiles();
-      TaskFile taskFile = task.getTaskFile(oldName);
-      String realTaskFileName = CCProjectService.getRealTaskFileName(oldName);
-      taskFiles.remove(realTaskFileName);
+      String realOldName = CCProjectService.getRealTaskFileName(oldName);
+      TaskFile taskFile = task.getTaskFile(realOldName);
+      taskFiles.remove(realOldName);
       taskFiles.put(CCProjectService.getRealTaskFileName(file.getName()), taskFile);
     }
 
