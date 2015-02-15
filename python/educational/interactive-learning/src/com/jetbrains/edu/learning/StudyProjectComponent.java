@@ -233,6 +233,7 @@ public class StudyProjectComponent implements ProjectComponent {
         }
       }
     }
+    myListener = null;
   }
 
   @Override
@@ -285,6 +286,7 @@ public class StudyProjectComponent implements ProjectComponent {
   private class FileCreatedByUserListener extends VirtualFileAdapter {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
+      if (myProject.isDisposed()) return;
       final VirtualFile createdFile = event.getFile();
       final VirtualFile taskDir = createdFile.getParent();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();

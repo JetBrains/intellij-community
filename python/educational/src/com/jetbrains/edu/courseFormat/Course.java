@@ -4,6 +4,7 @@ import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Course {
@@ -17,7 +18,11 @@ public class Course {
   private String myLanguage;
 
   public List<Lesson> getLessons() {
-    return lessons;
+    return Collections.unmodifiableList(lessons);
+  }
+
+  public void addLesson(@NotNull final Lesson lesson) {
+    lessons.add(lesson);
   }
 
   public String getAuthor() {
