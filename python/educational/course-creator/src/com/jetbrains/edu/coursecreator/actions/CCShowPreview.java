@@ -37,7 +37,6 @@ import com.intellij.ui.JBColor;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CCShowPreview extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
@@ -94,22 +92,21 @@ public class CCShowPreview extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    Task task = service.getTask(taskDir.getVirtualFile().getPath());
     TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
     if (taskFile == null) {
       return;
     }
-    final Map<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
-    for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-      if (entry.getValue() == taskFile) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            CCCreateCourseArchive.createUserFile(project, taskFilesCopy, taskDir.getVirtualFile(), taskDir.getVirtualFile(), entry);
-          }
-        });
+    final TaskFile taskFileCopy = new TaskFile();
+    TaskFile.copy(taskFile, taskFileCopy);
+    final String taskFileName = CCProjectService.getRealTaskFileName(file.getVirtualFile().getName());
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+        CCCreateCourseArchive.createUserFile(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(),
+                                             new AbstractMap.SimpleEntry<String, TaskFile>(taskFileName, taskFileCopy));
       }
-    }
+    });
+
     String userFileName = CCProjectService.getRealTaskFileName(file.getName());
     if (userFileName == null) {
       return;
@@ -133,7 +130,7 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
     }
     JPanel header = new JPanel();

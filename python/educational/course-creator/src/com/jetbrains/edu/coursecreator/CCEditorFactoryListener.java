@@ -44,7 +44,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     if (taskFile == null) {
       return;
     }
-    TaskFileModificationListener listener = new TaskFileModificationListener(taskFile);
+    EduDocumentListener listener = new EduDocumentListener(taskFile, true, true);
     CCProjectService.addDocumentListener(editor.getDocument(), listener);
     editor.getDocument().addDocumentListener(listener);
     EditorActionManager.getInstance()
@@ -66,17 +66,4 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getMarkupModel().removeAllHighlighters();
     editor.getSelectionModel().removeSelection();
   }
-
-  private static class TaskFileModificationListener extends EduDocumentListener {
-
-    public TaskFileModificationListener(TaskFile taskFile) {
-      super(taskFile);
-    }
-
-    @Override
-    protected boolean useLength() {
-      return false;
-    }
-  }
-
 }

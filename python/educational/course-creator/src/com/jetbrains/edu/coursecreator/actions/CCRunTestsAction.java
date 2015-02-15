@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
@@ -45,6 +44,7 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.Map;
 
 public abstract class CCRunTestsAction extends AnAction {
@@ -234,9 +234,11 @@ public abstract class CCRunTestsAction extends AnAction {
         Lesson lesson = course.getLessons().get(lessonIndex);
         if (CCProjectService.indexIsValid(index, lesson.getTaskList())) {
           Task task = lesson.getTaskList().get(index);
-          HashMap<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-            CCCreateCourseArchive.createUserFile(project, taskFilesCopy, taskResourceDir, taskDir, entry);
+            TaskFile taskFileCopy = new TaskFile();
+            TaskFile.copy(entry.getValue(), taskFileCopy);
+            CCCreateCourseArchive.createUserFile(project, taskResourceDir, taskDir,
+                                                 new AbstractMap.SimpleEntry<String, TaskFile>(entry.getKey(), taskFileCopy));
           }
         }
       }

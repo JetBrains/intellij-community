@@ -69,8 +69,6 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
 
-    final Lesson lesson = service.getLesson(lessonDir.getName());
-    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
     final TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
     if (taskFile == null) {
       return;

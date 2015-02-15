@@ -29,8 +29,7 @@ import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.AbstractMap;
 import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
@@ -76,8 +75,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
     final VirtualFile baseDir = project.getBaseDir();
     final Map<String, Lesson> lessons = service.getLessonsMap();
-    //map to store initial task file
-    final Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
 
     for (Map.Entry<String, Task> task : service.getTasksMap().entrySet()) {
       final VirtualFile taskDir = LocalFileSystem.getInstance().findFileByPath(task.getKey());
@@ -86,7 +83,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            createUserFile(project, taskFiles, taskDir, taskDir, entry);
+            TaskFile taskFileCopy = new TaskFile();
+            TaskFile.copy(entry.getValue(), taskFileCopy);
+            createUserFile(project, taskDir, taskDir, new AbstractMap.SimpleEntry<String, TaskFile>(entry.getKey(), taskFileCopy));
           }
         });
       }
@@ -97,11 +96,11 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   public static void createUserFile(@NotNull final Project project,
-                                    @NotNull final Map<TaskFile, TaskFile> taskFilesCopy,
                                     @NotNull final VirtualFile userFileDir,
                                     @NotNull final VirtualFile answerFileDir,
-                                    @NotNull final Map.Entry<String, TaskFile> taskFiles) {
-    final String name = taskFiles.getKey();
+                                    @NotNull final Map.Entry<String, TaskFile> taskFileEntry) {
+    final String name = taskFileEntry.getKey();
+    final TaskFile taskFile = taskFileEntry.getValue();
     VirtualFile file = userFileDir.findChild(name);
     if (file != null) {
       try {
@@ -131,12 +130,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
-    final TaskFile taskFile = taskFiles.getValue();
-    TaskFile taskFileSaved = new TaskFile();
-    TaskFile.copy(taskFile, taskFileSaved);
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      answerPlaceholder.setLength(answerPlaceholder.getPossibleAnswerLength());
-    }
+
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
@@ -148,10 +142,9 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         });
       }
     }, "x", "qwe");
-    EduDocumentListener listener = new EduDocumentListener(taskFile);
+    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     document.addDocumentListener(listener);
-    taskFilesCopy.put(taskFile, taskFileSaved);
-    Collections.sort(taskFile.getAnswerPlaceholders(), new AnswerPlaceholderComparator());
+    taskFile.sortAnswerPlaceholders();
     for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
@@ -181,7 +174,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            document.replaceString(offset, offset + answerPlaceholder.getLength(), taskText);
+            document.replaceString(offset, offset + answerPlaceholder.getPossibleAnswerLength(), taskText);
             FileDocumentManager.getInstance().saveDocument(document);
           }
         });
