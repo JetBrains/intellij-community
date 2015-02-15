@@ -74,19 +74,16 @@ class PortUnificationServerHandler extends Decoder {
     this(new DelegatingHttpRequestHandler(), true, true);
   }
 
-  private PortUnificationServerHandler(DelegatingHttpRequestHandler delegatingHttpRequestHandler, boolean detectSsl, boolean detectGzip) {
+  private PortUnificationServerHandler(@NotNull DelegatingHttpRequestHandler delegatingHttpRequestHandler, boolean detectSsl, boolean detectGzip) {
     this.delegatingHttpRequestHandler = delegatingHttpRequestHandler;
     this.detectSsl = detectSsl;
     this.detectGzip = detectGzip;
   }
 
   @Override
-  protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf message) throws Exception {
-    ByteBuf buffer = getBufferIfSufficient(message, 5, context);
-    if (buffer == null) {
-      message.release();
-    }
-    else {
+  protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
+    ByteBuf buffer = getBufferIfSufficient(input, 5, context);
+    if (buffer != null) {
       decode(context, buffer);
     }
   }
@@ -108,11 +105,7 @@ class PortUnificationServerHandler extends Decoder {
       }
       else if (isHttp(magic1, magic2)) {
         NettyUtil.addHttpServerCodec(pipeline);
-        pipeline.addLast(delegatingHttpRequestHandler);
-        // added earlier if HTTPS
-        if (pipeline.get(ChunkedWriteHandler.class) == null) {
-          pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
-        }
+        pipeline.addLast("delegatingHttpHandler", delegatingHttpRequestHandler);
         if (BuiltInServer.LOG.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override
@@ -139,17 +132,17 @@ class PortUnificationServerHandler extends Decoder {
 
     // must be after new channels handlers addition (netty bug?)
     pipeline.remove(this);
-    ensureThatExceptionHandlerIsLast(pipeline);
+    // Buffer will be automatically released after messageReceived, but we pass it to next handler, and next handler will also release, so, we must retain.
+    // We can introduce Decoder.isAutoRelease, but in this case, if error will be thrown while we are executing, buffer will not be released.
+    // So, it is robust solution just always release (Decoder does) and just retain (we - client) if autorelease behavior is not suitable.
+    buffer.retain();
     // we must fire channel read - new added handler must read buffer
     context.fireChannelRead(buffer);
   }
 
-  private static void ensureThatExceptionHandlerIsLast(ChannelPipeline pipeline) {
-    ChannelHandler exceptionHandler = ChannelExceptionHandler.getInstance();
-    if (pipeline.last() != exceptionHandler) {
-      pipeline.remove(exceptionHandler);
-      pipeline.addLast(exceptionHandler);
-    }
+  @Override
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+    NettyUtil.logAndClose(cause, BuiltInServer.LOG, context.channel());
   }
 
   private static boolean isHttp(int magic1, int magic2) {
@@ -169,24 +162,29 @@ class PortUnificationServerHandler extends Decoder {
     private static final int UUID_LENGTH = 16;
 
     @Override
-    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf message) throws Exception {
-      ByteBuf buffer = getBufferIfSufficient(message, UUID_LENGTH, context);
+    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
+      ByteBuf buffer = getBufferIfSufficient(input, UUID_LENGTH, context);
       if (buffer == null) {
-        message.release();
+        return;
       }
-      else {
-        UUID uuid = new UUID(buffer.readLong(), buffer.readLong());
-        for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensions()) {
-          if (uuid.equals(customHandler.getId())) {
-            ChannelPipeline pipeline = context.pipeline();
-            pipeline.addLast(customHandler.getInboundHandler());
-            pipeline.remove(this);
-            ensureThatExceptionHandlerIsLast(pipeline);
-            context.fireChannelRead(buffer);
-            break;
-          }
+
+      UUID uuid = new UUID(buffer.readLong(), buffer.readLong());
+      for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensions()) {
+        if (uuid.equals(customHandler.getId())) {
+          ChannelPipeline pipeline = context.pipeline();
+          pipeline.addLast(customHandler.getInboundHandler(context));
+          pipeline.addLast(ChannelExceptionHandler.getInstance());
+          pipeline.remove(this);
+
+          context.fireChannelRead(buffer);
+          break;
         }
       }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
+      NettyUtil.logAndClose(cause, BuiltInServer.LOG, context.channel());
     }
   }
 }

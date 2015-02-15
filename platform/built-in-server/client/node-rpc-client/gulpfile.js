@@ -25,12 +25,12 @@ gulp.task("compile", function () {
       .pipe(ts(tsProject));
 
   tsResult.js.pipe(concat(outFile))
-      .pipe(uglify({
-              output: {
-                beautify: true,
-                indent_level: 2
-              }
-            }))
+      //.pipe(uglify({
+      //        output: {
+      //          beautify: true,
+      //          indent_level: 2
+      //        }
+      //      }))
       .pipe(sourcemaps.write('.', {includeContent: false, sourceRoot: path.resolve('testData')}))
       .pipe(gulp.dest(outDir))
 });

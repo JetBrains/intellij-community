@@ -34,8 +34,9 @@ class RejectedPromise<T> extends Promise<T> {
   }
 
   @Override
-  public void processed(@NotNull Consumer<T> processed) {
+  public RejectedPromise<T> processed(@NotNull Consumer<T> processed) {
     processed.consume(null);
+    return this;
   }
 
   @NotNull

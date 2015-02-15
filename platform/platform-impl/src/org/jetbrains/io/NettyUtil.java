@@ -29,8 +29,7 @@ import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.codec.http.cors.CorsConfig;
-import io.netty.handler.codec.http.cors.CorsHandler;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -39,6 +38,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
@@ -57,7 +57,24 @@ public final class NettyUtil {
     }
   }
 
-  public static void log(Throwable throwable, Logger log) {
+  public static void logAndClose(@NotNull Throwable error, @NotNull Logger log, @NotNull Channel channel) {
+    // don't report about errors while connecting
+    // WEB-7727
+    try {
+      if (error instanceof ConnectException) {
+        log.debug(error);
+      }
+      else {
+        log(error, log);
+      }
+    }
+    finally {
+      log.info("Channel will be closed due to error");
+      channel.close();
+    }
+  }
+
+  public static void log(@NotNull Throwable throwable, @NotNull Logger log) {
     if (isAsWarning(throwable)) {
       log.warn(throwable);
     }
@@ -85,8 +102,7 @@ public final class NettyUtil {
   }
 
   @Nullable
-  private static Channel doConnect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable AsyncPromise<?> promise, int maxAttemptCount)
-    throws Throwable {
+  private static Channel doConnect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable AsyncPromise<?> promise, int maxAttemptCount) throws Throwable {
     int attemptCount = 0;
 
     if (bootstrap.group() instanceof NioEventLoopGroup) {
@@ -141,13 +157,12 @@ public final class NettyUtil {
         }
       }
     }
-
     OioSocketChannel channel = new OioSocketChannel(socket);
-    BootstrapUtil.initAndRegister(channel, bootstrap).awaitUninterruptibly();
+    BootstrapUtil.initAndRegister(channel, bootstrap).sync();
     return channel;
   }
 
-  private static boolean isAsWarning(Throwable throwable) {
+  private static boolean isAsWarning(@NotNull Throwable throwable) {
     String message = throwable.getMessage();
     if (message == null) {
       return false;
@@ -195,9 +210,13 @@ public final class NettyUtil {
   }
 
   public static void addHttpServerCodec(@NotNull ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(),
-                     new HttpResponseEncoder(),
-                     new CorsHandler(CorsConfig.withAnyOrigin().allowCredentials().allowNullOrigin().allowedRequestMethods().build()),
-                     new HttpObjectAggregator(MAX_CONTENT_LENGTH));
+    pipeline.addLast("httpRequestEncoder", new HttpResponseEncoder());
+    pipeline.addLast("httpRequestDecoder", new HttpRequestDecoder());
+    pipeline.addLast("httpObjectAggregator", new HttpObjectAggregator(MAX_CONTENT_LENGTH));
+    // could be added earlier if HTTPS
+    if (pipeline.get(ChunkedWriteHandler.class) == null) {
+      pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
+    }
+    //pipeline.addLast("corsHandler", new CorsHandler(CorsConfig.withAnyOrigin().allowCredentials().allowNullOrigin().allowedRequestMethods().build()));
   }
 }

@@ -164,7 +164,6 @@ public final class BuiltInWebServer extends HttpRequestHandler {
     }
 
     final String path = FileUtil.toCanonicalPath(decodedPath.substring(offset + 1), '/');
-
     for (WebServerPathHandler pathHandler : WebServerPathHandler.EP_NAME.getExtensions()) {
       try {
         if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {

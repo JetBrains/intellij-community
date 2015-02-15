@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.NotNull;
 
 abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandlerAdapter<FullHttpRequest> {
   @Override
   protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
     if (BuiltInServer.LOG.isDebugEnabled()) {
-//      BuiltInServer.LOG.debug("IN HTTP:\n" + message);
+      //BuiltInServer.LOG.debug("IN HTTP:\n" + message);
       BuiltInServer.LOG.debug("IN HTTP: " + message.uri());
     }
 
@@ -33,15 +34,10 @@ abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHand
     }
   }
 
-  protected abstract boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws Exception;
+  protected abstract boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws Exception;
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
-    try {
-      NettyUtil.log(cause, BuiltInServer.LOG);
-    }
-    finally {
-      context.channel().close();
-    }
+  public void exceptionCaught(@NotNull ChannelHandlerContext context, @NotNull Throwable cause) {
+    NettyUtil.logAndClose(cause, BuiltInServer.LOG, context.channel());
   }
 }

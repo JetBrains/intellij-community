@@ -1,6 +1,5 @@
 package org.jetbrains.builtInWebServer;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.OSProcessHandler;
@@ -13,19 +12,17 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.AsyncValueLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.io.NettyUtil;
+import org.jetbrains.concurrency.AsyncValueLoader;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 public abstract class NetService implements Disposable {
   protected static final Logger LOG = Logger.getInstance(NetService.class);
@@ -50,19 +47,23 @@ public abstract class NetService implements Disposable {
       }
     }
 
+    @NotNull
     @Override
-    protected void load(@NotNull final AsyncResult<OSProcessHandler> result) throws IOException {
+    protected Promise<OSProcessHandler> load(@NotNull final AsyncPromise<OSProcessHandler> promise) throws IOException {
       final int port = NetUtils.findAvailableSocketPort();
       final OSProcessHandler processHandler = doGetProcessHandler(port);
       if (processHandler == null) {
-        result.setRejected();
-        return;
+        promise.setError(Promise.createError("rejected"));
+        return promise;
       }
 
-      result.doWhenRejected(new Runnable() {
+      promise.rejected(new Consumer<Throwable>() {
         @Override
-        public void run() {
+        public void consume(Throwable error) {
           processHandler.destroyProcess();
+          if (!(error instanceof Promise.MessageError)) {
+            LOG.error(error);
+          }
         }
       });
 
@@ -70,35 +71,26 @@ public abstract class NetService implements Disposable {
       processHandler.addProcessListener(processListener);
       processHandler.startNotify();
 
-      if (result.isRejected()) {
-        return;
+      if (promise.getState() == Promise.State.REJECTED) {
+        return promise;
       }
 
-      JobScheduler.getScheduler().schedule(new Runnable() {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          if (result.isRejected()) {
-            return;
-          }
-
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              if (!result.isRejected()) {
-                AsyncPromise<OSProcessHandler> promise = new AsyncPromise<OSProcessHandler>();
-                try {
-                  connectToProcess(promise, port, processHandler, processListener);
-                  promise.notify(result);
-                }
-                catch (Throwable e) {
-                  result.setRejected();
-                  LOG.error(e);
-                }
+          if (promise.getState() != Promise.State.REJECTED) {
+            try {
+              connectToProcess(promise, port, processHandler, processListener);
+            }
+            catch (Throwable e) {
+              if (!promise.setError(e)) {
+                LOG.error(e);
               }
             }
-          });
+          }
         }
-      }, NettyUtil.MIN_START_TIME, TimeUnit.MILLISECONDS);
+      });
+      return promise;
     }
 
     @Override

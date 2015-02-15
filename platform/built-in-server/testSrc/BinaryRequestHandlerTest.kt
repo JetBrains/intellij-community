@@ -18,6 +18,7 @@ import junit.framework.TestCase
 import org.junit.rules.RuleChain
 import org.junit.Rule
 import org.junit.Test
+import org.jetbrains.io.MessageDecoder
 
 public class BinaryRequestHandlerTest {
   private val fixtureManager = FixtureRule()
@@ -36,16 +37,10 @@ public class BinaryRequestHandlerTest {
     val bootstrap = NettyUtil.oioClientBootstrap().handler(object : ChannelInitializer<Channel>() {
       override fun initChannel(channel: Channel) {
         channel.pipeline().addLast(object : Decoder() {
-          override fun messageReceived(context: ChannelHandlerContext, message: ByteBuf) {
+          override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
             val requiredLength = 4 + text.length()
-            val buffer = getBufferIfSufficient(message, requiredLength, context)
-            if (buffer == null) {
-              message.release()
-            }
-            else {
-              val response = buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8)
-              buffer.skipBytes(requiredLength)
-              buffer.release()
+            val response = readContent(input, context, requiredLength) {(buffer, context) -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+            if (response != null) {
               result.setDone(response)
             }
           }
@@ -90,55 +85,37 @@ public class BinaryRequestHandlerTest {
       return ID
     }
 
-    override fun getInboundHandler(): ChannelHandler {
+    override fun getInboundHandler(context: ChannelHandlerContext): ChannelHandler {
       return MyDecoder()
     }
 
-    private class MyDecoder : Decoder() {
+    private class MyDecoder : MessageDecoder() {
       private var state = State.HEADER
-      private var contentLength = -1
 
       private enum class State {
         HEADER
         CONTENT
       }
 
-      override fun messageReceived(context: ChannelHandlerContext, message: ByteBuf) {
+      override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
         while (true) {
           when (state) {
             State.HEADER -> {
-              run {
-                val buffer = getBufferIfSufficient(message, 2, context)
-                if (buffer == null) {
-                  message.release()
-                  return
-                }
-
-                contentLength = buffer.readUnsignedShort()
-                state = State.CONTENT
+              val buffer = getBufferIfSufficient(input, 2, context)
+              if (buffer == null) {
+                return
               }
-              run {
-                val buffer = getBufferIfSufficient(message, contentLength, context)
-                if (buffer == null) {
-                  message.release()
-                  return
-                }
 
-                val messageText = buffer.toString(buffer.readerIndex(), contentLength, CharsetUtil.UTF_8)
-                buffer.skipBytes(contentLength)
-                state = State.HEADER
-                context.writeAndFlush(Unpooled.copiedBuffer("got-" + messageText, CharsetUtil.UTF_8))
-              }
+              contentLength = buffer.readUnsignedShort()
+              state = State.CONTENT
             }
 
             State.CONTENT -> {
-              val buffer = getBufferIfSufficient(message, contentLength, context)
-              if (buffer == null) {
-                message.release()
+              val messageText = readChars(input)
+              if (messageText == null) {
                 return
               }
-              val messageText = buffer.toString(buffer.readerIndex(), contentLength, CharsetUtil.UTF_8)
-              buffer.skipBytes(contentLength)
+
               state = State.HEADER
               context.writeAndFlush(Unpooled.copiedBuffer("got-" + messageText, CharsetUtil.UTF_8))
             }

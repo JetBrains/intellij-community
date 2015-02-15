@@ -4,11 +4,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.util.CharsetUtil;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.PathInfo;
@@ -27,16 +26,17 @@ public class FastCgiRequest {
   private static final int STDIN = 5;
   private static final int VERSION = 1;
 
-  private final ByteBuf buffer;
+  private ByteBuf buffer;
   final int requestId;
 
   public FastCgiRequest(int requestId, @NotNull ByteBufAllocator allocator) {
     this.requestId = requestId;
 
-    buffer = allocator.buffer();
+    buffer = allocator.ioBuffer(4096);
     writeHeader(buffer, BEGIN_REQUEST, FastCgiConstants.HEADER_LENGTH);
     buffer.writeShort(RESPONDER);
     buffer.writeByte(FCGI_KEEP_CONNECTION);
+    // reserved[5]
     buffer.writeZero(5);
   }
 
@@ -77,11 +77,11 @@ public class FastCgiRequest {
       buffer.writeByte(valLength);
     }
 
-    buffer.writeBytes(key.getBytes(CharsetUtil.US_ASCII));
-    buffer.writeBytes(Unpooled.copiedBuffer(value, CharsetUtil.UTF_8));
+    ByteBufUtil.writeAscii(buffer, key);
+    ByteBufUtil.writeUtf8(buffer, value);
   }
 
-  public void writeHeaders(FullHttpRequest request, Channel clientChannel) {
+  public void writeHeaders(@NotNull FullHttpRequest request, @NotNull Channel clientChannel) {
     addHeader("REQUEST_URI", request.uri());
     addHeader("REQUEST_METHOD", request.method().name());
 
@@ -98,7 +98,7 @@ public class FastCgiRequest {
 
     addHeader("GATEWAY_INTERFACE", "CGI/1.1");
     addHeader("SERVER_PROTOCOL", request.protocolVersion().text());
-    addHeader("CONTENT_TYPE", request.headers().get(HttpHeaders.Names.CONTENT_TYPE));
+    addHeader("CONTENT_TYPE", request.headers().get(HttpHeaderNames.CONTENT_TYPE));
 
     // PHP only, required if PHP was built with --enable-force-cgi-redirect
     addHeader("REDIRECT_STATUS", "200");
@@ -117,33 +117,48 @@ public class FastCgiRequest {
     }
   }
 
-  final void writeToServerChannel(ByteBuf content, Channel fastCgiChannel) {
-    writeHeader(buffer, PARAMS, 0);
-    fastCgiChannel.write(buffer);
-
-    if (content.isReadable()) {
-      ByteBuf headerBuffer = fastCgiChannel.alloc().buffer(FastCgiConstants.HEADER_LENGTH, FastCgiConstants.HEADER_LENGTH);
-      writeHeader(headerBuffer, STDIN, content.readableBytes());
-      fastCgiChannel.write(headerBuffer);
-
-      fastCgiChannel.write(content);
-
-      headerBuffer = fastCgiChannel.alloc().buffer(FastCgiConstants.HEADER_LENGTH, FastCgiConstants.HEADER_LENGTH);
-      writeHeader(headerBuffer, STDIN, 0);
-      fastCgiChannel.write(headerBuffer);
+  final void writeToServerChannel(@Nullable ByteBuf content, @NotNull Channel fastCgiChannel) {
+    if (fastCgiChannel.pipeline().first() == null) {
+      throw new IllegalStateException("No handler in the pipeline");
     }
-    else {
-      content.release();
+
+    boolean releaseContent = content != null;
+    try {
+      writeHeader(buffer, PARAMS, 0);
+
+      if (content != null) {
+        writeHeader(buffer, STDIN, content.readableBytes());
+      }
+
+      fastCgiChannel.write(buffer);
+      buffer = null;
+
+      if (content != null) {
+        fastCgiChannel.write(content);
+        // channel.write releases
+        releaseContent = false;
+
+        ByteBuf headerBuffer = fastCgiChannel.alloc().ioBuffer(FastCgiConstants.HEADER_LENGTH, FastCgiConstants.HEADER_LENGTH);
+        writeHeader(headerBuffer, STDIN, 0);
+        fastCgiChannel.write(headerBuffer);
+      }
+    }
+    finally {
+      if (releaseContent) {
+        assert content != null;
+        content.release();
+      }
     }
 
     fastCgiChannel.flush();
   }
 
-  private void writeHeader(ByteBuf buffer, int type, int length) {
+  private void writeHeader(@NotNull ByteBuf buffer, int type, int length) {
     buffer.writeByte(VERSION);
     buffer.writeByte(type);
     buffer.writeShort(requestId);
     buffer.writeShort(length);
+    // paddingLength, reserved
     buffer.writeZero(2);
   }
 }

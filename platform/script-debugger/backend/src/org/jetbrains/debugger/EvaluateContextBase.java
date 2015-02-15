@@ -48,6 +48,7 @@ public abstract class EvaluateContextBase<VALUE_MANAGER extends ValueManager> im
   @NotNull
   @Override
   public Promise<?> refreshOnDone(@NotNull Promise<?> promise) {
+    //noinspection unchecked
     return promise.then(valueManager.getClearCachesTask());
   }
 }

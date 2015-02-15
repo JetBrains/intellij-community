@@ -8,13 +8,14 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.BuiltInServer;
@@ -27,7 +28,7 @@ import java.util.Map;
 public abstract class WebSocketHandshakeHandler extends HttpRequestHandler implements ClientListener, ExceptionHandler {
   private static final Logger LOG = Logger.getInstance(WebSocketHandshakeHandler.class);
 
-  private final AtomicNotNullLazyValue<ClientManager> server = new AtomicNotNullLazyValue<ClientManager>() {
+  private final AtomicNotNullLazyValue<ClientManager> clientManager = new AtomicNotNullLazyValue<ClientManager>() {
     @NotNull
     @Override
     protected ClientManager compute() {
@@ -43,7 +44,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
     return request.method() == HttpMethod.GET &&
-           "WebSocket".equalsIgnoreCase(request.headers().get(HttpHeaders.Names.UPGRADE)) &&
+           "WebSocket".equalsIgnoreCase(request.headers().get(HttpHeaderNames.UPGRADE)) &&
            request.uri().length() > 2;
   }
 
@@ -51,7 +52,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
   }
 
   @Override
-  public void exceptionCaught(Throwable e) {
+  public void exceptionCaught(@NotNull Throwable e) {
     NettyUtil.log(e, LOG);
   }
 
@@ -61,10 +62,8 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     return true;
   }
 
-  private void handleWebSocketRequest(final ChannelHandlerContext context,
-                                      FullHttpRequest request,
-                                      final QueryStringDecoder uriDecoder) {
-    WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("ws://" + HttpHeaders.getHost(request) + uriDecoder.path(), null, false, NettyUtil.MAX_CONTENT_LENGTH);
+  private void handleWebSocketRequest(@NotNull final ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull final QueryStringDecoder uriDecoder) {
+    WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("ws://" + request.headers().get(HttpHeaderNames.HOST) + uriDecoder.path(), null, false, NettyUtil.MAX_CONTENT_LENGTH);
     WebSocketServerHandshaker handshaker = factory.newHandshaker(request);
     if (handshaker == null) {
       WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(context.channel());
@@ -81,9 +80,9 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
         if (future.isSuccess()) {
-          ClientManager webSocketServer = server.getValue();
-          webSocketServer.addClient(client);
-          MessageChannelHandler messageChannelHandler = new MessageChannelHandler(webSocketServer, getMessageServer());
+          ClientManager clientManager = WebSocketHandshakeHandler.this.clientManager.getValue();
+          clientManager.addClient(client);
+          MessageChannelHandler messageChannelHandler = new MessageChannelHandler(clientManager, getMessageServer());
           BuiltInServer.replaceDefaultHandler(context, messageChannelHandler);
           ChannelHandlerContext messageChannelHandlerContext = context.pipeline().context(messageChannelHandler);
           context.pipeline().addBefore(messageChannelHandlerContext.name(), "webSocketFrameAggregator", new WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH));
@@ -98,6 +97,6 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
   protected abstract MessageServer getMessageServer();
 
   @Override
-  public void connected(@NotNull Client client, Map<String, List<String>> parameters) {
+  public void connected(@NotNull Client client, @Nullable Map<String, List<String>> parameters) {
   }
 }

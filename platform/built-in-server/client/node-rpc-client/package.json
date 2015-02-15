@@ -1,7 +1,11 @@
 {
   "name": "ij-rpc-client",
-  "version": 0.1,
+  "version": "0.0.1",
   "description": "IntelliJ Platform RPC client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JetBrains/intellij-community.git"
+  },
   "devDependencies": {
     "gulp": "^3.8.11",
     "gulp-concat": "^2.4.3",

@@ -98,7 +98,6 @@ final class DefaultWebServerPathHandler extends WebServerPathHandler {
         BuiltInWebServer.LOG.error(e);
       }
     }
-
     return false;
   }
 }

@@ -25,8 +25,9 @@ public abstract class SingleConnectionNetService extends NetService {
   protected void connectToProcess(@NotNull AsyncPromise<OSProcessHandler> promise, int port, @NotNull OSProcessHandler processHandler, @NotNull Consumer<String> errorOutputConsumer) {
     Bootstrap bootstrap = NettyUtil.oioClientBootstrap();
     configureBootstrap(bootstrap, errorOutputConsumer);
-    processChannel = NettyUtil.connect(bootstrap, new InetSocketAddress(NetUtils.getLoopbackAddress(), port), promise);
-    if (processChannel != null) {
+    Channel channel = NettyUtil.connect(bootstrap, new InetSocketAddress(NetUtils.getLoopbackAddress(), port), promise);
+    if (channel != null) {
+      processChannel = channel;
       promise.setResult(processHandler);
     }
   }

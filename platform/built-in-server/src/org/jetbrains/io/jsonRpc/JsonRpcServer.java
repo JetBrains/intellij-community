@@ -18,7 +18,8 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,7 @@ import org.jetbrains.io.JsonUtil;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,13 +90,16 @@ public class JsonRpcServer implements MessageServer {
   }
 
   @Override
-  public void message(@NotNull Client client, @NotNull String message) throws IOException {
+  public void messageReceived(@NotNull Client client, @NotNull CharSequence message, boolean isBinary) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("IN " + message);
     }
 
     JsonReaderEx reader = new JsonReaderEx(message);
-    reader.beginArray();
+    if (!isBinary) {
+      reader.beginArray();
+    }
+
     int messageId = reader.peek() == JsonToken.NUMBER ? reader.nextInt() : -1;
     String domainName = reader.nextString();
     if (domainName.length() == 1) {
@@ -121,7 +126,7 @@ public class JsonRpcServer implements MessageServer {
     Object domain = domainHolder.getValue();
     String command = reader.nextString();
     if (domain instanceof JsonServiceInvocator) {
-      ((JsonServiceInvocator)domain).invoke(command, client, reader, message, messageId);
+      ((JsonServiceInvocator)domain).invoke(command, client, reader, messageId);
       return;
     }
 
@@ -135,8 +140,9 @@ public class JsonRpcServer implements MessageServer {
       parameters = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    reader.endArray();
-    LOG.assertTrue(reader.peek() == JsonToken.END_DOCUMENT);
+    if (!isBinary) {
+      reader.endArray();
+    }
 
     try {
       boolean isStatic = domain instanceof Class;
@@ -152,7 +158,7 @@ public class JsonRpcServer implements MessageServer {
           method.setAccessible(true);
           Object result = method.invoke(isStatic ? null : domain, parameters);
           if (messageId != -1) {
-            client.send(encodeMessage(messageId, null, null, null, new Object[]{result}));
+            client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, null, new Object[]{result}));
           }
           return;
         }
@@ -166,13 +172,14 @@ public class JsonRpcServer implements MessageServer {
   }
 
   public void sendResponse(int messageId, @NotNull Client client, @Nullable CharSequence rawMessage) {
-    client.send(encodeMessage(messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
+    client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
   }
 
   public void sendErrorResponse(int messageId, @NotNull Client client, @Nullable CharSequence rawMessage) {
-    client.send(encodeMessage(messageId, "e", null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
+    client.send(encodeMessage(client.getByteBufAllocator(), messageId, "e", null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
   }
 
+  @SuppressWarnings("unused")
   public void sendToClients(@NotNull String domain, @NotNull String name) {
     sendToClients(domain, name, null);
   }
@@ -184,11 +191,11 @@ public class JsonRpcServer implements MessageServer {
   }
 
   private <T> void sendToClients(int messageId, @Nullable String domain, @Nullable String command, @Nullable List<AsyncPromise<Pair<Client, T>>> results, Object[] params) {
-    clientManager.send(messageId, encodeMessage(messageId, domain, command, null, params), results);
+    clientManager.send(messageId, encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, null, params), results);
   }
 
   public boolean sendWithRawPart(@NotNull Client client, @NotNull String domain, @NotNull String command, @Nullable CharSequence rawMessage, Object... params) {
-    client.send(encodeMessage(-1, domain, command, rawMessage, params));
+    client.send(encodeMessage(client.getByteBufAllocator(), -1, domain, command, rawMessage, params));
     return true;
   }
 
@@ -199,14 +206,15 @@ public class JsonRpcServer implements MessageServer {
   @NotNull
   public <T> Promise<T> call(@NotNull Client client, @NotNull String domain, @NotNull String command, Object... params) {
     int messageId = messageIdCounter.getAndIncrement();
-    ByteBuf message = encodeMessage(messageId, domain, command, null, params);
+    ByteBuf message = encodeMessage(client.getByteBufAllocator(), messageId, domain, command, null, params);
     AsyncPromise<T> result = client.send(messageId, message);
     LOG.assertTrue(result != null);
     return result;
   }
 
   @NotNull
-  private ByteBuf encodeMessage(int messageId,
+  private ByteBuf encodeMessage(@NotNull ByteBufAllocator byteBufAllocator,
+                                int messageId,
                                 @Nullable String domain,
                                 @Nullable String command,
                                 @Nullable CharSequence rawData,
@@ -217,7 +225,7 @@ public class JsonRpcServer implements MessageServer {
       if (LOG.isDebugEnabled()) {
         LOG.debug("OUT " + sb.toString());
       }
-      return Unpooled.copiedBuffer(sb, CharsetUtil.UTF_8);
+      return ByteBufUtil.encodeString(byteBufAllocator, CharBuffer.wrap(sb), CharsetUtil.UTF_8);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

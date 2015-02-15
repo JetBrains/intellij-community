@@ -18,10 +18,6 @@ public final class SingletonNotificationManager {
 
   private Runnable expiredListener;
 
-  public SingletonNotificationManager(@NotNull String groupId, @NotNull NotificationType type, @Nullable NotificationListener listener) {
-    this(new NotificationGroup(groupId, NotificationDisplayType.STICKY_BALLOON, true), type, listener);
-  }
-
   public SingletonNotificationManager(@NotNull NotificationGroup group, @NotNull NotificationType type, @Nullable NotificationListener listener) {
     this.group = group;
     this.type = type;

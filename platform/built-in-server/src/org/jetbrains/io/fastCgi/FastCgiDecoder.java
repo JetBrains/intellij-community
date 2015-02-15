@@ -2,9 +2,9 @@ package org.jetbrains.io.fastCgi;
 
 import com.intellij.util.Consumer;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.CompositeByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import org.jetbrains.io.Decoder;
 
 import static org.jetbrains.io.fastCgi.FastCgiService.LOG;
 
-public class FastCgiDecoder extends Decoder {
+public class FastCgiDecoder extends Decoder implements Decoder.FullMessageConsumer<Void> {
   private enum State {
     HEADER, CONTENT
   }
@@ -37,9 +37,11 @@ public class FastCgiDecoder extends Decoder {
   private final TIntObjectHashMap<ByteBuf> dataBuffers = new TIntObjectHashMap<ByteBuf>();
 
   private final Consumer<String> errorOutputConsumer;
+  private final FastCgiService responseHandler;
 
-  public FastCgiDecoder(Consumer<String> errorOutputConsumer) {
+  public FastCgiDecoder(@NotNull Consumer<String> errorOutputConsumer, @NotNull FastCgiService responseHandler) {
     this.errorOutputConsumer = errorOutputConsumer;
+    this.responseHandler = responseHandler;
   }
 
   @Override
@@ -48,21 +50,19 @@ public class FastCgiDecoder extends Decoder {
       switch (state) {
         case HEADER: {
           if (paddingLength > 0) {
-            if (input.readableBytes() >= paddingLength) {
+            if (input.readableBytes() > paddingLength) {
               input.skipBytes(paddingLength);
               paddingLength = 0;
             }
             else {
               paddingLength -= input.readableBytes();
               input.skipBytes(input.readableBytes());
-              input.release();
               return;
             }
           }
 
           ByteBuf buffer = getBufferIfSufficient(input, FastCgiConstants.HEADER_LENGTH, context);
           if (buffer == null) {
-            input.release();
             return;
           }
 
@@ -72,16 +72,7 @@ public class FastCgiDecoder extends Decoder {
 
         case CONTENT: {
           if (contentLength > 0) {
-            ByteBuf buffer = getBufferIfSufficient(input, contentLength, context);
-            if (buffer == null) {
-              input.release();
-              return;
-            }
-
-            FastCgiResponse response = readContent(buffer);
-            if (response != null) {
-              context.fireChannelRead(response);
-            }
+            readContent(input, context, contentLength, this);
           }
           state = State.HEADER;
         }
@@ -89,7 +80,31 @@ public class FastCgiDecoder extends Decoder {
     }
   }
 
-  private void decodeHeader(ByteBuf buffer) {
+  @Override
+  public void channelInactive(ChannelHandlerContext context) throws Exception {
+    try {
+      if (!dataBuffers.isEmpty()) {
+        dataBuffers.forEachEntry(new TIntObjectProcedure<ByteBuf>() {
+          @Override
+          public boolean execute(int a, ByteBuf buffer) {
+            try {
+              buffer.release();
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+            return true;
+          }
+        });
+        dataBuffers.clear();
+      }
+    }
+    finally {
+      super.channelInactive(context);
+    }
+  }
+
+  private void decodeHeader(@NotNull ByteBuf buffer) {
     buffer.skipBytes(1);
     type = buffer.readUnsignedByte();
     id = buffer.readUnsignedShort();
@@ -98,25 +113,25 @@ public class FastCgiDecoder extends Decoder {
     buffer.skipBytes(1);
   }
 
-  private FastCgiResponse readContent(ByteBuf buffer) {
+  @Override
+  public Void contentReceived(@NotNull ByteBuf buffer, @NotNull ChannelHandlerContext context, boolean isCumulateBuffer) {
     switch (type) {
       case RecordType.END_REQUEST:
         int appStatus = buffer.readInt();
         int protocolStatus = buffer.readUnsignedByte();
-        buffer.skipBytes(3);
         if (appStatus != 0 || protocolStatus != ProtocolStatus.REQUEST_COMPLETE.ordinal()) {
           LOG.warn("Protocol status " + protocolStatus);
           dataBuffers.remove(id);
-          return new FastCgiResponse(id, null);
+          responseHandler.responseReceived(id, null);
         }
         else if (protocolStatus == ProtocolStatus.REQUEST_COMPLETE.ordinal()) {
-          return new FastCgiResponse(id, dataBuffers.remove(id));
+          responseHandler.responseReceived(id, dataBuffers.remove(id));
         }
         break;
 
       case RecordType.STDOUT:
         ByteBuf data = dataBuffers.get(id);
-        ByteBuf sliced = buffer.slice(buffer.readerIndex(), contentLength);
+        ByteBuf sliced = isCumulateBuffer ? buffer : buffer.slice(buffer.readerIndex(), contentLength);
         if (data == null) {
           dataBuffers.put(id, sliced);
         }
@@ -125,10 +140,17 @@ public class FastCgiDecoder extends Decoder {
           data.writerIndex(data.writerIndex() + sliced.readableBytes());
         }
         else {
-          dataBuffers.put(id, Unpooled.wrappedBuffer(data, sliced));
+          if (sliced instanceof CompositeByteBuf) {
+            data = ((CompositeByteBuf)sliced).addComponent(0, data);
+            data.writerIndex(data.writerIndex() + data.readableBytes());
+          }
+          else {
+            data = context.alloc().compositeBuffer(DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS).addComponents(data, sliced);
+            data.writerIndex(data.writerIndex() + data.readableBytes() + sliced.readableBytes());
+          }
+          dataBuffers.put(id, data);
         }
         sliced.retain();
-        buffer.skipBytes(contentLength);
         break;
 
       case RecordType.STDERR:
@@ -138,7 +160,6 @@ public class FastCgiDecoder extends Decoder {
         catch (Throwable e) {
           LOG.error(e);
         }
-        buffer.skipBytes(contentLength);
         break;
 
       default:

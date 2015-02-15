@@ -1,6 +1,7 @@
-/// <reference path="../typings/node/node.d.ts" />
+"use strict"
 
 import net = require("net")
+import rpc = require("./rpc")
 
 export class RpcClient {
   connect(port:Number = 63342) {
@@ -8,92 +9,43 @@ export class RpcClient {
       console.log('Connected to IJ RPC server localhost:' + port)
     });
 
-    var jsonRpc = new JsonRpc(new Socket(socket))
+    var jsonRpc = new rpc.JsonRpc(new SocketTransport(socket))
     var decoder:MessageDecoder = new MessageDecoder(jsonRpc.messageReceived)
     socket.on('data', decoder.messageReceived)
   }
 }
 
-enum State {LENGTH, CONTENT}
+const enum State {LENGTH, CONTENT}
 
-class Socket {
-  private uint32Buffer = new Buffer(4)
+class SocketTransport implements rpc.Transport {
+  private headerBuffer = new Buffer(4)
 
   constructor(private socket:net.Socket) {
   }
 
-  send(message:string) {
-    var encoded = new Buffer(message)
-    this.uint32Buffer.writeUInt32BE(Buffer.byteLength(message), 0)
-    this.socket.write(this.uint32Buffer)
-    this.socket.write(message, 'utf-8')
-  }
-}
-
-class JsonRpc {
-  private messageIdCounter = 0
-  private callbacks:Map<number, (result?:any)=>void> = new Map<number, (result:any)=>void>()
-  private domains:Map<string, any> = new Map<string, any>();
-
-  constructor(private socket:Socket) {
+  send(id:number, domain:string, command:string, params:any[] = null):void {
+    var encodedParams = JSON.stringify(params)
+    var header = (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"';
+    this.headerBuffer.writeUInt32BE(Buffer.byteLength(encodedParams) + header.length, 0)
+    this.socket.write(this.headerBuffer)
+    this.socket.write(encodedParams, 'utf-8')
   }
 
-  messageReceived(message:Array<any>) {
-    if (message.length === 1 || (message.length === 2 && !(typeof message[1] === 'string'))) {
-      var f = this.callbacks.get(message[0])
-      var singletonArray = safeGet(message, 1)
-      if (singletonArray == null) {
-        f()
-      }
-      else {
-        f(singletonArray[0])
-      }
-    }
-    else {
-      var id:number
-      var offset:number
-      if (typeof message[0] === 'string') {
-        id = -1
-        offset = 0
-      }
-      else {
-        id = message[0]
-        offset = 1
-      }
-
-      var args = safeGet(message, offset + 2)
-      var errorCallback:(message:String)=>void
-      if (id === -1) {
-        errorCallback = null
-      }
-      else {
-        var resultCallback = (result:any) => this.socket.send("[" + id + ", \"r\", " + JSON.stringify(result) + "]")
-        errorCallback = (error:any) => this.socket.send("[$id, \"e\", " + JSON.stringify(error) + "]")
-        if (args == null) {
-          args = [resultCallback, errorCallback]
-        }
-        else {
-          var regularArgs = args
-          args = regularArgs.concat(errorCallback, resultCallback)
-        }
-      }
-
-      try {
-        var o = this.domains.get(message[offset]);
-        o[message[offset + 1]].apply(o, args);
-      }
-      catch (e) {
-        console.error(e)
-        if (errorCallback != null) {
-          errorCallback(e)
-        }
-      }
-    }
+  sendResult(id:number, result:any):void {
+    this.sendResultOrError(id, result, false)
   }
-}
 
-function safeGet(a:Array<any>, index:number):Array<any> {
-  return index < a.length ? a[index] : null
+  sendError(id:number, error:any):void {
+    this.sendResultOrError(id, error, true)
+  }
+
+  private sendResultOrError(id:number, result:any, isError:boolean):void {
+    var encodedResult = JSON.stringify(result)
+    var header = id + ', "' + (isError ? 'e': 'r') + '"';
+    this.headerBuffer.writeUInt32BE(Buffer.byteLength(encodedResult) + header.length, 0)
+    this.socket.write(this.headerBuffer)
+    this.socket.write(encodedResult, 'utf-8')
+  }
 }
 
 class MessageDecoder {
