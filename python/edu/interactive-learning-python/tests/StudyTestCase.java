@@ -25,7 +25,7 @@ public abstract class StudyTestCase extends UsefulTestCase {
   }
 
   protected String getTestDataPath() {
-    return PythonHelpersLocator.getPythonCommunityPath() + "/edu/learn-python/testData";
+    return PythonHelpersLocator.getPythonCommunityPath() + "/edu/interactive-learning-python/testData";
   }
 
   @Override
