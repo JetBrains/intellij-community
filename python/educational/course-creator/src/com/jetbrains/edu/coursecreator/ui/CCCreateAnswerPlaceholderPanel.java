@@ -7,18 +7,14 @@ import java.awt.event.ItemListener;
 
 public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
-  private final CCCreateAnswerPlaceholderDialog myDialog;
   private JPanel myPanel;
   private JTextArea myHintText;
   private JCheckBox myCreateHintCheckBox;
-  private JLabel myHintTextLabel;
   private JTextField myAnswerPlaceholderText;
-  private String myGeneratedHintName = "";
 
-  public CCCreateAnswerPlaceholderPanel(CCCreateAnswerPlaceholderDialog dialog) {
+  public CCCreateAnswerPlaceholderPanel() {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    myDialog = dialog;
     enableHint(false);
     myCreateHintCheckBox.addItemListener(new ItemListener() {
       @Override
@@ -37,7 +33,6 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
   private void enableHint(boolean isEnable) {
     myHintText.setEnabled(isEnable);
-    myHintTextLabel.setEnabled(isEnable);
   }
 
   public void setAnswerPlaceholderText(String answerPlaceholderText) {
@@ -62,10 +57,6 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
   public void resetHint() {
     myHintText.setText("");
-  }
-
-  public void setGeneratedHintName(String generatedHintName) {
-    myGeneratedHintName = generatedHintName;
   }
 
   public JComponent getPreferredFocusedComponent() {

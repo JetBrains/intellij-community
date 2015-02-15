@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,15 +22,11 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   }
 
   public CCCreateAnswerPlaceholderDialog(@NotNull final Project project,
-                                         @NotNull final AnswerPlaceholder answerPlaceholder,
-                                         int lessonIndex, int taskIndex, String taskFileName,
-                                         int answerPlaceholderIndex) {
+                                         @NotNull final AnswerPlaceholder answerPlaceholder) {
     super(project, true);
     setTitle(ourTitle);
     myAnswerPlaceholder = answerPlaceholder;
-    myPanel = new CCCreateAnswerPlaceholderPanel(this);
-    String generatedHintName = EduNames.LESSON + lessonIndex + EduNames.TASK + taskIndex + taskFileName + "_" + answerPlaceholderIndex;
-    myPanel.setGeneratedHintName(generatedHintName);
+    myPanel = new CCCreateAnswerPlaceholderPanel();
     if (answerPlaceholder.getHint() != null) {
       setHintText(answerPlaceholder);
     }
