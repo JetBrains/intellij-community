@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.TaskFile;
@@ -57,7 +58,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
   public void editorReleased(@NotNull EditorFactoryEvent event) {
     Editor editor = event.getEditor();
     Document document = editor.getDocument();
-    CCDocumentListener listener = CCProjectService.getListener(document);
+    EduDocumentListener listener = CCProjectService.getListener(document);
     if (listener != null) {
       document.removeDocumentListener(listener);
       CCProjectService.removeListener(document);
@@ -66,7 +67,7 @@ public class CCEditorFactoryListener implements EditorFactoryListener {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static class TaskFileModificationListener extends CCDocumentListener {
+  private static class TaskFileModificationListener extends EduDocumentListener {
 
     public TaskFileModificationListener(TaskFile taskFile) {
       super(taskFile);

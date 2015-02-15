@@ -20,8 +20,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
+import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.courseFormat.*;
-import com.jetbrains.edu.coursecreator.CCDocumentListener;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
@@ -148,7 +148,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         });
       }
     }, "x", "qwe");
-    InsertionListener listener = new InsertionListener(taskFile);
+    EduDocumentListener listener = new EduDocumentListener(taskFile);
     document.addDocumentListener(listener);
     taskFilesCopy.put(taskFile, taskFileSaved);
     Collections.sort(taskFile.getAnswerPlaceholders(), new AnswerPlaceholderComparator());
@@ -256,18 +256,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       catch (IOException e1) {
         //close silently
       }
-    }
-  }
-
-  public static class InsertionListener extends CCDocumentListener {
-
-    public InsertionListener(TaskFile taskFile) {
-      super(taskFile);
-    }
-
-    @Override
-    protected boolean useLength() {
-      return true;
     }
   }
 

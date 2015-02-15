@@ -30,10 +30,10 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyDocumentListener;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -349,7 +349,7 @@ public class StudyCheckAction extends DumbAwareAction {
       final Document document = documentManager.getDocument(copy);
       if (document != null) {
         TaskFile.copy(source, target);
-        StudyDocumentListener listener = new StudyDocumentListener(target);
+        EduDocumentListener listener = new EduDocumentListener(target);
         document.addDocumentListener(listener);
         for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
           if (!answerPlaceholder.isValid(document)) {

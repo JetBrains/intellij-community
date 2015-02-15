@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
@@ -60,7 +61,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
   //directory path to Task
   public Map<String, Task> myTasksMap = new HashMap<String, Task>();
 
-  private static final Map<Document, CCDocumentListener> myDocumentListeners = new HashMap<Document, CCDocumentListener>();
+  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
 
   public Map<String, Lesson> getLessonsMap() {
     return myLessonsMap;
@@ -144,11 +145,11 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     }
   }
 
-  public static void addDocumentListener(Document document, CCDocumentListener listener) {
+  public static void addDocumentListener(Document document, EduDocumentListener listener) {
     myDocumentListeners.put(document, listener);
   }
 
-  public static CCDocumentListener getListener(Document document) {
+  public static EduDocumentListener getListener(Document document) {
     return myDocumentListeners.get(document);
   }
 

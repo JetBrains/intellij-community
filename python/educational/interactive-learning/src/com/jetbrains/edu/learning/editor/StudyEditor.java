@@ -33,9 +33,9 @@ import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyDocumentListener;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
@@ -70,7 +70,7 @@ public class StudyEditor implements TextEditor {
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
-  private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
+  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
   private final Project myProject;
 
   public JButton getCheckButton() {
@@ -101,7 +101,7 @@ public class StudyEditor implements TextEditor {
     return newButton;
   }
 
-  public static void addDocumentListener(@NotNull final Document document, @NotNull final StudyDocumentListener listener) {
+  public static void addDocumentListener(@NotNull final Document document, @NotNull final EduDocumentListener listener) {
     document.addDocumentListener(listener);
     myDocumentListeners.put(document, listener);
   }
@@ -399,7 +399,7 @@ public class StudyEditor implements TextEditor {
   }
 
   public static void removeListener(Document document) {
-    final StudyDocumentListener listener = myDocumentListeners.get(document);
+    final EduDocumentListener listener = myDocumentListeners.get(document);
     if (listener != null) {
       document.removeDocumentListener(listener);
     }

@@ -15,9 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.JBColor;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyDocumentListener;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
@@ -79,7 +79,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                 if (taskFile != null) {
                   StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
                   editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
-                  StudyEditor.addDocumentListener(document, new StudyDocumentListener(taskFile));
+                  StudyEditor.addDocumentListener(document, new EduDocumentListener(taskFile));
                   WolfTheProblemSolver.getInstance(project).clearProblems(openedFile);
                   StudyUtils.drawAllWindows(editor, taskFile);
                 }
