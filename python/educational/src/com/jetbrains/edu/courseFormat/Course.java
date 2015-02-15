@@ -4,11 +4,10 @@ import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Course {
-  public List<Lesson> lessons = new ArrayList<Lesson>();
+  private List<Lesson> lessons = new ArrayList<Lesson>();
 
   private String description;
   private String name;
@@ -18,7 +17,11 @@ public class Course {
   private String myLanguage;
 
   public List<Lesson> getLessons() {
-    return Collections.unmodifiableList(lessons);
+    return lessons;
+  }
+
+  public void setLessons(List<Lesson> lessons) {
+    this.lessons = lessons;
   }
 
   public void addLesson(@NotNull final Lesson lesson) {
