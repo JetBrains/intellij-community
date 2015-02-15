@@ -248,7 +248,10 @@ public class GroovyCompilerWrapper {
       return ((ClassNode)node).getModule();
     }
     if (node instanceof AnnotatedNode) {
-      return ((AnnotatedNode)node).getDeclaringClass().getModule();
+      ClassNode declaringClass = ((AnnotatedNode)node).getDeclaringClass();
+      if (declaringClass != null) {
+        return declaringClass.getModule();
+      }
     }
     return null;
   }
