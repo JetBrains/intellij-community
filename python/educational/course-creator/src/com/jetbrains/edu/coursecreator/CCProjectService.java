@@ -59,7 +59,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
   private Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
 
   //directory path to Task
-  public Map<String, Task> myTasksMap = new HashMap<String, Task>();
+  private Map<String, Task> myTasksMap = new HashMap<String, Task>();
 
   private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
 
@@ -77,6 +77,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
 
   public void addLesson(@NotNull final Lesson lesson, @NotNull final PsiDirectory directory) {
     myLessonsMap.put(directory.getName(), lesson);
+    getCourse().addLesson(lesson);
   }
 
   public Map<String, Task> getTasksMap() {
