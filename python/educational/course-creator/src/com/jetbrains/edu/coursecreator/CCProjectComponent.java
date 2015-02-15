@@ -126,7 +126,7 @@ public class CCProjectComponent implements ProjectComponent {
       }
     }
 
-    private void deleteLesson(Course course, VirtualFile file) {
+    private void deleteLesson(@NotNull final Course course, @NotNull final VirtualFile file) {
       VirtualFile courseDir = file.getParent();
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
@@ -139,7 +139,7 @@ public class CCProjectComponent implements ProjectComponent {
       }
     }
 
-    private void deleteTask(VirtualFile removedFile) {
+    private void deleteTask(@NotNull final VirtualFile removedFile) {
       VirtualFile lessonDir = removedFile.getParent();
       final CCProjectService projectService = CCProjectService.getInstance(myProject);
       if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
@@ -161,7 +161,7 @@ public class CCProjectComponent implements ProjectComponent {
       projectService.getTasksMap().remove(removedFile.getPath());
     }
 
-    private void deleteTaskFile(VirtualFile removedFile) {
+    private void deleteTaskFile(@NotNull final VirtualFile removedFile) {
       final CCProjectService projectService = CCProjectService.getInstance(myProject);
       final VirtualFile taskDir = removedFile.getParent();
       if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
