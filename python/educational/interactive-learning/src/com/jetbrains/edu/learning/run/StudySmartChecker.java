@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -62,7 +63,7 @@ public class StudySmartChecker {
             documentManager.saveDocument(windowDocument);
           }
         });
-        VirtualFile fileWindows = StudyUtils.flushWindows(windowTaskFile, windowCopy);
+        VirtualFile fileWindows = EduUtils.flushWindows(windowTaskFile, windowCopy, true);
         Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess);
         final ProcessOutput output = handler.runProcess();

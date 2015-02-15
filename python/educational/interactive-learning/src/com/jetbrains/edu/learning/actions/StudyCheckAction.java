@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
@@ -66,7 +67,7 @@ public class StudyCheckAction extends DumbAwareAction {
       if (virtualFile == null) {
         continue;
       }
-      StudyUtils.flushWindows(taskFile, virtualFile);
+      EduUtils.flushWindows(taskFile, virtualFile, true);
     }
   }
 

@@ -7,7 +7,6 @@ import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -126,50 +124,6 @@ public class StudyUtils {
     FileDocumentManager.getInstance().saveAllDocuments();
     SaveAndSyncHandlerImpl.refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-  }
-
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  @Nullable
-  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
-    final VirtualFile taskDir = file.getParent();
-    VirtualFile fileWindows = null;
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
-      LOG.debug("Couldn't flush windows");
-      return null;
-    }
-    if (taskDir != null) {
-      final String name = file.getNameWithoutExtension() + "_windows";
-      PrintWriter printWriter = null;
-      try {
-        fileWindows = taskDir.createChildData(taskFile, name);
-        printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
-        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
-            printWriter.println("#educational_plugin_window = ");
-            continue;
-          }
-          int start = answerPlaceholder.getRealStartOffset(document);
-          final String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getLength()));
-          printWriter.println("#educational_plugin_window = " + windowDescription);
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        closeSilently(printWriter);
-        synchronize();
-      }
-    }
-    return fileWindows;
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {

@@ -24,10 +24,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,15 +34,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.*;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Map;
 
 public abstract class CCRunTestsAction extends AnAction {
@@ -175,7 +175,7 @@ public abstract class CCRunTestsAction extends AnAction {
         oldTaskFile.delete(project);
       }
       answerFile.copy(project, taskDir, fileName);
-      flushWindows(taskFile, answerFile);
+      EduUtils.flushWindows(taskFile, answerFile, false);
       createResourceFiles(answerFile, project);
     }
     catch (IOException e) {
@@ -254,40 +254,4 @@ public abstract class CCRunTestsAction extends AnAction {
     return targetDir;
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void flushWindows(TaskFile taskFile, VirtualFile file) {
-    VirtualFile taskDir = file.getParent();
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
-      LOG.debug("Couldn't flush windows");
-      return;
-    }
-    if (taskDir != null) {
-      String name = file.getNameWithoutExtension() + "_windows";
-      PrintWriter printWriter = null;
-      try {
-        final VirtualFile windowsFile = taskDir.createChildData(taskFile, name);
-        printWriter = new PrintWriter(new FileOutputStream(windowsFile.getPath()));
-        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          int start = answerPlaceholder.getRealStartOffset(document);
-          String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getPossibleAnswerLength()));
-          printWriter.println("#educational_plugin_window = " + windowDescription);
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        if (printWriter != null) {
-          printWriter.close();
-        }
-      }
-    }
-  }
 }

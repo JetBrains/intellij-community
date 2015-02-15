@@ -1,18 +1,30 @@
 package com.jetbrains.edu;
 
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class EduUtils {
   private EduUtils() {
@@ -61,4 +73,58 @@ public class EduUtils {
     }
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file,
+                                         boolean useLength) {
+    final VirtualFile taskDir = file.getParent();
+    VirtualFile fileWindows = null;
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) {
+      LOG.debug("Couldn't flush windows");
+      return null;
+    }
+    if (taskDir != null) {
+      final String name = file.getNameWithoutExtension() + "_windows";
+      PrintWriter printWriter = null;
+      try {
+        fileWindows = taskDir.createChildData(taskFile, name);
+        printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
+        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+          if (!answerPlaceholder.isValid(document)) {
+            printWriter.println("#educational_plugin_window = ");
+            continue;
+          }
+          int start = answerPlaceholder.getRealStartOffset(document);
+          int length = useLength ? answerPlaceholder.getLength() : answerPlaceholder.getPossibleAnswerLength();
+          final String windowDescription = document.getText(new TextRange(start, start + length));
+          printWriter.println("#educational_plugin_window = " + windowDescription);
+        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      finally {
+        if (printWriter != null) {
+          printWriter.close();
+        }
+        synchronize();
+      }
+    }
+    return fileWindows;
+  }
+
+  public static void synchronize() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    SaveAndSyncHandlerImpl.refreshOpenFiles();
+    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+  }
+
 }
