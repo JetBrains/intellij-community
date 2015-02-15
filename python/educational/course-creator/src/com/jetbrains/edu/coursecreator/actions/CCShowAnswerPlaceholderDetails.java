@@ -29,9 +29,8 @@ public class CCShowAnswerPlaceholderDetails extends CCAnswerPlaceholderAction {
     final Task task = service.getTask(taskDir.getVirtualFile().getPath());
     final TaskFile taskFile = state.getTaskFile();
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder, lesson.getIndex(), task.getIndex(),
-                                                            file.getVirtualFile().getNameWithoutExtension(),
-                                                            taskFile.getAnswerPlaceholders().size() + 1);
+    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder
+    );
     dlg.setTitle("Edit Answer Placeholder");
     dlg.show();
   }

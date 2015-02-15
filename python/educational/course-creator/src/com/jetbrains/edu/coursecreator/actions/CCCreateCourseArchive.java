@@ -174,8 +174,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
                                                @NotNull final Document document,
                                                @NotNull final AnswerPlaceholder answerPlaceholder) {
     final String taskText = answerPlaceholder.getTaskText();
-    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
-    final int offset = lineStartOffset + answerPlaceholder.getStart();
+    final int offset = answerPlaceholder.getRealStartOffset(document);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {

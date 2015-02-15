@@ -83,9 +83,8 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     answerPlaceholder.setStart(realStart);
     answerPlaceholder.setPossibleAnswer(model.getSelectedText());
 
-    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder, lesson.getIndex(),
-                                                            task.getIndex(), file.getVirtualFile().getNameWithoutExtension(),
-                                                            taskFile.getAnswerPlaceholders().size() + 1);
+    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder
+    );
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
