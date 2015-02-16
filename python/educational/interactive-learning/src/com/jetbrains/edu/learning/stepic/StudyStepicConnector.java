@@ -64,12 +64,11 @@ public class StudyStepicConnector {
     course.setAuthor(info.getAuthor());
     course.setDescription(info.getDescription());
     course.setName(info.getName());
-    course.lessons = new ArrayList<Lesson>();
     course.setLanguage("Python");  // TODO: get from stepic
     course.setUpToDate(true);  // TODO: get from stepic
     try {
       for (Integer section : info.sections) {
-        course.lessons.addAll(getLessons(section));
+        course.addLessons(getLessons(section));
       }
       return course;
     }

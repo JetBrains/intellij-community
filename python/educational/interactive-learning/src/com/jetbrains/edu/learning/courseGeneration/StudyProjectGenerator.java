@@ -114,7 +114,7 @@ public class StudyProjectGenerator {
     flushCourseJson(course, courseDirectory);
 
     int lessonIndex = 1;
-    for (Lesson lesson : course.lessons) {
+    for (Lesson lesson : course.getLessons()) {
       final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
       FileUtil.createDirectory(lessonDirectory);
       int taskIndex = 1;

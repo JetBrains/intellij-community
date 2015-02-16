@@ -128,7 +128,7 @@ public class StudyGenerator {
    * Initializes state of course
    */
   public static void initCourse(@NotNull final Course course, boolean isRestarted) {
-    for (Lesson lesson : course.lessons) {
+    for (Lesson lesson : course.getLessons()) {
       initLesson(lesson, course, isRestarted);
     }
   }
