@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.commandLineParser;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,22 +25,22 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Command line parse result.
+ * Command line getCommandLineInfo result.
  * It consists of command itself and its parts.
  * Each part may be {@link com.jetbrains.python.commandLineParser.CommandLinePartType#ARGUMENT argument} or
  * {@link com.jetbrains.python.commandLineParser.CommandLinePartType#OPTION option} or something else.
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineParseResult {
+public final class CommandLine {
   @NotNull
-  private final List<Pair<CommandLinePartType, WordWithPosition>> myParts = new ArrayList<Pair<CommandLinePartType, WordWithPosition>>();
+  private final List<CommandLinePart> myParts = new ArrayList<CommandLinePart>();
   @NotNull
   private final WordWithPosition myCommand;
 
-  public CommandLineParseResult(
+  public CommandLine(
     @NotNull final WordWithPosition command,
-    @NotNull final Collection<Pair<CommandLinePartType, WordWithPosition>> parts) {
+    @NotNull final Collection<CommandLinePart> parts) {
     myCommand = command;
     myParts.addAll(parts);
   }
@@ -53,26 +53,26 @@ public final class CommandLineParseResult {
     return myCommand;
   }
 
-  /**
-   * @return list of parts in format [part_type, value].
-   * For example (rm my_folder): [{@link com.jetbrains.python.commandLineParser.CommandLinePartType#ARGUMENT argument}, my_folder]
-   */
   @NotNull
-  public List<Pair<CommandLinePartType, WordWithPosition>> getParts() {
+  public List<CommandLinePart> getParts() {
     return Collections.unmodifiableList(myParts);
   }
 
   /**
-   * @return all command line parts with out of part information (just words and positions).
-   * Note tha command itself is not part, only args and options are
-   * @see #getParts()
+   * @return all command parts as text (actually by bindning them back together)
    */
   @NotNull
-  public Collection<WordWithPosition> getPartsNoType() {
-    final Collection<WordWithPosition> result = new ArrayList<WordWithPosition>();
-    for (final Pair<CommandLinePartType, WordWithPosition> part : myParts) {
-      result.add(part.second);
+  public String getPartsAsText() {
+    final StringBuilder builder = new StringBuilder();
+    int lastPosition = 0;
+    for (final CommandLinePart part : getParts()) {
+      final WordWithPosition partWord = part.getWord();
+      if (lastPosition != partWord.getFrom()) {
+        builder.append(' ');
+      }
+      builder.append(partWord.getText());
+      lastPosition = partWord.getTo();
     }
-    return result;
+    return StringUtil.trim(builder.toString());
   }
 }

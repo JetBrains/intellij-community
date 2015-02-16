@@ -15,10 +15,10 @@
  */
 
 /**
- * {@link com.jetbrains.python.commandInterface.chunkDriverBasedPresenter.ChunkDriver} implementation based on idea of
+ * {@link com.jetbrains.python.commandInterface.rangeBasedPresenter.RangeInfoDriver} implementation based on idea of
  * {@link com.jetbrains.python.commandInterface.command command, option and argument}.
  *
- *  See {@link com.jetbrains.python.commandInterface.commandBasedChunkDriver.CommandBasedChunkDriver} as entry point.
+ *  See {@link com.jetbrains.python.commandInterface.commandBasedRangeDriver.CommandBasedRangeInfoDriver} as entry point.
  *  It parses command line using {@link com.jetbrains.python.commandLineParser.CommandLineParser} and finds matching command and arguments
  *  provided by user
  *
@@ -26,4 +26,4 @@
  * @see com.jetbrains.python.commandInterface.command.Command
  * @author Ilya.Kazakevich
  */
-package com.jetbrains.python.commandInterface.commandBasedChunkDriver;
+package com.jetbrains.python.commandInterface.commandBasedRangeDriver;

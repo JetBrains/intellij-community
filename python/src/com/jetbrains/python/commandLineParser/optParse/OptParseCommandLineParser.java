@@ -16,19 +16,15 @@
 package com.jetbrains.python.commandLineParser.optParse;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.WordWithPosition;
-import com.jetbrains.python.commandInterface.command.Command;
-import com.jetbrains.python.commandInterface.command.Option;
-import com.jetbrains.python.commandInterface.command.OptionArgumentInfo;
-import com.jetbrains.python.commandLineParser.CommandLineParseResult;
-import com.jetbrains.python.commandLineParser.CommandLineParser;
-import com.jetbrains.python.commandLineParser.CommandLinePartType;
-import com.jetbrains.python.commandLineParser.MalformedCommandLineException;
+import com.jetbrains.python.commandLineParser.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 /**
  * <p>
@@ -48,114 +44,67 @@ import java.util.*;
 public final class OptParseCommandLineParser implements CommandLineParser {
   /**
    * Supported option parsers (option types, actually)
+   * Short (-o) and long (--option) strategies are used here
    */
-  @NotNull
-  private static final OptionParser[] OPTION_PARSERS = {new LongOptionParser(), new ShortOptionParser()};
 
-  /**
-   * CommandName -> Options
-   */
-  @NotNull
-  private final Map<String, List<Option>> myCommandOptions = new HashMap<String, List<Option>>();
+  private static final OptionParser[] OPTION_PARSERS = {new ShortOptionParser(), new LongOptionParser()};
 
-  /**
-   * @param commands commands (needed to parse out options)
-   */
-  public OptParseCommandLineParser(@NotNull final Iterable<? extends Command> commands) {
-    for (final Command command : commands) {
-      myCommandOptions.put(command.getName(), command.getOptions());
-    }
-  }
 
   @NotNull
   @Override
-  public CommandLineParseResult parse(@NotNull final List<WordWithPosition> commandLineParts) throws MalformedCommandLineException {
-    final Deque<WordWithPosition> parts = new ArrayDeque<WordWithPosition>(commandLineParts);
+  public CommandLine parse(@NotNull final String commandLineText) throws MalformedCommandLineException {
+    final Deque<WordWithPosition> parts = new ArrayDeque<WordWithPosition>(WordWithPosition.splitText(commandLineText));
     if (parts.isEmpty()) {
       throw new MalformedCommandLineException("No command provided");
     }
     final WordWithPosition command = parts.pop();
-    final List<Option> options;
-    if (myCommandOptions.containsKey(command.getText())) {
-      options = myCommandOptions.get(command.getText());
-    }
-    else {
-      options = Collections.emptyList();
-    }
 
+    final List<CommandLinePart> optionsAndArguments = new ArrayList<CommandLinePart>();
 
-    final List<Pair<CommandLinePartType, WordWithPosition>> resultParts = new ArrayList<Pair<CommandLinePartType, WordWithPosition>>();
-    if (isOption(command)) {
-      throw new MalformedCommandLineException("Command can't start with option prefix");
-    }
-
-    int optionArgumentsLeft = 0; // If option has N arguments, then next N arguments belong to this option
     for (final WordWithPosition part : parts) {
-      if (optionArgumentsLeft > 0) {
-        optionArgumentsLeft--;
-        resultParts.add(Pair.create(CommandLinePartType.OPTION_ARGUMENT, part));
-        continue;
-      }
-      if (isOption(part)) {
-        // This is option!
-        final Pair<Option, String> optionAndValue = findOptionAndValue(options, part.getText());
-        if (optionAndValue != null) {
-          final Option option = optionAndValue.first;
-          final Pair<Integer, OptionArgumentInfo> argumentAndQuantity = option.getArgumentAndQuantity();
-          if (argumentAndQuantity != null) {
-            optionArgumentsLeft = argumentAndQuantity.first;
-          }
-          final String optionArgumentValue = optionAndValue.second;
-          if (optionArgumentValue != null) {
-            // We found argument
-            optionArgumentsLeft--;
-            final String optionArgumentText =
-              part.getText().substring(0, part.getText().length() - optionArgumentValue.length());
-            final WordWithPosition optionPart =
-              new WordWithPosition(optionArgumentText, part.getFrom(), part.getFrom() + optionArgumentText.length());
-            final WordWithPosition valuePart = new WordWithPosition(optionArgumentValue, optionPart.getTo(), part.getTo());
-            resultParts.add(Pair.create(CommandLinePartType.OPTION, optionPart));
-            resultParts.add(Pair.create(CommandLinePartType.OPTION_ARGUMENT, valuePart));
-          }
-          else {
-            resultParts.add(Pair.create(CommandLinePartType.OPTION, part));
-          }
+      final Pair<String, String> optionTextAndName = findOptionTextAndName(part.getText());
+      if (optionTextAndName != null) {
+        final String optionText = optionTextAndName.first;
+        final String optionName = optionTextAndName.second;
+        final WordWithPosition option = new WordWithPosition(optionText, part.getFrom(), part.getFrom() + optionText.length());
+
+        final WordWithPosition optionArgument;
+        if (optionText.length() == part.getText().length()) {
+          optionArgument = null;
         }
         else {
-          resultParts.add(Pair.create(CommandLinePartType.UNKNOWN, part));
+          // Looks like we have option argument here.
+          final String argumentText = part.getText().substring(optionText.length());
+          optionArgument = new WordWithPosition(argumentText, option.getTo(), part.getTo());
+        }
+        optionsAndArguments.add(new CommandLineOption(option, optionName, optionArgument)); //Option
+        if (optionArgument != null) {
+          optionsAndArguments.add(new CommandLineArgument(optionArgument)); // And its argument
         }
       }
       else {
-        resultParts.add(Pair.create(CommandLinePartType.ARGUMENT, part));
+        optionsAndArguments.add(new CommandLineArgument(part)); //Not an option. Should be argument
       }
     }
-    return new CommandLineParseResult(command, resultParts);
+    return new CommandLine(command, optionsAndArguments);
   }
+
 
   /**
    * Parse out option and its value iterating through the parsers
    *
-   * @param options all available options
-   * @param text    text believed to be an option like "--foo=123"
-   * @return [option->argument_value] pair or null if provided text is not an option. ArgValue may also be null if not provided
-   * @see com.jetbrains.python.commandLineParser.optParse.OptionParser#findOptionAndValue(java.util.List, String)
+   * @param text text believed to be an option like "--foo=123"
+   * @return [option_text, option_name] or null of no such option
+   * @see OptionParser#findOptionTextAndName(String)
    */
   @Nullable
-  private static Pair<Option, String> findOptionAndValue(@NotNull final List<Option> options, @NotNull final String text) {
+  private static Pair<String, String> findOptionTextAndName(@NotNull final String optionText) {
     for (final OptionParser parser : OPTION_PARSERS) {
-      final Pair<Option, String> optionAndValue = parser.findOptionAndValue(options, text);
-      if (optionAndValue != null) {
-        return optionAndValue;
+      final Pair<String, String> optionTextAndName = parser.findOptionTextAndName(optionText);
+      if (optionTextAndName != null) {
+        return optionTextAndName;
       }
     }
     return null;
-  }
-
-  /**
-   * @param command command to check
-   * @return if command is option or not
-   */
-  private static boolean isOption(@NotNull final WordWithPosition command) {
-    return command.getText().startsWith("-");
   }
 }

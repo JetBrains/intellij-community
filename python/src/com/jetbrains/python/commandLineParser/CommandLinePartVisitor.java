@@ -13,32 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandLineParser.optParse;
+package com.jetbrains.python.commandLineParser;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
- * Deals with short-style options like -b or -f
+ * Visitor to process options and arguments
  *
  * @author Ilya.Kazakevich
+ * @see CommandLinePart#accept(CommandLinePartVisitor)
  */
-final class ShortOptionParser extends OptionParserRegexBased {
+public interface CommandLinePartVisitor {
+
   /**
-   * Short-style option regexp
+   * @param option option to visit
    */
-  private static final Pattern SHORT_OPT_PATTERN = Pattern.compile("^(-[a-zA-Z0-9])([^ -])?");
+  void visitOption(@NotNull CommandLineOption option);
 
-  ShortOptionParser() {
-    super(SHORT_OPT_PATTERN);
-  }
-
-  @NotNull
-  @Override
-  protected Pair<String, String> getOptionTextAndNameFromMatcher(@NotNull final Matcher matcher) {
-    return Pair.create(matcher.group(1), matcher.group(1));
-  }
+  /**
+   * @param argument argument to visit
+   */
+  void visitArgument(@NotNull CommandLineArgument argument);
 }
