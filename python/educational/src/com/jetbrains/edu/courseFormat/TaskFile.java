@@ -1,5 +1,6 @@
 package com.jetbrains.edu.courseFormat;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -17,10 +18,10 @@ import java.util.List;
  */
 
 public class TaskFile {
-  @SerializedName("placeholders")
+  @SerializedName("task_windows")
+  @Expose
   private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
   private int myIndex = -1;
-
 
   public String name;
   public String text;

@@ -1,6 +1,7 @@
 package com.jetbrains.edu.courseFormat;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -18,6 +19,8 @@ public class Task {
   @Expose
   private String name;
   private int myIndex;
+  @Expose
+  @SerializedName("task_files")
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
 
   private String text;
