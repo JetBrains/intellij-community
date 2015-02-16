@@ -152,12 +152,11 @@ public class CCProjectComponent implements ProjectComponent {
       if (lesson == null) {
         return;
       }
-      Task task = projectService.getTask(removedFile.getPath());
+      Task task = lesson.getTask(removedFile.getName());
       if (task == null) {
         return;
       }
       lesson.getTaskList().remove(task);
-      projectService.getTasksMap().remove(removedFile.getPath());
     }
 
     private void deleteTaskFile(@NotNull final VirtualFile removedFile) {
@@ -179,7 +178,7 @@ public class CCProjectComponent implements ProjectComponent {
       if (lesson == null) {
         return;
       }
-      Task task = projectService.getTask(taskDir.getPath());
+      Task task = lesson.getTask(taskDir.getName());
       if (task == null) {
         return;
       }

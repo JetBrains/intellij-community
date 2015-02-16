@@ -20,14 +20,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
@@ -48,29 +46,9 @@ import java.util.Map;
        }
 )
 public class CCProjectService implements PersistentStateComponent<CCProjectService> {
-  private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
   private Course myCourse;
 
-  //directory path to Task
-  private Map<String, Task> myTasksMap = new HashMap<String, Task>();
-
   private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
-
-  public Map<String, Task> getTasksMap() {
-    return myTasksMap;
-  }
-
-  public void setTasksMap(Map<String, Task> tasksMap) {
-    myTasksMap = tasksMap;
-  }
-
-  public void addTask(@NotNull final Task task, PsiDirectory taskDirectory) {
-    myTasksMap.put(taskDirectory.getVirtualFile().getPath(), task);
-  }
-
-  public Task getTask(@NotNull final String name) {
-    return myTasksMap.get(name);
-  }
 
   @Nullable
   public TaskFile getTaskFile(@NotNull final VirtualFile virtualFile) {
@@ -94,7 +72,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     if (lesson == null) {
       return null;
     }
-    Task task = getTask(taskDir.getPath());
+    Task task = lesson.getTask(taskDir.getName());
     if (task == null) {
       return null;
     }

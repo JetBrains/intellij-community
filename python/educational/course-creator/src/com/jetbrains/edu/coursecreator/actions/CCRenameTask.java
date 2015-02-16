@@ -22,7 +22,6 @@ import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 
 public class CCRenameTask extends CCRename {
   public CCRenameTask() {
@@ -40,12 +39,11 @@ public class CCRenameTask extends CCRename {
     if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
       return false;
     }
-    final CCProjectService service = CCProjectService.getInstance(project);
     Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) {
       return false;
     }
-    Task task = service.getTask(directory.getVirtualFile().getPath());
+    Task task = lesson.getTask(directory.getName());
     if (task == null) {
       return false;
     }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
@@ -52,7 +53,8 @@ public class CCCreateTaskFile extends DumbAwareAction {
     }
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
+    final Lesson lesson = course.getLesson(lessonDir.getName());
+    final Task task = lesson.getTask(taskDir.getName());
 
     final int index = task.getTaskFiles().size() + 1;
     String generatedName = "file" + index;

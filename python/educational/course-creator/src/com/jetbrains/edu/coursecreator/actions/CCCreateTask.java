@@ -83,15 +83,13 @@ public class CCCreateTask extends DumbAwareAction {
           EduUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final Task task = new Task(taskName);
           task.setIndex(size + 1);
-          service.addTask(task, taskDirectory);
           lesson.addTask(task);
 
           createFromTemplateAndOpen(taskDirectory, manager.getTestsTemplate(project), view);
           createFromTemplateAndOpen(taskDirectory, FileTemplateManager.getInstance(project).getInternalTemplate("task.html"), view);
           String defaultExtension = manager.getDefaultTaskFileExtension();
           if (defaultExtension != null) {
-            FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project,
-                                                                                          defaultExtension);
+            FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
             createFromTemplateAndOpen(taskDirectory, taskFileTemplate, view);
             if (taskFileTemplate != null) {
               String taskFileName = FileUtil.getNameWithoutExtension(taskFileTemplate.getName());

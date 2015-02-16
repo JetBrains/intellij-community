@@ -52,7 +52,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
       if (parentDir != null) {
         final Lesson parentLesson = course.getLesson(parentDir.getName());
         if (parentLesson != null) {
-          final Task task = service.getTask(myValue.getVirtualFile().getPath());
+          final Task task = parentLesson.getTask(valueName);
           if (task != null) {
             data.clearText();
             data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);

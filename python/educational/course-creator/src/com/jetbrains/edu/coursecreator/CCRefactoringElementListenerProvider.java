@@ -81,7 +81,7 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       if (lesson == null) {
         return;
       }
-      Task task = service.getTask(taskDir.getVirtualFile().getPath());
+      Task task = lesson.getTask(taskDir.getName());
       if (task == null) {
         return;
       }

@@ -3,6 +3,8 @@ package com.jetbrains.edu.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,4 +63,14 @@ public class Lesson {
   public void addTask(@NotNull final Task task) {
     taskList.add(task);
   }
+
+  public Task getTask(@NotNull final String name) {
+    int index = EduUtils.getIndex(name, EduNames.TASK);
+    List<Task> tasks = getTaskList();
+    if (!EduUtils.indexIsValid(index, tasks)) {
+      return null;
+    }
+    return tasks.get(index);
+  }
+
 }

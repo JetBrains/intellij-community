@@ -132,7 +132,7 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
       presentation.setEnabled(false);
       return;
     }
-    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
+    final Task task = lesson.getTask(taskDir.getName());
     if (task == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

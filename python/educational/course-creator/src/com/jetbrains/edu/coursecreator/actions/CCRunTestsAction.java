@@ -82,7 +82,7 @@ public abstract class CCRunTestsAction extends AnAction {
     if (course == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) return;
-    final Task task = service.getTask(taskDir.getVirtualFile().getPath());
+    final Task task = lesson.getTask(taskDir.getName());
     if (task == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
@@ -127,7 +127,12 @@ public abstract class CCRunTestsAction extends AnAction {
         if (taskDir == null) {
           return;
         }
-        final Task task = CCProjectService.getInstance(project).getTask(taskDir.getPath());
+        VirtualFile lessonDir = taskDir.getParent();
+        Lesson lesson = course.getLesson(lessonDir.getName());
+        if (lesson == null) {
+          return;
+        }
+        final Task task = lesson.getTask(taskDir.getName());
         if (task == null) {
           return;
         }

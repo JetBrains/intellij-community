@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
@@ -30,7 +29,7 @@ import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.AbstractMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
@@ -75,19 +74,22 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
     final VirtualFile baseDir = project.getBaseDir();
+    final List<Lesson> lessons = course.getLessons();
 
-    for (Map.Entry<String, Task> task : service.getTasksMap().entrySet()) {
-      final VirtualFile taskDir = LocalFileSystem.getInstance().findFileByPath(task.getKey());
-      if (taskDir == null) continue;
-      for (final Map.Entry<String, TaskFile> entry : task.getValue().getTaskFiles().entrySet()) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            TaskFile taskFileCopy = new TaskFile();
-            TaskFile.copy(entry.getValue(), taskFileCopy);
-            createUserFile(project, taskDir, taskDir, new AbstractMap.SimpleEntry<String, TaskFile>(entry.getKey(), taskFileCopy));
-          }
-        });
+    for (Lesson lesson : lessons) {
+      final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
+      if (lessonDir == null) continue;
+      for (Task task : lesson.getTaskList()) {
+        final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
+        if (taskDir == null) continue;
+        for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              createUserFile(project, taskDir, taskDir, entry);
+            }
+          });
+        }
       }
     }
     generateJson(project);
