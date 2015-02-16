@@ -294,7 +294,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
-    if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
+    if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel())) {
       return true;
     }
     final String compilerOutput = getOriginalCompilerOutputUrl();
