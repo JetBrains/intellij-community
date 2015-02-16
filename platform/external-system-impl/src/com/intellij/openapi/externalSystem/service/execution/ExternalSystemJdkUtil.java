@@ -139,9 +139,7 @@ public class ExternalSystemJdkUtil {
   public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
     try {
       final Sdk sdk = getJdk(project, jdkName);
-      if (sdk != null && sdk.getHomePath() != null && JdkUtil.checkForJdk(new File(sdk.getHomePath()))) {
-        return true;
-      }
+      return sdk != null && sdk.getHomePath() != null && JdkUtil.checkForJdk(new File(sdk.getHomePath()));
     }
     catch (ExternalSystemJdkException ignore) {
     }
