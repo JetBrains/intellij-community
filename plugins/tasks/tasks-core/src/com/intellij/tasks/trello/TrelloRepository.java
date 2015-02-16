@@ -36,6 +36,7 @@ import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloList;
 import com.intellij.tasks.trello.model.TrelloUser;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.*;
@@ -207,7 +208,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     try {
       final URIBuilder url = new URIBuilder(getRestApiUrl("members", "me"))
         .addParameter("fields", TrelloUser.REQUIRED_FIELDS);
-      return makeRequestAndDeserializeJsonResponse(url.build(), TrelloUser.class);
+      return ObjectUtils.assertNotNull(makeRequestAndDeserializeJsonResponse(url.build(), TrelloUser.class));
     }
     catch (Exception e) {
       LOG.warn("Error while fetching initial user info", e);
@@ -223,7 +224,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     final URIBuilder url = new URIBuilder(getRestApiUrl("boards", id))
       .addParameter("fields", TrelloBoard.REQUIRED_FIELDS);
     try {
-      return makeRequestAndDeserializeJsonResponse(url.build(), TrelloBoard.class);
+      return ObjectUtils.assertNotNull(makeRequestAndDeserializeJsonResponse(url.build(), TrelloBoard.class));
     }
     catch (Exception e) {
       LOG.warn("Error while fetching initial board info", e);
@@ -236,7 +237,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     final URIBuilder url = new URIBuilder(getRestApiUrl("lists", id))
       .addParameter("fields", TrelloList.REQUIRED_FIELDS);
     try {
-      return makeRequestAndDeserializeJsonResponse(url.build(), TrelloList.class);
+      return ObjectUtils.assertNotNull(makeRequestAndDeserializeJsonResponse(url.build(), TrelloList.class));
     }
     catch (Exception e) {
       LOG.warn("Error while fetching initial list info" + id, e);
@@ -337,7 +338,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     return cards;
   }
 
-  @NotNull
+  @Nullable
   private <T> T executeMethod(@NotNull HttpUriRequest method, @NotNull ResponseHandler<T> handler) throws Exception {
     final HttpClient client = getHttpClient();
     final HttpResponse response = client.execute(method);
@@ -355,10 +356,11 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @NotNull
   private <T> List<T> makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull TypeToken<List<T>> type) throws Exception {
-    return executeMethod(new HttpGet(url), new GsonMultipleObjectsDeserializer<T>(TrelloUtil.GSON, type));
+    final List<T> result = executeMethod(new HttpGet(url), new GsonMultipleObjectsDeserializer<T>(TrelloUtil.GSON, type));
+    return ObjectUtils.assertNotNull(result);
   }
 
-  @NotNull
+  @Nullable
   private <T> T makeRequestAndDeserializeJsonResponse(@NotNull URI url, @NotNull Class<T> cls) throws Exception {
     return executeMethod(new HttpGet(url), new GsonSingleObjectDeserializer<T>(TrelloUtil.GSON, cls));
   }
