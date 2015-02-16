@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
@@ -65,7 +64,7 @@ public class StudyProjectGenerator {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              EduUtils.initCourse(course, false);
+              course.initCourse(false);
               final File courseDirectory = new File(myCoursesDir, course.getName());
               StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
               course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());

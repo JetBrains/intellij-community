@@ -173,7 +173,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
   @Override
   public void loadState(CCProjectService state) {
     XmlSerializerUtil.copyBean(state, this);
-    EduUtils.initCourse(myCourse, true);
+    myCourse.initCourse(true);
   }
 
   public static CCProjectService getInstance(@NotNull Project project) {

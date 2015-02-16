@@ -36,6 +36,18 @@ public class Task {
     this.name = name;
   }
 
+  /**
+   * Initializes state of task file
+   *
+   * @param lesson lesson which task belongs to
+   */
+  public void initTask(final Lesson lesson, boolean isRestarted) {
+    setLesson(lesson);
+    for (TaskFile taskFile : getTaskFiles().values()) {
+      taskFile.initTaskFile(this, isRestarted);
+    }
+  }
+
   public String getName() {
     return name;
   }

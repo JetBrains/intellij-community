@@ -302,7 +302,7 @@ public class StudyProjectComponent implements ProjectComponent {
               if (StudyUtils.indexIsValid(taskIndex, tasks)) {
                 final Task task = tasks.get(taskIndex);
                 final TaskFile taskFile = new TaskFile();
-                EduUtils.initTaskFile(taskFile, task, false);
+                taskFile.initTaskFile(task, false);
                 taskFile.setUserCreated(true);
                 task.getTaskFiles().put(createdFile.getName(), taskFile);
               }

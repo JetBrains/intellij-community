@@ -30,6 +30,13 @@ public class Lesson {
   private Course myCourse = null;
   private int myIndex = -1;
 
+  public void initLesson(final Course course, boolean isRestarted) {
+    setCourse(course);
+    for (Task task : getTaskList()) {
+      task.initTask(this, isRestarted);
+    }
+  }
+
   public String getName() {
     return name;
   }

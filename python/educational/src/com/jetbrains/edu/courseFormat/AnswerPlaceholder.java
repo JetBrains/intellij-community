@@ -26,6 +26,13 @@ public class AnswerPlaceholder {
 
   @Transient private TaskFile myTaskFile;
 
+  public void initAnswerPlaceholder(final TaskFile file, boolean isRestarted) {
+    if (!isRestarted) {
+      setInitialState(new MyInitialState(getLine(), getLength(), getStart()));
+    }
+    setTaskFile(file);
+  }
+
   public int getIndex() {
     return myIndex;
   }

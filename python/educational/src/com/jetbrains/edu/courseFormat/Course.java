@@ -23,6 +23,15 @@ public class Course {
   @Expose @SerializedName("language")
   private String myLanguage;
 
+  /**
+   * Initializes state of course
+   */
+  public void initCourse(boolean isRestarted) {
+    for (Lesson lesson : getLessons()) {
+      lesson.initLesson(this, isRestarted);
+    }
+  }
+
   public List<Lesson> getLessons() {
     return lessons;
   }

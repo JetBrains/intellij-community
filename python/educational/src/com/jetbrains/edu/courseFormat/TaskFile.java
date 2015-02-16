@@ -34,6 +34,18 @@ public class TaskFile {
   private boolean myTrackChanges = true;
   private boolean myHighlightErrors = false;
 
+  public void initTaskFile(final Task task, boolean isRestarted) {
+    setTask(task);
+    final List<AnswerPlaceholder> answerPlaceholders = getAnswerPlaceholders();
+    for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
+      answerPlaceholder.initAnswerPlaceholder(this, isRestarted);
+    }
+    Collections.sort(answerPlaceholders, new AnswerPlaceholderComparator());
+    for (int i = 0; i < answerPlaceholders.size(); i++) {
+      answerPlaceholders.get(i).setIndex(i);
+    }
+  }
+
   @Nullable
   @Transient
   public AnswerPlaceholder getSelectedAnswerPlaceholder() {
