@@ -16,15 +16,14 @@
 package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
+import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author nik
  */
-public class JavaResourceRootType extends JpsElementTypeWithDummyProperties implements JpsModuleSourceRootType<JpsDummyElement> {
+public class JavaResourceRootType extends JpsElementTypeBase<JavaResourceRootProperties> implements
+                                                                                         JpsModuleSourceRootType<JavaResourceRootProperties> {
   public static final JavaResourceRootType RESOURCE = new JavaResourceRootType();
   public static final JavaResourceRootType TEST_RESOURCE = new JavaResourceRootType();
 
@@ -33,7 +32,7 @@ public class JavaResourceRootType extends JpsElementTypeWithDummyProperties impl
 
   @NotNull
   @Override
-  public JpsDummyElement createDefaultProperties() {
-    return JpsElementFactory.getInstance().createDummyElement();
+  public JavaResourceRootProperties createDefaultProperties() {
+    return JpsJavaExtensionService.getInstance().createResourceRootProperties("", false);
   }
 }
