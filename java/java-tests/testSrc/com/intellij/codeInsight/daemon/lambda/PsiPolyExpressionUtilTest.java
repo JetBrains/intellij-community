@@ -150,6 +150,30 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertFalse(InferenceSession.isPertinentToApplicability(psiExpression, meths[0]));
   }
 
+  public void testNotExactMethodReferenceOnRawClassType() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {" +
+                                          "    class Test<A>{ Test(){}}" +
+                                          "    {Runnable r = Test:<caret>:new;}" +  
+                                          "}");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(elementAtCaret);
+    final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    assertInstanceOf(psiExpression, PsiMethodReferenceExpression.class);
+    assertFalse(((PsiMethodReferenceExpression)psiExpression).isExact());
+  }
+
+  public void testExactMethodReferenceOnGenericClassType() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {" +
+                                          "    class Test<A>{ Test(){}}" +
+                                          "    {Runnable r = Test<String>:<caret>:new;}" +  
+                                          "}");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(elementAtCaret);
+    final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    assertInstanceOf(psiExpression, PsiMethodReferenceExpression.class);
+    assertTrue(((PsiMethodReferenceExpression)psiExpression).isExact());
+  }
+
   private boolean doTestLambdaPertinent(final String barText) {
     myFixture.configureByText("Foo.java", "import java.util.*;" +
                                           "class Foo {" +
