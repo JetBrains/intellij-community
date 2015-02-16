@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public class ThreadsViewSettings implements PersistentStateComponent<ThreadsView
   public boolean SHOW_THREAD_GROUPS = false;
   public boolean SHOW_LINE_NUMBER = true;
   public boolean SHOW_CLASS_NAME = true;
+  public boolean SHOW_PACKAGE_NAME = true;
   public boolean SHOW_SOURCE_NAME = false;
   public boolean SHOW_SYNTHETIC_FRAMES = true;
   public boolean SHOW_CURRENT_THREAD = true;

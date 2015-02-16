@@ -229,9 +229,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
           }
           else {
             label.append(name.substring(dotIndex + 1));
-            label.append(" {");
-            label.append(name.substring(0, dotIndex));
-            label.append("}");
+            if (settings.SHOW_PACKAGE_NAME) {
+              label.append(" {");
+              label.append(name.substring(0, dotIndex));
+              label.append("}");
+            }
           }
         }
       }
