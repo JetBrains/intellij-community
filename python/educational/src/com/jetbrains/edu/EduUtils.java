@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -17,8 +18,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +26,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class EduUtils {
   private EduUtils() {
@@ -131,6 +134,143 @@ public class EduUtils {
     FileDocumentManager.getInstance().saveAllDocuments();
     SaveAndSyncHandlerImpl.refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+  }
+
+  public static void createStudentFileFromAnswer(@NotNull final Project project,
+                                                 @NotNull final VirtualFile userFileDir,
+                                                 @NotNull final VirtualFile answerFileDir,
+                                                 @NotNull final Map.Entry<String, TaskFile> taskFileEntry) {
+    final String name = taskFileEntry.getKey();
+    final TaskFile taskFile = taskFileEntry.getValue();
+    VirtualFile file = userFileDir.findChild(name);
+    if (file != null) {
+      try {
+        file.delete(project);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    try {
+      userFileDir.createChildData(project, name);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    file = userFileDir.findChild(name);
+    assert file != null;
+    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
+    VirtualFile answerFile = answerFileDir.findChild(answerFileName);
+    if (answerFile == null) {
+      return;
+    }
+    final Document answerDocument = FileDocumentManager.getInstance().getDocument(answerFile);
+    if (answerDocument == null) {
+      return;
+    }
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return;
+
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
+          }
+        });
+      }
+    }, "Create Student File", "Create Student File");
+    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
+    document.addDocumentListener(listener);
+    taskFile.sortAnswerPlaceholders();
+    for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
+      final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
+      replaceAnswerPlaceholder(project, document, answerPlaceholder);
+    }
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+      }
+    }, "Create Student File", "Create Student File");
+    document.removeDocumentListener(listener);
+  }
+
+  private static void replaceAnswerPlaceholder(@NotNull final Project project,
+                                               @NotNull final Document document,
+                                               @NotNull final AnswerPlaceholder answerPlaceholder) {
+    final String taskText = answerPlaceholder.getTaskText();
+    final int offset = answerPlaceholder.getRealStartOffset(document);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(offset, offset + answerPlaceholder.getPossibleAnswerLength(), taskText);
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+      }
+    }, "Replace Answer Placeholders", "Replace Answer Placeholders");
+  }
+
+
+  /**
+   * Initializes state of course
+   */
+  public static void initCourse(@NotNull final Course course, boolean isRestarted) {
+    for (Lesson lesson : course.getLessons()) {
+      initLesson(lesson, course, isRestarted);
+    }
+  }
+
+  public static void initLesson(@NotNull final Lesson lesson, final Course course, boolean isRestarted) {
+    lesson.setCourse(course);
+    final List<Task> taskList = lesson.getTaskList();
+    for (Task task : taskList) {
+      initTask(task, lesson, isRestarted);
+    }
+  }
+
+  /**
+   * Initializes state of task file
+   *
+   * @param lesson lesson which task belongs to
+   */
+  public static void initTask(@NotNull final Task task, final Lesson lesson, boolean isRestarted) {
+    task.setLesson(lesson);
+    for (TaskFile taskFile : task.getTaskFiles().values()) {
+      initTaskFile(taskFile, task, isRestarted);
+    }
+  }
+
+  public static void initTaskFile(@NotNull final TaskFile taskFile, final Task task, boolean isRestarted) {
+    taskFile.setTask(task);
+    final List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
+    for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
+      initAnswerPlaceholder(answerPlaceholder, taskFile, isRestarted);
+    }
+    Collections.sort(answerPlaceholders, new AnswerPlaceholderComparator());
+    for (int i = 0; i < answerPlaceholders.size(); i++) {
+      answerPlaceholders.get(i).setIndex(i);
+    }
+  }
+
+  public static void initAnswerPlaceholder(@NotNull final AnswerPlaceholder placeholder, final TaskFile file, boolean isRestarted) {
+    if (!isRestarted) {
+      placeholder.setInitialState(new AnswerPlaceholder.MyInitialState(placeholder.getLine(), placeholder.getLength(),
+                                                                       placeholder.getStart()));
+    }
+    placeholder.setTaskFile(file);
   }
 
 }

@@ -18,12 +18,14 @@ import java.util.List;
  */
 
 public class TaskFile {
-  @SerializedName("task_windows")
+  @SerializedName("placeholders")
   @Expose
   private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<AnswerPlaceholder>();
   private int myIndex = -1;
 
+  @Expose
   public String name;
+  @Expose
   public String text;
   @Transient private Task myTask;
   @Transient

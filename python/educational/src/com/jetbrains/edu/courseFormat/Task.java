@@ -2,6 +2,8 @@ package com.jetbrains.edu.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -24,7 +26,7 @@ public class Task {
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
 
   private String text;
-  private String testsText;
+  private Map<String, String> testsText = new HashMap<String, String>();
 
   @Transient private Lesson myLesson;
 
@@ -58,12 +60,12 @@ public class Task {
     myIndex = index;
   }
 
-  public String getTestsText() {
+  public Map<String, String> getTestsText() {
     return testsText;
   }
 
-  public void setTestsText(@NotNull final String testsText) {
-    this.testsText = testsText;
+  public void setTestsTexts(String name, String text) {
+    testsText.put(name, text);
   }
 
   public Map<String, TaskFile> getTaskFiles() {
@@ -101,9 +103,9 @@ public class Task {
   }
 
   @Nullable
-  public VirtualFile getTaskDir(Project project) {
-    String lessonDirName = EduNames.LESSON + String.valueOf(myLesson.getIndex() + 1);
-    String taskDirName = EduNames.TASK + String.valueOf(myIndex + 1);
+  public VirtualFile getTaskDir(@NotNull final Project project) {
+    String lessonDirName = EduNames.LESSON + String.valueOf(myLesson.getIndex());
+    String taskDirName = EduNames.TASK + String.valueOf(myIndex);
     VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);
@@ -112,6 +114,44 @@ public class Task {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public String getTaskText(@NotNull final Project project) {
+    final VirtualFile taskDir = getTaskDir(project);
+    if (taskDir != null) {
+      final VirtualFile file = taskDir.findChild(EduNames.TASK_HTML);
+      if (file == null) return null;
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        return document.getImmutableCharSequence().toString();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public String getTestsText(@NotNull final Project project) {
+    final VirtualFile taskDir = getTaskDir(project);
+    if (taskDir != null) {
+      final VirtualFile file = taskDir.findChild("tests.py");
+      if (file == null) return null;
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        return document.getImmutableCharSequence().toString();
+      }
+    }
+
+    return null;
+  }
+
+  public Document getDocument(Project project, String name) {
+    final VirtualFile taskDirectory = getTaskDir(project);
+    if (taskDirectory == null) return null;
+    final VirtualFile file = taskDirectory.findChild(name);
+    if (file == null) return null;
+    return FileDocumentManager.getInstance().getDocument(file);
   }
 
   @Override

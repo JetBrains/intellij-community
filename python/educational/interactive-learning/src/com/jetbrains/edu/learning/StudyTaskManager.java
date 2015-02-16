@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
-import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +172,7 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   public void loadState(StudyTaskManager state) {
     XmlSerializerUtil.copyBean(state, this);
     if (myCourse != null) {
-      StudyGenerator.initCourse(myCourse, true);
+      EduUtils.initCourse(myCourse, true);
     }
   }
 

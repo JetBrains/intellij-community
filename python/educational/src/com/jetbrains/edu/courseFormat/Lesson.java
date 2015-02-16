@@ -12,7 +12,7 @@ import java.util.List;
 
 public class Lesson {
   @Transient
-  String id;
+  public int id;
   @Transient
   public List<Integer> steps;
   @Transient
@@ -20,6 +20,7 @@ public class Lesson {
   @Transient
   Boolean is_public;
   @Expose
+  @SerializedName("title")
   private String name;
   @Expose
   @SerializedName("task_list")

@@ -20,11 +20,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyLanguageManager;
 import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -65,7 +65,7 @@ public class StudyProjectGenerator {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              StudyGenerator.initCourse(course, false);
+              EduUtils.initCourse(course, false);
               final File courseDirectory = new File(myCoursesDir, course.getName());
               StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
               course.setCourseDirectory(new File(myCoursesDir, mySelectedCourseInfo.getName()).getAbsolutePath());
@@ -138,18 +138,16 @@ public class StudyProjectGenerator {
             LOG.error("ERROR copying file " + name);
           }
         }
-        StudyLanguageManager languageManager = StudyUtils.getLanguageManager(course);
-        if (languageManager == null) {
-          LOG.info("Language manager is null for " + course.getLanguageById().getDisplayName());
-          return;
-        }
-        final File testsFile = new File(taskDirectory, languageManager.getTestFileName());
-        FileUtil.createIfDoesntExist(testsFile);
-        try {
-          FileUtil.writeToFile(testsFile, task.getTestsText());
-        }
-        catch (IOException e) {
-          LOG.error("ERROR copying tests file");
+        final Map<String, String> testsText = task.getTestsText();
+        for (Map.Entry<String, String> entry : testsText.entrySet()) {
+          final File testsFile = new File(taskDirectory, entry.getKey());
+          FileUtil.createIfDoesntExist(testsFile);
+          try {
+              FileUtil.writeToFile(testsFile, entry.getValue());
+          }
+          catch (IOException e) {
+            LOG.error("ERROR copying tests file");
+          }
         }
         final File taskText = new File(taskDirectory, "task.html");
         FileUtil.createIfDoesntExist(taskText);

@@ -35,6 +35,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.TaskFile;
@@ -102,7 +103,7 @@ public class CCShowPreview extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-        CCCreateCourseArchive.createUserFile(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(),
+        EduUtils.createStudentFileFromAnswer(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(),
                                              new AbstractMap.SimpleEntry<String, TaskFile>(taskFileName, taskFileCopy));
       }
     });

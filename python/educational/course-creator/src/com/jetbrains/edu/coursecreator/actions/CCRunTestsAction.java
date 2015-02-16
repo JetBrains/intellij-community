@@ -242,7 +242,7 @@ public abstract class CCRunTestsAction extends AnAction {
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             TaskFile taskFileCopy = new TaskFile();
             TaskFile.copy(entry.getValue(), taskFileCopy);
-            CCCreateCourseArchive.createUserFile(project, taskResourceDir, taskDir,
+            EduUtils.createStudentFileFromAnswer(project, taskResourceDir, taskDir,
                                                  new AbstractMap.SimpleEntry<String, TaskFile>(entry.getKey(), taskFileCopy));
           }
         }
