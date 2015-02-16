@@ -29,6 +29,8 @@ import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,6 +219,6 @@ public final class NettyUtil {
     if (pipeline.get(ChunkedWriteHandler.class) == null) {
       pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
     }
-    //pipeline.addLast("corsHandler", new CorsHandler(CorsConfig.withAnyOrigin().allowCredentials().allowNullOrigin().allowedRequestMethods().build()));
+    pipeline.addLast("corsHandler", new CorsHandler(CorsConfig.withAnyOrigin().allowCredentials().allowNullOrigin().allowedRequestMethods().build()));
   }
 }
