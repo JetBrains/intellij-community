@@ -16,44 +16,33 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.ControlBinder;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tasks.impl.TaskUiUtil.ComboBoxUpdater;
+import com.intellij.tasks.impl.TaskStateCombo;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -61,8 +50,6 @@ import java.util.List;
 public class OpenTaskDialog extends DialogWrapper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
   private static final String START_FROM_BRANCH = "start.from.branch";
-
-  private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState("", "-- do not update --");
 
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
@@ -75,9 +62,8 @@ public class OpenTaskDialog extends DialogWrapper {
   private JBCheckBox myCreateChangelist;
   private JBLabel myFromLabel;
   private ComboBox myBranchFrom;
-  private TemplateKindCombo myStateCombo;
-  private JLabel myStateComboLabel;
-  private JBLabel myStateComboHint;
+  private JLabel myTaskStateLabel;
+  private TaskStateCombo myTaskStateCombo;
 
   private final Project myProject;
   private final Task myTask;
@@ -97,64 +83,10 @@ public class OpenTaskDialog extends DialogWrapper {
     binder.bindAnnotations(this);
     binder.reset();
 
-    myStateComboLabel.setLabelFor(myStateCombo);
-    myStateComboHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
-
-    final JComboBox comboBox = myStateCombo.getComboBox();
-    comboBox.setPreferredSize(new Dimension(300, UIUtil.fixComboBoxHeight(comboBox.getPreferredSize().height)));
-    final ListCellRenderer defaultRenderer = comboBox.getRenderer();
-    //noinspection GtkPreferredJComboBoxRenderer
-    comboBox.setRenderer(new ListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) {
-          return new ListCellRendererWrapper<CustomStateTrinityAdapter>() {
-            @Override
-            public void customize(JList list, CustomStateTrinityAdapter value, int index, boolean selected, boolean hasFocus) {
-              setText("-- no states available --");
-            }
-          }.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-        }
-        return defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-    });
-
-
-    // Capture correct modality state
-    final TaskRepository repository = myTask.getRepository();
-    if (myTask.isIssue() && repository != null && repository.isSupported(TaskRepository.STATE_UPDATING)) {
-      // Find out proper way to determine modality state here
-      new ComboBoxUpdater<CustomStateTrinityAdapter>(myProject, "Fetching available task states...", comboBox) {
-        @NotNull
-        @Override
-        protected List<CustomStateTrinityAdapter> fetch(@NotNull ProgressIndicator indicator) throws Exception {
-          return ContainerUtil
-            .map(repository.getAvailableTaskStates(myTask), new Function<CustomTaskState, CustomStateTrinityAdapter>() {
-              @Override
-              public CustomStateTrinityAdapter fun(CustomTaskState state) {
-                return new CustomStateTrinityAdapter(state);
-              }
-            });
-        }
-
-        @Nullable
-        @Override
-        public CustomStateTrinityAdapter getSelectedItem() {
-          final CustomTaskState state = repository.getPreferredOpenTaskState();
-          return state != null ? new CustomStateTrinityAdapter(state) : null;
-        }
-
-        @Nullable
-        @Override
-        public CustomStateTrinityAdapter getExtraItem() {
-          return new CustomStateTrinityAdapter(DO_NOT_UPDATE_STATE);
-        }
-      }.queue();
-    }
-    else {
-      myStateComboLabel.setVisible(false);
-      myStateComboHint.setVisible(false);
-      myStateCombo.setVisible(false);
+    myTaskStateLabel.setLabelFor(myTaskStateCombo);
+    if (!TaskStateCombo.taskStateSupported(task)) {
+      myTaskStateLabel.setVisible(false);
+      myTaskStateCombo.setVisible(false);
     }
 
     TaskManagerImpl.Config state = taskManager.getState();
@@ -232,14 +164,11 @@ public class OpenTaskDialog extends DialogWrapper {
       myChangelistName.setText(taskManager.getChangelistName(task));
       updateFields(true);
     }
-    final JComponent contentPanel = getContentPanel();
-    contentPanel.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        super.keyPressed(e);
-      }
-    });
-    myStateCombo.registerUpDownHint(getPreferredFocusedComponent());
+    final JComponent preferredFocusedComponent = getPreferredFocusedComponent();
+    if (preferredFocusedComponent != null) {
+      myTaskStateCombo.registerUpDownAction(preferredFocusedComponent);
+    }
+    myTaskStateCombo.scheduleUpdate();
     init();
   }
 
@@ -267,9 +196,9 @@ public class OpenTaskDialog extends DialogWrapper {
     taskManager.getState().createChangelist = myCreateChangelist.isSelected();
     taskManager.getState().createBranch = myCreateBranch.isSelected();
 
+    final CustomTaskState taskState = myTaskStateCombo.getSelectedState();
     final TaskRepository repository = myTask.getRepository();
-    final CustomTaskState taskState = ((CustomStateTrinityAdapter)myStateCombo.getComboBox().getSelectedItem()).myState;
-    if (repository != null && taskState != null && taskState != DO_NOT_UPDATE_STATE) {
+    if (repository != null && taskState != null) {
       try {
         repository.setTaskState(myTask, taskState);
         repository.setPreferredOpenTaskState(taskState);
@@ -345,7 +274,7 @@ public class OpenTaskDialog extends DialogWrapper {
       return myChangelistName;
     }
     else {
-      return myStateCombo.getComboBox();
+      return myTaskStateCombo.getComboBox();
     }
   }
 
@@ -353,12 +282,7 @@ public class OpenTaskDialog extends DialogWrapper {
     return myPanel;
   }
 
-  private static class CustomStateTrinityAdapter extends Trinity<String, Icon, String> {
-    final CustomTaskState myState;
-
-    public CustomStateTrinityAdapter(@NotNull CustomTaskState state) {
-      super(state.getPresentableName(), null, state.getId());
-      myState = state;
-    }
+  private void createUIComponents() {
+    myTaskStateCombo = new TaskStateCombo(myProject, myTask);
   }
 }
