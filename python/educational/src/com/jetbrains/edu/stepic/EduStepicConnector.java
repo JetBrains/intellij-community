@@ -294,7 +294,8 @@ public class EduStepicConnector {
     Lesson lesson;
 
     public LessonWrapper(Lesson lesson) {
-      this.lesson = lesson;
+      this.lesson = new Lesson();
+      this.lesson.setName(lesson.getName());
     }
   }
 
