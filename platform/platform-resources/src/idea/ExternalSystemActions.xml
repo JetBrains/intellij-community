@@ -48,6 +48,14 @@
             description="Assign shortcut to the selected Run Configuration">
     </action>
 
+    <action id="ExternalSystem.BeforeSync"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeSyncTaskAction" text="Execute Before Sync"
+            description="Execute selected task before the project import">
+    </action>
+    <action id="ExternalSystem.AfterSync"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterSyncTaskAction" text="Execute After Sync"
+            description="Execute selected task after the project import">
+    </action>
     <action id="ExternalSystem.BeforeCompile"
             class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeCompileTasksAction" text="Execute Before Make"
             description="Execute selected task before Make">
@@ -101,6 +109,16 @@
     <group id="ExternalSystemView.ActionsToolbar.RightPanel">
     </group>
 
+    <group id="ExternalSystemView.TaskActivationGroup">
+      <reference id="ExternalSystem.BeforeSync"/>
+      <reference id="ExternalSystem.AfterSync"/>
+      <reference id="ExternalSystem.BeforeCompile"/>
+      <reference id="ExternalSystem.AfterCompile"/>
+      <reference id="ExternalSystem.BeforeRebuild"/>
+      <reference id="ExternalSystem.AfterRebuild"/>
+      <!--<reference id="ExternalSystem.BeforeRun"/>-->
+    </group>
+
     <group id="ExternalSystemView.ActionsToolbar">
       <reference ref="ExternalSystemView.ActionsToolbar.LeftPanel"/>
       <separator/>
@@ -116,11 +134,7 @@
       <separator/>
       <reference id="EditSource"/>
       <separator/>
-      <reference id="ExternalSystem.BeforeCompile"/>
-      <reference id="ExternalSystem.AfterCompile"/>
-      <reference id="ExternalSystem.BeforeRebuild"/>
-      <reference id="ExternalSystem.AfterRebuild"/>
-      <!--<reference id="ExternalSystem.BeforeRun"/>-->
+      <reference ref="ExternalSystemView.TaskActivationGroup"/>
       <separator/>
       <reference id="ExternalSystem.AssignShortcut"/>
     </group>
@@ -134,11 +148,7 @@
               text="Remove Run Configuration" icon="AllIcons.General.Remove"
               class="com.intellij.openapi.externalSystem.action.RemoveExternalSystemRunConfigurationAction" />
       <separator/>
-      <reference id="ExternalSystem.BeforeCompile"/>
-      <reference id="ExternalSystem.AfterCompile"/>
-      <reference id="ExternalSystem.BeforeRebuild"/>
-      <reference id="ExternalSystem.AfterRebuild"/>
-      <!--<reference id="ExternalSystem.BeforeRun"/>-->
+      <reference ref="ExternalSystemView.TaskActivationGroup"/>
       <separator/>
       <reference id="ExternalSystem.AssignRunConfigurationShortcut"/>
     </group>

@@ -25,19 +25,21 @@ public abstract class MessageDecoder extends Decoder {
 
   @Nullable
   protected final CharSequence readChars(@NotNull ByteBuf input) throws CharacterCodingException {
-    if (!input.isReadable()) {
+    int readableBytes = input.readableBytes();
+    if (readableBytes == 0) {
+      input.release();
       return null;
     }
 
     int required = contentLength - consumedContentByteCount;
-    if (input.readableBytes() < required) {
+    if (readableBytes < required) {
       if (chunkedContent == null) {
         chunkedContent = CharBuffer.allocate((int)((float)contentLength * charsetDecoder.maxCharsPerByte()));
       }
 
-      int count = input.readableBytes();
-      ChannelBufferToString.readIntoCharBuffer(charsetDecoder, input, count, chunkedContent);
-      consumedContentByteCount += count;
+      ChannelBufferToString.readIntoCharBuffer(charsetDecoder, input, readableBytes, chunkedContent);
+      consumedContentByteCount += readableBytes;
+      input.release();
       return null;
     }
     else {

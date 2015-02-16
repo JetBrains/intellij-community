@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.table;
 
-import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -27,7 +26,8 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -114,10 +114,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
     });
-
-
-    //noinspection UnusedDeclaration
-    boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
 
     myUiUpdating = false;
   }
