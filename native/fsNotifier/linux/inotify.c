@@ -29,6 +29,8 @@
 
 #ifdef __amd64__
 __asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
+#elif defined(__powerpc64__)
+__asm__(".symver memcpy,memcpy@GLIBC_2.3");
 #else
 __asm__(".symver memcpy,memcpy@GLIBC_2.0");
 #endif
