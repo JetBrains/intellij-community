@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -133,5 +134,17 @@ public class ExternalSystemJdkUtil {
     }
 
     return null;
+  }
+
+  public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
+    try {
+      final Sdk sdk = getJdk(project, jdkName);
+      if (sdk != null && sdk.getHomePath() != null && JdkUtil.checkForJdk(new File(sdk.getHomePath()))) {
+        return true;
+      }
+    }
+    catch (ExternalSystemJdkException ignore) {
+    }
+    return false;
   }
 }
