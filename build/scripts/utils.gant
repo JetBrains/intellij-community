@@ -243,7 +243,7 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
 })
 
-binding.setVariable("commonJvmArgs", {
+binding.setVariable("commonJvmArgsForTests", {
   def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
   if (debugPort != null) jdwp += ",address=$debugPort"
   return [
