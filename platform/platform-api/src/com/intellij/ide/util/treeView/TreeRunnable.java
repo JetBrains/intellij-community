@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util;
+package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NamedRunnable;
 
 /**
- * @author Kirill.Kalishev
  * @author Sergey.Malenkov
  */
-public abstract class NamedRunnable implements Runnable {
-  private static final Logger LOG = Logger.getInstance(NamedRunnable.class);
-  private String myName;
-
-  protected NamedRunnable(String name) {
-    myName = name;
+abstract class TreeRunnable extends NamedRunnable {
+  protected TreeRunnable(String name) {
+    super(name);
   }
 
-  protected void debug(Object message) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(myName + ": " + message);
-    }
-  }
+  protected abstract void perform();
 
   @Override
-  public String toString() {
-    return myName;
+  public final void run() {
+    debug("started");
+    perform();
+    debug("finished");
   }
 }
