@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 
 public class EduUtils {
   private EduUtils() {
@@ -69,9 +70,14 @@ public class EduUtils {
    */
   public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
     if (!fullName.contains(logicalName)) {
-      throw new IllegalArgumentException();
+      return -1;
     }
     return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
+  }
+
+  public static boolean indexIsValid(int index, Collection collection) {
+    int size = collection.size();
+    return index >= 0 && index < size;
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

@@ -80,7 +80,7 @@ public abstract class CCRunTestsAction extends AnAction {
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
     if (course == null) return;
-    final Lesson lesson = service.getLesson(lessonDir.getName());
+    final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) return;
     final Task task = service.getTask(taskDir.getVirtualFile().getPath());
     if (task == null) {
@@ -217,9 +217,9 @@ public abstract class CCRunTestsAction extends AnAction {
   //some tests could compare task files after user modifications with initial task files
   private static void createResourceFiles(@NotNull final VirtualFile file, @NotNull final Project project) {
     VirtualFile taskDir = file.getParent();
-    int index = CCProjectService.getIndex(taskDir.getName(), EduNames.TASK);
+    int index = EduUtils.getIndex(taskDir.getName(), EduNames.TASK);
     VirtualFile lessonDir = taskDir.getParent();
-    int lessonIndex = CCProjectService.getIndex(lessonDir.getName(), EduNames.LESSON);
+    int lessonIndex = EduUtils.getIndex(lessonDir.getName(), EduNames.LESSON);
     Course course = CCProjectService.getInstance(project).getCourse();
     if (course == null) {
       return;
@@ -230,9 +230,9 @@ public abstract class CCRunTestsAction extends AnAction {
       VirtualFile courseResourceDir = findOrCreateDir(project, ideaDir, EduNames.COURSE);
       VirtualFile lessonResourceDir = findOrCreateDir(project, courseResourceDir, lessonDir.getName());
       VirtualFile taskResourceDir = findOrCreateDir(project, lessonResourceDir, taskDir.getName());
-      if (CCProjectService.indexIsValid(lessonIndex, course.getLessons())) {
+      if (EduUtils.indexIsValid(lessonIndex, course.getLessons())) {
         Lesson lesson = course.getLessons().get(lessonIndex);
-        if (CCProjectService.indexIsValid(index, lesson.getTaskList())) {
+        if (EduUtils.indexIsValid(index, lesson.getTaskList())) {
           Task task = lesson.getTaskList().get(index);
           for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             TaskFile taskFileCopy = new TaskFile();

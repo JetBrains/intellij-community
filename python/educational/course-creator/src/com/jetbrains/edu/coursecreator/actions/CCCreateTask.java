@@ -57,7 +57,7 @@ public class CCCreateTask extends DumbAwareAction {
   public static void createTask(final IdeView view, final Project project, final PsiDirectory lessonDir, boolean showDialog) {
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    final Lesson lesson = service.getLesson(lessonDir.getName());
+    final Lesson lesson = course.getLesson(lessonDir.getName());
     final int size = lesson.getTaskList().size();
     final String taskName;
     if (showDialog) {
@@ -160,7 +160,7 @@ public class CCCreateTask extends DumbAwareAction {
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = service.getCourse();
-    if (course != null && directory != null && service.getLesson(directory.getName()) == null) {
+    if (course != null && directory != null && course.getLesson(directory.getName()) == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;

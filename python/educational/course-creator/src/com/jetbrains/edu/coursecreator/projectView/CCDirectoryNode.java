@@ -40,7 +40,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
       data.addText(" (" + course.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
-    final Lesson lesson = service.getLesson(valueName);
+    final Lesson lesson = course.getLesson(valueName);
     if (lesson != null) {
       data.clearText();
       data.addText(valueName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -50,7 +50,7 @@ public class CCDirectoryNode extends PsiDirectoryNode {
     else {
       final PsiDirectory parentDir = myValue.getParentDirectory();
       if (parentDir != null) {
-        final Lesson parentLesson = service.getLesson(parentDir.getName());
+        final Lesson parentLesson = course.getLesson(parentDir.getName());
         if (parentLesson != null) {
           final Task task = service.getTask(myValue.getVirtualFile().getPath());
           if (task != null) {

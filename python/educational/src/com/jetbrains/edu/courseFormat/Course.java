@@ -1,19 +1,26 @@
 package com.jetbrains.edu.courseFormat;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.intellij.lang.Language;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Course {
+  @Expose
   private List<Lesson> lessons = new ArrayList<Lesson>();
 
-  private String description;
-  private String name;
+  @Expose private String description;
+  @Expose private String name;
   private String myCourseDirectory = "";
-  private String author="";
+  @Expose private String author="";
   private boolean myUpToDate;
+
+  @Expose @SerializedName("language")
   private String myLanguage;
 
   public List<Lesson> getLessons() {
@@ -29,6 +36,15 @@ public class Course {
 
   public void addLesson(@NotNull final Lesson lesson) {
     lessons.add(lesson);
+  }
+
+  public Lesson getLesson(@NotNull final String name) {
+    int lessonIndex = EduUtils.getIndex(name, EduNames.LESSON);
+    List<Lesson> lessons = getLessons();
+    if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
+      return null;
+    }
+    return lessons.get(lessonIndex);
   }
 
   public String getAuthor() {

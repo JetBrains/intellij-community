@@ -54,7 +54,7 @@ public class CCCreateLesson extends DumbAwareAction {
       return;
     }
     //"Create Lesson" invoked from any of lesson directories creates new lesson as next lesson
-    Lesson lesson = service.getLesson(directory.getName());
+    Lesson lesson = course.getLesson(directory.getName());
     if (lesson != null) {
       int index = lesson.getIndex();
       List<Lesson> lessons = course.getLessons();
@@ -91,7 +91,7 @@ public class CCCreateLesson extends DumbAwareAction {
       return;
     }
     final CCProjectService service = CCProjectService.getInstance(project);
-    Lesson l = service.getLesson(lessonDir.getName());
+    Lesson l = service.getCourse().getLesson(lessonDir.getName());
     if (l == null) {
       return;
     }
@@ -108,7 +108,6 @@ public class CCCreateLesson extends DumbAwareAction {
         }
       }
     });
-    service.getLessonsMap().put(lessonDir.getName(), l);
   }
 
   @Nullable
@@ -124,7 +123,7 @@ public class CCCreateLesson extends DumbAwareAction {
       final Lesson lesson = new Lesson();
       lesson.setName(name != null ? name : lessonFolderName);
       lesson.setIndex(index);
-      service.addLesson(lesson, lessonDirectory);
+      service.getCourse().addLesson(lesson);
     }
     return lessonDirectory;
   }

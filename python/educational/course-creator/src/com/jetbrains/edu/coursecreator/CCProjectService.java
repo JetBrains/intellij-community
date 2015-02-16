@@ -15,7 +15,6 @@
  */
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -28,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -40,8 +38,6 @@ import com.jetbrains.edu.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,30 +51,10 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
   private static final Logger LOG = Logger.getInstance(CCProjectService.class.getName());
   private Course myCourse;
 
-  //directory name to Lesson
-  private Map<String, Lesson> myLessonsMap = new HashMap<String, Lesson>();
-
   //directory path to Task
   private Map<String, Task> myTasksMap = new HashMap<String, Task>();
 
   private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
-
-  public Map<String, Lesson> getLessonsMap() {
-    return myLessonsMap;
-  }
-
-  public void setLessonsMap(Map<String, Lesson> lessonsMap) {
-    myLessonsMap = lessonsMap;
-  }
-
-  public Lesson getLesson(@NotNull final String name) {
-    return myLessonsMap.get(name);
-  }
-
-  public void addLesson(@NotNull final Lesson lesson, @NotNull final PsiDirectory directory) {
-    myLessonsMap.put(directory.getName(), lesson);
-    getCourse().addLesson(lesson);
-  }
 
   public Map<String, Task> getTasksMap() {
     return myTasksMap;
@@ -94,15 +70,6 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
 
   public Task getTask(@NotNull final String name) {
     return myTasksMap.get(name);
-  }
-
-
-  public static void deleteProjectFile(File file, @NotNull final Project project) {
-    if (!file.delete()) {
-      LOG.info("Failed to delete file " + file.getPath());
-    }
-    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-    ProjectView.getInstance(project).refresh();
   }
 
   @Nullable
@@ -123,7 +90,7 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     if (!lessonDirName.contains(EduNames.LESSON)) {
       return null;
     }
-    Lesson lesson = myLessonsMap.get(lessonDirName);
+    Lesson lesson = myCourse.getLesson(lessonDirName);
     if (lesson == null) {
       return null;
     }
@@ -158,11 +125,6 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
     myDocumentListeners.remove(document);
   }
 
-  public static boolean indexIsValid(int index, Collection collection) {
-    int size = collection.size();
-    return index >= 0 && index < size;
-  }
-
   public boolean isTaskFile(VirtualFile file) {
     if (myCourse == null || file == null) {
       return false;
@@ -174,15 +136,15 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
         VirtualFile lessonDir = taskDir.getParent();
         if (lessonDir != null) {
           String lessonDirName = lessonDir.getName();
-          int lessonIndex = getIndex(lessonDirName, EduNames.LESSON);
+          int lessonIndex = EduUtils.getIndex(lessonDirName, EduNames.LESSON);
           List<Lesson> lessons = myCourse.getLessons();
-          if (!indexIsValid(lessonIndex, lessons)) {
+          if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
             return false;
           }
           Lesson lesson = lessons.get(lessonIndex);
-          int taskIndex = getIndex(taskDirName, EduNames.TASK);
+          int taskIndex = EduUtils.getIndex(taskDirName, EduNames.TASK);
           List<Task> tasks = lesson.getTaskList();
-          if (!indexIsValid(taskIndex, tasks)) {
+          if (!EduUtils.indexIsValid(taskIndex, tasks)) {
             return false;
           }
           Task task = tasks.get(taskIndex);
@@ -191,13 +153,6 @@ public class CCProjectService implements PersistentStateComponent<CCProjectServi
       }
     }
     return false;
-  }
-
-  public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.contains(logicalName)) {
-      throw new IllegalArgumentException();
-    }
-    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
   @Nullable

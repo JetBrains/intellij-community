@@ -1,5 +1,6 @@
 package com.jetbrains.edu.courseFormat;
 
+import com.google.gson.annotations.Expose;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -14,6 +15,7 @@ import java.util.Map;
  * Implementation of task which contains task files, tests, input file for tests
  */
 public class Task {
+  @Expose
   private String name;
   private int myIndex;
   public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();

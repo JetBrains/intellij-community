@@ -15,10 +15,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +125,8 @@ public class CCAddAnswerPlaceholder extends DumbAwareAction {
     final PsiDirectory lessonDir = taskDir.getParent();
     if (lessonDir == null) return;
 
-    final Lesson lesson = service.getLesson(lessonDir.getName());
+    final Course course = service.getCourse();
+    final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

@@ -41,7 +41,7 @@ public class CCRenameTask extends CCRename {
       return false;
     }
     final CCProjectService service = CCProjectService.getInstance(project);
-    Lesson lesson = service.getLesson(lessonDir.getName());
+    Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) {
       return false;
     }

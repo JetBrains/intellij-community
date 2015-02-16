@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
@@ -74,7 +75,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
     final VirtualFile baseDir = project.getBaseDir();
-    final Map<String, Lesson> lessons = service.getLessonsMap();
 
     for (Map.Entry<String, Task> task : service.getTasksMap().entrySet()) {
       final VirtualFile taskDir = LocalFileSystem.getInstance().findFileByPath(task.getKey());
@@ -91,7 +91,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       }
     }
     generateJson(project);
-    packCourse(baseDir, lessons, course);
+    packCourse(baseDir, course);
     synchronize(project);
   }
 
@@ -187,13 +187,13 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     ProjectView.getInstance(project).refresh();
   }
 
-  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Map<String, Lesson> lessons, @NotNull final Course course) {
+  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Course course) {
     try {
       File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
       final CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-      for (Map.Entry<String, Lesson> entry : lessons.entrySet()) {
-        final VirtualFile lessonDir = baseDir.findChild(entry.getKey());
+      for (Lesson lesson : course.getLessons()) {
+        final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
         if (lessonDir == null) continue;
         ZipUtil.addFileOrDirRecursively(zos, null, new File(lessonDir.getPath()), lessonDir.getName(), new FileFilter() {
           @Override

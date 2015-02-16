@@ -21,7 +21,6 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.coursecreator.CCProjectService;
 
 public class CCRenameLesson extends CCRename {
 
@@ -36,7 +35,7 @@ public class CCRenameLesson extends CCRename {
 
   @Override
   public boolean processRename(Project project, PsiDirectory directory, Course course) {
-    Lesson lesson = CCProjectService.getInstance(project).getLesson(directory.getName());
+    Lesson lesson = course.getLesson(directory.getName());
     if (lesson == null) {
       return false;
     }

@@ -1,5 +1,6 @@
 package com.jetbrains.edu.courseFormat;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +18,10 @@ public class Lesson {
   @Transient
   Boolean is_public;
   @SerializedName("title")
+  @Expose
   private String name;
-
+  @Expose
+  @SerializedName("task_list")
   public List<Task> taskList = new ArrayList<Task>();
 
   @Transient

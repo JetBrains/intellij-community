@@ -77,7 +77,7 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
         return;
       }
-      Lesson lesson = service.getLesson(lessonDir.getName());
+      Lesson lesson = course.getLesson(lessonDir.getName());
       if (lesson == null) {
         return;
       }

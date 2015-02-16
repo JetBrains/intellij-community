@@ -131,11 +131,9 @@ public class CCProjectComponent implements ProjectComponent {
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
       }
-      final CCProjectService projectService = CCProjectService.getInstance(myProject);
-      Lesson lesson = projectService.getLesson(file.getName());
+      Lesson lesson = course.getLesson(file.getName());
       if (lesson != null) {
         course.getLessons().remove(lesson);
-        projectService.getLessonsMap().remove(file.getName());
       }
     }
 
@@ -149,7 +147,8 @@ public class CCProjectComponent implements ProjectComponent {
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
       }
-      Lesson lesson = projectService.getLesson(lessonDir.getName());
+      final Course course = projectService.getCourse();
+      Lesson lesson = course.getLesson(lessonDir.getName());
       if (lesson == null) {
         return;
       }
@@ -175,7 +174,8 @@ public class CCProjectComponent implements ProjectComponent {
       if (!courseDir.getName().equals(myProject.getName())) {
         return;
       }
-      Lesson lesson = projectService.getLesson(lessonDir.getName());
+      final Course course = projectService.getCourse();
+      Lesson lesson = course.getLesson(lessonDir.getName());
       if (lesson == null) {
         return;
       }
