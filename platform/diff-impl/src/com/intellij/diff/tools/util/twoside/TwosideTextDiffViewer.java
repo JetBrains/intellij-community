@@ -363,16 +363,22 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
     if (contents.size() != 2) return false;
 
-    if (!canShowContent(contents.get(0))) return false;
-    if (!canShowContent(contents.get(1))) return false;
-
-    if (contents.get(0) instanceof EmptyContent && contents.get(1) instanceof EmptyContent) return false;
-
-    return true;
+    boolean canShow = true;
+    boolean wantShow = false;
+    for (DiffContent content : contents) {
+      canShow &= canShowContent(content);
+      wantShow |= wantShowContent(content);
+    }
+    return canShow && wantShow;
   }
 
   public static boolean canShowContent(@NotNull DiffContent content) {
     if (content instanceof EmptyContent) return true;
+    if (content instanceof DocumentContent) return true;
+    return false;
+  }
+
+  public static boolean wantShowContent(@NotNull DiffContent content) {
     if (content instanceof DocumentContent) return true;
     return false;
   }
