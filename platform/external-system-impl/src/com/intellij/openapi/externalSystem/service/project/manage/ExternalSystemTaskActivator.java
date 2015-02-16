@@ -30,12 +30,15 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager.ExternalProjectsStateProvider;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +79,7 @@ public class ExternalSystemTaskActivator {
 
       @Override
       public boolean execute(CompileContext context) {
-        return doExecute(myBefore, context);
+        return doExecuteCompileTasks(myBefore, context);
       }
     }
 
@@ -101,8 +104,35 @@ public class ExternalSystemTaskActivator {
     return StringUtil.join(result, ", ");
   }
 
-  private boolean doExecute(boolean before, CompileContext context) {
+  private boolean doExecuteCompileTasks(boolean myBefore, @NotNull CompileContext context) {
+    final List<String> modules = ContainerUtil.map(context.getCompileScope().getAffectedModules(), new Function<Module, String>() {
+      @Override
+      public String fun(Module module) {
+        return ExternalSystemApiUtil.getExternalProjectPath(module);
+      }
+    });
 
+    final Collection<Phase> phases = ContainerUtil.newArrayList();
+    if (myBefore) {
+      if(context.isRebuild()) {
+        phases.add(Phase.BEFORE_REBUILD);
+      }
+      phases.add(Phase.BEFORE_COMPILE);
+    }
+    else {
+      phases.add(Phase.AFTER_COMPILE);
+      if(context.isRebuild()) {
+        phases.add(Phase.AFTER_REBUILD);
+      }
+    }
+    return runTasks(modules, ArrayUtil.toObjectArray(phases, Phase.class));
+  }
+
+  public boolean runTasks(@NotNull String modulePath, @NotNull Phase... phases) {
+    return runTasks(Collections.singleton(modulePath), phases);
+  }
+
+  public boolean runTasks(@NotNull Collection<String> modules, @NotNull Phase... phases) {
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManager.getInstance(myProject).getStateProvider();
 
     final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue =
@@ -128,10 +158,14 @@ public class ExternalSystemTaskActivator {
       };
 
     for (final ExternalProjectsStateProvider.TasksActivation activation : stateProvider.getAllTasksActivation()) {
-      Set<String> tasks = ContainerUtil.newTroveSet(activation.state.getTasks(before ? Phase.BEFORE_COMPILE : Phase.AFTER_COMPILE));
-      if (context.isRebuild()) {
-        tasks = ContainerUtil.union(tasks, (before ? activation.state.beforeRebuildTask : activation.state.afterRebuildTask));
+      final boolean hashPath = modules.contains(activation.projectPath);
+
+      final Set<String> tasks = ContainerUtil.newLinkedHashSet();
+      for (Phase phase : phases) {
+        if(hashPath || phase.isSyncPhase())
+        ContainerUtil.addAll(tasks, activation.state.getTasks(phase));
       }
+
       if (tasks.isEmpty()) continue;
 
       for (Iterator<String> iterator = tasks.iterator(); iterator.hasNext(); ) {
@@ -240,6 +274,7 @@ public class ExternalSystemTaskActivator {
   }
 
   public enum Phase {
+    BEFORE_SYNC("external.system.task.before.sync"),
     AFTER_SYNC("external.system.task.after.sync"),
     BEFORE_COMPILE("external.system.task.before.compile"),
     AFTER_COMPILE("external.system.task.after.compile"),
@@ -250,6 +285,10 @@ public class ExternalSystemTaskActivator {
 
     Phase(String messageKey) {
       myMessageKey = messageKey;
+    }
+
+    public boolean isSyncPhase () {
+      return this == BEFORE_SYNC || this == AFTER_SYNC;
     }
   }
 
