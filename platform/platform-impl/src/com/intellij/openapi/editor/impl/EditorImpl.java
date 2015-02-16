@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.Patches;
 import com.intellij.application.options.OptionsConstants;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -247,7 +246,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private Color myForcedBackground = null;
   @Nullable private Dimension myPreferredSize;
   private int myVirtualPageHeight;
-  private Alarm myAppleRepaintAlarm;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private Runnable myMouseSelectionStateResetRunnable;
@@ -530,24 +528,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
     myEditorComponent.setSize(preferredSize);
-
-    if (Patches.APPLE_BUG_ID_3716835) {
-      myScrollingModel.addVisibleAreaListener(new VisibleAreaListener() {
-        @Override
-        public void visibleAreaChanged(VisibleAreaEvent e) {
-          if (myAppleRepaintAlarm == null) {
-            myAppleRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-          }
-          myAppleRepaintAlarm.cancelAllRequests();
-          myAppleRepaintAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              repaint(0, myDocument.getTextLength());
-            }
-          }, 50, ModalityState.stateForComponent(myEditorComponent));
-        }
-      });
-    }
 
     updateCaretCursor();
 
@@ -920,8 +900,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(@NotNull KeyEvent event) {
-        if (Patches.APPLE_BUG_ID_3337563)
-          return; // Everything is going through InputMethods under MacOS X in JDK releases earlier than 1.4.2_03-117.1
         if (event.isConsumed()) {
           return;
         }

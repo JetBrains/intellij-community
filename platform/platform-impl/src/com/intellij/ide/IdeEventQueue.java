@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.Patches;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -529,12 +528,6 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
-        return;
-      }
-    }
-    if (e instanceof InputEvent && Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
-      final InputEvent inputEvent = (InputEvent)e;
-      if (!inputEvent.getComponent().isShowing()) {
         return;
       }
     }
