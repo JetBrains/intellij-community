@@ -114,7 +114,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            assert updater != null : "Action:" + title + "\nController: " + myVisiblePack.getVisibleGraph().getActionController() + "\nAnswer:" + answer;
+            assert updater != null : "Action:" +
+                                     title +
+                                     "\nController: " +
+                                     myVisiblePack.getVisibleGraph().getActionController() +
+                                     "\nAnswer:" +
+                                     answer;
             updater.run();
             getTable().handleAnswer(answer, true, null);
           }
@@ -123,12 +128,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }, title, false, null, getMainFrame().getMainComponent());
   }
 
-  public void showAll() {
-    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), "Expanding linear branches...");
+  public void expandAll() {
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND),
+                      "Expanding " + (getBekType() == PermanentGraph.SortType.LinearBek ? "merges..." : "linear branches..."));
   }
 
-  public void hideAll() {
-    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), "Collapsing linear branches...");
+  public void collapseAll() {
+    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE),
+                      "Collapsing " + (getBekType() == PermanentGraph.SortType.LinearBek ? "merges..." : "linear branches..."));
   }
 
   public void setLongEdgeVisibility(boolean visibility) {

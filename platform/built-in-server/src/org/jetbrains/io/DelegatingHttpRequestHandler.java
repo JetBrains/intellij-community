@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import io.netty.util.AttributeKey;
 import org.apache.sanselan.ImageFormat;
 import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.Sanselan;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.HttpRequestHandler;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
   private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = AttributeKey.valueOf("DelegatingHttpRequestHandler.handler");
 
   @Override
-  protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
+  protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
     Attribute<HttpRequestHandler> prevHandlerAttribute = context.attr(PREV_HANDLER);
     HttpRequestHandler connectedHandler = prevHandlerAttribute.get();
     if (connectedHandler != null) {
@@ -80,9 +81,12 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
-    super.exceptionCaught(context, cause);
-
-    context.attr(PREV_HANDLER).remove();
+  public void exceptionCaught(@NotNull ChannelHandlerContext context, @NotNull Throwable cause) {
+    try {
+      context.attr(PREV_HANDLER).remove();
+    }
+    finally {
+      super.exceptionCaught(context, cause);
+    }
   }
 }

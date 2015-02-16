@@ -30,6 +30,9 @@ import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+
 public abstract class DiffWindowBase {
   @Nullable protected final Project myProject;
   @NotNull protected final DiffDialogHints myHints;
@@ -50,7 +53,7 @@ public abstract class DiffWindowBase {
     String dialogGroupKey = myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY);
     if (dialogGroupKey == null) dialogGroupKey = "DiffContextDialog";
 
-    myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(myHints), myProcessor.getComponent())
+    myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(myHints), new MyPanel(myProcessor.getComponent()))
       .setProject(myProject)
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
@@ -104,5 +107,19 @@ public abstract class DiffWindowBase {
 
   protected DiffRequestProcessor getProcessor() {
     return myProcessor;
+  }
+
+  private static class MyPanel extends JPanel {
+    public MyPanel(@NotNull JComponent content) {
+      super(new BorderLayout());
+      add(content, BorderLayout.CENTER);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension windowSize = DiffUtil.getDefaultDiffWindowSize();
+      Dimension size = super.getPreferredSize();
+      return new Dimension(Math.max(windowSize.width, size.width), Math.max(windowSize.height, size.height));
+    }
   }
 }

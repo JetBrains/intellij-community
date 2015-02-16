@@ -52,18 +52,13 @@ public class GraphLayoutBuilder {
     return builder.build();
   }
 
-  @NotNull
-  private final LinearGraph myGraph;
-  @NotNull
-  private final int[] myLayoutIndex;
+  @NotNull private final LinearGraph myGraph;
+  @NotNull private final int[] myLayoutIndex;
 
-  @NotNull
-  private final List<Integer> myHeadNodeIndex;
-  @NotNull
-  private final int[] myStartLayoutIndexForHead;
+  @NotNull private final List<Integer> myHeadNodeIndex;
+  @NotNull private final int[] myStartLayoutIndexForHead;
 
-  @NotNull
-  private final DfsUtil myDfsUtil;
+  @NotNull private final DfsUtil myDfsUtil;
 
   private int currentLayoutIndex = 1;
 
@@ -82,8 +77,7 @@ public class GraphLayoutBuilder {
       @Override
       public int fun(int currentNode) {
         boolean firstVisit = myLayoutIndex[currentNode] == 0;
-        if (firstVisit)
-          myLayoutIndex[currentNode] = currentLayoutIndex;
+        if (firstVisit) myLayoutIndex[currentNode] = currentLayoutIndex;
 
         int childWithoutLayoutIndex = -1;
         for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
@@ -94,11 +88,11 @@ public class GraphLayoutBuilder {
         }
 
         if (childWithoutLayoutIndex == -1) {
-          if (firstVisit)
-            currentLayoutIndex++;
+          if (firstVisit) currentLayoutIndex++;
 
           return DfsUtil.NextNode.NODE_NOT_FOUND;
-        } else {
+        }
+        else {
           return childWithoutLayoutIndex;
         }
       }
@@ -107,7 +101,7 @@ public class GraphLayoutBuilder {
 
   @NotNull
   private GraphLayoutImpl build() {
-    for(int i = 0; i < myHeadNodeIndex.size(); i++) {
+    for (int i = 0; i < myHeadNodeIndex.size(); i++) {
       int headNodeIndex = myHeadNodeIndex.get(i);
       myStartLayoutIndexForHead[i] = currentLayoutIndex;
 

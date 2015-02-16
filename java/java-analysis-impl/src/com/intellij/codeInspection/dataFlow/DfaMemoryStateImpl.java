@@ -625,7 +625,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return isNegated;
     }
-    if (canBeNaN(dfaLeft) || canBeNaN(dfaRight)) {
+    if (canBeNaN(dfaLeft) && canBeNaN(dfaRight)) {
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return true;
     }

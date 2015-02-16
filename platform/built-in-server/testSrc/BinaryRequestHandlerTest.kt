@@ -8,7 +8,6 @@ import io.netty.buffer.ByteBuf
 import com.intellij.util.Consumer
 import java.util.UUID
 import io.netty.channel.ChannelHandler
-import com.intellij.openapi.util.AsyncResult
 import io.netty.util.CharsetUtil
 import org.jetbrains.io.ChannelExceptionHandler
 import org.jetbrains.io.NettyUtil
@@ -18,7 +17,12 @@ import junit.framework.TestCase
 import org.junit.rules.RuleChain
 import org.junit.Rule
 import org.junit.Test
+import org.jetbrains.io.MessageDecoder
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import com.intellij.util.concurrency.Semaphore
 
+// we don't handle String in efficient way - because we want to test readContent/readChars also
 public class BinaryRequestHandlerTest {
   private val fixtureManager = FixtureRule()
 
@@ -31,22 +35,16 @@ public class BinaryRequestHandlerTest {
   Test
   public fun test() {
     val text = "Hello!"
-    val result = AsyncResult<String>()
+    val result = AsyncPromise<String>()
 
     val bootstrap = NettyUtil.oioClientBootstrap().handler(object : ChannelInitializer<Channel>() {
       override fun initChannel(channel: Channel) {
         channel.pipeline().addLast(object : Decoder() {
-          override fun messageReceived(context: ChannelHandlerContext, message: ByteBuf) {
+          override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
             val requiredLength = 4 + text.length()
-            val buffer = getBufferIfSufficient(message, requiredLength, context)
-            if (buffer == null) {
-              message.release()
-            }
-            else {
-              val response = buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8)
-              buffer.skipBytes(requiredLength)
-              buffer.release()
-              result.setDone(response)
+            val response = readContent(input, context, requiredLength) {(buffer, context, isCumulateBuffer) -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+            if (response != null) {
+              result.setResult(response)
             }
           }
         }, ChannelExceptionHandler.getInstance())
@@ -63,18 +61,27 @@ public class BinaryRequestHandlerTest {
 
     val message = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8)
     buffer.writeShort(message.readableBytes())
-
     channel.write(buffer)
     channel.writeAndFlush(message).syncUninterruptibly()
 
     try {
-      result.doWhenRejected(object : Consumer<String> {
-        override fun consume(error: String) {
-          TestCase.fail(error)
+      result.rejected(object : Consumer<Throwable> {
+        override fun consume(error: Throwable) {
+          TestCase.fail(error.getMessage())
         }
       })
 
-      TestCase.assertEquals("got-" + text, result.getResultSync(5000))
+      if (result.getState() == Promise.State.PENDING) {
+        val semaphore = Semaphore()
+        semaphore.down()
+        result.processed { semaphore.up() }
+        if (!semaphore.waitForUnsafe(5000)) {
+          TestCase.fail("Time limit exceeded")
+          return
+        }
+      }
+
+      TestCase.assertEquals("got-" + text, result.get())
     }
     finally {
       channel.close()
@@ -90,55 +97,37 @@ public class BinaryRequestHandlerTest {
       return ID
     }
 
-    override fun getInboundHandler(): ChannelHandler {
+    override fun getInboundHandler(context: ChannelHandlerContext): ChannelHandler {
       return MyDecoder()
     }
 
-    private class MyDecoder : Decoder() {
+    private class MyDecoder : MessageDecoder() {
       private var state = State.HEADER
-      private var contentLength = -1
 
       private enum class State {
         HEADER
         CONTENT
       }
 
-      override fun messageReceived(context: ChannelHandlerContext, message: ByteBuf) {
+      override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
         while (true) {
           when (state) {
             State.HEADER -> {
-              run {
-                val buffer = getBufferIfSufficient(message, 2, context)
-                if (buffer == null) {
-                  message.release()
-                  return
-                }
-
-                contentLength = buffer.readUnsignedShort()
-                state = State.CONTENT
+              val buffer = getBufferIfSufficient(input, 2, context)
+              if (buffer == null) {
+                return
               }
-              run {
-                val buffer = getBufferIfSufficient(message, contentLength, context)
-                if (buffer == null) {
-                  message.release()
-                  return
-                }
 
-                val messageText = buffer.toString(buffer.readerIndex(), contentLength, CharsetUtil.UTF_8)
-                buffer.skipBytes(contentLength)
-                state = State.HEADER
-                context.writeAndFlush(Unpooled.copiedBuffer("got-" + messageText, CharsetUtil.UTF_8))
-              }
+              contentLength = buffer.readUnsignedShort()
+              state = State.CONTENT
             }
 
             State.CONTENT -> {
-              val buffer = getBufferIfSufficient(message, contentLength, context)
-              if (buffer == null) {
-                message.release()
+              val messageText = readChars(input)
+              if (messageText == null) {
                 return
               }
-              val messageText = buffer.toString(buffer.readerIndex(), contentLength, CharsetUtil.UTF_8)
-              buffer.skipBytes(contentLength)
+
               state = State.HEADER
               context.writeAndFlush(Unpooled.copiedBuffer("got-" + messageText, CharsetUtil.UTF_8))
             }

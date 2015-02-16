@@ -48,8 +48,7 @@ class PrintElementManagerImpl implements PrintElementManager {
       @Override
       public Integer fun(Integer nodeIndex) {
         int nodeId = linearGraph.getNodeId(nodeIndex);
-        if (nodeId < 0)
-          return nodeId;
+        if (nodeId < 0) return nodeId;
         return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
       }
     });

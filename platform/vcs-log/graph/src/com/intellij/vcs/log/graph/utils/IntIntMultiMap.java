@@ -32,11 +32,11 @@ public class IntIntMultiMap {
     if (values == null) {
       int[] newValues = {value};
       myKeyToArrayMap.put(key, newValues);
-    } else {
+    }
+    else {
       int[] newValues = new int[values.length + 1];
       for (int i = 0; i < values.length; i++) {
-        if (values[i] == value)
-          return;
+        if (values[i] == value) return;
         newValues[i] = values[i];
       }
       newValues[newValues.length - 1] = value;
@@ -47,16 +47,14 @@ public class IntIntMultiMap {
   public void remove(int key, int value) {
     int removeIndex = -1;
     int[] values = myKeyToArrayMap.get(key);
-    if (values == null)
-      return;
+    if (values == null) return;
     for (int i = 0; i < values.length; i++) {
       if (values[i] == value) {
         removeIndex = i;
         break;
       }
     }
-    if (removeIndex == -1)
-      return;
+    if (removeIndex == -1) return;
 
     if (values.length == 1) {
       myKeyToArrayMap.remove(key);
@@ -64,11 +62,13 @@ public class IntIntMultiMap {
     }
 
     int[] newValues = new int[values.length - 1];
-    for (int  i = 0; i < newValues.length; i++) {
-      if (i >= removeIndex)
+    for (int i = 0; i < newValues.length; i++) {
+      if (i >= removeIndex) {
         newValues[i] = values[i + 1];
-      else
+      }
+      else {
         newValues[i] = values[i];
+      }
     }
     myKeyToArrayMap.put(key, newValues);
   }
@@ -93,10 +93,12 @@ public class IntIntMultiMap {
   @NotNull
   public int[] getAsArray(int key) {
     int[] result = myKeyToArrayMap.get(key);
-    if (result == null)
+    if (result == null) {
       return EMPTY;
-    else
+    }
+    else {
       return result;
+    }
   }
 
   public boolean isEmpty() {

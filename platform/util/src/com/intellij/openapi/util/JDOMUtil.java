@@ -95,8 +95,12 @@ public class JDOMUtil {
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
 
-  public static int getTreeHash(@NotNull final Element root) {
-    return addToHash(0, root);
+  public static int getTreeHash(@NotNull Element root) {
+    return getTreeHash(root, false);
+  }
+
+  public static int getTreeHash(@NotNull Element root, boolean skipEmptyText) {
+    return addToHash(0, root, skipEmptyText);
   }
 
   @SuppressWarnings("unused")
@@ -105,33 +109,29 @@ public class JDOMUtil {
     return getTreeHash(document.getRootElement());
   }
 
-  private static int addToHash(int i, @NotNull final Element element) {
+  private static int addToHash(int i, @NotNull Element element, boolean skipEmptyText) {
     i = addToHash(i, element.getName());
 
-    for (Attribute aList : element.getAttributes()) {
-      i = addToHash(i, aList);
+    for (Attribute attribute : element.getAttributes()) {
+      i = addToHash(i, attribute.getName());
+      i = addToHash(i, attribute.getValue());
     }
 
-    List<Content> content = element.getContent();
-    for (Content child : content) {
+    for (Content child : element.getContent()) {
       if (child instanceof Element) {
-        i = addToHash(i, (Element)child);
+        i = addToHash(i, (Element)child, skipEmptyText);
       }
       else if (child instanceof Text) {
-        i = addToHash(i, ((Text)child).getText());
+        String text = ((Text)child).getText();
+        if (!skipEmptyText || !StringUtil.isEmptyOrSpaces(text)) {
+          i = addToHash(i, text);
+        }
       }
     }
-
     return i;
   }
 
-  private static int addToHash(int i, @NotNull final Attribute attribute) {
-    i = addToHash(i, attribute.getName());
-    i = addToHash(i, attribute.getValue());
-    return i;
-  }
-
-  private static int addToHash(final int i, @NotNull final String s) {
+  private static int addToHash(int i, @NotNull String s) {
     return i * 31 + s.hashCode();
   }
 

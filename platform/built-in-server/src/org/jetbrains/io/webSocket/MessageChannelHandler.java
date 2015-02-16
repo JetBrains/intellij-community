@@ -10,8 +10,6 @@ import org.jetbrains.io.jsonRpc.Client;
 import org.jetbrains.io.jsonRpc.ClientManager;
 import org.jetbrains.io.jsonRpc.MessageServer;
 
-import java.io.IOException;
-
 @ChannelHandler.Sharable
 final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<WebSocketFrame> {
   private final ClientManager clientManager;
@@ -40,12 +38,11 @@ final class MessageChannelHandler extends SimpleChannelInboundHandlerAdapter<Web
       context.channel().writeAndFlush(new PongWebSocketFrame(message.content()));
     }
     else if (message instanceof TextWebSocketFrame) {
-      String text = ChannelBufferToString.readString(message.content());
       try {
-        messageServer.message(client, text);
+        messageServer.messageReceived(client, ChannelBufferToString.readChars(message.content()), false);
       }
       catch (Throwable e) {
-        clientManager.exceptionHandler.exceptionCaught(new IOException("Exception while handle message: " + text, e));
+        clientManager.exceptionHandler.exceptionCaught(e);
       }
     }
     else if (!(message instanceof PongWebSocketFrame)) {

@@ -46,9 +46,7 @@ public class PermanentListIntToIntMapTest extends UpdatableIntToIntMapTest {
   }
 
   private static class UpdatableIntToIntMapWrapper implements UpdatableIntToIntMap {
-    @NotNull
-    private final Flags myFlags;
-    @NotNull
+    @NotNull private final Flags myFlags;
     private IntToIntMap myIntToIntMap;
 
     private UpdatableIntToIntMapWrapper(@NotNull Flags flags) {
@@ -58,9 +56,9 @@ public class PermanentListIntToIntMapTest extends UpdatableIntToIntMapTest {
 
     private void createIntToIntMap() {
       int shortSize = 0;
-      for (int i = 0; i < myFlags.size(); i++)
-        if (myFlags.get(i))
-          shortSize++;
+      for (int i = 0; i < myFlags.size(); i++) {
+        if (myFlags.get(i)) shortSize++;
+      }
       myIntToIntMap = PermanentListIntToIntMap.newInstance(myFlags, shortSize, 2);
     }
 

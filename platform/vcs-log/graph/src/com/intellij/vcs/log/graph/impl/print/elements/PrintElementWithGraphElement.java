@@ -20,17 +20,14 @@ import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PrintElementWithGraphElement implements PrintElement {
 
   protected final int myRowIndex;
   protected final int myPositionInCurrentRow;
 
-  @NotNull
-  protected final GraphElement myGraphElement;
-  @NotNull
-  protected final PrintElementManager myPrintElementManager;
+  @NotNull protected final GraphElement myGraphElement;
+  @NotNull protected final PrintElementManager myPrintElementManager;
 
   protected PrintElementWithGraphElement(int rowIndex,
                                          int positionInCurrentRow,
@@ -67,8 +64,10 @@ public abstract class PrintElementWithGraphElement implements PrintElement {
     return myPrintElementManager.isSelected(this);
   }
 
-  public static PrintElementWithGraphElement converted(@NotNull PrintElementWithGraphElement element, @NotNull GraphElement convertedGraphElement) {
-    return new PrintElementWithGraphElement(element.getRowIndex(), element.getPositionInCurrentRow(), convertedGraphElement, element.myPrintElementManager) {
+  public static PrintElementWithGraphElement converted(@NotNull PrintElementWithGraphElement element,
+                                                       @NotNull GraphElement convertedGraphElement) {
+    return new PrintElementWithGraphElement(element.getRowIndex(), element.getPositionInCurrentRow(), convertedGraphElement,
+                                            element.myPrintElementManager) {
     };
   }
 }

@@ -39,7 +39,7 @@ public class XmlAttributeReference implements PsiReference {
   };
   private final XmlAttributeImpl myAttribute;
 
-  public XmlAttributeReference(XmlAttributeImpl attribute) {
+  public XmlAttributeReference(@NotNull XmlAttributeImpl attribute) {
     myAttribute = attribute;
   }
 

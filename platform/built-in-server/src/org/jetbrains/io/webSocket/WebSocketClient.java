@@ -23,10 +23,12 @@ class WebSocketClient extends Client {
 
   @Override
   public ChannelFuture send(@NotNull ByteBuf message) {
-    if (!channel.isOpen()) {
+    if (channel.isOpen()) {
+      return channel.writeAndFlush(new TextWebSocketFrame(message));
+    }
+    else {
       return channel.newFailedFuture(new ClosedChannelException());
     }
-    return channel.writeAndFlush(new TextWebSocketFrame(message));
   }
 
   @Override

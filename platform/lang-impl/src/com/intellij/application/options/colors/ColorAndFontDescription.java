@@ -42,9 +42,9 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   private boolean isInherited;
 
   public ColorAndFontDescription(@NotNull String name,
-                                 @NotNull String group,
+                                 @Nullable String group,
                                  @Nullable String type,
-                                 @NotNull EditorColorsScheme scheme,
+                                 @Nullable EditorColorsScheme scheme,
                                  @Nullable Icon icon,
                                  @Nullable String toolTip) {
     myName = name;

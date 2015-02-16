@@ -37,11 +37,9 @@ public class LinearFragmentGenerator {
   private static final int SHORT_FRAGMENT_MAX_SIZE = 10;
   private static final int MAX_SEARCH_SIZE = 10;
 
-  @NotNull
-  private final LiteLinearGraph myLinearGraph;
+  @NotNull private final LiteLinearGraph myLinearGraph;
 
-  @NotNull
-  private final Set<Integer> myPinnedNodes;
+  @NotNull private final Set<Integer> myPinnedNodes;
 
   private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
     @Override
@@ -69,7 +67,8 @@ public class LinearFragmentGenerator {
     if (element instanceof GraphNode) {
       upNodeIndex = ((GraphNode)element).getNodeIndex();
       downNodeIndex = upNodeIndex;
-    } else {
+    }
+    else {
       Pair<Integer, Integer> graphEdge = LinearGraphUtils.asNormalEdge(((GraphEdge)element));
       if (graphEdge == null) return null;
 
@@ -79,8 +78,7 @@ public class LinearFragmentGenerator {
 
     for (int i = 0; i < MAX_SEARCH_SIZE; i++) {
       GraphFragment graphFragment = getDownFragment(upNodeIndex);
-      if (graphFragment != null && graphFragment.downNodeIndex >= downNodeIndex)
-        return graphFragment;
+      if (graphFragment != null && graphFragment.downNodeIndex >= downNodeIndex) return graphFragment;
 
       List<Integer> upNodes = myLinearGraph.getNodes(upNodeIndex, UP);
       if (upNodes.size() != 1) {
@@ -122,31 +120,28 @@ public class LinearFragmentGenerator {
 
   @Nullable
   private GraphFragment getLongFragment(@Nullable GraphFragment startFragment, int bound) {
-    if (startFragment == null)
-      return null;
+    if (startFragment == null) return null;
 
     GraphFragment shortFragment;
 
     int maxDown = startFragment.downNodeIndex;
     while ((shortFragment = getDownFragment(maxDown)) != null && !myPinnedNodes.contains(maxDown)) {
       maxDown = shortFragment.downNodeIndex;
-      if (maxDown - startFragment.downNodeIndex > bound)
-        break;
+      if (maxDown - startFragment.downNodeIndex > bound) break;
     }
 
     int maxUp = startFragment.upNodeIndex;
     while ((shortFragment = getUpFragment(maxUp)) != null && !myPinnedNodes.contains(maxUp)) {
       maxUp = shortFragment.upNodeIndex;
-      if (startFragment.upNodeIndex - maxUp > bound)
-        break;
+      if (startFragment.upNodeIndex - maxUp > bound) break;
     }
 
     if (maxUp != startFragment.upNodeIndex || maxDown != startFragment.downNodeIndex) {
       return new GraphFragment(maxUp, maxDown);
-    } else {
+    }
+    else {
       // start fragment is Simple
-      if (myLinearGraph.getNodes(startFragment.upNodeIndex, DOWN).size() != 1)
-        return startFragment;
+      if (myLinearGraph.getNodes(startFragment.upNodeIndex, DOWN).size() != 1) return startFragment;
     }
     return null;
   }
@@ -172,8 +167,7 @@ public class LinearFragmentGenerator {
         }
       }
 
-      if (nextBlackNode == -1)
-        return null;
+      if (nextBlackNode == -1) return null;
 
       if (grayNodes.size() == 1) {
         endNode = nextBlackNode;
@@ -181,18 +175,19 @@ public class LinearFragmentGenerator {
       }
 
       List<Integer> nextGrayNodes = getNextNodes.fun(nextBlackNode);
-      if (nextGrayNodes.isEmpty() || thisNodeCantBeInMiddle.contains(nextBlackNode))
-        return null;
+      if (nextGrayNodes.isEmpty() || thisNodeCantBeInMiddle.contains(nextBlackNode)) return null;
 
       blackNodes.add(nextBlackNode);
       grayNodes.remove(nextBlackNode);
       grayNodes.addAll(nextGrayNodes);
     }
 
-    if (endNode != -1)
+    if (endNode != -1) {
       return Pair.create(startNode, endNode);
-    else
+    }
+    else {
       return null;
+    }
   }
 
   public static class GraphFragment {

@@ -5,5 +5,5 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public interface MessageServer {
-  void message(@NotNull Client client, @NotNull String message) throws IOException;
+  void messageReceived(@NotNull Client client, @NotNull CharSequence message, boolean isBinary) throws IOException;
 }

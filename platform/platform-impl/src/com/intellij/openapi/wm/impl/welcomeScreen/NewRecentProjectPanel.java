@@ -154,6 +154,12 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         return this;
       }
 
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        int h = myName.getPreferredSize().height + myPath.getPreferredSize().height;
+        return new Dimension(size.width, h + JBUI.scale(26));
+      }
     };
   }
   

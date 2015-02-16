@@ -15,18 +15,24 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 /**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 5/5/11
- * Time: 10:47 AM
- * To change this template use File | Settings | File Templates.
+ * @author Kirill.Kalishev
+ * @author Sergey.Malenkov
  */
 public abstract class NamedRunnable implements Runnable {
+  private static final Logger LOG = Logger.getInstance(NamedRunnable.class);
   private String myName;
 
   protected NamedRunnable(String name) {
     myName = name;
+  }
+
+  protected void debug(Object message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(myName + ": " + message);
+    }
   }
 
   @Override

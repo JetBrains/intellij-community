@@ -135,6 +135,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return list.toArray(new VirtualFilePointer[list.size()]);
   }
 
+  @TestOnly
+  public VirtualFilePointer[] getPointersUnder(VirtualFile parent, String childName) {
+    List<FilePointerPartNode> nodes = new ArrayList<FilePointerPartNode>();
+    addPointersUnder(parent, true, childName, nodes);
+    return toPointers(nodes);
+  }
+
   private void addPointersUnder(VirtualFile parent,
                                 boolean separator,
                                 @NotNull CharSequence childName,

@@ -152,6 +152,8 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   void notify(@NotNull final AsyncPromise<T> child) {
+    LOG.assertTrue(child != this);
+
     switch (state) {
       case PENDING:
         break;
@@ -300,9 +302,9 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     return done instanceof Obsolescent && ((Obsolescent)done).isObsolete();
   }
 
-  public void setError(@NotNull Throwable error) {
+  public boolean setError(@NotNull Throwable error) {
     if (state != State.PENDING) {
-      return;
+      return false;
     }
 
     result = error;
@@ -318,6 +320,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     else if (!(error instanceof MessageError)) {
       LOG.error(error);
     }
+    return true;
   }
 
   private void clearHandlers() {
@@ -326,7 +329,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  public void processed(@NotNull final Consumer<T> processed) {
+  public Promise<T> processed(@NotNull final Consumer<T> processed) {
     done(processed);
     rejected(new Consumer<Throwable>() {
       @Override
@@ -334,5 +337,6 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         processed.consume(null);
       }
     });
+    return this;
   }
 }

@@ -29,8 +29,9 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  public void processed(@NotNull Consumer<T> processed) {
+  public Promise<T> processed(@NotNull Consumer<T> processed) {
     done(processed);
+    return this;
   }
 
   @NotNull

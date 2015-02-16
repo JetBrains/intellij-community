@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.Patches;
 import com.intellij.application.options.OptionsConstants;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -247,7 +246,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private Color myForcedBackground = null;
   @Nullable private Dimension myPreferredSize;
   private int myVirtualPageHeight;
-  private Alarm myAppleRepaintAlarm;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private Runnable myMouseSelectionStateResetRunnable;
@@ -332,8 +330,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
-    boolean forceSoftWraps = !myUseNewRendering && !mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced(myDocument);
-    if (forceSoftWraps) {
+    if (shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
     }
@@ -532,24 +529,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Dimension preferredSize = getPreferredSize();
     myEditorComponent.setSize(preferredSize);
 
-    if (Patches.APPLE_BUG_ID_3716835) {
-      myScrollingModel.addVisibleAreaListener(new VisibleAreaListener() {
-        @Override
-        public void visibleAreaChanged(VisibleAreaEvent e) {
-          if (myAppleRepaintAlarm == null) {
-            myAppleRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-          }
-          myAppleRepaintAlarm.cancelAllRequests();
-          myAppleRepaintAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              repaint(0, myDocument.getTextLength());
-            }
-          }, 50, ModalityState.stateForComponent(myEditorComponent));
-        }
-      });
-    }
-
     updateCaretCursor();
 
     // This hacks context layout problem where editor appears scrolled to the right just after it is created.
@@ -567,10 +546,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean shouldSoftWrapsBeForced(Document document) {
+  private boolean shouldSoftWrapsBeForced() {
+    if (myUseNewRendering || mySettings.isUseSoftWraps() ||
+        // Disable checking for files in intermediate states - e.g. for files during refactoring.
+        (myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument))) {
+      return false;
+    }
     int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
-    for (int i = 0; i < document.getLineCount(); i++) {
-      if (document.getLineEndOffset(i) - document.getLineStartOffset(i) > lineWidthLimit) {
+    for (int i = 0; i < myDocument.getLineCount(); i++) {
+      if (myDocument.getLineEndOffset(i) - myDocument.getLineStartOffset(i) > lineWidthLimit) {
         return true;
       }
     }
@@ -902,6 +886,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
         }
+
+        @Override
+        public Dimension getPreferredSize() {
+          return myScrollPane.getPreferredSize();
+        }
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
@@ -916,8 +905,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(@NotNull KeyEvent event) {
-        if (Patches.APPLE_BUG_ID_3337563)
-          return; // Everything is going through InputMethods under MacOS X in JDK releases earlier than 1.4.2_03-117.1
         if (event.isConsumed()) {
           return;
         }
@@ -4154,14 +4141,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void validateMousePointer(@NotNull MouseEvent e) {
     if (e.getSource() == myGutterComponent) {
-      FoldRegion foldingAtCursor = myGutterComponent.findFoldingAnchorAt(e.getX(), e.getY());
-      myGutterComponent.setActiveFoldRegion(foldingAtCursor);
-      if (foldingAtCursor != null) {
-        myGutterComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      }
-      else {
-        myGutterComponent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      }
+      myGutterComponent.validateMousePointer(e);
     }
     else {
       myGutterComponent.setActiveFoldRegion(null);

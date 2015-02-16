@@ -15,154 +15,310 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.GraphLayout;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper;
+import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
+import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 class LinearBekGraphBuilder {
-  private static final int MAX_BLOCK_SIZE = 20;
-  private static final long MAX_DELTA_TIME = 60 * 60 * 24 * 3 * 1000l;
-  @NotNull private final WorkingGraph myWorkingGraph;
+  private static final int MAX_BLOCK_SIZE = 200;
+  private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
+  private static final GraphEdgeToDownNode GRAPH_EDGE_TO_DOWN_NODE = new GraphEdgeToDownNode();
   @NotNull private final GraphLayout myGraphLayout;
-  @NotNull private final List<Integer> myHeads;
-  @NotNull private final TimestampGetter myTimestampGetter;
+  private final LinearBekGraph myLinearBekGraph;
 
-  public LinearBekGraphBuilder(@NotNull LinearGraph graph, @NotNull GraphLayout graphLayout, @NotNull TimestampGetter timestampGetter) {
-    myWorkingGraph = new WorkingGraph(graph);
+  public LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
+    myLinearBekGraph = bekGraph;
     myGraphLayout = graphLayout;
-    myHeads = graphLayout.getHeadNodeIndex();
-    myTimestampGetter = timestampGetter;
   }
 
-  public LinearBekGraph build() {
-    Map<Integer, Integer> nextHeadLayoutIndexes = ContainerUtilRt.newHashMap(myHeads.size());
-    for (int i = 0; i < myHeads.size(); i++) {
-      if (i == myHeads.size() - 1) {
-        nextHeadLayoutIndexes.put(myHeads.get(i), Integer.MAX_VALUE);
-      }
-      else {
-        nextHeadLayoutIndexes.put(myHeads.get(i), myGraphLayout.getLayoutIndex(myHeads.get(i + 1)));
+  public void collapseAll() {
+    for (int i = myLinearBekGraph.myGraph.nodesCount() - 1; i >= 0; i--) {
+      MergeFragment fragment = getFragment(i);
+      if (fragment != null) {
+        fragment.collapse(myLinearBekGraph);
       }
     }
-
-    for (int i = myWorkingGraph.myGraph.nodesCount() - 1; i >= 0; i--) {
-      List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myWorkingGraph, i));
-      if (downNodes.size() != 2) continue;
-
-      int head = myGraphLayout.getOneOfHeadNodeIndex(i);
-      if (collapse(downNodes.get(1), downNodes.get(0), i, myGraphLayout.getLayoutIndex(head), nextHeadLayoutIndexes.get(head))) {
-        myWorkingGraph.apply();
-      }
-      else {
-        myWorkingGraph.clear();
-      }
-    }
-    return myWorkingGraph.createLinearBekGraph();
   }
 
-  private boolean collapse(int firstChild, int secondChild, int parent, int headIndex, int nextHeadIndex) {
-    int x = myGraphLayout.getLayoutIndex(firstChild);
-    int y = myGraphLayout.getLayoutIndex(secondChild);
-    int k = 1;
+  @Nullable
+  public MergeFragment collapseFragment(int mergeCommit) {
+    MergeFragment fragment = getFragment(mergeCommit);
+    if (fragment != null) {
+      fragment.collapse(myLinearBekGraph);
+      return fragment;
+    }
+    return null;
+  }
+
+  @Nullable
+  public MergeFragment getFragment(int mergeCommit) {
+    List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myLinearBekGraph, mergeCommit));
+    if (downNodes.size() != 2) return null;
+
+    return getFragment(downNodes.get(1), downNodes.get(0), mergeCommit);
+  }
+
+  @Nullable
+  private MergeFragment getFragment(int leftChild, int rightChild, int parent) {
+    MergeFragment fragment = new MergeFragment(parent, leftChild, rightChild);
+
+    int leftLi = myGraphLayout.getLayoutIndex(leftChild);
+    int rightLi = myGraphLayout.getLayoutIndex(rightChild);
+    int rowsCount = 1;
+    int blockSize = 1;
 
     PriorityQueue<GraphEdge> queue = new PriorityQueue<GraphEdge>(MAX_BLOCK_SIZE, new GraphEdgeComparator());
-    queue.addAll(myWorkingGraph.getAdjacentEdges(secondChild, EdgeFilter.NORMAL_DOWN));
+    queue.addAll(myLinearBekGraph.getAdjacentEdges(rightChild, EdgeFilter.NORMAL_DOWN));
 
-    Set<Integer> definitelyNotTails = ContainerUtil.newHashSet();
-    Set<Integer> tails = ContainerUtil.newHashSet();
-    boolean mergeWithOldCommit = false;
+    @Nullable Set<Integer> magicSet = null;
 
     while (!queue.isEmpty()) {
       GraphEdge nextEdge = queue.poll();
       Integer next = nextEdge.getDownNodeIndex();
-      if (next == null) continue; // allow very long edges down
-
       Integer upNodeIndex = nextEdge.getUpNodeIndex();
       assert upNodeIndex != null; // can not happen
+      if (next == null) {
+        fragment.addTail(upNodeIndex);
+        continue; // allow very long edges down
+      }
 
-      if (next == firstChild) {
+      if (next == leftChild) {
         // found first child
-        tails.add(upNodeIndex);
-        mergeWithOldCommit = true;
+        fragment.addTail(upNodeIndex);
+        fragment.setMergeWithOldCommit(true);
       }
-      else if (next == secondChild + k) {
+      else if (next == rightChild + rowsCount) {
         // all is fine, continuing
-        k++;
-        queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
-        definitelyNotTails.add(upNodeIndex);
+        rowsCount++;
+        blockSize++;
+        queue.addAll(myLinearBekGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
+        fragment.addBody(upNodeIndex);
       }
-      else if (next > secondChild + k && next < firstChild) {
-        k = next - secondChild + 1;
-        queue.addAll(myWorkingGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
-        definitelyNotTails.add(upNodeIndex);
+      else if (next > rightChild + rowsCount && next < leftChild) {
+        rowsCount = next - rightChild + 1;
+        blockSize++;
+        queue.addAll(myLinearBekGraph.getAdjacentEdges(next, EdgeFilter.NORMAL_DOWN));
+        fragment.addBody(upNodeIndex);
       }
-      else if (next > firstChild) {
+      else if (next > leftChild) {
+
         int li = myGraphLayout.getLayoutIndex(next);
-        if (li > y) {
-          return false;
-        }
-        if (li < x && !(li >= headIndex && li < nextHeadIndex)) {
-          return false;
+        if (leftLi > rightLi && !fragment.isMergeWithOldCommit()) {
+
+          if (next > leftChild + MAGIC_SET_SIZE) {
+            return null;
+          }
+          if (magicSet == null) {
+            magicSet = calculateMagicSet(leftChild);
+          }
+
+          if (magicSet.contains(next)) {
+            fragment.addTailEdge(upNodeIndex, next);
+          }
+          else {
+            return null;
+          }
+
         }
         else {
-          if (!definitelyNotTails.contains(upNodeIndex)) {
-            tails.add(upNodeIndex);
-            if (li != y && (li >= x)) {
-              myWorkingGraph.removeEdge(upNodeIndex, next); // questionable -- we remove edges to the very old commits only for tails
-              // done in sake of expanding dotted edges
-              // also, should check (I guess?) that the edge is not too long
-              // another thing is that if li < x next can still be reachable from the firstChild
-              // but we do not know that unless we walk down from the firstChild and check that
+          if ((li > leftLi && li < rightLi) || (li == leftLi)) {
+            fragment.addTailEdge(upNodeIndex, next);
+          }
+          else {
+            if (li >= rightLi) {
+              return null;
+            }
+            else {
+              if (next > leftChild + MAGIC_SET_SIZE) {
+                fragment.addTail(upNodeIndex);
+              }
+              else {
+                if (magicSet == null) {
+                  magicSet = calculateMagicSet(leftChild);
+                }
+
+                if (magicSet.contains(next)) {
+                  fragment.addTailEdge(upNodeIndex, next);
+                }
+                else {
+                  return null;
+                }
+              }
             }
           }
         }
+
       }
 
-      if (k >= MAX_BLOCK_SIZE) {
-        return false;
-      }
-      if (Math.abs(myTimestampGetter.getTimestamp(secondChild) - myTimestampGetter.getTimestamp(secondChild + k - 1)) > MAX_DELTA_TIME) {
-        // there is a big question what we should really check here
-        // maybe we should also ensure that we do not remove edges to very old commits too
-        return false;
+      if (blockSize >= MAX_BLOCK_SIZE) {
+        return null;
       }
     }
 
-    if (tails.isEmpty()) {
-      return false; // this can happen if we ran into initial import
+    if (fragment.getTails().isEmpty()) {
+      return null; // this can happen if we ran into initial import
     }
 
-    for (Integer tail : tails) {
-      if (!LinearGraphUtils.getDownNodes(myWorkingGraph, tail).contains(firstChild)) {
-        myWorkingGraph.addEdge(tail, firstChild);
-      }
-      else if (mergeWithOldCommit) {
-        myWorkingGraph.replaceEdge(tail, firstChild);
+    return fragment;
+  }
+
+  @NotNull
+  private Set<Integer> calculateMagicSet(int node) {
+    Set<Integer> magicSet;
+    magicSet = ContainerUtil.newHashSet(MAGIC_SET_SIZE);
+
+    PriorityQueue<Integer> magicQueue = new PriorityQueue<Integer>(MAGIC_SET_SIZE);
+    magicQueue.addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN), GRAPH_EDGE_TO_DOWN_NODE));
+    while (!magicQueue.isEmpty()) {
+      Integer i = magicQueue.poll();
+      if (i > node + MAGIC_SET_SIZE) break;
+      magicSet.add(i);
+      magicQueue.addAll(ContainerUtil.map(myLinearBekGraph.getAdjacentEdges(i, EdgeFilter.NORMAL_DOWN), GRAPH_EDGE_TO_DOWN_NODE));
+    }
+    return magicSet;
+  }
+
+  public static class MergeFragment {
+    private final int myParent;
+    private final int myLeftChild;
+    private final int myRightChild;
+
+    private boolean myMergeWithOldCommit = false;
+    @NotNull private final IntIntMultiMap myTailEdges = new IntIntMultiMap();
+    @NotNull private final TIntHashSet myBlockBody = new TIntHashSet();
+    @NotNull private final TIntHashSet myTails = new TIntHashSet();
+
+    private MergeFragment(int parent, int leftChild, int rightChild) {
+      myParent = parent;
+      myLeftChild = leftChild;
+      myRightChild = rightChild;
+    }
+
+    public boolean isMergeWithOldCommit() {
+      return myMergeWithOldCommit;
+    }
+
+    public void setMergeWithOldCommit(boolean mergeWithOldCommit) {
+      myMergeWithOldCommit = mergeWithOldCommit;
+    }
+
+    public void addTail(int tail) {
+      if (!myBlockBody.contains(tail)) {
+        myTails.add(tail);
       }
     }
-    myWorkingGraph.removeEdge(parent, firstChild);
 
-    return true;
+    public void addTailEdge(int upNodeIndex, int downNodeIndex) {
+      if (!myBlockBody.contains(upNodeIndex)) {
+        myTails.add(upNodeIndex);
+        myTailEdges.putValue(upNodeIndex, downNodeIndex);
+      }
+    }
+
+    public void addBody(int body) {
+      myBlockBody.add(body);
+    }
+
+    @NotNull
+    public TIntHashSet getTails() {
+      return myTails;
+    }
+
+    public Set<Integer> getTailsAndBody() {
+      Set<Integer> nodes = ContainerUtil.newHashSet();
+      TIntIterator it = myBlockBody.iterator();
+      while (it.hasNext()) {
+        nodes.add(it.next());
+      }
+      it = myTails.iterator();
+      while (it.hasNext()) {
+        nodes.add(it.next());
+      }
+      return nodes;
+    }
+
+    public Set<Integer> getAllNodes() {
+      Set<Integer> nodes = ContainerUtil.newHashSet();
+      nodes.add(myParent);
+      nodes.add(myLeftChild);
+      nodes.add(myRightChild);
+      nodes.addAll(getTailsAndBody());
+      return nodes;
+    }
+
+    public void collapse(LinearBekGraph graph) {
+      for (int upNodeIndex : myTailEdges.keys()) {
+        for (int downNodeIndex : myTailEdges.get(upNodeIndex)) {
+          removeEdge(graph, upNodeIndex, downNodeIndex);
+        }
+      }
+
+      TIntIterator it = myTails.iterator();
+      while (it.hasNext()) {
+        int tail = it.next();
+        if (!LinearGraphUtils.getDownNodes(graph, tail).contains(myLeftChild)) {
+          addEdge(graph, tail, myLeftChild);
+        }
+        else {
+          replaceEdge(graph, tail, myLeftChild);
+        }
+      }
+      removeEdge(graph, myParent, myLeftChild);
+    }
+
+    private static void addEdge(LinearBekGraph graph, int up, int down) {
+      graph.myDottedEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+    }
+
+    private static void removeEdge(LinearBekGraph graph, int up, int down) {
+      if (graph.myDottedEdges.hasEdge(up, down)) {
+        graph.myDottedEdges.removeEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+        graph.myHiddenEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+      }
+      else {
+        GraphEdge edge = LinearGraphUtils.getEdge(graph.myGraph, up, down);
+        assert edge != null : "No edge between " + up + " and " + down;
+        graph.myHiddenEdges.createEdge(edge);
+      }
+    }
+
+    private static void replaceEdge(LinearBekGraph graph, int up, int down) {
+      if (!graph.myDottedEdges.hasEdge(up, down)) {
+        GraphEdge edge = LinearGraphUtils.getEdge(graph.myGraph, up, down);
+        assert edge != null : "No edge between " + up + " and " + down;
+        graph.myHiddenEdges.createEdge(edge);
+        graph.myDottedEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+      }
+    }
+
+    public int getParent() {
+      return myParent;
+    }
   }
 
   private static class GraphEdgeComparator implements Comparator<GraphEdge> {
     @Override
-    public int compare(@NotNull GraphEdge o1, @NotNull GraphEdge o2) {
-      Integer d1 = o1.getDownNodeIndex();
-      Integer d2 = o2.getDownNodeIndex();
+    public int compare(@NotNull GraphEdge e1, @NotNull GraphEdge e2) {
+      Integer d1 = e1.getDownNodeIndex();
+      Integer d2 = e2.getDownNodeIndex();
 
       if (d1 == null) {
-        if (d2 == null) return 0;
+        if (d2 == null) return e1.hashCode() - e2.hashCode();
         return 1;
       }
       if (d2 == null) return -1;
@@ -171,63 +327,10 @@ class LinearBekGraphBuilder {
     }
   }
 
-  private static class WorkingGraph extends LinearBekGraph {
-    private final List<GraphEdge> myToAdd = new ArrayList<GraphEdge>();
-    private final List<GraphEdge> myToReplace = new ArrayList<GraphEdge>();
-    private final List<GraphEdge> myNormalToHide = new ArrayList<GraphEdge>();
-    private final List<GraphEdge> myDottedToHide = new ArrayList<GraphEdge>();
-
-    private WorkingGraph(LinearGraph graph) {
-      super(graph, EdgeStorageWrapper.createSimpleEdgeStorage(), EdgeStorageWrapper.createSimpleEdgeStorage());
-    }
-
-    public void addEdge(int up, int down) {
-      myToAdd.add(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
-    }
-
-    public void removeEdge(int up, int down) {
-      if (myDottedEdges.hasEdge(up, down)) {
-        myDottedToHide.add(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
-      }
-      else {
-        myNormalToHide.add(LinearGraphUtils.getEdge(myGraph, up, down));
-      }
-    }
-
-    public void replaceEdge(int up, int down) {
-      if (!myDottedEdges.hasEdge(up, down)) {
-        myToReplace.add(LinearGraphUtils.getEdge(myGraph, up, down));
-      }
-    }
-
-    public void apply() {
-      for (GraphEdge e : myNormalToHide) {
-        myHiddenEdges.createEdge(e);
-      }
-      for (GraphEdge e : myDottedToHide) {
-        myDottedEdges.removeEdge(e);
-        myHiddenEdges.createEdge(e);
-      }
-      for (GraphEdge e : myToAdd) {
-        myDottedEdges.createEdge(e);
-      }
-      for (GraphEdge e : myToReplace) {
-        myHiddenEdges.createEdge(e);
-        myDottedEdges.createEdge(new GraphEdge(e.getUpNodeIndex(), e.getDownNodeIndex(), null, GraphEdgeType.DOTTED));
-      }
-
-      clear();
-    }
-
-    public void clear() {
-      myToAdd.clear();
-      myToReplace.clear();
-      myNormalToHide.clear();
-      myDottedToHide.clear();
-    }
-
-    public LinearBekGraph createLinearBekGraph() {
-      return new LinearBekGraph(myGraph, myHiddenEdges, myDottedEdges);
+  private static class GraphEdgeToDownNode implements Function<GraphEdge, Integer> {
+    @Override
+    public Integer fun(GraphEdge graphEdge) {
+      return graphEdge.getDownNodeIndex();
     }
   }
 }

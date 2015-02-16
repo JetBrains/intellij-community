@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -33,11 +32,8 @@ import javax.swing.*;
  * @author ven
  */
 @SuppressWarnings("unchecked")
-public class LanguageLevelCombo extends ComboBox {
+public abstract class LanguageLevelCombo extends ComboBox {
 
-  /** Default from current SDK or project*/
-  @Nullable
-  private LanguageLevel myDefaultLevel;
   private final String myDefaultItem;
 
   public LanguageLevelCombo(String defaultItem) {
@@ -53,8 +49,9 @@ public class LanguageLevelCombo extends ComboBox {
         }
         else if (value instanceof String) {    // default for SDK or project
           append((String)value);
-          if (myDefaultLevel != null) {
-            append(" (" + myDefaultLevel.getPresentableText() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          LanguageLevel defaultLevel = getDefaultLevel();
+          if (defaultLevel != null) {
+            append(" (" + defaultLevel.getPresentableText() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
       }
@@ -70,13 +67,15 @@ public class LanguageLevelCombo extends ComboBox {
     sdkUpdated(sdk);
 
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
-    if (myDefaultLevel != null && extension.isDefault()) {
+    if (getDefaultLevel() != null && extension.isDefault()) {
       setSelectedItem(myDefaultItem);
     }
     else {
       setSelectedItem(extension.getLanguageLevel());
     }
   }
+
+  protected abstract LanguageLevel getDefaultLevel();
 
   void sdkUpdated(Sdk sdk) {
     LanguageLevel newLevel = null;
@@ -92,19 +91,23 @@ public class LanguageLevelCombo extends ComboBox {
   void updateDefaultLevel(LanguageLevel newLevel) {
     if (newLevel == null) {
       if (getSelectedItem() == myDefaultItem) {
-        setSelectedItem(myDefaultLevel);
+        setSelectedItem(getDefaultLevel());
       }
       removeItem(myDefaultItem);
     }
     else if (!(getItemAt(0) instanceof String)) {
-      insertItemAt(myDefaultItem, 0);
+      addDefaultItem();
     }
-    myDefaultLevel = newLevel;
+    repaint();
+  }
+
+  void addDefaultItem() {
+    insertItemAt(myDefaultItem, 0);
   }
 
   public LanguageLevel getSelectedLevel() {
     Object item = getSelectedItem();
-    return item instanceof LanguageLevel ? (LanguageLevel)item : myDefaultLevel;
+    return item instanceof LanguageLevel ? (LanguageLevel)item : getDefaultLevel();
   }
 
   public boolean isDefault() {

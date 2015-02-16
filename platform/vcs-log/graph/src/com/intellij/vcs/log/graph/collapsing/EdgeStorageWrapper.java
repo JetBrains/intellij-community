@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,7 +22,6 @@ import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,14 +128,20 @@ public class EdgeStorageWrapper {
   private static boolean matchedEdge(int startNodeIndex, @Nullable GraphEdge edge, @NotNull EdgeFilter filter) {
     if (edge == null) return false;
     if (edge.getType().isNormalEdge()) {
-      return (startNodeIndex == convertToInt(edge.getDownNodeIndex()) && filter.upNormal)
-             || (startNodeIndex == convertToInt(edge.getUpNodeIndex()) && filter.downNormal);
+      return (startNodeIndex == convertToInt(edge.getDownNodeIndex()) && filter.upNormal) ||
+             (startNodeIndex == convertToInt(edge.getUpNodeIndex()) && filter.downNormal);
     }
-    else return filter.special;
+    else {
+      return filter.special;
+    }
   }
 
   private static int convertToInt(@Nullable Integer value) {
     return value == null ? EdgeStorage.NULL_ID : value;
+  }
+
+  public void removeAll() {
+    myEdgeStorage.removeAll();
   }
 
   public static EdgeStorageWrapper createSimpleEdgeStorage() {

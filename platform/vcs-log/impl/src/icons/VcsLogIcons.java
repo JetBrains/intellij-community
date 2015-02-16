@@ -15,6 +15,8 @@ public class VcsLogIcons {
 
   public static final Icon Branch = load("/icons/branch.png"); // 16x16
   public static final Icon CollapseBranches = load("/icons/CollapseBranches.png"); // 16x16
+  public static final Icon CollapseMerges = load("/icons/CollapseMerges.png"); // 16x16
   public static final Icon ExpandBranches = load("/icons/ExpandBranches.png"); // 16x16
+  public static final Icon ExpandMerges = load("/icons/ExpandMerges.png"); // 16x16
   public static final Icon ShowHideLongEdges = load("/icons/ShowHideLongEdges.png"); // 16x16
 }

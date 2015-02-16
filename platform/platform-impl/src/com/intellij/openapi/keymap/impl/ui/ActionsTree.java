@@ -385,7 +385,7 @@ public class ActionsTree {
       return ((Group)userObject).getQualifiedPath();
     }
     if (userObject instanceof QuickList) {
-      return ((QuickList)userObject).getDisplayName();
+      return ((QuickList)userObject).getName();
     }
     return null;
   }
@@ -517,7 +517,7 @@ public class ActionsTree {
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
           icon = AllIcons.Actions.QuickList;
-          text = list.getDisplayName();
+          text = list.getName();
 
           changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
         }

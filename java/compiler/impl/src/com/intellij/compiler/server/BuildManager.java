@@ -105,8 +105,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.swing.*;
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -993,6 +992,11 @@ public class BuildManager implements ApplicationComponent{
 
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
+    }
+
+    final String isFSCaseSensitive = System.getProperty("idea.case.sensitive.fs", null);
+    if (isFSCaseSensitive != null) {
+      cmdLine.addParameter("-Didea.case.sensitive.fs=" + isFSCaseSensitive);
     }
 
     boolean isProfilingMode = false;

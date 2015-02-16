@@ -18,11 +18,10 @@ package com.intellij.vcs.log.graph.collapsing;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.CascadeLinearGraphController;
+import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,23 +29,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class CollapsedLinearGraphController extends CascadeLinearGraphController {
+public class CollapsedController extends CascadeController {
   @NotNull private CollapsedGraph myCollapsedGraph;
 
-  public CollapsedLinearGraphController(@NotNull CascadeLinearGraphController delegateLinearGraphController,
-                                        @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
-                                        @Nullable Set<Integer> IdsOfVisibleBranches) {
+  public CollapsedController(@NotNull CascadeController delegateLinearGraphController,
+                             @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+                             @Nullable Set<Integer> IdsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     UnsignedBitSet initVisibility =
       BranchMatchedNodesGenerator.generateVisibleNodes(permanentGraphInfo.getPermanentLinearGraph(), IdsOfVisibleBranches);
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateLinearGraphController().getCompiledGraph(), initVisibility);
+    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
   @NotNull
   @Override
   protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer.getGraphChanges() != null) {
-      LinearGraph delegateGraph = getDelegateLinearGraphController().getCompiledGraph();
+      LinearGraph delegateGraph = getDelegateController().getCompiledGraph();
       myCollapsedGraph = CollapsedGraph.updateInstance(myCollapsedGraph, delegateGraph);
 
       // some new edges and node appeared, so we expand them
@@ -109,19 +108,24 @@ public class CollapsedLinearGraphController extends CascadeLinearGraphController
   @Nullable
   @Override
   protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
+    return convertToDelegate(graphElement, myCollapsedGraph);
+  }
+
+  @Nullable
+  public static GraphElement convertToDelegate(@NotNull GraphElement graphElement, CollapsedGraph collapsedGraph) {
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();
-      if (upIndex != null && downIndex != null && myCollapsedGraph.hasCollapsedEdge(upIndex, downIndex)) return null;
+      if (upIndex != null && downIndex != null && collapsedGraph.isMyCollapsedEdge(upIndex, downIndex)) return null;
 
-      Integer convertedUpIndex = upIndex == null ? null : myCollapsedGraph.convertToDelegateNodeIndex(upIndex);
-      Integer convertedDownIndex = downIndex == null ? null : myCollapsedGraph.convertToDelegateNodeIndex(downIndex);
+      Integer convertedUpIndex = upIndex == null ? null : collapsedGraph.convertToDelegateNodeIndex(upIndex);
+      Integer convertedDownIndex = downIndex == null ? null : collapsedGraph.convertToDelegateNodeIndex(downIndex);
 
       return new GraphEdge(convertedUpIndex, convertedDownIndex, ((GraphEdge)graphElement).getTargetId(),
                            ((GraphEdge)graphElement).getType());
     }
     else if (graphElement instanceof GraphNode) {
-      return new GraphNode(myCollapsedGraph.convertToDelegateNodeIndex((((GraphNode)graphElement).getNodeIndex())),
+      return new GraphNode(collapsedGraph.convertToDelegateNodeIndex((((GraphNode)graphElement).getNodeIndex())),
                            ((GraphNode)graphElement).getType());
     }
     return null;

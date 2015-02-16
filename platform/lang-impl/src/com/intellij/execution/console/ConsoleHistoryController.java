@@ -56,6 +56,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.SafeFileOutputStream;
+import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
@@ -575,7 +576,7 @@ public class ConsoleHistoryController {
   private static void textTag(@NotNull XmlSerializer out, @NotNull String tag, @NotNull String text) throws IOException {
     out.startTag(null, tag);
     try {
-      out.cdsect(text);
+      out.ignorableWhitespace(XmlStringUtil.wrapInCDATA(text));
     }
     finally {
       out.endTag(null, tag);

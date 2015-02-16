@@ -17,6 +17,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
+      @NotNull
       @Override
       public Promise<List<Variable>> load(@NotNull VariablesHost host) {
         if (host.valueManager.isObsolete()) {

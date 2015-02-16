@@ -380,6 +380,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
+    if (!myEditor.getSettings().isCaretRowShown()) return;
     final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
     Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     if (caretRowColor != null) {
@@ -1096,7 +1097,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return EditorMouseEventArea.LINE_MARKERS_AREA;
     }
 
-    if (x >= 0 && (x -= getFoldingAreaWidth()) < 0) {
+    if (x >= 0 && (x - getFoldingAreaWidth()) < 0) {
       return EditorMouseEventArea.FOLDING_OUTLINE_AREA;
     }
 
@@ -1171,17 +1172,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     TooltipController controller = TooltipController.getInstance();
     if (renderer != null) {
       toolTip = renderer.getTooltipText();
-      if (renderer.isNavigateAction()) {
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      }
     }
     else {
       ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
-      if (lineRenderer != null) {
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      }
-
-      else {
+      if (lineRenderer == null) {
         TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
         if (provider != null) {
           final int line = getLineNumAtPoint(e.getPoint());
@@ -1189,12 +1183,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           if (!Comparing.equal(toolTip, myLastGutterToolTip)) {
             controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, true);
             myLastGutterToolTip = toolTip;
-          }
-          if (myProviderToListener.containsKey(provider)) {
-            final EditorGutterAction action = myProviderToListener.get(provider);
-            if (action != null) {
-              setCursor(action.getCursor(line));
-            }
           }
         }
       }
@@ -1235,6 +1223,40 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     }
+  }
+  
+  void validateMousePointer(@NotNull MouseEvent e) {
+    Cursor cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+    FoldRegion foldingAtCursor = findFoldingAnchorAt(e.getX(), e.getY());
+    setActiveFoldRegion(foldingAtCursor);
+    if (foldingAtCursor != null) {
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+    }
+    GutterIconRenderer renderer = getGutterRenderer(e);
+    if (renderer != null) {
+      if (renderer.isNavigateAction()) {
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      }
+    }
+    else {
+      ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+      if (lineRenderer != null) {
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      }
+      else {
+        TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
+        if (provider != null) {
+          if (myProviderToListener.containsKey(provider)) {
+            EditorGutterAction action = myProviderToListener.get(provider);
+            if (action != null) {
+              int line = getLineNumAtPoint(e.getPoint());
+              cursor = action.getCursor(line);
+            }
+          }
+        }
+      }
+    }
+    setCursor(cursor);
   }
 
   @Override

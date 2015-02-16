@@ -4,6 +4,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -27,8 +28,13 @@ public abstract class Client extends UserDataHolderBase {
   }
 
   @NotNull
-  public EventLoop getEventLoop() {
+  public final EventLoop getEventLoop() {
     return channel.eventLoop();
+  }
+
+  @NotNull
+  public final ByteBufAllocator getByteBufAllocator() {
+    return channel.alloc();
   }
 
   protected abstract ChannelFuture send(@NotNull ByteBuf message);
@@ -49,7 +55,7 @@ public abstract class Client extends UserDataHolderBase {
     return promise;
   }
 
-  void rejectAsyncResults(@NotNull ExceptionHandler exceptionHandler) {
+  final void rejectAsyncResults(@NotNull ExceptionHandler exceptionHandler) {
     if (!messageCallbackMap.isEmpty()) {
       Enumeration<AsyncPromise<Object>> elements = messageCallbackMap.elements();
       while (elements.hasMoreElements()) {
@@ -73,10 +79,10 @@ public abstract class Client extends UserDataHolderBase {
     }
 
     @Override
-    public void setError(@NotNull Throwable error) {
-      super.setError(error);
-
+    public boolean setError(@NotNull Throwable error) {
+      boolean result = super.setError(error);
       messageCallbackMap.remove(messageId);
+      return result;
     }
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")

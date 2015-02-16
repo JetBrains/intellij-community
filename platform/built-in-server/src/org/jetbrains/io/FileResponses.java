@@ -45,10 +45,10 @@ public class FileResponses {
   }
 
   private static boolean checkCache(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified) {
-    String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
+    String ifModifiedSince = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
     if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
-        if (HttpHeaders.getDateHeader(request, HttpHeaders.Names.IF_MODIFIED_SINCE).getTime() >= lastModified) {
+        if (HttpHeaders.getDateHeader(request, HttpHeaderNames.IF_MODIFIED_SINCE).getTime() >= lastModified) {
           send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
           return true;
         }
@@ -70,8 +70,8 @@ public class FileResponses {
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
     response.headers().add(CONTENT_TYPE, getContentType(path));
     addCommonHeaders(response);
-    response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
-    HttpHeaders.setDateHeader(response, HttpHeaders.Names.LAST_MODIFIED, new Date(lastModified));
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
+    HttpHeaders.setDateHeader(response, HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));
     return response;
   }
 

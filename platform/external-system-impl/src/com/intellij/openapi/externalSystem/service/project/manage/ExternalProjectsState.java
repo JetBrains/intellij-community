@@ -22,6 +22,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -66,6 +67,11 @@ public class ExternalProjectsState {
       public TaskActivationState put(String key, TaskActivationState value) {
         if(value == null) return null;
         return super.put(key, value);
+      }
+
+      @Override
+      protected Map<String, TaskActivationState> createMap() {
+        return new LinkedHashMap<String, TaskActivationState>();
       }
     };
 

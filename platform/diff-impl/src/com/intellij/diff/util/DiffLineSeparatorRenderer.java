@@ -126,50 +126,43 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
                            int shiftX,
                            int shiftY,
                            int lineHeight) {
-    Graphics gg = g.create(0, 0, x2 - x1, lineHeight);
-    gg.translate(shiftX, shiftY);
-    try {
-      int halfHeight = lineHeight / 2;
+    int halfHeight = lineHeight / 2;
 
-      int count = ((x2 - x1) / X_STEP + 3);
+    int count = ((x2 - x1) / X_STEP + 3);
 
-      int[] xPoints1 = new int[count];
-      int[] yPoints1 = new int[count];
-      int[] xPoints2 = new int[count];
-      int[] yPoints2 = new int[count];
+    int[] xPoints1 = new int[count];
+    int[] yPoints1 = new int[count];
+    int[] xPoints2 = new int[count];
+    int[] yPoints2 = new int[count];
 
-      int shift = Math.max(x1 - shiftX / X_STEP, 0);
-      for (int index = 0; index < count; index++) {
-        int absIndex = index + shift;
+    int shift = Math.max(x1 - shiftX / X_STEP, 0);
+    for (int index = 0; index < count; index++) {
+      int absIndex = index + shift;
 
-        int xPos = absIndex * X_STEP + shiftX;
-        int yPos1;
-        int yPos2;
+      int xPos = absIndex * X_STEP + shiftX;
+      int yPos1;
+      int yPos2;
 
-        if (absIndex == 0) {
-          yPos1 = halfHeight + shiftY - Y_STEP;
-          yPos2 = halfHeight + shiftY + Y_STEP;
-        }
-        else if (absIndex % 2 == 0) {
-          yPos1 = halfHeight + shiftY - Y_STEP_2;
-          yPos2 = halfHeight + shiftY + Y_STEP + Y_STEP_2;
-        }
-        else {
-          yPos1 = halfHeight + shiftY - Y_STEP - Y_STEP_2;
-          yPos2 = halfHeight + shiftY + Y_STEP_2;
-        }
-
-        xPoints1[index] = xPos;
-        yPoints1[index] = yPos1;
-        xPoints2[index] = xPos;
-        yPoints2[index] = yPos2;
+      if (absIndex == 0) {
+        yPos1 = halfHeight + shiftY - Y_STEP;
+        yPos2 = halfHeight + shiftY + Y_STEP;
+      }
+      else if (absIndex % 2 == 0) {
+        yPos1 = halfHeight + shiftY - Y_STEP_2;
+        yPos2 = halfHeight + shiftY + Y_STEP + Y_STEP_2;
+      }
+      else {
+        yPos1 = halfHeight + shiftY - Y_STEP - Y_STEP_2;
+        yPos2 = halfHeight + shiftY + Y_STEP_2;
       }
 
-      paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
+      xPoints1[index] = xPos;
+      yPoints1[index] = yPos1;
+      xPoints2[index] = xPos;
+      yPoints2[index] = yPos2;
     }
-    finally {
-      gg.dispose();
-    }
+
+    paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
   }
 
   private static void paintLine(@NotNull Graphics g,

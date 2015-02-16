@@ -451,7 +451,7 @@ public abstract class AbstractExternalFilter {
         else {
           URL parsedUrl = BrowserUtil.getURL(url);
           if (parsedUrl != null) {
-            HttpRequests.request(parsedUrl.toString()).connect(new HttpRequests.RequestProcessor<Void>() {
+            HttpRequests.request(parsedUrl.toString()).gzip(false).connect(new HttpRequests.RequestProcessor<Void>() {
               @Override
               public Void process(@NotNull HttpRequests.Request request) throws IOException {
                 byte[] bytes = request.readBytes(null);

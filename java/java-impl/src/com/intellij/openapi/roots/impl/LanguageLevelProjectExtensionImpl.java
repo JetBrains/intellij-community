@@ -52,6 +52,10 @@ import org.jetbrains.annotations.Nullable;
     setDefault(project.isDefault() ? true : null);
   }
 
+  public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
+    return (LanguageLevelProjectExtensionImpl)getInstance(project);
+  }
+
   private void readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
     if (level == null) {
@@ -129,7 +133,17 @@ import org.jetbrains.annotations.Nullable;
     }
   }
 
-  public static class MyProjectExtension extends ProjectExtension {
+    private LanguageLevel myCurrentLevel;
+
+    public void setCurrentLevel(LanguageLevel level) {
+      myCurrentLevel = level;
+    }
+
+    public LanguageLevel getCurrentLevel() {
+      return myCurrentLevel;
+    }
+
+    public static class MyProjectExtension extends ProjectExtension {
     private final LanguageLevelProjectExtensionImpl myInstance;
 
     public MyProjectExtension(final Project project) {

@@ -398,11 +398,14 @@ public class FileSystemUtil {
 
     private static final int[] LINUX_32 =  {16, 44, 72, 24, 28};
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
+    private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
+    private static final int[] LNX_PPC64 = LINUX_64;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
     private static final int[] SUN_OS_64 = {16, 40, 64, 24, 28};
 
+    private static final int STAT_VER = 1;
     private static final int OFF_MODE = 0;
     private static final int OFF_SIZE = 1;
     private static final int OFF_TIME = 2;
@@ -416,11 +419,23 @@ public class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP, false);
 
     private JnaUnixMediatorImpl() throws Exception {
-      myOffsets = SystemInfo.isLinux ? (SystemInfo.is32Bit ? LINUX_32 : LINUX_64) :
-                  SystemInfo.isMac | SystemInfo.isFreeBSD ? (SystemInfo.is32Bit ? BSD_32 : BSD_64) :
-                  SystemInfo.isSolaris ? (SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64) :
-                  null;
-      if (myOffsets == null || myOffsets.length != 5) throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
+      if (SystemInfo.isLinux) {
+        if ("ppc".equals(SystemInfo.OS_ARCH)) {
+          myOffsets = SystemInfo.is32Bit ? LNX_PPC32 : LNX_PPC64;
+        }
+        else {
+          myOffsets = SystemInfo.is32Bit ? LINUX_32 : LINUX_64;
+        }
+      }
+      else if (SystemInfo.isMac | SystemInfo.isFreeBSD) {
+        myOffsets = SystemInfo.is32Bit ? BSD_32 : BSD_64;
+      }
+      else if (SystemInfo.isSolaris) {
+        myOffsets = SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64;
+      }
+      else {
+        throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
+      }
 
       myLibC = (LibC)Native.loadLibrary("c", LibC.class);
       myUid = myLibC.getuid();
@@ -430,7 +445,7 @@ public class FileSystemUtil {
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, buffer) : myLibC.lstat(path, buffer);
+      int res = SystemInfo.isLinux ? myLibC.__lxstat64(STAT_VER, path, buffer) : myLibC.lstat(path, buffer);
       if (res != 0) return null;
 
       int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -455,7 +470,7 @@ public class FileSystemUtil {
     }
 
     private boolean loadFileStatus(@NotNull String path, Memory buffer) {
-      return (SystemInfo.isLinux ? myLibC.__xstat64(0, path, buffer) : myLibC.stat(path, buffer)) == 0;
+      return (SystemInfo.isLinux ? myLibC.__xstat64(STAT_VER, path, buffer) : myLibC.stat(path, buffer)) == 0;
     }
 
     @Override

@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DirectoryContent;
+import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.List;
 
 class DifDiffViewer implements FrameDiffTool.DiffViewer {
@@ -109,10 +111,13 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
     if (!canShowContent(contents.get(0))) return false;
     if (!canShowContent(contents.get(1))) return false;
 
+    if (contents.get(0) instanceof EmptyContent && contents.get(1) instanceof EmptyContent) return false;
+
     return true;
   }
 
   private static boolean canShowContent(@NotNull DiffContent content) {
+    if (content instanceof EmptyContent) return true;
     if (content instanceof DirectoryContent) return true;
     if (content instanceof FileContent &&
         content.getContentType() instanceof ArchiveFileType &&
@@ -125,6 +130,51 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
 
   @NotNull
   private static DiffElement createDiffElement(@NotNull DiffContent content) {
+    if (content instanceof EmptyContent) {
+      return new DiffElement() {
+        @Override
+        public String getPath() {
+          return "";
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+          return "Nothing";
+        }
+
+        @Override
+        public long getSize() {
+          return -1;
+        }
+
+        @Override
+        public long getTimeStamp() {
+          return -1;
+        }
+
+        @Override
+        public boolean isContainer() {
+          return true;
+        }
+
+        @Override
+        public DiffElement[] getChildren() throws IOException {
+          return EMPTY_ARRAY;
+        }
+
+        @Nullable
+        @Override
+        public byte[] getContent() throws IOException {
+          return null;
+        }
+
+        @Override
+        public Object getValue() {
+          return null;
+        }
+      };
+    }
     if (content instanceof DirectoryContent) {
       return new VirtualFileDiffElement(((DirectoryContent)content).getFile());
     }

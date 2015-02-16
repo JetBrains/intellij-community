@@ -81,7 +81,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   @NotNull
   public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
-    List<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
+    List<FileEditorProvider> sharedProviders = new ArrayList<FileEditorProvider>();
     boolean doNotShowTextEditor = false;
     for (final FileEditorProvider provider : myProviders) {
       if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -93,14 +93,14 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
           return provider.accept(project, file);
         }
       })) {
-        mySharedProviderList.add(provider);
+        sharedProviders.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }
     }
 
     // Throw out default editors provider if necessary
     if (doNotShowTextEditor) {
-      ContainerUtil.retainAll(mySharedProviderList, new Condition<FileEditorProvider>() {
+      ContainerUtil.retainAll(sharedProviders, new Condition<FileEditorProvider>() {
         @Override
         public boolean value(FileEditorProvider provider) {
           return !(provider instanceof TextEditorProvider);
@@ -109,12 +109,9 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
 
     // Sort editors according policies
-    Collections.sort(mySharedProviderList, MyComparator.ourInstance);
+    Collections.sort(sharedProviders, MyComparator.ourInstance);
 
-    if (mySharedProviderList.isEmpty()) {
-      return EMPTY_ARRAY;
-    }
-    return mySharedProviderList.toArray(new FileEditorProvider[mySharedProviderList.size()]);
+    return sharedProviders.toArray(new FileEditorProvider[sharedProviders.size()]);
   }
 
   @Override

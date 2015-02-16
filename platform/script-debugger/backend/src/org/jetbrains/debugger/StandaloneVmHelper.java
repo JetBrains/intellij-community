@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import com.intellij.util.Consumer;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -23,7 +24,7 @@ public class StandaloneVmHelper extends MessageWriter implements Vm.AttachStateM
   }
 
   @Override
-  public boolean write(@NotNull CharSequence content) {
+  public boolean write(@NotNull ByteBuf content) {
     return write(((Object)content));
   }
 

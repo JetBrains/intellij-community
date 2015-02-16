@@ -314,23 +314,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         }
       };
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
       return new Runnable() {
         @Override
         public void run() {
           clearDiffPresentation();
           myPanel.setErrorContent();
-        }
-      };
-    }
-    catch (final Error e) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.setErrorContent();
-          throw e;
         }
       };
     }

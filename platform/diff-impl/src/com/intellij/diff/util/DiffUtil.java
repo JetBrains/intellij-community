@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
@@ -63,6 +64,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,6 +81,8 @@ import java.util.BitSet;
 import java.util.List;
 
 public class DiffUtil {
+  private static final Logger LOG = Logger.getInstance(DiffUtil.class);
+
   @NotNull public static final String DIFF_CONFIG = StoragePathMacros.APP_CONFIG + "/diff.xml";
 
   //
@@ -757,6 +761,19 @@ public class DiffUtil {
   //
 
   @NotNull
+  public static Dimension getDefaultDiffPanelSize() {
+    return new Dimension(400, 200);
+  }
+
+  @NotNull
+  public static Dimension getDefaultDiffWindowSize() {
+    Rectangle screenBounds = ScreenUtil.getMainScreenBounds();
+    int width = (int)(screenBounds.width * 0.8);
+    int height = (int)(screenBounds.height * 0.8);
+    return new Dimension(width, height);
+  }
+
+  @NotNull
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
     WindowWrapper.Mode mode = hints.getMode();
     if (mode == null) {
@@ -837,7 +854,12 @@ public class DiffUtil {
 
     final List<Class<? extends DiffTool>> suppressedTools = new ArrayList<Class<? extends DiffTool>>();
     for (T tool : tools) {
-      if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
+      try {
+        if (tool instanceof SuppressiveDiffTool) suppressedTools.addAll(((SuppressiveDiffTool)tool).getSuppressedTools());
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     if (suppressedTools.isEmpty()) return tools;

@@ -22,6 +22,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     return true;
   }
 
+  @NotNull
   public abstract Promise<VALUE> load(@NotNull HOST host);
 
   public final void reset(HOST host) {
@@ -103,8 +104,10 @@ public abstract class PromiseManager<HOST, VALUE> {
     }
 
     Promise<VALUE> effectivePromise = load(host);
-    fieldUpdater.compareAndSet(host, promise, effectivePromise);
-    effectivePromise.notify((AsyncPromise<VALUE>)promise);
+    if (effectivePromise != promise) {
+      fieldUpdater.compareAndSet(host, promise, effectivePromise);
+      effectivePromise.notify((AsyncPromise<VALUE>)promise);
+    }
     return effectivePromise;
   }
 }

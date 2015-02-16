@@ -1,6 +1,6 @@
 package org.jetbrains.io;
 
-import com.intellij.util.text.StringFactory;
+import com.intellij.util.text.CharArrayCharSequence;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,42 +13,31 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 
 public final class ChannelBufferToString {
-  public static String readString(ByteBuf buffer) {
-    return charBufferToString(readIntoCharBuffer(null, buffer, buffer.readableBytes()));
+  @NotNull
+  public static CharSequence readChars(@NotNull ByteBuf buffer) throws CharacterCodingException {
+    return new MyCharArrayCharSequence(readIntoCharBuffer(CharsetUtil.getDecoder(CharsetUtil.UTF_8), buffer, buffer.readableBytes(), null));
   }
 
-  public static String readString(ByteBuf buffer, int byteCount) {
-    return charBufferToString(readIntoCharBuffer(null, buffer, byteCount));
+  @SuppressWarnings("unused")
+  @NotNull
+  public static CharSequence readChars(@NotNull ByteBuf buffer, int byteCount) throws CharacterCodingException {
+    return new MyCharArrayCharSequence(readIntoCharBuffer(CharsetUtil.getDecoder(CharsetUtil.UTF_8), buffer, byteCount, null));
   }
 
-  public static String charBufferToString(CharBuffer charBuffer) {
-    char[] array = charBuffer.array();
-    if (array.length == charBuffer.position()) {
-      return StringFactory.createShared(array);
-    }
-    else {
-      return charBuffer.flip().toString();
-    }
-  }
-
-  public static CharBuffer readIntoCharBuffer(@Nullable CharBuffer charBuffer, @NotNull ByteBuf buffer, int byteCount) {
-    CharsetDecoder decoder = CharsetUtil.getDecoder(CharsetUtil.UTF_8);
+  @NotNull
+  public static CharBuffer readIntoCharBuffer(@NotNull CharsetDecoder decoder, @NotNull ByteBuf buffer, int byteCount, @Nullable CharBuffer charBuffer) throws CharacterCodingException {
     ByteBuffer in = buffer.nioBuffer(buffer.readerIndex(), byteCount);
     if (charBuffer == null) {
-      charBuffer = CharBuffer.allocate((int) ((double) in.remaining() * decoder.maxCharsPerByte()));
+      charBuffer = CharBuffer.allocate((int)((float)in.remaining() * decoder.maxCharsPerByte()));
     }
-    try {
-      CoderResult cr = decoder.decode(in, charBuffer, true);
-      if (!cr.isUnderflow()) {
-        cr.throwException();
-      }
-      cr = decoder.flush(charBuffer);
-      if (!cr.isUnderflow()) {
-        cr.throwException();
-      }
+
+    CoderResult cr = decoder.decode(in, charBuffer, true);
+    if (!cr.isUnderflow()) {
+      cr.throwException();
     }
-    catch (CharacterCodingException x) {
-      throw new IllegalStateException(x);
+    cr = decoder.flush(charBuffer);
+    if (!cr.isUnderflow()) {
+      cr.throwException();
     }
 
     buffer.skipBytes(byteCount);
@@ -59,6 +48,20 @@ public final class ChannelBufferToString {
     String string = Integer.toString(value);
     for (int i = 0; i < string.length(); i++) {
       buffer.writeByte(string.charAt(i));
+    }
+  }
+
+  // we can produce char sequence CharSequence result = CharsetUtil.UTF_8.decode(buffer.nioBuffer(buffer.readerIndex(), required));
+  // but later, in JsonReaderEx, it will be toString in any case, so, in this case, intermediate java.nio.HeapCharBuffer will be created - so, we stay with String
+  // we must return string on subSequence() - JsonReaderEx will call toString in any case
+  public static final class MyCharArrayCharSequence extends CharArrayCharSequence {
+    public MyCharArrayCharSequence(@NotNull CharBuffer charBuffer) {
+      super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position());
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+      return start == 0 && end == length() ? this : new String(myChars, myStart + start, end - start);
     }
   }
 }

@@ -38,8 +38,10 @@ public interface GraphChanges<NodeId> {
   interface Edge<NodeId> {
     @Nullable
     NodeId upNodeId();
+
     @Nullable
     NodeId downNodeId();
+
     @Nullable
     NodeId targetId();
 
@@ -78,10 +80,6 @@ public interface GraphChanges<NodeId> {
       myDownNodeId = downNodeId;
       myTargetId = targetId;
       myRemoved = removed;
-    }
-
-    public EdgeImpl(NodeId upNodeId, NodeId downNodeId, boolean removed) {
-      this(upNodeId, downNodeId, null, removed);
     }
 
     @Nullable

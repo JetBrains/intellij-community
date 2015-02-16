@@ -17,6 +17,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
@@ -52,6 +53,7 @@ import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -323,6 +325,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
                                  UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
       return null;
     }
+    updateHistory(project, language);
     return result.getResultObject();
   }
 
@@ -350,5 +353,20 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     finally {
       token.finish();
     }
+  }
+
+  private static void updateHistory(@NotNull Project project, @NotNull Language language) {
+    String[] values = PropertiesComponent.getInstance(project).getValues(ScratchFileService.class.getName());
+    List<String> lastUsed = ContainerUtil.newArrayListWithCapacity(5);
+    lastUsed.add(language.getID());
+    if (values != null) {
+      for (String value : values) {
+        if (!lastUsed.contains(value)) {
+          lastUsed.add(value);
+        }
+        if (lastUsed.size() == 5) break;
+      }
+    }
+    PropertiesComponent.getInstance(project).setValues(ScratchFileService.class.getName(), ArrayUtil.toStringArray(lastUsed));
   }
 }

@@ -159,8 +159,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   private FrameDiffTool getFittedTool() {
     List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
     for (DiffTool tool : myToolOrder) {
-      if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        tools.add((FrameDiffTool)tool);
+      try {
+        if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
+          tools.add((FrameDiffTool)tool);
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
 
@@ -173,8 +178,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   private List<FrameDiffTool> getAvailableFittedTools() {
     List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
     for (DiffTool tool : myAvailableTools) {
-      if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-        tools.add((FrameDiffTool)tool);
+      try {
+        if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
+          tools.add((FrameDiffTool)tool);
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
 
@@ -237,7 +247,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState = createState();
       myState.init();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
       myState = new ErrorState(new ErrorDiffRequest("Error: can't show diff"), getFittedTool());
       myState.init();
@@ -725,6 +735,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   private class MyPanel extends JPanel implements DataProvider {
     public MyPanel() {
       super(new BorderLayout());
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension windowSize = DiffUtil.getDefaultDiffPanelSize();
+      Dimension size = super.getPreferredSize();
+      return new Dimension(Math.max(windowSize.width, size.width), Math.max(windowSize.height, size.height));
     }
 
     @Nullable

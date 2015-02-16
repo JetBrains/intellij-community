@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -29,6 +31,7 @@ import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Calendar;
 
@@ -45,20 +48,20 @@ public final class Responses {
                                 ? new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
                                 : new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
     if (contentType != null) {
-      response.headers().set(HttpHeaders.Names.CONTENT_TYPE, contentType);
+      response.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
     }
     return response;
   }
 
   public static void setDate(@NotNull HttpResponse response) {
-    if (!response.headers().contains(HttpHeaders.Names.DATE)) {
-      HttpHeaders.setDateHeader(response, HttpHeaders.Names.DATE, Calendar.getInstance().getTime());
+    if (!response.headers().contains(HttpHeaderNames.DATE)) {
+      HttpHeaders.setDateHeader(response, HttpHeaderNames.DATE, Calendar.getInstance().getTime());
     }
   }
 
   public static void addNoCache(@NotNull HttpResponse response) {
-    response.headers().add(HttpHeaders.Names.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
-    response.headers().add(HttpHeaders.Names.PRAGMA, "no-cache");
+    response.headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
+    response.headers().add(HttpHeaderNames.PRAGMA, "no-cache");
   }
 
   @Nullable
@@ -74,13 +77,13 @@ public final class Responses {
 
   public static void addServer(@NotNull HttpResponse response) {
     if (getServerHeaderValue() != null) {
-      response.headers().add(HttpHeaders.Names.SERVER, getServerHeaderValue());
+      response.headers().add(HttpHeaderNames.SERVER, getServerHeaderValue());
     }
   }
 
   public static void send(@NotNull HttpResponse response, Channel channel, @Nullable HttpRequest request) {
-    if (response.status() != HttpResponseStatus.NOT_MODIFIED && !HttpHeaders.isContentLengthSet(response)) {
-      HttpHeaders.setContentLength(response,
+    if (response.status() != HttpResponseStatus.NOT_MODIFIED && !HttpHeaderUtil.isContentLengthSet(response)) {
+      HttpHeaderUtil.setContentLength(response,
                                    response instanceof FullHttpResponse ? ((FullHttpResponse)response).content().readableBytes() : 0);
     }
 
@@ -89,8 +92,8 @@ public final class Responses {
   }
 
   public static boolean addKeepAliveIfNeed(HttpResponse response, HttpRequest request) {
-    if (HttpHeaders.isKeepAlive(request)) {
-      HttpHeaders.setKeepAlive(response, true);
+    if (HttpHeaderUtil.isKeepAlive(request)) {
+      HttpHeaderUtil.setKeepAlive(response, true);
       return true;
     }
     return false;
@@ -149,8 +152,8 @@ public final class Responses {
     }
     builder.append("<hr/><p style=\"text-align: center\">").append(StringUtil.notNullize(getServerHeaderValue(), "")).append("</p>");
 
-    DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.copiedBuffer(builder, CharsetUtil.UTF_8));
-    response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html");
+    DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(builder), CharsetUtil.UTF_8));
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
     return response;
   }
 }

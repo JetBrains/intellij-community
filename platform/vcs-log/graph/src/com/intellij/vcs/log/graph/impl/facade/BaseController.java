@@ -20,8 +20,8 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BaseLinearGraphController extends CascadeLinearGraphController {
-  public BaseLinearGraphController(@NotNull PermanentGraphInfo permanentGraphInfo) {
+public class BaseController extends CascadeController {
+  public BaseController(@NotNull PermanentGraphInfo permanentGraphInfo) {
     super(null, permanentGraphInfo);
   }
 

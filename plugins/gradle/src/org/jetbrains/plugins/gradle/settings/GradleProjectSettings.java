@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class GradleProjectSettings extends ExternalProjectSettings {
 
   @Nullable private String myGradleHome;
-  @Nullable private String myGradleJvm;
+  @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;;
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
 

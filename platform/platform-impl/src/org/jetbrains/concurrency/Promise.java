@@ -118,24 +118,12 @@ public abstract class Promise<T> {
   public abstract Promise<T> done(@NotNull Consumer<T> done);
 
   @NotNull
-  public Promise<T> done(@NotNull ConsumerRunnable done) {
-    //noinspection unchecked
-    return done((Consumer<T>)done);
-  }
-
-  @NotNull
   public abstract Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled);
-
-  @NotNull
-  public Promise<Void> then(@NotNull ConsumerRunnable done) {
-    //noinspection unchecked
-    return then((Function<T, Void>)done);
-  }
 
   @NotNull
   public abstract Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
-  public abstract void processed(@NotNull Consumer<T> processed);
+  public abstract Promise<T> processed(@NotNull Consumer<T> processed);
 
   @NotNull
   public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done);

@@ -307,7 +307,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       mySchemes.remove(existing);
 
       if (existing instanceof ExternalizableScheme) {
-        //noinspection unchecked
+        //noinspection unchecked,CastConflictsWithInstanceof
         myProcessor.onSchemeDeleted((E)existing);
       }
     }
@@ -424,7 +424,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       scheme = myProcessor.readScheme(new Document((Element)element.detach()));
     }
     if (scheme != null) {
-      scheme.getExternalInfo().setHash(JDOMUtil.getTreeHash(element));
+      scheme.getExternalInfo().setHash(JDOMUtil.getTreeHash(element, true));
     }
     return scheme;
   }
@@ -446,11 +446,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private String getFileFullPath(@NotNull String subPath) {
     return myFileSpec + '/' + subPath;
-  }
-
-  @Override
-  public boolean isImportAvailable() {
-    return false;
   }
 
   @Override
@@ -541,7 +536,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
     String fileName = fileNameWithoutExtension + mySchemeExtension;
 
-    int newHash = JDOMUtil.getTreeHash(element);
+    int newHash = JDOMUtil.getTreeHash(element, true);
     if (currentFileNameWithoutExtension == fileNameWithoutExtension && newHash == externalInfo.getHash()) {
       return;
     }
@@ -661,8 +656,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Override
-  protected void onSchemeDeleted(@NotNull Scheme toDelete) {
-    super.onSchemeDeleted(toDelete);
+  protected void schemeDeleted(@NotNull Scheme toDelete) {
+    super.schemeDeleted(toDelete);
 
     if (toDelete instanceof ExternalizableScheme) {
       ContainerUtilRt.addIfNotNull(myFilesToDelete, ((ExternalizableScheme)toDelete).getExternalInfo().getCurrentFileName());
@@ -670,16 +665,19 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Override
-  protected void onSchemeAdded(@NotNull T scheme) {
-    if (scheme instanceof ExternalizableScheme) {
-      String fileName = ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName();
-      if (fileName != null) {
-        myFilesToDelete.remove(fileName);
-      }
-      if (myProvider != null && myProvider.isEnabled()) {
-        // do not save locally
-        ((ExternalizableScheme)scheme).getExternalInfo().markRemote();
-      }
+  protected void schemeAdded(@NotNull T scheme) {
+    if (!(scheme instanceof ExternalizableScheme)) {
+      return;
+    }
+
+    ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
+    String fileName = externalInfo.getCurrentFileName();
+    if (fileName != null) {
+      myFilesToDelete.remove(fileName);
+    }
+    if (myProvider != null && myProvider.isEnabled()) {
+      // do not save locally
+      externalInfo.markRemote();
     }
   }
 }
