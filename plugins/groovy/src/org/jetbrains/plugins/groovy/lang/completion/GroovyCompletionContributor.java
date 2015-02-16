@@ -209,6 +209,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   public GroovyCompletionContributor() {
+    GrMethodOverrideCompletionProvider.register(this);
     //provide 'this' and 'super' completions in ClassName.<caret>
     extend(CompletionType.BASIC, AFTER_DOT, new CompletionProvider<CompletionParameters>() {
       @Override
