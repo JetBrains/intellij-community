@@ -23,9 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
@@ -62,8 +60,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
       @Override
       public void run() {
         for (VirtualFile file : files) {
-          VirtualFileSystem fs = file.getFileSystem();
-          if (fs instanceof LocalFileSystem && file instanceof NewVirtualFile) {
+          if (file instanceof NewVirtualFile) {
             ((NewVirtualFile)file).markDirtyRecursively();
           }
         }
