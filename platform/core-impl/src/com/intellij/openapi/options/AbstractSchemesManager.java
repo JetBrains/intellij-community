@@ -48,10 +48,10 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
     else {
       //noinspection unchecked
-      renameScheme((E)scheme, UniqueNameGenerator.generateUniqueName(scheme.getName(), collectExistingNames(mySchemes)));
+      renameScheme((ExternalizableScheme)scheme, UniqueNameGenerator.generateUniqueName(scheme.getName(), collectExistingNames(mySchemes)));
       mySchemes.add(scheme);
     }
-    onSchemeAdded(scheme);
+    schemeAdded(scheme);
     checkCurrentScheme(scheme);
   }
 
@@ -73,7 +73,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   @Override
   public void clearAllSchemes() {
     for (T myScheme : mySchemes) {
-      onSchemeDeleted(myScheme);
+      schemeDeleted(myScheme);
     }
     mySchemes.clear();
   }
@@ -113,14 +113,14 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     for (int i = 0, n = mySchemes.size(); i < n; i++) {
       T s = mySchemes.get(i);
       if (scheme.getName().equals(s.getName())) {
-        onSchemeDeleted(s);
+        schemeDeleted(s);
         mySchemes.remove(i);
         break;
       }
     }
   }
 
-  protected void onSchemeDeleted(@NotNull Scheme toDelete) {
+  protected void schemeDeleted(@NotNull Scheme toDelete) {
     if (myCurrentScheme == toDelete) {
       myCurrentScheme = null;
     }
@@ -136,40 +136,12 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     return names;
   }
 
-  protected abstract void onSchemeAdded(@NotNull T scheme);
+  protected abstract void schemeAdded(@NotNull T scheme);
 
-  protected void renameScheme(@NotNull E scheme, @NotNull String newName) {
+  protected static void renameScheme(@NotNull ExternalizableScheme scheme, @NotNull String newName) {
     if (!newName.equals(scheme.getName())) {
       scheme.setName(newName);
       LOG.assertTrue(newName.equals(scheme.getName()));
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  @NotNull
-  @Override
-  public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
-    return Collections.emptyList();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  @NotNull
-  public Collection<SharedScheme<E>> loadSharedSchemes() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public boolean isShared(@NotNull Scheme scheme) {
-    return false;
-  }
-
-  @Override
-  public boolean isExportAvailable() {
-    return false;
-  }
-
-  @Override
-  public void exportScheme(@NotNull final E scheme, final String name, final String description) {
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.List;
 public class ToolAction extends AnAction implements DumbAware {
   private final String myActionId;
 
-  public ToolAction(Tool tool) {
+  public ToolAction(@NotNull Tool tool) {
     myActionId = tool.getActionId();
     getTemplatePresentation().setText(tool.getName(), false);
     getTemplatePresentation().setDescription(tool.getDescription());
