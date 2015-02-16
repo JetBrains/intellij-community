@@ -136,17 +136,31 @@ public class TaskUiUtil {
 
         final T selected = getSelectedItem();
         if (selected != null) {
-          if (!selected.equals(extra) && !myResult.contains(selected) && addSelectedItemIfMissing()) {
-            myComboBox.addItem(selected);
+          if (!selected.equals(extra) && !myResult.contains(selected)) {
+            if (addSelectedItemIfMissing()) {
+              myComboBox.addItem(selected);
+              myComboBox.setSelectedItem(selected);
+            }
+            else {
+              selectFirstItem();
+            }
           }
-          myComboBox.setSelectedItem(selected);
+          else {
+            myComboBox.setSelectedItem(selected);
+          }
         }
-        else if (myComboBox.getItemCount() > 0) {
-          myComboBox.setSelectedIndex(0);
+        else {
+          selectFirstItem();
         }
       }
       else {
         handleError();
+      }
+    }
+
+    private void selectFirstItem() {
+      if (myComboBox.getItemCount() > 0) {
+        myComboBox.setSelectedIndex(0);
       }
     }
 

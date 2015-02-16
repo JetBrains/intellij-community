@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
@@ -84,7 +85,7 @@ public class OpenTaskDialog extends DialogWrapper {
     binder.reset();
 
     myTaskStateLabel.setLabelFor(myTaskStateCombo);
-    if (!TaskStateCombo.taskStateSupported(task)) {
+    if (!TaskStateCombo.isStateSupportedFor(task)) {
       myTaskStateLabel.setVisible(false);
       myTaskStateCombo.setVisible(false);
     }
@@ -283,6 +284,12 @@ public class OpenTaskDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTaskStateCombo = new TaskStateCombo(myProject, myTask);
+    myTaskStateCombo = new TaskStateCombo(myProject, myTask) {
+      @Nullable
+      @Override
+      protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {
+        return repository.getPreferredOpenTaskState();
+      }
+    };
   }
 }

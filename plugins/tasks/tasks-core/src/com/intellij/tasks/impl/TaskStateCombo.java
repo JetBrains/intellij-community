@@ -19,14 +19,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
  */
-public class TaskStateCombo extends JPanel {
+public abstract class TaskStateCombo extends JPanel {
   private static final CustomTaskState DO_NOT_UPDATE_STATE = new CustomTaskState("", "-- do not update --");
 
-  public static boolean taskStateSupported(@Nullable Task task) {
+  public static boolean isStateSupportedFor(@Nullable Task task) {
     if (task == null || !task.isIssue()) {
       return false;
     }
@@ -77,27 +79,21 @@ public class TaskStateCombo extends JPanel {
   }
 
   public boolean scheduleUpdate() {
-    if (myProject != null && taskStateSupported(myTask)) {
+    if (myProject != null && isStateSupportedFor(myTask)) {
       final JComboBox comboBox = myKindCombo.getComboBox();
       final TaskRepository repository = myTask.getRepository();
       assert repository != null;
       new ComboBoxUpdater<CustomStateTrinityAdapter>(myProject, "Fetching available task states...", comboBox) {
         @NotNull
         @Override
-        protected java.util.List<CustomStateTrinityAdapter> fetch(@NotNull ProgressIndicator indicator) throws Exception {
-          return ContainerUtil
-            .map(repository.getAvailableTaskStates(myTask), new Function<CustomTaskState, CustomStateTrinityAdapter>() {
-              @Override
-              public CustomStateTrinityAdapter fun(CustomTaskState state) {
-                return new CustomStateTrinityAdapter(state);
-              }
-            });
+        protected List<CustomStateTrinityAdapter> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+          return CustomStateTrinityAdapter.wrapList(repository.getAvailableTaskStates(myTask));
         }
 
         @Nullable
         @Override
         public CustomStateTrinityAdapter getSelectedItem() {
-          final CustomTaskState state = repository.getPreferredOpenTaskState();
+          final CustomTaskState state = getPreferredState(repository, CustomStateTrinityAdapter.unwrapList(myResult));
           return state != null ? new CustomStateTrinityAdapter(state) : null;
         }
 
@@ -134,12 +130,41 @@ public class TaskStateCombo extends JPanel {
     return myKindCombo.getComboBox();
   }
 
+  /**
+   * Determine what state should be initially selected in the list.
+   * @param repository task repository to communicate with
+   * @param available  tasks states already downloaded from the repository
+   * @return task state to select
+   */
+  @Nullable
+  protected abstract CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available);
+
   private static class CustomStateTrinityAdapter extends Trinity<String, Icon, String> {
     final CustomTaskState myState;
 
     public CustomStateTrinityAdapter(@NotNull CustomTaskState state) {
       super(state.getPresentableName(), null, state.getId());
       myState = state;
+    }
+
+    @NotNull
+    static List<CustomStateTrinityAdapter> wrapList(@NotNull Collection<CustomTaskState> states) {
+      return ContainerUtil.map(states, new Function<CustomTaskState, CustomStateTrinityAdapter>() {
+        @Override
+        public CustomStateTrinityAdapter fun(CustomTaskState state) {
+          return new CustomStateTrinityAdapter(state);
+        }
+      });
+    }
+
+    @NotNull
+    static List<CustomTaskState> unwrapList(@NotNull Collection<CustomStateTrinityAdapter> wrapped) {
+      return ContainerUtil.map(wrapped, new Function<CustomStateTrinityAdapter, CustomTaskState>() {
+        @Override
+        public CustomTaskState fun(CustomStateTrinityAdapter adapter) {
+          return adapter.myState;
+        }
+      });
     }
   }
 }
