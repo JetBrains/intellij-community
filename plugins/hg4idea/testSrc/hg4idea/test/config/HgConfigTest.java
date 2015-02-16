@@ -20,7 +20,12 @@ public class HgConfigTest extends HgPlatformTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    prepareSecondRepository();
+    try {
+      prepareSecondRepository();
+    }
+    catch (Throwable e) {
+      tearDown();
+    }
   }
 
   public void testDefaultPathInClonedRepo() {
