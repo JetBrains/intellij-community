@@ -99,17 +99,18 @@ public class EduStepicConnector {
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
-    final List<Lesson> lessons =
-      HttpRequests.request(stepicApiUrl + "sections/" + String.valueOf(sectionId))
-        .connect(new HttpRequests.RequestProcessor<List<Lesson>>() {
 
-          @Override
-          public List<Lesson> process(@NotNull HttpRequests.Request request) throws IOException {
-            final BufferedReader reader = request.getReader();
-            Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-            return gson.fromJson(reader, Course.class).getLessons();
-          }
-        });
+    final SectionWrapper sectionWrapper = HttpRequests.request(stepicApiUrl + "sections/" + String.valueOf(sectionId))
+      .connect(new HttpRequests.RequestProcessor<SectionWrapper>() {
+
+        @Override
+        public SectionWrapper process(@NotNull HttpRequests.Request request) throws IOException {
+          final BufferedReader reader = request.getReader();
+          Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+          return gson.fromJson(reader, SectionWrapper.class);
+        }
+      });
+    final List<Lesson> lessons = getSortedLessons(sectionWrapper);
     for (Lesson lesson : lessons) {
       lesson.taskList = new ArrayList<Task>();
       for (Integer s : lesson.steps) {
@@ -130,6 +131,27 @@ public class EduStepicConnector {
         lesson.taskList.add(task);
       }
     }
+    return lessons;
+  }
+
+  @NotNull
+  private static List<Lesson> getSortedLessons(SectionWrapper sectionWrapper) {
+    final List<Lesson> lessons = sectionWrapper.lessons;
+
+    final List<Integer> units = sectionWrapper.sections.get(0).units;
+    final List<SectionWrapper.Unit> wrapperUnits = sectionWrapper.units;
+
+    final HashMap<Integer, Integer> unitsMap = new HashMap<Integer, Integer>();
+    for (SectionWrapper.Unit unit : wrapperUnits) {
+      unitsMap.put(unit.lesson, unit.id);
+    }
+    Collections.sort(lessons, new Comparator<Lesson>() {
+      @Override
+      public int compare(Lesson l1, Lesson l2) {
+
+        return units.indexOf(unitsMap.get(l1.id)) - units.indexOf(unitsMap.get(l2.id));
+      }
+    });
     return lessons;
   }
 
@@ -321,4 +343,20 @@ public class EduStepicConnector {
     }
   }
 
+  static class SectionWrapper {
+    static class Section {
+      List<Integer> units;
+    }
+
+    List<Section> sections;
+    List<Lesson> lessons;
+
+    static class Unit {
+      int id;
+      int lesson;
+    }
+
+    List<Unit> units;
+
+  }
 }
