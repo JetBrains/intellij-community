@@ -18,8 +18,10 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,8 +38,14 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   private LanguageLevelCombo myLanguageLevelCombo;
   private JPanel myPanel = new JPanel(new GridBagLayout());
 
-  public LanguageLevelConfigurable() {
-    myLanguageLevelCombo = new LanguageLevelCombo(ProjectBundle.message("project.language.level.combo.item"));
+  public LanguageLevelConfigurable(final Project project) {
+    myLanguageLevelCombo = new LanguageLevelCombo(ProjectBundle.message("project.language.level.combo.item")) {
+      @Override
+      protected LanguageLevel getDefaultLevel() {
+        return LanguageLevelProjectExtensionImpl.getInstanceImpl(project).getCurrentLevel();
+      }
+    };
+    myLanguageLevelCombo.addDefaultItem();
     myLanguageLevelCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -82,8 +90,4 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   public abstract LanguageLevelModuleExtensionImpl getLanguageLevelExtension();
-
-  public void addProjectDefault(LanguageLevel projectDefault) {
-    myLanguageLevelCombo.updateDefaultLevel(projectDefault);
-  }
 }
