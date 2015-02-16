@@ -87,7 +87,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         // text does not fit visible area - show link
         if (node instanceof XValueNodeImpl) {
           final String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
-          if (rawValue != null) {
+          if (!StringUtil.isEmpty(rawValue)) {
             myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);
