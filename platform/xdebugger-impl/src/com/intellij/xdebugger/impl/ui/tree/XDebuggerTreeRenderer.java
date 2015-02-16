@@ -15,7 +15,11 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -33,6 +37,12 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
+import java.text.CharacterIterator;
 
 /**
  * @author nik
@@ -123,6 +133,53 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else {
       super.doPaint(g);
     }
+  }
+
+  @Override
+  protected void doDrawString(Graphics2D g, String text, int x, int y) {
+    TextLayout layout = createTextLayout(text, g.getFont(), g.getFontRenderContext());
+    if (layout != null) {
+      layout.draw(g, x, y);
+    }
+  }
+
+  @Override
+  protected int computeStringWidth(String text, Font font) {
+    TextLayout layout = createTextLayout(text, font, getFontMetrics(font).getFontRenderContext());
+    if (layout != null) {
+      return (int)layout.getAdvance();
+    }
+    return 0;
+  }
+
+  @Nullable
+  private static TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
+    if (StringUtil.isEmpty(text)) return null;
+    FontPreferences fontPreferences = EditorColorsManager.getInstance().getGlobalScheme().getFontPreferences();
+    AttributedString string = new AttributedString(text);
+    int start = 0;
+    int end = text.length();
+    AttributedCharacterIterator it = string.getIterator(new AttributedCharacterIterator.Attribute[0], start, end);
+    Font currentFont = basefont;
+    int currentIndex = start;
+    for(char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      Font font = basefont;
+      if (!font.canDisplay(c)) {
+        font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, basefont.getStyle(), fontPreferences).getFont();
+      }
+      int i = it.getIndex();
+      if (!font.equals(currentFont)) {
+        if (i > currentIndex) {
+          string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, i);
+        }
+        currentFont = font.deriveFont(basefont.getSize2D());
+        currentIndex = i;
+      }
+    }
+    if (currentIndex < end) {
+      string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
+    }
+    return new TextLayout(string.getIterator(), fontRenderContext);
   }
 
   @NotNull
