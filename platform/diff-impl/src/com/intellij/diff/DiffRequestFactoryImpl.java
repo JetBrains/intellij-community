@@ -47,7 +47,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @NotNull
   public ContentDiffRequest createClipboardVsValue(@NotNull String value) {
     DiffContent content1 = myContentFactory.createClipboardContent();
-    DiffContent content2 = myContentFactory.create(value, null);
+    DiffContent content2 = myContentFactory.create(value);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
     String title2 = DiffBundle.message("diff.content.selected.value");
