@@ -78,7 +78,7 @@ NSString* getOSXVersion(){
 }
 
 void openUrl(){
-    CFURLRef url = (__bridge CFURLRef)[NSURL URLWithString:@"http://support.apple.com/kb/DL1572"];
+    CFURLRef url = (__bridge CFURLRef)[NSURL URLWithString:@"http://support.apple.com/kb/DL1572?viewlocale=en_US&locale=en_US"];
     NSString *fileString =  @"/Applications/Safari.app/";
     
     FSRef appFSURL;
@@ -105,7 +105,7 @@ void openUrl(){
     //kLSRolesAll - the role with which the applicaiton is to be opened (kLSRolesAll accepts any)
     
     if (stat<0) {
-        NSLog(@"Can not open the url (http://support.apple.com/kb/DL1572) with the Safari");
+        NSLog(@"Can not open the url (http://support.apple.com/kb/DL1572?viewlocale=en_US&locale=en_US) with the Safari");
     }
 }
 
@@ -480,7 +480,7 @@ BOOL validationJavaVersion(){
     if (vm == nil) {
         NSString *title = @"Java not found";
         NSString *message = [getBundleName() stringByAppendingString:@" was unable to find a valid JVM. Please download it from:"];
-        NSString *link = @"http://support.apple.com/kb/DL1572";
+        NSString *link = @"http://support.apple.com/kb/DL1572?viewlocale=en_US&locale=en_US";
         [self performSelectorOnMainThread:@selector(alert:) withObject:@[title, message, link] waitUntilDone:true];
 
         NSLog(@"Cannot find matching VM, aborting");
