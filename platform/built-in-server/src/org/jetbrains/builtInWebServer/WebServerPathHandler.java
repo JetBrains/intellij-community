@@ -31,7 +31,7 @@ import java.net.URI;
  * By default {@link WebServerPathToFileManager} will be used to map request to file.
  * If file physically exists in the file system, you must use {@link WebServerRootsProvider}.
  *
- * Consider to extend {@link WebServerPathHandlerAdapter} instead of implement low-level {@link #process(String, com.intellij.openapi.project.Project, io.netty.handler.codec.http.FullHttpRequest, io.netty.channel.Channel, String, String, boolean)}
+ * Consider to extend {@link WebServerPathHandlerAdapter} instead of implement low-level {@link #process)}
  */
 public abstract class WebServerPathHandler {
   static final ExtensionPointName<WebServerPathHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerPathHandler");
@@ -46,9 +46,9 @@ public abstract class WebServerPathHandler {
 
   protected static void redirectToDirectory(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull String path) {
     FullHttpResponse response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY);
-    URI url = VfsUtil.toUri("http://" + HttpHeaders.getHost(request) + '/' + path + '/');
+    URI url = VfsUtil.toUri("http://" + request.headers().get(HttpHeaderNames.HOST) + '/' + path + '/');
     BuiltInWebServer.LOG.assertTrue(url != null);
-    response.headers().add(HttpHeaders.Names.LOCATION, url.toASCIIString());
+    response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString());
     Responses.send(response, channel, request);
   }
 

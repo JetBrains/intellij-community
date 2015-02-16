@@ -74,7 +74,7 @@ public class BuiltInServer implements Disposable {
       bootstrap.childHandler(new ChannelInitializer() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
-          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler, ChannelExceptionHandler.getInstance());
+          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
         }
       });
     }
@@ -85,7 +85,7 @@ public class BuiltInServer implements Disposable {
         protected void initChannel(Channel channel) throws Exception {
           channel.pipeline().addLast(channelRegistrar);
           NettyUtil.addHttpServerCodec(channel.pipeline());
-          channel.pipeline().addLast(handler, ChannelExceptionHandler.getInstance());
+          channel.pipeline().addLast(handler);
         }
       });
     }
@@ -175,7 +175,7 @@ public class BuiltInServer implements Disposable {
     }
 
     @Override
-    protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException {
+    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException {
       if (handlers.isEmpty()) {
         // not yet initialized, for example, P2PTransport could add handlers after we bound.
         return false;

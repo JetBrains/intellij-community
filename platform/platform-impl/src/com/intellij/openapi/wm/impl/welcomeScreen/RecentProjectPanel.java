@@ -350,9 +350,25 @@ public class RecentProjectPanel extends JPanel {
 
       fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
 
-      int labelWidth = pathLabel.getWidth();
-      if (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-        return myShortener.getShortPath(action);
+      FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
+      int maxWidth = RecentProjectPanel.this.getWidth() - JBUI.scale(40);
+      if (fm.stringWidth(fullText) > maxWidth) {
+        int left = 1; int right = 1;
+        int center = fullText.length() / 2;
+        String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+        while (fm.stringWidth(s) > maxWidth) {
+          if (left == right) {
+            left++;
+          } else {
+            right++;
+          }
+
+          if (center - left < 0 || center + right >= fullText.length()) {
+            return "";
+          }
+          s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+        }
+        return s;
       }
 
       return fullText;

@@ -806,7 +806,7 @@ public class InferenceSession {
       for (int i = 0; i < freshParameters.length; i++) {
         PsiTypeParameter parameter = freshParameters[i];
         final InferenceVariable var = vars.get(i);
-        final PsiType lub = getLowerBound(var, PsiSubstitutor.EMPTY);
+        final PsiType lub = getLowerBound(var, substitutor);
         if (lub != PsiType.NULL) {
           for (PsiClassType upperBoundType : parameter.getExtendsListTypes()) {
             if (!TypeConversionUtil.isAssignable(upperBoundType, lub)) {

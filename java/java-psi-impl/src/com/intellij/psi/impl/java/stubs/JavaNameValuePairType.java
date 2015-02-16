@@ -68,7 +68,7 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
       }
       else if (child.getTokenType() == JavaElementType.LITERAL_EXPRESSION) {
         value = RecordUtil.intern(tree.getCharTable(), tree.getChildren(child).get(0));
-        value = StringUtil.stripQuotesAroundValue(value);
+        value = StringUtil.unquoteString(value);
       }
     }
     return new PsiNameValuePairStubImpl(parentStub, StringRef.fromString(name), StringRef.fromString(value));

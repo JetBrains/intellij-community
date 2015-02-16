@@ -104,7 +104,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
         }
 
         Object response = invokeHandler(getHandler(xmlRpcServerRequest.getMethodName(), handlers == null ? handlerMapping : handlers), xmlRpcServerRequest);
-        result = Unpooled.copiedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
+        result = Unpooled.wrappedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
       }
       catch (Throwable e) {
         context.channel().close();

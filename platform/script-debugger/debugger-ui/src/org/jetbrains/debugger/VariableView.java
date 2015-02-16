@@ -19,7 +19,6 @@ import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.ConsumerRunnable;
 import org.jetbrains.concurrency.ObsolescentAsyncFunction;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.*;
@@ -489,13 +488,16 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void setValue(@NotNull String expression, @NotNull final XModificationCallback callback) {
         ValueModifier valueModifier = variable.getValueModifier();
         assert valueModifier != null;
-        valueModifier.setValue(variable, expression, getEvaluateContext()).done(new ConsumerRunnable() {
-          @Override
-          public void run() {
-            value = null;
-            callback.valueModified();
-          }
-        }).rejected(createErrorMessageConsumer(callback));
+        //noinspection unchecked
+        valueModifier.setValue(variable, expression, getEvaluateContext())
+          .done(new Consumer() {
+            @Override
+            public void consume(Object o) {
+              value = null;
+              callback.valueModified();
+            }
+          })
+          .rejected(createErrorMessageConsumer(callback));
       }
     };
   }
@@ -621,14 +623,16 @@ public final class VariableView extends XNamedValue implements VariableContext {
       }
 
       final AtomicBoolean evaluated = new AtomicBoolean();
-      ((StringValue)value).getFullString().done(new ConsumerRunnable() {
-        @Override
-        public void run() {
-          if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
-            callback.evaluated(value.getValueString());
+      ((StringValue)value).getFullString()
+        .done(new Consumer<String>() {
+          @Override
+          public void consume(String s) {
+            if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
+              callback.evaluated(value.getValueString());
+            }
           }
-        }
-      }).rejected(createErrorMessageConsumer(callback));
+        })
+        .rejected(createErrorMessageConsumer(callback));
     }
   }
 

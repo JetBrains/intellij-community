@@ -50,7 +50,7 @@ public class RestColorsPage implements ColorSettingsPage {
 
   @NotNull
   public String getDisplayName() {
-    return "ReST file";
+    return "reStructuredText";
   }
 
   public Icon getIcon() {

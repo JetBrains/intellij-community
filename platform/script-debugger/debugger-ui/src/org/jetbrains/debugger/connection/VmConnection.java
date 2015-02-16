@@ -48,7 +48,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
   }
 
   @NotNull
-  public AsyncPromise<Void> opened() {
+  public Promise<Void> opened() {
     return opened;
   }
 

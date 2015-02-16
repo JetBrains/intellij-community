@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,6 @@ public class FileUtilRt {
 
       });
       initSuccess = true;
-      LOG.info("Using NIO-based file deletion");
     }
     catch (Throwable ignored) {
       LOG.info("Was not able to detect NIO API");
@@ -205,23 +204,22 @@ public class FileUtilRt {
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
+  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return getRelativePath(basePath, filePath, separator, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String basePath,
-                                       @NotNull String filePath,
-                                       final char separator,
-                                       final boolean caseSensitive) {
+  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator, boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
-    String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
-    String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
-    if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
+    if (caseSensitive ? basePath.equals(ensureEnds(filePath, separator)) : basePath.equalsIgnoreCase(ensureEnds(filePath, separator))) {
+      return ".";
+    }
+
     int len = 0;
     int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abc/base" and file="/temp/ab"
-    while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
+    CharComparingStrategy strategy = caseSensitive ? CharComparingStrategy.IDENTITY : CharComparingStrategy.CASE_INSENSITIVE;
+    while (len < filePath.length() && len < basePath.length() && strategy.charsEqual(filePath.charAt(len), basePath.charAt(len))) {
       if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;
       }
@@ -797,5 +795,22 @@ public class FileUtilRt {
     catch (NumberFormatException e) {
       return 2500 * KILOBYTE;
     }
+  }
+
+  private interface CharComparingStrategy {
+    CharComparingStrategy IDENTITY = new CharComparingStrategy() {
+      @Override
+      public boolean charsEqual(char ch1, char ch2) {
+        return ch1 == ch2;
+      }
+    };
+    CharComparingStrategy CASE_INSENSITIVE = new CharComparingStrategy() {
+      @Override
+      public boolean charsEqual(char ch1, char ch2) {
+        return StringUtilRt.charsEqualIgnoreCase(ch1, ch2);
+      }
+    };
+
+    boolean charsEqual(char ch1, char ch2);
   }
 }

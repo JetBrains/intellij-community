@@ -162,7 +162,27 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());
           //15.13.1 A method reference expression of the form ArrayType :: new is always exact.
           return factory.createMethodFromText("public " + componentType.createArrayType().getCanonicalText() + " __array__(int i) {return null;}", this);
-        } else {
+        }
+        else {
+          if (getQualifierType() == null) {
+            //ClassType is raw or is a non-static member type of a raw type.
+            PsiClass aClass = containingClass;
+            while (aClass != null) {
+              if (aClass.hasTypeParameters()) {
+                return null;
+              }
+
+              if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+                break;
+              }
+
+              aClass = aClass.getContainingClass();
+
+              if (PsiTreeUtil.isAncestor(aClass, this, true)) {
+                break;
+              }
+            }
+          }
           methods = containingClass.getConstructors();
         }
       }

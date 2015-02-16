@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/6/12
+ * @since 6.11.2012
  */
 public class ImportProjectAction extends ImportModuleAction {
-
-
   @Override
   public void actionPerformed(AnActionEvent e) {
     doImport(null);

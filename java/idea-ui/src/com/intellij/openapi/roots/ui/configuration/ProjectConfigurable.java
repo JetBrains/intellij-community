@@ -28,9 +28,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -43,6 +47,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
@@ -169,6 +174,13 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       @Override
       public void actionPerformed(ActionEvent e) {
         myLanguageLevelCombo.sdkUpdated(myProjectJdkConfigurable.getSelectedProjectJdk());
+        LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).setCurrentLevel(myLanguageLevelCombo.getSelectedLevel());
+      }
+    });
+    myLanguageLevelCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).setCurrentLevel(myLanguageLevelCombo.getSelectedLevel());
       }
     });
   }
@@ -282,7 +294,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
-    if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
+    if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedLevel())) {
       return true;
     }
     final String compilerOutput = getOriginalCompilerOutputUrl();
@@ -303,7 +315,15 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   private void createUIComponents() {
-    myLanguageLevelCombo = new LanguageLevelCombo(JavaCoreBundle.message("default.language.level.description"));
+    myLanguageLevelCombo = new LanguageLevelCombo(JavaCoreBundle.message("default.language.level.description")) {
+      @Override
+      protected LanguageLevel getDefaultLevel() {
+        Sdk sdk = myProjectJdkConfigurable.getSelectedProjectJdk();
+        if (sdk == null) return null;
+        JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+        return version == null ? null : version.getMaxLanguageLevel();
+      }
+    };
     final JTextField textField = new JTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);

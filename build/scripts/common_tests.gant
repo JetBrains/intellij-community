@@ -63,7 +63,7 @@ target('run_tests': 'Run java tests') {
         };
       }
 
-      commonJvmArgs().each { jvmarg(value: it) }
+      commonJvmArgsForTests().each { jvmarg(value: it) }
 
       jvmarg(value: "-Dbootstrap.testcases=$testCase")
 

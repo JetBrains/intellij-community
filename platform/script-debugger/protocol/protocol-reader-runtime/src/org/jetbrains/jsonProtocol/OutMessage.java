@@ -1,22 +1,28 @@
 package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonWriter;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.ByteBufUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public abstract class OutMessage {
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private final StringWriter stringWriter = new StringWriter();
-  public final JsonWriter writer = new JsonWriter(stringWriter);
+  // todo don't want to risk - are we really can release it properly? heap buffer for now
+  private final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
+  public final JsonWriter writer = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(buffer)));
 
   private boolean finalized;
 
@@ -177,13 +183,12 @@ public abstract class OutMessage {
       boolean isNotFirst = false;
       for (OutMessage item : value) {
         if (isNotFirst) {
-          stringWriter.append(',').append(' ');
+          buffer.writeByte(',').writeByte(' ');
         }
         else {
           isNotFirst = true;
         }
 
-        StringBuilder buffer = item.stringWriter.getBuffer();
         if (!item.finalized) {
           item.finalized = true;
           try {
@@ -191,7 +196,7 @@ public abstract class OutMessage {
           }
           catch (IllegalStateException e) {
             if ("Nesting problem.".equals(e.getMessage())) {
-              throw new RuntimeException(item.stringWriter.getBuffer() + "\nparent:\n" + stringWriter.getBuffer(), e);
+              throw new RuntimeException(item.buffer.toString(CharsetToolkit.UTF8_CHARSET) + "\nparent:\n" + buffer.toString(CharsetToolkit.UTF8_CHARSET), e);
             }
             else {
               throw e;
@@ -199,7 +204,7 @@ public abstract class OutMessage {
           }
         }
 
-        stringWriter.append(buffer);
+        buffer.writeBytes(item.buffer);
       }
       writer.endArray();
     }
@@ -218,26 +223,26 @@ public abstract class OutMessage {
     }
   }
 
-  public static void prepareWriteRaw(OutMessage message, String name) throws IOException {
+  public static void prepareWriteRaw(@NotNull OutMessage message, @NotNull String name) throws IOException {
     message.writer.name(name).nullValue();
-    StringBuilder myBuffer = message.stringWriter.getBuffer();
-    myBuffer.delete(myBuffer.length() - "null".length(), myBuffer.length());
+    message.writer.flush();
+    ByteBuf itemBuffer = message.buffer;
+    itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length());
   }
 
-  public static void doWriteRaw(OutMessage message, String rawValue) {
-    message.stringWriter.append(rawValue);
+  public static void doWriteRaw(@NotNull OutMessage message, @NotNull String rawValue) {
+    ByteBufUtil.writeUtf8(message.buffer, rawValue);
   }
 
-  protected final void writeMessage(String name, OutMessage value) {
+  protected final void writeMessage(@NotNull String name, @NotNull OutMessage value) {
     try {
       beginArguments();
       prepareWriteRaw(this, name);
 
-      StringBuilder buffer = value.stringWriter.getBuffer();
       if (!value.finalized) {
         value.close();
       }
-      stringWriter.append(buffer);
+      buffer.writeBytes(value.buffer);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -287,11 +292,11 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeString(String name, CharSequence value) {
+  protected final void writeString(@NotNull String name, CharSequence value) {
     if (value != null) {
       try {
         prepareWriteRaw(this, name);
-        JsonUtil.escape(value, stringWriter.getBuffer());
+        JsonUtil.escape(value, buffer);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -311,7 +316,7 @@ public abstract class OutMessage {
 
   @NotNull
   @SuppressWarnings("UnusedDeclaration")
-  public final CharSequence toJson() {
-    return stringWriter.getBuffer();
+  public final ByteBuf getBuffer() {
+    return buffer;
   }
 }

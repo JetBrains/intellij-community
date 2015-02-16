@@ -1,7 +1,6 @@
 package org.jetbrains.io.jsonRpc;
 
 import com.google.gson.*;
-import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -9,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
@@ -17,9 +17,7 @@ import com.intellij.util.text.CharSequenceBackedByArray;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.util.CharsetUtil;
+import io.netty.buffer.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -28,8 +26,10 @@ import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,13 +88,16 @@ public class JsonRpcServer implements MessageServer {
   }
 
   @Override
-  public void message(@NotNull Client client, @NotNull String message) throws IOException {
+  public void messageReceived(@NotNull Client client, @NotNull CharSequence message, boolean isBinary) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("IN " + message);
     }
 
     JsonReaderEx reader = new JsonReaderEx(message);
-    reader.beginArray();
+    if (!isBinary) {
+      reader.beginArray();
+    }
+
     int messageId = reader.peek() == JsonToken.NUMBER ? reader.nextInt() : -1;
     String domainName = reader.nextString();
     if (domainName.length() == 1) {
@@ -121,7 +124,7 @@ public class JsonRpcServer implements MessageServer {
     Object domain = domainHolder.getValue();
     String command = reader.nextString();
     if (domain instanceof JsonServiceInvocator) {
-      ((JsonServiceInvocator)domain).invoke(command, client, reader, message, messageId);
+      ((JsonServiceInvocator)domain).invoke(command, client, reader, messageId);
       return;
     }
 
@@ -135,8 +138,9 @@ public class JsonRpcServer implements MessageServer {
       parameters = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    reader.endArray();
-    LOG.assertTrue(reader.peek() == JsonToken.END_DOCUMENT);
+    if (!isBinary) {
+      reader.endArray();
+    }
 
     try {
       boolean isStatic = domain instanceof Class;
@@ -152,7 +156,7 @@ public class JsonRpcServer implements MessageServer {
           method.setAccessible(true);
           Object result = method.invoke(isStatic ? null : domain, parameters);
           if (messageId != -1) {
-            client.send(encodeMessage(messageId, null, null, null, new Object[]{result}));
+            client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, null, new Object[]{result}));
           }
           return;
         }
@@ -165,14 +169,15 @@ public class JsonRpcServer implements MessageServer {
     }
   }
 
-  public void sendResponse(int messageId, @NotNull Client client, @Nullable CharSequence rawMessage) {
-    client.send(encodeMessage(messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
+  public void sendResponse(int messageId, @NotNull Client client, @Nullable ByteBuf rawMessage) {
+    client.send(encodeMessage(client.getByteBufAllocator(), messageId, null, null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
   }
 
   public void sendErrorResponse(int messageId, @NotNull Client client, @Nullable CharSequence rawMessage) {
-    client.send(encodeMessage(messageId, "e", null, rawMessage, ArrayUtil.EMPTY_OBJECT_ARRAY));
+    client.send(encodeMessage(client.getByteBufAllocator(), messageId, "e", null, null, new Object[]{rawMessage}));
   }
 
+  @SuppressWarnings("unused")
   public void sendToClients(@NotNull String domain, @NotNull String name) {
     sendToClients(domain, name, null);
   }
@@ -184,11 +189,11 @@ public class JsonRpcServer implements MessageServer {
   }
 
   private <T> void sendToClients(int messageId, @Nullable String domain, @Nullable String command, @Nullable List<AsyncPromise<Pair<Client, T>>> results, Object[] params) {
-    clientManager.send(messageId, encodeMessage(messageId, domain, command, null, params), results);
+    clientManager.send(messageId, encodeMessage(ByteBufAllocator.DEFAULT, messageId, domain, command, null, params), results);
   }
 
-  public boolean sendWithRawPart(@NotNull Client client, @NotNull String domain, @NotNull String command, @Nullable CharSequence rawMessage, Object... params) {
-    client.send(encodeMessage(-1, domain, command, rawMessage, params));
+  public boolean sendWithRawPart(@NotNull Client client, @NotNull String domain, @NotNull String command, @Nullable ByteBuf rawMessage, Object... params) {
+    client.send(encodeMessage(client.getByteBufAllocator(), -1, domain, command, rawMessage, params));
     return true;
   }
 
@@ -199,68 +204,111 @@ public class JsonRpcServer implements MessageServer {
   @NotNull
   public <T> Promise<T> call(@NotNull Client client, @NotNull String domain, @NotNull String command, Object... params) {
     int messageId = messageIdCounter.getAndIncrement();
-    ByteBuf message = encodeMessage(messageId, domain, command, null, params);
+    ByteBuf message = encodeMessage(client.getByteBufAllocator(), messageId, domain, command, null, params);
     AsyncPromise<T> result = client.send(messageId, message);
     LOG.assertTrue(result != null);
     return result;
   }
 
   @NotNull
-  private ByteBuf encodeMessage(int messageId,
+  private ByteBuf encodeMessage(@NotNull ByteBufAllocator byteBufAllocator,
+                                int messageId,
                                 @Nullable String domain,
                                 @Nullable String command,
-                                @Nullable CharSequence rawData,
+                                @Nullable ByteBuf rawData,
                                 @Nullable Object[] params) {
-    StringBuilder sb = new StringBuilder();
+    ByteBuf buffer = byteBufAllocator.ioBuffer();
+    boolean success = false;
     try {
-      doEncodeMessage(sb, messageId, domain, command, params == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : params, rawData);
+      Object[] notNullParams = params == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : params;
+      buffer = doEncodeMessage(byteBufAllocator, buffer, messageId, domain, command, notNullParams, rawData);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("OUT " + sb.toString());
+        LOG.debug("OUT " + domain + '.' + command + (notNullParams.length == 0 ? "" : " " + Arrays.toString(params)) + (rawData == null ? "" : " " + rawData.toString(CharsetToolkit.UTF8_CHARSET)));
       }
-      return Unpooled.copiedBuffer(sb, CharsetUtil.UTF_8);
+      success = true;
+      return buffer;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+    finally {
+      if (!success) {
+        buffer.release();
+      }
+    }
   }
 
-  private void doEncodeMessage(@NotNull StringBuilder sb, int id, @Nullable String domain, @Nullable String command, @NotNull Object[] params, @Nullable CharSequence rawData) throws IOException {
-    sb.append('[');
+  @NotNull
+  private ByteBuf doEncodeMessage(@NotNull ByteBufAllocator byteBufAllocator,
+                                  @NotNull ByteBuf buffer,
+                                  int id,
+                                  @Nullable String domain,
+                                  @Nullable String command,
+                                  @NotNull Object[] params,
+                                  @Nullable ByteBuf rawData) throws IOException {
+    buffer.writeByte('[');
+    ByteBuf effectiveBuffer = buffer;
     boolean hasPrev = false;
+    StringBuilder sb = null;
     if (id != -1) {
-      sb.append(id);
+      sb = new StringBuilder();
+      ByteBufUtil.writeAscii(buffer, sb.append(id));
+      sb.setLength(0);
       hasPrev = true;
     }
 
     if (domain != null) {
       if (hasPrev) {
-        sb.append(',');
+        buffer.writeByte(',');
       }
-      sb.append('"').append(domain).append("\",\"");
-
+      buffer.writeByte('"');
+      ByteBufUtil.writeAscii(buffer, domain);
+      buffer.writeByte('"').writeByte(',').writeByte('"');
       if (command == null) {
         if (rawData != null) {
-          sb.append(rawData);
+          effectiveBuffer = byteBufAllocator.compositeBuffer().addComponent(buffer).addComponent(rawData);
+          buffer = byteBufAllocator.ioBuffer();
         }
-        sb.append('"');
-        return;
+        buffer.writeByte('"');
+        return addBuffer(effectiveBuffer, buffer);
       }
       else {
-        sb.append(command).append('"');
+        ByteBufUtil.writeAscii(buffer, command);
+        buffer.writeByte('"');
       }
     }
 
-    encodeParameters(sb, params, rawData);
-    sb.append(']');
+    encodeParameters(buffer, params, rawData, sb);
+    if (rawData != null) {
+      if (params.length > 0) {
+        buffer.writeByte(',');
+      }
+      effectiveBuffer = byteBufAllocator.compositeBuffer().addComponent(buffer).addComponent(rawData);
+      buffer = byteBufAllocator.ioBuffer();
+    }
+    buffer.writeByte(']');
+
+    buffer.writeByte(']');
+    return addBuffer(effectiveBuffer, buffer);
   }
 
-  private void encodeParameters(@NotNull StringBuilder sb, @NotNull Object[] params, @Nullable CharSequence rawData) throws IOException {
+  @NotNull
+  // addComponent always add sliced component, so, we must add last buffer only after all writes
+  private static ByteBuf addBuffer(@NotNull ByteBuf buffer, @NotNull ByteBuf lastComponent) {
+    if (buffer != lastComponent) {
+      ((CompositeByteBuf)buffer).addComponent(lastComponent);
+      buffer.writerIndex(buffer.capacity());
+    }
+    return buffer;
+  }
+
+  private void encodeParameters(@NotNull ByteBuf buffer, @NotNull Object[] params, @Nullable ByteBuf rawData, @Nullable StringBuilder sb) throws IOException {
     JsonWriter writer = null;
-    sb.append(',').append('[');
+    buffer.writeByte(',').writeByte('[');
     boolean hasPrev = false;
     for (Object param : params) {
       if (hasPrev) {
-        sb.append(',');
+        buffer.writeByte(',');
       }
       else {
         hasPrev = true;
@@ -268,34 +316,53 @@ public class JsonRpcServer implements MessageServer {
 
       // gson - SOE if param has type class com.intellij.openapi.editor.impl.DocumentImpl$MyCharArray, so, use hack
       if (param instanceof CharSequence) {
-        JsonUtil.escape(((CharSequence)param), sb);
+        JsonUtil.escape(((CharSequence)param), buffer);
       }
       else if (param == null) {
-        sb.append("null");
+        ByteBufUtil.writeAscii(buffer, "null");
       }
-      else if (param instanceof Number || param instanceof Boolean) {
-        sb.append(param.toString());
+      else if (param instanceof Boolean) {
+        ByteBufUtil.writeAscii(buffer, param.toString());
+      }
+      else if (param instanceof Number) {
+        if (sb == null) {
+          sb = new StringBuilder();
+        }
+        if (param instanceof Integer) {
+          sb.append(((Integer)param).intValue());
+        }
+        else if (param instanceof Long) {
+          sb.append(((Long)param).longValue());
+        }
+        else if (param instanceof Float) {
+          sb.append(((Float)param).floatValue());
+        }
+        else if (param instanceof Double) {
+          sb.append(((Double)param).doubleValue());
+        }
+        else {
+          sb.append(param.toString());
+        }
+        ByteBufUtil.writeAscii(buffer, sb);
+        sb.setLength(0);
       }
       else if (param instanceof Consumer) {
+        if (sb == null) {
+          sb = new StringBuilder();
+        }
         //noinspection unchecked
         ((Consumer<StringBuilder>)param).consume(sb);
+        ByteBufUtil.writeUtf8(buffer, sb);
+        sb.setLength(0);
       }
       else {
         if (writer == null) {
-          writer = new JsonWriter(Streams.writerForAppendable(sb));
+          writer = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(buffer)));
         }
         //noinspection unchecked
         ((TypeAdapter<Object>)gson.getAdapter(param.getClass())).write(writer, param);
       }
     }
-
-    if (rawData != null) {
-      if (hasPrev) {
-        sb.append(',');
-      }
-      sb.append(rawData);
-    }
-    sb.append(']');
   }
 
   private static class IntArrayListTypeAdapter<T> extends TypeAdapter<T> {

@@ -482,7 +482,7 @@ public class CustomizableActionsPanel {
           setText("-------------");
         }
         else if (userObject instanceof QuickList) {
-          setText(((QuickList)userObject).getDisplayName());
+          setText(((QuickList)userObject).getName());
           icon = AllIcons.Actions.QuickList;
         }
         else {

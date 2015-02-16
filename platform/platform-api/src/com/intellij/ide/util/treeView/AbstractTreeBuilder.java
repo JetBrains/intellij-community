@@ -302,9 +302,9 @@ public class AbstractTreeBuilder implements Disposable {
 
     final ActionCallback result = new ActionCallback();
 
-    getUi().invokeLaterIfNeeded(false, new Runnable() {
+    getUi().invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeBuilder.queueUpdateFrom") {
       @Override
-      public void run() {
+      public void perform() {
         if (updateStructure && forceResort) {
           getUi().incComparatorStamp();
         }
@@ -461,9 +461,9 @@ public class AbstractTreeBuilder implements Disposable {
 
     final Application app = ApplicationManager.getApplication();
     if (app != null) {
-      app.runReadAction(new Runnable() {
+      app.runReadAction(new TreeRunnable("AbstractTreeBuilder.runBackgroundLoading") {
         @Override
-        public void run() {
+        public void perform() {
           runnable.run();
         }
       });

@@ -97,7 +97,7 @@ public class NewScratchFileAction extends DumbAwareAction {
     }
 
     final Ref<Boolean> tenMinuteScratch = Ref.create(false);
-    ListPopup popup = buildLanguagePopup(project, language, new Consumer<Language>() {
+    ListPopup popup = buildLanguageSelectionPopup(project, "New Scratch", language, new Consumer<Language>() {
       @Override
       public void consume(@NotNull Language language) {
         openNewFile(project, language, "", tenMinuteScratch.get());
@@ -141,7 +141,8 @@ public class NewScratchFileAction extends DumbAwareAction {
   }
 
   @NotNull
-  static ListPopup buildLanguagePopup(@NotNull Project project, @Nullable Language context, @NotNull final Consumer<Language> onChoosen) {
+  public static ListPopup buildLanguageSelectionPopup(@NotNull Project project, @NotNull String title,
+                                                      @Nullable Language context, @NotNull final Consumer<Language> onChosen) {
     List<Language> languages = LanguageUtil.getFileLanguages();
     final List<String> ids = ContainerUtil.newArrayList(getLastUsedLanguagesIds(project));
     if (context != null) {
@@ -162,7 +163,7 @@ public class NewScratchFileAction extends DumbAwareAction {
       }
     });
     BaseListPopupStep<Language> step =
-      new BaseListPopupStep<Language>("New Scratch", languages) {
+      new BaseListPopupStep<Language>(title, languages) {
         @NotNull
         @Override
         public String getTextFor(@NotNull Language value) {
@@ -176,7 +177,7 @@ public class NewScratchFileAction extends DumbAwareAction {
 
         @Override
         public PopupStep onChosen(Language selectedValue, boolean finalChoice) {
-          onChoosen.consume(selectedValue);
+          onChosen.consume(selectedValue);
           return null;
         }
 

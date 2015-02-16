@@ -272,11 +272,19 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     final Document hostDocument = hostEditor.getDocument();
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
-    if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
+    if (infoAtCursor == null) {
       intentions.errorFixesToShow.addAll(fixes);
     }
     else {
-      intentions.inspectionFixesToShow.addAll(fixes);
+      final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
+      for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
+        if (fix.notError() || !isError) {
+          intentions.inspectionFixesToShow.add(fix);
+        }
+        else {
+          intentions.errorFixesToShow.add(fix);
+        }
+      }
     }
 
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {

@@ -344,7 +344,7 @@ public class ActionsTreeUtil {
     for (QuickList quickList : quickLists) {
       if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId()))) {
         group.addQuickList(quickList);
-      } else if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering, null)) {
+      } else if (SearchUtil.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null)) {
         group.addQuickList(quickList);
       } else if (filtered == null && StringUtil.isEmpty(filter)) {
         group.addQuickList(quickList);

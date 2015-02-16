@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,6 @@ public final class ExternalInfo {
 
   private boolean myRemote;
 
-  @SuppressWarnings({"UnusedParameters", "unused"})
-  @Deprecated
-  public void setIsImported(boolean isImported) {
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public void setOriginalPath(String originalPath) {
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public boolean isIsImported() {
-    return false;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public String getOriginalPath() {
-    return null;
-  }
-
   public String getCurrentFileName() {
     return myCurrentFileName;
   }
@@ -61,11 +39,12 @@ public final class ExternalInfo {
     myCurrentFileName = externalInfo.myCurrentFileName;
   }
 
+  @Nullable
   public String getPreviouslySavedName() {
     return myPreviouslySavedName;
   }
 
-  public void setPreviouslySavedName(final String previouslySavedName) {
+  public void setPreviouslySavedName(@NotNull String previouslySavedName) {
     myPreviouslySavedName = previouslySavedName;
   }
 
