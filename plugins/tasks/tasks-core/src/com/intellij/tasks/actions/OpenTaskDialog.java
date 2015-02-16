@@ -36,6 +36,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUiUtil.ComboBoxUpdater;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
@@ -107,7 +108,12 @@ public class OpenTaskDialog extends DialogWrapper {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == null) {
-          return new JBLabel("-- no states available --");
+          return new ListCellRendererWrapper<CustomStateTrinityAdapter>() {
+            @Override
+            public void customize(JList list, CustomStateTrinityAdapter value, int index, boolean selected, boolean hasFocus) {
+              setText("-- no states available --");
+            }
+          }.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
         }
         return defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
