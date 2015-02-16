@@ -38,7 +38,10 @@ public abstract class Decoder extends ChannelInboundHandlerAdapter {
         messageReceived(context, input);
       }
       finally {
-        input.release();
+        // client should release buffer as soon as possible, so, input could be released already
+        if (input.refCnt() > 0) {
+          input.release();
+        }
       }
     }
     else {
