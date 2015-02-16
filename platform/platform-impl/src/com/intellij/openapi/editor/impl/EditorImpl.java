@@ -886,6 +886,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
         }
+
+        @Override
+        public Dimension getPreferredSize() {
+          return myScrollPane.getPreferredSize();
+        }
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -434,8 +434,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
       wasSmaller = isSmaller;
-      final String text = myFragments.get(i);
-      result += getFontMetrics(font).stringWidth(text);
+
+      result += computeStringWidth(myFragments.get(i), font);
 
       final int fixedWidth = myFragmentPadding.get(i);
       if (fixedWidth > 0 && result < fixedWidth) {
@@ -444,6 +444,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (mainTextOnly && myMainTextLastIndex >= 0 && i == myMainTextLastIndex) break;
     }
     return result;
+  }
+
+  protected void doDrawString(Graphics2D g, String text, int x, int y) {
+    g.drawString(text, x, y);
+  }
+
+  protected int computeStringWidth(String text, Font font) {
+    return getFontMetrics(font).stringWidth(text);
   }
 
   /**
@@ -477,8 +485,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      final String text = myFragments.get(i);
-      final int curWidth = getFontMetrics(font).stringWidth(text);
+      final int curWidth = computeStringWidth(myFragments.get(i), font);
       if (x >= curX && x < curX + curWidth) {
         return i;
       }
@@ -681,7 +688,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final FontMetrics metrics = g.getFontMetrics(font);
 
       final String fragment = myFragments.get(i);
-      final int fragmentWidth = metrics.stringWidth(fragment);
+      final int fragmentWidth = computeStringWidth(fragment, font);
 
       final int fragmentPadding = myFragmentPadding.get(i);
 
@@ -719,7 +726,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (!attributes.isSearchMatch()) {
         if (shouldDrawMacShadow()) {
           g.setColor(SHADOW_COLOR);
-          g.drawString(fragment, offset, textBaseline + 1);
+          doDrawString(g, fragment, offset, textBaseline + 1);
         }
 
         if (shouldDrawDimmed()) {
@@ -727,7 +734,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         }
 
         g.setColor(color);
-        g.drawString(fragment, offset, textBaseline);
+        doDrawString(g, fragment, offset, textBaseline);
       }
 
       // for some reason strokeState here may be incorrect, resetting the stroke helps
