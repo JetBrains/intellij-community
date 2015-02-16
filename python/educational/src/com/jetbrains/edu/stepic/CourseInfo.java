@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.stepic;
 
 import com.google.gson.annotations.SerializedName;
 

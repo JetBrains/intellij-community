@@ -24,8 +24,12 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.*;
-import com.jetbrains.edu.learning.stepic.StudyStepicConnector;
+import com.jetbrains.edu.learning.StudyLanguageManager;
+import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.stepic.CourseInfo;
+import com.jetbrains.edu.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -50,7 +54,7 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    final Course course = StudyStepicConnector.getCourse(mySelectedCourseInfo);
+    final Course course = EduStepicConnector.getCourse(mySelectedCourseInfo);
     if (course == null) return;
     StudyTaskManager.getInstance(project).setCourse(course);
     flushCourse(course);
@@ -235,7 +239,7 @@ public class StudyProjectGenerator {
       return myCourses;
     }
     else {
-      myCourses = StudyStepicConnector.getCourses();
+      myCourses = EduStepicConnector.getCourses();
       return myCourses;
     }
   }

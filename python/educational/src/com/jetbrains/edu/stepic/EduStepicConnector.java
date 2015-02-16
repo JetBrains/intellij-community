@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.stepic;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -9,7 +9,6 @@ import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.courseFormat.Lesson;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.CourseInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -19,11 +18,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class StudyStepicConnector {
+public class EduStepicConnector {
   private static final String stepicApiUrl = "https://stepic.org/api/";
-  private static final Logger LOG = Logger.getInstance(StudyStepicConnector.class.getName());
+  private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
 
-  private StudyStepicConnector() {}
+  private EduStepicConnector() {}
 
   @NotNull
   public static List<CourseInfo> getCourses() {
