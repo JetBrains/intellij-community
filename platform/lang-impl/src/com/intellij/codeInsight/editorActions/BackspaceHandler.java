@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.injected.editor.EditorWindow;
@@ -109,7 +110,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (offset >= editor.getDocument().getTextLength()) return true;
 
     chars = editor.getDocument().getCharsSequence();
-    if (c == '(' || c == '[' || c == '{'){
+    if ((c == '(' || c == '[' || c == '{') && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
       char c1 = chars.charAt(offset);
       if (c1 != getRightChar(c)) return true;
 
@@ -130,7 +131,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
       editor.getDocument().deleteString(offset, offset + 1);
     }
-    else if (c == '"' || c == '\'' || c == '`'){
+    else if ((c == '"' || c == '\'' || c == '`') && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE){
       char c1 = chars.charAt(offset);
       if (c1 != c) return true;
       if (wasClosingQuote) return true;
