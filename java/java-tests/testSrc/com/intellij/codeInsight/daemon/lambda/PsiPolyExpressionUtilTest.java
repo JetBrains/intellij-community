@@ -131,6 +131,25 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
                                       "  }"));
   }
 
+  public void testPertinentNestedLambdaExpressionWhenTargetIsTypeParameterOfMethod() throws Exception {
+    myFixture.configureByText("Foo.java", "interface Supplier<T> { T get();}" +
+                                          "class Foo {" +
+                                          "      { Supplier<Runnable> x = foo ((<caret>) -> () -> {});}\n" +
+                                          "      static <T> Supplier<T> foo(Supplier<T> delegate) {\n" +
+                                          "          return null;\n" +
+                                          "      }\n" +
+                                          "}");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(elementAtCaret);
+    final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    assertInstanceOf(psiExpression, PsiLambdaExpression.class);
+    final PsiClass aClass = myFixture.findClass("Foo");
+    assertNotNull(aClass);
+    final PsiMethod[] meths = aClass.findMethodsByName("foo", false);
+    assertTrue(meths.length == 1);
+    assertFalse(InferenceSession.isPertinentToApplicability(psiExpression, meths[0]));
+  }
+
   private boolean doTestLambdaPertinent(final String barText) {
     myFixture.configureByText("Foo.java", "import java.util.*;" +
                                           "class Foo {" +
