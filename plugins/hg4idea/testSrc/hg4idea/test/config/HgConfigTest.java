@@ -23,8 +23,13 @@ public class HgConfigTest extends HgPlatformTest {
     try {
       prepareSecondRepository();
     }
-    catch (Throwable e) {
+    catch (Exception e) {
       tearDown();
+      throw e;
+    }
+    catch (Error e) {
+      tearDown();
+      throw e;
     }
   }
 
