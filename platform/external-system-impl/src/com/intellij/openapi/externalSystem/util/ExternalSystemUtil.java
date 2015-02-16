@@ -54,6 +54,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
@@ -482,6 +483,11 @@ public class ExternalSystemUtil {
             .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
         }
 
+        final ExternalSystemTaskActivator externalSystemTaskActivator = ExternalProjectsManager.getInstance(project).getTaskActivator();
+        if (!isPreviewMode && !externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.BEFORE_SYNC)) {
+          return;
+        }
+
         myTask.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
         if(project.isDisposed()) return;
 
@@ -511,6 +517,10 @@ public class ExternalSystemUtil {
           }
 
           callback.onSuccess(externalProject);
+
+          if(!isPreviewMode) {
+            externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+          }
           return;
         }
         if(error instanceof ImportCanceledException) {
