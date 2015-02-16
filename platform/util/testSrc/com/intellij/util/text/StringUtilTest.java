@@ -367,8 +367,8 @@ public class StringUtilTest extends TestCase {
 
   public void testXmlWrapInCDATA() {
     assertEquals("<![CDATA[abcd]]>", XmlStringUtil.wrapInCDATA("abcd"));
-    assertEquals("<![CDATA[abcd]]>]]&gt;", XmlStringUtil.wrapInCDATA("abcd]]>"));
-    assertEquals("<![CDATA[abcd]]>]]&gt;<![CDATA[efgh]]>", XmlStringUtil.wrapInCDATA("abcd]]>efgh"));
-    assertEquals("<![CDATA[123<![CDATA[wow<&>]]>]]&gt;<![CDATA[]]>]]&gt;<![CDATA[<![CDATA[123]]>", XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
+    assertEquals("<![CDATA[abcd]]]><![CDATA[]>]]>", XmlStringUtil.wrapInCDATA("abcd]]>"));
+    assertEquals("<![CDATA[abcd]]]><![CDATA[]>efgh]]>", XmlStringUtil.wrapInCDATA("abcd]]>efgh"));
+    assertEquals("<![CDATA[123<![CDATA[wow<&>]]]><![CDATA[]>]]]><![CDATA[]><![CDATA[123]]>", XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
   }
 }
