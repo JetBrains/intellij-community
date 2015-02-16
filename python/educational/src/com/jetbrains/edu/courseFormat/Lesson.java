@@ -19,7 +19,6 @@ public class Lesson {
   public List<String> tags;
   @Transient
   Boolean is_public;
-  @SerializedName("title")
   @Expose
   private String name;
   @Expose
