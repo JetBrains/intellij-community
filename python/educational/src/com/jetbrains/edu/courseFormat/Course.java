@@ -24,7 +24,7 @@ public class Course {
     this.lessons = lessons;
   }
   public void addLessons(List<Lesson> lessons) {
-    lessons.addAll(lessons);
+    this.lessons.addAll(lessons);
   }
 
   public void addLesson(@NotNull final Lesson lesson) {
