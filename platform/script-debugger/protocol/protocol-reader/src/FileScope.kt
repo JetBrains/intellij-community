@@ -1,25 +1,11 @@
 package org.jetbrains.protocolReader
 
+fun FileScope(globalScope: GlobalScope, stringBuilder: StringBuilder) = FileScope(TextOutput(stringBuilder), globalScope)
 
-fun FileScope(globalScope: GlobalScope, stringBuilder: StringBuilder): FileScope {
-  val __ = FileScope(TextOutput(stringBuilder))
-  `super`(globalScope)
-  return __
-}
+fun FileScope(fileScope: FileScope) = FileScope(fileScope.output, fileScope)
 
-fun FileScope(fileScope: FileScope): FileScope {
-  val __ = FileScope(fileScope.output)
-  `super`(fileScope)
-  return __
-}
+open class FileScope(public val output: TextOutput, globalScope: GlobalScope) : GlobalScope(globalScope.state) {
+  fun newClassScope() = ClassScope(this, asClassScope())
 
-class FileScope(public val output: TextOutput) : GlobalScope() {
-
-  public fun newClassScope(): ClassScope {
-    return ClassScope(this, asClassScope())
-  }
-
-  protected fun asClassScope(): ClassScope? {
-    return null
-  }
+  open protected fun asClassScope(): ClassScope? = null
 }

@@ -1,12 +1,7 @@
 package org.jetbrains.protocolReader
 
-public class ClassScope(fileScope: FileScope, private val parentClass: ClassScope?) : FileScope(fileScope) {
+class ClassScope(fileScope: FileScope, private val parentClass: ClassScope?) : FileScope(fileScope.output, fileScope) {
+  fun getRootClassScope(): ClassScope = if (parentClass == null) this else parentClass.getRootClassScope()
 
-  public fun getRootClassScope(): ClassScope {
-    return if (parentClass == null) this else parentClass.getRootClassScope()
-  }
-
-  override fun asClassScope(): ClassScope? {
-    return this
-  }
+  override fun asClassScope() = this
 }

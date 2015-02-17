@@ -8,48 +8,32 @@ import java.util.*
 
 public class ReaderGenerator {
 
-  public class GenerateConfiguration<ROOT>(private val packageName: String, private val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: Array<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
+  public class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: Array<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
     val basePackagesMap: Collection<Map<Class<*>, String>>
 
     val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>
     val root: ReaderRoot<ROOT>
 
     {
-      this.basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf<Map<Class<*>, String>>(basePackagesMap)
+      this.basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
 
       typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
-      root = ReaderRoot<Any>(readerRootClass, typeToTypeHandler)
+      root = ReaderRoot(readerRootClass, typeToTypeHandler)
     }
-  }
-
-  private trait Params {
-    public fun outputDirectory(): String
   }
 
   private class StringParam {
     public var value: String? = null
-      private set
-
-    public fun setValue(value: String?) {
-      if (value == null) {
-        throw IllegalArgumentException("Argument with value expected")
-      }
-      if (this.value != null) {
-        throw IllegalArgumentException("Argument value already set")
-      }
-      this.value = value
-    }
   }
 
   class object {
-    throws(javaClass<IOException>())
-    public fun generate(args: Array<String>, configuration: GenerateConfiguration<Any>) {
-      val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args).outputDirectory(), configuration.packageName.replace('.', File.separatorChar), configuration.className + ".java"))
+    public fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
+      val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), configuration.className + ".java"))
       generate(configuration, fileUpdater.builder)
       fileUpdater.update()
     }
 
-    private fun parseArgs(args: Array<String>): Params {
+    private fun parseArgs(args: Array<String>): String {
       val outputDirParam = StringParam()
 
       val paramMap = HashMap<String, StringParam>(3)
@@ -75,7 +59,7 @@ public class ReaderGenerator {
           throw IllegalArgumentException("Unrecognized param name: " + key)
         }
         try {
-          paramListener.setValue(value)
+          paramListener.value = value
         }
         catch (e: IllegalArgumentException) {
           throw IllegalArgumentException("Failed to set value of " + key, e)
@@ -84,11 +68,11 @@ public class ReaderGenerator {
       }
       for (en in paramMap.entrySet()) {
         if (en.getValue().value == null) {
-          throw IllegalArgumentException("Parameter " + en.getKey() + " should be set")
+          en.getValue().value = "generated"
         }
       }
 
-      return outputDirParam.getValue
+      return outputDirParam.value!!
     }
 
     public fun buildParserMap(configuration: GenerateConfiguration<*>): Map<Class<*>, String> {
@@ -132,13 +116,13 @@ public class ReaderGenerator {
         }
 
         val originName = typeWriter.typeClass.getCanonicalName()
-        out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeWriter)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<")
+        out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeWriter)).append(TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<")
         out.append(originName).append('>').openBlock()
-        out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(Util.JSON_READER_PARAMETER_DEF)
+        out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(JSON_READER_PARAMETER_DEF)
         out.append(')').openBlock()
         out.append("return ")
         typeWriter.writeInstantiateCode(rootClassScope, out)
-        out.append('(').append(Util.READER_NAME).append(", null);").closeBlock()
+        out.append('(').append(READER_NAME).append(", null);").closeBlock()
         out.closeBlock()
       }
 

@@ -5,7 +5,6 @@ import gnu.trove.THashSet
 
 import java.util.ArrayList
 
-
 public fun GlobalScope(typeWriters: Collection<TypeWriter<*>>, basePackages: Collection<Map<Class<*>, String>>): GlobalScope {
   return GlobalScope(State(typeWriters, basePackages))
 }
@@ -14,8 +13,7 @@ public fun GlobalScope(globalScope: GlobalScope): GlobalScope {
   return GlobalScope(globalScope.state)
 }
 
-public class GlobalScope(private val state: State) {
-
+open public class GlobalScope(val state: State) {
   public fun getTypeImplReference(typeWriter: TypeWriter<*>): String {
     return state.getTypeImplReference(typeWriter)
   }
@@ -35,51 +33,50 @@ public class GlobalScope(private val state: State) {
   public fun getTypeFactories(): List<TypeWriter<*>> {
     return state.typesWithFactoriesList
   }
+}
 
-  private class State(typeWriters: Collection<TypeWriter<*>>, private val basePackages: Collection<Map<Class<*>, String>>) {
-    private var typeToName: Map<TypeWriter<*>, String>
-    private val typesWithFactories = THashSet<E>()
-    private val typesWithFactoriesList = ArrayList<E>()
+private class State(typeWriters: Collection<TypeWriter<*>>, private val basePackages: Collection<Map<Class<*>, String>>) {
+  private var typeToName: Map<TypeWriter<*>, String>
+  private val typesWithFactories = THashSet<TypeWriter<*>>()
+  val typesWithFactoriesList = ArrayList<TypeWriter<*>>();
 
-    {
-
-      var uniqueCode = 0
-      val result = THashMap<K, V>(typeWriters.size())
-      for (handler in typeWriters) {
-        val conflict = result.put(handler, Util.TYPE_NAME_PREFIX + Integer.toString(uniqueCode++))
-        if (conflict != null) {
-          throw RuntimeException()
-        }
+  {
+    var uniqueCode = 0
+    val result = THashMap<TypeWriter<*>, String>(typeWriters.size())
+    for (handler in typeWriters) {
+      val conflict = result.put(handler, TYPE_NAME_PREFIX + Integer.toString(uniqueCode++))
+      if (conflict != null) {
+        throw RuntimeException()
       }
-      typeToName = result
+    }
+    typeToName = result
+  }
+
+  fun getTypeImplReference(typeWriter: TypeWriter<*>): String {
+    val localName = typeToName.get(typeWriter)
+    if (localName != null) {
+      return localName
     }
 
-    fun getTypeImplReference(typeWriter: TypeWriter<*>): String {
-      val localName = typeToName.get(typeWriter)
-      if (localName != null) {
-        return localName
+    for (base in basePackages) {
+      val result = base.get(typeWriter.typeClass)
+      if (result != null) {
+        return result
       }
-
-      for (base in basePackages) {
-        val result = base.get(typeWriter.typeClass)
-        if (result != null) {
-          return result
-        }
-      }
-
-      throw RuntimeException()
     }
 
-    public fun requireFactoryGenerationAndGetName(typeWriter: TypeWriter<*>): String {
-      val name = getTypeImplShortName(typeWriter)
-      if (typesWithFactories.add(typeWriter)) {
-        typesWithFactoriesList.add(typeWriter)
-      }
-      return name
-    }
+    throw RuntimeException()
+  }
 
-    fun getTypeImplShortName(typeWriter: TypeWriter<*>): String {
-      return typeToName.get(typeWriter)
+  public fun requireFactoryGenerationAndGetName(typeWriter: TypeWriter<*>): String {
+    val name = getTypeImplShortName(typeWriter)
+    if (typesWithFactories.add(typeWriter)) {
+      typesWithFactoriesList.add(typeWriter)
     }
+    return name
+  }
+
+  fun getTypeImplShortName(typeWriter: TypeWriter<*>): String {
+    return typeToName.get(typeWriter)!!
   }
 }

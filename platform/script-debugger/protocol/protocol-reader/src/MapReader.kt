@@ -1,10 +1,9 @@
 package org.jetbrains.protocolReader
 
-public class MapReader(componentParser: ValueReader?) : ValueReader() {
+class MapReader(componentParser: ValueReader?) : ValueReader() {
   private val componentParser: ValueReader?
 
   {
-
     if (componentParser == null || componentParser is ObjectValueReader) {
       this.componentParser = componentParser
     }
@@ -14,17 +13,17 @@ public class MapReader(componentParser: ValueReader?) : ValueReader() {
     }
   }
 
-  public fun appendFinishedValueTypeName(out: TextOutput) {
+  override fun appendFinishedValueTypeName(out: TextOutput) {
     out.append("java.util.Map")
     if (componentParser != null) {
       out.append('<')
       out.append("String, ")
-      componentParser!!.appendFinishedValueTypeName(out)
+      componentParser.appendFinishedValueTypeName(out)
       out.append('>')
     }
   }
 
-  fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     beginReadCall("Map", subtyping, out)
     if (componentParser == null) {
       out.comma().append("null")
@@ -35,7 +34,7 @@ public class MapReader(componentParser: ValueReader?) : ValueReader() {
     out.append(')')
   }
 
-  fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     beginReadCall("ObjectArray", subtyping, out)
     out.comma().append("new org.jetbrains.jsonProtocol.MapFactory(")
     assert(componentParser != null)

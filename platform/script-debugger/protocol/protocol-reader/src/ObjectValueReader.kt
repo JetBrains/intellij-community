@@ -1,13 +1,13 @@
 package org.jetbrains.protocolReader
 
-class ObjectValueReader<T>(val type: TypeRef<T>, private val isSubtyping: Boolean, primitiveValueName: String?) : ValueReader() {
+class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?) : ValueReader() {
   val primitiveValueName: String?
 
   {
     this.primitiveValueName = if (primitiveValueName == null || primitiveValueName.isEmpty()) null else primitiveValueName
   }
 
-  public fun asJsonTypeParser(): ObjectValueReader<Any> {
+  override public fun asJsonTypeParser(): ObjectValueReader {
     return this
   }
 
@@ -15,26 +15,26 @@ class ObjectValueReader<T>(val type: TypeRef<T>, private val isSubtyping: Boolea
     return isSubtyping
   }
 
-  public fun appendFinishedValueTypeName(out: TextOutput) {
+  override public fun appendFinishedValueTypeName(out: TextOutput) {
     out.append(type.typeClass.getCanonicalName())
   }
 
-  public fun appendInternalValueTypeName(classScope: FileScope, out: TextOutput) {
-    out.append(classScope.getTypeImplReference(type.type))
+  override public fun appendInternalValueTypeName(scope: FileScope, out: TextOutput) {
+    out.append(scope.getTypeImplReference(type.type!!))
   }
 
-  fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
-    type.type.writeInstantiateCode(scope.getRootClassScope(), subtyping, out)
+  override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+    type.type!!.writeInstantiateCode(scope.getRootClassScope(), subtyping, out)
     out.append('(')
     addReaderParameter(subtyping, out)
     out.comma().append("null")
-    if (subtyping && type.type.subtypeAspect != null) {
+    if (subtyping && type.type!!.subtypeAspect != null) {
       out.comma().append("this")
     }
     out.append(')')
   }
 
-  public fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override public fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     beginReadCall("ObjectArray", subtyping, out)
     writeFactoryArgument(scope, out)
     out.append(')')
@@ -46,6 +46,6 @@ class ObjectValueReader<T>(val type: TypeRef<T>, private val isSubtyping: Boolea
   }
 
   fun writeFactoryNewExpression(scope: ClassScope, out: TextOutput) {
-    out.append("new ").append(scope.requireFactoryGenerationAndGetName(type.type)).append(Util.TYPE_FACTORY_NAME_POSTFIX).append("()")
+    out.append("new ").append(scope.requireFactoryGenerationAndGetName(type.type!!)).append(TYPE_FACTORY_NAME_POSTFIX).append("()")
   }
 }

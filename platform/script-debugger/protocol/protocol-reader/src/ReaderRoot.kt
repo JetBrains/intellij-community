@@ -10,7 +10,7 @@ import java.util.*
 
 class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>) {
   private val visitedInterfaces = THashSet<Class<*>>(1)
-  val methodMap: LinkedHashMap<Method, ReadDelegate> = LinkedHashMap<K, V>()
+  val methodMap = LinkedHashMap<Method, ReadDelegate>();
 
   {
     readInterfaceRecursive(type)
@@ -38,7 +38,7 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       }
 
       val exceptionTypes = m.getExceptionTypes()
-      if (exceptionTypes.size > 1) {
+      if (exceptionTypes.size() > 1) {
         throw JsonProtocolModelParseException("Too many exception declared in " + m)
       }
 
@@ -62,12 +62,12 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       }
 
       val arguments = m.getGenericParameterTypes()
-      if (arguments.size > 2) {
+      if (arguments.size() > 2) {
         throw JsonProtocolModelParseException("Exactly one argument is expected in " + m)
       }
       val argument = arguments[0]
       if (argument == javaClass<JsonReaderEx>() || argument == javaClass<Any>()) {
-        methodMap.put(m, ReadDelegate(typeWriter, isList, arguments.size != 1))
+        methodMap.put(m, ReadDelegate(typeWriter!!, isList, arguments.size != 1))
       }
       else {
         throw JsonProtocolModelParseException("Unrecognized argument type in " + m)
@@ -75,16 +75,15 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
     }
 
     for (baseType in clazz.getGenericInterfaces()) {
-      if (!(baseType is Class<Any>)) {
+      if (baseType !is Class<*>) {
         throw JsonProtocolModelParseException("Base interface must be class in " + clazz)
       }
-      val baseClass = baseType as Class<*>
-      readInterfaceRecursive(baseClass)
+      readInterfaceRecursive(baseType)
     }
   }
 
   public fun writeStaticMethodJava(scope: ClassScope) {
-    val out = scope.getOutput()
+    val out = scope.output
     for (entry in methodMap.entrySet()) {
       out.newLine()
       entry.getValue().write(scope, entry.getKey(), out)

@@ -12,15 +12,9 @@ import java.util.Arrays
  * calls {@link #update()}.
  */
 class FileUpdater(private val file: Path) {
-  val builder: StringBuilder
-  val out: TextOutput
+  val builder = StringBuilder()
+  val out = TextOutput(builder)
 
-  {
-    builder = StringBuilder()
-    out = TextOutput(builder)
-  }
-
-  throws(javaClass<IOException>())
   fun update() {
     if (builder.length() == 0) {
       Files.delete(file)

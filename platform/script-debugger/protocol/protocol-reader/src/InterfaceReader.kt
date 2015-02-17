@@ -5,33 +5,28 @@ import org.jetbrains.jsonProtocol.JsonField
 import org.jetbrains.jsonProtocol.JsonSubtype
 import org.jetbrains.jsonProtocol.StringIntPair
 
-import java.lang.annotation.RetentionPolicy
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 import java.util.*
-
+import gnu.trove.*
 
 fun InterfaceReader(protocolInterfaces: Array<Class<*>>): InterfaceReader {
-  val __ = InterfaceReader(LinkedHashMap<Class<*>, TypeWriter<*>>(protocolInterfaces.size), null, null, null)
+  val __ = InterfaceReader(LinkedHashMap<Class<*>, TypeWriter<*>>(protocolInterfaces.size()))
   for (typeClass in protocolInterfaces) {
     __.typeToTypeHandler.put(typeClass, null)
   }
   return __
 }
 
-private fun InterfaceReader(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>): InterfaceReader {
-  return InterfaceReader(typeToTypeHandler, null, null, null)
-}
-
-class InterfaceReader(
-    private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>,
-    val refs: MutableList<TypeRef<*>>, val subtypeCasters: List<SubtypeCaster>,
-    private val processed: MutableSet<Class<*>>) {
+class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>) {
+  private val processed = THashSet<Class<*>>()
+  private val refs = ArrayList<TypeRef<*>>()
+  val subtypeCasters = ArrayList<SubtypeCaster>()
 
   fun go(): LinkedHashMap<Class<*>, TypeWriter<*>> {
-    return go(typeToTypeHandler.keySet().toArray<Class<Any>>(arrayOfNulls<Class<Any>>(typeToTypeHandler.size())))
+    return go(typeToTypeHandler.keySet().copyToArray())
   }
 
   private fun go(classes: Array<Class<*>>): LinkedHashMap<Class<*>, TypeWriter<*>> {
@@ -64,10 +59,7 @@ class InterfaceReader(
     }
 
     for (subtypeCaster in subtypeCasters) {
-      val subtypeSupport = subtypeCaster.getSubtypeHandler().subtypeAspect
-      if (subtypeSupport != null) {
-        subtypeSupport!!.setSubtypeCaster(subtypeCaster)
-      }
+      subtypeCaster.getSubtypeHandler().subtypeAspect?.setSubtypeCaster(subtypeCaster)
     }
 
     return typeToTypeHandler
@@ -93,7 +85,7 @@ class InterfaceReader(
       throw JsonProtocolModelParseException("Json model type should be interface: " + typeClass.getName())
     }
 
-    val fields = FieldProcessor<Any>(this, typeClass)
+    val fields = FieldProcessor(this, typeClass)
     for (method in fields.methodHandlerMap.keySet()) {
       val returnType = method.getReturnType()
       if (returnType != typeClass) {
@@ -101,7 +93,7 @@ class InterfaceReader(
       }
     }
 
-    val typeWriter = TypeWriter<Any>(typeClass, getSuperclassRef(typeClass), fields.volatileFields, fields.methodHandlerMap, fields.fieldLoaders, fields.lazyRead)
+    val typeWriter = TypeWriter(typeClass, getSuperclassRef(typeClass), fields.volatileFields, fields.methodHandlerMap, fields.fieldLoaders, fields.lazyRead)
     for (ref in refs) {
       if (ref.typeClass == typeClass) {
         assert(ref.type == null)
@@ -113,8 +105,7 @@ class InterfaceReader(
   }
 
   fun getFieldTypeParser(type: Type, isSubtyping: Boolean, method: Method?): ValueReader {
-    if (type is Class<Any>) {
-      val typeClass = type as Class<*>
+    if (type is Class<*>) {
       if (type == java.lang.Long.TYPE) {
         return LONG_PARSER
       }
@@ -154,28 +145,25 @@ class InterfaceReader(
       else if (type == javaClass<StringIntPair>()) {
         return STRING_INT_PAIR_PARSER
       }
-      else if (typeClass.isArray()) {
-        return ArrayReader(getFieldTypeParser(typeClass.getComponentType(), false, null), false)
+      else if (type.isArray()) {
+        return ArrayReader(getFieldTypeParser(type.getComponentType(), false, null), false)
       }
-      else if (typeClass.isEnum()) {
-        //noinspection unchecked
-        return EnumReader.create(typeClass as Class<RetentionPolicy>)
+      else if (type.isEnum()) {
+        return EnumReader(type as Class<Enum<*>>)
       }
-      val ref = getTypeRef<*>(typeClass)
+      val ref = getTypeRef(type)
       if (ref != null) {
-        val jsonField = if (method == null) null else method.getAnnotation<JsonField>(javaClass<JsonField>())
-        return ObjectValueReader<Any>(ref, isSubtyping, if (jsonField == null) null else jsonField.primitiveValue())
+        return ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(javaClass<JsonField>())?.primitiveValue())
       }
       throw UnsupportedOperationException("Method return type " + type + " (simple class) not supported")
     }
     else if (type is ParameterizedType) {
-      val parameterizedType = type as ParameterizedType
-      val isList = parameterizedType.getRawType() == javaClass<List<Any>>()
-      if (isList || parameterizedType.getRawType() == javaClass<Map<Any, Any>>()) {
-        var argumentType = parameterizedType.getActualTypeArguments()[if (isList) 0 else 1]
+      val isList = type.getRawType() == javaClass<List<Any>>()
+      if (isList || type.getRawType() == javaClass<Map<Any, Any>>()) {
+        var argumentType = type.getActualTypeArguments()[if (isList) 0 else 1]
         if (argumentType is WildcardType) {
           val wildcard = argumentType as WildcardType
-          if (wildcard.getLowerBounds().size == 0 && wildcard.getUpperBounds().size == 1) {
+          if (wildcard.getLowerBounds().size() == 0 && wildcard.getUpperBounds().size() == 1) {
             argumentType = wildcard.getUpperBounds()[0]
           }
         }
@@ -192,32 +180,30 @@ class InterfaceReader(
   }
 
   fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T>? {
-    val result = TypeRef<T>(typeClass)
+    val result = TypeRef(typeClass)
     refs.add(result)
     return result
   }
 
-  private fun getSuperclassRef(typeClass: Class<*>): TypeRef<*> {
+  private fun getSuperclassRef(typeClass: Class<*>): TypeRef<*>? {
     var result: TypeRef<*>? = null
     for (interfaceGeneric in typeClass.getGenericInterfaces()) {
-      if (!(interfaceGeneric is ParameterizedType)) {
+      if (interfaceGeneric !is ParameterizedType) {
         continue
       }
-      val parameterizedType = interfaceGeneric as ParameterizedType
-      if (parameterizedType.getRawType() != javaClass<JsonSubtype<Any>>()) {
+      if (interfaceGeneric.getRawType() != javaClass<JsonSubtype<Any>>()) {
         continue
       }
-      val param = parameterizedType.getActualTypeArguments()[0]
-      if (!(param is Class<Any>)) {
+      val param = interfaceGeneric.getActualTypeArguments()[0]
+      if (param !is Class<*>) {
         throw JsonProtocolModelParseException("Unexpected type of superclass " + param)
       }
-      val paramClass = param as Class<*>
       if (result != null) {
         throw JsonProtocolModelParseException("Already has superclass " + result!!.typeClass.getName())
       }
-      result = getTypeRef<*>(paramClass)
+      result = getTypeRef(param)
       if (result == null) {
-        throw JsonProtocolModelParseException("Unknown base class " + paramClass.getName())
+        throw JsonProtocolModelParseException("Unknown base class " + param.getName())
       }
     }
     return result
@@ -237,33 +223,33 @@ class InterfaceReader(
 
     private val RAW_STRING_PARSER = PrimitiveValueReader("String", null, true)
     private val RAW_STRING_OR_MAP_PARSER = object : PrimitiveValueReader("Object", null, true) {
-      fun writeReadCode(methodScope: ClassScope, subtyping: Boolean, out: TextOutput) {
+      override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
         out.append("readRawStringOrMap(")
         addReaderParameter(subtyping, out)
         out.append(')')
       }
     }
 
-    private val JSON_PARSER = RawValueReader(false)
+    private val JSON_PARSER = RawValueReader()
 
     private val MAP_PARSER = MapReader(null)
 
     private val STRING_INT_PAIR_PARSER = StringIntPairValueReader()
 
     val VOID_PARSER: ValueReader = object : ValueReader() {
-      public fun appendFinishedValueTypeName(out: TextOutput) {
+      override fun appendFinishedValueTypeName(out: TextOutput) {
         out.append("void")
       }
 
-      fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+      override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
         out.append("null")
       }
     }
 
-    public fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>, aClass: Class<*>): TypeWriter<*> {
+    fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>, aClass: Class<*>): TypeWriter<*> {
       val reader = InterfaceReader(typeToTypeHandler)
       reader.processed.addAll(typeToTypeHandler.keySet())
-      reader.go(array<Class<Any>>(aClass))
+      reader.go(array(aClass))
       return typeToTypeHandler.get(aClass)
     }
   }

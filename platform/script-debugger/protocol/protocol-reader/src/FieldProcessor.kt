@@ -9,17 +9,16 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 
-class FieldProcessor<T>(private val reader: InterfaceReader, typeClass: Class<T>) {
-  val fieldLoaders: MutableList<FieldLoader> = ArrayList<E>()
-  val methodHandlerMap: LinkedHashMap<Method, MethodHandler> = LinkedHashMap<K, V>()
-  val volatileFields: MutableList<VolatileFieldBinding> = ArrayList<E>()
+class FieldProcessor(private val reader: InterfaceReader, typeClass: Class<*>) {
+  val fieldLoaders = ArrayList<FieldLoader>()
+  val methodHandlerMap = LinkedHashMap<Method, MethodHandler>()
+  val volatileFields = ArrayList<VolatileFieldBinding>()
   var lazyRead: Boolean = false
 
   {
-
     val methods = typeClass.getMethods()
     // todo sort by source location
-    Arrays.sort<Method>(methods)
+    Arrays.sort(methods, {(o1, o2) -> o1.getName().compareTo(o2.getName())})
 
     val skippedNames = THashSet<String>()
     for (method in methods) {
@@ -75,7 +74,7 @@ class FieldProcessor<T>(private val reader: InterfaceReader, typeClass: Class<T>
 
     val genericReturnType = method.getGenericReturnType()
     val addNotNullAnnotation: Boolean
-    val isPrimitive = if (genericReturnType is Class<Any>) (genericReturnType as Class<Any>).isPrimitive() else !(genericReturnType is ParameterizedType)
+    val isPrimitive = if (genericReturnType is Class<*>) genericReturnType.isPrimitive() else genericReturnType !is ParameterizedType
     if (isPrimitive) {
       addNotNullAnnotation = false
     }
@@ -92,8 +91,8 @@ class FieldProcessor<T>(private val reader: InterfaceReader, typeClass: Class<T>
     }
 
     val effectiveFieldName = if (fieldTypeParser == InterfaceReader.VOID_PARSER) null else method.getName()
-    return object : MethodHandler() {
-      fun writeMethodImplementationJava(scope: ClassScope, method: Method, out: TextOutput) {
+    return object : MethodHandler {
+      override fun writeMethodImplementationJava(scope: ClassScope, method: Method, out: TextOutput) {
         if (addNotNullAnnotation) {
           out.append("@NotNull").newLine()
         }
@@ -112,9 +111,9 @@ class FieldProcessor<T>(private val reader: InterfaceReader, typeClass: Class<T>
     val fieldInfo = allocateVolatileField(fieldTypeParser, true)
     val handler = LazyCachedMethodHandler(fieldTypeParser, fieldInfo)
     val parserAsObjectValueParser = fieldTypeParser.asJsonTypeParser()
-    if (parserAsObjectValueParser != null && parserAsObjectValueParser!!.isSubtyping()) {
-      val subtypeCaster = object : SubtypeCaster(parserAsObjectValueParser!!.getType()) {
-        fun writeJava(out: TextOutput) {
+    if (parserAsObjectValueParser != null && parserAsObjectValueParser.isSubtyping()) {
+      val subtypeCaster = object : SubtypeCaster(parserAsObjectValueParser.type) {
+        override fun writeJava(out: TextOutput) {
           out.append(m.getName()).append("()")
         }
       }
@@ -125,12 +124,12 @@ class FieldProcessor<T>(private val reader: InterfaceReader, typeClass: Class<T>
 
   private fun allocateVolatileField(fieldTypeParser: ValueReader, internalType: Boolean): VolatileFieldBinding {
     val position = volatileFields.size()
-    val fieldTypeInfo: FieldTypeInfo
+    val fieldTypeInfo: (scope: FileScope, out: TextOutput)->Unit
     if (internalType) {
-      fieldTypeInfo = fieldTypeParser.appendInternalValueTypeName
+      fieldTypeInfo = {scope, out -> fieldTypeParser.appendInternalValueTypeName(scope, out)}
     }
     else {
-      fieldTypeInfo =
+      fieldTypeInfo = {scope, out -> fieldTypeParser.appendFinishedValueTypeName(out)}
     }
     val binding = VolatileFieldBinding(position, fieldTypeInfo)
     volatileFields.add(binding)

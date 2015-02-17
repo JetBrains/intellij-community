@@ -26,7 +26,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
       out.append("new ").append(className)
     }
     else {
-      subtypeAspect!!.writeInstantiateCode(className, out)
+      subtypeAspect.writeInstantiateCode(className, out)
     }
   }
 
@@ -38,7 +38,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
     out.append(" implements ").append(typeClass.getCanonicalName()).openBlock()
 
     if (hasLazyFields || javaClass<JsonObjectBased>().isAssignableFrom(typeClass)) {
-      out.append("private ").append(Util.JSON_READER_CLASS_NAME).space().append(Util.PENDING_INPUT_READER_NAME).semi().newLine()
+      out.append("private ").append(JSON_READER_CLASS_NAME).space().append(PENDING_INPUT_READER_NAME).semi().newLine()
     }
 
     val classScope = fileScope.newClassScope()
@@ -52,7 +52,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
       loader.valueReader.appendFinishedValueTypeName(out)
       out.space().append(FIELD_PREFIX).append(loader.name)
       if (loader.valueReader is PrimitiveValueReader) {
-        val defaultValue = (loader.valueReader as PrimitiveValueReader).defaultValue
+        val defaultValue = loader.valueReader.defaultValue
         if (defaultValue != null) {
           out.append(" = ").append(defaultValue)
         }
@@ -62,14 +62,14 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
     }
 
     if (subtypeAspect != null) {
-      subtypeAspect!!.writeSuperFieldJava(out)
+      subtypeAspect.writeSuperFieldJava(out)
     }
 
     writeConstructorMethod(valueImplClassName, classScope, out)
     out.newLine()
 
     if (subtypeAspect != null) {
-      subtypeAspect!!.writeParseMethod(valueImplClassName, classScope, out)
+      subtypeAspect.writeParseMethod(valueImplClassName, classScope, out)
     }
 
     for (entry in methodHandlerMap.entrySet()) {
@@ -80,7 +80,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
 
     writeBaseMethods(out)
     if (subtypeAspect != null) {
-      subtypeAspect!!.writeGetSuperMethodJava(out)
+      subtypeAspect.writeGetSuperMethodJava(out)
     }
     out.indentOut().append('}')
   }
@@ -105,29 +105,29 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
 
 
     out.newLine()
-    MethodHandler.writeMethodDeclarationJava(out, method)
+    writeMethodDeclarationJava(out, method)
     out.openBlock()
-    out.append("return ").append(Util.PENDING_INPUT_READER_NAME).semi()
+    out.append("return ").append(PENDING_INPUT_READER_NAME).semi()
     out.closeBlock()
   }
 
   private fun writeConstructorMethod(valueImplClassName: String, classScope: ClassScope, out: TextOutput) {
-    out.newLine().append(valueImplClassName).append('(').append(Util.JSON_READER_PARAMETER_DEF).comma().append("String name")
+    out.newLine().append(valueImplClassName).append('(').append(JSON_READER_PARAMETER_DEF).comma().append("String name")
     if (subtypeAspect != null) {
-      subtypeAspect!!.writeSuperConstructorParamJava(out)
+      subtypeAspect.writeSuperConstructorParamJava(out)
     }
     out.append(')').openBlock()
 
     if (subtypeAspect != null) {
-      subtypeAspect!!.writeSuperConstructorInitialization(out)
+      subtypeAspect.writeSuperConstructorInitialization(out)
     }
 
     if (javaClass<JsonObjectBased>().isAssignableFrom(typeClass) || hasLazyFields) {
-      out.append(Util.PENDING_INPUT_READER_NAME).append(" = ").append(Util.READER_NAME).append(".subReader()").semi().newLine()
+      out.append(PENDING_INPUT_READER_NAME).append(" = ").append(READER_NAME).append(".subReader()").semi().newLine()
     }
 
     if (fieldLoaders.isEmpty()) {
-      out.append(Util.READER_NAME).append(".skipValue()").semi()
+      out.append(READER_NAME).append(".skipValue()").semi()
     }
     else {
       out.append("if (name == null)").openBlock()
@@ -146,7 +146,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
 
       // we don't read all data if we have lazy fields, so, we should not check end of stream
       //if (!hasLazyFields) {
-      out.newLine().newLine().append(Util.READER_NAME).append(".endObject()").semi()
+      out.newLine().newLine().append(READER_NAME).append(".endObject()").semi()
       //}
     }
     out.closeBlock()
@@ -175,7 +175,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
       out.append(operator).append(" (name")
       out.append(".equals(\"").append(fieldLoader.jsonName).append("\"))").openBlock()
       run {
-        val primitiveValueName = if (fieldLoader.valueReader is ObjectValueReader<Any>) (fieldLoader.valueReader as ObjectValueReader<Any>).primitiveValueName else null
+        val primitiveValueName = if (fieldLoader.valueReader is ObjectValueReader) fieldLoader.valueReader.primitiveValueName else null
         if (primitiveValueName != null) {
           out.append("if (reader.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT)").openBlock()
         }
@@ -198,7 +198,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
         }
 
         if (stopIfAllFieldsWereRead && !isTracedStop) {
-          out.newLine().append(Util.READER_NAME).append(".skipValues()").semi().newLine().append("break").semi()
+          out.newLine().append(READER_NAME).append(".skipValues()").semi().newLine().append("break").semi()
         }
       }
       out.closeBlock()
@@ -216,7 +216,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
     out.closeBlock()
     if (isTracedStop) {
       out.newLine().newLine().append("if (i == ").append(fieldLoaders.size() - 1).append(")").openBlock()
-      out.append(Util.READER_NAME).append(".skipValues()").semi().newLine().append("break").semi().closeBlock()
+      out.append(READER_NAME).append(".skipValues()").semi().newLine().append("break").semi().closeBlock()
       out.newLine().append("else").openBlock().append("i++").semi().closeBlock()
     }
     out.closeBlock()

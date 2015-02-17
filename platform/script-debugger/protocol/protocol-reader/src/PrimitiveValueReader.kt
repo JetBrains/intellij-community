@@ -9,7 +9,7 @@ fun PrimitiveValueReader(name: String, defaultValue: String): PrimitiveValueRead
   return PrimitiveValueReader(name, defaultValue, false)
 }
 
-class PrimitiveValueReader(private val className: String, val defaultValue: String?, private val asRawString: Boolean) : ValueReader() {
+open class PrimitiveValueReader(private val className: String, val defaultValue: String?, private val asRawString: Boolean) : ValueReader() {
   private val readPostfix: String
 
   {
@@ -21,31 +21,31 @@ class PrimitiveValueReader(private val className: String, val defaultValue: Stri
     }
   }
 
-  fun writeReadCode(methodScope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     if (asRawString) {
       out.append("readRawString(")
       addReaderParameter(subtyping, out)
       out.append(')')
     }
     else {
-      ValueReader.addReaderParameter(subtyping, out)
+      addReaderParameter(subtyping, out)
       out.append(".next").append(readPostfix).append("()")
       //beginReadCall(readPostfix, subtyping, out, name);
     }
   }
 
-  fun appendFinishedValueTypeName(out: TextOutput) {
+  override fun appendFinishedValueTypeName(out: TextOutput) {
     out.append(className)
   }
 
-  public fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     if (readPostfix == "String") {
       out.append("nextList")
     }
     else {
       out.append("read").append(readPostfix).append("Array")
     }
-    out.append('(').append(Util.READER_NAME)
+    out.append('(').append(READER_NAME)
     out.append(')')
   }
 }
