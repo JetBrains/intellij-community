@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBInsets;
@@ -37,6 +38,12 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
+import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -90,6 +97,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Border can be <code>null</code>.
    */
   private Border myBorder;
+
+  /**
+   * If true, then for character that the current font can not draw we try to look for a fallback font that can
+   */
+  private boolean mySupportFontFallback = false;
 
   private int myMainTextLastIndex = -1;
 
@@ -446,12 +458,70 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return result;
   }
 
-  protected void doDrawString(Graphics2D g, String text, int x, int y) {
-    g.drawString(text, x, y);
+  private void doDrawString(Graphics2D g, String text, int x, int y) {
+    Font font = g.getFont();
+    if (needFontFallback(font, text)) {
+      TextLayout layout = createTextLayout(text, font, g.getFontRenderContext());
+      if (layout != null) {
+        layout.draw(g, x, y);
+      }
+    }
+    else {
+      g.drawString(text, x, y);
+    }
   }
 
-  protected int computeStringWidth(String text, Font font) {
-    return getFontMetrics(font).stringWidth(text);
+  private int computeStringWidth(String text, Font font) {
+    if (needFontFallback(font, text)) {
+      TextLayout layout = createTextLayout(text, font, getFontMetrics(font).getFontRenderContext());
+      return layout != null ? (int)layout.getAdvance() : 0;
+    }
+    else {
+      return getFontMetrics(font).stringWidth(text);
+    }
+  }
+
+  @Nullable
+  private TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
+    if (StringUtil.isEmpty(text)) return null;
+    AttributedString string = new AttributedString(text);
+    int start = 0;
+    int end = text.length();
+    AttributedCharacterIterator it = string.getIterator(new AttributedCharacterIterator.Attribute[0], start, end);
+    Font currentFont = basefont;
+    int currentIndex = start;
+    for(char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      Font font = basefont;
+      if (!font.canDisplay(c)) {
+        for (SuitableFontProvider provider : SuitableFontProvider.EP_NAME.getExtensions()) {
+          font = provider.getFontAbleToDisplay(c, basefont.getSize(), basefont.getStyle(), basefont.getFamily());
+          if (font != null) break;
+        }
+      }
+      int i = it.getIndex();
+      if (!Comparing.equal(currentFont, font)) {
+        if (i > currentIndex) {
+          string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, i);
+        }
+        currentFont = font;
+        currentIndex = i;
+      }
+    }
+    if (currentIndex < end) {
+      string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
+    }
+    return new TextLayout(string.getIterator(), fontRenderContext);
+  }
+
+  private boolean needFontFallback(Font font, String text) {
+    return mySupportFontFallback && font.canDisplayUpTo(text) != -1;
+  }
+
+  /**
+   * If true, then for character that the current font can not draw we try to look for a fallback font that can
+   */
+  public void setSupportFontFallback(boolean supportFontFallback) {
+    mySupportFontFallback = supportFontFallback;
   }
 
   /**
