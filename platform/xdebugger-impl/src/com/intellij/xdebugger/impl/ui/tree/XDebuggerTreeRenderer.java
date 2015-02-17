@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -48,10 +48,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   public XDebuggerTreeRenderer() {
     setSupportFontFallback(true);
-    Insets myLinkIpad = myLink.getIpad();
-    myLink.setIpad(new JBInsets(myLinkIpad.top, 0, myLinkIpad.bottom, myLinkIpad.right));
-    Insets myIpad = getIpad();
-    setIpad(new JBInsets(myLinkIpad.top, myIpad.left, myLinkIpad.bottom, 0));
   }
 
   public void customizeCellRenderer(@NotNull final JTree tree,
@@ -118,9 +114,11 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       } finally {
         textGraphics.dispose();
       }
-      g.translate(myLinkOffset, 0);
-      myLink.doPaint(g);
-      g.translate(-myLinkOffset, 0);
+
+      UIUtil.applyRenderingHints(g);
+      applyAdditionalHints(g);
+
+      g.drawString(myLink.toString(), myLinkOffset, getTextBaseLine(getFontMetrics(getFont()), getHeight()));
     }
     else {
       super.doPaint(g);
