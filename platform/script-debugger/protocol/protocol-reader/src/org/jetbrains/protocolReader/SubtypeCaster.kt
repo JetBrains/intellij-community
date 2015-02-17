@@ -2,22 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.jetbrains.protocolReader;
+package org.jetbrains.protocolReader
 
 /**
  * An internal facility for navigating from object of base type to object of subtype. Used only
  * when user wants to parse JSON object as subtype.
  */
-abstract class SubtypeCaster {
-  private final TypeRef<?> subtypeRef;
+abstract class SubtypeCaster(private val subtypeRef: TypeRef<*>) {
 
-  SubtypeCaster(TypeRef<?> subtypeRef) {
-    this.subtypeRef = subtypeRef;
-  }
+  abstract fun writeJava(out: TextOutput)
 
-  abstract void writeJava(TextOutput out);
-
-  TypeWriter<?> getSubtypeHandler() {
-    return subtypeRef.type;
+  fun getSubtypeHandler(): TypeWriter<*> {
+    return subtypeRef.type
   }
 }
