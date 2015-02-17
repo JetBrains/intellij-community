@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
+public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable {
   
   private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
 
