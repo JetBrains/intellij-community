@@ -225,7 +225,6 @@ public abstract class OutMessage {
 
   public static void prepareWriteRaw(@NotNull OutMessage message, @NotNull String name) throws IOException {
     message.writer.name(name).nullValue();
-    message.writer.flush();
     ByteBuf itemBuffer = message.buffer;
     itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length());
   }

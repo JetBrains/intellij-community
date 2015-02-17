@@ -26,7 +26,6 @@ import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -357,7 +356,7 @@ public class JsonRpcServer implements MessageServer {
       }
       else {
         if (writer == null) {
-          writer = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(buffer)));
+          writer = new JsonWriter(new ByteBufUtf8Writer(buffer));
         }
         //noinspection unchecked
         ((TypeAdapter<Object>)gson.getAdapter(param.getClass())).write(writer, param);
