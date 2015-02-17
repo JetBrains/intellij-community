@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
@@ -1869,7 +1870,6 @@ foooo ()<caret>
     }
     finally {
       settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = old
-
     }
   }
 
@@ -1925,8 +1925,32 @@ var.<caret>
 
   void testCharsetName() {
     myFixture.addClass("package java.nio.charset; public class Charset { public static boolean isSupported(String s) {} }")
-    doVariantableTest('import java.nio.charset.*; Charset.isSupported("<caret>")', '', CompletionType.BASIC, CompletionResult.contain, 1, 'UTF-8')
+    doVariantableTest('import java.nio.charset.*; Charset.isSupported("<caret>")', '', CompletionType.BASIC, CompletionResult.contain, 1,
+                      'UTF-8')
   }
 
+  void "test override super methods completion"() {
+    doVariantableTest('''
+class A {
+    def foo() {}
+    def bar(a, b, List c) {}
+    def baz() {}
+}
+class B extends A {
+  <caret>
+}
+''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'public Object bar', 'public Object baz', 'public Object foo')
+  }
 
+  void "test override trait method completion"() {
+    doVariantableTest('''
+trait T<X> {
+  X quack() {}
+}
+
+class C implements T<String> {
+  <caret>
+}
+''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'public String quack')
+  }
 }
