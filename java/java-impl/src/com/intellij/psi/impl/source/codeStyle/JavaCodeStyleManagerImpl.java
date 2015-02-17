@@ -634,6 +634,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       if (isIdentifier(text)) {
         return new NamesByExprInfo(text, getSuggestionsByName(text, variableKind, false, correctKeywords));
       }
+    } else if (expr instanceof PsiFunctionalExpression) {
+      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
+      if (functionalInterfaceType != null) {
+        final String[] namesByType = suggestVariableNameByType(functionalInterfaceType, variableKind, correctKeywords);
+        return new NamesByExprInfo(null, namesByType);
+      }
     }
 
     return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
