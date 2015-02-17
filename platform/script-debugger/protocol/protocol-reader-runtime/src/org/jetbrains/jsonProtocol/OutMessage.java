@@ -7,14 +7,13 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.ByteBufUtf8Writer;
+import io.netty.buffer.ByteBufUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ import java.util.Map;
 public abstract class OutMessage {
   // todo don't want to risk - are we really can release it properly? heap buffer for now
   private final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
-  public final JsonWriter writer = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(buffer)));
+  public final JsonWriter writer = new JsonWriter(new ByteBufUtf8Writer(buffer));
 
   private boolean finalized;
 
@@ -230,7 +229,7 @@ public abstract class OutMessage {
   }
 
   public static void doWriteRaw(@NotNull OutMessage message, @NotNull String rawValue) {
-    ByteBufUtil.writeUtf8(message.buffer, rawValue);
+    ByteBufUtilEx.writeUtf8(message.buffer, rawValue);
   }
 
   protected final void writeMessage(@NotNull String name, @NotNull OutMessage value) {

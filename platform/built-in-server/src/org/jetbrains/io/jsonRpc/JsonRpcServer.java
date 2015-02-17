@@ -351,7 +351,7 @@ public class JsonRpcServer implements MessageServer {
         }
         //noinspection unchecked
         ((Consumer<StringBuilder>)param).consume(sb);
-        ByteBufUtil.writeUtf8(buffer, sb);
+        ByteBufUtilEx.writeUtf8(buffer, sb);
         sb.setLength(0);
       }
       else {

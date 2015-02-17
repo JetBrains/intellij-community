@@ -22,15 +22,16 @@ import java.io.IOException;
 import java.io.Writer;
 
 public final class ByteBufUtf8Writer extends Writer {
-  private final AbstractByteBuf buffer;
+  private final ByteBuf buffer;
 
   public ByteBufUtf8Writer(@NotNull ByteBuf buffer) {
-    this.buffer = (AbstractByteBuf)buffer;
+    this.buffer = buffer;
   }
 
   @Override
   public void write(int c) {
-    int writerIndex = buffer.writerIndex;
+    AbstractByteBuf buffer = ByteBufUtilEx.getBuf(this.buffer);
+    int writerIndex = this.buffer.writerIndex();
     if (c < 0x80) {
       buffer._setByte(writerIndex++, (byte)c);
     }
@@ -43,17 +44,17 @@ public final class ByteBufUtf8Writer extends Writer {
       buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
       buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
     }
-    buffer.writerIndex = writerIndex;
+    this.buffer.writerIndex(writerIndex);
   }
 
   @Override
   public void write(char[] chars, int off, int len) {
-    ByteBufUtil.writeUtf8(buffer, new CharArrayCharSequence(chars, off, off + len));
+    ByteBufUtilEx.writeUtf8(buffer, new CharArrayCharSequence(chars, off, off + len));
   }
 
   @Override
   public void write(String str) throws IOException {
-    ByteBufUtil.writeUtf8(buffer, str);
+    ByteBufUtilEx.writeUtf8(buffer, str);
   }
 
   @Override
@@ -67,7 +68,7 @@ public final class ByteBufUtf8Writer extends Writer {
       ByteBufUtil.writeAscii(buffer, "null");
     }
     else {
-      ByteBufUtil.writeUtf8(buffer, csq);
+      ByteBufUtilEx.writeUtf8(buffer, csq);
     }
     return this;
   }
