@@ -13,11 +13,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.Course;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class StudyShowHintAction extends DumbAwareAction {
     PsiFile file = PsiManager.getInstance(project).findFile(studyState.getVirtualFile());
     final Editor editor = studyState.getEditor();
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getTaskWindow(editor.getDocument(), pos);
+    AnswerPlaceholder answerPlaceholder = studyState.getTaskFile().getAnswerPlaceholder(editor.getDocument(), pos);
     if (file == null) {
       return;
     }

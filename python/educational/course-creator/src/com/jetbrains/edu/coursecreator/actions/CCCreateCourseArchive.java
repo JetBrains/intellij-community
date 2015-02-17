@@ -7,10 +7,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -19,17 +16,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.ZipUtil;
-import com.jetbrains.edu.coursecreator.CCDocumentListener;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
-import com.jetbrains.edu.coursecreator.format.*;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
@@ -74,123 +74,27 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
     final VirtualFile baseDir = project.getBaseDir();
-    final Map<String, Lesson> lessons = course.getLessonsMap();
-    //map to store initial task file
-    final Map<TaskFile, TaskFile> taskFiles = new HashMap<TaskFile, TaskFile>();
-    for (Map.Entry<String, Lesson> lesson : lessons.entrySet()) {
-      final VirtualFile lessonDir = baseDir.findChild(lesson.getKey());
+    final List<Lesson> lessons = course.getLessons();
+
+    for (Lesson lesson : lessons) {
+      final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
       if (lessonDir == null) continue;
-      for (Map.Entry<String, Task> task : lesson.getValue().myTasksMap.entrySet()) {
-        final VirtualFile taskDir = lessonDir.findChild(task.getKey());
+      for (Task task : lesson.getTaskList()) {
+        final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
         if (taskDir == null) continue;
-        for (final Map.Entry<String, TaskFile> entry : task.getValue().task_files.entrySet()) {
+        for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              createUserFile(project, taskFiles, taskDir, taskDir, entry);
+              EduUtils.createStudentFileFromAnswer(project, taskDir, taskDir, entry);
             }
           });
         }
       }
     }
     generateJson(project);
-    packCourse(baseDir, lessons, course);
-    resetTaskFiles(taskFiles);
+    packCourse(baseDir, course);
     synchronize(project);
-  }
-
-  public static void createUserFile(@NotNull final Project project,
-                                    @NotNull final Map<TaskFile, TaskFile> taskFilesCopy,
-                                    @NotNull final VirtualFile userFileDir,
-                                    @NotNull final VirtualFile answerFileDir,
-                                    @NotNull final Map.Entry<String, TaskFile> taskFiles) {
-    final String name = taskFiles.getKey();
-    VirtualFile file = userFileDir.findChild(name);
-    if (file != null) {
-      try {
-        file.delete(project);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    try {
-      userFileDir.createChildData(project, name);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-
-    file = userFileDir.findChild(name);
-    assert file != null;
-    String answerFileName = file.getNameWithoutExtension() + ".answer." + file.getExtension();
-    VirtualFile answerFile = answerFileDir.findChild(answerFileName);
-    if (answerFile == null) {
-      return;
-    }
-    final Document answerDocument = FileDocumentManager.getInstance().getDocument(answerFile);
-    if (answerDocument == null) {
-      return;
-    }
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return;
-    final TaskFile taskFile = taskFiles.getValue();
-    TaskFile taskFileSaved = new TaskFile();
-    taskFile.copy(taskFileSaved);
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getTaskWindows()) {
-      answerPlaceholder.setLength(answerPlaceholder.getReplacementLength());
-    }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(0, document.getTextLength(), answerDocument.getCharsSequence());
-          }
-        });
-      }
-    }, "x", "qwe");
-    InsertionListener listener = new InsertionListener(taskFile);
-    document.addDocumentListener(listener);
-    taskFilesCopy.put(taskFile, taskFileSaved);
-    Collections.sort(taskFile.getTaskWindows());
-    for (int i = taskFile.getTaskWindows().size() - 1; i >= 0; i--) {
-      final AnswerPlaceholder answerPlaceholder = taskFile.getTaskWindows().get(i);
-      replaceTaskWindow(project, document, answerPlaceholder);
-    }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "x", "qwe");
-    document.removeDocumentListener(listener);
-  }
-
-  private static void replaceTaskWindow(@NotNull final Project project,
-                                        @NotNull final Document document,
-                                        @NotNull final AnswerPlaceholder answerPlaceholder) {
-    final String taskText = answerPlaceholder.getTaskText();
-    final int lineStartOffset = document.getLineStartOffset(answerPlaceholder.getLine());
-    final int offset = lineStartOffset + answerPlaceholder.getStart();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(offset, offset + answerPlaceholder.getLength(), taskText);
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-    }, "x", "qwe");
   }
 
   private static void synchronize(@NotNull final Project project) {
@@ -198,21 +102,13 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     ProjectView.getInstance(project).refresh();
   }
 
-  public static void resetTaskFiles(@NotNull final Map<TaskFile, TaskFile> taskFiles) {
-    for (Map.Entry<TaskFile, TaskFile> entry : taskFiles.entrySet()) {
-      TaskFile realTaskFile = entry.getKey();
-      TaskFile savedTaskFile = entry.getValue();
-      realTaskFile.update(savedTaskFile);
-    }
-  }
-
-  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Map<String, Lesson> lessons, @NotNull final Course course) {
+  private void packCourse(@NotNull final VirtualFile baseDir, @NotNull final Course course) {
     try {
       File zipFile = new File(myLocationDir, myZipName + ".zip");
       ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
       final CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-      for (Map.Entry<String, Lesson> entry : lessons.entrySet()) {
-        final VirtualFile lessonDir = baseDir.findChild(entry.getKey());
+      for (Lesson lesson : course.getLessons()) {
+        final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
         if (lessonDir == null) continue;
         ZipUtil.addFileOrDirRecursively(zos, null, new File(lessonDir.getPath()), lessonDir.getName(), new FileFilter() {
           @Override
@@ -267,18 +163,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       catch (IOException e1) {
         //close silently
       }
-    }
-  }
-
-  public static class InsertionListener extends CCDocumentListener {
-
-    public InsertionListener(TaskFile taskFile) {
-      super(taskFile);
-    }
-
-    @Override
-    protected boolean useLength() {
-      return true;
     }
   }
 

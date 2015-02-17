@@ -180,7 +180,7 @@ class FilePointerPartNode {
       for (FilePointerPartNode child : children) {
         // find the right child (its part should start with ours)
         int i = child.indexOfFirstDifferentChar(path, index);
-        if (i != index && (i > index+1 || path.charAt(index) != '/')) {
+        if (i != index && (i > index+1 || path.charAt(index) != '/' || index == 0)) {
           FilePointerPartNode node = child.findPointerOrCreate(path, index, fileAndUrl);
           if (node.leaf == null) pointersUnder++; // the new node's been created
           return node;

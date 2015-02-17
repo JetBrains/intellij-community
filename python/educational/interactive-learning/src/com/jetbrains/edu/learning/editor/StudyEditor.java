@@ -33,11 +33,13 @@ import com.intellij.ui.HideableTitledPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.edu.learning.StudyDocumentListener;
+import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +70,7 @@ public class StudyEditor implements TextEditor {
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
-  private static final Map<Document, StudyDocumentListener> myDocumentListeners = new HashMap<Document, StudyDocumentListener>();
+  private static final Map<Document, EduDocumentListener> myDocumentListeners = new HashMap<Document, EduDocumentListener>();
   private final Project myProject;
 
   public JButton getCheckButton() {
@@ -99,7 +101,7 @@ public class StudyEditor implements TextEditor {
     return newButton;
   }
 
-  public static void addDocumentListener(@NotNull final Document document, @NotNull final StudyDocumentListener listener) {
+  public static void addDocumentListener(@NotNull final Document document, @NotNull final EduDocumentListener listener) {
     document.addDocumentListener(listener);
     myDocumentListeners.put(document, listener);
   }
@@ -110,7 +112,7 @@ public class StudyEditor implements TextEditor {
     myComponent = myDefaultEditor.getComponent();
     final JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    myTaskFile = StudyTaskManager.getInstance(myProject).getTaskFile(file);
+    myTaskFile = StudyUtils.getTaskFile(project, file);
     if (myTaskFile != null) {
       final Task currentTask = myTaskFile.getTask();
       final String taskText = currentTask.getText();
@@ -204,7 +206,8 @@ public class StudyEditor implements TextEditor {
     myNextTaskButton = addButton(taskActionsPanel, StudyNextStudyTaskAction.ACTION_ID, AllIcons.Actions.Forward, StudyNextStudyTaskAction.SHORTCUT);
     myRefreshButton = addButton(taskActionsPanel, StudyRefreshTaskFileAction.ACTION_ID, AllIcons.Actions.Refresh, StudyRefreshTaskFileAction.SHORTCUT);
     final JButton myShowHintButton = addButton(taskActionsPanel, StudyShowHintAction.ACTION_ID, InteractiveLearningIcons.ShowHint, StudyShowHintAction.SHORTCUT);
-    if (!taskFile.getTask().getUserTests().isEmpty()) {
+    final List<UserTest> userTests = StudyTaskManager.getInstance(myProject).getUserTests(taskFile.getTask());
+    if (!userTests.isEmpty()) {
       final JButton runButton = addButton(taskActionsPanel, StudyRunAction.ACTION_ID, AllIcons.General.Run, null);
       runButton.addActionListener(new ActionListener() {
         @Override
@@ -396,7 +399,7 @@ public class StudyEditor implements TextEditor {
   }
 
   public static void removeListener(Document document) {
-    final StudyDocumentListener listener = myDocumentListeners.get(document);
+    final EduDocumentListener listener = myDocumentListeners.get(document);
     if (listener != null) {
       document.removeDocumentListener(listener);
     }

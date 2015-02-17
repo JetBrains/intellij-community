@@ -3,9 +3,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.edu.learning.StudyDocumentListener;
-import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
+import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.TaskFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class StudyDocumentListenerTest extends StudyTestCase {
     List<AnswerPlaceholder> answerPlaceholders = new ArrayList<AnswerPlaceholder>();
     addTaskWindow(answerPlaceholders, 0, 32, 14);
     taskFile.setAnswerPlaceholders(answerPlaceholders);
-    StudyDocumentListener listener = new StudyDocumentListener(taskFile);
+    EduDocumentListener listener = new EduDocumentListener(taskFile);
     document.addDocumentListener(listener);
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
       @Override

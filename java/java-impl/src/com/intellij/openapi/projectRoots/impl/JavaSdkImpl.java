@@ -241,8 +241,11 @@ public class JavaSdkImpl extends JavaSdk {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(baseDescriptor) {
       @Override
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-        if (files.length > 0 && JrtFileSystem.isModularJdk(files[0].getPath()) && !JrtFileSystem.isSupported()) {
-          throw new Exception(LangBundle.message("jrt.not.available.message"));
+        if (files.length > 0 && !JrtFileSystem.isSupported()) {
+          String path = files[0].getPath();
+          if (JrtFileSystem.isModularJdk(path) || JrtFileSystem.isModularJdk(adjustSelectedSdkHome(path))) {
+            throw new Exception(LangBundle.message("jrt.not.available.message"));
+          }
         }
         baseDescriptor.validateSelectedFiles(files);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.junit.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);
-      assert deleted : "Can't delete " + fileToDelete;
+      Assert.assertTrue("Can't delete " + fileToDelete, deleted);
     }
 
     super.tearDown();
@@ -179,7 +180,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   @Override
   public Project getProject() {
-    assert myProject != null : "setUp() should be called first";
+    Assert.assertNotNull("setUp() should be called first", myProject);
     return myProject;
   }
 

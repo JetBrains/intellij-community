@@ -99,7 +99,7 @@ public abstract class PromiseManager<HOST, VALUE> {
 
   @NotNull
   private Promise<VALUE> getPromise(HOST host, boolean load, Promise<VALUE> promise) {
-    if (!load) {
+    if (!load || promise.getState() != Promise.State.PENDING) {
       return promise;
     }
 

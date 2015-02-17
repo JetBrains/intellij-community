@@ -11,10 +11,15 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.edu.learning.StudyNames;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.*;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,11 +54,11 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       data.addText(" (" + valueName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return;
     }
-    if (valueName.contains(Task.TASK_DIR)) {
+    if (valueName.contains(EduNames.TASK)) {
       TaskFile file = null;
       for (PsiElement child : myValue.getChildren()) {
         VirtualFile virtualFile = child.getContainingFile().getVirtualFile();
-        file = studyTaskManager.getTaskFile(virtualFile);
+        file = StudyUtils.getTaskFile(myProject, virtualFile);
         if (file != null) {
           break;
         }
@@ -63,16 +68,16 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         setStudyAttributes(task, data, task.getName());
       }
     }
-    if (valueName.contains(StudyNames.LESSON_DIR)) {
-      int lessonIndex = Integer.parseInt(valueName.substring(StudyNames.LESSON_DIR.length())) - 1;
+    if (valueName.contains(EduNames.LESSON)) {
+      int lessonIndex = Integer.parseInt(valueName.substring(EduNames.LESSON.length())) - 1;
       Lesson lesson = course.getLessons().get(lessonIndex);
       setStudyAttributes(lesson, data, lesson.getName());
     }
 
-    if (valueName.contains(Course.SANDBOX_DIR)) {
+    if (valueName.contains(EduNames.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
-        if (!myValue.getParent().getName().contains(Course.SANDBOX_DIR)) {
-          data.setPresentableText(Course.SANDBOX_DIR);
+        if (!myValue.getParent().getName().contains(EduNames.SANDBOX_DIR)) {
+          data.setPresentableText(EduNames.SANDBOX_DIR);
           data.setIcon(InteractiveLearningIcons.Sandbox);
           return;
         }
@@ -84,27 +89,44 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public int getTypeSortWeight(boolean sortByType) {
     String name = myValue.getName();
-    if (name.contains(StudyNames.LESSON_DIR) || name.contains(Task.TASK_DIR)) {
-      String logicalName = name.contains(StudyNames.LESSON_DIR) ? StudyNames.LESSON_DIR : Task.TASK_DIR;
-      return StudyUtils.getIndex(name, logicalName) + 1;
+    if (name.contains(EduNames.LESSON) || name.contains(EduNames.TASK)) {
+      String logicalName = name.contains(EduNames.LESSON) ? EduNames.LESSON : EduNames.TASK;
+      return EduUtils.getIndex(name, logicalName) + 1;
     }
-    return name.contains(Course.SANDBOX_DIR) ? 0 : 3;
+    return name.contains(EduNames.SANDBOX_DIR) ? 0 : 3;
   }
 
-  private static void setStudyAttributes(Stateful stateful, PresentationData data, String additionalName) {
-    StudyStatus taskStatus = stateful.getStatus();
+  private void setStudyAttributes(Lesson lesson, PresentationData data, String additionalName) {
+    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(lesson);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, additionalName, JBColor.BLACK, stateful instanceof Lesson ? InteractiveLearningIcons.Lesson : InteractiveLearningIcons.Task);
+        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Lesson);
+        break;
+      }
+      case Solved: {
+        updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)), InteractiveLearningIcons.LessonCompl);
+        break;
+      }
+      case Failed: {
+        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.Lesson);
+      }
+    }
+  }
+
+  private void setStudyAttributes(Task task, PresentationData data, String additionalName) {
+    StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
+    switch (taskStatus) {
+      case Unchecked: {
+        updatePresentation(data, additionalName, JBColor.BLACK, InteractiveLearningIcons.Task);
         break;
       }
       case Solved: {
         updatePresentation(data, additionalName, new JBColor(new Color(0, 134, 0), new Color(98, 150, 85)),
-                           stateful instanceof Lesson ? InteractiveLearningIcons.LessonCompl : InteractiveLearningIcons.TaskCompl);
+                           InteractiveLearningIcons.TaskCompl);
         break;
       }
       case Failed: {
-        updatePresentation(data, additionalName, JBColor.RED, stateful instanceof Lesson ? InteractiveLearningIcons.Lesson : InteractiveLearningIcons.TaskProbl);
+        updatePresentation(data, additionalName, JBColor.RED, InteractiveLearningIcons.TaskProbl);
       }
     }
   }
@@ -127,12 +149,12 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (myValue.getName().contains(Task.TASK_DIR)) {
+    if (myValue.getName().contains(EduNames.TASK)) {
       TaskFile taskFile = null;
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
         VirtualFile childFile = child.getContainingFile().getVirtualFile();
-        taskFile = StudyTaskManager.getInstance(myProject).getTaskFile(childFile);
+        taskFile = StudyUtils.getTaskFile(myProject, childFile);
         if (taskFile != null) {
           virtualFile = childFile;
           break;
@@ -170,7 +192,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public boolean expandOnDoubleClick() {
-    if (myValue.getName().contains(Task.TASK_DIR)) {
+    if (myValue.getName().contains(EduNames.TASK)) {
       return false;
     }
     return super.expandOnDoubleClick();

@@ -3,13 +3,20 @@ package com.jetbrains.edu.learning;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.jetbrains.edu.learning.course.CourseInfo;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
+import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -21,6 +28,7 @@ import java.util.List;
 
 
 public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+  private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
 
@@ -58,6 +66,15 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
     myGenerator.generateProject(project, baseDir);
+    final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
+    final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
+    if (projectDir == null) return;
+    try {
+      FileTemplateUtil.createFromTemplate(template, "test_helper.py", null, projectDir);
+    }
+    catch (Exception exception) {
+      LOG.error("Can't copy test_helper.py " + exception.getMessage());
+    }
   }
   @NotNull
   @Override

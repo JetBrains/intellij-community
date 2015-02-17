@@ -5,8 +5,8 @@ This module encapsulates Django semi-public API knowledge, and not very stable b
 """
 from optparse import Option
 import django
-from django.apps import registry
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management import ManagementUtility, get_commands, BaseCommand
 
 __author__ = 'Ilya.Kazakevich'
@@ -21,7 +21,11 @@ def report_data(dumper):
     """
     utility = ManagementUtility()
     for command_name in get_commands().keys():
-        command = utility.fetch_command(command_name)
+        try:
+            command = utility.fetch_command(command_name)
+        except ImproperlyConfigured:
+            continue # TODO: Log somehow
+
         assert isinstance(command, BaseCommand)
         dumper.start_command(command_name=command_name,
                              command_help_text=str(command.usage("").replace("%prog", command_name)),

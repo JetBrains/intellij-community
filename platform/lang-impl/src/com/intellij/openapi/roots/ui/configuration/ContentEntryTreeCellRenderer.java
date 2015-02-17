@@ -28,6 +28,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
@@ -58,7 +62,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
           if (file != null && file.isDirectory()) {
             final ContentEntry contentEntry = editor.getContentEntry();
             if (contentEntry != null) {
-              final String prefix = getPrefix(contentEntry, file);
+              final String prefix = getPresentablePrefix(contentEntry, file);
               if (!prefix.isEmpty()) {
                 append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
               }
@@ -70,10 +74,14 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
   }
 
-  private static String getPrefix(final ContentEntry entry, final VirtualFile file) {
+  private static String getPresentablePrefix(final ContentEntry entry, final VirtualFile file) {
     for (final SourceFolder sourceFolder : entry.getSourceFolders()) {
       if (file.equals(sourceFolder.getFile())) {
-        return sourceFolder.getPackagePrefix();
+        JpsModuleSourceRoot element = sourceFolder.getJpsElement();
+        JavaSourceRootProperties properties = element.getProperties(JavaModuleSourceRootTypes.SOURCES);
+        if (properties != null) return properties.getPackagePrefix();
+        JavaResourceRootProperties resourceRootProperties = element.getProperties(JavaModuleSourceRootTypes.RESOURCES);
+        if (resourceRootProperties != null) return resourceRootProperties.getRelativeOutputPath();
       }
     }
     return "";

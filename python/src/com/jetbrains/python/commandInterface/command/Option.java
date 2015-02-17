@@ -26,7 +26,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Command option
+ * Command option.
+ * It may have some long names (like --foo) and short (like -f), help text and arguments (if not flag option)
+ *
  * @author Ilya.Kazakevich
  */
 public final class Option {
@@ -40,17 +42,17 @@ public final class Option {
   private final String myHelp;
 
   /**
-   *
    * @param argumentAndQuantity if option accepts argument, there should be pair of [argument_quantity, its_type_info]
-   * @param help option help
-   * @param shortNames option short names
-   * @param longNames option long names
+   * @param help                option help
+   * @param shortNames          option short names
+   * @param longNames           option long names
    */
   public Option(@Nullable final Pair<Integer, OptionArgumentInfo> argumentAndQuantity,
                 @NotNull final String help,
                 @NotNull final Collection<String> shortNames,
                 @NotNull final Collection<String> longNames) {
-    Preconditions.checkArgument(argumentAndQuantity == null || argumentAndQuantity.first > 0, "Illegal args and quantity: " + argumentAndQuantity);
+    Preconditions
+      .checkArgument(argumentAndQuantity == null || argumentAndQuantity.first > 0, "Illegal args and quantity: " + argumentAndQuantity);
     myArgumentAndQuantity = argumentAndQuantity;
     myShortNames.addAll(shortNames);
     myLongNames.addAll(longNames);
@@ -66,6 +68,16 @@ public final class Option {
   }
 
   /**
+   * @return all option names (long and short)
+   */
+  @NotNull
+  public List<String> getAllNames() {
+    final List<String> result = new ArrayList<String>(myLongNames);
+    result.addAll(myShortNames);
+    return result;
+  }
+
+  /**
    * @return Option short names
    */
   @NotNull
@@ -74,8 +86,7 @@ public final class Option {
   }
 
   /**
-   *
-   * @return  if option accepts argument -- pair of [argument_quantity, its_type_info]. Null otherwise.
+   * @return if option accepts argument -- pair of [argument_quantity, its_type_info]. Null otherwise.
    */
   @Nullable
   public Pair<Integer, OptionArgumentInfo> getArgumentAndQuantity() {

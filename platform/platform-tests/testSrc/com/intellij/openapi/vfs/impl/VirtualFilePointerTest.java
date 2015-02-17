@@ -163,6 +163,17 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
+  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() throws Exception {
+    VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
+    myVirtualFilePointerManager.create("file://invalid/path", disposable, null);
+    VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
+    final LightVirtualFile root = new LightVirtualFile("/");
+    LightVirtualFile a = createLightFile(root, "a");
+    LightVirtualFile b = createLightFile(root, "b");
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
+  }
+
   @NotNull
   private static LightVirtualFile createLightFile(final LightVirtualFile parent, final String name) {
     return new LightVirtualFile(name) {

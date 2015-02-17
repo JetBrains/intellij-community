@@ -3,7 +3,7 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
-import com.jetbrains.edu.learning.course.UserTest;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

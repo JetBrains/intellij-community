@@ -248,6 +248,7 @@ binding.setVariable("commonJvmArgsForTests", {
   if (debugPort != null) jdwp += ",address=$debugPort"
   return [
     "-ea",
+    "-Dio.netty.leakDetectionLevel=PARANOID",
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",

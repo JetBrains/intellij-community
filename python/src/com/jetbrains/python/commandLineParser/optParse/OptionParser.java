@@ -16,25 +16,19 @@
 package com.jetbrains.python.commandLineParser.optParse;
 
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.commandInterface.command.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
- * Engine that knows how to deal with option of certain style
+ * Engine that knows how to deal with option of certain style (like long and short)
  *
  * @author Ilya.Kazakevich
  */
 interface OptionParser {
   /**
-   * Checks if some text that looks like and option is really option
-   *
-   * @param availableOptions all available options
-   * @param textToCheck      text believed to be an option like "--foo=123"
-   * @return [option->argument_value] pair or null if provided text is not an option. ArgValue may also be null if not provided
+   * @param optionText text to parse (like --foo=bar)
+   * @return null if option can't be parsed. Otherwise pair of [option_text, option_name]. That may match each other in some cases.
    */
   @Nullable
-  Pair<Option, String> findOptionAndValue(@NotNull List<Option> availableOptions, @NotNull String textToCheck);
+  Pair<String, String> findOptionTextAndName(@NotNull String optionText);
 }

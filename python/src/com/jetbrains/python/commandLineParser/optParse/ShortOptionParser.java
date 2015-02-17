@@ -16,44 +16,29 @@
 package com.jetbrains.python.commandLineParser.optParse;
 
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.commandInterface.command.Option;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Deals with short-style options like -b or -f
+ *
  * @author Ilya.Kazakevich
  */
-final class ShortOptionParser implements OptionParser {
+final class ShortOptionParser extends OptionParserRegexBased {
   /**
    * Short-style option regexp
    */
-  private static final Pattern SHORT_OPT_START = Pattern.compile("^(-[a-zA-Z0-9])([^ -])?");
+  private static final Pattern SHORT_OPT_PATTERN = Pattern.compile("^(-[a-zA-Z0-9])([^ -])?");
 
-  @Nullable
+  ShortOptionParser() {
+    super(SHORT_OPT_PATTERN);
+  }
+
+  @NotNull
   @Override
-  public Pair<Option, String> findOptionAndValue(@NotNull final List<Option> availableOptions, @NotNull final String textToCheck) {
-    final Matcher matcher = SHORT_OPT_START.matcher(textToCheck);
-
-    if (!matcher.find()) {
-      return null;
-    }
-    final String optionText = matcher.group(1);
-    final String optionValueText = (matcher.groupCount() == 2 ? matcher.group(2) : null);
-
-
-    for (final Option option : availableOptions) {
-      for (final String shortName : option.getShortNames()) {
-        if (optionText.equals(shortName)) {
-          return Pair.create(option, optionValueText);
-        }
-      }
-    }
-
-    return null;
+  protected Pair<String, String> getOptionTextAndNameFromMatcher(@NotNull final Matcher matcher) {
+    return Pair.create(matcher.group(1), matcher.group(1));
   }
 }

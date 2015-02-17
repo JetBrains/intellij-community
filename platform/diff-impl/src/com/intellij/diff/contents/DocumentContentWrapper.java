@@ -16,7 +16,6 @@
 package com.intellij.diff.contents;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,9 +29,9 @@ public class DocumentContentWrapper implements DocumentContent {
   @NotNull private final DocumentContent myBase;
   @NotNull private final Document myDocument;
 
-  public DocumentContentWrapper(@NotNull DocumentContent base, @NotNull String text) {
+  public DocumentContentWrapper(@NotNull Document document, @NotNull DocumentContent base) {
+    myDocument = document;
     myBase = base;
-    myDocument = EditorFactory.getInstance().createDocument(text);
   }
 
   @NotNull

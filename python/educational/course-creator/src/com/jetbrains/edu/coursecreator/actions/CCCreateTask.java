@@ -22,12 +22,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCProjectService;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,10 +61,10 @@ public class CCCreateTask extends DumbAwareAction {
     final int size = lesson.getTaskList().size();
     final String taskName;
     if (showDialog) {
-      taskName = Messages.showInputDialog("Name:", "Task Name", null, "task" + (size + 1), null);
+      taskName = Messages.showInputDialog("Name:", "Task Name", null, EduNames.TASK + (size + 1), null);
     }
     else {
-      taskName = "task" + (size + 1);
+      taskName = EduNames.TASK + (size + 1);
     }
 
     if (taskName == null) {
@@ -71,24 +73,23 @@ public class CCCreateTask extends DumbAwareAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories("task" + (size + 1), lessonDir, "\\/");
+        final PsiDirectory taskDirectory = DirectoryUtil.createSubdirectories(EduNames.TASK + (size + 1), lessonDir, "\\/");
         if (taskDirectory != null) {
           CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
           if (manager == null) {
             return;
           }
 
-          CCUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
+          EduUtils.markDirAsSourceRoot(taskDirectory.getVirtualFile(), project);
           final Task task = new Task(taskName);
           task.setIndex(size + 1);
-          lesson.addTask(task, taskDirectory);
+          lesson.addTask(task);
 
           createFromTemplateAndOpen(taskDirectory, manager.getTestsTemplate(project), view);
           createFromTemplateAndOpen(taskDirectory, FileTemplateManager.getInstance(project).getInternalTemplate("task.html"), view);
           String defaultExtension = manager.getDefaultTaskFileExtension();
           if (defaultExtension != null) {
-            FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project,
-                                                                                          defaultExtension);
+            FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
             createFromTemplateAndOpen(taskDirectory, taskFileTemplate, view);
             if (taskFileTemplate != null) {
               String taskFileName = FileUtil.getNameWithoutExtension(taskFileTemplate.getName());

@@ -14,10 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,11 +40,10 @@ public class StudyRunAction extends DumbAwareAction {
 
   private void executeFile(@NotNull final Project project,
                            @NotNull final VirtualFile openedFile, @NotNull final String filePath) {
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     GeneralCommandLine cmd = new GeneralCommandLine();
     cmd.withWorkDirectory(openedFile.getParent().getCanonicalPath());
 
-    TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+    TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
     assert selectedTaskFile != null;
     final Task currentTask = selectedTaskFile.getTask();
     final Sdk sdk = StudyUtils.findSdk(currentTask, project);
