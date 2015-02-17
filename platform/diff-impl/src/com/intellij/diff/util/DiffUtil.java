@@ -752,6 +752,7 @@ public class DiffUtil {
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
+    if (document.isWritable()) return true;
     if (project == null) return false;
     return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
   }
