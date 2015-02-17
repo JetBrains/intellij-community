@@ -80,8 +80,7 @@ public class HgHistoryUtil {
                                                  @NotNull String email,
                                                  @NotNull List<String> attributes) {
         String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-        int subjectIndex = message.indexOf('\n');
-        String subject = subjectIndex == -1 ? message : message.substring(0, subjectIndex);
+        String subject = extractSubject(message);
         List<Hash> parentsHash = new SmartList<Hash>();
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));
@@ -259,8 +258,7 @@ public class HgHistoryUtil {
                                                      @NotNull String email,
                                                      @NotNull List<String> attributes) {
         String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-        int subjectIndex = message.indexOf('\n');
-        String subject = subjectIndex == -1 ? message : message.substring(0, subjectIndex);
+        String subject = extractSubject(message);
         List<Hash> parentsHash = new SmartList<Hash>();
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));
