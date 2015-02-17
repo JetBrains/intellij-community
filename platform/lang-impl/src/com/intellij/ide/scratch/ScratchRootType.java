@@ -17,10 +17,8 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +42,8 @@ public final class ScratchRootType extends RootType {
 
   @Override
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
-    Language language = mapping.getMapping(file);
-    return language != null && language != ScratchFileType.INSTANCE.getLanguage() ?
-           LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
+    Language language = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
+    return substituteLanguageImpl(language, file, project);
   }
 
   @Nullable

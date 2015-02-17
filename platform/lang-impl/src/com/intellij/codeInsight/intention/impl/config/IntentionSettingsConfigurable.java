@@ -39,6 +39,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     }
     JPanel component = myPanel.getComponent();
     component.setPreferredSize(new Dimension(800, 600));
+    component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     return component;
   }
 

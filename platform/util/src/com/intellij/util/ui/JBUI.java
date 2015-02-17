@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 
 import javax.swing.*;
@@ -25,8 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBUI {
-  private static boolean IS_HIDPI = ("true".equals(System.getProperty("hidpi")) || getSystemDPI() >= 144)
-                                    && !("false".equals(System.getProperty("hidpi")));
+  private static boolean IS_HIDPI = !SystemInfo.isMac && ("true".equals(System.getProperty("hidpi")) || "true".equals(System.getProperty("is.hidpi")));
 
   private static int getSystemDPI() {
     try {
