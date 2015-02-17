@@ -1343,6 +1343,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       final PyType metaClassType = cls.getMetaClassType(context);
       if (metaClassType instanceof PyClassType) {
         final PyClass metaClass = ((PyClassType)metaClassType).getPyClass();
+        if (cls == metaClass) {
+          return false;
+        }
         final PyFunction mroMethod = metaClass.findMethodByName(PyNames.MRO, true);
         if (mroMethod != null) {
           final PyClass mroClass = mroMethod.getContainingClass();
