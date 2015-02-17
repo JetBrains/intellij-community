@@ -13,27 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.chunkDriverBasedPresenter;
+package com.jetbrains.python.commandLineParser;
 
 import com.jetbrains.python.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
- * Driver that knows how to parse pack of chunks into chunk info.
+ * Part of command line. Known subclasses are {@link CommandLineOption} and {@link CommandLineArgument}
  *
  * @author Ilya.Kazakevich
+ * @see CommandLineArgument
+ * @see CommandLineOption
  */
-public interface ChunkDriver {
+public abstract class CommandLinePart {
+  @NotNull
+  private final WordWithPosition myWord;
+
   /**
-   * Parses chunks into pack of chunks. There <strong>always</strong> should be chunk+1 chunkInfos (one for the tail like
-   * {@link com.jetbrains.python.commandInterface.CommandInterfaceView#AFTER_LAST_CHARACTER_RANGE}).
-   * So, at least one chunk info should also exist!
-   *
-   * @param chunks chunks (parts of command line)
-   * @return parse info with chunks info. Warning: do not return less chunk infos than chunks provided. That leads to runtime error
+   * @param word word (and its position) this part represents
+   */
+  protected CommandLinePart(@NotNull final WordWithPosition word) {
+    myWord = word;
+  }
+
+  /**
+   * @return word (and its position) this part represents
    */
   @NotNull
-  ParseInfo parse(@NotNull List<WordWithPosition> chunks);
+  public final WordWithPosition getWord() {
+    return myWord;
+  }
+
+  /**
+   * @param visitor visitor to accept
+   */
+  public abstract void accept(@NotNull CommandLinePartVisitor visitor);
 }

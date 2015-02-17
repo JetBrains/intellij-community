@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandLineParser.optParse;
+package com.jetbrains.python.commandInterface.rangeBasedPresenter;
 
-import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Engine that knows how to deal with option of certain style (like long and short)
+ * Engine to execute command line
  *
  * @author Ilya.Kazakevich
  */
-interface OptionParser {
+public interface Executor {
   /**
-   * @param optionText text to parse (like --foo=bar)
-   * @return null if option can't be parsed. Otherwise pair of [option_text, option_name]. That may match each other in some cases.
+   * @return information about what to execute (like command name)
    */
   @Nullable
-  Pair<String, String> findOptionTextAndName(@NotNull String optionText);
+  String getExecutionDescription();
+
+  /**
+   * Execute command!
+   */
+  void execute();
 }

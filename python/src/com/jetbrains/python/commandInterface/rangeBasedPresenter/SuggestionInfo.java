@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.commandInterface.chunkDriverBasedPresenter;
+package com.jetbrains.python.commandInterface.rangeBasedPresenter;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -66,5 +66,14 @@ public final class SuggestionInfo {
    */
   public boolean isShowAbsolute() {
     return myShowAbsolute;
+  }
+
+  @Override
+  public String toString() {
+    return "SuggestionInfo{" +
+           "mySuggestions=" + mySuggestions +
+           ", myShowSuggestionsAutomatically=" + myShowSuggestionsAutomatically +
+           ", myShowAbsolute=" + myShowAbsolute +
+           '}';
   }
 }

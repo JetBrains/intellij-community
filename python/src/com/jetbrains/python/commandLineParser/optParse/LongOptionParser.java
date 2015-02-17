@@ -16,38 +16,27 @@
 package com.jetbrains.python.commandLineParser.optParse;
 
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.commandInterface.command.Option;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Supports --long-option-style-with=value
+ *
  * @author Ilya.Kazakevich
  */
-final class LongOptionParser implements OptionParser {
-  @Nullable
+final class LongOptionParser extends OptionParserRegexBased {
+  @NotNull
+  private static final Pattern LONG_OPT_PATTERN = Pattern.compile("^((--[a-zA-Z0-9-]+)=?)");
+
+  LongOptionParser() {
+    super(LONG_OPT_PATTERN);
+  }
+
+  @NotNull
   @Override
-  public Pair<Option, String> findOptionAndValue(@NotNull final List<Option> availableOptions, @NotNull final String textToCheck) {
-    if (!textToCheck.startsWith("--")) {
-      return null;
-    }
-
-    for (final Option option : availableOptions) {
-      for (final String longName : option.getLongNames()) {
-        if (textToCheck.startsWith(longName)) {
-          final String[] parts = textToCheck.split("=");
-          if (parts.length == 0) {
-            return Pair.create(option, null);
-          }
-          else {
-            return Pair.create(option, parts[1]);
-          }
-        }
-      }
-    }
-
-    return null;
+  protected Pair<String, String> getOptionTextAndNameFromMatcher(@NotNull final Matcher matcher) {
+    return Pair.create(matcher.group(1), matcher.group(2));
   }
 }

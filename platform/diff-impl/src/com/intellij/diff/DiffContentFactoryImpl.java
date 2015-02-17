@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -45,6 +44,12 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @NotNull
   public EmptyContent createEmpty() {
     return new EmptyContent();
+  }
+
+  @Override
+  @NotNull
+  public DocumentContent create(@NotNull String text) {
+    return create(text, null);
   }
 
   @Override
@@ -97,14 +102,16 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @NotNull
   public DiffContent createClipboardContent() {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    return new DocumentContentImpl(new DocumentImpl(StringUtil.notNullize(text)));
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(StringUtil.notNullize(text)));
+    return new DocumentContentImpl(document); // TODO: show difference in line separators ?
   }
 
   @Override
   @NotNull
   public DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    return new DocumentContentWrapper(mainContent, StringUtil.notNullize(text));
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(StringUtil.notNullize(text)));
+    return new DocumentContentWrapper(document, mainContent);
   }
 
   @Override

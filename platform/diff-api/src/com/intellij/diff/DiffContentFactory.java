@@ -41,6 +41,9 @@ public abstract class DiffContentFactory {
   public abstract EmptyContent createEmpty();
 
   @NotNull
+  public abstract DocumentContent create(@NotNull String text);
+
+  @NotNull
   public abstract DocumentContent create(@NotNull String text, @Nullable FileType type);
 
   @NotNull
@@ -58,8 +61,11 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DiffContent createClipboardContent();
 
+  /**
+   * @param referenceContent used to detect FileType and proper highlighting for clipboard content
+   */
   @NotNull
-  public abstract DocumentContent createClipboardContent(@NotNull DocumentContent mainContent);
+  public abstract DocumentContent createClipboardContent(@NotNull DocumentContent referenceContent);
 
   @NotNull
   public abstract DiffContent createBinary(@Nullable Project project,

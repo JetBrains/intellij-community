@@ -15,27 +15,22 @@
  */
 package com.jetbrains.python.commandLineParser;
 
+import com.jetbrains.python.WordWithPosition;
+import org.jetbrains.annotations.NotNull;
+
 /**
- * Types of command line parts.
- *
+ * Positional or option argument.
  * @author Ilya.Kazakevich
  */
-public enum CommandLinePartType {
-  /**
-   * Argument (or positional, or unnamed argument) something that has only value. Like "my_folder" in "rm my_folder"
-   */
-  ARGUMENT,
-  /**
-   * Option is named but optional parameter. Like "-l" in "ls -l".
-   */
-  OPTION,
-  /**
-   * Option argument like --folder-to-delete=/
-   * Here root is option argument
-   */
-  OPTION_ARGUMENT,
-  /**
-   * Some part of command line that {@link com.jetbrains.python.commandLineParser.CommandLineParser} does not understand
-   */
-  UNKNOWN
+public final class CommandLineArgument extends CommandLinePart {
+
+  public CommandLineArgument(@NotNull final WordWithPosition argumentValue) {
+    super(argumentValue);
+  }
+
+
+  @Override
+  public void accept(@NotNull final CommandLinePartVisitor visitor) {
+    visitor.visitArgument(this);
+  }
 }

@@ -151,11 +151,31 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals("UTF-8", configuration.getEncoding(new File(getAbsolutePath("other"))));
   }
 
+  public void testResourceRoots() {
+    String projectPath = "/jps/model-serialization/testData/resourceRoots/";
+    loadProject(projectPath + "resourceRoots.ipr");
+    JpsModule module = assertOneElement(myProject.getModules());
+    List<JpsModuleSourceRoot> roots = module.getSourceRoots();
+    assertSame(JavaSourceRootType.SOURCE, roots.get(0).getRootType());
+    checkResourceRoot(roots.get(1), false, "");
+    checkResourceRoot(roots.get(2), true, "");
+    checkResourceRoot(roots.get(3), true, "foo");
+    doTestSaveModule(module, projectPath + "resourceRoots.iml");
+  }
+
+  private static void checkResourceRoot(JpsModuleSourceRoot root, boolean forGenerated, String relativeOutput) {
+    assertSame(JavaResourceRootType.RESOURCE, root.getRootType());
+    JavaResourceRootProperties properties = root.getProperties(JavaResourceRootType.RESOURCE);
+    assertNotNull(properties);
+    assertEquals(forGenerated, properties.isForGeneratedSources());
+    assertEquals(relativeOutput, properties.getRelativeOutputPath());
+  }
+
   public void testSaveProject() {
     loadProject(SAMPLE_PROJECT_PATH);
     List<JpsModule> modules = myProject.getModules();
-    doTestSaveModule(modules.get(0), "main.iml");
-    doTestSaveModule(modules.get(1), "util/util.iml");
+    doTestSaveModule(modules.get(0), SAMPLE_PROJECT_PATH + "/main.iml");
+    doTestSaveModule(modules.get(1), SAMPLE_PROJECT_PATH + "/util/util.iml");
     //tod[nik] remember that test output root wasn't specified and doesn't save it to avoid unnecessary modifications of iml files
     //doTestSaveModule(modules.get(2), "xxx/xxx.iml");
 
@@ -188,7 +208,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     try {
       Element actual = JDomSerializationUtil.createComponentElement("NewModuleRootManager");
       JpsModuleRootModelSerializer.saveRootModel(module, actual);
-      File imlFile = getFileInSampleProject(moduleFilePath);
+      File imlFile = new File(getTestDataFileAbsolutePath(moduleFilePath));
       Element rootElement = loadModuleRootTag(imlFile);
       Element expected = JDomSerializationUtil.findComponent(rootElement, "NewModuleRootManager");
       PlatformTestUtil.assertElementsEqual(expected, actual);

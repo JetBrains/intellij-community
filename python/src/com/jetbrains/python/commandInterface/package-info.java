@@ -31,7 +31,7 @@
  *
  * <p>
  *   There is also swing-based view implementation in {@link com.jetbrains.python.commandInterface.swingView}
- *   and presenter implementation based on idea of commands with arguments. See {@link com.jetbrains.python.commandInterface.chunkDriverBasedPresenter}
+ *   and presenter implementation based on idea of commands with arguments. See {@link com.jetbrains.python.commandInterface.rangeBasedPresenter}
  * </p>
  *
  * <p>
