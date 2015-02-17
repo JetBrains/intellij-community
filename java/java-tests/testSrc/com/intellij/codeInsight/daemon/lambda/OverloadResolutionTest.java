@@ -51,6 +51,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testTryCatchWithoutFinallyBlockProcessing() throws Exception {
+    doTest(false);
+  }
+
   public void testValueCompatibleWithThrowsStatement() throws Exception {
     doTest(false);
   }
