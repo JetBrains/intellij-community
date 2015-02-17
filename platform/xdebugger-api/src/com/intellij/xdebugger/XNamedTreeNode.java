@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+package com.intellij.xdebugger;
 
-import com.intellij.xdebugger.XNamedTreeNode;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 
 /**
- * @author nik
+ * @author Konstantin Bulenkov
  */
-public interface RestorableStateNode extends XNamedTreeNode {
+public interface XNamedTreeNode extends TreeNode {
   @Nullable
-  String getRawValue();
-
-  boolean isComputed();
-
-  TreePath getPath();
-
-  void markChanged();
+  String getName();
 }
