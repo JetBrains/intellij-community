@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
+import com.intellij.xdebugger.evaluation.InlineDebuggerHelper;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -93,13 +94,13 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
               myValueChildren = new ArrayList<XValueNodeImpl>(children.size());
             }
           }
+          final InlineDebuggerHelper inlineHelper = getTree().getEditorsProvider().getInlineDebuggerHelper();
           for (int i = 0; i < children.size(); i++) {
             XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
             myValueChildren.add(node);
             newChildren.add(node);
 
-            if (Registry.is("ide.debugger.inline") && "this".equals(node.getName()) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
-              //initialize "this" fields to display in inline view
+            if (Registry.is("ide.debugger.inline") && inlineHelper.shouldEvaluateChildrenByDefault(node) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
               node.getChildren();
             }
           }
