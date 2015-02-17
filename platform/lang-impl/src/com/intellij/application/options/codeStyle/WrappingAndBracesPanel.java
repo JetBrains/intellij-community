@@ -90,6 +90,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("WHILE_ON_NEW_LINE", ApplicationBundle.message("wrapping.while.on.new.line"), WRAPPING_DOWHILE_STATEMENT);
 
     addOption("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch"), WRAPPING_SWITCH_STATEMENT);
+    addOption("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case"), WRAPPING_SWITCH_STATEMENT);
 
     addOption("RESOURCE_LIST_WRAP", WRAPPING_TRY_RESOURCE_LIST, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_RESOURCES", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_TRY_RESOURCE_LIST);

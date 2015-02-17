@@ -412,6 +412,15 @@ public class CommonCodeStyleSettings {
 
   public boolean INDENT_CASE_FROM_SWITCH = true;
 
+  /**
+   * Controls "break" position realtive to "case".
+   * <pre>
+   * case 0:
+   * <--->break;
+   * </pre>
+   */
+  public boolean INDENT_BREAK_FROM_CASE = true;
+
   public boolean SPECIAL_ELSE_IF_TREATMENT = true;
 
   /**
