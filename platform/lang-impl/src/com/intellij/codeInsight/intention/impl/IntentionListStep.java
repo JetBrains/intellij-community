@@ -246,6 +246,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
           @Override
           public void run() {
             if (myProject.isDisposed()) return;
+            if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+              DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+              return;
+            }
+            
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             final PsiFile file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
             if (file == null) {
