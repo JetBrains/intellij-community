@@ -457,14 +457,18 @@ public abstract class EditorComposite implements Disposable {
   }
 
   void addEditor(FileEditor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FileEditor[] editors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(editors);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());
     }
     else {
-      myTabbedPaneWrapper.addTab(editor.getName(), editor.getComponent());
+      JComponent component = createEditorComponent(editor);
+      myTabbedPaneWrapper.addTab(editor.getName(), component);
     }
+    myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
+    myFocusWatcher.install(myComponent);
     myEditors = editors;
   }
 

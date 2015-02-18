@@ -1558,6 +1558,11 @@
           <option name="FOREGROUND" value="ffc66d" />
         </value>
       </option>
+      <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
+      <value>
+        <option name="BACKGROUND" value="303232" />
+      </value>
+    </option>
       <option name="DEFAULT_IDENTIFIER">
         <value>
           <option name="FOREGROUND" value="a9b7c6" />

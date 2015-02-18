@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.ByteBufUtilEx;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -78,7 +79,7 @@ public class FastCgiRequest {
     }
 
     ByteBufUtil.writeAscii(buffer, key);
-    ByteBufUtil.writeUtf8(buffer, value);
+    ByteBufUtilEx.writeUtf8(buffer, value);
   }
 
   public void writeHeaders(@NotNull FullHttpRequest request, @NotNull Channel clientChannel) {

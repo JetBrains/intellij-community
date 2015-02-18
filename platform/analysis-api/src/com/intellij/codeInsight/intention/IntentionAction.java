@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * Implement {@link HighPriorityAction HighPriorityAction} or
  * {@link LowPriorityAction LowPriorityAction} to change ordering.
+ * <p/>
+ * Can be {@link com.intellij.openapi.project.DumbAware}.
  *
  * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
  */

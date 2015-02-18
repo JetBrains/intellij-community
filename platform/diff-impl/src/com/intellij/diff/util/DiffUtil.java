@@ -64,6 +64,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
@@ -751,6 +752,7 @@ public class DiffUtil {
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
+    if (document.isWritable()) return true;
     if (project == null) return false;
     return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
   }
@@ -758,6 +760,19 @@ public class DiffUtil {
   //
   // Windows
   //
+
+  @NotNull
+  public static Dimension getDefaultDiffPanelSize() {
+    return new Dimension(400, 200);
+  }
+
+  @NotNull
+  public static Dimension getDefaultDiffWindowSize() {
+    Rectangle screenBounds = ScreenUtil.getMainScreenBounds();
+    int width = (int)(screenBounds.width * 0.8);
+    int height = (int)(screenBounds.height * 0.8);
+    return new Dimension(width, height);
+  }
 
   @NotNull
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {

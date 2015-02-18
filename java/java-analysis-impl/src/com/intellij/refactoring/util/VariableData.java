@@ -15,9 +15,8 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.SmartTypePointerManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableData {
@@ -33,6 +32,9 @@ public class VariableData {
 
   public VariableData(@NotNull PsiVariable var, @NotNull PsiType type) {
     variable = var;
+    if (type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) {
+      type = PsiType.getJavaLangObject(var.getManager(), GlobalSearchScope.allScope(var.getProject()));
+    }
     this.type = SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType();
   }
 }

@@ -243,11 +243,12 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
 })
 
-binding.setVariable("commonJvmArgs", {
+binding.setVariable("commonJvmArgsForTests", {
   def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
   if (debugPort != null) jdwp += ",address=$debugPort"
   return [
     "-ea",
+    "-Dio.netty.leakDetectionLevel=PARANOID",
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
@@ -366,6 +367,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
+  String EAP = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "-EAP" : ""
 
   Map properties = readIdeaProperties(args)
 
@@ -426,6 +428,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@executable@@", value: executable)
     replacefilter(token: "@@icns@@", value: icns)
     replacefilter(token: "@@bundle_name@@", value: fullName)
+    replacefilter(token: "@@product_state@@", value: EAP)
     replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
     replacefilter(token: "@@year@@", value: "$todayYear")
     replacefilter(token: "@@version@@", value: version)

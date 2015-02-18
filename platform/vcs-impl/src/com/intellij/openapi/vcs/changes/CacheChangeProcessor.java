@@ -207,14 +207,12 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
     if (selectedChanges.size() > 1) {
       int index = selectedChanges.indexOf(myCurrentChange);
-      assert index != -1;
-      return index < selectedChanges.size() - 1;
+      return index != -1 && index < selectedChanges.size() - 1;
     }
     else {
       List<Change> allChanges = getAllChanges();
       int index = allChanges.indexOf(myCurrentChange);
-      assert index != -1;
-      return index < allChanges.size() - 1;
+      return index != -1 && index < allChanges.size() - 1;
     }
   }
 
@@ -227,14 +225,12 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
     if (selectedChanges.size() > 1) {
       int index = selectedChanges.indexOf(myCurrentChange);
-      assert index != -1;
-      return index > 0;
+      return index != -1 && index > 0;
     }
     else {
       List<Change> allChanges = getAllChanges();
       int index = allChanges.indexOf(myCurrentChange);
-      assert index != -1;
-      return index > 0;
+      return index != -1 && index > 0;
     }
   }
 

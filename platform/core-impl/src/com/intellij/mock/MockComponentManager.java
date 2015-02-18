@@ -43,24 +43,28 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final MutablePicoContainer myPicoContainer;
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
+  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new DefaultPicoContainer(parent) {
-      private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
-
       @Override
       @Nullable
       public Object getComponentInstance(final Object componentKey) {
         final Object o = super.getComponentInstance(componentKey);
-        if (o instanceof Disposable && o != MockComponentManager.this) {
-          if (myDisposableComponents.add(o))
-            Disposer.register(MockComponentManager.this, (Disposable)o);
-        }
+        registerComponentInDisposer(o);
         return o;
       }
     };
+
     myPicoContainer.registerComponentInstance(this);
     Disposer.register(parentDisposable, this);
+  }
+
+  private void registerComponentInDisposer(@Nullable Object o) {
+    if (o instanceof Disposable && o != MockComponentManager.this) {
+      if (myDisposableComponents.add(o))
+        Disposer.register(MockComponentManager.this, (Disposable)o);
+    }
   }
 
   @Override
@@ -79,10 +83,12 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
     myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
+    registerComponentInDisposer(serviceImplementation);
   }
 
   public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
     myComponents.put(interfaceClass, instance);
+    registerComponentInDisposer(instance);
   }
 
   @Override

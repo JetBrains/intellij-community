@@ -24,7 +24,7 @@ import java.util.List;
  * For options, whose argument is based on certain type.
  *
  * @author Ilya.Kazakevich
- * @see com.jetbrains.python.commandInterface.command.OptionArgumentType
+ * @see OptionArgumentType
  */
 public final class OptionTypedArgumentInfo implements OptionArgumentInfo {
   @NotNull
@@ -42,7 +42,7 @@ public final class OptionTypedArgumentInfo implements OptionArgumentInfo {
     // We only check integer for now
     if (myType == OptionArgumentType.INTEGER) {
       try {
-        // We just parse it to get exception
+        // We just getCommandLineInfo it to get exception
         //noinspection ResultOfMethodCallIgnored
         Integer.parseInt(value);
       }

@@ -19,12 +19,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.jetbrains.edu.learning.StudyNames;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.*;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -63,15 +71,16 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
-    taskFile.drawAllWindows(editor);
-    taskFile.createGuardedBlocks(editor);
+    StudyUtils.drawAllWindows(editor, taskFile);
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
       }
     });
-    taskFile.navigateToFirstTaskWindow(editor);
+
+    StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
     showBalloon(project, "You can start again now", MessageType.INFO);
   }
 
@@ -82,10 +91,9 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     if (!resetDocument(project, document, taskFile, name)) {
       return false;
     }
-    updateLessonInfo(taskFile.getTask());
-    StudyUtils.updateStudyToolWindow(project);
-    resetTaskWindows(taskFile);
+    resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
+    StudyUtils.updateStudyToolWindow(project);
     return true;
   }
 
@@ -99,18 +107,14 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     Disposer.register(project, balloon);
   }
 
-  private static void resetTaskWindows(TaskFile selectedTaskFile) {
+  private static void resetAnswerPlaceholders(TaskFile selectedTaskFile, Project project) {
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
       answerPlaceholder.reset();
+      taskManager.setStatus(answerPlaceholder, StudyStatus.Unchecked);
     }
   }
 
-  private static void updateLessonInfo(Task currentTask) {
-    StudyStatus oldStatus = currentTask.getStatus();
-    LessonInfo lessonInfo = currentTask.getLesson().getLessonInfo();
-    lessonInfo.update(oldStatus, -1);
-    lessonInfo.update(StudyStatus.Unchecked, +1);
-  }
 
   private static boolean resetDocument(@NotNull final Project project,
                                        @NotNull final Document document,
@@ -120,8 +124,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     taskFile.setTrackChanges(false);
     clearDocument(document);
     Task task = taskFile.getTask();
-    String lessonDir = StudyNames.LESSON_DIR + String.valueOf(task.getLesson().getIndex() + 1);
-    String taskDir = Task.TASK_DIR + String.valueOf(task.getIndex() + 1);
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex() + 1);
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex() + 1);
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {
@@ -168,9 +172,9 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
       StudyEditor studyEditor = StudyEditor.getSelectedStudyEditor(project);
       StudyState studyState = new StudyState(studyEditor);
       if (studyState.isValid()) {
-        StudyUtils.enableAction(event, true);
+        EduUtils.enableAction(event, true);
       }
     }
-    StudyUtils.enableAction(event, false);
+    EduUtils.enableAction(event, false);
   }
 }

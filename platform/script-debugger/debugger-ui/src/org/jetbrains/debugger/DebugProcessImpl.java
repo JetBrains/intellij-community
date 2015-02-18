@@ -96,7 +96,7 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
     return editorsProvider;
   }
 
-  public void setProcessBreakpointConditionsAtIdeSide(final boolean processBreakpointConditionsAtIdeSide) {
+  public void setProcessBreakpointConditionsAtIdeSide(boolean processBreakpointConditionsAtIdeSide) {
     this.processBreakpointConditionsAtIdeSide = processBreakpointConditionsAtIdeSide;
   }
 

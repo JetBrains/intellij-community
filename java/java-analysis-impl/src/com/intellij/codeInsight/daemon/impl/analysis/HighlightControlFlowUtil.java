@@ -110,7 +110,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  private static boolean isFinalFieldInitialized(@NotNull PsiField field) {
+  public static boolean isFieldInitializedAfterObjectConstruction(@NotNull PsiField field) {
     if (field.hasInitializer()) return true;
     final boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
     final PsiClass aClass = field.getContainingClass();
@@ -232,7 +232,7 @@ public class HighlightControlFlowUtil {
   @Nullable
   public static HighlightInfo checkFinalFieldInitialized(@NotNull PsiField field) {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
-    if (isFinalFieldInitialized(field)) return null;
+    if (isFieldInitializedAfterObjectConstruction(field)) return null;
 
     String description = JavaErrorMessages.message("variable.not.initialized", field.getName());
     TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);

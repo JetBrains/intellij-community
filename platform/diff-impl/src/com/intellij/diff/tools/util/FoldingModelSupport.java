@@ -538,11 +538,11 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  private static RangeHighlighter createFoldingHighlighter(@NotNull Editor editor, @NotNull final FoldRegion region) {
+  private static RangeHighlighter createFoldingHighlighter(@NotNull final Editor editor, @NotNull final FoldRegion region) {
     return DiffDrawUtil.createLineSeparatorHighlighter(editor, region.getStartOffset(), region.getEndOffset(), new BooleanGetter() {
       @Override
       public boolean get() {
-        return region.isValid() && !region.isExpanded();
+        return region.isValid() && !region.isExpanded() && ((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled();
       }
     });
   }

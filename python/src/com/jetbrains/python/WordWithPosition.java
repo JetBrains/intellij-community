@@ -107,8 +107,8 @@ public final class WordWithPosition extends Range<Integer> {
 
     WordWithPosition position = (WordWithPosition)o;
 
-    if (getFrom() != position.getFrom()) return false;
-    if (getTo() != position.getTo()) return false;
+    if (!getFrom().equals(position.getFrom())) return false;
+    if (!getTo().equals(position.getTo())) return false;
     if (!myWord.equals(position.myWord)) return false;
 
     return true;

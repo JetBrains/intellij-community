@@ -261,7 +261,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     PsiElement el = findRealSubstitutionElement(elementToReplace);
     boolean listContext = isListContext(el);
 
-    if (el instanceof PsiAnnotation && !StringUtil.startsWithChar(replacementToMake, '@')) {
+    if (el instanceof PsiAnnotation && !replacementToMake.isEmpty() && !StringUtil.startsWithChar(replacementToMake, '@')) {
       replacementToMake = "@" + replacementToMake;
     }
 
@@ -270,6 +270,22 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
                                                    PatternTreeContext.Class :
                                                    PatternTreeContext.Block, myContext);
 
+    if (el instanceof PsiAnnotation && statements.length == 1) {
+      final PsiElement parent = el.getParent();
+      final PsiElement statement = statements[0];
+      if (statement instanceof PsiDeclarationStatement) {
+        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+        final PsiElement firstChild = declarationStatement.getFirstChild();
+        if (firstChild instanceof PsiModifierList) {
+          final PsiModifierList modifierList = (PsiModifierList)firstChild;
+          for (PsiElement child : modifierList.getChildren()) {
+            parent.add(child);
+          }
+        }
+      }
+      el.delete();
+      return;
+    }
     if (listContext) {
       if (statements.length > 1) {
         elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);

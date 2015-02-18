@@ -87,17 +87,16 @@ public class CopyHandler extends EditorActionHandler {
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
-    List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
+    final List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
     
-    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-    try {
-      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-        transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+          transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+        }
       }
-    }
-    finally {
-      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-    }
+    });
 
     String text = editor.getCaretModel().supportsMultipleCarets()
                   ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDatas)

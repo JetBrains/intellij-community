@@ -26,6 +26,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -108,6 +110,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public boolean canBePerformed(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project != null && DumbService.isDumb(project)) {
+      return false;
+    }
+
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
 
   @Override
   public ModuleFixtureBuilder<T> addSourceRoot(final String sourceRootPath) {
-    assert !myContentRoots.isEmpty() : "content root should be added first";
+    Assert.assertFalse("content root should be added first", myContentRoots.isEmpty());
     mySourceRoots.add(sourceRootPath);
     return this;
   }
@@ -82,7 +83,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
 
   protected Module createModule() {
     final Project project = myFixtureBuilder.getFixture().getProject();
-    assert project != null;
+    Assert.assertNotNull(project);
     final String moduleFilePath = new File(project.getProjectFilePath()).getParent() + File.separator + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
     return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType.getId());
   }
@@ -128,7 +129,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
 
     for (String contentRoot : myContentRoots) {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
-      assert virtualFile != null : "cannot find content root: " + contentRoot;
+      Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
       final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
       for (String sourceRoot: mySourceRoots) {

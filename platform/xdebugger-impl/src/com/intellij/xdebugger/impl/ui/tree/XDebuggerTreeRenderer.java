@@ -16,10 +16,10 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -46,10 +46,9 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
   public XDebuggerTreeRenderer() {
-    Insets myLinkIpad = myLink.getIpad();
-    myLink.setIpad(new JBInsets(myLinkIpad.top, 0, myLinkIpad.bottom, myLinkIpad.right));
-    Insets myIpad = getIpad();
-    setIpad(new JBInsets(myLinkIpad.top, myIpad.left, myLinkIpad.bottom, 0));
+    setSupportFontFallback(true);
+    getIpad().right = 0;
+    myLink.getIpad().left = 0;
   }
 
   public void customizeCellRenderer(@NotNull final JTree tree,
@@ -77,7 +76,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         // text does not fit visible area - show link
         if (node instanceof XValueNodeImpl) {
           final String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
-          if (rawValue != null) {
+          if (!StringUtil.isEmpty(rawValue)) {
             myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);
@@ -92,7 +91,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
     Dimension linkSize = myLink.getPreferredSize();
     myLinkWidth = linkSize.width;
-    myLink.setBounds(0, 0, linkSize.width, linkSize.height);
     myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
   }
 
@@ -117,6 +115,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         textGraphics.dispose();
       }
       g.translate(myLinkOffset, 0);
+      myLink.setHeight(getHeight());
       myLink.doPaint(g);
       g.translate(-myLinkOffset, 0);
     }
@@ -145,6 +144,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    private int myHeight;
+
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -157,6 +158,15 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
+    }
+
+    public void setHeight(int height) {
+      myHeight = height;
+    }
+
+    @Override
+    public int getHeight() {
+      return myHeight;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,9 @@ public class Growl {
     final ID applicationIcon = getApplicationIcon();
     final ID defaultNotifications = Foundation.fillArray(myDefaultNotification);
     final ID allNotifications = Foundation.fillArray(myAllNotifications);
-
-    final ID userDict = Foundation.createDict(new String[]{GROWL_APP_NAME, GROWL_APP_ICON, GROWL_DEFAULT_NOTIFICATIONS, GROWL_ALL_NOTIFICATIONS},
-        new Object[]{myProductName, applicationIcon, defaultNotifications, allNotifications});
-
+    final ID userDict = Foundation.createDict(
+      new String[]{GROWL_APP_NAME, GROWL_APP_ICON, GROWL_DEFAULT_NOTIFICATIONS, GROWL_ALL_NOTIFICATIONS},
+      new Object[]{myProductName, applicationIcon, defaultNotifications, allNotifications});
     final ID center = invoke("NSDistributedNotificationCenter", "defaultCenter");
     final Object notificationName = Foundation.nsString(GROWL_APPLICATION_REGISTRATION_NOTIFICATION);
     invoke(center, "postNotificationName:object:userInfo:deliverImmediately:", notificationName, null, userDict, true);
@@ -59,12 +58,11 @@ public class Growl {
 
   public void notifyGrowlOf(final String notification, final String title, final String description) {
     final ID autoReleasePool = createAutoReleasePool();
-    final ID dict = Foundation.createDict(new String[]{
-        GROWL_NOTIFICATION_NAME, GROWL_NOTIFICATION_TITLE, GROWL_NOTIFICATION_DESCRIPTION, GROWL_APP_NAME},
-        new Object[]{notification, title, description, myProductName});
+    final ID dict = Foundation.createDict(
+      new String[]{GROWL_NOTIFICATION_NAME, GROWL_NOTIFICATION_TITLE, GROWL_NOTIFICATION_DESCRIPTION, GROWL_APP_NAME},
+      new Object[]{notification, title, description, myProductName});
     final ID center = invoke("NSDistributedNotificationCenter", "defaultCenter");
     final Object notificationName = Foundation.nsString(GROWL_NOTIFICATION);
-
     invoke(center, "postNotificationName:object:userInfo:deliverImmediately:", notificationName, null, dict, true);
     invoke(autoReleasePool, "release");
   }

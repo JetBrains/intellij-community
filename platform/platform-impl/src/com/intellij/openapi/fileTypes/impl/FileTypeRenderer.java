@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,12 +68,14 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
 
     setIcon(layeredIcon);
 
-    if (isDuplicated(type.getDescription())) {
-      setText(type.getDescription() + " (" + type.getName() + ")");
+    String description = type.getDescription();
+    String trimmedDescription = StringUtil.capitalizeWords(description.replaceAll("(?i)\\s*file(?:s)?$", ""), true);
+    if (isDuplicated(description)) {
+      setText(trimmedDescription + " (" + type.getName() + ")");
 
     }
     else {
-      setText(type.getDescription());
+      setText(trimmedDescription);
     }
   }
 

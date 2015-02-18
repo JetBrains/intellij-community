@@ -131,7 +131,7 @@ public class MergeOperations {
 
   private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument) {
     return new Operation(DiffBundle.message("merge.editor.insert.operation.name"),
-                         AllIcons.Diff.ArrowRightDown,
+                         AllIcons.Diff.ArrowLeftDown,
                          otherDocument,
                          insertModification(range, document, offset, otherDocument));
   }

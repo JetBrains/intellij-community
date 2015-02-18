@@ -18,8 +18,9 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
 
 public class CCRenameLesson extends CCRename {
 
@@ -29,7 +30,7 @@ public class CCRenameLesson extends CCRename {
 
   @Override
   public String getFolderName() {
-    return "lesson";
+    return EduNames.LESSON;
   }
 
   @Override

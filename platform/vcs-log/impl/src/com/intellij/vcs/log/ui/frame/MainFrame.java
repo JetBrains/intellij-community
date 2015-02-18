@@ -44,6 +44,7 @@ import java.util.List;
 
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
+  public static final int MAX_SELECTED_COMMITS = 100;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
   @NotNull private final Project myProject;
@@ -331,9 +332,9 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     @Override
     public void valueChanged(@Nullable ListSelectionEvent notUsed) {
       int rows = getGraphTable().getSelectedRowCount();
-      if (rows < 1) {
+      if (rows < 1 || rows > MAX_SELECTED_COMMITS) {
         myChangesLoadingPane.stopLoading();
-        setDefaultEmptyText(myChangesBrowser);
+        myChangesBrowser.getViewer().setEmptyText(rows < 1 ? "" : "Too many commits selected.");
         myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
       }
       else {
@@ -344,6 +345,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }
         else {
           myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+          setDefaultEmptyText(myChangesBrowser);
           myChangesLoadingPane.startLoading();
         }
       }

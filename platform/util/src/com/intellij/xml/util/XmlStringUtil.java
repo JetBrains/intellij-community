@@ -33,12 +33,11 @@ public class XmlStringUtil {
   @NotNull
   public static String wrapInCDATA(@NotNull String str) {
     StringBuilder sb = new StringBuilder();
-    int cur = 0, next, len = str.length();
+    int cur = 0, len = str.length();
     while (cur < len) {
-      next = StringUtil.indexOf(str, CDATA_END, cur);
-      sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next)).append(CDATA_END);
-      if (next < len) sb.append(escapeString(CDATA_END));
-      cur = next + CDATA_END.length();
+      int next = StringUtil.indexOf(str, CDATA_END, cur);
+      sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next + 1)).append(CDATA_END);
+      cur = next;
     }
     return sb.toString();
   }

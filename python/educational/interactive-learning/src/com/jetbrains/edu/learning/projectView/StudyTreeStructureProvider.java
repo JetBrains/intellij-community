@@ -8,10 +8,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.course.Course;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
           final PsiDirectory nodeValue = (PsiDirectory)node.getValue();
-          if (!nodeValue.getName().contains(Task.USER_TESTS)) {
+          if (!nodeValue.getName().contains(EduNames.USER_TESTS)) {
             StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
             nodes.add(newNode);
           }
@@ -45,13 +45,13 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
             if (virtualFile == null) {
               return nodes;
             }
-            final TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(virtualFile);
+            final TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
             if (taskFile != null) {
               nodes.add(node);
             }
             final String parentName = parent.getName();
             if (parentName != null) {
-              if (parentName.equals(Course.SANDBOX_DIR)) {
+              if (parentName.equals(EduNames.SANDBOX_DIR)) {
                 nodes.add(node);
               }
             }

@@ -99,6 +99,7 @@ public class SuggestionList {
     }
     // Fill and select
 
+    int record = 0; // Record to select
     // Iterate through groups adding suggestions. Odd groups should be marked differently.
     for (int groupId = 0; groupId < values.size(); groupId++) {
       final List<Suggestion> suggestions = values.get(groupId);
@@ -106,11 +107,12 @@ public class SuggestionList {
         final Suggestion suggestion = suggestions.get(suggestionId);
         myListModel.addElement(new SuggestionListElement((groupId % 2) == 0, suggestion));
         if (suggestion.getText().equals(elementToSelect)) {
-          myList.setSelectedIndex(suggestionId + groupId);
+          myList.setSelectedIndex(record);
         }
+        record++;
       }
     }
-    if ((elementToSelect == null) && (!myListModel.isEmpty())) {
+    if ((myList.getSelectedIndex() ==-1) && (!myListModel.isEmpty())) {
       myList.setSelectedIndex(0); // Select first element
     }
 
@@ -124,6 +126,7 @@ public class SuggestionList {
       myListPopUp.addListener(myListener);
     }
     myListPopUp.show(displayPoint);
+    myList.ensureIndexIsVisible(myList.getSelectedIndex()); // Scrolls to selected
   }
 
 

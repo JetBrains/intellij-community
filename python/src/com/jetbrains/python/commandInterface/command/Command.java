@@ -16,7 +16,6 @@
 package com.jetbrains.python.commandInterface.command;
 
 import com.intellij.openapi.module.Module;
-import com.jetbrains.python.commandLineParser.CommandLineParseResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,7 @@ public interface Command {
    * Execute command
    *
    * @param module      module to execute command against
-   * @param commandLine command's command line
+   * @param parameters command's arguments and options (just like entered by user but splitted by space)
    */
-  void execute(@NotNull final Module module, @NotNull final CommandLineParseResult commandLine);
+  void execute(@NotNull final Module module, @NotNull final List<String> parameters);
 }

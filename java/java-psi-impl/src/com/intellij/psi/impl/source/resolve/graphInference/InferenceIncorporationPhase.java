@@ -288,10 +288,8 @@ public class InferenceIncorporationPhase {
       public boolean process(Pair<PsiType, PsiType> pair) {
         final PsiType sType = pair.first;
         final PsiType tType = pair.second;
-        if (!mySession.isProperType(sType) && !mySession.isProperType(tType)) {
-          if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
-            addConstraint(new TypeEqualityConstraint(sType, tType));
-          }
+        if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+          addConstraint(new TypeEqualityConstraint(sType, tType));
         }
         return true;
       }

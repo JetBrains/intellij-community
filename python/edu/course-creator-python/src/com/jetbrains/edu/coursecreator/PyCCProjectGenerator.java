@@ -15,9 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
-import com.jetbrains.edu.coursecreator.format.Course;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.CourseCreatorPythonIcons;
@@ -63,7 +63,10 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
                                      @NotNull final String description) {
 
     final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = new Course(name, author, description);
+    final Course course = new Course();
+    course.setName(name);
+    course.setAuthor(author);
+    course.setDescription(description);
     course.setLanguage("Python");
     service.setCourse(course);
 
@@ -79,7 +82,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         catch (Exception ignored) {
         }
         DirectoryUtil.createSubdirectories("hints", projectDir, "\\/");
-        final PsiDirectory lessonDir = CCCreateLesson.createLessonDir(projectDir, 1, null, null, course);
+        final PsiDirectory lessonDir = CCCreateLesson.createLessonDir(project, 1, null, null);
         CCCreateTask.createTask(null, project, lessonDir, false);
       }
     }.execute();

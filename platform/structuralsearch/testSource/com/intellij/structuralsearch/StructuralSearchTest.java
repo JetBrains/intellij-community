@@ -239,9 +239,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   private static final String s73 = " class A { int A; static int B=5; public abstract void a(int c); void q() { ind d=7; } }";
   private static final String s74 = " '_Type 'Var = '_Init?; ";
-  private static final String s75 = "{ /** @class aClass\n @author the author */ class A {}\n" +
-                                    " /** */ class B {}\n" +
-                                    " /** @class aClass */ class C {} }";
+  private static final String s75 = "/** @class aClass\n @author the author */ class A {}\n" +
+                                    "/** */ class B {}\n" +
+                                    "/** @class aClass */ class C {}";
   private static final String s76 = " /** @'_tag+ '_value+ */";
   private static final String s76_2 = " /** @'_tag* '_value* */";
   private static final String s76_3 = " /** @'_tag? '_value? */ class 't {}";
@@ -1723,6 +1723,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s75, s76_3)
     );
 
+    assertEquals("no infinite loop on javadoc matching", 1, findMatchesCount(s57, "/** 'Text */ class '_ { }"));
   }
 
   public void testNamedPatterns() {

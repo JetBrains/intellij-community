@@ -15,12 +15,14 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,18 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
 
   @Nullable
   static PsiElement getAnchor(PsiElement element) {
+    //a hack
+    if (element instanceof XmlTag) {
+      XmlToken tagNameElement = XmlTagUtil.getStartTagNameElement((XmlTag)element);
+      if (tagNameElement != null && tagNameElement.isPhysical()) {
+        return tagNameElement;
+      }
+    }
+    
+    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      return null;
+    }
+    
     PsiUtilCore.ensureValid(element);
     PsiElement anchor = null;
     if (element instanceof PsiClass) {
@@ -68,9 +82,6 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
     }
     else if (element instanceof PsiVariable) {
       anchor = ((PsiVariable)element).getNameIdentifier();
-    }
-    else if (element instanceof XmlTag) {
-      anchor = XmlTagUtil.getStartTagNameElement((XmlTag)element);
     }
     if (anchor != null && (!anchor.isPhysical() /*|| anchor.getTextRange()==null*/)) return null;
     return anchor;

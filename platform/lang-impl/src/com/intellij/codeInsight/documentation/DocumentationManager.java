@@ -705,7 +705,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             public void run() {
               String message = ex[0] instanceof IndexNotReadyException
                              ? "Documentation is not available until indices are built."
-                             : CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage());
+                             : CodeInsightBundle.message("javadoc.external.fetch.error.message");
               component.setText(message, null, true);
               callback.setDone();
             }

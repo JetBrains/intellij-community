@@ -222,6 +222,9 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
       return getOpenFileDescriptor();
     }
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     else {
       return null;
     }

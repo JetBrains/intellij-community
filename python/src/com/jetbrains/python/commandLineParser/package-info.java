@@ -15,15 +15,14 @@
  */
 
 /**
- * Engine to parse command-line.
- * Command line consists of command itself,  {@link com.jetbrains.python.commandLineParser.CommandLinePartType#ARGUMENT arguments}
- * and {@link com.jetbrains.python.commandLineParser.CommandLinePartType#OPTION options}.
- * Use need to split command line into {@link com.jetbrains.python.WordWithPosition chunks}, pass them to
- * {@link com.jetbrains.python.commandLineParser.CommandLineParser parser} and obtain {@link com.jetbrains.python.commandLineParser.CommandLineParseResult}.
+ * Engine to parse commandline from string to {@link com.jetbrains.python.commandLineParser.CommandLine} structure.
  *
+ * Command line consists of command itself,  {@link com.jetbrains.python.commandLineParser.CommandLineArgument arguments}
+ * and {@link com.jetbrains.python.commandLineParser.CommandLineOption options}.
+ * Use need to pass text to {@link com.jetbrains.python.commandLineParser.CommandLineParser parser} and obtain {@link com.jetbrains.python.commandLineParser.CommandLine}.
+ * <p/>
  * Not like any other parsers, this package supports {@link com.jetbrains.python.WordWithPosition} telling you exactly with part of
  * command line is command or argument. That helps you to underline or emphisize some parts.
- *
  *
  * @author Ilya.Kazakevich
  */

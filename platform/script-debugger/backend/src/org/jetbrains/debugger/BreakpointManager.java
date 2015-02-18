@@ -20,8 +20,7 @@ public interface BreakpointManager {
   @Nullable
   FunctionSupport getFunctionSupport();
 
-  @Nullable
-  ScriptRegExpSupport getScriptRegExpSupport();
+  boolean hasScriptRegExpSupport();
 
   // Could be called multiple times for breakpoint
   void addBreakpointListener(@NotNull BreakpointListener listener);

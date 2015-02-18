@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -1068,9 +1069,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
 
   private void updateOnSelectionChanged() {
-    List<UsageInfo> infos = getSelectedUsageInfos();
     if (myCurrentUsageContextPanel != null) {
-      myCurrentUsageContextPanel.updateLayout(infos);
+      try {
+        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos());
+      }
+      catch (IndexNotReadyException ignore) {
+      }
     }
   }
 

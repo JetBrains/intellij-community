@@ -18,6 +18,7 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
@@ -179,9 +180,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
           }
 
-          List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
           if (REQUIRE_NOTNULL_FIELDS_INITIALIZED) {
-            if (annotated.isDeclaredNotNull && initializers.isEmpty()) {
+            if (annotated.isDeclaredNotNull && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
               final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
               if (annotation != null) {
                 holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
@@ -191,7 +191,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
           }
 
-          for (PsiExpression rhs : initializers) {
+          for (PsiExpression rhs : DfaPsiUtil.findAllConstructorInitializers(field)) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
               if (target instanceof PsiParameter && target.isPhysical()) {

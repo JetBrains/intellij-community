@@ -449,6 +449,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         myDoneMarker.myEdgeTokenBinder = right;
       }
     }
+
+    public CharSequence getText() {
+      int startOffset = getStartOffset();
+      int endOffset = getEndOffset();
+      return myBuilder.getOriginalText().subSequence(startOffset, endOffset);
+    }
+
+    @Override
+    public String toString() {
+      return getText().toString();
+    }
   }
 
   private Marker precede(final StartMarker marker) {
@@ -526,6 +537,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class TokenNode extends Token implements LighterASTTokenNode {
+    @Override
+    public String toString() {
+      return getText().toString();
+    }
   }
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {

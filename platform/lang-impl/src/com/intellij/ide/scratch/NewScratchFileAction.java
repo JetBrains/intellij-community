@@ -42,11 +42,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -75,12 +74,6 @@ public class NewScratchFileAction extends DumbAwareAction {
     return e.getProject() != null && Registry.is("ide.scratch.enabled");
   }
 
-  @NotNull
-  public static List<String> getLastUsedLanguagesIds(Project project) {
-    String[] values = PropertiesComponent.getInstance(project).getValues(ScratchFileService.class.getName());
-    return values == null ? ContainerUtil.<String>emptyList() : ContainerUtil.list(values);
-  }
-  
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -97,7 +90,7 @@ public class NewScratchFileAction extends DumbAwareAction {
     }
 
     final Ref<Boolean> tenMinuteScratch = Ref.create(false);
-    ListPopup popup = buildLanguagePopup(project, language, new Consumer<Language>() {
+    ListPopup popup = buildLanguageSelectionPopup(project, "New Scratch", language, new Consumer<Language>() {
       @Override
       public void consume(@NotNull Language language) {
         openNewFile(project, language, "", tenMinuteScratch.get());
@@ -127,7 +120,8 @@ public class NewScratchFileAction extends DumbAwareAction {
 
   public static VirtualFile openNewFile(@NotNull Project project, @NotNull Language language, @NotNull String text, boolean altMode) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
-    VirtualFile file = ScratchFileService.getInstance().createScratchFile(project, language, text);
+    storeLRULanguages(project, language);
+    VirtualFile file = ScratchRootType.getInstance().createScratchFile(project, "scratch", language, text);
     if (file != null) {
       FileEditorManager.getInstance(project).openFile(file, true);
       if (altMode) scheduleSelfDestruct(file);
@@ -135,15 +129,36 @@ public class NewScratchFileAction extends DumbAwareAction {
     return file;
   }
 
-  @NotNull
-  public static Language substitute(@NotNull Project project, @NotNull Language language) {
-    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, new LightVirtualFile(), project);
+  private static void storeLRULanguages(@NotNull Project project, @NotNull Language language) {
+    String[] values = PropertiesComponent.getInstance(project).getValues(getLRUStoreKey());
+    List<String> lastUsed = ContainerUtil.newArrayListWithCapacity(5);
+    lastUsed.add(language.getID());
+    if (values != null) {
+      for (String value : values) {
+        if (!lastUsed.contains(value)) {
+          lastUsed.add(value);
+        }
+        if (lastUsed.size() == 5) break;
+      }
+    }
+    PropertiesComponent.getInstance(project).setValues(getLRUStoreKey(), ArrayUtil.toStringArray(lastUsed));
   }
 
   @NotNull
-  static ListPopup buildLanguagePopup(@NotNull Project project, @Nullable Language context, @NotNull final Consumer<Language> onChoosen) {
+  private static List<String> restoreLRULanguages(@NotNull Project project) {
+    String[] values = PropertiesComponent.getInstance(project).getValues(getLRUStoreKey());
+    return values == null ? ContainerUtil.<String>emptyList() : ContainerUtil.list(values);
+  }
+
+  private static String getLRUStoreKey() {
+    return NewScratchFileAction.class.getName();
+  }
+
+  @NotNull
+  public static ListPopup buildLanguageSelectionPopup(@NotNull Project project, @NotNull String title,
+                                                      @Nullable Language context, @NotNull final Consumer<Language> onChosen) {
     List<Language> languages = LanguageUtil.getFileLanguages();
-    final List<String> ids = ContainerUtil.newArrayList(getLastUsedLanguagesIds(project));
+    final List<String> ids = ContainerUtil.newArrayList(restoreLRULanguages(project));
     if (context != null) {
       ids.add(context.getID());
     }
@@ -162,7 +177,7 @@ public class NewScratchFileAction extends DumbAwareAction {
       }
     });
     BaseListPopupStep<Language> step =
-      new BaseListPopupStep<Language>("New Scratch", languages) {
+      new BaseListPopupStep<Language>(title, languages) {
         @NotNull
         @Override
         public String getTextFor(@NotNull Language value) {
@@ -176,7 +191,7 @@ public class NewScratchFileAction extends DumbAwareAction {
 
         @Override
         public PopupStep onChosen(Language selectedValue, boolean finalChoice) {
-          onChoosen.consume(selectedValue);
+          onChosen.consume(selectedValue);
           return null;
         }
 

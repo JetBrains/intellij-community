@@ -367,6 +367,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     );
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
+    if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
+      return;
+    }
     if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :

@@ -4,33 +4,35 @@ import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.edu.learning.course.*;
+import com.jetbrains.edu.EduAnswerPlaceholderDeleteHandler;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.run.StudyExecutor;
+import com.jetbrains.edu.learning.run.StudyTestRunner;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.util.Collection;
+import java.util.List;
 
 public class StudyUtils {
   private StudyUtils() {
@@ -123,63 +126,6 @@ public class StudyUtils {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 
-  /**
-   * Gets number index in directory names like "task1", "lesson2"
-   *
-   * @param fullName    full name of directory
-   * @param logicalName part of name without index
-   * @return index of object
-   */
-  public static int getIndex(@NotNull final String fullName, @NotNull final String logicalName) {
-    if (!fullName.contains(logicalName)) {
-      throw new IllegalArgumentException();
-    }
-    return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
-  }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  @Nullable
-  public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
-    final VirtualFile taskDir = file.getParent();
-    VirtualFile fileWindows = null;
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
-      LOG.debug("Couldn't flush windows");
-      return null;
-    }
-    if (taskDir != null) {
-      final String name = file.getNameWithoutExtension() + "_windows";
-      PrintWriter printWriter = null;
-      try {
-        fileWindows = taskDir.createChildData(taskFile, name);
-        printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
-        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
-            printWriter.println("#educational_plugin_window = ");
-            continue;
-          }
-          int start = answerPlaceholder.getRealStartOffset(document);
-          final String windowDescription = document.getText(new TextRange(start, start + answerPlaceholder.getLength()));
-          printWriter.println("#educational_plugin_window = " + windowDescription);
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
-        });
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        closeSilently(printWriter);
-        synchronize();
-      }
-    }
-    return fileWindows;
-  }
-
   public static void deleteFile(@NotNull final VirtualFile file) {
     try {
       file.delete(StudyUtils.class);
@@ -197,7 +143,7 @@ public class StudyUtils {
     int taskNum = task.getIndex() + 1;
     int lessonNum = task.getLesson().getIndex() + 1;
     assert course != null;
-    final String pathToResource = FileUtil.join(course.getCourseDirectory(), StudyNames.LESSON_DIR + lessonNum, Task.TASK_DIR + taskNum);
+    final String pathToResource = FileUtil.join(course.getCourseDirectory(), EduNames.LESSON + lessonNum, EduNames.TASK + taskNum);
     final File resourceFile = new File(pathToResource, copyName);
     FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
     return resourceFile;
@@ -207,28 +153,6 @@ public class StudyUtils {
   public static Sdk findSdk(@NotNull final Task task, @NotNull final Project project) {
     final Language language = task.getLesson().getCourse().getLanguageById();
     return StudyExecutor.INSTANCE.forLanguage(language).findSdk(project);
-  }
-
-  public static void markDirAsSourceRoot(@NotNull final VirtualFile dir, @NotNull final Project project) {
-    final Module module = ModuleUtilCore.findModuleForFile(dir, project);
-    if (module == null) {
-      LOG.info("Module for " + dir.getPath() + " was not found");
-      return;
-    }
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final ContentEntry entry = MarkRootActionBase.findContentEntry(model, dir);
-    if (entry == null) {
-      LOG.info("Content entry for " + dir.getPath() + " was not found");
-      return;
-    }
-    entry.addSourceFolder(dir, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-        module.getProject().save();
-      }
-    });
   }
 
   @NotNull
@@ -250,12 +174,6 @@ public class StudyUtils {
                                               @NotNull final Task currentTask) {
     final Language language = currentTask.getLesson().getCourse().getLanguageById();
     StudyExecutor.INSTANCE.forLanguage(language).setCommandLineParameters(cmd, project, filePath, sdkPath, currentTask);
-  }
-
-  public static void enableAction(@NotNull final AnActionEvent event, boolean isEnable) {
-    final Presentation presentation = event.getPresentation();
-    presentation.setVisible(isEnable);
-    presentation.setEnabled(isEnable);
   }
 
   public static void showNoSdkNotification(@NotNull final Task currentTask, @NotNull final Project project) {
@@ -283,4 +201,54 @@ public class StudyUtils {
     Language language = course.getLanguageById();
     return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
   }
+
+  @Nullable
+  public static TaskFile getTaskFile(@NotNull final Project project, @NotNull final VirtualFile file) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return null;
+    }
+    final VirtualFile taskDir = file.getParent();
+    if (taskDir == null) {
+      return null;
+    }
+    final String taskDirName = taskDir.getName();
+    if (taskDirName.contains(EduNames.TASK)) {
+      final VirtualFile lessonDir = taskDir.getParent();
+      if (lessonDir != null) {
+        int lessonIndex = EduUtils.getIndex(lessonDir.getName(), EduNames.LESSON);
+        List<Lesson> lessons = course.getLessons();
+        if (!indexIsValid(lessonIndex, lessons)) {
+          return null;
+        }
+        final Lesson lesson = lessons.get(lessonIndex);
+        int taskIndex = EduUtils.getIndex(taskDirName, EduNames.TASK);
+        final List<Task> tasks = lesson.getTaskList();
+        if (!indexIsValid(taskIndex, tasks)) {
+          return null;
+        }
+        final Task task = tasks.get(taskIndex);
+        return task.getFile(file.getName());
+      }
+    }
+    return null;
+  }
+
+
+  public static void drawAllWindows(Editor editor, TaskFile taskFile) {
+    editor.getMarkupModel().removeAllHighlighters();
+    final Project project = editor.getProject();
+    if (project == null) return;
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+      final JBColor color = taskManager.getColor(answerPlaceholder);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, true, color);
+    }
+    final Document document = editor.getDocument();
+    EditorActionManager.getInstance()
+      .setReadonlyFragmentModificationHandler(document, new EduAnswerPlaceholderDeleteHandler(editor));
+    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile, true);
+    editor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null);
+  }
+
 }

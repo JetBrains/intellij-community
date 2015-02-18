@@ -22,11 +22,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.actions.CCRunTestsAction;
-import com.jetbrains.edu.coursecreator.format.Course;
-import com.jetbrains.edu.coursecreator.format.Lesson;
-import com.jetbrains.edu.coursecreator.format.Task;
-import com.jetbrains.edu.coursecreator.format.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,15 +65,16 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
 
     private static void renameTaskFile(PsiFile file, String oldName) {
       final PsiDirectory taskDir = file.getContainingDirectory();
-      Course course = CCProjectService.getInstance(file.getProject()).getCourse();
+      final CCProjectService service = CCProjectService.getInstance(file.getProject());
+      Course course = service.getCourse();
       if (course == null) {
         return;
       }
-      if (taskDir == null || !taskDir.getName().contains("task")) {
+      if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
         return;
       }
       PsiDirectory lessonDir = taskDir.getParent();
-      if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
+      if (lessonDir == null || !lessonDir.getName().contains(EduNames.LESSON)) {
         return;
       }
       Lesson lesson = course.getLesson(lessonDir.getName());
@@ -90,9 +92,9 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
         }
       });
       Map<String, TaskFile> taskFiles = task.getTaskFiles();
-      TaskFile taskFile = task.getTaskFile(oldName);
-      String realTaskFileName = CCProjectService.getRealTaskFileName(oldName);
-      taskFiles.remove(realTaskFileName);
+      String realOldName = CCProjectService.getRealTaskFileName(oldName);
+      TaskFile taskFile = task.getTaskFile(realOldName);
+      taskFiles.remove(realOldName);
       taskFiles.put(CCProjectService.getRealTaskFileName(file.getName()), taskFile);
     }
 

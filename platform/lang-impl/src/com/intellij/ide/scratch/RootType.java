@@ -19,10 +19,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +83,7 @@ public abstract class RootType {
 
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    return null;
+    return substituteLanguageImpl(getOriginalLanguage(file), file, project);
   }
 
   @Nullable
@@ -100,5 +103,24 @@ public abstract class RootType {
   }
 
   public void fileOpened(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
+  }
+
+  @Nullable
+  protected static Language substituteLanguageImpl(Language language, VirtualFile file, Project project) {
+    return language != null && language != ScratchFileType.INSTANCE.getLanguage() ?
+           LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
+  }
+
+  @Nullable
+  protected static FileType getOriginalFileType(@NotNull VirtualFile file) {
+    String extension = file.getExtension();
+    if (extension == null) return null;
+    return FileTypeManager.getInstance().getFileTypeByExtension(extension);
+  }
+
+  @Nullable
+  protected static Language getOriginalLanguage(@NotNull VirtualFile file) {
+    FileType fileType = getOriginalFileType(file);
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 }

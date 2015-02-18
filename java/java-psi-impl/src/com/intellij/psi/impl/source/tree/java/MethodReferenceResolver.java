@@ -111,10 +111,10 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return inferTypeArguments();
+                  return inferTypeArguments(includeReturnConstraint);
                 }
 
-                private PsiSubstitutor inferTypeArguments() {
+                private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
                   if (interfaceMethod == null) return substitutor;
                   final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
                   session.initThrowsConstraints(method);
@@ -127,7 +127,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                     return substitutor;
                   }
 
-                  if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
+                  if (includeReturnConstraint && interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
                     if (method.isConstructor()) {
                       //todo
                       session.initBounds(reference, method.getContainingClass().getTypeParameters());
@@ -230,7 +230,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (!(conflict instanceof MethodCandidateInfo)) continue;
         final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
-        final PsiSubstitutor substitutor = conflict.getSubstitutor();
+        final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
         final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
         final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();

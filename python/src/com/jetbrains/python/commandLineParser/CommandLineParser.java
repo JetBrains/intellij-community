@@ -15,24 +15,20 @@
  */
 package com.jetbrains.python.commandLineParser;
 
-import com.jetbrains.python.WordWithPosition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
- * Engine to parse command line. It understands how options and arguments are coded in certain commandline.
- * It supportd {@link com.jetbrains.python.WordWithPosition} telling you exactly with part of
- * command line is command or argument. That helps you to underline or emphisize some parts.
+ * Engine to {@link CommandLine} structure from text.
  *
  * @author Ilya.Kazakevich
  */
 public interface CommandLineParser {
   /**
-   * @param commandLineParts command line splitted into words.
+   *
+   * @param commandLineText command line to parse
    * @return command line information
    * @throws MalformedCommandLineException in case of bad commandline
    */
   @NotNull
-  CommandLineParseResult parse(@NotNull List<WordWithPosition> commandLineParts) throws MalformedCommandLineException;
+  CommandLine parse(@NotNull String commandLineText) throws MalformedCommandLineException;
 }

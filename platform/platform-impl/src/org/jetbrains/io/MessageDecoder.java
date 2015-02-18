@@ -2,13 +2,11 @@ package org.jetbrains.io;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
 
 public abstract class MessageDecoder extends Decoder {
   protected int contentLength;
@@ -17,27 +15,27 @@ public abstract class MessageDecoder extends Decoder {
   private CharBuffer chunkedContent;
   private int consumedContentByteCount = 0;
 
-  private final CharsetDecoder charsetDecoder = CharsetUtil.getDecoder(CharsetUtil.UTF_8);
-
   protected final int parseContentLength() {
     return parseInt(builder, 0, false, 10);
   }
 
   @Nullable
-  protected final CharSequence readChars(@NotNull ByteBuf input) throws CharacterCodingException {
-    if (!input.isReadable()) {
+  protected final CharSequence readChars(@NotNull ByteBuf input) throws IOException {
+    int readableBytes = input.readableBytes();
+    if (readableBytes == 0) {
+      input.release();
       return null;
     }
 
     int required = contentLength - consumedContentByteCount;
-    if (input.readableBytes() < required) {
+    if (readableBytes < required) {
       if (chunkedContent == null) {
-        chunkedContent = CharBuffer.allocate((int)((float)contentLength * charsetDecoder.maxCharsPerByte()));
+        chunkedContent = CharBuffer.allocate(contentLength);
       }
 
-      int count = input.readableBytes();
-      ChannelBufferToString.readIntoCharBuffer(charsetDecoder, input, count, chunkedContent);
-      consumedContentByteCount += count;
+      ChannelBufferToString.readIntoCharBuffer(input, readableBytes, chunkedContent);
+      consumedContentByteCount += readableBytes;
+      input.release();
       return null;
     }
     else {
@@ -46,7 +44,7 @@ public abstract class MessageDecoder extends Decoder {
         chunkedContent = null;
         consumedContentByteCount = 0;
       }
-      return new ChannelBufferToString.MyCharArrayCharSequence(ChannelBufferToString.readIntoCharBuffer(charsetDecoder, input, required, charBuffer));
+      return new ChannelBufferToString.MyCharArrayCharSequence(ChannelBufferToString.readIntoCharBuffer(input, required, charBuffer));
     }
   }
 

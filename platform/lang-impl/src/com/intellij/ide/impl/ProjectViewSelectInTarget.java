@@ -27,6 +27,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -151,13 +151,19 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       }
     }
     if (toSelect == null) return;
-    PsiElement originalElement = toSelect.getOriginalElement();
+    PsiElement originalElement;
+    try {
+      originalElement = toSelect.getOriginalElement();
+    }
+    catch (IndexNotReadyException e) {
+      originalElement = toSelect;
+    }
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(originalElement);
     select(originalElement, virtualFile, requestFocus);
   }
 
   private TreeStructureProvider[] getProvidersDumbAware() {
-    List<TreeStructureProvider> allProviders = Arrays.asList(Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject));
+    TreeStructureProvider[] allProviders = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
     List<TreeStructureProvider> dumbAware = DumbService.getInstance(myProject).filterByDumbAwareness(allProviders);
     return dumbAware.toArray(new TreeStructureProvider[dumbAware.size()]);
   }

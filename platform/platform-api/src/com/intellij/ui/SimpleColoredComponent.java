@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBInsets;
@@ -37,6 +38,12 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
+import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -90,6 +97,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Border can be <code>null</code>.
    */
   private Border myBorder;
+
+  /**
+   * If true, then for character that the current font can not draw we try to look for a fallback font that can
+   */
+  private boolean mySupportFontFallback = false;
 
   private int myMainTextLastIndex = -1;
 
@@ -434,8 +446,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
       wasSmaller = isSmaller;
-      final String text = myFragments.get(i);
-      result += getFontMetrics(font).stringWidth(text);
+
+      result += computeStringWidth(myFragments.get(i), font);
 
       final int fixedWidth = myFragmentPadding.get(i);
       if (fixedWidth > 0 && result < fixedWidth) {
@@ -444,6 +456,72 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (mainTextOnly && myMainTextLastIndex >= 0 && i == myMainTextLastIndex) break;
     }
     return result;
+  }
+
+  private void doDrawString(Graphics2D g, String text, int x, int y) {
+    Font font = g.getFont();
+    if (needFontFallback(font, text)) {
+      TextLayout layout = createTextLayout(text, font, g.getFontRenderContext());
+      if (layout != null) {
+        layout.draw(g, x, y);
+      }
+    }
+    else {
+      g.drawString(text, x, y);
+    }
+  }
+
+  private int computeStringWidth(String text, Font font) {
+    if (needFontFallback(font, text)) {
+      TextLayout layout = createTextLayout(text, font, getFontMetrics(font).getFontRenderContext());
+      return layout != null ? (int)layout.getAdvance() : 0;
+    }
+    else {
+      return getFontMetrics(font).stringWidth(text);
+    }
+  }
+
+  @Nullable
+  private TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
+    if (StringUtil.isEmpty(text)) return null;
+    AttributedString string = new AttributedString(text);
+    int start = 0;
+    int end = text.length();
+    AttributedCharacterIterator it = string.getIterator(new AttributedCharacterIterator.Attribute[0], start, end);
+    Font currentFont = basefont;
+    int currentIndex = start;
+    for(char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      Font font = basefont;
+      if (!font.canDisplay(c)) {
+        for (SuitableFontProvider provider : SuitableFontProvider.EP_NAME.getExtensions()) {
+          font = provider.getFontAbleToDisplay(c, basefont.getSize(), basefont.getStyle(), basefont.getFamily());
+          if (font != null) break;
+        }
+      }
+      int i = it.getIndex();
+      if (!Comparing.equal(currentFont, font)) {
+        if (i > currentIndex) {
+          string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, i);
+        }
+        currentFont = font;
+        currentIndex = i;
+      }
+    }
+    if (currentIndex < end) {
+      string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
+    }
+    return new TextLayout(string.getIterator(), fontRenderContext);
+  }
+
+  private boolean needFontFallback(Font font, String text) {
+    return mySupportFontFallback && font.canDisplayUpTo(text) != -1;
+  }
+
+  /**
+   * If true, then for character that the current font can not draw we try to look for a fallback font that can
+   */
+  public void setSupportFontFallback(boolean supportFontFallback) {
+    mySupportFontFallback = supportFontFallback;
   }
 
   /**
@@ -477,8 +555,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      final String text = myFragments.get(i);
-      final int curWidth = getFontMetrics(font).stringWidth(text);
+      final int curWidth = computeStringWidth(myFragments.get(i), font);
       if (x >= curX && x < curX + curWidth) {
         return i;
       }
@@ -681,7 +758,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final FontMetrics metrics = g.getFontMetrics(font);
 
       final String fragment = myFragments.get(i);
-      final int fragmentWidth = metrics.stringWidth(fragment);
+      final int fragmentWidth = computeStringWidth(fragment, font);
 
       final int fragmentPadding = myFragmentPadding.get(i);
 
@@ -719,7 +796,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       if (!attributes.isSearchMatch()) {
         if (shouldDrawMacShadow()) {
           g.setColor(SHADOW_COLOR);
-          g.drawString(fragment, offset, textBaseline + 1);
+          doDrawString(g, fragment, offset, textBaseline + 1);
         }
 
         if (shouldDrawDimmed()) {
@@ -727,7 +804,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         }
 
         g.setColor(color);
-        g.drawString(fragment, offset, textBaseline);
+        doDrawString(g, fragment, offset, textBaseline);
       }
 
       // for some reason strokeState here may be incorrect, resetting the stroke helps

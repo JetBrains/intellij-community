@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,20 +204,22 @@ public class FileUtilRt {
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
+  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return getRelativePath(basePath, filePath, separator, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator, final boolean caseSensitive) {
+  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator, boolean caseSensitive) {
     basePath = ensureEnds(basePath, separator);
 
-    if (caseSensitive? basePath.equals(ensureEnds(filePath, separator)) : basePath.equalsIgnoreCase(ensureEnds(filePath, separator))) return ".";
+    if (caseSensitive ? basePath.equals(ensureEnds(filePath, separator)) : basePath.equalsIgnoreCase(ensureEnds(filePath, separator))) {
+      return ".";
+    }
 
     int len = 0;
     int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abc/base" and file="/temp/ab"
-    final CharComparingStrategy charComparingStrategy = caseSensitive? CharComparingStrategy.IDENTITY : CharComparingStrategy.CASE_INSENSITIVE;
-    while (len < filePath.length() && len < basePath.length() && charComparingStrategy.charsEqual(filePath.charAt(len), basePath.charAt(len))) {
+    CharComparingStrategy strategy = caseSensitive ? CharComparingStrategy.IDENTITY : CharComparingStrategy.CASE_INSENSITIVE;
+    while (len < filePath.length() && len < basePath.length() && strategy.charsEqual(filePath.charAt(len), basePath.charAt(len))) {
       if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;
       }

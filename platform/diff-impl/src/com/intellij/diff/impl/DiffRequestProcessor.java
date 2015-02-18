@@ -737,6 +737,13 @@ public abstract class DiffRequestProcessor implements Disposable {
       super(new BorderLayout());
     }
 
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension windowSize = DiffUtil.getDefaultDiffPanelSize();
+      Dimension size = super.getPreferredSize();
+      return new Dimension(Math.max(windowSize.width, size.width), Math.max(windowSize.height, size.height));
+    }
+
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {

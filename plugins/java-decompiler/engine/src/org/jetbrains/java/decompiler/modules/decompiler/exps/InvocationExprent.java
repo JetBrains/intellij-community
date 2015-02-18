@@ -87,7 +87,6 @@ public class InvocationExprent extends Exprent {
         break;
       case CodeConstants.opc_invokedynamic:
         invocationTyp = INVOKE_DYNAMIC;
-
         classname = "java/lang/Class"; // dummy class name
         invokeDynamicClassSuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
     }
@@ -139,6 +138,7 @@ public class InvocationExprent extends Exprent {
       instance = instance.copy();
     }
     invocationTyp = expr.getInvocationTyp();
+    invokeDynamicClassSuffix = expr.getInvokeDynamicClassSuffix();
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
     lstParameters = new ArrayList<Exprent>(expr.getLstParameters());
@@ -193,39 +193,7 @@ public class InvocationExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    /*if (invocationTyp == INVOKE_DYNAMIC) {
-      //			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
-      //
-      //			if(node != null) {
-      //				ClassNode lambda_node = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName + invokeDynamicClassSuffix);
-      //				if(lambda_node != null) {
-      //
-      //					String typename = ExprProcessor.getCastTypeName(lambda_node.anonimousClassType);
-      //
-      //					StringWriter strwriter = new StringWriter();
-      //					BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
-      //
-      //					ClassWriter clwriter = new ClassWriter();
-      //
-      //					try {
-      //						bufstrwriter.write("new " + typename + "() {");
-      //						bufstrwriter.newLine();
-      //
-      //
-      //
-      //						bufstrwriter.flush();
-      //					} catch(IOException ex) {
-      //						throw new RuntimeException(ex);
-      //					}
-      //
-      //					buf.append(strwriter.toString());
-      //
-      //				}
-      //			}
-
-    }
-    else*/ if (isStatic) {
-
+    if (isStatic) {
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
         buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));

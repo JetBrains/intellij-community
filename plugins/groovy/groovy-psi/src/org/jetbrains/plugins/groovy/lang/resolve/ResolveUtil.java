@@ -79,7 +79,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author ven
  */
-@SuppressWarnings({"StringBufferReplaceableByString"})
 public class ResolveUtil {
   private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 

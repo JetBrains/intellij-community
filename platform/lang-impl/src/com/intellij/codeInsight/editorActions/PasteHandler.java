@@ -116,6 +116,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
 
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     document.startGuardedBlockChecking();
     try {
       for (PasteProvider provider : Extensions.getExtensions(EP_NAME)) {
@@ -131,6 +132,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
     finally {
       document.stopGuardedBlockChecking();
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 
@@ -153,20 +155,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
-    Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
+    final Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
 
-    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-    try {
-      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-        List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-        if (!data.isEmpty()) {
-          extraData.put(processor, data);
-          allValues.addAll(data);
-        }
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
+      if (!data.isEmpty()) {
+        extraData.put(processor, data);
+        allValues.addAll(data);
       }
-    }
-    finally {
-      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
 
     text = TextBlockTransferable.convertLineSeparators(editor, text, allValues);

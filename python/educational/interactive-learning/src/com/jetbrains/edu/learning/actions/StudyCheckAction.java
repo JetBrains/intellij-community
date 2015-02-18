@@ -30,15 +30,19 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.jetbrains.edu.learning.StudyDocumentListener;
+import com.jetbrains.edu.EduDocumentListener;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTestRunner;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.StudyStatus;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
-import com.jetbrains.edu.learning.course.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
+import com.jetbrains.edu.learning.run.StudySmartChecker;
+import com.jetbrains.edu.learning.run.StudyTestRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +67,7 @@ public class StudyCheckAction extends DumbAwareAction {
       if (virtualFile == null) {
         continue;
       }
-      StudyUtils.flushWindows(taskFile, virtualFile);
+      EduUtils.flushWindows(taskFile, virtualFile, true);
     }
   }
 
@@ -87,7 +91,7 @@ public class StudyCheckAction extends DumbAwareAction {
     }
   }
 
-  private static void drawAllTaskWindows(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
+  private static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
@@ -98,7 +102,7 @@ public class StudyCheckAction extends DumbAwareAction {
       FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       if (fileEditor instanceof StudyEditor) {
         StudyEditor studyEditor = (StudyEditor)fileEditor;
-        taskFile.drawAllWindows(studyEditor.getEditor());
+        StudyUtils.drawAllWindows(studyEditor.getEditor(), taskFile);
       }
     }
   }
@@ -188,12 +192,14 @@ public class StudyCheckAction extends DumbAwareAction {
                                                                          final StudyEditor selectedEditor) {
     final Task task = studyState.getTask();
     final VirtualFile taskDir = studyState.getTaskDir();
-    final StudyStatus statusBeforeCheck = task.getStatus();
+
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    final StudyStatus statusBeforeCheck = taskManager.getStatus(task);
     return new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking task", true) {
       @Override
       public void onSuccess() {
         StudyUtils.updateStudyToolWindow(project);
-        drawAllTaskWindows(project, task, taskDir);
+        drawAllPlaceholders(project, task, taskDir);
         ProjectView.getInstance(project).refresh();
         deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
@@ -201,8 +207,7 @@ public class StudyCheckAction extends DumbAwareAction {
 
       @Override
       public void onCancel() {
-        StudyStatus currentStatus = task.getStatus();
-        task.setStatus(statusBeforeCheck, currentStatus);
+        taskManager.setStatus(task, statusBeforeCheck);
         deleteWindowDescriptions(task, taskDir);
         selectedEditor.getCheckButton().setEnabled(true);
       }
@@ -223,7 +228,7 @@ public class StudyCheckAction extends DumbAwareAction {
         }
         final String failedMessage = testRunner.getTestsOutput(output);
         if (StudyTestRunner.TEST_OK.equals(failedMessage)) {
-          task.setStatus(StudyStatus.Solved, statusBeforeCheck);
+          taskManager.setStatus(task, StudyStatus.Solved);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -236,12 +241,12 @@ public class StudyCheckAction extends DumbAwareAction {
             @Override
             public void run() {
               if (taskDir == null) return;
-              task.setStatus(StudyStatus.Failed, statusBeforeCheck);
+              taskManager.setStatus(task, StudyStatus.Failed);
               for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
                 final String name = entry.getKey();
                 final TaskFile taskFile = entry.getValue();
                 if (taskFile.getAnswerPlaceholders().size() < 2) {
-                  taskFile.setStatus(StudyStatus.Failed, StudyStatus.Unchecked);
+                  taskManager.setStatus(taskFile, StudyStatus.Failed);
                   continue;
                 }
                 CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
@@ -257,7 +262,7 @@ public class StudyCheckAction extends DumbAwareAction {
                 });
               }
               showTestResultPopUp(failedMessage, MessageType.ERROR.getPopupBackground(), project);
-              navigateToFailedTaskWindow(studyState, task, taskDir, project);
+              navigateToFailedPlaceholder(studyState, task, taskDir, project);
             }
           });
         }
@@ -265,19 +270,20 @@ public class StudyCheckAction extends DumbAwareAction {
     };
   }
 
-  private static void navigateToFailedTaskWindow(@NotNull final StudyState studyState,
-                                                 @NotNull final Task task,
-                                                 @NotNull final VirtualFile taskDir,
-                                                 @NotNull final Project project) {
+  private static void navigateToFailedPlaceholder(@NotNull final StudyState studyState,
+                                                  @NotNull final Task task,
+                                                  @NotNull final VirtualFile taskDir,
+                                                  @NotNull final Project project) {
     TaskFile selectedTaskFile = studyState.getTaskFile();
     Editor editor = studyState.getEditor();
     TaskFile taskFileToNavigate = selectedTaskFile;
     VirtualFile fileToNavigate = studyState.getVirtualFile();
-    if (!selectedTaskFile.hasFailedTaskWindows()) {
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    if (!taskManager.hasFailedAnswerPlaceholders(selectedTaskFile)) {
       for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
         String name = entry.getKey();
         TaskFile taskFile = entry.getValue();
-        if (taskFile.hasFailedTaskWindows()) {
+        if (taskManager.hasFailedAnswerPlaceholders(taskFile)) {
           taskFileToNavigate = taskFile;
           VirtualFile virtualFile = taskDir.findChild(name);
           if (virtualFile == null) {
@@ -303,7 +309,8 @@ public class StudyCheckAction extends DumbAwareAction {
         IdeFocusManager.getInstance(project).requestFocus(editorToNavigate.getContentComponent(), true);
       }
     });
-    taskFileToNavigate.navigateToFirstFailedTaskWindow(editor);
+
+    StudyNavigator.navigateToFirstFailedAnswerPlaceholder(editor, taskFileToNavigate);
   }
 
   private void runSmartTestProcess(@NotNull final VirtualFile taskDir,
@@ -325,7 +332,8 @@ public class StudyCheckAction extends DumbAwareAction {
       if (!answerPlaceholder.isValid(document)) {
         continue;
       }
-      answerPlaceholder.smartCheck(project, answerFile, answerTaskFile, taskFile, testRunner, virtualFile, document);
+      StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
+                                   virtualFile, document);
     }
     StudyUtils.deleteFile(answerFile);
   }
@@ -342,7 +350,7 @@ public class StudyCheckAction extends DumbAwareAction {
       final Document document = documentManager.getDocument(copy);
       if (document != null) {
         TaskFile.copy(source, target);
-        StudyDocumentListener listener = new StudyDocumentListener(target);
+        EduDocumentListener listener = new EduDocumentListener(target);
         document.addDocumentListener(listener);
         for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
           if (!answerPlaceholder.isValid(document)) {

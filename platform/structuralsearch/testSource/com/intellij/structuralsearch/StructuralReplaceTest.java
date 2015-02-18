@@ -2166,4 +2166,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
+
+  public void testReplaceAnnotation() {
+    String in = "@SuppressWarnings(\"ALL\")\n" +
+                "class A {}";
+    String what = "@SuppressWarnings(\"ALL\")";
+
+    final String by1 = "";
+    assertEquals("class A {}", replacer.testReplace(in, what, by1, options, false));
+
+    final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
+    assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
+                 "class A {}", replacer.testReplace(in, what, by2, options, false));
+  }
 }

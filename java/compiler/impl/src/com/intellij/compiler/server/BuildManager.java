@@ -901,8 +901,14 @@ public class BuildManager implements ApplicationComponent{
 
       // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
       final JavaSdk javaSdkType = JavaSdk.getInstance();
+      if (IS_UNIT_TEST_MODE) {
+        LOG.info("detecting JDK");
+      }
       for (Sdk candidate : candidates) {
         final String vs = candidate.getVersionString();
+        if (IS_UNIT_TEST_MODE) {
+          LOG.info(" candidate=" + candidate);
+        }
         if (vs != null) {
           final JavaSdkVersion candidateVersion = javaSdkType.getVersion(vs);
           if (candidateVersion != null) {
@@ -925,6 +931,10 @@ public class BuildManager implements ApplicationComponent{
       }
 
       final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      if (IS_UNIT_TEST_MODE) {
+        LOG.info("projectJdk = " + projectJdk);
+        LOG.info("internalJdk = " + internalJdk);
+      }
       if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
         projectJdk = internalJdk;
       }
@@ -938,9 +948,15 @@ public class BuildManager implements ApplicationComponent{
         if (systemCompiler == null) {
           throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
         }
+        if (IS_UNIT_TEST_MODE) {
+          LOG.info("compute compiler path by jar for " + systemCompiler.getClass());
+        }
         compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
       }
       else {
+        if (IS_UNIT_TEST_MODE) {
+          LOG.info("compute compiler path from jdk " + projectJdk + ", jdk home = " + projectJdk.getHomePath());
+        }
         compilerPath = projectJdkType.getToolsPath(projectJdk);
         if (compilerPath == null) {
           throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
@@ -950,10 +966,15 @@ public class BuildManager implements ApplicationComponent{
       vmExecutablePath = projectJdkType.getVMExecutablePath(projectJdk);
     }
     else {
+      if (IS_UNIT_TEST_MODE) {
+        LOG.info("use forced jdk home " + forcedCompiledJdkHome);
+      }
       compilerPath = new File(forcedCompiledJdkHome, "lib/tools.jar").getAbsolutePath();
       vmExecutablePath = new File(forcedCompiledJdkHome, "bin/java").getAbsolutePath();
     }
-
+    if (IS_UNIT_TEST_MODE) {
+      LOG.info("compilerPath=" + compilerPath);
+    }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(vmExecutablePath);

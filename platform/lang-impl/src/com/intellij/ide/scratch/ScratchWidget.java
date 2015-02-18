@@ -61,7 +61,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
         if (project == null || editor == null || file == null) return false;
         final PerFileMappings<Language> fileService = ScratchFileService.getInstance().getScratchesMapping();
 
-        ListPopup popup = NewScratchFileAction.buildLanguagePopup(project, fileService.getMapping(file), new Consumer<Language>() {
+        ListPopup popup = NewScratchFileAction.buildLanguageSelectionPopup(project, "Change Language", fileService.getMapping(file), new Consumer<Language>() {
           @Override
           public void consume(Language language) {
             fileService.setMapping(file, language);
