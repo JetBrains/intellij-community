@@ -18,8 +18,8 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.InfoCollectingImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
-import com.intellij.notification.UserNotificationInfoProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -108,8 +108,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   private static String retrieveMessage(@NotNull ImportOptimizer optimizer) {
     String info = "imports optimized";
-    if (optimizer instanceof UserNotificationInfoProvider) {
-        info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
+    if (optimizer instanceof InfoCollectingImportOptimizer) {
+        info = ((InfoCollectingImportOptimizer)optimizer).getUserNotificationInfo();
     }
     return info;
   }

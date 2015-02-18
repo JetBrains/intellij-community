@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle.arrangement.engine;
 
-import com.intellij.notification.UserNotificationInfoProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -57,11 +56,10 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
  * @author Denis Zhdanov
  * @since 7/20/12 1:56 PM
  */
-public class ArrangementEngine implements UserNotificationInfoProvider {
+public class ArrangementEngine {
   private boolean myCodeChanged;
 
   @Nullable
-  @Override
   public String getUserNotificationInfo() {
     if (myCodeChanged) {
       return "rearranged code";

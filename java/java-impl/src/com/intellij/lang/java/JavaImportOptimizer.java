@@ -16,8 +16,7 @@
 
 package com.intellij.lang.java;
 
-import com.intellij.lang.ImportOptimizer;
-import com.intellij.notification.UserNotificationInfoProvider;
+import com.intellij.lang.InfoCollectingImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class JavaImportOptimizer implements ImportOptimizer, UserNotificationInfoProvider {
+public class JavaImportOptimizer implements InfoCollectingImportOptimizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
   private int myImportListLengthDiff;
 

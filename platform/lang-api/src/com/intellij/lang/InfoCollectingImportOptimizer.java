@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.notification;
+package com.intellij.lang;
 
 import org.jetbrains.annotations.Nullable;
 
-public interface UserNotificationInfoProvider {
+public interface InfoCollectingImportOptimizer extends ImportOptimizer {
 
   @Nullable
   String getUserNotificationInfo();
