@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -159,6 +160,19 @@ public abstract class DumbService {
     return INSTANCE_KEY.getValue(project);
   }
 
+  /**
+   * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
+   * @see #isDumbAware(Object) 
+   */
+  @NotNull
+  public <T> List<T> filterByDumbAwareness(@NotNull T[] array) {
+    return filterByDumbAwareness(Arrays.asList(array));
+  }
+
+  /**
+   * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true. 
+   * @see #isDumbAware(Object)
+   */
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {

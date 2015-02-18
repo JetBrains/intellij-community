@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -157,7 +156,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   private TreeStructureProvider[] getProvidersDumbAware() {
-    List<TreeStructureProvider> allProviders = Arrays.asList(Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject));
+    TreeStructureProvider[] allProviders = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
     List<TreeStructureProvider> dumbAware = DumbService.getInstance(myProject).filterByDumbAwareness(allProviders);
     return dumbAware.toArray(new TreeStructureProvider[dumbAware.size()]);
   }
