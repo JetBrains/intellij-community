@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -1104,8 +1105,14 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-        optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
+      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
+      try {
+        for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+          optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
+        }
+      }
+      finally {
+        DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
       }
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
       // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
