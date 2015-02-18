@@ -639,7 +639,7 @@ public class FindDialog extends DialogWrapper {
 
   private void doOKAction(boolean findAll) {
     if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Find Usages is not available while indexing is in process", "Indexing", null);
+      Messages.showMessageDialog(myProject, "Find Usages is not available while indexing is in progress", "Indexing", null);
       return;
     }
 

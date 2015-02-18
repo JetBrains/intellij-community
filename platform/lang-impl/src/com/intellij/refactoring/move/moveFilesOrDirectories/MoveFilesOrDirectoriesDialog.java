@@ -199,7 +199,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
 
     if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in process", "Indexing", null);
+      Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
       return;
     }
     

@@ -195,7 +195,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Safe delete refactoring is not available while indexing is in process", "Indexing", null);
+      Messages.showMessageDialog(myProject, "Safe delete refactoring is not available while indexing is in progress", "Indexing", null);
       return;
     }
 
