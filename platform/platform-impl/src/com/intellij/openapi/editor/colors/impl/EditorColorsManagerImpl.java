@@ -69,6 +69,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
   @NonNls private static final String NAME_ATTR = "name";
   private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/colors";
+  @NonNls
   private static final String FILE_EXT = ".icls";
 
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {
@@ -237,8 +238,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
-    String newValue = scheme == null ? getDefaultScheme().getName() : scheme.getName();
-    mySchemesManager.setCurrentSchemeName(newValue);
+    mySchemesManager.setCurrentSchemeName(scheme == null ? getDefaultScheme().getName() : scheme.getName());
   }
 
   @NotNull
