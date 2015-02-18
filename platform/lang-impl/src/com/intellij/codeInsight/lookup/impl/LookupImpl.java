@@ -657,14 +657,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
 
-    if (!isVisible()) {
+    if (!isVisible() || !myList.isShowing()) {
       hide();
       return false;
     }
 
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
-
-    LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
 
     return true;
   }
