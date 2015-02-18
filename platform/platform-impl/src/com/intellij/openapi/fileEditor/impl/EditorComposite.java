@@ -457,6 +457,7 @@ public abstract class EditorComposite implements Disposable {
   }
 
   void addEditor(FileEditor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FileEditor[] editors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(editors);
