@@ -284,7 +284,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeString(@NotNull String name, @Nullable String value) {
+  public final void writeString(@NotNull String name, @Nullable String value) {
     if (value != null) {
       writeNullableString(name, value);
     }
