@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -34,9 +35,12 @@ import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementExp
 
 import java.util.Collection;
 
+import static com.intellij.patterns.PlatformPatterns.psiComment;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionParameters> {
+
+  private static final ElementPattern<PsiElement> PLACE = psiElement().withParent(GrTypeDefinitionBody.class).andNot(psiComment());
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
@@ -50,7 +54,7 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
   }
 
   public static void register(CompletionContributor contributor) {
-    contributor.extend(CompletionType.BASIC, psiElement().withParent(GrTypeDefinitionBody.class), new GrMethodOverrideCompletionProvider());
+    contributor.extend(CompletionType.BASIC, PLACE, new GrMethodOverrideCompletionProvider());
   }
 
   private static void addSuperMethods(final GrTypeDefinition psiClass, CompletionResultSet completionResultSet, boolean toImplement) {
