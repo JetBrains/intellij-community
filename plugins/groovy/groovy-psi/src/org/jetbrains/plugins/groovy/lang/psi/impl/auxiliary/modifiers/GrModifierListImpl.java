@@ -189,10 +189,10 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
         if (modifier.equals(GrModifier.STATIC)) return true;
         if (modifier.equals(GrModifier.FINAL)) return true;
       }
-      if (pParent instanceof GrTypeDefinition) {
+      if (pParent instanceof GrTypeDefinition && modifier.equals(GrModifier.FINAL) && !modifierList.hasExplicitVisibilityModifiers()) {
         PsiModifierList pModifierList = ((GrTypeDefinition)pParent).getModifierList();
-        if (pModifierList != null && !modifierList.hasExplicitVisibilityModifiers() && PsiImplUtil.hasImmutableAnnotation(pModifierList)) {
-          if (modifier.equals(GrModifier.FINAL)) return true;
+        if (pModifierList != null && PsiImplUtil.hasImmutableAnnotation(pModifierList)) {
+          return true;
         }
       }
     }
