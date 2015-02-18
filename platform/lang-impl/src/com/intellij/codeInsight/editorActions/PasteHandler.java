@@ -157,18 +157,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
     final Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
 
-    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-          List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-          if (!data.isEmpty()) {
-            extraData.put(processor, data);
-            allValues.addAll(data);
-          }
-        }
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
+      if (!data.isEmpty()) {
+        extraData.put(processor, data);
+        allValues.addAll(data);
       }
-    });
+    }
 
     text = TextBlockTransferable.convertLineSeparators(editor, text, allValues);
 
