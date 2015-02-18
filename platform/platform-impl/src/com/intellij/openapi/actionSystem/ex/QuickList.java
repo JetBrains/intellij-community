@@ -202,7 +202,7 @@ public class QuickList implements ExternalizableScheme {
 
     myDisplayName = element.getAttributeValue(DISPLAY_NAME_TAG);
 
-    myDescription = element.getAttributeValue(DESCRIPTION_TAG);
+    myDescription = element.getAttributeValue(DESCRIPTION_TAG, "");
 
     myReadonly = Boolean.valueOf(element.getAttributeValue(READONLY_TAG)).booleanValue();
 
