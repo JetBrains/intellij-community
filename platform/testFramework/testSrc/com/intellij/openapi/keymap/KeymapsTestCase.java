@@ -110,6 +110,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control MINUS",            "CollapseAll", "CollapseRegion"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
+    { "shift ENTER",              "EditorStartNewLine", "Console.TableResult.EditValueMaximized"},
     { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter"},
