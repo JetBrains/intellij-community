@@ -172,22 +172,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         fileType.writeExternal(root);
 
         Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
-
-        if (fileType instanceof ImportedFileType) {
-          FileNameMatcher[] patterns = ((ImportedFileType)fileType).getOriginalPatterns();
-          if (patterns != null) {
-            for (FileNameMatcher matcher : patterns) {
-              Element content = AbstractFileType.writeMapping(fileType.getName(), matcher, false);
-              if (content != null) {
-                map.addContent(content);
-              }
-            }
-          }
-        }
-        else {
-          writeExtensionsMap(map, fileType, false);
-        }
-
+        writeExtensionsMap(map, fileType, false);
         if (!map.getChildren().isEmpty()) {
           root.addContent(map);
         }
@@ -1028,11 +1013,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         defaultAssociations.remove(matcher);
       }
       else if (shouldSave(type)) {
-        if (!(type instanceof ImportedFileType) || !((ImportedFileType)type).hasPattern(matcher)) {
-          Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
-          if (content != null) {
-            map.addContent(content);
-          }
+        Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
+        if (content != null) {
+          map.addContent(content);
         }
       }
     }
@@ -1041,20 +1024,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName, isApproved(matcher));
       if (content != null) {
         map.addContent(content);
-      }
-    }
-
-    if (type instanceof ImportedFileType) {
-      FileNameMatcher[] patterns = ((ImportedFileType)type).getOriginalPatterns();
-      if (patterns != null) {
-        for (FileNameMatcher matcher : patterns) {
-          if (!associations.contains(matcher)) {
-            Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName, isApproved(matcher));
-            if (content != null) {
-              map.addContent(content);
-            }
-          }
-        }
       }
     }
   }
@@ -1154,13 +1123,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     else {
       SyntaxTable table = AbstractFileType.readSyntaxTable(element);
-      if (isDefault) {
-        type = new AbstractFileType(table);
-      }
-      else {
-        type = new ImportedFileType(table);
-        ((ImportedFileType)type).readOriginalMatchers(typeElement);
-      }
+      type = new AbstractFileType(table);
       ((AbstractFileType)type).initSupport();
     }
 
