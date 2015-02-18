@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,35 +100,36 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   private static void addParentClasspath(List<URL> classpathElements) throws MalformedURLException {
-    ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader();
-    if (loader instanceof URLClassLoader) {
-      ContainerUtil.addAll(classpathElements, ((URLClassLoader)loader).getURLs());
-    }
-    else {
-      String loaderName = loader.getClass().getName();
-      try {
-        Class<?> antClassLoaderClass = Class.forName("org.apache.tools.ant.AntClassLoader");
-        if (antClassLoaderClass.isInstance(loader) ||
-            "org.apache.tools.ant.AntClassLoader".equals(loaderName) ||
-            "org.apache.tools.ant.loader.AntClassLoader2".equals(loaderName)) {
-          String classpath = (String)antClassLoaderClass
-            .getDeclaredMethod("getClasspath", ArrayUtil.EMPTY_CLASS_ARRAY)
-            .invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
-          StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
-          while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            classpathElements.add(new File(token).toURI().toURL());
+    for (ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader(); loader != null; loader = loader.getParent()) {
+      if (loader instanceof URLClassLoader) {
+        ContainerUtil.addAll(classpathElements, ((URLClassLoader)loader).getURLs());
+      }
+      else {
+        String loaderName = loader.getClass().getName();
+        try {
+          Class<?> antClassLoaderClass = Class.forName("org.apache.tools.ant.AntClassLoader");
+          if (antClassLoaderClass.isInstance(loader) ||
+              "org.apache.tools.ant.AntClassLoader".equals(loaderName) ||
+              "org.apache.tools.ant.loader.AntClassLoader2".equals(loaderName)) {
+            String classpath = (String)antClassLoaderClass
+              .getDeclaredMethod("getClasspath", ArrayUtil.EMPTY_CLASS_ARRAY)
+              .invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
+            StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
+            while (tokenizer.hasMoreTokens()) {
+              String token = tokenizer.nextToken();
+              classpathElements.add(new File(token).toURI().toURL());
+            }
+          }
+          else {
+            getLogger().warn("Unknown class loader: " + loaderName);
           }
         }
-        else {
-          getLogger().warn("Unknown class loader: " + loaderName);
-        }
+        catch (ClassCastException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+        catch (ClassNotFoundException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+        catch (NoSuchMethodException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+        catch (IllegalAccessException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
+        catch (InvocationTargetException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
       }
-      catch (ClassCastException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
-      catch (ClassNotFoundException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
-      catch (NoSuchMethodException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
-      catch (IllegalAccessException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
-      catch (InvocationTargetException e) { getLogger().warn("Unknown class loader '" + loaderName + "'", e); }
     }
   }
 
