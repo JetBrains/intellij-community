@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -55,7 +54,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public ReformatCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
-    super(file.getProject(), COMMAND_NAME, PROGRESS_TEXT, false);
+    super(file.getProject(), file, COMMAND_NAME, PROGRESS_TEXT, false);
     mySelectionModel = selectionModel;
   }
 
