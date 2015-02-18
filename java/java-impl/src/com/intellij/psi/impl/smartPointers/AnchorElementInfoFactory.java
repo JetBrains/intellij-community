@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
@@ -53,6 +54,10 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
 
   @Nullable
   static PsiElement getAnchor(PsiElement element) {
+    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      return null;
+    }
+    
     PsiUtilCore.ensureValid(element);
     PsiElement anchor = null;
     if (element instanceof PsiClass) {
