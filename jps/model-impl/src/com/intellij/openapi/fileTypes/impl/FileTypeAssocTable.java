@@ -225,7 +225,7 @@ public class FileTypeAssocTable<T> {
   }
 
   @NotNull
-  public List<FileNameMatcher> getAssociations(final T type) {
+  public List<FileNameMatcher> getAssociations(@NotNull T type) {
     List<FileNameMatcher> result = new ArrayList<FileNameMatcher>();
     for (Pair<FileNameMatcher, T> mapping : myMatchingMappings) {
       if (mapping.getSecond() == type) {

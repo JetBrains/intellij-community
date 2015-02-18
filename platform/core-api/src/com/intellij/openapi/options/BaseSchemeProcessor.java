@@ -49,6 +49,14 @@ public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implem
     return readScheme(new Document((Element)element.detach()));
   }
 
+  @Nullable
+  /**
+   * @param duringLoad If occurred during {@link SchemesManager#loadSchemes()} call
+   */
+  public T readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
+    return readScheme(element);
+  }
+
   @Override
   public T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException {
     throw new AbstractMethodError();

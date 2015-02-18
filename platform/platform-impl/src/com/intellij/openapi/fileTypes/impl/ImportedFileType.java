@@ -18,32 +18,38 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class ImportedFileType extends AbstractFileType {
-  private final List<FileNameMatcher> myPatterns = new ArrayList<FileNameMatcher>();
+  private FileNameMatcher[] myPatterns;
 
   public ImportedFileType(@NotNull SyntaxTable syntaxTable) {
     super(syntaxTable);
   }
 
-  public List<FileNameMatcher> getOriginalPatterns() {
+  @Nullable
+  public FileNameMatcher[] getOriginalPatterns() {
     return myPatterns;
   }
 
-  public void addPattern(FileNameMatcher pattern) {
-    myPatterns.add(pattern);
+  public boolean hasPattern(@NotNull FileNameMatcher matcher) {
+    return myPatterns != null && ArrayUtil.contains(matcher, myPatterns);
   }
 
   public void readOriginalMatchers(@NotNull Element element) {
-    Element mappingsElement = element.getChild(ELEMENT_EXTENSIONMAP);
+    Element mappingsElement = element.getChild(ELEMENT_EXTENSION_MAP);
     if (mappingsElement != null) {
-      for (Pair<FileNameMatcher, String> pair : AbstractFileType.readAssociations(mappingsElement)) {
-        addPattern(pair.getFirst());
+      List<Pair<FileNameMatcher, String>> associations = AbstractFileType.readAssociations(mappingsElement);
+      if (!associations.isEmpty()) {
+        myPatterns = new FileNameMatcher[associations.size()];
+        for (int i = 0; i < myPatterns.length; i++) {
+          myPatterns[i] = associations.get(i).getFirst();
+        }
       }
     }
   }
