@@ -38,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
 
@@ -216,7 +217,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         final RowSorter.SortKey sortKey = sortableModel.getDefaultSortKey();
         if (sortKey != null && sortKey.getColumn() >= 0 && sortKey.getColumn() < model.getColumnCount()) {
           if (sortableModel.getColumnInfos()[sortKey.getColumn()].isSortable()) {
-            rowSorter.setSortKeys(Arrays.asList(sortKey));
+            rowSorter.setSortKeys(Collections.singletonList(sortKey));
           }
         }
       }
