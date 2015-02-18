@@ -23,10 +23,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -216,7 +213,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         return language;
       }
     };
-
+    SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     return viewProvider.getPsi(language);
   }
 
