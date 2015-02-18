@@ -116,6 +116,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
 
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     document.startGuardedBlockChecking();
     try {
       for (PasteProvider provider : Extensions.getExtensions(EP_NAME)) {
@@ -131,6 +132,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
     finally {
       document.stopGuardedBlockChecking();
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 
