@@ -27,8 +27,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerMessageCategories;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.*;
 import java.util.*;
@@ -37,12 +40,19 @@ import java.util.*;
  * @author: Dmitry.Krasilschikov
  * @date: 16.04.2007
  */
-public abstract class GroovycOutputParser {
+public class GroovycOutputParser {
   private static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   public static final String GRAPE_ROOT = "grape.root";
   private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer stdErr = new StringBuffer();
+  private final ModuleChunk myChunk;
+  private final CompileContext myContext;
+
+  public GroovycOutputParser(ModuleChunk chunk, CompileContext context) {
+    myChunk = chunk;
+    myContext = context;
+  }
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
   private int myExitCode;
@@ -67,7 +77,9 @@ public abstract class GroovycOutputParser {
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
-  protected abstract void updateStatus(@NotNull String status);
+  private void updateStatus(@NotNull String status) {
+    myContext.processMessage(new ProgressMessage(status + " [" + myChunk.getPresentableShortName() + "]"));
+  }
 
   private void parseOutput(String text) {
     final String trimmed = text.trim();
