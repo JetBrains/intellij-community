@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author traff
@@ -32,15 +35,17 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   private final char[] myBuffer = new char[8192];
   private final StringBuilder myTextBuffer = new StringBuilder();
+  private ExecutorService myExecutorService;
   private boolean skipLF = false;
+  private volatile Future myScheduledSubmitter;
+  private Runnable myTokenSubmitter;
 
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     this(inputStream, charset, null);
   }
 
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy) {
-    super(sleepingPolicy);
-    myReader = createInputStreamReader(inputStream, charset);
+    this(createInputStreamReader(inputStream, charset), sleepingPolicy);
   }
 
   public BaseOutputReader(@NotNull Reader reader) {
@@ -49,8 +54,21 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
     super(sleepingPolicy);
-    if (sleepingPolicy == SleepingPolicy.BLOCKING && !(reader instanceof BaseInputStreamReader)) {
-      throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
+    if (sleepingPolicy == SleepingPolicy.BLOCKING) {
+      if (!(reader instanceof BaseInputStreamReader)) {
+        throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
+      }
+      myExecutorService = Executors.newSingleThreadExecutor();
+      myTokenSubmitter = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Thread.sleep(10);
+            submitToken();
+          }
+          catch (InterruptedException ignore) { }
+        }
+      };
     }
     myReader = reader;
   }
@@ -109,10 +127,8 @@ public abstract class BaseOutputReader extends BaseDataReader {
       processLine(buffer, token, n);
     }
 
-    if (token.length() != 0) {
-      onTextAvailable(token.toString());
-      token.setLength(0);
-    }
+    submitToken();
+
     return read;
   }
 
@@ -133,16 +149,34 @@ public abstract class BaseOutputReader extends BaseDataReader {
     boolean read = false;
     int n;
     while ((n = myReader.read(buffer)) > 0) {
+      if (myScheduledSubmitter != null) myScheduledSubmitter.cancel(true);
+
       read = true;
 
-      processLine(buffer, token, n);
+      synchronized (myTextBuffer) {
+        processLine(buffer, token, n);
+      }
+
+      myScheduledSubmitter = myExecutorService.submit(myTokenSubmitter);
     }
 
-    if (token.length() != 0) {
-      onTextAvailable(token.toString());
-      token.setLength(0);
-    }
+    submitToken();
+
     return read;
+  }
+
+  private void submitToken() {
+    synchronized (myTextBuffer) {
+      if (myTextBuffer.length() != 0) {
+        onTextAvailable(myTextBuffer.toString());
+        myTextBuffer.setLength(0);
+      }
+    }
+  }
+
+  @Nullable
+  protected Future getScheduledSubmitter() {
+    return myScheduledSubmitter;
   }
 
   @Override
