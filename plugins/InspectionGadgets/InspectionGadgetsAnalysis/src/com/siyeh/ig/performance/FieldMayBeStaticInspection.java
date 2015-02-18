@@ -81,7 +81,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
         // inner class cannot have static declarations
         return;
       }
-      if (containingClass instanceof PsiAnonymousClass) {
+      if (containingClass instanceof PsiAnonymousClass && !PsiUtil.isCompileTimeConstant(field)) {
         return;
       }
       if (!canBeStatic(initializer)) {

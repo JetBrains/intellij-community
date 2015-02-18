@@ -19,6 +19,7 @@ public class FieldMayBeStatic
         public void run() {
 
             new Namer() {
+                final String <warning descr="Field 'constant' may be 'static'">constant</warning> = "";
                 final String usage = "Usage: " + getString();
                 public void action() {
 
