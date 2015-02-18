@@ -2041,7 +2041,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void _testReplaceFinalModifier() throws Exception {
+  public void testReplaceFinalModifier() throws Exception {
     String s1 = "class Foo {\n" +
                 "  void foo(final int i,final int i2, final int i3) {\n" +
                 "     final int x = 5;\n" +
@@ -2050,7 +2050,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s2 = "final '_type 'var = '_init?";
     String s3 = "$type$ $var$ = $init$";
 
-    String expected = "2 = 1;\nint b = a;\nb2 = 3;";
+    String expected = "class Foo {\n" +
+                      "  void foo(int i, int i2, int i3) {\n" +
+                      "     int x = 5\n" +
+                      "  }\n" +
+                      "}";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
 
