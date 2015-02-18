@@ -109,7 +109,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             myProcessor.onSchemeDeleted(scheme);
           }
 
-          E readScheme = readSchemeFromFile(event.getFile(), true, Collections.<String, E>emptyMap());
+          E readScheme = readSchemeFromFile(event.getFile(), true);
           if (readScheme != null) {
             myProcessor.initScheme(readScheme);
             myProcessor.onSchemeAdded(readScheme);
@@ -129,7 +129,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         @Override
         public void fileCreated(@NotNull VirtualFileEvent event) {
           if (event.getRequestor() == null && isMy(event)) {
-            E readScheme = readSchemeFromFile(event.getFile(), true, Collections.<String, E>emptyMap());
+            E readScheme = readSchemeFromFile(event.getFile(), true);
             if (readScheme != null) {
               myProcessor.initScheme(readScheme);
               myProcessor.onSchemeAdded(readScheme);
@@ -182,7 +182,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       VirtualFile[] files = dir == null ? null : dir.getChildren();
       if (files != null) {
         for (VirtualFile file : files) {
-          E scheme = readSchemeFromFile(file, false, Collections.<String, E>emptyMap());
+          E scheme = readSchemeFromFile(file, false);
           if (scheme != null) {
             result.put(scheme.getName(), scheme);
           }
@@ -234,7 +234,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           return;
         }
 
-        E scheme = readScheme(element, Collections.<String, E>emptyMap());
+        E scheme = readScheme(element);
         boolean fileRenamed = false;
         assert scheme != null;
         T existing = findSchemeByName(scheme.getName());
@@ -331,7 +331,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private E readSchemeFromFile(@NotNull final VirtualFile file, boolean forceAdd, @NotNull Map<String, E> filter) {
+  private E readSchemeFromFile(@NotNull final VirtualFile file, boolean forceAdd) {
     if (!canRead(file)) {
       return null;
     }
@@ -355,7 +355,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         throw e;
       }
 
-      E scheme = readScheme(element, filter);
+      E scheme = readScheme(element);
       if (scheme != null) {
         loadScheme(scheme, forceAdd, file.getNameSequence());
         return scheme;
@@ -377,22 +377,17 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private E readScheme(@NotNull Element element, @NotNull Map<String, E> filter) throws InvalidDataException, IOException, JDOMException {
+  private E readScheme(@NotNull Element element) throws InvalidDataException, IOException, JDOMException {
     if (element.getName().equals("shared-scheme")) {
       String schemeName = element.getAttributeValue(NAME);
-      if (filter.containsKey(schemeName)) {
-        return null;
-      }
-
       String schemePath = element.getAttributeValue("original-scheme-path");
       Element sharedElement = myProvider != null && myProvider.isEnabled() ? loadElementOrNull(myProvider.loadContent(schemePath, myRoamingType)) : null;
       if (sharedElement == null) {
         Element localCopyElement = element.getChild("scheme-local-copy");
-        E scheme = localCopyElement == null ? null : doReadScheme(localCopyElement.getChildren().get(0));
-        return scheme == null || filter.containsKey(scheme.getName()) ? null : scheme;
+        return localCopyElement == null ? null : doReadScheme(localCopyElement.getChildren().get(0));
       }
       else {
-        E result = readScheme(sharedElement, Collections.<String, E>emptyMap());
+        E result = readScheme(sharedElement);
         if (result != null) {
           renameScheme(result, schemeName);
         }
@@ -401,15 +396,14 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
     else if (element.getName().equals("shared-scheme-original")) {
       E scheme = doReadScheme(element.getChildren().get(0));
-      if (scheme == null || filter.containsKey(scheme.getName())) {
+      if (scheme == null) {
         return null;
       }
       renameScheme(scheme, element.getAttributeValue(NAME));
       return scheme;
     }
     else {
-      E scheme = doReadScheme(element);
-      return scheme == null || filter.containsKey(scheme.getName()) ? null : scheme;
+      return doReadScheme(element);
     }
   }
 
