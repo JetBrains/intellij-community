@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,15 +55,16 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     checkCurrentScheme(scheme);
   }
 
-  protected void checkCurrentScheme(final Scheme scheme) {
-    if (myCurrentScheme == null && myCurrentSchemeName != null && myCurrentSchemeName.equals(scheme.getName())) {
+  protected void checkCurrentScheme(@NotNull Scheme scheme) {
+    if (myCurrentScheme == null && scheme.getName().equals(myCurrentSchemeName)) {
       //noinspection unchecked
       myCurrentScheme = (T)scheme;
     }
   }
 
-  private Collection<String> collectExistingNames(final Collection<T> schemes) {
-    Set<String> result = new THashSet<String>();
+  @NotNull
+  private Collection<String> collectExistingNames(@NotNull Collection<T> schemes) {
+    Set<String> result = new THashSet<String>(schemes.size());
     for (T scheme : schemes) {
       result.add(scheme.getName());
     }
@@ -96,7 +97,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   @Override
-  public void setCurrentSchemeName(final String schemeName) {
+  public void setCurrentSchemeName(@Nullable String schemeName) {
     myCurrentSchemeName = schemeName;
     myCurrentScheme = schemeName == null ? null : findSchemeByName(schemeName);
   }
