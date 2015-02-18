@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 /**
  * Created by Max Medvedev on 27/02/14
  */
-class Gr2_3HighlightingTest extends GrHighlightingTestBase {
+class Gr23HighlightingTest extends GrHighlightingTestBase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_3
@@ -380,6 +380,35 @@ trait E implements A {}
 trait F extends A implements B {}
 trait G implements A, B {}
 
+''')
+  }
+
+  void 'test trait with generic method no errors'() {
+    testHighlighting('''
+trait TraitGenericMethod {
+    def <X> X bar(X x) { x }
+}
+class ConcreteClassOfTraitGenericMethod implements TraitGenericMethod {}
+''')
+  }
+
+  void 'test generic trait with generic method no errors'() {
+    testHighlighting('''
+trait GenericTraitGenericMethod<X> {
+    public <T> T bar(T a) { a }
+}
+class ConcreteClassGenericTraitGenericMethod implements GenericTraitGenericMethod<String> {}
+class GenericClassGenericTraitGenericMethod<Y> implements GenericTraitGenericMethod<Y> {}
+''')
+  }
+
+  void 'test generic trait no errors'() {
+    testHighlighting('''
+trait GenericTrait<X> {
+    def X bar(X a) { a }
+}
+class GenericClassGenericTrait<Y> implements GenericTrait<Y> {}
+class ConcreteClassGenericTrait implements GenericTrait<String> {}
 ''')
   }
 }
