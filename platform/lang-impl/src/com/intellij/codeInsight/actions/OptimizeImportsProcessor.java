@@ -93,7 +93,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
           for (Runnable runnable : runnables) {
             runnable.run();
           }
-          if (optimizer != null) prepareUserInfoMessage(optimizer);
+          if (optimizer != null) {
+            String message = retrieveMessage(optimizer);
+            getInfoCollector().setOptimizeImportsNotification(message);
+          }
         }
         finally {
           CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
@@ -103,12 +106,11 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     return new FutureTask<Boolean>(runnable, true);
   }
 
-  private void prepareUserInfoMessage(@NotNull ImportOptimizer optimizer) {
-    assert getInfoCollector() != null;
+  private static String retrieveMessage(@NotNull ImportOptimizer optimizer) {
     String info = "imports optimized";
     if (optimizer instanceof UserNotificationInfoProvider) {
         info = ((UserNotificationInfoProvider)optimizer).getUserNotificationInfo();
     }
-    getInfoCollector().setOptimizeImportsNotification(info);
+    return info;
   }
 }
