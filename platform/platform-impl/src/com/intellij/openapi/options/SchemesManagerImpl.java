@@ -343,37 +343,36 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
       catch (JDOMException e) {
         try {
-          File initialIOFile = new File(myIoDir, file.getName());
-          if (initialIOFile.isFile()) {
-            FileUtil.copy(initialIOFile, new File(myIoDir, file.getName() + ".copy"));
+          File initialIoFile = new File(myIoDir, file.getName());
+          if (initialIoFile.isFile()) {
+            FileUtil.copy(initialIoFile, new File(myIoDir, file.getName() + ".copy"));
           }
         }
         catch (IOException e1) {
-          LOG.info(e1);
+          LOG.error(e1);
         }
-        LOG.info("Error reading file " + file.getPath() + ": " + e.getMessage() );
-        throw e;
+        LOG.error("Error reading file " + file.getPath() + ": " + e.getMessage());
+        return null;
       }
 
       E scheme = readScheme(element);
       if (scheme != null) {
         loadScheme(scheme, forceAdd, file.getNameSequence());
-        return scheme;
       }
+      return scheme;
     }
     catch (final Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                          String msg = "Cannot read scheme " + file.getName() + "  from '" + myFileSpec + "': " + e.getLocalizedMessage();
+                                                          String msg = "Cannot read scheme " + file.getName() + "  from '" + myFileSpec + "': " + e.getMessage();
                                                           LOG.info(msg, e);
                                                           Messages.showErrorDialog(msg, "Load Settings");
                                                         }
                                                       }
       );
+      return null;
     }
-
-    return null;
   }
 
   @Nullable
@@ -387,19 +386,18 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         return localCopyElement == null ? null : doReadScheme(localCopyElement.getChildren().get(0));
       }
       else {
-        E result = readScheme(sharedElement);
-        if (result != null) {
-          renameScheme(result, schemeName);
+        E scheme = readScheme(sharedElement);
+        if (scheme != null) {
+          renameScheme(scheme, schemeName);
         }
-        return result;
+        return scheme;
       }
     }
     else if (element.getName().equals("shared-scheme-original")) {
       E scheme = doReadScheme(element.getChildren().get(0));
-      if (scheme == null) {
-        return null;
+      if (scheme != null) {
+        renameScheme(scheme, element.getAttributeValue(NAME));
       }
-      renameScheme(scheme, element.getAttributeValue(NAME));
       return scheme;
     }
     else {
@@ -650,11 +648,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Override
-  protected void schemeDeleted(@NotNull Scheme toDelete) {
-    super.schemeDeleted(toDelete);
+  protected void schemeDeleted(@NotNull Scheme scheme) {
+    super.schemeDeleted(scheme);
 
-    if (toDelete instanceof ExternalizableScheme) {
-      ContainerUtilRt.addIfNotNull(myFilesToDelete, ((ExternalizableScheme)toDelete).getExternalInfo().getCurrentFileName());
+    if (scheme instanceof ExternalizableScheme) {
+      ContainerUtilRt.addIfNotNull(myFilesToDelete, ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName());
     }
   }
 
