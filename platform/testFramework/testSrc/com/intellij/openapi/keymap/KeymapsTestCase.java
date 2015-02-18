@@ -70,7 +70,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "ENTER",                    "EditorChooseLookupItem", "NextTemplateVariable", "EditorEnter", "Images.Thumbnails.EnterAction",
-                                  "PropertyInspectorActions.EditValue", "Console.Execute"},
+                                  "PropertyInspectorActions.EditValue", "Console.Execute", "Console.TableResult.EditValue"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "DatabaseView.PropertiesAction"},
     { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
