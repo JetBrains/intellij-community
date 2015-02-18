@@ -227,7 +227,7 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
     return jdkVersion;
   }
 
-  private static void assertUnorderedLinesWithFile(String filePath, String actualText) {
+  public static void assertUnorderedLinesWithFile(String filePath, String actualText) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
