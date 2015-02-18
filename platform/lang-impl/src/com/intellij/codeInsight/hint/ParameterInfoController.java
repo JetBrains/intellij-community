@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -240,7 +241,14 @@ public class ParameterInfoController implements Disposable {
     Runnable request = new Runnable(){
       @Override
       public void run(){
-        if (!myDisposed && !myProject.isDisposed()) updateComponent();
+        if (!myDisposed && !myProject.isDisposed()) {
+          DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+            @Override
+            public void run() {
+              updateComponent();
+            }
+          });
+        }
       }
     };
     myAlarm.addRequest(request, DELAY, ModalityState.stateForComponent(myEditor.getComponent()));

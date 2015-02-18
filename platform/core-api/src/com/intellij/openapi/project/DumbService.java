@@ -242,6 +242,20 @@ public abstract class DumbService {
   public abstract void setAlternativeResolveEnabled(boolean enabled);
 
   /**
+   * Invokes the given runnable with alternative resolve set to true.
+   * @see #setAlternativeResolveEnabled(boolean) 
+   */
+  public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
+    setAlternativeResolveEnabled(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
    * @return whether alternative resolution is enabled for the current thread.
    * 
    * @see #setAlternativeResolveEnabled(boolean) 
