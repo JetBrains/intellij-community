@@ -25,6 +25,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,6 @@ import static com.intellij.codeInsight.actions.TextRangeType.*;
 
 class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
-  private static final String SHORTCUT_TEXT_COLOR = "#7D7D7D";
 
   private final Editor myEditor;
 
@@ -167,7 +168,9 @@ class FileInEditorProcessor {
     }
 
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
-    builder.append("<span style='color:").append(SHORTCUT_TEXT_COLOR).append("'>")
+    String color = ColorUtil.toHex(JBColor.gray);
+
+    builder.append("<span style='color:#").append(color).append("'>")
            .append("Show reformat dialog: ").append(shortcutText).append("</span>")
            .append("</html>");
 
