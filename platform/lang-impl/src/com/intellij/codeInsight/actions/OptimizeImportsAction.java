@@ -228,8 +228,7 @@ public class OptimizeImportsAction extends AnAction {
       panel.setLayout(layout);
 
       panel.add(new JLabel(myText));
-      myOnlyVcsCheckBox = new JCheckBox("only VCS changed files");
-
+      myOnlyVcsCheckBox = new JCheckBox(CodeInsightBundle.message("process.scope.changed.files"));
       boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
 
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
