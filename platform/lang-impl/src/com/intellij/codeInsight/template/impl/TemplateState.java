@@ -664,12 +664,17 @@ public class TemplateState implements Disposable {
           calcedSegments.clear();
           for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
             String variableName = myTemplate.getVariableNameAt(i);
-            int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+            final int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
             if (segmentNumber < 0) continue;
-            Expression expression = myTemplate.getExpressionAt(i);
-            Expression defaultValue = myTemplate.getDefaultValueAt(i);
+            final Expression expression = myTemplate.getExpressionAt(i);
+            final Expression defaultValue = myTemplate.getDefaultValueAt(i);
             String oldValue = getVariableValueText(variableName);
-            recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+            DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+              @Override
+              public void run() {
+                recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+              }
+            });
             final TextResult value = getVariableValue(variableName);
             assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
             String newValue = value.getText();
