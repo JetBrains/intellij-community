@@ -84,11 +84,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
 
   private static int getErrorIconWidth() {
-    return JBUI.scale(13);
+    return JBUI.scale(14);
   }
 
   private static int getErrorIconHeight() {
-    return JBUI.scale(13);
+    return JBUI.scale(14);
   }
 
   private static int getThinGap() {
@@ -482,9 +482,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.isMirrored();
   }
 
-  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() +
-                                                                                                                  getThinGap());
-
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
       setFocusable(false);
@@ -513,7 +510,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             g2d.setTransform(old);
           }
           else {
-            int x = getThinGap() + myMinMarkHeight - JBUI.scale(1);
+            int x = getThinGap() + myMinMarkHeight;
             final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
             myErrorStripeRenderer.paint(this, g, b);
           }
