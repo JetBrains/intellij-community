@@ -36,7 +36,6 @@ public interface FileEditorProvider {
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
   /**
-   * If provider is not dumb-aware, and it is the only
    * @param file file to be tested for acceptance. This
    * parameter is never <code>null</code>.
    *
