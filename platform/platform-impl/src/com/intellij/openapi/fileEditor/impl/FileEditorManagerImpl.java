@@ -1848,8 +1848,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   private class MyRootsListener extends ModuleRootAdapter {
+    private boolean myScheduled;
+    
     @Override
     public void rootsChanged(ModuleRootEvent event) {
+      if (myScheduled) return;
+      myScheduled = true;
+      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+        @Override
+        public void run() {
+          myScheduled = false;
+          handleRootChange();
+        }
+      });
+    }
+
+    private void handleRootChange() {
       EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
 
       for (EditorWindow eachWindow : getWindows()) {
