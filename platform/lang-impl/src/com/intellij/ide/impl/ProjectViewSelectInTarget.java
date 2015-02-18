@@ -27,6 +27,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -150,7 +151,13 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       }
     }
     if (toSelect == null) return;
-    PsiElement originalElement = toSelect.getOriginalElement();
+    PsiElement originalElement;
+    try {
+      originalElement = toSelect.getOriginalElement();
+    }
+    catch (IndexNotReadyException e) {
+      originalElement = toSelect;
+    }
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(originalElement);
     select(originalElement, virtualFile, requestFocus);
   }
