@@ -269,8 +269,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             uexpr = null;
           }
           else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
-            final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, referencedName, myElement, false);
-            final ResolveResultList latest = resolveToLatestDefs(instructions, myElement, referencedName);
+            final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, referencedName, realContext, false);
+            final ResolveResultList latest = resolveToLatestDefs(instructions, realContext, referencedName);
             if (!latest.isEmpty()) {
               return latest;
             }
