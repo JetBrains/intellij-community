@@ -152,28 +152,39 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
 
       public void exitDumbMode() {
-        VirtualFile[] files = getOpenFiles();
-        for (VirtualFile file : files) {
-          Set<FileEditorProvider> providers = new HashSet<FileEditorProvider>();
-          List<EditorWithProviderComposite> composites = getEditorComposites(file);
-          for (EditorWithProviderComposite composite : composites) {
-            providers.addAll(Arrays.asList(composite.getProviders()));
+        // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!project.isDisposed())
+              dumbModeFinished(project);
           }
-          FileEditorProvider[] newProviders = FileEditorProviderManager.getInstance().getProviders(project, file);
-          if (newProviders.length > providers.size()) {
-            List<FileEditorProvider> toOpen = new ArrayList<FileEditorProvider>(Arrays.asList(newProviders));
-            toOpen.removeAll(providers);
-            // need to open additional non dumb-aware editors
-            for (EditorWithProviderComposite composite : composites) {
-              for (FileEditorProvider provider : toOpen) {
-                FileEditor editor = provider.createEditor(myProject, file);
-                composite.addEditor(editor, provider);
-              }
-            }
+        });
+      }
+    });
+  }
+
+  private void dumbModeFinished(Project project) {
+    VirtualFile[] files = getOpenFiles();
+    for (VirtualFile file : files) {
+      Set<FileEditorProvider> providers = new HashSet<FileEditorProvider>();
+      List<EditorWithProviderComposite> composites = getEditorComposites(file);
+      for (EditorWithProviderComposite composite : composites) {
+        providers.addAll(Arrays.asList(composite.getProviders()));
+      }
+      FileEditorProvider[] newProviders = FileEditorProviderManager.getInstance().getProviders(project, file);
+      if (newProviders.length > providers.size()) {
+        List<FileEditorProvider> toOpen = new ArrayList<FileEditorProvider>(Arrays.asList(newProviders));
+        toOpen.removeAll(providers);
+        // need to open additional non dumb-aware editors
+        for (EditorWithProviderComposite composite : composites) {
+          for (FileEditorProvider provider : toOpen) {
+            FileEditor editor = provider.createEditor(myProject, file);
+            composite.addEditor(editor, provider);
           }
         }
       }
-    });
+    }
   }
 
   public void initDockableContentFactory() {
