@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 import static com.intellij.codeInsight.actions.TextRangeType.*;
 
-public class FileInEditorProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
