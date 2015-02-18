@@ -414,7 +414,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   @Nullable
-  private E doReadScheme(Element element) throws InvalidDataException, IOException, JDOMException {
+  private E doReadScheme(@NotNull Element element) throws InvalidDataException, IOException, JDOMException {
     E scheme;
     if (myProcessor instanceof BaseSchemeProcessor) {
       scheme = ((BaseSchemeProcessor<E>)myProcessor).readScheme(element);

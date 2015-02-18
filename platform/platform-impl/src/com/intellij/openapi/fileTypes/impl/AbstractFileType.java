@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
                                                                                 CustomSyntaxTableFileType {
@@ -112,13 +114,10 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   @Override
-  public void readExternal(final Element typeElement) throws InvalidDataException {
+  public void readExternal(@NotNull Element typeElement) throws InvalidDataException {
     Element element = typeElement.getChild(ELEMENT_HIGHLIGHTING);
     if (element != null) {
-      SyntaxTable table = readSyntaxTable(element);
-      if (table != null) {
-        setSyntaxTable(table);
-      }
+      setSyntaxTable(readSyntaxTable(element));
     }
   }
 
@@ -329,8 +328,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
 
   @NotNull
-  public static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element e) {
-    List<Element> children = e.getChildren(ELEMENT_MAPPING);
+  public static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element element) {
+    List<Element> children = element.getChildren(ELEMENT_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();
     }
@@ -347,19 +346,18 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   @NotNull
-  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element e) {
-    ArrayList<Trinity<FileNameMatcher, String, Boolean>> result = new ArrayList<Trinity<FileNameMatcher, String, Boolean>>();
-    List removedMappings = e.getChildren(ELEMENT_REMOVED_MAPPING);
-    for (Object removedMapping : removedMappings) {
-      Element mapping = (Element)removedMapping;
-      String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
-      String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
-      String approved = mapping.getAttributeValue(ATTRIBUTE_APPROVED);
-
-      FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
-      result.add(new Trinity<FileNameMatcher, String, Boolean>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE), Boolean.parseBoolean(approved)));
+  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element element) {
+    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<Trinity<FileNameMatcher, String, Boolean>>();
+    List<Element> children = element.getChildren(ELEMENT_REMOVED_MAPPING);
+    if (children.isEmpty()) {
+      return Collections.emptyList();
     }
 
+    for (Element mapping : children) {
+      String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
+      FileNameMatcher matcher = ext == null ? FileTypeManager.parseFromString(mapping.getAttributeValue(ATTRIBUTE_PATTERN)) : new ExtensionFileNameMatcher(ext);
+      result.add(Trinity.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE), Boolean.parseBoolean(mapping.getAttributeValue(ATTRIBUTE_APPROVED))));
+    }
     return result;
   }
 
