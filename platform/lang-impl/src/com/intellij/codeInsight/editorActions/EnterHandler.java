@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -595,8 +596,16 @@ public class EnterHandler extends BaseEnterHandler {
 
         if (docProvider != null) {
           if (docProvider.findExistingDocComment(comment) != comment) return comment;
-          String docStub = docProvider.generateDocumentationContentStub(comment);
+          String docStub;
           
+          DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+          try {
+            docStub = docProvider.generateDocumentationContentStub(comment);
+          }
+          finally {
+            DumbService.getInstance(project).setAlternativeResolveEnabled(false);
+          }
+
           if (docStub != null && docStub.length() != 0) {
             myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
             myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
