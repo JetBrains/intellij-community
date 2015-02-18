@@ -76,6 +76,11 @@ public class StringUtilTest extends TestCase {
     assertEquals("z", StringUtil.unpluralize("zs"));
   }
 
+  public void testPluralize() {
+    assertEquals("values", StringUtil.pluralize("value"));
+    assertEquals("values", StringUtil.pluralize("values"));
+  }
+
   public void testStartsWithConcatenation() {
     assertTrue(StringUtil.startsWithConcatenation("something.with.dot", "something", "."));
     assertTrue(StringUtil.startsWithConcatenation("something.with.dot", "", "something."));

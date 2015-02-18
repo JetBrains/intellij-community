@@ -765,6 +765,10 @@ public class StringUtil extends StringUtilRt {
       return "These";
     }
 
+    if (endsWithIgnoreCase(suggestion, "es")) {
+      return suggestion;
+    }
+
     if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
       return suggestion + "es";
     }
