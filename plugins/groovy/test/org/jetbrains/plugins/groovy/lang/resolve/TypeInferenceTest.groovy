@@ -352,7 +352,7 @@ def foo(Integer a) {
     <caret>a.substring(2)
   }
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testInferArgumentTypeFromMethod2() {
@@ -363,7 +363,7 @@ def foo(Integer a) {
     bar(a)
     <caret>a.substring(2)
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testInferArgumentTypeFromMethod3() {
@@ -375,7 +375,7 @@ def foo(Integer a) {
     print a
     <caret>a.substring(2)
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testInferArgumentTypeFromMethod4() {
@@ -389,7 +389,7 @@ def foo(Integer a) {
     <caret>a.substring(2)
   }
 }
-''', '[java.lang.String,java.lang.Integer]')
+''', '[java.lang.Integer,java.lang.String]')
   }
 
   void testEmptyListOrListWithGenerics() {

@@ -25,12 +25,9 @@ import com.intellij.psi.PsiMethod;
 
 import java.util.List;
 
-/**
- * Created by Arasthel on 29/01/15.
- */
 public class GroovyMethodOverrideHandler implements InsertHandler<LookupElement> {
 
-  private PsiClass myPsiClass;
+  private final PsiClass myPsiClass;
 
   public GroovyMethodOverrideHandler(PsiClass aClass) {
     this.myPsiClass = aClass;
@@ -39,7 +36,7 @@ public class GroovyMethodOverrideHandler implements InsertHandler<LookupElement>
   @Override
   public void handleInsert(InsertionContext context, LookupElement item) {
     context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-    PsiMethod method = (PsiMethod) item.getObject();
+    PsiMethod method = (PsiMethod)item.getObject();
     List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(myPsiClass, method, false);
     context.commitDocument();
     GenerateMembersUtil.insertMembersAtOffset(context.getFile(), context.getStartOffset(),

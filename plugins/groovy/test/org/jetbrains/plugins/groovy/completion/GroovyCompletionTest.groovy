@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
@@ -1868,7 +1869,6 @@ foooo ()<caret>
     }
     finally {
       settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = old
-
     }
   }
 
@@ -1892,5 +1892,18 @@ def foo() {
   va<caret>r = 'abc'
 }
 ''', '', CompletionType.BASIC, CompletionResult.notContain, 1, 'vaIntellijIdeaRulezzzr')
+  }
+
+  void "test override super methods completion"() {
+    doVariantableTest('''
+class A {
+    def foo() {}
+    def bar(a, b, List c) {}
+    def baz() {}
+}
+class B extends A {
+  <caret>
+}
+''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'public Object bar', 'public Object baz', 'public Object foo')
   }
 }
