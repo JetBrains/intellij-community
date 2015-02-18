@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -194,7 +195,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (DumbService.isDumb(myProject)) {
-      DumbService.getInstance(myProject).showDumbModeNotification("Safe delete refactoring is not available while indexing is in process");
+      Messages.showMessageDialog(myProject, "Safe delete refactoring is not available while indexing is in process", "Indexing", null);
       return;
     }
 

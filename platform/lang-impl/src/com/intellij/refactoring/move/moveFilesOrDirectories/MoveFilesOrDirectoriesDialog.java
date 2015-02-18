@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDirectory;
@@ -198,7 +199,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
 
     if (DumbService.isDumb(myProject)) {
-      DumbService.getInstance(myProject).showDumbModeNotification("Move refactoring is not available while indexing is in process");
+      Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in process", "Indexing", null);
       return;
     }
     
