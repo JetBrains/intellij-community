@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -116,7 +117,7 @@ public class ConfigurationContext {
   private void createConfiguration() {
     LOG.assertTrue(myConfiguration == null);
     final Location location = getLocation();
-    myConfiguration = location != null ?
+    myConfiguration = location != null && !DumbService.isDumb(location.getProject()) ?
         PreferredProducerFind.createConfiguration(location, this) :
         null;
   }
