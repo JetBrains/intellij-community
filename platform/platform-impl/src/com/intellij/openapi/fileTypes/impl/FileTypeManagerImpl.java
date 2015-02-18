@@ -74,6 +74,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
+  // You must update all existing default configurations accordingly
   private static final int VERSION = 12;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
@@ -361,7 +362,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     // Resolve unresolved mappings initialized before certain plugin initialized.
-    for (final StandardFileType pair : myStandardFileTypes.values()) {
+    for (StandardFileType pair : myStandardFileTypes.values()) {
       bindUnresolvedMappings(pair.fileType);
     }
 

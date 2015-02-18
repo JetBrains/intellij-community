@@ -1,5 +1,5 @@
-<component version="2">
-  <ignoreFiles list="CVS;SCCS;RCS;rcs;.DS_Store;.svn;.pyc;.pyo"/>
+<component version="12">
+  <ignoreFiles list="CVS;SCCS;RCS;rcs;.DS_Store;.svn;.git;.pyc;.pyo;*.hprof;_svn;.hg;*.lib;*~;__pycache__;.bundle;*.rbc"/>
 
   <filetypes>
     <filetype name = "IDL" description = "IDL files"

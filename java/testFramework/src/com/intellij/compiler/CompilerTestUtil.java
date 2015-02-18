@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -65,6 +66,12 @@ public class CompilerTestUtil {
   }
 
   public static void saveApplicationComponent(Object appComponent) {
+    //noinspection ConstantConditions
+    if (true) {
+      //noinspection TestOnlyProblems
+      ((ComponentStoreImpl)((ApplicationImpl)ApplicationManager.getApplication()).getStateStore()).saveApplicationComponent(appComponent);
+    }
+
     try {
       final File file;
       String componentName;

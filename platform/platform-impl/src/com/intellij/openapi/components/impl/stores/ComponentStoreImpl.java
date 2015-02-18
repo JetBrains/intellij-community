@@ -24,15 +24,14 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager.Externali
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,7 +44,9 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -98,12 +99,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       Arrays.sort(names);
       for (String name : names) {
         Object component = myComponents.get(name);
-        if (component instanceof PersistentStateComponent) {
-          commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
-        }
-        else if (component instanceof JDOMExternalizable) {
-          externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
-        }
+        commitComponent(externalizationSession, component);
       }
     }
 
@@ -117,6 +113,64 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     doSave(externalizationSession == null ? null : externalizationSession.createSaveSessions(), readonlyFiles);
+  }
+
+  @TestOnly
+  public void saveApplicationComponent(@NotNull Object component) {
+    StateStorageManager.ExternalizationSession externalizationSession = getStateStorageManager().startExternalization();
+    if (externalizationSession == null) {
+      return;
+    }
+
+    commitComponent(externalizationSession, component);
+    List<SaveSession> sessions = externalizationSession.createSaveSessions();
+    if (sessions.isEmpty()) {
+      return;
+    }
+
+    final File file;
+    State state = StoreUtil.getStateSpec(component.getClass());
+    if (state != null) {
+      file = new File(getStateStorageManager().expandMacros(findNonDeprecated(state.storages()).file()));
+    }
+    else if (component instanceof ExportableApplicationComponent && component instanceof NamedJDOMExternalizable) {
+      file = PathManager.getOptionsFile((NamedJDOMExternalizable)component);
+    }
+    else {
+      throw new AssertionError(component.getClass() + " doesn't have @State annotation and doesn't implement ExportableApplicationComponent");
+    }
+
+    AccessToken token = WriteAction.start();
+    try {
+      VfsRootAccess.allowRootAccess(file.getAbsolutePath());
+      doSave(sessions, Collections.<Pair<SaveSession, VirtualFile>>emptyList());
+    }
+    finally {
+      try {
+        VfsRootAccess.disallowRootAccess(file.getAbsolutePath());
+      }
+      finally {
+        token.finish();
+      }
+    }
+  }
+
+  private static Storage findNonDeprecated(Storage[] storages) {
+    for (Storage storage : storages) {
+      if (!storage.deprecated()) {
+        return storage;
+      }
+    }
+    throw new AssertionError("All storages are deprecated");
+  }
+
+  private void commitComponent(ExternalizationSession externalizationSession, Object component) {
+    if (component instanceof PersistentStateComponent) {
+      commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
+    }
+    else if (component instanceof JDOMExternalizable) {
+      externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
+    }
   }
 
   protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
@@ -137,12 +191,19 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> persistentStateComponent,
-                                             @NotNull ExternalizationSession session) {
-    T state = persistentStateComponent.getState();
+  private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> component, @NotNull ExternalizationSession session) {
+    T state = component.getState();
     if (state != null) {
-      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StoreUtil.getStateSpec(persistentStateComponent), StateStorageOperation.WRITE);
-      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), state);
+      Storage[] storageSpecs = getComponentStorageSpecs(component, StoreUtil.getStateSpec(component), StateStorageOperation.WRITE);
+      String componentName = getComponentName(component);
+      //if (state instanceof Element) {
+      //  Element defaultState = getDefaultState(component, componentName, Element.class);
+      //  if (defaultState != null && JDOMUtil.areElementsEqual(defaultState, (Element)state)) {
+      //    session.setState(storageSpecs, component, componentName, new Element("empty"));
+      //    return;
+      //  }
+      //}
+      session.setState(storageSpecs, component, componentName, state);
     }
   }
 
@@ -230,7 +291,8 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
-    T state = getDefaultState(component, name, stateClass);
+    T defaultState = getDefaultState(component, name, stateClass);
+    T state = defaultState;
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
@@ -243,6 +305,10 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     if (state != null) {
+      // quick dirty fix IDEA-136382 Bundled custom file types disappear
+      if (defaultState != state && component instanceof FileTypeManager) {
+        component.loadState(defaultState);
+      }
       component.loadState(state);
     }
 
