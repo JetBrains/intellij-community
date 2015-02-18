@@ -153,8 +153,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           }
           else {
             Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
-            if (nav != null && nav.canNavigate()) {
-              navigateToElement(nav);
+            try {
+              if (nav != null && nav.canNavigate()) {
+                navigateToElement(nav);
+              }
+            }
+            catch (IndexNotReadyException e) {
+              DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
             }
           }
         }
