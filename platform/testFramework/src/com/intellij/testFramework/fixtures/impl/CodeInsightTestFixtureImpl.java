@@ -923,14 +923,28 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public GutterMark findGutter(@NotNull final String filePath) {
     configureByFilesInner(filePath);
+    CommonProcessors.FindFirstProcessor<GutterMark> processor = new CommonProcessors.FindFirstProcessor<GutterMark>();
+    findGutters(processor);
+    return processor.getFoundValue();
+  }
+
+  @NotNull
+  @Override
+  public Collection<GutterMark> findCaretGutters() {
+    CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<GutterMark>();
+    findGutters(processor);
+    return processor.getResults();
+  }
+
+  private void findGutters(Processor<GutterMark> processor) {
     int offset = myEditor.getCaretModel().getOffset();
 
     final Collection<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
       if (info.endOffset >= offset && info.startOffset <= offset) {
         final GutterMark renderer = info.getGutterIconRenderer();
-        if (renderer != null) {
-          return renderer;
+        if (renderer != null && !processor.process(renderer)) {
+          return;
         }
       }
     }
@@ -938,12 +952,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (RangeHighlighter highlighter : highlighters) {
       if (highlighter.getEndOffset() >= offset && highlighter.getStartOffset() <= offset) {
         GutterMark renderer = highlighter.getGutterIconRenderer();
-        if (renderer != null) {
-          return renderer;
+        if (renderer != null && !processor.process(renderer)) {
+          return;
         }
       }
     }
-    return null;
   }
 
   @Override
