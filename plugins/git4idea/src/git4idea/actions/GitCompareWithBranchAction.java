@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
@@ -84,6 +85,12 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       .setTitle("Select branch to compare")
       .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, head, list))
       .setAutoselectOnMouseMove(true)
+      .setFilteringEnabled(new Function<Object, String>() {
+        @Override
+        public String fun(Object o) {
+          return o.toString();
+        }
+      })
       .createPopup()
       .showInBestPositionFor(event.getDataContext());
   }
