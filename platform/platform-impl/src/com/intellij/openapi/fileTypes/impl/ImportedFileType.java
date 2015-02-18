@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,18 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImportedFileType extends AbstractFileType {
+class ImportedFileType extends AbstractFileType {
   private final List<FileNameMatcher> myPatterns = new ArrayList<FileNameMatcher>();
 
-  public ImportedFileType(final SyntaxTable syntaxTable, ExternalInfo copyFrom) {
+  public ImportedFileType(@NotNull SyntaxTable syntaxTable) {
     super(syntaxTable);
-    if (copyFrom != null) {
-      getExternalInfo().copy(copyFrom);
-    }
   }
 
   public List<FileNameMatcher> getOriginalPatterns() {
@@ -42,14 +39,12 @@ public class ImportedFileType extends AbstractFileType {
     myPatterns.add(pattern);
   }
 
-  public void readOriginalMatchers(final Element element) {
+  public void readOriginalMatchers(@NotNull Element element) {
     Element mappingsElement = element.getChild(ELEMENT_EXTENSIONMAP);
     if (mappingsElement != null) {
-      List<Pair<FileNameMatcher,String>> list = AbstractFileType.readAssociations(mappingsElement);
-      for (Pair<FileNameMatcher, String> pair : list) {
+      for (Pair<FileNameMatcher, String> pair : AbstractFileType.readAssociations(mappingsElement)) {
         addPattern(pair.getFirst());
       }
     }
-
   }
 }

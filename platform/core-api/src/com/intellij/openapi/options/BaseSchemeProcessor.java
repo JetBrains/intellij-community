@@ -33,15 +33,15 @@ public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implem
   }
 
   @Override
-  public void onSchemeAdded(@NotNull final T scheme) {
+  public void onSchemeAdded(@NotNull T scheme) {
   }
 
   @Override
-  public void onSchemeDeleted(@NotNull final T scheme) {
+  public void onSchemeDeleted(@NotNull T scheme) {
   }
 
   @Override
-  public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+  public void onCurrentSchemeChanged(Scheme newCurrentScheme) {
   }
 
   @Nullable

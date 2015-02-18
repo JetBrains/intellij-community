@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import org.jdom.Element;
 
 public class ReadFileType extends AbstractFileType {
-
   private final Element myElement;
 
-  public ReadFileType(final SyntaxTable syntaxTable, Element element) {
+  public ReadFileType(SyntaxTable syntaxTable, Element element) {
     super(syntaxTable);
+
     myElement = element;
   }
 
   public Element getElement() {
     return myElement;
   }
-
 }
