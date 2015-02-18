@@ -18,6 +18,7 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -170,6 +171,9 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     return search(aClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
+        if (!aClass.isValid()) {
+          throw new ProcessCanceledException();
+        }
         return aClass.getUseScope();
       }
     }), checkDeep);
