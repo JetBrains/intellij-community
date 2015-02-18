@@ -19,6 +19,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -47,7 +49,6 @@ class FileInEditorProcessor {
   private final boolean myShouldRearrangeCode;
   private final boolean myProcessSelectedText;
 
-  private final boolean myShouldNotify;
   private final Project myProject;
 
   private final PsiFile myFile;
@@ -65,8 +66,6 @@ class FileInEditorProcessor {
     myShouldRearrangeCode = runOptions.isRearrangeCode();
     myProcessSelectedText = myEditor != null && runOptions.getTextRangeType() == SELECTED_TEXT;
     myProcessChangesTextOnly = runOptions.getTextRangeType() == VCS_CHANGED_TEXT;
-
-    myShouldNotify = myEditor != null && !myProcessSelectedText;
   }
 
   public void processCode() {
@@ -83,7 +82,7 @@ class FileInEditorProcessor {
       myProcessor = mixWithRearrangeProcessor(myProcessor);
     }
 
-    if (myShouldNotify) {
+    if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(new Runnable() {
         @Override
@@ -195,5 +194,13 @@ class FileInEditorProcessor {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING,
                                                      0, false);
+  }
+
+  private boolean shouldNotify() {
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return false;
+    }
+    return myEditor != null && !myProcessSelectedText;
   }
 }
