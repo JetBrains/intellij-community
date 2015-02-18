@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,7 +39,7 @@ import java.util.concurrent.FutureTask;
 public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   public static final String COMMAND_NAME = "Rearrange code";
-  public static final String PROGRESS_TEXT = "Rearranging code...";
+  public static final String PROGRESS_TEXT = CodeInsightBundle.message("process.rearrange.code");
 
   private static final Logger LOG = Logger.getInstance(RearrangeCodeProcessor.class);
   private SelectionModel mySelectionModel;
