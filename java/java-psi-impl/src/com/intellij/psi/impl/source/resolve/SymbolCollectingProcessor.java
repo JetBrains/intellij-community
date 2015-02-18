@@ -24,7 +24,6 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +82,16 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
 
     @NotNull
     public PsiNamedElement getElement() {
-      return (PsiNamedElement)ObjectUtils.assertNotNull(myElement.retrieve());
+      PsiElement element = myElement.retrieve();
+      if (element == null) {
+        String message = "Anchor hasn't survived: " + myElement;
+        if (myElement instanceof PsiAnchor.StubIndexReference) {
+          message += "; diagnostics=" + ((PsiAnchor.StubIndexReference)myElement).diagnoseNull();
+        }
+        throw new AssertionError(message);
+      }
+
+      return (PsiNamedElement)element;
     }
 
     public PsiElement getFileContext() {
