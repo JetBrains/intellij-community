@@ -46,7 +46,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
 
   public MavenServerIndexer createIndexer() throws RemoteException {
     try {
-      Maven30ServerIndexerImpl result = new Maven30ServerIndexerImpl(new Maven30ServerEmbedderImpl(new MavenServerSettings()));
+      Maven3ServerIndexerImpl result = new Maven3ServerIndexerImpl(new Maven30ServerEmbedderImpl(new MavenServerSettings()));
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
