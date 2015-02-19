@@ -24,7 +24,6 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager.Externali
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -282,8 +281,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
-    T defaultState = getDefaultState(component, name, stateClass);
-    T state = defaultState;
+    T state = getDefaultState(component, name, stateClass);
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
     for (Storage storageSpec : storageSpecs) {
@@ -296,10 +294,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     if (state != null) {
-      // quick dirty fix IDEA-136382 Bundled custom file types disappear
-      if (defaultState != state && component instanceof FileTypeManager) {
-        component.loadState(defaultState);
-      }
       component.loadState(state);
     }
 
