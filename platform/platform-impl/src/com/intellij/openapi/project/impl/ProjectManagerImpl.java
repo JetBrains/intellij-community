@@ -887,7 +887,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
         listener.projectClosing(project);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("From listener "+listener+" ("+listener.getClass()+")", e);
       }
     }
   }
