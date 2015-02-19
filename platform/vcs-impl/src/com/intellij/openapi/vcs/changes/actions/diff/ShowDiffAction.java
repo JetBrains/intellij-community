@@ -21,6 +21,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -53,6 +54,11 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+      e.getPresentation().setEnabled(true);
+      return;
+    }
+
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && canShowDiff(project, changes));
@@ -68,10 +74,9 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (changes == null) return;
+    if (project == null || !canShowDiff(project, changes)) return;
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
     final List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
