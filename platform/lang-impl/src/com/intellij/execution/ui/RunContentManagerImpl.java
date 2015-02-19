@@ -313,6 +313,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
               boolean alive = false;
               String toolWindowId = executor.getToolWindowId();
               ContentManager manager = myToolwindowIdToContentManagerMap.get(toolWindowId);
+              if (manager == null) return;
               for (Content content : manager.getContents()) {
                 RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
                 if (descriptor != null) {
