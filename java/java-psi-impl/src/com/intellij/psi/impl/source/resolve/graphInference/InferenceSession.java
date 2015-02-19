@@ -558,7 +558,7 @@ public class InferenceSession {
     return false;
   }
 
-  private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
+  private boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
     if (!FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
       final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
       final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
@@ -567,7 +567,7 @@ public class InferenceSession {
           return pair.first == null || pair.second == null || !TypesDistinctProver.provablyDistinct(pair.first, pair.second);
         }
       };
-      if (InferenceIncorporationPhase.findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor)) return true;
+      if (findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor)) return true;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       for (PsiType lowBound : bounds) {
         if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(lowBound)) {
@@ -878,7 +878,7 @@ public class InferenceSession {
       PsiType type;
       if (eqBound != PsiType.NULL && (myErased || eqBound != null)) {
         if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
-          type = PsiType.NULL;
+          continue;
         } else {
           type = eqBound;
         }
@@ -1462,5 +1462,39 @@ public class InferenceSession {
   public static boolean areSameFreshVariables(PsiTypeParameter p1, PsiTypeParameter p2) {
     final PsiElement originalContext = p1.getUserData(ORIGINAL_CONTEXT);
     return originalContext != null && originalContext == p2.getUserData(ORIGINAL_CONTEXT);
+  }
+
+  public boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,
+                                                           Processor<Pair<PsiType, PsiType>> processor) {
+    for (int i = 0; i < upperBounds.size(); i++) {
+      final PsiType sBound = upperBounds.get(i);
+      final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
+      if (sClass == null) continue;
+      final LinkedHashSet<PsiClass> superClasses = InheritanceUtil.getSuperClasses(sClass);
+      superClasses.add(sClass);
+      for (int j = i + 1; j < upperBounds.size(); j++) {
+        final PsiType tBound = upperBounds.get(j);
+        final PsiClass tClass = PsiUtil.resolveClassInClassTypeOnly(tBound);
+        if (tClass != null) {
+
+          final LinkedHashSet<PsiClass> tSupers = InheritanceUtil.getSuperClasses(tClass);
+          tSupers.add(tClass);
+          tSupers.retainAll(superClasses);
+
+          for (PsiClass gClass : tSupers) {
+            final PsiSubstitutor sSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)sBound);
+            final PsiSubstitutor tSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)tBound);
+            for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
+              final PsiType sType = sSubstitutor.substitute(typeParameter);
+              final PsiType tType = tSubstitutor.substitute(typeParameter);
+              if (!processor.process(Pair.create(sType, tType))) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }
