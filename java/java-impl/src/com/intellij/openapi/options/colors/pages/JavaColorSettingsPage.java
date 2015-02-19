@@ -57,7 +57,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.block.comment"), JavaHighlightingColors.JAVA_BLOCK_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), JavaHighlightingColors.DOC_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), JavaHighlightingColors.DOC_COMMENT_TAG),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag.value"), CodeInsightColors.DOC_COMMENT_TAG_VALUE),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag.value"), JavaHighlightingColors.DOC_COMMENT_TAG_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), JavaHighlightingColors.DOC_COMMENT_MARKUP),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), CodeInsightColors.CLASS_NAME_ATTRIBUTES),
@@ -119,7 +119,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("enum", CodeInsightColors.ENUM_NAME_ATTRIBUTES);
     ourTags.put("annotationName", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
-    ourTags.put("javadocTagValue", CodeInsightColors.DOC_COMMENT_TAG_VALUE);
+    ourTags.put("javadocTagValue", JavaHighlightingColors.DOC_COMMENT_TAG_VALUE);
   }
 
   @Override

@@ -416,14 +416,6 @@
         </value>
       </option>
 
-      <option name="DOC_COMMENT_TAG_VALUE">
-        <value>
-          <option name="FOREGROUND" value="3d3d3d"/>
-          <option name="BACKGROUND"/>
-          <option name="FONT_TYPE" value="3"/>
-        </value>
-      </option>
-
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="808080"/>
@@ -1682,11 +1674,6 @@
           <option name="FOREGROUND" value="8a653b" />
         </value>
       </option>
-      <option name="DOC_COMMENT_TAG_VALUE">
-        <value>
-          <option name="FOREGROUND" value="8a653b" />
-        </value>
-      </option>
       <option name="DUPLICATE_FROM_SERVER">
         <value>
           <option name="BACKGROUND" value="5e5339" />
@@ -1899,19 +1886,6 @@
       <option name="JAVA_COMMA">
         <value>
           <option name="FOREGROUND" value="cc7832" />
-        </value>
-      </option>
-      <option name="JAVA_DOC_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="629755" />
-        </value>
-      </option>
-      <option name="JAVA_DOC_MARKUP">
-        <value />
-      </option>
-      <option name="JAVA_DOC_TAG">
-        <value>
-          <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
       <option name="JAVA_INVALID_STRING_ESCAPE">
