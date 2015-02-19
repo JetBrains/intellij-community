@@ -1266,7 +1266,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           @NotNull
           @Override
           public Dimension getPreferredSize() {
-            int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width;
+            int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
+                        - myEditor.getVerticalScrollBar().getWidth();
             if (!ToolWindowManagerEx.getInstanceEx(myEditor.getProject()).getIdsOn(ToolWindowAnchor.LEFT).isEmpty()) width--;
             return new Dimension(width - BalloonImpl.POINTER_WIDTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
