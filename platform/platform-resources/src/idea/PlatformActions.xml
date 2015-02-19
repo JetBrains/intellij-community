@@ -629,9 +629,6 @@
       <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
-        <action id="GoToClassPopupStressTest" internal="true" class="com.intellij.internal.validation.GoToClassPopupStressTestAction"
-                text="Stress Test Go To Popup"/>
-
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
