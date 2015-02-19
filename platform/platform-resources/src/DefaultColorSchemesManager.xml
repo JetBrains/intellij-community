@@ -1586,6 +1586,11 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
+      <option name="DEFAULT_BLOCK_COMMENT">
+        <value>
+          <option name="FOREGROUND" value="808080" />
+        </value>
+      </option>
       <option name="DEFAULT_LINE_COMMENT">
         <value>
           <option name="FOREGROUND" value="808080" />
