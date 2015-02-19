@@ -19,6 +19,7 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -75,7 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Gregory.Shrago
  * In case of REPL consider to use {@link LanguageConsoleBuilder}
  */
-public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageConsole, LanguageConsoleView, DataProvider {
+public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageConsoleView, DataProvider {
   private final Project myProject;
 
   private final EditorEx myConsoleEditor;
@@ -99,6 +100,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     @Override
     public void focusGained(Editor editor) {
       myCurrentEditor = editor;
+      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+        FileDocumentManager.getInstance().saveAllDocuments(); // PY-12487
+      }
     }
 
     @Override
@@ -331,12 +335,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @NotNull
-  @Override
-  public LanguageConsole getConsole() {
-    return this;
-  }
-
-  @NotNull
   public String getTitle() {
     return myTitle;
   }
@@ -469,9 +467,12 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   @Override
   public void dispose() {
     super.dispose();
+    // double dispose via RunContentDescriptor and ContentImpl
+    if (myHistoryViewer.isDisposed()) return;
+
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);
-    //editorFactory.releaseEditor(myHistoryViewer);
+    editorFactory.releaseEditor(myHistoryViewer);
 
     if (getProject().isOpen()) {
       FileEditorManager editorManager = FileEditorManager.getInstance(getProject());

@@ -47,7 +47,7 @@ public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
   @Nullable
-  private Condition<LanguageConsole> executionEnabled = Conditions.alwaysTrue();
+  private Condition<LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
 
   @Nullable
   private PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
@@ -72,17 +72,17 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
-    executionEnabled = new Condition<LanguageConsole>() {
+    executionEnabled = new Condition<LanguageConsoleView>() {
 
       @Override
-      public boolean value(LanguageConsole console) {
+      public boolean value(LanguageConsoleView console) {
         return !processHandler.isProcessTerminated();
       }
     };
     return this;
   }
 
-  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsole> condition) {
+  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsoleView> condition) {
     executionEnabled = condition;
     return this;
   }
@@ -109,9 +109,9 @@ public final class LanguageConsoleBuilder {
 
   private void doInitAction(@NotNull LanguageConsoleView consoleView, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(consoleView, executeActionHandler, executionEnabled);
-    action.registerCustomShortcutSet(action.getShortcutSet(), consoleView.getConsole().getConsoleEditor().getComponent());
+    action.registerCustomShortcutSet(action.getShortcutSet(), consoleView.getConsoleEditor().getComponent());
 
-    new ConsoleHistoryController(historyType, null, consoleView.getConsole(), executeActionHandler.getConsoleHistoryModel()).install();
+    new ConsoleHistoryController(historyType, null, consoleView, executeActionHandler.getConsoleHistoryModel()).install();
   }
 
   /**
@@ -121,7 +121,7 @@ public final class LanguageConsoleBuilder {
                                                                                @NotNull final Consumer<String> executeActionHandler,
                                                                                @NotNull String historyType,
                                                                                @Nullable String historyPersistenceId,
-                                                                               @Nullable Condition<LanguageConsole> enabledCondition) {
+                                                                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
       void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
@@ -130,9 +130,9 @@ public final class LanguageConsoleBuilder {
     };
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
-    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsole().getConsoleEditor().getComponent());
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
 
-    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console.getConsole(), handler.getConsoleHistoryModel());
+    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console, handler.getConsoleHistoryModel());
     historyController.install();
     return new Pair<AnAction, ConsoleHistoryController>(action, historyController);
   }
@@ -181,7 +181,7 @@ public final class LanguageConsoleBuilder {
       if (PropertiesComponent.getInstance().getBoolean(processInputStateKey, false)) {
         executeActionHandler.myUseProcessStdIn = true;
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
-        daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getConsole().getFile(), false);
+        daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getFile(), false);
       }
       consoleView.addCustomConsoleAction(new UseConsoleInputAction(processInputStateKey));
     }

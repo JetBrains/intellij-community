@@ -213,7 +213,7 @@ public abstract class GroovyShellActionBase extends AnAction {
     @Override
     protected LanguageConsoleView createConsoleView() {
       LanguageConsoleView res = createConsole(getProject(), getConsoleTitle());
-      GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
+      GroovyFileImpl file = (GroovyFileImpl)res.getFile();
       assert file.getContext() == null;
       file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
 

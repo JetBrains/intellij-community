@@ -16,7 +16,6 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.DuplexConsoleView;
-import com.intellij.execution.console.LanguageConsole;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
@@ -70,10 +69,9 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     super.enableConsole(primary);
 
     if (!primary && !isPrimaryConsoleEnabled()) {
-      PythonConsoleView pydevConsoleView = getPydevConsoleView();
-      LanguageConsole languageConsole = pydevConsoleView.getConsole();
+      PythonConsoleView console = getPydevConsoleView();
 
-      IdeFocusManager.findInstance().requestFocus(languageConsole.getConsoleEditor().getContentComponent(), true);
+      IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
     }
   }
 }

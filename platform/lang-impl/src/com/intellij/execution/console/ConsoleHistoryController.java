@@ -90,7 +90,7 @@ public class ConsoleHistoryController {
     }
   };
 
-  private final LanguageConsole myConsole;
+  private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
@@ -100,21 +100,21 @@ public class ConsoleHistoryController {
 
   @Deprecated
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
-                                  @NotNull LanguageConsole console, @NotNull ConsoleHistoryModel model) {
+                                  @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
     this(new ConsoleRootType(type, null) { }, persistenceId, console, model);
   }
 
-  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsole console) {
+  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     this(rootType, persistenceId, console, ourModels.get(getHistoryName(rootType, fixNullPersistenceId(persistenceId, console))));
   }
 
   private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId,
-                                  @NotNull LanguageConsole console, @NotNull ConsoleHistoryModel model) {
+                                  @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
     myHelper = new ModelHelper(rootType, fixNullPersistenceId(persistenceId, console), model);
     myConsole = console;
   }
 
-  private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsole console) {
+  private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     return StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
   }
 

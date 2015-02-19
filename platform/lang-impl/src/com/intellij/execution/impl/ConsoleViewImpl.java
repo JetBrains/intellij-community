@@ -518,7 +518,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor = null;
       myHyperlinks = null;
     }
-    }
+  }
 
   private void cancelAllFlushRequests() {
     synchronized (myCurrentRequests) {

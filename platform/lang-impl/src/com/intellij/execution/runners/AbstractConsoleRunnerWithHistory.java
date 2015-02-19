@@ -23,7 +23,6 @@ import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleExecuteAction;
-import com.intellij.execution.console.LanguageConsole;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -142,7 +141,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
-    panel.updateUI();
 
     showConsole(defaultExecutor, contentDescriptor);
   }
@@ -187,7 +185,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   }
 
   protected void finishConsole() {
-    myConsoleView.getConsole().setEditable(false);
+    myConsoleView.setEditable(false);
   }
 
   protected abstract T createConsoleView();
@@ -236,8 +234,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  public LanguageConsole getLanguageConsole() {
-    return myConsoleView.getConsole();
+  public LanguageConsoleView getLanguageConsole() {
+    return myConsoleView;
   }
 
   @SuppressWarnings("UnusedDeclaration")
