@@ -16,7 +16,7 @@
 
 package com.intellij.lang.java;
 
-import com.intellij.lang.InfoCollectingImportOptimizer;
+import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -33,14 +33,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class JavaImportOptimizer implements InfoCollectingImportOptimizer {
+public class JavaImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
-  private int myImportListLengthDiff;
 
   @Override
   @NotNull
   public Runnable processFile(final PsiFile file) {
-    myImportListLengthDiff = 0;
     if (!(file instanceof PsiJavaFile)) {
       return EmptyRunnable.getInstance();
     }
@@ -48,7 +46,9 @@ public class JavaImportOptimizer implements InfoCollectingImportOptimizer {
     final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
     if (newImportList == null) return EmptyRunnable.getInstance();
 
-    return new Runnable() {
+    return new CollectingInfoRunnable() {
+      private int myImportListLengthDiff = 0;
+
       @Override
       public void run() {
         try {
@@ -67,16 +67,16 @@ public class JavaImportOptimizer implements InfoCollectingImportOptimizer {
           LOG.error(e);
         }
       }
-    };
-  }
 
-  @Nullable
-  @Override
-  public String getUserNotificationInfo() {
-    if (myImportListLengthDiff > 0) {
-      return "removed " + myImportListLengthDiff + " import" + (myImportListLengthDiff > 1 ? "s" : "");
-    }
-    return null;
+      @Nullable
+      @Override
+      public String getUserNotificationInfo() {
+        if (myImportListLengthDiff > 0) {
+          return "removed " + myImportListLengthDiff + " import" + (myImportListLengthDiff > 1 ? "s" : "");
+        }
+        return null;
+      }
+    };
   }
 
   @Override

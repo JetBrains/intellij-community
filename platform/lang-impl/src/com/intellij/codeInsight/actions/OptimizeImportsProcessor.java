@@ -18,7 +18,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.lang.InfoCollectingImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,6 +36,7 @@ import java.util.concurrent.FutureTask;
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
   public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
+  private List<String> myOptimizersMessages = ContainerUtil.newSmartList();
 
   public OptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, false);
@@ -83,8 +84,6 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    final ImportOptimizer optimizer = getInfoCollector() != null && optimizers.size() == 1 ? optimizers.iterator().next() : null;
-
     Runnable runnable = !runnables.isEmpty() ? new Runnable() {
       @Override
       public void run() {
@@ -92,11 +91,9 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         try {
           for (Runnable runnable : runnables) {
             runnable.run();
+            retrieveAndStoreNotificationInfo(runnable);
           }
-          if (optimizer != null) {
-            String message = retrieveMessage(optimizer);
-            getInfoCollector().setOptimizeImportsNotification(message);
-          }
+          putNotificationInfoIntoCollector();
         }
         finally {
           CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
@@ -106,11 +103,25 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     return new FutureTask<Boolean>(runnable, true);
   }
 
-  private static String retrieveMessage(@NotNull ImportOptimizer optimizer) {
-    String info = "imports optimized";
-    if (optimizer instanceof InfoCollectingImportOptimizer) {
-        info = ((InfoCollectingImportOptimizer)optimizer).getUserNotificationInfo();
+  private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {
+    if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
+      String info = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
+      if (info != null) {
+        myOptimizersMessages.add(info);
+      }
     }
-    return info;
+  }
+
+  private void putNotificationInfoIntoCollector() {
+    LayoutCodeInfoCollector collector = getInfoCollector();
+    if (collector == null) {
+      return;
+    }
+
+    String info = "imports optimized";
+    if (myOptimizersMessages.size() == 1) {
+      info = myOptimizersMessages.get(0);
+    }
+    collector.setOptimizeImportsNotification(info);
   }
 }
