@@ -1189,6 +1189,7 @@ public class InferenceSession {
 
     final boolean varargs = candidateInfo.isVarargs();
     final PsiMethod method = candidateInfo.getElement();
+    final PsiClass methodContainingClass = method.getContainingClass();
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
@@ -1199,16 +1200,21 @@ public class InferenceSession {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
 
     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
 
     if (parameters.length == functionalMethodParameters.length && !varargs || isStatic && varargs) {//static methods
 
-      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
         //15.13.1 If ClassType is a raw type, but is not a non-static member type of a raw type,
         //the candidate notional member methods are those specified in §15.9.3 for a
         //class instance creation expression that uses <> to elide the type arguments to a class
         initBounds(containingClass.getTypeParameters());
         psiSubstitutor = PsiSubstitutor.EMPTY;
+      }
+
+      if (methodContainingClass != null) {
+        psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
+        LOG.assertTrue(psiSubstitutor != null);
       }
 
       for (int i = 0; i < functionalMethodParameters.length; i++) {
@@ -1223,7 +1229,6 @@ public class InferenceSession {
 
       final PsiType pType = signature.getParameterTypes()[0];
 
-      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
       // the type to search is the result of capture conversion (5.1.10) applied to T; 
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
