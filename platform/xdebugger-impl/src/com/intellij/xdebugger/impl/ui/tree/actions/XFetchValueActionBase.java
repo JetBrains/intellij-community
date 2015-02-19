@@ -75,11 +75,16 @@ public abstract class XFetchValueActionBase extends AnAction {
       if (node instanceof XValueNodeImpl) {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
-        if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
-          valueCollector.add(StringUtil.notNullize(DebuggerUIUtil.getNodeRawValue(valueNode)));
+        if (paths.length > 1) { // multiselection - copy the whole node text, see IDEA-136722
+          valueCollector.add(valueNode.getText().toString());
         }
         else {
-          new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
+          if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
+            valueCollector.add(StringUtil.notNullize(DebuggerUIUtil.getNodeRawValue(valueNode)));
+          }
+          else {
+            new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
+          }
         }
       }
       else if (node instanceof WatchMessageNode) {
