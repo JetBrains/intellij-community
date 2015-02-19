@@ -17,17 +17,28 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Allows SmartPointer that points to stubbed psi element to survive stub-to-AST switch
+ *
  * @author Dennis.Ushakov
  */
-public interface SmartPointerAnchorProvider {
-  ExtensionPointName<SmartPointerAnchorProvider> EP_NAME = ExtensionPointName.create("com.intellij.smartPointer.anchorProvider");
+public abstract class SmartPointerAnchorProvider {
+  public static final ExtensionPointName<SmartPointerAnchorProvider> EP_NAME = ExtensionPointName.create("com.intellij.smartPointer.anchorProvider");
 
+  /**
+   * @param element
+   * @return anchor to be used when restoring element after stub-to-AST switch
+   */
   @Nullable
-  PsiElement getAnchor(PsiElement element);
+  public abstract PsiElement getAnchor(@NotNull PsiElement element);
 
+  /**
+   * @param anchor
+   * @return restored original element using anchor
+   */
   @Nullable
-  PsiElement getElement(PsiElement anchor);
+  public abstract PsiElement getElement(@NotNull PsiElement anchor);
 }

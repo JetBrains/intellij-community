@@ -20,15 +20,16 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.XmlTagUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
-public class XmlAnchorProvider implements SmartPointerAnchorProvider {
+public class XmlAnchorProvider extends SmartPointerAnchorProvider {
   @Nullable
   @Override
-  public PsiElement getAnchor(PsiElement element) {
+  public PsiElement getAnchor(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       return XmlTagUtil.getStartTagNameElement((XmlTag)element);
     }
@@ -37,7 +38,7 @@ public class XmlAnchorProvider implements SmartPointerAnchorProvider {
 
   @Nullable
   @Override
-  public PsiElement getElement(PsiElement anchor) {
+  public PsiElement getElement(@NotNull PsiElement anchor) {
     if (anchor instanceof XmlToken) {
       XmlToken token = (XmlToken)anchor;
       return token.getTokenType() == XmlTokenType.XML_NAME ? token.getParent() : null;

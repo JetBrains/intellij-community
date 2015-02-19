@@ -17,14 +17,15 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
-public class JavaAnchorProvider implements SmartPointerAnchorProvider {
+public class JavaAnchorProvider extends SmartPointerAnchorProvider {
   @Override
-  public PsiElement getAnchor(PsiElement element) {
+  public PsiElement getAnchor(@NotNull PsiElement element) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return null;
     }
@@ -45,7 +46,7 @@ public class JavaAnchorProvider implements SmartPointerAnchorProvider {
 
   @Nullable
   @Override
-  public PsiElement getElement(PsiElement anchor) {
+  public PsiElement getElement(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiIdentifier) {
       PsiElement parent = anchor.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement) { // anonymous class, type

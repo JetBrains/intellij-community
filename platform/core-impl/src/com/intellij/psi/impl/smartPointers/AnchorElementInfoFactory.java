@@ -53,7 +53,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
   }
 
   @Nullable
-  static PsiElement getAnchor(PsiElement element) {
+  static PsiElement getAnchor(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
     PsiElement anchor = null;
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
