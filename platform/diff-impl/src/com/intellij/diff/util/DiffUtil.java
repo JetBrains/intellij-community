@@ -57,6 +57,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -78,6 +79,7 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
 public class DiffUtil {
@@ -349,8 +351,12 @@ public class DiffUtil {
 
     List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
+    if (equalCharsets && equalSeparators && ContainerUtil.find(titles, Condition.NOT_NULL) == null) {
+      return Collections.nCopies(titles.size(), null);
+    }
+
     for (int i = 0; i < contents.size(); i++) {
-      result.add(createTitle(titles.get(i), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
+      result.add(createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
     }
 
     return result;
