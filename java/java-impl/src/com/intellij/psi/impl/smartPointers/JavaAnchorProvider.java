@@ -46,7 +46,7 @@ public class JavaAnchorProvider extends SmartPointerAnchorProvider {
 
   @Nullable
   @Override
-  public PsiElement getElement(@NotNull PsiElement anchor) {
+  public PsiElement restoreElement(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiIdentifier) {
       PsiElement parent = anchor.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement) { // anonymous class, type
