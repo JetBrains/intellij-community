@@ -1774,7 +1774,7 @@ public class UIUtil {
 
   private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
   private static int BEST_DARK_LCD_CONTRAST = 100;
-  private static int BEST_LIGHT_LCD_CONTRAST = 250;
+  private static int BEST_LIGHT_LCD_CONTRAST = 200;
 
 
   public static void setHintingForLCDText(Graphics2D g2d) {
