@@ -76,7 +76,7 @@ public abstract class XFetchValueActionBase extends AnAction {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
         if (paths.length > 1) { // multiselection - copy the whole node text, see IDEA-136722
-          valueCollector.add(valueNode.getText().toString());
+          valueCollector.add(valueNode.getText().toString(), valueNode.getPath().getPathCount());
         }
         else {
           if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
@@ -102,6 +102,7 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   protected class ValueCollector {
     private final List<String> values = new SmartList<String>();
+    private final List<Integer> indents = new SmartList<Integer>();
     private final XDebuggerTree myTree;
     private volatile boolean processed;
 
@@ -110,12 +111,30 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
 
     public void add(@NotNull String value) {
+      add(value, 0);
+    }
+
+    public void add(@NotNull String value, int indent) {
       values.add(value);
+      indents.add(indent);
     }
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handleInCollector(project, StringUtil.join(values, "\n"), myTree);
+        int minIndent = Integer.MAX_VALUE;
+        for (Integer indent : indents) {
+          minIndent = Math.min(minIndent, indent);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.size(); i++) {
+          if (i > 0) {
+            sb.append("\n");
+          }
+          Integer indent = indents.get(i);
+          StringUtil.repeatSymbol(sb, ' ', indent - minIndent);
+          sb.append(values.get(i));
+        }
+        handleInCollector(project, sb.toString(), myTree);
       }
     }
 
