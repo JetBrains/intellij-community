@@ -143,8 +143,15 @@ class InProcessGroovyc implements GroovycFlavor {
       return pair.second;
     }
 
-    UrlClassLoader groovyAllLoader = 
-      UrlClassLoader.build().urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).useCache().get();
+    UrlClassLoader groovyAllLoader = UrlClassLoader.build().
+      urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).
+      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+        @Override
+        public boolean shouldCacheData(
+          @NotNull URL url) {
+          return true;
+        }
+      }).get();
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
