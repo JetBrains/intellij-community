@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes.actions.diff;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,10 +30,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffManager;
-import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
@@ -55,11 +55,15 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
-    e.getPresentation().setEnabled(project != null && canShowDiff(changes));
+    e.getPresentation().setEnabled(project != null && canShowDiff(project, changes));
   }
 
-  protected static boolean canShowDiff(@Nullable Change[] changes) {
-    return changes != null && changes.length != 0;
+  protected static boolean canShowDiff(@Nullable Project project, @Nullable Change[] changes) {
+    if (changes == null || changes.length == 0) return false;
+    for (Change change : changes) {
+      if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
+    }
+    return false;
   }
 
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -116,7 +120,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     }
   }
 
-  private static boolean checkIfThereAreFakeRevisions(final Project project, final Change[] changes) {
+  private static boolean checkIfThereAreFakeRevisions(@NotNull Project project, @NotNull Change[] changes) {
     boolean needsConversion = false;
     for (Change change : changes) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
@@ -134,7 +138,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  private static Change[] loadFakeRevisions(final Project project, final Change[] changes) {
+  private static Change[] loadFakeRevisions(@NotNull Project project, @NotNull Change[] changes) {
     List<Change> matchingChanges = new ArrayList<Change>();
     for (Change change : changes) {
       matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
@@ -146,15 +150,15 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   // Impl
   //
 
-  public static void showDiffForChange(@NotNull Project project, @NotNull Iterable<Change> changes) {
+  public static void showDiffForChange(@Nullable Project project, @NotNull Iterable<Change> changes) {
     showDiffForChange(project, changes, 0);
   }
 
-  public static void showDiffForChange(@NotNull Project project, @NotNull Iterable<Change> changes, int index) {
+  public static void showDiffForChange(@Nullable Project project, @NotNull Iterable<Change> changes, int index) {
     showDiffForChange(project, changes, index, new ShowDiffContext());
   }
 
-  public static void showDiffForChange(@NotNull Project project,
+  public static void showDiffForChange(@Nullable Project project,
                                        @NotNull Iterable<Change> changes,
                                        @NotNull Condition<Change> condition,
                                        @NotNull ShowDiffContext context) {
@@ -169,7 +173,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     showDiffForChange(project, presentables, index, context);
   }
 
-  public static void showDiffForChange(@NotNull Project project,
+  public static void showDiffForChange(@Nullable Project project,
                                        @NotNull Iterable<Change> changes,
                                        int index,
                                        @NotNull ShowDiffContext context) {
@@ -188,7 +192,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     showDiffForChange(project, presentables, newIndex, context);
   }
 
-  private static void showDiffForChange(@NotNull Project project,
+  private static void showDiffForChange(@Nullable Project project,
                                         @NotNull List<ChangeDiffRequestProducer> presentables,
                                         int index,
                                         @NotNull ShowDiffContext context) {

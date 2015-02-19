@@ -66,11 +66,11 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   private static Key<List<String>> CONTEXT_KEY = Key.create("Diff.ChangeDiffRequestPresentableContextKey");
   public static Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
 
-  @NotNull private final Project myProject;
+  @Nullable private final Project myProject;
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
 
-  private ChangeDiffRequestProducer(@NotNull Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
+  private ChangeDiffRequestProducer(@Nullable Project project, @NotNull Change change, @NotNull Map<Key, Object> changeContext) {
     myChange = change;
     myProject = project;
     myChangeContext = changeContext;
@@ -81,7 +81,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     return myChange;
   }
 
-  @NotNull
+  @Nullable
   public Project getProject() {
     return myProject;
   }
@@ -111,19 +111,19 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   }
 
   @Nullable
-  public static ChangeDiffRequestProducer create(@NotNull Project project, @NotNull Change change) {
+  public static ChangeDiffRequestProducer create(@Nullable Project project, @NotNull Change change) {
     return create(project, change, Collections.<Key, Object>emptyMap());
   }
 
   @Nullable
-  public static ChangeDiffRequestProducer create(@NotNull Project project,
-                                                    @NotNull Change change,
-                                                    @NotNull Map<Key, Object> changeContext) {
+  public static ChangeDiffRequestProducer create(@Nullable Project project,
+                                                 @NotNull Change change,
+                                                 @NotNull Map<Key, Object> changeContext) {
     if (!canCreate(project, change)) return null;
     return new ChangeDiffRequestProducer(project, change, changeContext);
   }
 
-  private static boolean canCreate(@NotNull Project project, @NotNull Change change) {
+  public static boolean canCreate(@Nullable Project project, @NotNull Change change) {
     for (ChangeDiffViewerWrapperProvider provider : ChangeDiffViewerWrapperProvider.EP_NAME.getExtensions()) {
       if (provider.canCreate(project, change)) return true;
     }
@@ -223,7 +223,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   }
 
   @NotNull
-  private static DiffRequest createRequest(@NotNull Project project,
+  private static DiffRequest createRequest(@Nullable Project project,
                                            @NotNull Change change,
                                            @NotNull UserDataHolder context,
                                            @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -238,6 +238,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       }
       if (file == null) throw new DiffRequestProducerException("Can't show merge conflict - file not found");
 
+      if (project == null) {
+        throw new DiffRequestProducerException("Can't show merge conflict - project is unknown");
+      }
       final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
       if (vcs == null || vcs.getMergeProvider() == null) {
         throw new DiffRequestProducerException("Can't show merge conflict - operation nos supported");
@@ -353,7 +356,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   }
 
   @NotNull
-  public static DiffContent createContent(@NotNull Project project,
+  public static DiffContent createContent(@Nullable Project project,
                                           @Nullable ContentRevision revision,
                                           @NotNull UserDataHolder context,
                                           @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -400,7 +403,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     return DiffContentFactory.getInstance().create(CharsetToolkit.bytesToString(bytes, file.getCharset()), file.getFileType());
   }
 
-  public static void checkContentRevision(@NotNull Project project,
+  public static void checkContentRevision(@Nullable Project project,
                                           @NotNull ContentRevision rev,
                                           @NotNull UserDataHolder context,
                                           @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
@@ -409,7 +412,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     }
   }
 
-  private static void checkAssociate(@NotNull final Project project,
+  private static void checkAssociate(@Nullable final Project project,
                                      @NotNull final FilePath file,
                                      @NotNull final UserDataHolder context,
                                      @NotNull ProgressIndicator indicator) {

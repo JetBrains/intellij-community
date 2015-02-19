@@ -20,10 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 public class FileAwareDocumentContent extends DocumentContentImpl {
-  @NotNull private final Project myProject;
+  @Nullable private final Project myProject;
   @Nullable private final VirtualFile myLocalFile;
 
-  public FileAwareDocumentContent(@NotNull Project project,
+  public FileAwareDocumentContent(@Nullable Project project,
                                   @NotNull Document document,
                                   @Nullable FileType fileType,
                                   @Nullable VirtualFile localFile,
@@ -35,11 +35,12 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    return myLocalFile == null ? null : new OpenFileDescriptor(myProject, myLocalFile, offset);
+    if (myProject == null || myLocalFile == null) return null;
+    return new OpenFileDescriptor(myProject, myLocalFile, offset);
   }
 
   @NotNull
-  public static DiffContent create(@NotNull Project project,
+  public static DiffContent create(@Nullable Project project,
                                    @NotNull String content,
                                    @NotNull FilePath path) {
     VirtualFile localFile = LocalFileSystem.getInstance().findFileByPath(path.getPath());
@@ -58,7 +59,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   @NotNull
-  private static DiffContent create(@NotNull Project project,
+  private static DiffContent create(@Nullable Project project,
                                     @NotNull String content,
                                     @Nullable FileType fileType,
                                     @Nullable VirtualFile file,

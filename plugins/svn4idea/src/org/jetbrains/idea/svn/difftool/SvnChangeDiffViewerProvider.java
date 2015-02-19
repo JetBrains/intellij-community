@@ -1,13 +1,13 @@
 package org.jetbrains.idea.svn.difftool;
 
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.impl.DiffViewerWrapper;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.impl.DiffViewerWrapper;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -41,7 +41,7 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
   }
 
   @Override
-  public boolean canCreate(@NotNull Project project, @NotNull Change change) {
+  public boolean canCreate(@Nullable Project project, @NotNull Change change) {
     return getSvnChangeLayer(change) != null; // TODO: do not show, if no properties are set in both revisions ?
   }
 
