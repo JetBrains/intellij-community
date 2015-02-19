@@ -119,7 +119,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       patchStyledEditorKit(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
-      defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
+      defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
       if (SystemInfo.isWindows) {
         //JFrame.setDefaultLookAndFeelDecorated(true);
