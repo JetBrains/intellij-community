@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -971,8 +971,11 @@ public class PsiClassImplUtil {
                                                       @NotNull PsiManager manager,
                                                       @NotNull GlobalSearchScope resolveScope,
                                                       boolean includeObject) {
-    PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
-    if (objectClass == null) includeObject = false;
+    PsiClass objectClass = null;
+    if (includeObject) {
+      objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+      if (objectClass == null) includeObject = false;
+    }
     if (listOfTypes.length == 0) {
       if (includeObject) return new PsiClass[]{objectClass};
       return PsiClass.EMPTY_ARRAY;
