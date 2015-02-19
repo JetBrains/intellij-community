@@ -19,6 +19,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 
 public final class ByteBufUtf8Writer extends Writer {
@@ -26,6 +27,10 @@ public final class ByteBufUtf8Writer extends Writer {
 
   public ByteBufUtf8Writer(@NotNull ByteBuf buffer) {
     this.buffer = buffer;
+  }
+
+  public void write(@NotNull InputStream inputStream, int length) throws IOException {
+    buffer.writeBytes(inputStream, length);
   }
 
   @Override
@@ -53,7 +58,7 @@ public final class ByteBufUtf8Writer extends Writer {
   }
 
   @Override
-  public void write(String str) throws IOException {
+  public void write(String str) {
     ByteBufUtilEx.writeUtf8(buffer, str);
   }
 
