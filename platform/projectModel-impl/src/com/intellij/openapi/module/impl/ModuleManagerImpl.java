@@ -32,7 +32,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -740,7 +743,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
+    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException {
       filePath = resolveShortWindowsName(filePath);
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {

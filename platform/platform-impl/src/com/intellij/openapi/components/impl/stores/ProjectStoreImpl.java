@@ -32,7 +32,6 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -43,7 +42,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -329,11 +327,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
     }
     return myPresentableUrl;
-  }
-
-  @Override
-  public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException {
-    myProject.init();
   }
 
   @Override
