@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -209,7 +210,7 @@ public class FindInProjectUtil {
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
-      found = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      found = DumbService.getInstance(psiFile.getProject()).runReadActionInSmartMode(new Computable<Integer>() {
         @Override
         @NotNull
         public Integer compute() {

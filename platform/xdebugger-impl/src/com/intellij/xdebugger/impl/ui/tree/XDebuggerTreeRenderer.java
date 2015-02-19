@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -48,6 +47,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   public XDebuggerTreeRenderer() {
     setSupportFontFallback(true);
+    getIpad().right = 0;
+    myLink.getIpad().left = 0;
   }
 
   public void customizeCellRenderer(@NotNull final JTree tree,
@@ -90,7 +91,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
     Dimension linkSize = myLink.getPreferredSize();
     myLinkWidth = linkSize.width;
-    myLink.setBounds(0, 0, linkSize.width, linkSize.height);
     myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
   }
 
@@ -114,11 +114,10 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       } finally {
         textGraphics.dispose();
       }
-
-      UIUtil.applyRenderingHints(g);
-      applyAdditionalHints(g);
-
-      g.drawString(myLink.toString(), myLinkOffset, getTextBaseLine(getFontMetrics(getFont()), getHeight()));
+      g.translate(myLinkOffset, 0);
+      myLink.setHeight(getHeight());
+      myLink.doPaint(g);
+      g.translate(-myLinkOffset, 0);
     }
     else {
       super.doPaint(g);
@@ -145,6 +144,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    private int myHeight;
+
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -157,6 +158,15 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
+    }
+
+    public void setHeight(int height) {
+      myHeight = height;
+    }
+
+    @Override
+    public int getHeight() {
+      return myHeight;
     }
   }
 

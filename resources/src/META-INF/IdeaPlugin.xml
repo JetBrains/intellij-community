@@ -1162,7 +1162,7 @@
 
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.ImplicitVariableElementInfoFactory"/>
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.ImportListElementInfoFactory"/>
-    <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
+    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.JavaAnchorProvider"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider"/>
 

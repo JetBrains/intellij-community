@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,7 +49,6 @@ import java.util.List;
 public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private AnnotationHolderImpl myAnnotationHolder;
 
-  public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
   private final boolean myHighlightErrorElements;
@@ -67,7 +65,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
-    myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
+    myErrorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
   }

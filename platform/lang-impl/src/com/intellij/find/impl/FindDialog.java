@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
@@ -637,7 +638,12 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void doOKAction(boolean findAll) {
-    FindModel validateModel = (FindModel)myModel.clone();
+    if (DumbService.isDumb(myProject)) {
+      Messages.showMessageDialog(myProject, "Find Usages is not available while indexing is in progress", "Indexing", null);
+      return;
+    }
+
+    FindModel validateModel = myModel.clone();
     applyTo(validateModel, findAll);
 
     ValidationInfo validationInfo = getValidationInfo(validateModel);
@@ -761,7 +767,7 @@ public class FindDialog extends DialogWrapper {
 
   @Override
   protected ValidationInfo doValidate() {
-    FindModel validateModel = (FindModel)myModel.clone();
+    FindModel validateModel = myModel.clone();
     applyTo(validateModel, false);
 
     ValidationInfo result = getValidationInfo(validateModel);

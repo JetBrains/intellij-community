@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import org.jdom.Element;
+/**
+ * (c) 2015 Silent Forest AB
+ * created: 18 February 2015
+ */
+package com.siyeh.ig.performance;
 
-public class ReadFileType extends AbstractFileType {
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-  private final Element myElement;
+/**
+ * @author Bas Leijdekkers
+ */
+public class FieldMayBeStaticInspectionTest extends LightInspectionTestCase {
 
-  public ReadFileType(final SyntaxTable syntaxTable, Element element) {
-    super(syntaxTable);
-    myElement = element;
+  public void testFieldMayBeStatic() {
+    doTest();
   }
 
-  public Element getElement() {
-    return myElement;
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new FieldMayBeStaticInspection();
   }
-
 }

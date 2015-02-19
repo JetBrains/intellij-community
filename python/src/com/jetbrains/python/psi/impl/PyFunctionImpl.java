@@ -131,8 +131,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
         return PlatformIcons.PROPERTY_ICON;
       }
+      if (getContainingClass() != null) {
+        return PlatformIcons.METHOD_ICON;
+      }
     }
-    return PlatformIcons.METHOD_ICON;
+    return PythonIcons.Python.Function;
   }
 
   @Nullable

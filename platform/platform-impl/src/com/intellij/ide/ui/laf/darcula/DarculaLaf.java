@@ -42,7 +42,9 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
 /**
@@ -90,12 +92,23 @@ public class DarculaLaf extends BasicLookAndFeel {
       superMethod.setAccessible(true);
       final UIDefaults metalDefaults = (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
-      if (SystemInfo.isLinux && !Registry.is("darcula.use.native.fonts.on.linux")) {
-        Font font = findFont("DejaVu Sans");
-        if (font != null) {
+      if (SystemInfo.isLinux) {
+        if (!Registry.is("darcula.use.native.fonts.on.linux")) {
+          Font font = findFont("DejaVu Sans");
+          if (font != null) {
+            for (Object key : defaults.keySet()) {
+              if (key instanceof String && ((String)key).endsWith(".font")) {
+                defaults.put(key, new FontUIResource(font.deriveFont(13f)));
+              }
+            }
+          }
+        } else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
           for (Object key : defaults.keySet()) {
             if (key instanceof String && ((String)key).endsWith(".font")) {
-              defaults.put(key, new FontUIResource(font.deriveFont(13f)));
+              final Font font = defaults.getFont(key);
+              if (font != null) {
+                defaults.put(key, new FontUIResource("Dialog", font.getStyle(), font.getSize()));
+              }
             }
           }
         }

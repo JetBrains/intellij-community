@@ -33,6 +33,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
@@ -245,6 +246,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
           @Override
           public void run() {
             if (myProject.isDisposed()) return;
+            if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+              DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+              return;
+            }
+            
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             final PsiFile file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
             if (file == null) {
@@ -294,6 +300,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     result.addAll(myCachedInspectionFixes);
     result.addAll(myCachedIntentions);
     result.addAll(myCachedGutters);
+    result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
     Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
       @Override
       public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {

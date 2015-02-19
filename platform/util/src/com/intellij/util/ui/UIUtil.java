@@ -2633,6 +2633,7 @@ public class UIUtil {
     return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
+  public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
    * The main difference from javax.swing.SwingUtilities#isDescendingFrom(Component, Component) is that this method

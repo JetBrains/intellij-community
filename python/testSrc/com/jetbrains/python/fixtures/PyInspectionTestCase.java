@@ -42,7 +42,7 @@ public abstract class PyInspectionTestCase extends PyTestCase {
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
-  private String getTestDirectory(boolean lowercaseFirstLetter) {
+  protected String getTestDirectory(boolean lowercaseFirstLetter) {
     return "inspections/" + getInspectionClass().getSimpleName() + "/" + getTestName(lowercaseFirstLetter);
   }
 

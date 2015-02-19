@@ -121,8 +121,8 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     }
   }
 
-  protected void schemeDeleted(@NotNull Scheme toDelete) {
-    if (myCurrentScheme == toDelete) {
+  protected void schemeDeleted(@NotNull Scheme scheme) {
+    if (myCurrentScheme == scheme) {
       myCurrentScheme = null;
     }
   }

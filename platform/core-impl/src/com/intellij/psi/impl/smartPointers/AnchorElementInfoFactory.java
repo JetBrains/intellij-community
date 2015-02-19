@@ -15,13 +15,14 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,22 +56,9 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
   static PsiElement getAnchor(PsiElement element) {
     PsiUtilCore.ensureValid(element);
     PsiElement anchor = null;
-    if (element instanceof PsiClass) {
-      if (element instanceof PsiAnonymousClass) {
-        anchor = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceNameElement();
-      }
-      else {
-        anchor = ((PsiClass)element).getNameIdentifier();
-      }
-    }
-    else if (element instanceof PsiMethod) {
-      anchor = ((PsiMethod)element).getNameIdentifier();
-    }
-    else if (element instanceof PsiVariable) {
-      anchor = ((PsiVariable)element).getNameIdentifier();
-    }
-    else if (element instanceof XmlTag) {
-      anchor = XmlTagUtil.getStartTagNameElement((XmlTag)element);
+    for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
+      anchor = provider.getAnchor(element);
+      if (anchor != null) break;
     }
     if (anchor != null && (!anchor.isPhysical() /*|| anchor.getTextRange()==null*/)) return null;
     return anchor;

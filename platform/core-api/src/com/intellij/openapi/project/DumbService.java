@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -159,6 +160,19 @@ public abstract class DumbService {
     return INSTANCE_KEY.getValue(project);
   }
 
+  /**
+   * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
+   * @see #isDumbAware(Object) 
+   */
+  @NotNull
+  public <T> List<T> filterByDumbAwareness(@NotNull T[] array) {
+    return filterByDumbAwareness(Arrays.asList(array));
+  }
+
+  /**
+   * @return all the elements of the given collection if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true. 
+   * @see #isDumbAware(Object)
+   */
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {
@@ -226,6 +240,20 @@ public abstract class DumbService {
    * and then alternative resolution is turned off in the finally block.
    */
   public abstract void setAlternativeResolveEnabled(boolean enabled);
+
+  /**
+   * Invokes the given runnable with alternative resolve set to true.
+   * @see #setAlternativeResolveEnabled(boolean) 
+   */
+  public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
+    setAlternativeResolveEnabled(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
 
   /**
    * @return whether alternative resolution is enabled for the current thread.

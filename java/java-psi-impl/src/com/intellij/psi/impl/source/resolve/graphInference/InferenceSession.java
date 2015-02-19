@@ -1127,13 +1127,18 @@ public class InferenceSession {
 
     if (parameters.length == functionalMethodParameters.length && !varargs || isStatic && varargs) {//static methods
 
-      if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, qualifierResolveResult.getSubstitutor())) {
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+      if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
+        //15.13.1 If ClassType is a raw type, but is not a non-static member type of a raw type,
+        //the candidate notional member methods are those specified in §15.9.3 for a
+        //class instance creation expression that uses <> to elide the type arguments to a class
         initBounds(containingClass.getTypeParameters());
+        psiSubstitutor = PsiSubstitutor.EMPTY;
       }
 
       for (int i = 0; i < functionalMethodParameters.length; i++) {
         final PsiType pType = signature.getParameterTypes()[i];
-        addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, qualifierResolveResult.getSubstitutor(), varargs)),
+        addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
                                                       PsiImplUtil.normalizeWildcardTypeByPosition(pType, reference)));
       }
     }

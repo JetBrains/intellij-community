@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +121,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             }
           });
           final JBList list = new JBList(infos);
-          list.setFixedCellHeight(20);
+          list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);
           PopupChooserBuilder builder  = JBPopupFactory.getInstance().createListPopupBuilder(list);
           if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
             list.installCellRenderer(new NotNullFunction<Object, JComponent>() {

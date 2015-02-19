@@ -43,6 +43,10 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
+  // Dev. notes:
+  // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
+  // - A new options should be added to CodeStyleSettingsCustomizable as well.
+  // - Covered by CodeStyleConfigurationsTest.
 
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
