@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,7 +205,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
         onNameChanged();
       }
     });
-    myMainPanel.setPreferredSize(new Dimension(400, 300));
+    myMainPanel.setPreferredSize(JBUI.size(400, 300));
     return myMainPanel;
   }
 

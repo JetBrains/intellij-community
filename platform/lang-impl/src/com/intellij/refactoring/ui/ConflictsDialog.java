@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public class ConflictsDialog extends DialogWrapper{
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setPreferredSize(new Dimension(500, 400));
+    scrollPane.setPreferredSize(JBUI.size(500, 400));
     panel.add(scrollPane, BorderLayout.CENTER);
 
     if (getOKAction().isEnabled()) {
