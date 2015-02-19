@@ -29,8 +29,10 @@ public abstract class SmartPointerAnchorProvider {
   public static final ExtensionPointName<SmartPointerAnchorProvider> EP_NAME = ExtensionPointName.create("com.intellij.smartPointer.anchorProvider");
 
   /**
+   * Provides anchor used for restoring elements after stub-to-AST switch.
+   * One can use name identifier (such as tag or method name) as an anchor
    * @param element
-   * @return anchor to be used when restoring element after stub-to-AST switch
+   * @return anchor to be used when restoring element
    */
   @Nullable
   public abstract PsiElement getAnchor(@NotNull PsiElement element);
@@ -40,5 +42,5 @@ public abstract class SmartPointerAnchorProvider {
    * @return restored original element using anchor
    */
   @Nullable
-  public abstract PsiElement getElement(@NotNull PsiElement anchor);
+  public abstract PsiElement restoreElement(@NotNull PsiElement anchor);
 }

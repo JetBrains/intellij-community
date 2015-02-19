@@ -58,9 +58,8 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
     PsiElement anchor = null;
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
       anchor = provider.getAnchor(element);
-      if (anchor != null) break;
+      if (anchor != null && anchor.isPhysical()) return anchor;
     }
-    if (anchor != null && (!anchor.isPhysical() /*|| anchor.getTextRange()==null*/)) return null;
     return anchor;
   }
 }

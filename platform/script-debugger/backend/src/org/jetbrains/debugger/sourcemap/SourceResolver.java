@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
 import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
@@ -121,6 +122,18 @@ public class SourceResolver {
 
     int index = entry.getSource();
     return index < 0 || index >= sourceContents.size() ? null : sourceContents.get(index);
+  }
+
+  @Nullable
+  public String getSourceContent(int sourceIndex) {
+    if (ContainerUtil.isEmpty(sourceContents)) {
+      return null;
+    }
+    return sourceIndex < 0 || sourceIndex >= sourceContents.size() ? null : sourceContents.get(sourceIndex);
+  }
+
+  public int getSourceIndex(@NotNull Url url) {
+    return ArrayUtil.indexOf(canonicalizedSources, url);
   }
 
   @Nullable

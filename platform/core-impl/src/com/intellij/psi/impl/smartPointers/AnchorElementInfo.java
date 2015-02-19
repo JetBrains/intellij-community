@@ -73,7 +73,7 @@ class AnchorElementInfo extends SelfElementInfo {
     if (range.getStartOffset() != getSyncStartOffset() || range.getEndOffset() != getSyncEndOffset()) return null;
 
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
-      final PsiElement element = provider.getElement(anchor);
+      final PsiElement element = provider.restoreElement(anchor);
       if (element != null) return element;
     }
     return null;

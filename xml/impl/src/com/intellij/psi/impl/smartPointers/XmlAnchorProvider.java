@@ -38,7 +38,7 @@ public class XmlAnchorProvider extends SmartPointerAnchorProvider {
 
   @Nullable
   @Override
-  public PsiElement getElement(@NotNull PsiElement anchor) {
+  public PsiElement restoreElement(@NotNull PsiElement anchor) {
     if (anchor instanceof XmlToken) {
       XmlToken token = (XmlToken)anchor;
       return token.getTokenType() == XmlTokenType.XML_NAME ? token.getParent() : null;
