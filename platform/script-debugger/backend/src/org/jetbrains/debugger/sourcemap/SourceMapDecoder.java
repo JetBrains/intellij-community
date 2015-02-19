@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +97,9 @@ public final class SourceMapDecoder {
       }
       else if (propertyName.equals("sourceRoot")) {
         sourceRoot = readSourcePath(reader);
+        if (sourceRoot != null) {
+          sourceRoot = UriUtil.trimLeadingSlashes(sourceRoot);
+        }
       }
       else if (propertyName.equals("sources")) {
         sourcesReader = reader.subReader();
