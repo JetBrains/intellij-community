@@ -117,7 +117,9 @@ public class DebuggerUIUtil {
 
     JBPopup popup = createValuePopup(project, textArea, callback);
     if (editor == null) {
-      popup.show(new RelativePoint(event.getComponent(), new Point(event.getX() - size.width, event.getY() - size.height)));
+      int y = (event.getYOnScreen() - size.height < 0) ? event.getY() : event.getY() - size.height;
+      Point point = new Point(event.getX() - size.width, y);
+      popup.show(new RelativePoint(event.getComponent(), point));
     }
     else {
       popup.showInBestPositionFor(editor);
