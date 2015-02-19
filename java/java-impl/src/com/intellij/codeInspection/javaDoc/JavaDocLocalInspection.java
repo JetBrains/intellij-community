@@ -10,6 +10,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -109,7 +110,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
 
       slider.setLabelTable(sliderLabels);
       slider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
-      slider.setPreferredSize(new Dimension(80, 50));
+      slider.setPreferredSize(JBUI.size(80, 50));
       slider.setPaintLabels(true);
       slider.setSnapToTicks(true);
       slider.addChangeListener(new ChangeListener() {

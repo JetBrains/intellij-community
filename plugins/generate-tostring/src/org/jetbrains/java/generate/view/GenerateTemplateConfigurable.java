@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -100,7 +100,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       panel.add(component, BorderLayout.CENTER);
       MultiLineLabel label =
         new MultiLineLabel("<html>Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ") + "</html>");
-      label.setPreferredSize(new Dimension(250, 30));
+      label.setPreferredSize(JBUI.size(250, 30));
       panel.add(label, BorderLayout.SOUTH);
       return panel;
     }
