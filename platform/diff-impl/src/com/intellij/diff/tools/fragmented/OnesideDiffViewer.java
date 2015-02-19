@@ -15,9 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
@@ -62,7 +59,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
@@ -601,14 +597,6 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
     @Override
-    public void notify(@NotNull String message) {
-      final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, myEditor, HintManager.UNDER, HintManager.HIDE_BY_ANY_KEY |
-                                                                                          HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                                          HintManager.HIDE_BY_SCROLLING, 0, false);
-    }
-
-    @Override
     public boolean canGoNext() {
       List<OnesideDiffChange> diffChanges = getDiffChanges();
       if (diffChanges == null || diffChanges.isEmpty()) return false;
@@ -810,6 +798,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
+    }
+    else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
+      return myEditor;
     }
     else {
       return super.getData(dataId);

@@ -404,16 +404,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
     @Override
-    public void notify(@NotNull String message) {
-      final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, getCurrentEditor(), HintManager.UNDER,
-                                                       HintManager.HIDE_BY_ANY_KEY |
-                                                       HintManager.HIDE_BY_TEXT_CHANGE |
-                                                       HintManager.HIDE_BY_SCROLLING,
-                                                       0, false);
-    }
-
-    @Override
     public boolean canGoNext() {
       if (myDiffChanges.isEmpty()) return false;
 

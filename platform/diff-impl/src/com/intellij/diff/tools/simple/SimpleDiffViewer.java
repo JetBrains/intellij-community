@@ -15,9 +15,6 @@
  */
 package com.intellij.diff.tools.simple;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
@@ -57,7 +54,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.*;
 
@@ -488,16 +484,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
-    @Override
-    public void notify(@NotNull String message) {
-      final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, getCurrentEditor(), HintManager.UNDER,
-                                                       HintManager.HIDE_BY_ANY_KEY |
-                                                       HintManager.HIDE_BY_TEXT_CHANGE |
-                                                       HintManager.HIDE_BY_SCROLLING,
-                                                       0, false);
-    }
-
     @Override
     public boolean canGoNext() {
       if (myDiffChanges.isEmpty()) return false;

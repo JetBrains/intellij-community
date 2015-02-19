@@ -23,6 +23,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
@@ -48,6 +49,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -403,6 +405,15 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
   // Helpers
   //
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
+      return getCurrentEditor();
+    }
+    return super.getData(dataId);
+  }
 
   @NotNull
   protected Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider) {
