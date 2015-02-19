@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   @NonNls private static final String NODE_NAME = "global_color_scheme";
   @NonNls private static final String SCHEME_NODE_NAME = "scheme";
+  private static final String DEFAULT_NAME = "Default";
 
   private String myGlobalSchemeName;
   public boolean USE_ONLY_MONOSPACED_FONTS = true;
@@ -221,6 +222,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       public int compare(@NotNull EditorColorsScheme s1, @NotNull EditorColorsScheme s2) {
         if (isDefaultScheme(s1) && !isDefaultScheme(s2)) return -1;
         if (!isDefaultScheme(s1) && isDefaultScheme(s2)) return 1;
+        if (s1.getName().equals(DEFAULT_NAME)) return -1;
+        if (s2.getName().equals(DEFAULT_NAME)) return 1;
         return s1.getName().compareToIgnoreCase(s2.getName());
       }
     });
