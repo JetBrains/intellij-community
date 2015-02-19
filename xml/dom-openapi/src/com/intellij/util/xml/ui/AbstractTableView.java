@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -94,7 +95,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     header.setReorderingAllowed(false);
 
     myTable.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight());
-    myTable.setPreferredScrollableViewportSize(new Dimension(-1, 150));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(-1, 150));
     myTable.setSelectionMode(allowMultipleRowsSelection() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
     myInnerPanel = new JPanel(new CardLayout());
