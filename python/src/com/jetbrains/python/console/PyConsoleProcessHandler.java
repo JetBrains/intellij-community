@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsole;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -84,7 +84,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     }
   }
 
-  private LanguageConsoleImpl getConsole() {
+  private LanguageConsole getConsole() {
     return myConsoleView.getConsole();
   }
 }

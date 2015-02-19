@@ -16,9 +16,9 @@
 package com.jetbrains.python.console;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.execution.console.LanguageConsole;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
@@ -81,23 +81,18 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
-  private final LanguageConsoleViewImpl myLanguageConsoleView;
+  private final LanguageConsoleImpl myLanguageConsoleView;
 
   private Disposable mySplitDisposable;
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
     super(new BorderLayout());
 
-    LanguageConsoleImpl languageConsole = new LanguageConsoleImpl(project, title, PythonLanguage.getInstance(), false);
-    if (languageConsole.getFile().getVirtualFile() != null) {
-      languageConsole.getFile().getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
-    }
+    myLanguageConsoleView = new LanguageConsoleImpl(project, title, PythonLanguage.getInstance());
+    myLanguageConsoleView.getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
-    languageConsole.getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
-    languageConsole.setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
-    languageConsole.initComponents();
+    myLanguageConsoleView.getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
 
-    myLanguageConsoleView = new LanguageConsoleViewImpl(languageConsole);
     Disposer.register(this, myLanguageConsoleView);
 
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
@@ -139,15 +134,13 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   @Override
   public void requestFocus() {
     IdeFocusManager.findInstance().requestFocus(getPythonLanguageConsole().getConsoleEditor().getContentComponent(), true);
-    myLanguageConsoleView.updateUI();
-    getLanguageConsole().getHistoryViewer().getComponent().updateUI();
   }
 
-  private LanguageConsoleImpl getPythonLanguageConsole() {
+  private LanguageConsole getPythonLanguageConsole() {
     return getLanguageConsole();
   }
 
-  public LanguageConsoleImpl getLanguageConsole() {
+  public LanguageConsole getLanguageConsole() {
     return myLanguageConsoleView.getConsole();
   }
 
@@ -416,7 +409,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   @NotNull
   @Override
-  public LanguageConsoleImpl getConsole() {
+  public LanguageConsole getConsole() {
     return myLanguageConsoleView.getConsole();
   }
 

@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
@@ -39,7 +38,6 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
 
   private final LanguageConsoleView myConsoleView;
-  private final LanguageConsole myConsole;
   final ConsoleExecuteActionHandler myExecuteActionHandler;
   private final Condition<LanguageConsole> myEnabledCondition;
 
@@ -48,46 +46,22 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.<LanguageConsole>alwaysTrue());
   }
 
-  /**
-   * Only internal usage, to keep backward compatibility
-   * to remove in IDEA 14
-   */
-  public static ConsoleExecuteAction createAction(@NotNull final LanguageConsole languageConsole,
-                                                  @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    final ConsoleExecuteActionHandler handler = consoleExecuteActionHandler;
-    return new ConsoleExecuteAction(languageConsole, new ConsoleExecuteActionHandler(handler.myPreserveMarkup) {
-      @Override
-      void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
-        handler.doExecute(text, languageConsole, null);
-      }
-    }, consoleExecuteActionHandler);
-  }
-
-  ConsoleExecuteAction(@NotNull LanguageConsole console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsole> enabledCondition) {
-    this(console, null, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
+  ConsoleExecuteAction(@NotNull LanguageConsoleView console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsole> enabledCondition) {
+    this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
                               @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
                               @Nullable Condition<LanguageConsole> enabledCondition) {
-    this(console.getConsole(), console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
+    this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
-  public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
-                              @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
-                              @NotNull String emptyExecuteActionId,
-                              @NotNull Condition<LanguageConsole> enabledCondition) {
-    this(console.getConsole(), console, executeActionHandler, emptyExecuteActionId, enabledCondition);
-  }
-
-  private ConsoleExecuteAction(@NotNull LanguageConsole console,
-                               @Nullable LanguageConsoleView consoleView,
+  public ConsoleExecuteAction(@NotNull LanguageConsoleView consoleView,
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
                                @Nullable Condition<LanguageConsole> enabledCondition) {
     super(null, null, AllIcons.Actions.Execute);
 
-    myConsole = console;
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;
     myEnabledCondition = enabledCondition == null ? Conditions.<LanguageConsole>alwaysTrue() : enabledCondition;
@@ -97,7 +71,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    EditorEx editor = myConsole.getConsoleEditor();
+    EditorEx editor = myConsoleView.getConsole().getConsoleEditor();
     boolean enabled = !editor.isRendererMode() && isEnabled() &&
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
     if (enabled) {
@@ -111,27 +85,26 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    myExecuteActionHandler.runExecuteAction(myConsole, myConsoleView);
+    myExecuteActionHandler.runExecuteAction(myConsoleView);
   }
 
   public boolean isEnabled() {
-    return myEnabledCondition.value(myConsole);
+    return myEnabledCondition.value(myConsoleView.getConsole());
   }
 
   public void execute(@Nullable TextRange range, @NotNull String text, @Nullable EditorEx editor) {
     if (range == null) {
-      ((LanguageConsoleImpl)myConsole).doAddPromptToHistory();
-      DocumentEx document = myConsole.getHistoryViewer().getDocument();
-      document.insertString(document.getTextLength(), text);
+      ((LanguageConsoleImpl)myConsoleView.getConsole()).doAddPromptToHistory();
+      myConsoleView.print(text, ConsoleViewContentType.USER_INPUT);
       if (!text.endsWith("\n")) {
-        document.insertString(document.getTextLength(), "\n");
+        myConsoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       }
     }
     else {
       assert editor != null;
-      ((LanguageConsoleImpl)myConsole).addTextRangeToHistory(range, editor, myExecuteActionHandler.myPreserveMarkup);
+      ((LanguageConsoleImpl)myConsoleView.getConsole()).addTextRangeToHistory(range, editor, myExecuteActionHandler.myPreserveMarkup);
     }
-    myExecuteActionHandler.addToCommandHistoryAndExecute(myConsole, myConsoleView, text);
+    myExecuteActionHandler.addToCommandHistoryAndExecute(myConsoleView, text);
   }
 
   public static abstract class ConsoleExecuteActionHandler {
@@ -159,32 +132,33 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myAddToHistory = addCurrentToHistory;
     }
 
-    protected void beforeExecution(@NotNull LanguageConsole console) {
+    protected void beforeExecution(@NotNull LanguageConsoleView consoleView) {
     }
 
-    protected void runExecuteAction(@NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
+    public void runExecuteAction(@NotNull LanguageConsoleView consoleView) {
       if (!myUseProcessStdIn) {
-        beforeExecution(console);
+        beforeExecution(consoleView);
       }
 
-      String text = ((LanguageConsoleImpl)console).prepareExecuteAction(myAddToHistory && !myUseProcessStdIn, myPreserveMarkup, true);
-      ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
+      String text = ((LanguageConsoleImpl)consoleView.getConsole()).prepareExecuteAction(myAddToHistory && !myUseProcessStdIn,
+                                                                                       myPreserveMarkup, true);
+      ((UndoManagerImpl)UndoManager.getInstance(consoleView.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(
+        consoleView.getConsole().getCurrentEditor().getDocument()));
 
       if (myUseProcessStdIn) {
-        assert consoleView != null;
         consoleView.print(text, ConsoleViewContentType.USER_INPUT);
         consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       }
       else {
-        addToCommandHistoryAndExecute(console, consoleView, text);
+        addToCommandHistoryAndExecute(consoleView, text);
       }
     }
 
-    private void addToCommandHistoryAndExecute(@NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView, @NotNull String text) {
+    private void addToCommandHistoryAndExecute(@NotNull LanguageConsoleView consoleView, @NotNull String text) {
       myCommandHistoryModel.addToHistory(text);
-      doExecute(text, console, consoleView);
+      doExecute(text, consoleView);
     }
 
-    abstract void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView);
+    abstract void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView);
   }
 }

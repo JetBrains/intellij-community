@@ -40,13 +40,8 @@ public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecute
     myProcessHandler = processHandler;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  protected void execute(@NotNull String text) {
+  protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
     processLine(text);
   }
 

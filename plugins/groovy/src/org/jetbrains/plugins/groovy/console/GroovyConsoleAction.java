@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class GroovyConsoleAction extends GroovyShellActionBase implements DumbAw
   }
 
   @Override
-  protected LanguageConsoleImpl createConsole(Project project, String title) {
+  protected LanguageConsoleView createConsole(Project project, String title) {
     return new LanguageConsoleImpl(project, title, GroovyLanguage.INSTANCE) {
       @NotNull
       @Override

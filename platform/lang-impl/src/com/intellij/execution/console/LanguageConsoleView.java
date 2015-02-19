@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LanguageConsoleView extends ConsoleView {
   @NotNull
-  LanguageConsole getConsole();
+  Project getProject();
 
   @NotNull
-  Project getProject();
+  LanguageConsole getConsole();
 }

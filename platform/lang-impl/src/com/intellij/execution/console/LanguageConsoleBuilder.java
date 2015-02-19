@@ -117,22 +117,22 @@ public final class LanguageConsoleBuilder {
   /**
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
-  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsole console,
+  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsoleView console,
                                                                                @NotNull final Consumer<String> executeActionHandler,
                                                                                @NotNull String historyType,
                                                                                @Nullable String historyPersistenceId,
                                                                                @Nullable Condition<LanguageConsole> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
-      void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
+      void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
         executeActionHandler.consume(text);
       }
     };
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
-    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsole().getConsoleEditor().getComponent());
 
-    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console, handler.getConsoleHistoryModel());
+    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console.getConsole(), handler.getConsoleHistoryModel());
     historyController.install();
     return new Pair<AnAction, ConsoleHistoryController>(action, historyController);
   }
@@ -167,11 +167,10 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
     if (oneLineInput) {
-      console.getConsoleEditor().setOneLineMode(true);
+      consoleView.getConsoleEditor().setOneLineMode(true);
     }
-    LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
@@ -187,7 +186,7 @@ public final class LanguageConsoleBuilder {
       consoleView.addCustomConsoleAction(new UseConsoleInputAction(processInputStateKey));
     }
 
-    console.initComponents();
+    consoleView.initComponents();
     return consoleView;
   }
 
@@ -201,9 +200,7 @@ public final class LanguageConsoleBuilder {
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
                                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, title, new LightVirtualFile(title, language, ""), false, psiFileFactory);
-
-      setShowSeparatorLine(false);
+      super(project, title, new LightVirtualFile(title, language, ""), psiFileFactory);
 
       this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
       this.psiFileFactory = psiFileFactory;

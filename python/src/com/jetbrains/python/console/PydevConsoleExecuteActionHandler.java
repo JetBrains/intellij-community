@@ -286,9 +286,14 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
   }
 
   private void ipythonInPrompt(LanguageConsole console, Editor currentEditor){
-    TextAttributes attributes = ConsoleViewContentType.USER_INPUT.getAttributes();
-    attributes.setFontType(Font.PLAIN);
-    console.setPromptAttributes(attributes);
+    console.setPromptAttributes(new ConsoleViewContentType("", ConsoleViewContentType.USER_INPUT_KEY) {
+      @Override
+      public TextAttributes getAttributes() {
+        TextAttributes attrs = super.getAttributes();
+        attrs.setFontType(Font.PLAIN);
+        return attrs;
+      }
+    });
     console.setPrompt("In[" + myIpythonInputPromptCount + "]:");
     PyConsoleUtil.scrollDown(currentEditor);
   }

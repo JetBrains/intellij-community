@@ -15,17 +15,19 @@
  */
 package com.intellij.execution.console;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author gregsh
@@ -34,10 +36,13 @@ public interface LanguageConsole extends Disposable {
   @NotNull
   Project getProject();
 
-  boolean isValid();
+  @NotNull
+  JComponent getComponent();
 
   @NotNull
   String getTitle();
+
+  void setTitle(String title);
 
   @NotNull
   PsiFile getFile();
@@ -67,7 +72,9 @@ public interface LanguageConsole extends Disposable {
 
   void setPrompt(@Nullable String prompt);
 
-  void setPromptAttributes(@NotNull TextAttributes attributes);
+  void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes);
+
+  void setInputText(@NotNull String inputText);
 
   boolean isEditable();
 
