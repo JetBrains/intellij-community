@@ -26,7 +26,7 @@ abstract class NoFormalParamTypeInferenceNeeded {
   {
     map(a -> zip(text ->  text));
     zip(a -> zip(text ->  text));
-    Integer zip = zip(<error descr="Cyclic inference">a -> zip(text -> text)</error>);
+    Integer zip = zip(a -> zip(<error descr="Cyclic inference">text -> text</error>));
   }
 
 }

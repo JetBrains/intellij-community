@@ -864,6 +864,7 @@ public class InferenceSession {
   }
 
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
+    nextVar:
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
       final PsiTypeParameter typeParameter = var.getParameter();
@@ -893,6 +894,13 @@ public class InferenceSession {
         else {
           if (substitutor.putAll(mySiteSubstitutor).getSubstitutionMap().get(typeParameter) != null) continue;
           type = myErased ? null : upperBound;
+        }
+      }
+      else {
+        for (PsiType upperType : var.getBounds(InferenceBound.UPPER)) {
+          if (isProperType(upperType) && !TypeConversionUtil.isAssignable(substitutor.substitute(upperType), lowerBound)) {
+            continue nextVar;
+          }
         }
       }
       substitutor = substitutor.put(typeParameter, type);

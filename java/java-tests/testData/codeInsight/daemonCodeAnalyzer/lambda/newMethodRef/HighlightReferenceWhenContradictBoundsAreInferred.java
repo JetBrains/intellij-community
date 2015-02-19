@@ -29,15 +29,15 @@ class Test {
     static void meth4(I3 s) { }
 
     static {
-        meth1(<error descr="Inferred type 'java.lang.String' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Foo::new</error>);
+        meth1(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
         meth2(Foo::new);
-        meth3(<error descr="Inferred type 'java.lang.Object' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Foo::new</error>);
-        meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Foo::new)</error>;
+        meth3(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
+        meth4<error descr="Cannot resolve method 'meth4(<method reference>)'">(Foo::new)</error>;
 
-        meth1(<error descr="Inferred type 'java.lang.String' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Test::foo</error>);
+        meth1(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
         meth2(Test::foo);
-        meth3(<error descr="Inferred type 'java.lang.Object' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">Test::foo</error>);
-        meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Test::foo)</error>;
+        meth3(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
+        meth4<error descr="Cannot resolve method 'meth4(<method reference>)'">(Test::foo)</error>;
     }
 
 
@@ -55,8 +55,8 @@ class Test {
     }
 
     void test() {
-      II1 i1 = <error descr="Inferred type 'X' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">this::fooInstance</error>;
+      II1 i1 = this::<error descr="Cannot resolve method 'fooInstance'">fooInstance</error>;
       II2 i2 = this::fooInstance;
-      II3 i3 = <error descr="Inferred type 'X' for type parameter 'X' is not within its bound; should extend 'java.lang.Number'">this::fooInstance</error>;
+      II3 i3 = this::<error descr="Cannot resolve method 'fooInstance'">fooInstance</error>;
     }
 }
