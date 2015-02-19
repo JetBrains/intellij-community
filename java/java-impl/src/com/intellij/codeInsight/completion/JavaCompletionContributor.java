@@ -26,6 +26,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -39,6 +40,7 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -52,10 +54,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.ProcessingContext;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -324,7 +323,7 @@ public class JavaCompletionContributor extends CompletionContributor {
               }
 
               if (isSwitchLabel) {
-                result.addElement(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':')));
+                result.addElement(new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
               }
               else {
                 final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
@@ -789,6 +788,22 @@ public class JavaCompletionContributor extends CompletionContributor {
   static void processLabelReference(CompletionResultSet result, PsiLabelReference ref) {
     for (String s : ref.getVariants()) {
       result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
+    }
+  }
+  
+  private static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
+    public IndentingDecorator(LookupElement delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void handleInsert(InsertionContext context) {
+      super.handleInsert(context);
+      Project project = context.getProject();
+      Document document = context.getDocument();
+      int lineStartOffset = DocumentUtil.getLineStartOffset(context.getStartOffset(), document);
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      CodeStyleManager.getInstance(project).adjustLineIndent(context.getFile(), lineStartOffset);
     }
   }
 }

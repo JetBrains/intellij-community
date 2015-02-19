@@ -1502,4 +1502,6 @@ class Bar {
     }
 }'''
   }
+  
+  public void testIndentingForSwitchCase() { doTest() }
 }

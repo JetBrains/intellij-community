@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,7 +225,7 @@ public final class EditorUtil {
    * @return              given text offset that identifies the same position that is pointed by the given visual column
    *
    * @deprecated This function can give incorrect results when soft wraps are enabled in editor. It is also slow in case of
-   * long document lines - {@link com.intellij.openapi.editor.Editor#logicalPositionToOffset(com.intellij.openapi.editor.LogicalPosition)}
+   * long document lines - {@link Editor#logicalPositionToOffset(LogicalPosition)}
    * should be faster when soft wraps are enabled. To be removed in IDEA 16.
    */
   @SuppressWarnings("UnusedDeclaration")
@@ -718,8 +719,8 @@ public final class EditorUtil {
    * @param end       target end coordinate
    * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
    *
-   * @see #getNotFoldedLineStartOffset(com.intellij.openapi.editor.Editor, int)
-   * @see #getNotFoldedLineEndOffset(com.intellij.openapi.editor.Editor, int)
+   * @see #getNotFoldedLineStartOffset(Editor, int)
+   * @see #getNotFoldedLineEndOffset(Editor, int)
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
@@ -776,7 +777,7 @@ public final class EditorUtil {
    */
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset) {
     while(true) {
-      offset = getLineStartOffset(offset, editor.getDocument());
+      offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
       if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
         break;
@@ -799,14 +800,6 @@ public final class EditorUtil {
       offset = foldRegion.getEndOffset();
     }
     return offset;
-  }
-
-  private static int getLineStartOffset(int offset, Document document) {
-    if (offset > document.getTextLength()) {
-      return offset;
-    }
-    int lineNumber = document.getLineNumber(offset);
-    return document.getLineStartOffset(lineNumber);
   }
 
   private static int getLineEndOffset(int offset, Document document) {
