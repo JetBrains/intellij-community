@@ -19,14 +19,14 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,19 +72,9 @@ class AnchorElementInfo extends SelfElementInfo {
     TextRange range = anchor.getTextRange();
     if (range.getStartOffset() != getSyncStartOffset() || range.getEndOffset() != getSyncEndOffset()) return null;
 
-    if (anchor instanceof PsiIdentifier) {
-      PsiElement parent = anchor.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) { // anonymous class, type
-        parent = parent.getParent();
-      }
-
-      if (!anchor.equals(AnchorElementInfoFactory.getAnchor(parent))) return null;
-
-      return parent;
-    }
-    if (anchor instanceof XmlToken) {
-      XmlToken token = (XmlToken)anchor;
-      return token.getTokenType() == XmlTokenType.XML_NAME ? token.getParent() : null;
+    for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
+      final PsiElement element = provider.getElement(anchor);
+      if (element != null) return element;
     }
     return null;
   }
