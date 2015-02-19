@@ -98,8 +98,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       String[] names = ArrayUtilRt.toStringArray(myComponents.keySet());
       Arrays.sort(names);
       for (String name : names) {
-        Object component = myComponents.get(name);
-        commitComponent(externalizationSession, component);
+        commitComponent(externalizationSession, myComponents.get(name), name);
       }
     }
 
@@ -122,7 +121,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       return;
     }
 
-    commitComponent(externalizationSession, component);
+    commitComponent(externalizationSession, component, null);
     List<SaveSession> sessions = externalizationSession.createSaveSessions();
     if (sessions.isEmpty()) {
       return;
@@ -164,12 +163,12 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     throw new AssertionError("All storages are deprecated");
   }
 
-  private void commitComponent(ExternalizationSession externalizationSession, Object component) {
+  private void commitComponent(@NotNull ExternalizationSession externalizationSession, @NotNull Object component, @Nullable String componentName) {
     if (component instanceof PersistentStateComponent) {
-      commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession);
+      commitPersistentComponent((PersistentStateComponent<?>)component, externalizationSession, componentName);
     }
     else if (component instanceof JDOMExternalizable) {
-      externalizationSession.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
+      externalizationSession.setStateInOldStorage(component, componentName == null ? ComponentManagerImpl.getComponentName(component) : componentName, component);
     }
   }
 
@@ -191,19 +190,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> component, @NotNull ExternalizationSession session) {
+  private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> component, @NotNull ExternalizationSession session, @Nullable String componentName) {
     T state = component.getState();
     if (state != null) {
       Storage[] storageSpecs = getComponentStorageSpecs(component, StoreUtil.getStateSpec(component), StateStorageOperation.WRITE);
-      String componentName = getComponentName(component);
-      //if (state instanceof Element) {
-      //  Element defaultState = getDefaultState(component, componentName, Element.class);
-      //  if (defaultState != null && JDOMUtil.areElementsEqual(defaultState, (Element)state)) {
-      //    session.setState(storageSpecs, component, componentName, new Element("empty"));
-      //    return;
-      //  }
-      //}
-      session.setState(storageSpecs, component, componentName, state);
+      session.setState(storageSpecs, component, componentName == null ? getComponentName(component) : componentName, state);
     }
   }
 
