@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -256,7 +257,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (description == null) {
       description = "Select configuration element in the tree to edit its settings";
       content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
-      content.setPreferredSize(new Dimension(800, 600));
+      content.setPreferredSize(JBUI.size(800, 600));
     }
     else {
       content.add(BorderLayout.NORTH, new JLabel(description));

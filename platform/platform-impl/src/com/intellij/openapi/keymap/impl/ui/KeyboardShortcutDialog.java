@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +119,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myConflictInfoArea.setLineWrap(true);
     myConflictInfoArea.setWrapStyleWord(true);
     final JScrollPane conflictInfoScroll = ScrollPaneFactory.createScrollPane(myConflictInfoArea);
-    conflictInfoScroll.setPreferredSize(new Dimension(260, 60));
+    conflictInfoScroll.setPreferredSize(JBUI.size(260, 60));
     conflictInfoScroll.setBorder(null);
     conflictsPanel.add(conflictInfoScroll);
     panel.add(

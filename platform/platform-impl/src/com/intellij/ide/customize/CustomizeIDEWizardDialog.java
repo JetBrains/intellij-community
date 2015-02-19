@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +125,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     result.add(topPanel, BorderLayout.NORTH);
     result.add(myContentPanel, BorderLayout.CENTER);
     result.add(myFooterLabel, BorderLayout.SOUTH);
-    result.setPreferredSize(new Dimension(700, 600));
+    result.setPreferredSize(JBUI.size(700, 600));
     result.setBorder(AbstractCustomizeWizardStep.createSmallEmptyBorder());
     return result;
   }
