@@ -27,16 +27,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
 
+import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.*;
+
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
   public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
-  private List<String> myOptimizersMessages = ContainerUtil.newSmartList();
+  private List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
 
   public OptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, false);
@@ -105,10 +108,14 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {
     if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
-      String info = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
-      if (info != null) {
-        myOptimizersMessages.add(info);
-      }
+      String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
+      myOptimizerNotifications.add(optimizerMessage != null ? new NotificationInfo(optimizerMessage) : NOTHING_CHANGED_NOTIFICATION);
+    }
+    else if (runnable == EmptyRunnable.getInstance()) {
+      myOptimizerNotifications.add(NOTHING_CHANGED_NOTIFICATION);
+    }
+    else {
+      myOptimizerNotifications.add(SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION);
     }
   }
 
@@ -118,10 +125,40 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return;
     }
 
-    String info = "imports optimized";
-    if (myOptimizersMessages.size() == 1) {
-      info = myOptimizersMessages.get(0);
+    boolean atLeastOneOptimizerChangedSomething = false;
+    for (NotificationInfo info : myOptimizerNotifications) {
+      atLeastOneOptimizerChangedSomething |= info.isSomethingChanged();
+      if (info.getMessage() != null) {
+        collector.setOptimizeImportsNotification(info.getMessage());
+        return;
+      }
     }
-    collector.setOptimizeImportsNotification(info);
+
+    collector.setOptimizeImportsNotification(atLeastOneOptimizerChangedSomething ? "imports optimized" : null);
+  }
+
+  static class NotificationInfo {
+    public static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
+    public static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
+
+    private final boolean mySomethingChanged;
+    private final String myMessage;
+
+    NotificationInfo(@NotNull String message) {
+      this(true, message);
+    }
+
+    public boolean isSomethingChanged() {
+      return mySomethingChanged;
+    }
+
+    public String getMessage() {
+      return myMessage;
+    }
+
+    private NotificationInfo(boolean isSomethingChanged, @Nullable String message) {
+      mySomethingChanged = isSomethingChanged;
+      myMessage = message;
+    }
   }
 }
