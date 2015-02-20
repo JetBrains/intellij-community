@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.process;
+package com.intellij.execution.console;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -27,11 +27,22 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class ConsoleHistoryModel extends SimpleModificationTracker {
+class ConsoleHistoryModel extends SimpleModificationTracker {
+  /** @noinspection FieldCanBeLocal*/
+  private final ConsoleHistoryModel myMasterModel; // hard ref
   private int myHistoryCursor = -1;
-  private final LinkedList<String> myHistory = new LinkedList<String>();
+  private final LinkedList<String> myHistory;
 
-  public void addToHistory(String statement) {
+  ConsoleHistoryModel(ConsoleHistoryModel masterModel) {
+    myMasterModel = masterModel;
+    myHistory = myMasterModel == null ? new LinkedList<String>() : myMasterModel.myHistory;
+  }
+
+  ConsoleHistoryModel copy() {
+    return new ConsoleHistoryModel(this);
+  }
+
+  public void addToHistory(@Nullable String statement) {
     if (StringUtil.isEmptyOrSpaces(statement)) return;
 
     int maxHistorySize = getMaxHistorySize();

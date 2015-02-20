@@ -16,7 +16,6 @@
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -40,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,8 +75,11 @@ import java.util.*;
  */
 public class ConsoleHistoryController {
 
+  private static final Key<ConsoleHistoryController> CONTROLLER_KEY = Key.create("CONTROLLER_KEY");
+
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
+  /** @noinspection MismatchedQueryAndUpdateOfCollection*/
   private final static FactoryMap<String, ConsoleHistoryModel> ourModels = new FactoryMap<String, ConsoleHistoryModel>() {
     @Override
     protected Map<String, ConsoleHistoryModel> createMap() {
@@ -86,7 +89,7 @@ public class ConsoleHistoryController {
     @Nullable
     @Override
     protected ConsoleHistoryModel create(String key) {
-      return new ConsoleHistoryModel();
+      return new ConsoleHistoryModel(null);
     }
   };
 
@@ -99,9 +102,8 @@ public class ConsoleHistoryController {
   private long myLastSaveStamp;
 
   @Deprecated
-  public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
-                                  @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
-    this(new ConsoleRootType(type, null) { }, persistenceId, console, model);
+  public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
+    this(new ConsoleRootType(type, null) { }, persistenceId, console);
   }
 
   public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
@@ -110,8 +112,28 @@ public class ConsoleHistoryController {
 
   private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId,
                                   @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
-    myHelper = new ModelHelper(rootType, fixNullPersistenceId(persistenceId, console), model);
+    myHelper = new ModelHelper(rootType, fixNullPersistenceId(persistenceId, console), model.copy());
     myConsole = console;
+    console.getVirtualFile().putUserData(CONTROLLER_KEY, this);
+  }
+
+  public static ConsoleHistoryController getController(LanguageConsoleView console) {
+    return console.getVirtualFile().getUserData(CONTROLLER_KEY);
+  }
+
+  public static void addToHistory(@NotNull LanguageConsoleView consoleView, @Nullable String command) {
+    ConsoleHistoryController controller = getController(consoleView);
+    if (controller != null) {
+      controller.addToHistory(command);
+    }
+  }
+
+  public void addToHistory(@Nullable String command) {
+    getModel().addToHistory(command);
+  }
+
+  public boolean hasHistory() {
+    return getModel().getHistory().isEmpty();
   }
 
   private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
@@ -127,26 +149,29 @@ public class ConsoleHistoryController {
     return this;
   }
 
-  public ConsoleHistoryModel getModel() {
+  ConsoleHistoryModel getModel() {
     return myHelper.getModel();
   }
 
   public void install() {
+    FileDocumentManager.getInstance().saveAllDocuments();
     if (myHelper.getId() != null) {
       ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(
         ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-        @Override
-        public void saved(@NotNull final Project project) {
-          saveHistory();
-        }
-      });
+          @Override
+          public void saved(@NotNull final Project project) {
+            saveHistory();
+          }
+        });
       Disposer.register(myConsole, new Disposable() {
         @Override
         public void dispose() {
           saveHistory();
         }
       });
-      loadHistory(myHelper.getId());
+      if (myHelper.getModel().getHistorySize() == 0) {
+        loadHistory(myHelper.getId());
+      }
     }
     configureActions();
     myLastSaveStamp = getCurrentTimeStamp();
@@ -483,14 +508,15 @@ public class ConsoleHistoryController {
 
       OutputStream os = null;
       try {
-        final XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
+        os = new SafeFileOutputStream(file);
+        XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
         try {
           serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
         }
         catch (Exception ignored) {
           // not recognized
         }
-        serializer.setOutput(os = new SafeFileOutputStream(file), CharsetToolkit.UTF8);
+        serializer.setOutput(os, CharsetToolkit.UTF8);
         saveHistory(serializer);
         serializer.flush();
       }
@@ -499,7 +525,9 @@ public class ConsoleHistoryController {
       }
       finally {
         try {
-          os.close();
+          if (os != null) {
+            os.close();
+          }
         }
         catch (Exception ignored) {
           // nothing
@@ -517,7 +545,7 @@ public class ConsoleHistoryController {
         AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
         try {
           VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
-          VfsUtil.saveText(file, StringUtil.join(ContainerUtil.reverse(getModel().getHistory()), myRootType.getEntrySeparator()));
+          VfsUtil.saveText(file, StringUtil.join(getModel().getHistory(), myRootType.getEntrySeparator()));
         }
         finally {
           token.finish();

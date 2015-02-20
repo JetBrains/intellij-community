@@ -254,7 +254,7 @@ public abstract class GroovyShellActionBase extends AnAction {
           return GROOVY_SHELL_EXECUTE;
         }
       };
-      new ConsoleHistoryController(getConsoleTitle(), null, getLanguageConsole(), handler.getConsoleHistoryModel()).install();
+      new ConsoleHistoryController(getConsoleTitle(), null, getConsoleView()).install();
       return handler;
     }
   }

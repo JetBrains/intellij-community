@@ -136,7 +136,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
   private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
-  private ConsoleHistoryController myHistoryController;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
@@ -273,7 +272,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     AnAction showVarsAction = new ShowVarsAction();
     toolbarActions.add(showVarsAction);
-    toolbarActions.add(myHistoryController.getBrowseHistory());
+    toolbarActions.add(ConsoleHistoryController.getController(getConsoleView()).getBrowseHistory());
 
     toolbarActions.add(new ConnectDebuggerAction());
 
@@ -641,13 +640,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     final AnAction upAction = new AnAction() {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        new WriteCommandAction(getLanguageConsole().getProject(), getLanguageConsole().getFile()) {
+        new WriteCommandAction(getConsoleView().getProject(), getConsoleView().getFile()) {
           @Override
           protected void run(@NotNull final Result result) throws Throwable {
-            String text = getLanguageConsole().getEditorDocument().getText();
+            String text = getConsoleView().getEditorDocument().getText();
             String newText = text.substring(0, text.length() - myConsoleExecuteActionHandler.getPythonIndent());
-            getLanguageConsole().getEditorDocument().setText(newText);
-            getLanguageConsole().getConsoleEditor().getCaretModel().moveToOffset(newText.length());
+            getConsoleView().getEditorDocument().setText(newText);
+            getConsoleView().getConsoleEditor().getCaretModel().moveToOffset(newText.length());
           }
         }.execute();
       }
@@ -656,7 +655,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       public void update(final AnActionEvent e) {
         e.getPresentation()
           .setEnabled(myConsoleExecuteActionHandler.getCurrentIndentSize() >= myConsoleExecuteActionHandler.getPythonIndent() &&
-                      isIndentSubstring(getLanguageConsole().getEditorDocument().getText()));
+                      isIndentSubstring(getConsoleView().getEditorDocument().getText()));
       }
     };
     upAction.registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, null);
@@ -812,9 +811,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
-    myHistoryController = new ConsoleHistoryController(myConsoleType.getTypeId(), "", getLanguageConsole(),
-                                                       myConsoleExecuteActionHandler.getConsoleHistoryModel());
-    myHistoryController.install();
+    new ConsoleHistoryController(myConsoleType.getTypeId(), "", getConsoleView()).install();
     return myConsoleExecuteActionHandler;
   }
 
@@ -826,11 +823,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null;
   }
 
-  public static boolean isInPydevConsole(final VirtualFile file) {
-    return file.getName().contains("Python Console");
-  }
-
-  public static boolean isPythonConsole(@Nullable final FileElement element) {
+  public static boolean isPythonConsole(@Nullable FileElement element) {
     return getPythonConsoleData(element) != null;
   }
 
