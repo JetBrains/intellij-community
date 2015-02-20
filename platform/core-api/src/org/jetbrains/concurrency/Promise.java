@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.concurrency;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -118,7 +133,7 @@ public abstract class Promise<T> {
   public abstract Promise<T> done(@NotNull Consumer<T> done);
 
   @NotNull
-  public abstract Promise<T> processed(@NotNull final AsyncPromise<T> fulfilled);
+  public abstract Promise<T> processed(@NotNull AsyncPromise<T> fulfilled);
 
   @NotNull
   public abstract Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
@@ -128,38 +143,11 @@ public abstract class Promise<T> {
   @NotNull
   public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<T, SUB_RESULT> done);
 
-  //@NotNull
-  //public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull PairConsumer<T, AsyncPromise<SUB_RESULT>> done);
-
-  //public final <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull final SUB_RESULT result) {
-  //  return then(new Function<T, SUB_RESULT>() {
-  //    @Override
-  //    public SUB_RESULT fun(T ignored) {
-  //      return result;
-  //    }
-  //  });
-  //}
-
   @NotNull
   public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull AsyncFunction<T, SUB_RESULT> done);
 
   @NotNull
   public abstract State getState();
-
-  public final void notify(@NotNull final AsyncResult<T> result) {
-    done(new Consumer<T>() {
-      @Override
-      public void consume(T t) {
-        result.setDone(t);
-      }
-    });
-    rejected(new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        result.reject(error == null ? null : error.getMessage());
-      }
-    });
-  }
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
   public static class MessageError extends RuntimeException {

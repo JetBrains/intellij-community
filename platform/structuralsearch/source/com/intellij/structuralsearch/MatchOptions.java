@@ -77,9 +77,9 @@ public class MatchOptions implements JDOMExternalizable {
     return null;
   }
 
-  public Iterator<String> getVariableConstraintNames() {
-    if (variableConstraints==null) return null;
-    return variableConstraints.keySet().iterator();
+  public Set<String> getVariableConstraintNames() {
+    if (variableConstraints==null) return Collections.emptySet();
+    return Collections.unmodifiableSet(variableConstraints.keySet());
   }
 
   public void setCaseSensitiveMatch(boolean caseSensitiveMatch) {

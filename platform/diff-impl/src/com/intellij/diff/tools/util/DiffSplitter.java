@@ -17,6 +17,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public class DiffSplitter extends Splitter {
   @Nullable private Painter myPainter;
 
   public DiffSplitter() {
-    setDividerWidth(30);
+    setDividerWidth(JBUI.scale(30));
   }
 
   @Override

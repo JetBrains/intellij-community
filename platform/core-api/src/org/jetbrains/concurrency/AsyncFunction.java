@@ -13,29 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl.http;
+package org.jetbrains.concurrency;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
-public interface RemoteFileInfo {
-  void addDownloadingListener(@NotNull FileDownloadingListener listener);
-
-  void removeDownloadingListener(@NotNull FileDownloadingListener listener);
-
-  void restartDownloading();
-
-  void startDownloading();
-
-  String getErrorMessage();
-
-  VirtualFile getLocalFile();
-
-  RemoteFileState getState();
-
-  void cancelDownloading();
-
+public interface AsyncFunction<PARAM, RESULT> {
   @NotNull
-  Promise<VirtualFile> download();
+  Promise<RESULT> fun(PARAM param);
 }

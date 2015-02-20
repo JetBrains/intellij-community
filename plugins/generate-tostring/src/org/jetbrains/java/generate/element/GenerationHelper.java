@@ -52,9 +52,13 @@ public class GenerationHelper {
   }
 
   public static String getParamName(FieldElement fieldElement, Project project) {
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    return codeStyleManager.propertyNameToVariableName(getPropertyName(fieldElement, project), VariableKind.PARAMETER);
+  }
+
+  public static String getPropertyName(FieldElement fieldElement, Project project) {
     String name = fieldElement.getName();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    String propertyName = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
-    return codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
+    return codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
   }
 }

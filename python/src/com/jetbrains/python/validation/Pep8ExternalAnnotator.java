@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -44,6 +45,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -51,6 +53,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.quickFixes.RemoveTrailingBlankLinesFix;
@@ -145,8 +148,19 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return null;
     }
     final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.KEY.toString(), file);
-    final List<String> ignoredErrors = inspection.ignoredErrors;
-    final int margin = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().getRightMargin(file.getLanguage());
+    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
+
+    final List<String> ignoredErrors = Lists.newArrayList(inspection.ignoredErrors);
+    if (!currentSettings.getCustomSettings(PyCodeStyleSettings.class).SPACE_AFTER_NUMBER_SIGN) {
+      ignoredErrors.add("E262"); // Block comment should start with a space
+      ignoredErrors.add("E265"); // Inline comment should start with a space
+    }
+
+    if (!currentSettings.getCustomSettings(PyCodeStyleSettings.class).SPACE_BEFORE_NUMBER_SIGN) {
+      ignoredErrors.add("E261"); // At least two spaces before inline comment
+    }
+
+    final int margin = currentSettings.getRightMargin(file.getLanguage());
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors, margin);
   }
 

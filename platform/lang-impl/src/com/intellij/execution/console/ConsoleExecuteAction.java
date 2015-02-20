@@ -108,7 +108,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   public static abstract class ConsoleExecuteActionHandler {
-    private final ConsoleHistoryModel myCommandHistoryModel;
+    private ConsoleHistoryModel myCommandHistoryModel;
 
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
@@ -116,12 +116,19 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     boolean myUseProcessStdIn;
 
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
-      myCommandHistoryModel = new ConsoleHistoryModel();
       myPreserveMarkup = preserveMarkup;
     }
 
+    @NotNull
     public ConsoleHistoryModel getConsoleHistoryModel() {
+      if (myCommandHistoryModel == null) {
+        myCommandHistoryModel = new ConsoleHistoryModel();
+      }
       return myCommandHistoryModel;
+    }
+
+    void setConsoleHistoryModel(@NotNull ConsoleHistoryModel model) {
+      myCommandHistoryModel = model;
     }
 
     public boolean isEmptyCommandExecutionAllowed() {
@@ -155,7 +162,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     }
 
     private void addToCommandHistoryAndExecute(@NotNull LanguageConsoleView consoleView, @NotNull String text) {
-      myCommandHistoryModel.addToHistory(text);
+      getConsoleHistoryModel().addToHistory(text);
       doExecute(text, consoleView);
     }
 

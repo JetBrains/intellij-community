@@ -446,7 +446,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           ParameterInfo nameInfo = builder.findParameterization(name);
           ParameterInfo typeInfo = builder.findParameterization(type);
 
-          if (nameInfo != null && typeInfo != null && !(parameter.getParent() instanceof PsiCatchSection)) {
+          final PsiElement scope = parameter.getDeclarationScope();
+          if (nameInfo != null && typeInfo != null && !(scope instanceof PsiCatchSection) && !(scope instanceof PsiForeachStatement)) {
             nameInfo.setArgumentContext(false);
             typeInfo.setArgumentContext(false);
             typeInfo.setMethodParameterContext(true);
