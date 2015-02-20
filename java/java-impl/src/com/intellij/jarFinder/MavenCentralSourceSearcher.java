@@ -2,6 +2,7 @@ package com.intellij.jarFinder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.xpath.XPath;
@@ -21,13 +22,19 @@ public class MavenCentralSourceSearcher extends SourceSearcher {
   @Override
   protected String findSourceJar(@NotNull ProgressIndicator indicator,
                                  @NotNull String artifactId,
-                                 @NotNull String version) throws SourceSearchException {
+                                 @NotNull String version,
+                                 @NotNull VirtualFile classesJar) throws SourceSearchException {
     try {
       indicator.setText("Connecting to https://search.maven.org");
 
       indicator.checkCanceled();
 
-      String url = "https://search.maven.org/solrsearch/select?rows=3&wt=xml&q=a:%22" + artifactId + "%22%20AND%20v:%22" + version + "%22%20AND%20l:%22sources%22";
+      String url = "https://search.maven.org/solrsearch/select?rows=3&wt=xml&q=";
+      final String groupId = findMavenGroupId(classesJar, artifactId);
+      if (groupId != null) {
+        url += "g:%22" + groupId + "%22%20AND%20";
+      }
+      url += "a:%22" + artifactId + "%22%20AND%20v:%22" + version + "%22%20AND%20l:%22sources%22";
       @SuppressWarnings("unchecked")
       List<Element> artifactList = (List<Element>)XPath.newInstance("/response/result/doc/str[@name='g']").selectNodes(readDocumentCancelable(indicator, url));
       if (artifactList.isEmpty()) {
