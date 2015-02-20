@@ -84,7 +84,11 @@ public abstract class SourceSearcher {
         }
       }
       finally {
-        StreamUtil.closeStream(jarFile);
+        try {
+          jarFile.close();
+        }
+        catch (IOException ignore) {
+        }
       }
     }
     catch (IOException ignore) {
