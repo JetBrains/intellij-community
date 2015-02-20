@@ -300,6 +300,19 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
+  public void "test don't import class in qualified reference at foreign place"() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      String s = "";
+      s.<caret>
+      String p = "";
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
     public void "test allow to add import from javadoc"() {
     myFixture.configureByText 'a.java', '''
 class Test {
