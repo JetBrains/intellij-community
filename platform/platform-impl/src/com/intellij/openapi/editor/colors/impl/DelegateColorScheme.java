@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,11 +143,7 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void readExternal(Element element) {
   }
 
   @NotNull
@@ -203,5 +197,4 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   public void setConsoleLineSpacing(float lineSpacing) {
     myDelegate.setConsoleLineSpacing(lineSpacing);
   }
-
 }

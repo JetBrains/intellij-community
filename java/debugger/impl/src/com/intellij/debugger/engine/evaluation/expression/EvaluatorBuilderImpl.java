@@ -952,11 +952,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
 
           if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
-            // this is a call to a 'static' method
-            if (contextClass == null && type == null) {
-              throwEvaluateException(DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()));
+            // this is a call to a 'static' method but class is not available, try to evaluate by qname
+            if (contextClass == null) {
+              contextClass = JVMNameUtil.getJVMRawText(((PsiReferenceExpression)qualifier).getQualifiedName());
             }
-            assert contextClass != null;
             objectEvaluator = new TypeEvaluator(contextClass);
           }
           else {

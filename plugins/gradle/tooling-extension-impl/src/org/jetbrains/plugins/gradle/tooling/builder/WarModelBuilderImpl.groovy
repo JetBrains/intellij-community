@@ -84,7 +84,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
           }
 
           final String relativePath = resolver.destPath.pathString
-          final def sourcePaths
+          def sourcePaths
 
           if (resolver.metaClass.respondsTo(resolver, 'getSourcePaths')) {
             sourcePaths = resolver.getSourcePaths()

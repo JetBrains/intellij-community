@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  * @author yole
  */
-public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T> {
+public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T>, SchemeExtensionProvider {
   @Override
   public void initScheme(@NotNull T scheme) {
   }
@@ -74,5 +74,16 @@ public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implem
   @NotNull
   public State getState(@NotNull T scheme) {
     return shouldBeSaved(scheme) ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+  }
+
+  @Override
+  public boolean isUpgradeNeeded() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public String getSchemeExtension() {
+    return ".xml";
   }
 }

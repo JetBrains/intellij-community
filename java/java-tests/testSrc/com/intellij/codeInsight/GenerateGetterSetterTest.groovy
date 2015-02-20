@@ -20,6 +20,9 @@ import com.intellij.codeInsight.generation.GenerateSetterHandler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -68,6 +71,34 @@ class Foo {
     }
 }
 '''
+  }
+
+  public void "test strip field prefix"() {
+    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings
+    String oldPrefix = settings.FIELD_NAME_PREFIX
+    try {
+      settings.FIELD_NAME_PREFIX = "my"
+      myFixture.configureByText 'a.java', '''
+  class Foo {
+      String myName;
+
+      <caret>
+  }
+  '''
+      generateGetter()
+      myFixture.checkResult '''
+  class Foo {
+      String myName;
+
+      public String getName() {
+          return myName;
+      }
+  }
+  '''
+    }
+    finally {
+      settings.FIELD_NAME_PREFIX = oldPrefix
+    }
   }
 
   public void "test qualified this"() {
