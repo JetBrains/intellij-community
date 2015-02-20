@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,13 @@ import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
+import com.intellij.psi.impl.search.MethodSuperSearcher;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
 import com.intellij.psi.presentation.java.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -98,6 +101,8 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
       }
     });
 
+    registerApplicationExtensionPoint(SuperMethodsSearch.EP_NAME, QueryExecutor.class);
+    addExtension(SuperMethodsSearch.EP_NAME, new MethodSuperSearcher());
   }
 
   @SuppressWarnings("MethodMayBeStatic") // overridden in upsource
