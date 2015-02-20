@@ -423,13 +423,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
       invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
     }
 
-    boolean isExprContext = true;
     final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
-    if (contextVar) isExprContext = false;
     containedInConstraints.setVisible(contextVar);
-    expressionConstraints.setVisible(isExprContext);
-    partOfSearchResults.setEnabled(!contextVar); //?
-
+    textConstraintsPanel.setVisible(!contextVar);
+    expressionConstraints.setVisible(!contextVar);
+    partOfSearchResults.setVisible(!contextVar);
     occurencePanel.setVisible(!contextVar);
   }
 
@@ -439,7 +437,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     expressionConstraints.setVisible(b);
     partOfSearchResults.setVisible(b);
     containedInConstraints.setVisible(b);
-    pack();
   }
 
   private void restoreScriptCode(NamedScriptableDefinition varInfo) {
