@@ -166,7 +166,7 @@ class FileInEditorProcessor {
       }
     }
 
-    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ReformatFile"));
+    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowReformatFileDialog"));
     String color = ColorUtil.toHex(JBColor.gray);
 
     builder.append("<span style='color:#").append(color).append("'>")

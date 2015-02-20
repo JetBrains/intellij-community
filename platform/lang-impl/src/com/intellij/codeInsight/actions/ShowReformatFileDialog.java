@@ -24,7 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 
-public class ReformatFileAction extends AnAction implements DumbAware {
+public class ShowReformatFileDialog extends AnAction implements DumbAware {
   private static final @NonNls String HELP_ID = "editing.codeReformatting";
 
   @Override
