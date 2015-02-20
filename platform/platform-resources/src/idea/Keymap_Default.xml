@@ -87,6 +87,9 @@
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
+  <action id="ShowReformatFileDialog">
+    <keyboard-shortcut first-keystroke="control shift alt L"/>
+  </action>
   <action id="Generate">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
   </action>

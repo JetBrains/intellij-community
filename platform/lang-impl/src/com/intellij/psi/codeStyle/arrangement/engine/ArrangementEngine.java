@@ -57,6 +57,15 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
  * @since 7/20/12 1:56 PM
  */
 public class ArrangementEngine {
+  private boolean myCodeChanged;
+
+  @Nullable
+  public String getUserNotificationInfo() {
+    if (myCodeChanged) {
+      return "rearranged code";
+    }
+    return null;
+  }
 
   /**
    * Arranges given PSI root contents that belong to the given ranges.
@@ -87,8 +96,9 @@ public class ArrangementEngine {
    * @param file    target PSI root
    * @param ranges  target ranges to use within the given root
    */
-  @SuppressWarnings("MethodMayBeStatic")
   public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable final ArrangementCallback callback) {
+    myCodeChanged = false;
+
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) {
       return;
@@ -143,7 +153,7 @@ public class ArrangementEngine {
   }
 
   @SuppressWarnings("unchecked")
-  private static <E extends ArrangementEntry> void doArrange(Context<E> context) {
+  private <E extends ArrangementEntry> void doArrange(Context<E> context) {
     // The general idea is to process entries bottom-up where every processed group belongs to the same parent. We may not bother
     // with entries text ranges then. We use a list and a stack for achieving that than.
     //
@@ -363,8 +373,8 @@ public class ArrangementEngine {
   }
 
   @SuppressWarnings("unchecked")
-  private static <E extends ArrangementEntry> void doArrange(@NotNull List<ArrangementEntryWrapper<E>> wrappers,
-                                                             @NotNull Context<E> context) {
+  private <E extends ArrangementEntry> void doArrange(@NotNull List<ArrangementEntryWrapper<E>> wrappers,
+                                                      @NotNull Context<E> context) {
     if (wrappers.isEmpty()) {
       return;
     }
@@ -408,7 +418,9 @@ public class ArrangementEngine {
         if (previous != null && previous.equals(previousInitial) || previous == null && previousInitial == null) {
           final int beforeOffset = arrangedWrapper.getStartOffset();
           final int afterOffset = arrangedWrapper.getEndOffset();
-          context.changer.insertSection(context, arranged.get(i), newSectionsInfo, parentWrapper, beforeOffset, afterOffset);
+
+          boolean isInserted = context.changer.insertSection(context, arranged.get(i), newSectionsInfo, parentWrapper, beforeOffset, afterOffset);
+          myCodeChanged = isInserted || myCodeChanged;
           continue;
         }
       }
@@ -416,6 +428,7 @@ public class ArrangementEngine {
       ArrangementEntryWrapper<E> next = i < arranged.size() - 1 ? map.get(arranged.get(i + 1)) : null;
       context.changer.replace(arrangedWrapper, initialWrapper, previous, next, context);
       context.changer.insertSection(context, arranged.get(i), newSectionsInfo, arrangedWrapper, initialWrapper, parentWrapper);
+      myCodeChanged = true;
     }
   }
 
@@ -600,7 +613,7 @@ public class ArrangementEngine {
                                        @NotNull ArrangementEntryWrapper<E> initial,
                                        @Nullable ArrangementEntryWrapper<E> parent);
 
-    protected abstract void insertSection(@NotNull Context<E> context,
+    protected abstract boolean insertSection(@NotNull Context<E> context,
                                           @NotNull E entry,
                                           @NotNull NewSectionInfo<E> newSectionsInfo,
                                           @Nullable ArrangementEntryWrapper<E> parent, int beforeOffset, int afterOffset);
@@ -746,18 +759,22 @@ public class ArrangementEngine {
     }
 
     @Override
-    protected void insertSection(@NotNull Context<E> context,
+    protected boolean insertSection(@NotNull Context<E> context,
                                  @NotNull E entry,
                                  @NotNull NewSectionInfo<E> newSectionsInfo,
                                  ArrangementEntryWrapper<E> parent, int beforeOffset, int afterOffset) {
+      boolean isInserted = false;
       final String afterComment = newSectionsInfo.getEndComment(entry);
       if (afterComment != null) {
         insert(context, afterOffset, "\n" + afterComment);
+        isInserted = true;
       }
       final String beforeComment = newSectionsInfo.getStartComment(entry);
       if (beforeComment != null) {
         insert(context, beforeOffset, beforeComment + "\n");
+        isInserted = true;
       }
+      return isInserted;
     }
   }
 
@@ -886,24 +903,29 @@ public class ArrangementEngine {
     }
 
     @Override
-    protected void insertSection(@NotNull Context<E> context,
+    protected boolean insertSection(@NotNull Context<E> context,
                                  @NotNull E entry,
                                  @NotNull NewSectionInfo<E> newSectionsInfo,
                                  @Nullable ArrangementEntryWrapper<E> parent,
                                  int beforeOffset, int afterOffset) {
+      boolean isInserted = false;
       int diff = 0;
       final String afterComment = newSectionsInfo.getEndComment(entry);
       if (afterComment != null) {
         insert(context, afterOffset, "\n" + afterComment);
         diff += afterComment.length() + 1;
+        isInserted = true;
       }
       final String beforeComment = newSectionsInfo.getStartComment(entry);
       if (beforeComment != null) {
         insert(context, beforeOffset, beforeComment + "\n");
         diff += beforeComment.length() + 1;
+        isInserted = true;
       }
 
       updateAllWrapperRanges(parent, diff);
+
+      return isInserted;
     }
 
     /**
