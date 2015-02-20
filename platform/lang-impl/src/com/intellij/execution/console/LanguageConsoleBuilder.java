@@ -193,8 +193,6 @@ public final class LanguageConsoleBuilder {
       }
       consoleView.addCustomConsoleAction(new UseConsoleInputAction(processInputStateKey));
     }
-
-    consoleView.initComponents();
     return consoleView;
   }
 
