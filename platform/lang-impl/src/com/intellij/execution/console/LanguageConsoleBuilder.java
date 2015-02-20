@@ -107,11 +107,10 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  private void doInitAction(@NotNull LanguageConsoleView consoleView, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
-    ConsoleExecuteAction action = new ConsoleExecuteAction(consoleView, executeActionHandler, executionEnabled);
-    action.registerCustomShortcutSet(action.getShortcutSet(), consoleView.getConsoleEditor().getComponent());
-
-    new ConsoleHistoryController(historyType, null, consoleView, executeActionHandler.getConsoleHistoryModel()).install();
+  private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+    ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
+    setupHistoryController(console, historyType, null, executeActionHandler);
   }
 
   /**
@@ -132,9 +131,18 @@ public final class LanguageConsoleBuilder {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
 
-    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console, handler.getConsoleHistoryModel());
+    return new Pair<AnAction, ConsoleHistoryController>(action, setupHistoryController(console, historyType, historyPersistenceId, handler));
+  }
+
+  @NotNull
+  private static ConsoleHistoryController setupHistoryController(@NotNull LanguageConsoleView console,
+                                                                 @NotNull String historyType,
+                                                                 @Nullable String historyPersistenceId,
+                                                                 @NotNull ConsoleExecuteAction.ConsoleExecuteActionHandler handler) {
+    ConsoleHistoryController historyController = new ConsoleHistoryController(new ConsoleRootType(historyType, null) {}, historyPersistenceId, console);
     historyController.install();
-    return new Pair<AnAction, ConsoleHistoryController>(action, historyController);
+    handler.setConsoleHistoryModel(historyController.getModel());
+    return historyController;
   }
 
   public LanguageConsoleBuilder gutterContentProvider(@Nullable GutterContentProvider value) {
@@ -418,6 +426,7 @@ public final class LanguageConsoleBuilder {
         }
 
         gutterSizeUpdater = new Task(start, end);
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(gutterSizeUpdater);
       }
 
