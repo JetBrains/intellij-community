@@ -852,6 +852,7 @@ public class ControlFlowUtil {
 
   private static PsiReferenceExpression findReferenceTo(PsiElement element, PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
+        && !((PsiReferenceExpression)element).isQualified()
         && ((PsiReferenceExpression)element).resolve() == variable) {
       return (PsiReferenceExpression)element;
     }
