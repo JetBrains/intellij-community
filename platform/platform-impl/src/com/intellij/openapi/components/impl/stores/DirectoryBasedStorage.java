@@ -334,8 +334,8 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     try {
       file.delete(requestor);
     }
-    catch (FileNotFoundException ignored) {
-      throw new ReadOnlyModificationException(file);
+    catch (FileNotFoundException e) {
+      throw new ReadOnlyModificationException(file, e);
     }
     catch (IOException e) {
       throw new StateStorageException(e);

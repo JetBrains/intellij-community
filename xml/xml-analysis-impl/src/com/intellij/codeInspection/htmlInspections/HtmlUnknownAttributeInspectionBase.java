@@ -37,10 +37,14 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
 
+  public HtmlUnknownAttributeInspectionBase() {
+    this("");
+  }
+
   public HtmlUnknownAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
   }
-
+  
   @Override
   @Nls
   @NotNull

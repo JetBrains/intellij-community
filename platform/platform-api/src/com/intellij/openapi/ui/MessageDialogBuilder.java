@@ -107,6 +107,10 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
       return Messages.showDialog(myProject, myMessage, myTitle, new String[]{yesText, noText}, 0, myIcon, myDoNotAskOption) == 0 ? Messages.YES : Messages.NO;
 
     }
+
+    public boolean is() {
+      return show() == Messages.YES;
+    }
   }
 
   public static final class YesNoCancel extends MessageDialogBuilder<YesNoCancel> {

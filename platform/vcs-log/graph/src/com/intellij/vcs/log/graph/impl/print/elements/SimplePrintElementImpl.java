@@ -18,20 +18,19 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.SimplePrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementsManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplePrintElementImpl extends AbstractPrintElement implements SimplePrintElement {
+public class SimplePrintElementImpl extends PrintElementWithGraphElement implements SimplePrintElement {
 
-  @NotNull
-  private final Type myType;
+  @NotNull private final Type myType;
 
   public SimplePrintElementImpl(int rowIndex,
                                 int positionInCurrentRow,
                                 @NotNull Type type,
                                 @NotNull GraphElement graphElement,
-                                @NotNull PrintElementsManager printElementsManager) {
-    super(rowIndex, positionInCurrentRow, graphElement, printElementsManager);
+                                @NotNull PrintElementManager printElementManager) {
+    super(rowIndex, positionInCurrentRow, graphElement, printElementManager);
     myType = type;
   }
 

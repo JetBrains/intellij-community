@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
@@ -49,9 +48,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +63,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.IllegalArgumentException;
-import java.lang.String;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -149,7 +147,7 @@ public abstract class DialogWrapper {
    */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
-  private Insets myButtonMargins = new Insets(2, 16, 2, 16);
+  private Insets myButtonMargins = JBUI.insets(2, 16);
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -196,7 +194,6 @@ public abstract class DialogWrapper {
   }
 
   private ErrorText myErrorText;
-  private int myMaxErrorTextLength;
 
   private final Alarm myErrorTextAlarm = new Alarm();
 
@@ -224,7 +221,7 @@ public abstract class DialogWrapper {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
             if (myErrorText != null && myErrorText.isVisible()) {
-              myActualSize.height -= myErrorText.getHeight() + 10;
+              myActualSize.height -= myErrorText.myLabel.getHeight();
             }
           }
         }
@@ -443,7 +440,7 @@ public abstract class DialogWrapper {
   @Nullable
   protected Border createContentPaneBorder() {
     if (getStyle() == DialogStyle.COMPACT) {
-      return new EmptyBorder(0,0,0,0);
+      return JBUI.Borders.empty();
     }
     return ourDefaultBorder;
   }
@@ -466,6 +463,8 @@ public abstract class DialogWrapper {
         && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
+    } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
+      actions = ArrayUtil.remove(actions, getHelpAction());
     }
 
     if (SystemInfo.isMac) {
@@ -484,7 +483,7 @@ public abstract class DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
-    final Insets insets = SystemInfo.isMacOSLeopard ? new Insets(0, 0, 0, 0) : new Insets(8, 0, 0, 0);
+    final Insets insets = SystemInfo.isMacOSLeopard ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridX = 0;
@@ -564,10 +563,10 @@ public abstract class DialogWrapper {
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
-      CustomLineBorder line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
-      panel.setBorder(new CompoundBorder(line, BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+      Border line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
     } else {
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+      panel.setBorder(JBUI.Borders.emptyTop(8));
     }
 
     return panel;
@@ -607,7 +606,7 @@ public abstract class DialogWrapper {
 
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
-    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+    checkBox.setBorder(JBUI.Borders.emptyRight(20));
 
     return panel;
   }
@@ -1183,6 +1182,25 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
+    myErrorText.myLabel.addComponentListener(new ComponentAdapter() {
+      private int myHeight;
+
+      @Override
+      public void componentResized(ComponentEvent event) {
+        int height = !myErrorText.isVisible() ? 0 : event.getComponent().getHeight();
+        if (height != myHeight) {
+          myHeight = height;
+          myResizeInProgress = true;
+          myErrorText.setMinimumSize(new Dimension(0, height));
+          myPeer.getRootPane().validate();
+          if (myActualSize != null) {
+            myPeer.setSize(myActualSize.width, myActualSize.height + height);
+          }
+          myErrorText.revalidate();
+          myResizeInProgress = false;
+        }
+      }
+    });
 
     final JPanel root = new JPanel(createRootLayout());
     //{
@@ -1241,7 +1259,7 @@ public abstract class DialogWrapper {
       southSection.add(south, BorderLayout.SOUTH);
     }
 
-    new MnemonicHelper().register(root);
+    MnemonicHelper.init(root);
     if (!postponeValidation()) {
       startTrackingValidation();
     }
@@ -1495,7 +1513,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(String title) {
+  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     myPeer.setTitle(title);
   }
 
@@ -1858,7 +1876,7 @@ public abstract class DialogWrapper {
   private Dimension myActualSize = null;
   private String myLastErrorText = null;
 
-  protected final void setErrorText(@Nullable final String text) {
+  protected void setErrorText(@Nullable final String text) {
     if (Comparing.equal(myLastErrorText, text)) {
       return;
     }
@@ -1868,25 +1886,10 @@ public abstract class DialogWrapper {
       @Override
       public void run() {
         final String text = myLastErrorText;
-        if (myActualSize == null && !StringUtil.isEmpty(text)) {
+        if (myActualSize == null && !myErrorText.isVisible()) {
           myActualSize = getSize();
         }
         myErrorText.setError(text);
-        if (text != null && text.length() > myMaxErrorTextLength) {
-          // during the first update, resize only for growing. during a subsequent update,
-          // if error text becomes longer, the min size calculation may not calculate enough size,
-          // so we pack() even though it could cause the dialog to become smaller.
-          if (myMaxErrorTextLength == 0) {
-            updateHeightForErrorText();
-          }
-          myMaxErrorTextLength = text.length();
-          updateHeightForErrorText();
-        }
-        myErrorText.repaint();
-        if (StringUtil.isEmpty(text) && myActualSize != null) {
-          resizeWithAnimation(myActualSize);
-          myMaxErrorTextLength = 0;
-        }
       }
     }, 300, null);
   }
@@ -1900,6 +1903,11 @@ public abstract class DialogWrapper {
       c = c.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  public static DialogWrapper findInstanceFromFocus() {
+    return findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
   }
 
   private void resizeWithAnimation(@NotNull final Dimension size) {
@@ -1935,22 +1943,17 @@ public abstract class DialogWrapper {
     }.start();
   }
 
-  private void updateHeightForErrorText() {
-    Dimension errorSize = myErrorText.getPreferredSize();
-    myErrorText.setMinimumSize(new Dimension(0, errorSize.height));
-    resizeWithAnimation(new Dimension(Math.max(myActualSize.width, errorSize.width + 40), myActualSize.height + errorSize.height + 10));
-  }
-
   private static class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private Dimension myPrefSize;
     private String myText;
 
     private ErrorText() {
       setLayout(new BorderLayout());
+      myLabel.setIcon(AllIcons.Actions.Lightning);
+      myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      pane.setBorder(IdeBorderFactory.createEmptyBorder());
+      pane.setBorder(JBUI.Borders.empty());
       pane.setBackground(null);
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);
@@ -1958,27 +1961,12 @@ public abstract class DialogWrapper {
     }
 
     public void setError(String text) {
-      final Dimension oldSize = getPreferredSize();
       myText = text;
-
-      if (text == null) {
-        myLabel.setText("");
-        myLabel.setIcon(null);
-        setVisible(false);
-        setBorder(null);
-      }
-      else {
-        myLabel
-          .setText(XmlStringUtil.wrapInHtml("<font color='#" + ColorUtil.toHex(JBColor.RED) + "'><left>" + text + "</left></b></font>"));
-        myLabel.setIcon(AllIcons.Actions.Lightning);
-        myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
-        setVisible(true);
-      }
-
-      final Dimension size = getPreferredSize();
-      if (oldSize.height < size.height) {
-        revalidate();
-      }
+      myLabel.setBounds(0, 0, 0, 0);
+      setVisible(text != null);
+      myLabel.setText(text != null
+                      ? "<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'><left>" + text + "</left></b></font></html>"
+                      : "");
     }
 
     public boolean shouldBeVisible() {
@@ -1987,11 +1975,6 @@ public abstract class DialogWrapper {
 
     public boolean isTextSet(@Nullable String text) {
       return StringUtil.equals(text, myText);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return myPrefSize == null ? myLabel.getPreferredSize() : myPrefSize;
     }
   }
 
@@ -2123,7 +2106,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private static enum ErrorPaintingType {DOT, SIGN, LINE}
+  private enum ErrorPaintingType {DOT, SIGN, LINE}
 
   public enum DialogStyle {NO_STYLE, COMPACT}
 }

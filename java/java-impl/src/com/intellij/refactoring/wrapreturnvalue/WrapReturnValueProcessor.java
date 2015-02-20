@@ -31,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
@@ -157,7 +158,30 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       }, ","));
       returnTypeBuffer.append('>');
     }
+    else if (myDelegateField != null) {
+      final PsiType type = myDelegateField.getType();
+      final PsiType returnType = myMethod.getReturnType();
+      final PsiClass containingClass = myDelegateField.getContainingClass();
+      final PsiType inferredType = getInferredType(type, returnType, containingClass, myMethod);
+      if (inferredType != null) {
+        returnTypeBuffer.append("<").append(inferredType.getCanonicalText()).append(">");
+      }
+    }
     return returnTypeBuffer.toString();
+  }
+
+  protected static PsiType getInferredType(PsiType type, PsiType returnType, PsiClass containingClass, PsiMethod method) {
+    if (containingClass != null && containingClass.getTypeParameters().length == 1) {
+      final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
+        .inferTypeArguments(containingClass.getTypeParameters(), new PsiType[]{type}, new PsiType[]{returnType}, PsiUtil.getLanguageLevel(
+          method));
+      final PsiTypeParameter typeParameter = containingClass.getTypeParameters()[0];
+      final PsiType substituted = substitutor.substitute(typeParameter);
+      if (substituted != null && !typeParameter.equals(PsiUtil.resolveClassInClassTypeOnly(substituted))) {
+        return substituted;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -198,7 +222,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             final PsiParameter parameter = parameters[0];
             final PsiType parameterType = parameter.getType();
             for (PsiType returnType : returnTypes) {
-              if (!TypeConversionUtil.isAssignable(parameterType, returnType)) {
+              if (getInferredType(parameterType, returnType, existingClass, myMethod) == null && !TypeConversionUtil.isAssignable(parameterType, returnType)) {
                 continue constr;
               }
             }

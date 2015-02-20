@@ -8,30 +8,16 @@ import org.jetbrains.debugger.values.FunctionValue;
  * is available.
  */
 public interface ObjectProperty extends Variable {
-  /**
-   * @return whether property described as 'writable'
-   */
   boolean isWritable();
 
-  /**
-   * @return property getter value (function or undefined) or null if not an accessor property
-   */
   @Nullable
   FunctionValue getGetter();
 
-  /**
-   * @return property setter value (function or undefined) or null if not an accessor property
-   */
   @Nullable
   FunctionValue getSetter();
 
-  /**
-   * @return whether property described as 'configurable'
-   */
+
   boolean isConfigurable();
 
-  /**
-   * @return whether property described as 'enumerable'
-   */
   boolean isEnumerable();
 }

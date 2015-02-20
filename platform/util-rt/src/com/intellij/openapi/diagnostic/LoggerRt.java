@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -82,10 +81,9 @@ public abstract class LoggerRt {
   public abstract void error(@Nullable @NonNls final String message, @Nullable final Throwable t);
 
   private static class JavaFactory implements Factory {
-    private final LogManager myManager = LogManager.getLogManager();
-
+    @Override
     public LoggerRt getInstance(@NotNull @NonNls final String category) {
-      final Logger logger = myManager.getLogger(category);
+      final Logger logger = Logger.getLogger(category);
       return new LoggerRt() {
         @Override
         public void info(@Nullable @NonNls final String message, @Nullable final Throwable t) {
@@ -123,6 +121,7 @@ public abstract class LoggerRt {
       myError.setAccessible(true);
     }
 
+    @Override
     public LoggerRt getInstance(@NotNull @NonNls final String category) {
       try {
         final Object logger = myGetInstance.invoke(null, category);

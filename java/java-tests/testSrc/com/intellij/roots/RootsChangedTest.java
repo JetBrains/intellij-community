@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,17 +59,17 @@ public class RootsChangedTest extends ModuleTestCase {
   }
 
   public void testEventsAfterFileModifications() throws Exception {
-    final File root = FileUtil.createTempDirectory(getTestName(true), "");
+    File root = new File(FileUtil.getTempDirectory());
+
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdirs());
-    final VirtualFile vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+    VirtualFile vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+    assertNotNull(vDir1);
 
-    final Module moduleA = createModule("a.iml");
-    final ModifiableRootModel model = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+    Module moduleA = createModule("a.iml");
     myModuleRootListener.reset();
-    
-    model.addContentEntry(vDir1.getUrl());
-    model.commit();
+
+    ModuleRootModificationUtil.addContentRoot(moduleA, vDir1.getPath());
 
     assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
@@ -79,8 +79,9 @@ public class RootsChangedTest extends ModuleTestCase {
     assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
  
     File dir2 = new File(root, "dir2");
-    dir2.mkdirs();
-    final VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
+    assertTrue(dir2.mkdirs());
+    VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
+    assertNotNull(vDir2);
 
     vDir2.rename(null, "dir1");
     assertEventsCount(1);
@@ -93,8 +94,11 @@ public class RootsChangedTest extends ModuleTestCase {
  
     // and event if it is moved, it's still a root
     File subdir = new File(root, "subdir");
-    subdir.mkdirs();
-    vDir2.move(null, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subdir));
+    assertTrue(subdir.mkdirs());
+    VirtualFile vSubdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subdir);
+    assertNotNull(vSubdir);
+
+    vDir2.move(null, vSubdir);
     assertEventsCount(0);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }

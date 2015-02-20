@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,26 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
 /**
  * @author nik
  */
 public class ComponentSerializationUtil {
-  public static Class getStateClass(final Class<? extends PersistentStateComponent> aClass) {
+  @NotNull
+  public static <S> Class<S> getStateClass(@NotNull Class<? extends PersistentStateComponent> aClass) {
     TypeVariable<Class<PersistentStateComponent>> variable = PersistentStateComponent.class.getTypeParameters()[0];
-    return ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(variable, aClass));
+    Type type = ReflectionUtil.resolveVariableInHierarchy(variable, aClass);
+    assert type != null : aClass;
+    @SuppressWarnings("unchecked") Class<S> result = (Class<S>)ReflectionUtil.getRawType(type);
+    return result;
   }
 
   public static <S> void loadComponentState(@NotNull PersistentStateComponent<S> configuration, @Nullable Element element) {
     if (element != null) {
       Class<S> stateClass = getStateClass(configuration.getClass());
-      S state = XmlSerializer.deserialize(element, stateClass);
+      @SuppressWarnings("unchecked") S state = stateClass.equals(Element.class) ? (S)element : XmlSerializer.deserialize(element, stateClass);
       if (state != null) {
         configuration.loadState(state);
       }

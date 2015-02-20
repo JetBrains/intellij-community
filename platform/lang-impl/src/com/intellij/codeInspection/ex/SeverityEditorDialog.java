@@ -325,12 +325,24 @@ public class SeverityEditorDialog extends DialogWrapper {
     final ListModel listModel = myOptionsList.getModel();
     final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
-      final SeverityBasedTextAttributes info =
-        (SeverityBasedTextAttributes)listModel.getElementAt(i);
+      SeverityBasedTextAttributes info = (SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity());
       if (!mySeverityRegistrar.isDefaultSeverity(info.getSeverity())) {
         infoTypes.remove(info);
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
+        final boolean exists = mySeverityRegistrar.getSeverity(info.getSeverity().getName()) != null;
+        if (exists) {
+          info.getType().getAttributesKey().getDefaultAttributes().setErrorStripeColor(stripeColor);
+        } else {
+          HighlightInfoType.HighlightInfoTypeImpl type = info.getType();
+          TextAttributesKey key = type.getAttributesKey();
+          final TextAttributes defaultAttributes = key.getDefaultAttributes().clone();
+          defaultAttributes.setErrorStripeColor(stripeColor);
+          key = TextAttributesKey.createTextAttributesKey(key.getExternalName(), defaultAttributes);
+          type = new HighlightInfoType.HighlightInfoTypeImpl(type.getSeverity(null), key);
+          info = new SeverityBasedTextAttributes(info.getAttributes(), type);
+        }
+
         mySeverityRegistrar.registerSeverity(info, stripeColor != null ? stripeColor : LightColors.YELLOW);
       }
     }

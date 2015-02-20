@@ -1365,7 +1365,9 @@ public class PyUtil {
         final VirtualFile baseDir = project.getBaseDir();
         final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
-        final String content = (template != null) ? template.getText(fileTemplateManager.getDefaultProperties(project)) : null;
+        final Properties properties = fileTemplateManager.getDefaultProperties();
+        properties.setProperty("NAME", FileUtil.getNameWithoutExtension(file.getName()));
+        final String content = (template != null) ? template.getText(properties) : null;
         psi = PyExtractSuperclassHelper.placeFile(project,
                                                   StringUtil.notNullize(
                                                     file.getParent(),

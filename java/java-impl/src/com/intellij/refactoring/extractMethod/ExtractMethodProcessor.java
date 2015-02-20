@@ -21,6 +21,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
@@ -46,6 +47,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -142,8 +144,9 @@ public class ExtractMethodProcessor implements MatchProvider {
                                 String helpId) {
     myProject = project;
     myEditor = editor;
-    if (elements.length != 1 || elements.length == 1 && !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements;
+    if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
+      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression 
+                   ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
       myEnclosingBlockStatement = null;
     }
     else {
@@ -634,7 +637,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
+      .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());
     if (nullableAnnotationClass != null) {
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
@@ -668,7 +671,11 @@ public class ExtractMethodProcessor implements MatchProvider {
       final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
         @Override
         public String fun(String propertyName) {
-          return PropertyUtil.suggestGetterName(propertyName, myReturnType);
+          if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
+            LOG.info(propertyName + "; " + myExpression);
+            return null;
+          }
+          return GenerateMembersUtil.suggestGetterName(propertyName, myReturnType, myProject);
         }
       }));
       ContainerUtil.addIfNotNull(nameByComment, getters);
@@ -1706,14 +1713,17 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (duplicates != null && !duplicates.isEmpty()) {
       return true;
     }
-    final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
-    duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
-    if (duplicates != null && !duplicates.isEmpty()) {
-      myDuplicates      = duplicates;
-      myExtractedMethod = suggester.getExtractedMethod();
-      myMethodCall      = suggester.getMethodCall();
-      myVariableDatum   = suggester.getVariableData();
-      return null;
+
+    if (myExtractedMethod != null) {
+      final ExtractMethodSignatureSuggester suggester = new ExtractMethodSignatureSuggester(myProject, myExtractedMethod, myMethodCall, myVariableDatum);
+      duplicates = suggester.getDuplicates(myExtractedMethod, myMethodCall);
+      if (duplicates != null && !duplicates.isEmpty()) {
+        myDuplicates      = duplicates;
+        myExtractedMethod = suggester.getExtractedMethod();
+        myMethodCall      = suggester.getMethodCall();
+        myVariableDatum   = suggester.getVariableData();
+        return null;
+      }
     }
     return false;
   }

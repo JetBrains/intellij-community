@@ -17,7 +17,13 @@ public abstract class EvaluateContextBase<VALUE_MANAGER extends ValueManager> im
   @NotNull
   @Override
   public Promise<EvaluateResult> evaluate(@NotNull String expression) {
-    return evaluate(expression, null);
+    return evaluate(expression, null, false);
+  }
+
+  @NotNull
+  @Override
+  public Promise<EvaluateResult> evaluate(@NotNull String expression, boolean enableBreak) {
+    return evaluate(expression, null, true);
   }
 
   @NotNull
@@ -32,7 +38,7 @@ public abstract class EvaluateContextBase<VALUE_MANAGER extends ValueManager> im
 
   @NotNull
   @Override
-  public abstract Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, EvaluateContextAdditionalParameter> additionalContext);
+  public abstract Promise<EvaluateResult> evaluate(@NotNull String expression, @Nullable Map<String, Object> additionalContext, boolean enableBreak);
 
   @NotNull
   public final VALUE_MANAGER getValueManager() {
@@ -42,6 +48,7 @@ public abstract class EvaluateContextBase<VALUE_MANAGER extends ValueManager> im
   @NotNull
   @Override
   public Promise<?> refreshOnDone(@NotNull Promise<?> promise) {
+    //noinspection unchecked
     return promise.then(valueManager.getClearCachesTask());
   }
 }

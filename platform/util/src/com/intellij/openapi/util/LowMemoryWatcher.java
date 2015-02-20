@@ -126,4 +126,14 @@ public class LowMemoryWatcher {
     ourInstances.remove(this);
   }
 
+  /**
+   * LowMemoryWatcher maintains a background thread where all the handlers are invoked.
+   * In server environments, this thread may run indefinitely and prevent the class loader from
+   * being gc-ed. Thus it's necessary to invoke this method to stop that thread and let the classes be garbage-collected.
+   */
+  public static void stopAll() {
+    ourExecutor.shutdown();
+    ourInstances.clear();
+  }
+
 }

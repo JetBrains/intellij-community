@@ -22,6 +22,7 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionListener;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
@@ -49,6 +50,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
   @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
+  @NonNls private static final String SERVERS_TOOL_WINDOW_POPUP = "RemoteServersViewPopup";
 
   @NonNls
   private static final String HELP_ID = "Application_Servers_tool_window";
@@ -112,6 +114,11 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         return true;
       }
     }.installOn(myTree);
+
+    DefaultActionGroup popupActionGroup = new DefaultActionGroup();
+    popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
+    popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_POPUP));
+    PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
   private void onSelectionChanged() {
@@ -277,7 +284,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     myBuilder.select(ServersTreeStructure.RemoteServerNode.class, new TreeVisitor<ServersTreeStructure.RemoteServerNode>() {
       @Override
       public boolean visit(@NotNull ServersTreeStructure.RemoteServerNode node) {
-        return node.getValue().equals(connection.getServer());
+        return isServerNodeMatch(node, connection);
       }
     }, null, false);
   }
@@ -289,13 +296,42 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
           @Override
           public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
-            AbstractTreeNode parent = node.getParent();
-            return parent instanceof ServersTreeStructure.RemoteServerNode &&
-                   ((ServersTreeStructure.RemoteServerNode)parent).getValue().equals(connection.getServer())
-                   && node.getValue().getName().equals(deploymentName);
+            return isDeploymentNodeMatch(node, connection, deploymentName);
           }
         }, null, false);
       }
     });
+  }
+
+  public void select(@NotNull final ServerConnection<?> connection,
+                     @NotNull final String deploymentName,
+                     @NotNull final String logName) {
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        myBuilder.select(ServersTreeStructure.DeploymentLogNode.class, new TreeVisitor<ServersTreeStructure.DeploymentLogNode>() {
+          @Override
+          public boolean visit(@NotNull ServersTreeStructure.DeploymentLogNode node) {
+            AbstractTreeNode parent = node.getParent();
+            return parent instanceof ServersTreeStructure.DeploymentNodeImpl
+                   && isDeploymentNodeMatch((ServersTreeStructure.DeploymentNodeImpl)parent, connection, deploymentName)
+                   && node.getValue().second.equals(logName);
+          }
+        }, null, false);
+      }
+    });
+  }
+
+  private static boolean isServerNodeMatch(@NotNull final ServersTreeStructure.RemoteServerNode node,
+                                           @NotNull final ServerConnection<?> connection) {
+    return node.getValue().equals(connection.getServer());
+  }
+
+  private static boolean isDeploymentNodeMatch(@NotNull ServersTreeStructure.DeploymentNodeImpl node,
+                                               @NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
+    AbstractTreeNode parent = node.getParent();
+    return parent instanceof ServersTreeStructure.RemoteServerNode &&
+           isServerNodeMatch((ServersTreeStructure.RemoteServerNode)parent, connection)
+           && node.getValue().getName().equals(deploymentName);
   }
 }

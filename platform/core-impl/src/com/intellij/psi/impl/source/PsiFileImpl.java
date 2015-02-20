@@ -119,9 +119,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return loadTreeElement();
     }
 
-    synchronized (PsiLock.LOCK) {
-      return derefTreeElement();
-    }
+    return null;
   }
 
   private FileElement derefTreeElement() {
@@ -984,10 +982,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       if (tree == null) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        IElementType contentElementType = getContentElementType();
-        if (!(contentElementType instanceof IStubFileElementType)) {
+        IStubFileElementType contentElementType = getElementTypeForStubBuilder();
+        if (contentElementType == null) {
           VirtualFile vFile = getVirtualFile();
-          String message = "ContentElementType: " + contentElementType + "; file: " + this +
+          String message = "ContentElementType: " + getContentElementType() + "; file: " + this +
                            "\n\t" + "Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = " + Boolean.TRUE.equals(getUserData(BUILDING_STUB)) +
                            "\n\t" + "getTreeElement() = " + getTreeElement() +
                            "\n\t" + "vFile instanceof VirtualFileWithId = " + (vFile instanceof VirtualFileWithId) +
@@ -996,7 +994,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           throw new AssertionError(message);
         }
 
-        StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
+        StubElement currentStubTree = contentElementType.getBuilder().buildStubTree(this);
         if (currentStubTree == null) {
           throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
         }

@@ -50,7 +50,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -528,68 +527,77 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   public boolean introduceStrategy(final Project project, final Editor editor, PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      final PsiElement[] elements = CodeInsightUtil
-        .findStatementsInRange(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-      if (elements.length > 0) {
-        final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
-        if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
-          return false;
-        }
-        final List<PsiMethod> enclosingMethods = getEnclosingMethods(Util.getContainingMethod(elements[0]));
-        if (enclosingMethods.isEmpty()) {
-          return false;
-        }
+      final PsiElement[] elements = CodeInsightUtil.findStatementsInRange(file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      return introduceStrategy(project, editor, file, elements);
+    }
+    return false;
+  }
 
-        final PsiFile copy = PsiFileFactory.getInstance(project)
-          .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+  @VisibleForTesting
+  public boolean introduceStrategy(final Project project, final Editor editor, PsiFile file, final PsiElement[] elements) {
+    if (elements.length > 0) {
+      final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+      if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
+        return false;
+      }
+      final List<PsiMethod> enclosingMethods = getEnclosingMethods(Util.getContainingMethod(elements[0]));
+      if (enclosingMethods.isEmpty()) {
+        return false;
+      }
 
-        final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
-                                                                                elements[0].getTextRange().getStartOffset(),
+      final PsiFile copy = PsiFileFactory.getInstance(project)
+        .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+
+      final PsiExpression exprInRange = CodeInsightUtil.findExpressionInRange(copy, elements[0].getTextRange().getStartOffset(),
+                                                                              elements[elements.length - 1].getTextRange().getEndOffset());
+      final PsiElement[] elementsCopy = exprInRange != null
+                                        ? new PsiElement[] {exprInRange}
+                                        : CodeInsightUtil.findStatementsInRange(copy, elements[0].getTextRange().getStartOffset(),
                                                                                 elements[elements.length - 1].getTextRange().getEndOffset());
-        final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy);
-        try {
-          if (!processor.prepare()) return false;
-          processor.showDialog();
+      final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy);
+      try {
+        if (!processor.prepare()) return false;
+        processor.showDialog();
 
-          //provide context for generated method to check exceptions compatibility
-          final PsiMethod emptyMethod = JavaPsiFacade.getElementFactory(project)
-            .createMethodFromText(processor.generateEmptyMethod("name").getText(), elements[0]);
-          final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod);
-          if (types.isEmpty()) {
-            return false;
-          }
+        //provide context for generated method to check exceptions compatibility
+        final PsiMethod emptyMethod = JavaPsiFacade.getElementFactory(project)
+          .createMethodFromText(processor.generateEmptyMethod("name").getText(), elements[0]);
+        final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod);
+        if (types.isEmpty()) {
+          return false;
+        }
 
-          if (types.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-            final PsiType next = types.iterator().next();
-            functionalInterfaceSelected(next, enclosingMethods, project, editor, processor, elements);
+        if (types.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+          final PsiType next = types.iterator().next();
+          functionalInterfaceSelected(next, enclosingMethods, project, editor, processor, elements);
+        }
+        else {
+          final Map<PsiClass, PsiType> classes = new LinkedHashMap<PsiClass, PsiType>();
+          for (PsiType type : types) {
+            classes.put(PsiUtil.resolveClassInType(type), type);
           }
-          else {
-            final Map<PsiClass, PsiType> classes = new LinkedHashMap<PsiClass, PsiType>();
-            for (PsiType type : types) {
-              classes.put(PsiUtil.resolveClassInType(type), type);
-            }
-            final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
-            final String methodSignature =
-              PsiFormatUtil.formatMethod(emptyMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
-            final PsiType returnType = emptyMethod.getReturnType();
-            LOG.assertTrue(returnType != null);
-            final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
-            NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
-                                              new PsiElementProcessor<PsiClass>() {
-                                                @Override
-                                                public boolean execute(@NotNull PsiClass psiClass) {
-                                                  functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor, processor, elements);
-                                                  return true;
-                                                }
-                                              }).showInBestPositionFor(editor);
-            return true;
-          }
-
+          final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
+          final String methodSignature =
+            PsiFormatUtil.formatMethod(emptyMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE);
+          final PsiType returnType = emptyMethod.getReturnType();
+          LOG.assertTrue(returnType != null);
+          final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
+          NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
+                                            new PsiElementProcessor<PsiClass>() {
+                                              @Override
+                                              public boolean execute(@NotNull PsiClass psiClass) {
+                                                functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor, processor,
+                                                                            elements);
+                                                return true;
+                                              }
+                                            }).showInBestPositionFor(editor);
           return true;
         }
-        catch (IncorrectOperationException ignore) {}
-        catch (PrepareFailedException ignore) {}
+
+        return true;
       }
+      catch (IncorrectOperationException ignore) {}
+      catch (PrepareFailedException ignore) {}
     }
     return false;
   }
@@ -615,7 +623,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   final PsiType selectedType,
                                                   final MyExtractMethodProcessor processor, 
                                                   final PsiElement[] elements) {
-    final PsiElement commonParent = elements.length > 1 ? PsiTreeUtil.findCommonParent(elements) : elements[0].getParent();
+    final PsiElement commonParent = elements.length > 1 ? PsiTreeUtil.findCommonParent(elements) 
+                                                        : PsiTreeUtil.getParentOfType(elements[0].getParent(), PsiCodeBlock.class, false);
     if (commonParent == null) {
       LOG.error("Should have common parent:" + Arrays.toString(elements));
       return;
@@ -623,7 +632,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     final RangeMarker marker = editor.getDocument().createRangeMarker(commonParent.getTextRange());
 
     final PsiElement[] copyElements = processor.getElements();
-    final PsiElement containerCopy = copyElements.length > 1 ? PsiTreeUtil.findCommonParent(copyElements) : copyElements[0].getParent();
+    final PsiElement containerCopy = copyElements.length > 1 ? PsiTreeUtil.findCommonParent(copyElements)
+                                                             : PsiTreeUtil.getParentOfType(copyElements[0].getParent(), PsiCodeBlock.class, false);
     if (containerCopy == null) {
       LOG.error("Should have common parent:" + Arrays.toString(copyElements));
       return;
@@ -644,6 +654,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         LOG.assertTrue(method != null);
         final String interfaceMethodName = method.getName();
         processor.setMethodName(interfaceMethodName);
+
+        if (copyElements.length == 1) {
+          copyElements[0].putUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL, true);
+        }
+
         processor.doExtract();
 
         final PsiMethod extractedMethod = processor.getExtractedMethod();
@@ -701,6 +716,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
     @Override
     public boolean isStatic() {
+      return false;
+    }
+
+    @Override
+    protected boolean isFoldingApplicable() {
       return false;
     }
 

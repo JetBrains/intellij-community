@@ -53,6 +53,11 @@ public class LoggingHandlerImpl implements LoggingHandler, Disposable {
   }
 
   @Override
+  public void clear() {
+    myConsole.clear();
+  }
+
+  @Override
   public void dispose() {
 
   }

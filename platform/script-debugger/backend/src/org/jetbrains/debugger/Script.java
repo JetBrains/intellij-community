@@ -25,6 +25,7 @@ public interface Script extends UserDataHolderEx, HasUrl {
   @Nullable
   SourceMap getSourceMap();
 
+  @Override
   @NotNull
   Url getUrl();
 

@@ -449,7 +449,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
 
-    String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext();) {\n" +
+    /*String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext();) {\n" +
                  "      String str = iterator.next();\n" +
                  "      System.out.println( str );\n" +
                  "}";
@@ -470,7 +470,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       "for with foreach",
       expectedResult20,
       actualResult
-    );
+    );*/
 
     String s58 = "class A {\n" +
                  "  static Set<String> b_MAP = new HashSet<String>();\n" +
@@ -2041,7 +2041,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  public void _testReplaceFinalModifier() throws Exception {
+  public void testReplaceFinalModifier() throws Exception {
     String s1 = "class Foo {\n" +
                 "  void foo(final int i,final int i2, final int i3) {\n" +
                 "     final int x = 5;\n" +
@@ -2050,7 +2050,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s2 = "final '_type 'var = '_init?";
     String s3 = "$type$ $var$ = $init$";
 
-    String expected = "2 = 1;\nint b = a;\nb2 = 3;";
+    String expected = "class Foo {\n" +
+                      "  void foo(int i, int i2, int i3) {\n" +
+                      "     int x = 5\n" +
+                      "  }\n" +
+                      "}";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
 
@@ -2165,5 +2169,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       expectedResult,
       actualResult
     );
+  }
+
+  public void testReplaceAnnotation() {
+    String in = "@SuppressWarnings(\"ALL\")\n" +
+                "class A {}";
+    String what = "@SuppressWarnings(\"ALL\")";
+
+    final String by1 = "";
+    assertEquals("class A {}", replacer.testReplace(in, what, by1, options, false));
+
+    final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
+    assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
+                 "class A {}", replacer.testReplace(in, what, by2, options, false));
   }
 }

@@ -597,7 +597,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final String qualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
     @NonNls String getter = null;
     if (myGenerateAccessors) {
-      getter = PropertyUtil.suggestGetterName(field);
+      getter = GenerateMembersUtil.suggestGetterName(field);
     } else {
       final PsiMethod fieldGetter = PropertyUtil.findPropertyGetter(sourceClass, field.getName(), false, false);
       if (fieldGetter != null && isInMovedElement(fieldGetter)) {
@@ -607,7 +607,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     @NonNls String setter = null;
     if (myGenerateAccessors) {
-      setter = PropertyUtil.suggestSetterName(field);
+      setter = GenerateMembersUtil.suggestSetterName(field);
     } else {
       final PsiMethod fieldSetter = PropertyUtil.findPropertySetter(sourceClass, field.getName(), false, false);
       if (fieldSetter != null && isInMovedElement(fieldSetter)) {
@@ -871,11 +871,11 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     private boolean hasGetter(final PsiField field) {
-      return hasGetterOrSetter(sourceClass.findMethodsBySignature(PropertyUtil.generateGetterPrototype(field), false));
+      return hasGetterOrSetter(sourceClass.findMethodsBySignature(GenerateMembersUtil.generateGetterPrototype(field), false));
     }
 
     private boolean hasSetter(final PsiField field) {
-      return hasGetterOrSetter(sourceClass.findMethodsBySignature(PropertyUtil.generateSetterPrototype(field), false));
+      return hasGetterOrSetter(sourceClass.findMethodsBySignature(GenerateMembersUtil.generateSetterPrototype(field), false));
     }
 
     protected abstract boolean hasGetterOrSetter(final PsiMethod[] getters);

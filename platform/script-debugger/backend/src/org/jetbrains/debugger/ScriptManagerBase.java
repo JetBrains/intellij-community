@@ -1,6 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.Url;
@@ -12,8 +11,9 @@ import org.jetbrains.concurrency.PromiseManager;
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   @SuppressWarnings("unchecked")
   private final PromiseManager<ScriptBase, String> scriptSourceLoader = new PromiseManager<ScriptBase, String>(ScriptBase.class) {
+    @NotNull
     @Override
-    public Promise<String> load(@NotNull ScriptBase script, @NotNull Promise<String> result) {
+    public Promise<String> load(@NotNull ScriptBase script) {
       //noinspection unchecked
       return loadScriptSource((SCRIPT)script);
     }
@@ -44,7 +44,7 @@ public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements Sc
 
   @Nullable
   @Override
-  public ActionCallback getScriptSourceMapLoadCallback(@NotNull Script script) {
+  public Promise<Void> getScriptSourceMapPromise(@NotNull Script script) {
     return null;
   }
 

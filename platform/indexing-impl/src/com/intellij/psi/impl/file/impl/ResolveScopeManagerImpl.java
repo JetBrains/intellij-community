@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -145,15 +144,17 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
         if (forcedScope != null) {
           return forcedScope;
         }
-        final PsiElement context = containingFile.getContext();
-        if (context == null) {
-          return GlobalSearchScope.allScope(myProject);
-        }
-        return getResolveScope(context);
       }
 
-      contextFile = containingFile != null ? FileContextUtil.getContextFile(containingFile) : null;
-      if (contextFile == null) {
+      if (containingFile != null) {
+        PsiElement context = containingFile.getContext();
+        if (context != null) {
+          return getResolveScope(context);
+        }
+      }
+
+      contextFile = containingFile;
+      if (containingFile == null) {
         return GlobalSearchScope.allScope(myProject);
       }
       else if (contextFile instanceof FileResolveScopeProvider) {

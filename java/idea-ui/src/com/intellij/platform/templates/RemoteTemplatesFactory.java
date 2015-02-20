@@ -49,7 +49,7 @@ import java.util.zip.ZipInputStream;
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 
-  private static final String URL = "https://download.jetbrains.com/idea/project_templates/";
+  private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
@@ -92,9 +92,9 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(@NotNull String group, WizardContext context) {
+  public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
     Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
-    return templates.toArray(new ProjectTemplate[templates.size()]);
+    return templates.isEmpty() ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
   @NotNull
@@ -105,24 +105,22 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   private static MultiMap<String, ArchivedProjectTemplate> create(@NotNull Element element) throws IOException, JDOMException {
-    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.createSmartList();
+    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.create();
     for (ArchivedProjectTemplate template : createGroupTemplates(element)) {
       map.putValue(template.getCategory(), template);
     }
     return map;
   }
 
-  @SuppressWarnings("unchecked")
   private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement) {
-    List<Element> elements = groupElement.getChildren(TEMPLATE);
-    return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ArchivedProjectTemplate>() {
+    return ContainerUtil.mapNotNull(groupElement.getChildren(TEMPLATE), new NullableFunction<Element, ArchivedProjectTemplate>() {
       @Override
       public ArchivedProjectTemplate fun(final Element element) {
-        if (!checkRequiredPlugins(element)) return null;
-        String type = element.getChildText("moduleType");
+        if (!checkRequiredPlugins(element)) {
+          return null;
+        }
 
-        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-
+        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(element.getChildText("moduleType"));
         final String path = element.getChildText("path");
         final String description = element.getChildTextTrim("description");
         String name = element.getChildTextTrim("name");
@@ -163,12 +161,11 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     }
 
     @Override
-    public <T> void getStream(@NotNull final StreamConsumer<T> consumer) throws IOException {
-      HttpRequests.request(URL + myPath).connect(new HttpRequests.RequestProcessor<Void>() {
+    public <T> T processStream(@NotNull final StreamProcessor<T> consumer) throws IOException {
+      return HttpRequests.request(URL + myPath).connect(new HttpRequests.RequestProcessor<T>() {
         @Override
-        public Void process(@NotNull HttpRequests.Request request) throws IOException {
-          consumeZipStream(consumer, new ZipInputStream(request.getInputStream()));
-          return null;
+        public T process(@NotNull HttpRequests.Request request) throws IOException {
+          return consumeZipStream(consumer, new ZipInputStream(request.getInputStream()));
         }
       });
     }

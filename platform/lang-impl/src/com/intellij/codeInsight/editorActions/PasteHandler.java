@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -48,11 +49,15 @@ import com.intellij.util.Producer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
@@ -72,6 +77,9 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   @Override
   public void execute(final Editor editor, final DataContext dataContext, @Nullable final Producer<Transferable> producer) {
+    final Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(producer);
+    if (transferable == null) return;
+    
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
 
     final Document document = editor.getDocument();
@@ -79,19 +87,21 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
 
-    DataContext context = dataContext;
-    if (producer != null) {
-      context = new DataContext() {
-        @Override
-        public Object getData(@NonNls String dataId) {
-          return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? producer : dataContext.getData(dataId);
-        }
-      };
-    }
+    DataContext context = new DataContext() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? new Producer<Transferable>() {
+          @Nullable
+          @Override
+          public Transferable produce() {
+            return transferable;
+          }
+        } : dataContext.getData(dataId);
+      }
+    };
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()
-        || editor.getCaretModel().getCaretCount() > 1) {
+    if (project == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, context);
       }
@@ -106,6 +116,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
 
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     document.startGuardedBlockChecking();
     try {
       for (PasteProvider provider : Extensions.getExtensions(EP_NAME)) {
@@ -114,13 +125,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
           return;
         }
       }
-      doPaste(editor, project, file, document, producer);
+      doPaste(editor, project, file, document, transferable);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
     }
     finally {
       document.stopGuardedBlockChecking();
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 
@@ -128,145 +140,131 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
                               final Project project,
                               final PsiFile file,
                               final Document document,
-                              final Producer<Transferable> producer) {
-    Transferable content = null;
+                              @NotNull final Transferable content) {
+    CopyPasteManager.getInstance().stopKillRings();
+    
+    String text = null;
+    try {
+      text = (String)content.getTransferData(DataFlavor.stringFlavor);
+    }
+    catch (Exception e) {
+      editor.getComponent().getToolkit().beep();
+    }
+    if (text == null) return;
 
-    if (producer != null) {
-      content = producer.produce();
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+
+    final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
+    final Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
+
+    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
+      if (!data.isEmpty()) {
+        extraData.put(processor, data);
+        allValues.addAll(data);
+      }
+    }
+
+    text = TextBlockTransferable.convertLineSeparators(editor, text, allValues);
+
+    final CaretModel caretModel = editor.getCaretModel();
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final int col = caretModel.getLogicalPosition().column;
+
+    // There is a possible case that we want to perform paste while there is an active selection at the editor and caret is located
+    // inside it (e.g. Ctrl+A is pressed while caret is not at the zero column). We want to insert the text at selection start column
+    // then, hence, inserted block of text should be indented according to the selection start as well.
+    final int blockIndentAnchorColumn;
+    final int caretOffset = caretModel.getOffset();
+    if (selectionModel.hasSelection() && caretOffset >= selectionModel.getSelectionStart()) {
+      blockIndentAnchorColumn = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).column;
     }
     else {
-      CopyPasteManager manager = CopyPasteManager.getInstance();
-      if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
-        content = manager.getContents();
-        if (content != null) {
-          manager.stopKillRings();
-        }
-      }
+      blockIndentAnchorColumn = col;
     }
 
-    if (content != null) {
-      String text = null;
-      try {
-        text = (String)content.getTransferData(DataFlavor.stringFlavor);
-      }
-      catch (Exception e) {
-        editor.getComponent().getToolkit().beep();
-      }
-      if (text == null) return;
+    // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
 
-      final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    RawText rawText = RawText.fromTransferable(content);
+    String newText = text;
+    for (CopyPastePreProcessor preProcessor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+      newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
+    }
+    int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
+    text = newText;
 
-      final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<CopyPastePostProcessor, List<? extends TextBlockTransferableData>>();
-      Collection<TextBlockTransferableData> allValues = new ArrayList<TextBlockTransferableData>();
-      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-        List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-        if (!data.isEmpty()) {
-          extraData.put(processor, data);
-          allValues.addAll(data);
+    if (LanguageFormatting.INSTANCE.forContext(file) == null && indentOptions != CodeInsightSettings.NO_REFORMAT) {
+      indentOptions = CodeInsightSettings.INDENT_BLOCK;
+    }
+
+    final String _text = text;
+    ApplicationManager.getApplication().runWriteAction(
+      new Runnable() {
+        @Override
+        public void run() {
+          EditorModificationUtil.insertStringAtCaret(editor, _text, false, true);
         }
       }
+    );
 
-      text = TextBlockTransferable.convertLineSeparators(editor, text, allValues);
+    int length = text.length();
+    int offset = caretModel.getOffset() - length;
+    if (offset < 0) {
+      length += offset;
+      offset = 0;
+    }
+    final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
 
-      final CaretModel caretModel = editor.getCaretModel();
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      final int col = caretModel.getLogicalPosition().column;
+    caretModel.moveToOffset(bounds.getEndOffset());
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    selectionModel.removeSelection();
 
-      // There is a possible case that we want to perform paste while there is an active selection at the editor and caret is located
-      // inside it (e.g. Ctrl+A is pressed while caret is not at the zero column). We want to insert the text at selection start column
-      // then, hence, inserted block of text should be indented according to the selection start as well.
-      final int blockIndentAnchorColumn;
-      final int caretOffset = caretModel.getOffset();
-      if (selectionModel.hasSelection() && caretOffset >= selectionModel.getSelectionStart()) {
-        blockIndentAnchorColumn = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).column;
-      }
-      else {
-        blockIndentAnchorColumn = col;
-      }
+    final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
+    for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
+      //noinspection unchecked
+      e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue());
+    }
 
-      // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
+    boolean pastedTextContainsWhiteSpacesOnly =
+      CharArrayUtil.shiftForward(document.getCharsSequence(), bounds.getStartOffset(), " \n\t") >= bounds.getEndOffset();
 
-      RawText rawText = RawText.fromTransferable(content);
-      String newText = text;
-      for (CopyPastePreProcessor preProcessor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
-        newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
-      }
-      int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
-      text = newText;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (!pastedTextContainsWhiteSpacesOnly && (virtualFile == null || !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile))) {
+      final int indentOptions1 = indentOptions;
 
-      if (LanguageFormatting.INSTANCE.forContext(file) == null && indentOptions != CodeInsightSettings.NO_REFORMAT) {
-        indentOptions = CodeInsightSettings.INDENT_BLOCK;
-      }
-
-      final String _text = text;
       ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           @Override
           public void run() {
-            EditorModificationUtil.insertStringAtCaret(editor, _text, false, true);
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+            switch (indentOptions1) {
+              case CodeInsightSettings.INDENT_BLOCK:
+                if (!indented.get()) {
+                  indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
+                }
+                break;
+
+              case CodeInsightSettings.INDENT_EACH_LINE:
+                if (!indented.get()) {
+                  indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+                }
+                break;
+
+              case CodeInsightSettings.REFORMAT_BLOCK:
+                indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
+                reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+                break;
+            }
           }
         }
       );
+    }
 
-      int length = text.length();
-      int offset = caretModel.getOffset() - length;
-      if (offset < 0) {
-        length += offset;
-        offset = 0;
-      }
-      final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
-
+    if (bounds.isValid()) {
       caretModel.moveToOffset(bounds.getEndOffset());
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       selectionModel.removeSelection();
-
-      final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
-      for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
-        //noinspection unchecked
-        e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue());
-      }
-
-      boolean pastedTextContainsWhiteSpacesOnly =
-        CharArrayUtil.shiftForward(document.getCharsSequence(), bounds.getStartOffset(), " \n\t") >= bounds.getEndOffset();
-
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (!pastedTextContainsWhiteSpacesOnly && (virtualFile == null || !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile))) {
-        final int indentOptions1 = indentOptions;
-
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            @Override
-            public void run() {
-              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-              switch (indentOptions1) {
-                case CodeInsightSettings.INDENT_BLOCK:
-                  if (!indented.get()) {
-                    indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
-                  }
-                  break;
-
-                case CodeInsightSettings.INDENT_EACH_LINE:
-                  if (!indented.get()) {
-                    indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
-                  }
-                  break;
-
-                case CodeInsightSettings.REFORMAT_BLOCK:
-                  indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
-                  reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
-                  break;
-              }
-            }
-          }
-        );
-      }
-
-      if (bounds.isValid()) {
-        caretModel.moveToOffset(bounds.getEndOffset());
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        selectionModel.removeSelection();
-        editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
-      }
+      editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
     }
   }
 

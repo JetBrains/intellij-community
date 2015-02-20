@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,19 @@ public class JBFont extends Font {
     }
 
     return new JBFont(scaled);
-
   }
 
+  public JBFont asBold() {
+    return deriveFont(BOLD, getSize());
+  }
 
+  public JBFont asItalic() {
+    return deriveFont(ITALIC, getSize());
+  }
+
+  public JBFont asPlain() {
+    return deriveFont(PLAIN, getSize());
+  }
 
   @Override
   public JBFont deriveFont(int style, float size) {

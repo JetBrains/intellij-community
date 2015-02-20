@@ -26,13 +26,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.generate.tostring.util.StringUtil;
 
 /**
  * @author peter
@@ -102,7 +102,7 @@ public class EditContractIntention extends BaseIntentionAction {
     try {
       ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
       manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      if (StringUtil.isNotEmpty(newContract)) {
+      if (!StringUtil.isEmpty(newContract)) {
         PsiAnnotation mockAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@Foo(\"" + newContract + "\")", null);
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, file,
                                    mockAnno.getParameterList().getAttributes());

@@ -103,10 +103,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     new IpnbHeading6CellAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift 6")), myIpnbFilePanel);
   }
 
-  public JScrollPane getScrollPane() {
-    return myScrollPane;
-  }
-
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
@@ -317,8 +313,21 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
                                public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
                                  if (myCellTypeCombo == null) return;
                                  updateCellTypeCombo(ipnbPanel);
+                                 updateScrollPosition(ipnbPanel);
                                }
                              });
+  }
+
+  public void updateScrollPosition(@NotNull final IpnbPanel ipnbPanel) {
+    final Rectangle rect = myIpnbFilePanel.getVisibleRect();
+
+    final Rectangle cellBounds = ipnbPanel.getBounds();
+    if (cellBounds.getY() <= rect.getY()) {
+      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y);
+    }
+    if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
+      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - rect.height + cellBounds.height);
+    }
   }
 
   private void updateCellTypeCombo(@NotNull final IpnbPanel ipnbPanel) {
@@ -360,18 +369,15 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   @Override
   public FileEditorState getState(@NotNull FileEditorStateLevel level) {
     final int index = getIpnbFilePanel().getSelectedIndex();
-    final IpnbEditablePanel cell = getIpnbFilePanel().getSelectedCell();
-    final int top = cell != null ? cell.getTop() : 0;
     final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
     long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
-    return new IpnbEditorState(modificationStamp, index, top);
+    return new IpnbEditorState(modificationStamp, index);
   }
 
   @Override
   public void setState(@NotNull FileEditorState state) {
     final int index = ((IpnbEditorState)state).getSelectedIndex();
-    final int position = ((IpnbEditorState)state).getSelectedTop();
-    myIpnbFilePanel.setInitialPosition(index, position);
+    myIpnbFilePanel.setInitialPosition(index);
   }
 
   @Override

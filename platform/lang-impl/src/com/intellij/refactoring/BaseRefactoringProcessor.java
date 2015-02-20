@@ -161,7 +161,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       @Override
       public void run() {
         try {
-          refUsages.set(ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo[]>() {
+          refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<UsageInfo[]>() {
             @Override
             public UsageInfo[] compute() {
               return findUsages();
@@ -548,12 +548,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
         @Override
         public void run() {
           doRun();
         }
-      }, myProject.getDisposed());
+      });
     }
     else {
       doRun();

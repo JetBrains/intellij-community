@@ -15,15 +15,20 @@
  */
 package com.intellij.openapi.components.impl;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.mock.MockFileSystem;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +57,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(JMock.class)
 public class PathMacroManagerTest {
   private static final String APP_HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
-  private static final String USER_HOME = FileUtil.toSystemIndependentName(StringUtil.trimEnd(SystemProperties.getUserHome(), "/"));
+  private static final String USER_HOME = StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
 
   private Module myModule;
   private ProjectEx myProject;
@@ -60,8 +65,7 @@ public class PathMacroManagerTest {
   private Mockery context;
 
   protected ApplicationEx myApplication;
-  private IFileSystem myOldFileSystem;
-  protected MockFileSystem myFileSystem;
+  private Disposable myRootDisposable = Disposer.newDisposable();
 
   @Before
   public final void setupApplication() throws Exception {
@@ -93,18 +97,33 @@ public class PathMacroManagerTest {
         });
       }
     });
-  }
 
-  @Before
-  public final void setupFileSystem() {
-    myOldFileSystem = FileSystem.FILE_SYSTEM;
-    myFileSystem = new MockFileSystem();
-    FileSystem.FILE_SYSTEM = myFileSystem;
+    final ExtensionsArea area = Extensions.getRootArea();
+    final String epName = PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getName();
+    if (!area.hasExtensionPoint(epName)) {
+      area.registerExtensionPoint(epName, "com.intellij.openapi.application.PathMacroFilter");
+      Disposer.register(myRootDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          area.unregisterExtensionPoint(epName);
+        }
+      });
+    }
+
+    final IFileSystem myOldFileSystem = FileSystem.FILE_SYSTEM;
+    FileSystem.FILE_SYSTEM = new MockFileSystem();
+
+    Disposer.register(myRootDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        FileSystem.FILE_SYSTEM = myOldFileSystem;
+      }
+    });
   }
 
   @After
   public final void restoreFilesystem() {
-    FileSystem.FILE_SYSTEM = myOldFileSystem;
+    Disposer.dispose(myRootDisposable);
   }
 
   private void setUpMocks(final String projectPath) {
@@ -213,7 +232,7 @@ public class PathMacroManagerTest {
       String[] split = s.split(" -> ");
       String path = split[0];
       String replaced = split[1];
-      assertEquals(replaced, map.substitute(path, true));
+      assertEquals("For " + path, replaced, map.substitute(path, true));
     }
   }
 

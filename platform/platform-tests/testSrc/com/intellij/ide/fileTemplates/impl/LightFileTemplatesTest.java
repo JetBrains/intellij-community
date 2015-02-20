@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 
 import java.io.File;
@@ -105,15 +106,50 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       assertNotNull(FileTemplateManager.getInstance(project).getTemplate("foo.txt"));
     }
     finally {
-      if (project != null) {
-        ProjectManager.getInstance().closeProject(project);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Disposer.dispose(project);
-          }
-        });
-      }
+      closeProject(project);
+    }
+  }
+
+  public void testSurviveOnProjectReopen() throws Exception {
+    File foo = PlatformTestCase.createTempDir("foo");
+    Project reloaded = null;
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    try {
+      assertNotNull(project);
+      FileTemplateManager manager = FileTemplateManager.getInstance(project);
+      manager.setCurrentScheme(manager.getProjectScheme());
+      FileTemplate template = manager.getTemplate(TEST_TEMPLATE_TXT);
+      assertEquals(HI_THERE, template.getText());
+      String newText = "good bye";
+      template.setText(newText);
+      assertEquals(newText, manager.getTemplate(TEST_TEMPLATE_TXT).getText());
+
+      PlatformTestUtil.saveProject(project);
+      closeProject(project);
+
+      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo.getPath());
+      assertNotNull(reloaded);
+      manager = FileTemplateManager.getInstance(reloaded);
+      assertEquals(manager.getProjectScheme(), manager.getCurrentScheme());
+      //manager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+      //manager.setCurrentScheme(manager.getProjectScheme()); // enforce reloading
+      assertEquals(newText, manager.getTemplate(TEST_TEMPLATE_TXT).getText());
+    }
+    finally {
+      closeProject(project);
+      closeProject(reloaded);
+    }
+  }
+
+  private static void closeProject(final Project project) {
+    if (project != null && !project.isDisposed()) {
+      ProjectManager.getInstance().closeProject(project);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(project);
+        }
+      });
     }
   }
 

@@ -87,10 +87,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         final ASTNode astNode = myCurrentChild;
         AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, myCurrentChild));
 
-        if (myNode.getElementType() == JavaElementType.FIELD) {
+        if (myNode.getElementType() == JavaElementType.FIELD
+            || myNode.getElementType() == JavaElementType.DECLARATION_STATEMENT
+            || myNode.getElementType() == JavaElementType.LOCAL_VARIABLE)
+        {
           alignmentStrategyToUse = myAlignmentStrategy;
         }
-
 
         myCurrentChild = processChild(result, astNode, alignmentStrategyToUse, childWrap, myCurrentIndent, myCurrentOffset);
         if (astNode != myCurrentChild && myCurrentChild != null) {

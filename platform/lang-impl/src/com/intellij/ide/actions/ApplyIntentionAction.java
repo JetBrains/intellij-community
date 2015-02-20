@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public class ApplyIntentionAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
     ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText());
   }
 

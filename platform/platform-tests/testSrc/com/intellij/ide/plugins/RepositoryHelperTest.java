@@ -68,6 +68,7 @@ public class RepositoryHelperTest {
       "      <change-notes>...</change-notes>\n" +
       "      <depends>com.intellij.javaee</depends>\n" +
       "      <rating>3.5</rating>\n" +
+      "      <download-url>plugin.zip</download-url>\n" +
       "    </idea-plugin>\n" +
       "    <idea-plugin downloads=\"6182\" size=\"131276\" date=\"1386612959000\" url=\"\">\n" +
       "      <name>tc Server Support</name>\n" +
@@ -79,6 +80,7 @@ public class RepositoryHelperTest {
       "      <change-notes>...</change-notes>\n" +
       "      <depends>com.intellij.javaee</depends>\n" +
       "      <rating>00</rating>\n" +
+      "      <downloadUrl>plugin.zip</downloadUrl>\n" +
       "    </idea-plugin>" +
       "  </category>\n" +
       "</plugin-repository>");

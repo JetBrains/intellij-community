@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -38,11 +39,11 @@ public class DarculaTextBorder implements Border, UIResource {
       vOffset += 2;
     }
     if (DarculaTextFieldUI.isSearchFieldWithHistoryPopup(c)) {
-      return new InsetsUIResource(vOffset, 7 + 16 + 3, vOffset, 7 + 16);
+      return JBUI.insets(vOffset, 7 + 16 + 3, vOffset, 7 + 16).asUIResource();
     } else if (DarculaTextFieldUI.isSearchField(c)) {
-      return new InsetsUIResource(vOffset, 4 + 16 + 3, vOffset, 7 + 16);
+      return JBUI.insets(vOffset, 4 + 16 + 3, vOffset, 7 + 16).asUIResource();
     } else {
-      return new InsetsUIResource(vOffset, 7, vOffset, 7);
+      return JBUI.insets(vOffset, 7, vOffset, 7).asUIResource();
     }
   }
 

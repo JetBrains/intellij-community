@@ -30,7 +30,7 @@ public interface RowInfo<CommitId> {
   CommitId getOneOfHeads();
 
   @NotNull
-  Collection<PrintElement> getPrintElements();
+  Collection<? extends PrintElement> getPrintElements();
 
   @NotNull
   RowType getRowType();

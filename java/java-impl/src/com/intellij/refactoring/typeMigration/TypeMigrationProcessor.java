@@ -171,7 +171,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @Override
   public void performRefactoring(UsageInfo[] usages) {
     for (PsiElement element : myRoot) {
-      if (element instanceof PsiVariable) {
+      if (element instanceof PsiVariable && ((PsiVariable)element).getTypeElement() != null) {
         ((PsiVariable)element).normalizeDeclaration();
       }
     }

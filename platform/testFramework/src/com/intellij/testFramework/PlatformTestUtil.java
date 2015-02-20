@@ -45,11 +45,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -68,8 +64,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.*;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -814,6 +808,11 @@ public class PlatformTestUtil {
     return homePath;
   }
 
+  public static String getPlatformTestDataPath() {
+    return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+  }
+
+
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return new Comparator<AbstractTreeNode>() {
       @Override
@@ -837,20 +836,7 @@ public class PlatformTestUtil {
   }
 
   public static void tryGcSoftlyReachableObjects() {
-    ReferenceQueue<Object> q = new ReferenceQueue<Object>();
-    SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
-    List<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
-    for (int i = 0; i < 100; i++) {
-      if (q.poll() != null) {
-        break;
-      }
-      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
-    }
-  }
-
-  private static int useReference(SoftReference<Object> ref) {
-    Object o = ref.get();
-    return o == null ? 0 : Math.abs(o.hashCode()) % 10;
+    GCUtil.tryGcSoftlyReachableObjects();
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {

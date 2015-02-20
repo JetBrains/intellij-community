@@ -9,6 +9,7 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
   public void testTypeMayBeWeakened() { doTest(); }
   public void testNumberAdderDemo() { doTest(); }
   public void testAutoClosableTest() { doTest(); }
+  public void testLambda() { doTest(); }
 
   @Override
   protected String[] getEnvironmentClasses() {
@@ -33,6 +34,11 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
       "@FunctionalInterface " +
       "public interface Function<T, R> {" +
       "    R apply(T t);" +
+      "}",
+      "package java.util.function;\n" +
+      "@FunctionalInterface\n" +
+      "public interface Supplier<T> {\n" +
+      "    T get();\n" +
       "}"
     };
   }

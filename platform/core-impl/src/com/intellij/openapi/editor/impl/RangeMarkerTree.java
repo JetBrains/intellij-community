@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,8 +152,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
-    private static final int EXPAND_TO_LEFT_FLAG = VALID_FLAG+1;
-    private static final int EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG+1;
+    private static final byte EXPAND_TO_LEFT_FLAG = VALID_FLAG<<1;
+    private static final byte EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG<<1;
 
     public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
                   @NotNull T key,

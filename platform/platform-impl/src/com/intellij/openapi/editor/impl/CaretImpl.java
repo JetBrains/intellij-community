@@ -234,15 +234,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   }
 
   @Override
-  public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
-    moveCaretRelatively(columnShift, lineShift, withSelection, false, scrollToCaret);
-  }
-
-  void moveCaretRelatively(final int columnShift,
-                                  final int lineShift,
-                                  final boolean withSelection,
-                                  final boolean blockSelection,
-                                  final boolean scrollToCaret) {
+  public void moveCaretRelatively(final int columnShift, final int lineShift, final boolean withSelection, final boolean scrollToCaret) {
     assertIsDispatchThread();
     if (mySkipChangeRequests) {
       return;
@@ -256,12 +248,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
       @Override
       public void run() {
-        SelectionModelImpl selectionModel = myEditor.getSelectionModel();
+        int oldOffset = myOffset;
         final int leadSelectionOffset = getLeadSelectionOffset();
         final VisualPosition leadSelectionPosition = getLeadSelectionPosition();
-        LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
-                                              ? selectionModel.getBlockStart()
-                                              : getLogicalPosition();
         EditorSettings editorSettings = myEditor.getSettings();
         VisualPosition visualCaret = getVisualPosition();
 
@@ -370,49 +359,29 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         }
 
         if (withSelection) {
-          if (blockSelection && !supportsMultipleCarets()) {
-            selectionModel.setBlockSelection(blockSelectionStart, getLogicalPosition());
+          if (selectToDocumentStart) {
+            setSelection(leadSelectionPosition, leadSelectionOffset, myEditor.offsetToVisualPosition(0), 0);
+          }
+          else if (pos.line >= myEditor.getVisibleLineCount()) {
+            int endOffset = document.getTextLength();
+            if (leadSelectionOffset < endOffset) {
+              setSelection(leadSelectionPosition, leadSelectionOffset, myEditor.offsetToVisualPosition(endOffset), endOffset);
+            }
           }
           else {
-            if (selectToDocumentStart) {
-              if (supportsMultipleCarets()) {
-                setSelection(leadSelectionPosition, leadSelectionOffset, myEditor.offsetToVisualPosition(0), 0);
+            int selectionStartToUse = leadSelectionOffset;
+            VisualPosition selectionStartPositionToUse = leadSelectionPosition;
+            if (isUnknownDirection() || oldOffset > getSelectionStart() && oldOffset < getSelectionEnd()) {
+              if (getOffset() > leadSelectionOffset ^ getSelectionStart() < getSelectionEnd()) {
+                selectionStartToUse = getSelectionEnd();
+                selectionStartPositionToUse = getSelectionEndPosition();
               }
               else {
-                setSelection(leadSelectionOffset, 0);
+                selectionStartToUse = getSelectionStart();
+                selectionStartPositionToUse = getSelectionStartPosition();
               }
             }
-            else if (pos.line >= myEditor.getVisibleLineCount()) {
-              int endOffset = document.getTextLength();
-              if (leadSelectionOffset < endOffset) {
-                if (supportsMultipleCarets()) {
-                  setSelection(leadSelectionPosition, leadSelectionOffset, myEditor.offsetToVisualPosition(endOffset), endOffset);
-                }
-                else {
-                  setSelection(leadSelectionOffset, endOffset);
-                }
-              }
-            }
-            else {
-              int selectionStartToUse = leadSelectionOffset;
-              VisualPosition selectionStartPositionToUse = leadSelectionPosition;
-              if (isUnknownDirection()) {
-                if (getOffset() > leadSelectionOffset ^ getSelectionStart() < getSelectionEnd()) {
-                  selectionStartToUse = getSelectionEnd();
-                  selectionStartPositionToUse = getSelectionEndPosition();
-                }
-                else {
-                  selectionStartToUse = getSelectionStart();
-                  selectionStartPositionToUse = getSelectionStartPosition();
-                }
-              }
-              if (supportsMultipleCarets()) {
-                setSelection(selectionStartPositionToUse, selectionStartToUse, getVisualPosition(), getOffset());
-              }
-              else {
-                setSelection(selectionStartToUse, getVisualPosition(), getOffset());
-              }
-            }
+            setSelection(selectionStartPositionToUse, selectionStartToUse, getVisualPosition(), getOffset());
           }
         }
         else {
@@ -497,7 +466,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
     EditorSettings editorSettings = myEditor.getSettings();
 
-    if (!editorSettings.isVirtualSpace() && line < lineCount && !myEditor.getSelectionModel().hasBlockSelection()) {
+    if (!editorSettings.isVirtualSpace() && line < lineCount) {
       int lineEndOffset = doc.getLineEndOffset(line);
       final LogicalPosition endLinePosition = myEditor.offsetToLogicalPosition(lineEndOffset);
       int lineEndColumnNumber = endLinePosition.column;
@@ -606,7 +575,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
 
     if (!oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
-      CaretEvent event = new CaretEvent(myEditor, supportsMultipleCarets() ? this : null, oldCaretPosition, myLogicalCaret);
+      CaretEvent event = new CaretEvent(myEditor, this, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
       }
@@ -615,10 +584,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       }
     }
     return null;
-  }
-
-  private boolean supportsMultipleCarets() {
-    return myEditor.getCaretModel().supportsMultipleCarets();
   }
 
   private void updateOffsetsFromLogicalPosition() {
@@ -641,12 +606,17 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     if (Math.abs(myCaretInfo.y - oldCaretInfo.y) <= 2 * lineHeight) {
       int minY = Math.min(oldCaretInfo.y, myCaretInfo.y);
       int maxY = Math.max(oldCaretInfo.y + oldCaretInfo.height, myCaretInfo.y + myCaretInfo.height);
+      if (myEditor.myUseNewRendering) myEditor.myView.invalidateLines(myEditor.yPositionToVisibleLine(minY), myEditor.yPositionToVisibleLine(maxY) - 1);
       content.repaintEditorComponent(0, minY, updateWidth, maxY - minY);
       gutter.repaint(0, minY, gutter.getWidth(), maxY - minY);
     }
     else {
+      if (myEditor.myUseNewRendering) myEditor.myView.invalidateLines(myEditor.yPositionToVisibleLine(oldCaretInfo.y), 
+                                                                         myEditor.yPositionToVisibleLine(oldCaretInfo.y + oldCaretInfo.height));
       content.repaintEditorComponent(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
       gutter.repaint(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
+      if (myEditor.myUseNewRendering) myEditor.myView.invalidateLines(myEditor.yPositionToVisibleLine(myCaretInfo.y),
+                                                                         myEditor.yPositionToVisibleLine(myCaretInfo.y + myCaretInfo.height));
       content.repaintEditorComponent(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
       gutter.repaint(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
     }
@@ -725,7 +695,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     requestRepaint(oldInfo);
 
     if (fireListeners && !oldPosition.equals(myLogicalCaret)) {
-      CaretEvent event = new CaretEvent(myEditor, supportsMultipleCarets() ? this : null, oldPosition, myLogicalCaret);
+      CaretEvent event = new CaretEvent(myEditor, this, oldPosition, myLogicalCaret);
       myEditor.getCaretModel().fireCaretPositionChanged(event);
     }
   }
@@ -828,7 +798,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
     // and height in accordance with the number of occupied visual lines.
     VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
-    int y = myEditor.visualPositionToXY(visualPosition).y;
+    int y = myEditor.myUseNewRendering ? myEditor.visibleLineToY(visualPosition.line) :  myEditor.visualPositionToXY(visualPosition).y;
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
     List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
@@ -897,7 +867,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
       newOffset = Math.min(newOffset, document.getTextLength());
 
-      if (supportsMultipleCarets() && myOffset != startOffset) {
+      if (myOffset != startOffset) {
         LogicalPosition pos = myEditor.offsetToLogicalPosition(newOffset);
         moveToLogicalPosition(new LogicalPosition(pos.line, pos.column + myVirtualSpaceOffset), // retain caret in the virtual space
                             performSoftWrapAdjustment, null, true);
@@ -1214,8 +1184,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         validateContext(true);
 
-        myEditor.getSelectionModel().removeBlockSelection();
-
         int textLength = doc.getTextLength();
         if (startOffset < 0 || startOffset > textLength) {
           LOG.error("Wrong startOffset: " + startOffset + ", textLength=" + textLength);
@@ -1326,7 +1294,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       @Override
       public void run() {
         validateContext(true);
-        myEditor.getSelectionModel().removeBlockSelection();
         int caretOffset = getOffset();
         RangeMarker marker = mySelectionMarker;
         if (marker != null) {
@@ -1488,7 +1455,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   }
 
   private boolean isVirtualSelectionEnabled() {
-    return myEditor.isColumnMode() && supportsMultipleCarets();
+    return myEditor.isColumnMode();
   }
 
   boolean hasVirtualSelection() {

@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="script-debugger-backend" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
+    <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
-

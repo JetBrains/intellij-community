@@ -27,8 +27,9 @@ public abstract class ScriptManagerBaseEx<SCRIPT extends ScriptBase> extends Scr
     return idToScript.get(id);
   }
 
-  public void clear() {
+  public void clear(@NotNull DebugEventListener listener) {
     idToScript.clear();
+    listener.scriptsCleared();
   }
 
   @Nullable

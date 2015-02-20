@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -145,6 +145,46 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     myQueue.setTrackUiActivity(true);
+
+    project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+
+      public void enteredDumbMode() {
+      }
+
+      public void exitDumbMode() {
+        // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!project.isDisposed())
+              dumbModeFinished(project);
+          }
+        });
+      }
+    });
+  }
+
+  private void dumbModeFinished(Project project) {
+    VirtualFile[] files = getOpenFiles();
+    for (VirtualFile file : files) {
+      Set<FileEditorProvider> providers = new HashSet<FileEditorProvider>();
+      List<EditorWithProviderComposite> composites = getEditorComposites(file);
+      for (EditorWithProviderComposite composite : composites) {
+        providers.addAll(Arrays.asList(composite.getProviders()));
+      }
+      FileEditorProvider[] newProviders = FileEditorProviderManager.getInstance().getProviders(project, file);
+      if (newProviders.length > providers.size()) {
+        List<FileEditorProvider> toOpen = new ArrayList<FileEditorProvider>(Arrays.asList(newProviders));
+        toOpen.removeAll(providers);
+        // need to open additional non dumb-aware editors
+        for (EditorWithProviderComposite composite : composites) {
+          for (FileEditorProvider provider : toOpen) {
+            FileEditor editor = provider.createEditor(myProject, file);
+            composite.addEditor(editor, provider);
+          }
+        }
+      }
+    }
   }
 
   public void initDockableContentFactory() {
@@ -243,11 +283,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (myPanels == null) {
       synchronized (myInitLock) {
         if (myPanels == null) {
-          myPanels = new JPanel(new BorderLayout());
-          myPanels.setOpaque(false);
-          myPanels.setBorder(new MyBorder());
+          final JPanel panel = new JPanel(new BorderLayout());
+          panel.setOpaque(false);
+          panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
-          myPanels.add(mySplitters, BorderLayout.CENTER);
+          panel.add(mySplitters, BorderLayout.CENTER);
+          myPanels = panel;
         }
       }
     }
@@ -268,7 +309,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     @NotNull
     @Override
     public Insets getBorderInsets(Component c) {
-      return (Insets)JBInsets.NONE.clone();
+      return JBUI.emptyInsets();
     }
 
     @Override
@@ -761,7 +802,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (compositeRef.isNull()) {
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.
-      newProviders = getAvailableProviders(file);
+      newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file);
       if (newProviders.length == 0) {
         return Pair.create(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY);
       }
@@ -957,22 +998,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         editor.setState(state);
       }
     }
-  }
-
-  @NotNull
-  private FileEditorProvider[] getAvailableProviders(@NotNull VirtualFile file) {
-    final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
-    if (DumbService.getInstance(myProject).isDumb()) {
-      final List<FileEditorProvider> dumbAware = ContainerUtil.findAll(providers, new Condition<FileEditorProvider>() {
-        @Override
-        public boolean value(FileEditorProvider fileEditorProvider) {
-          return DumbService.isDumbAware(fileEditorProvider);
-        }
-      });
-      providers = dumbAware.toArray(new FileEditorProvider[dumbAware.size()]);
-    }
-    return providers;
   }
 
   @NotNull
@@ -1823,8 +1848,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   private class MyRootsListener extends ModuleRootAdapter {
+    private boolean myScheduled;
+    
     @Override
     public void rootsChanged(ModuleRootEvent event) {
+      if (myScheduled) return;
+      myScheduled = true;
+      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+        @Override
+        public void run() {
+          myScheduled = false;
+          handleRootChange();
+        }
+      });
+    }
+
+    private void handleRootChange() {
       EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
 
       for (EditorWindow eachWindow : getWindows()) {

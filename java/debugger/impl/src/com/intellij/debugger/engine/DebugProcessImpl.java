@@ -58,6 +58,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -71,7 +72,9 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -366,10 +369,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    *
    * @param suspendContext
    * @param stepThread
+   * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
    * @param depth
    * @param hint may be null
    */
-  protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
+  protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
+                        RequestHint hint) {
     if (stepThread == null) {
       return;
     }
@@ -380,7 +385,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       deleteStepRequests(stepThreadReference);
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-      StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, StepRequest.STEP_LINE, depth);
+      StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
         final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
         DebuggerSettings settings = DebuggerSettings.getInstance();
@@ -567,7 +572,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     }
     catch (IOException e) {
-      throw new ExecutionException(processError(e), e);
+      throw new ExecutionException(processIOException(e, DebuggerBundle.getAddressDisplayName(myConnection)), e);
     }
     catch (IllegalConnectorArgumentsException e) {
       throw new ExecutionException(processError(e), e);
@@ -826,29 +831,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     else if (e instanceof VMDisconnectedException) {
       message = DebuggerBundle.message("error.vm.disconnected");
     }
-    else if (e instanceof UnknownHostException) {
-      message = DebuggerBundle.message("error.unknown.host") + ":\n" + e.getLocalizedMessage();
-    }
     else if (e instanceof IOException) {
-      IOException e1 = (IOException)e;
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        buf.append(DebuggerBundle.message("error.cannot.open.debugger.port")).append(" : ");
-        buf.append(e1.getClass().getName()).append(" ");
-        final String localizedMessage = e1.getLocalizedMessage();
-        if (localizedMessage != null && !localizedMessage.isEmpty()) {
-          buf.append('"');
-          buf.append(localizedMessage);
-          buf.append('"');
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(e1);
-        }
-        message = buf.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
-      }
+      message = processIOException((IOException)e, null);
     }
     else if (e instanceof ExecutionException) {
       message = e.getLocalizedMessage();
@@ -858,6 +842,38 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (LOG.isDebugEnabled()) {
         LOG.debug(e);
       }
+    }
+    return message;
+  }
+
+  @NotNull
+  public static String processIOException(@NotNull IOException e, @Nullable String address) {
+    if (e instanceof UnknownHostException) {
+      return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    String message;
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+      if (address != null) {
+        buf.append(" (").append(address).append(")");
+      }
+      buf.append(": ");
+      buf.append(e.getClass().getName()).append(" ");
+      final String localizedMessage = e.getLocalizedMessage();
+      if (!StringUtil.isEmpty(localizedMessage)) {
+        buf.append('"');
+        buf.append(localizedMessage);
+        buf.append('"');
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
+      message = buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
     }
     return message;
   }
@@ -873,7 +889,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myDebuggerManagerThread == null) {
       synchronized (this) {
         if (myDebuggerManagerThread == null) {
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable);
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, getProject());
         }
       }
     }
@@ -1408,8 +1424,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private class StepOutCommand extends ResumeCommand {
-    public StepOutCommand(SuspendContextImpl suspendContext) {
+    private final int myStepSize;
+
+    public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
       super(suspendContext);
+      myStepSize = stepSize;
     }
 
     @Override
@@ -1424,7 +1443,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (rvWatcher != null) {
         rvWatcher.enable(thread.getThreadReference());
       }
-      doStep(suspendContext, thread, StepRequest.STEP_OUT, hint);
+      doStep(suspendContext, thread, myStepSize, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
   }
@@ -1434,14 +1453,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final MethodFilter mySmartStepFilter;
     @Nullable
     private final StepIntoBreakpoint myBreakpoint;
+    private final int myStepSize;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter) {
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
+                           int stepSize) {
       super(suspendContext);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
       mySmartStepFilter = methodFilter;
       myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter ?
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addStepIntoBreakpoint(((BreakpointStepMethodFilter)methodFilter)) :
         null;
+      myStepSize = stepSize;
     }
 
     @Override
@@ -1467,17 +1489,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myBreakpoint.createRequest(suspendContext.getDebugProcess());
         myRunToCursorBreakpoint = myBreakpoint;
       }
-      doStep(suspendContext, stepThread, StepRequest.STEP_INTO, hint);
+      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
   }
 
   private class StepOverCommand extends ResumeCommand {
     private final boolean myIsIgnoreBreakpoints;
+    private final int myStepSize;
 
-    public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
+    public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
       super(suspendContext);
       myIsIgnoreBreakpoints = ignoreBreakpoints;
+      myStepSize = stepSize;
     }
 
     @Override
@@ -1499,7 +1523,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         rvWatcher.enable(stepThread.getThreadReference());
       }
 
-      doStep(suspendContext, stepThread, StepRequest.STEP_OVER, hint);
+      doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_OVER, hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
@@ -1533,9 +1557,26 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();
       myRunToCursorBreakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
-      myRunToCursorBreakpoint.createRequest(context.getDebugProcess());
+      DebugProcessImpl debugProcess = context.getDebugProcess();
+      myRunToCursorBreakpoint.createRequest(debugProcess);
       DebugProcessImpl.this.myRunToCursorBreakpoint = myRunToCursorBreakpoint;
-      super.contextAction();
+
+      if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
+        super.contextAction();
+      }
+      else {
+        myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
+        DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+          @Override
+          public void run() {
+            SourcePosition position = myRunToCursorBreakpoint.getSourcePosition();
+            String name = position != null ? position.getFile().getName() : "<No File>";
+            Messages.showErrorDialog(
+              DebuggerBundle.message("error.running.to.cursor.no.executable.code", name, myRunToCursorBreakpoint.getLineIndex()+1),
+              UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
+          }
+        });
+      }
     }
   }
 
@@ -1926,15 +1967,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
-    return new StepOverCommand(suspendContext, ignoreBreakpoints);
+    return createStepOverCommand(suspendContext, ignoreBreakpoints, StepRequest.STEP_LINE);
+  }
+
+  public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
+    return new StepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
   }
 
   public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext) {
-    return new StepOutCommand(suspendContext);
+    return createStepOutCommand(suspendContext, StepRequest.STEP_LINE);
+  }
+
+  public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
+    return new StepOutCommand(suspendContext, stepSize);
   }
 
   public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter) {
-    return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
+    return createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
+  }
+
+  public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter,
+                                             int stepSize) {
+    return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
   }
 
   public ResumeCommand createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,

@@ -23,7 +23,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> IS_STRING = new Condition<PsiElement>() {
@@ -39,7 +39,7 @@ public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
 
 
   public FormatPostfixTemplate() {
-    super("format", "String.format(expr)", JAVA_PSI_INFO, IS_STRING);
+    super("format", "String.format(expr)", selectorTopmost(IS_STRING));
   }
 
 

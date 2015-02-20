@@ -71,7 +71,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
-    myIsFoldingEnabled = true;
+    myIsFoldingEnabled = !editor.myUseNewRendering;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
     myFoldTree = new FoldRegionsTree() {
@@ -149,7 +149,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   @Override
   public void setFoldingEnabled(boolean isEnabled) {
     assertIsDispatchThreadForEditor();
-    myIsFoldingEnabled = isEnabled;
+    myIsFoldingEnabled = isEnabled && !myEditor.myUseNewRendering;
   }
 
   @Override
@@ -368,9 +368,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myEditor.updateCaretCursor();
     myEditor.recalculateSizeAndRepaint();
-    if (myEditor.getGutterComponentEx().isFoldingOutlineShown()) {
-      myEditor.getGutterComponentEx().repaint();
-    }
+    myEditor.getGutterComponentEx().updateSize();
+    myEditor.getGutterComponentEx().repaint();
 
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
@@ -380,7 +379,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       caretPosition = new LogicalPosition(caretPosition.line, caretPosition.column);
     }
     int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-    boolean hasBlockSelection = myEditor.getSelectionModel().hasBlockSelection();
     int selectionStart = myEditor.getSelectionModel().getSelectionStart();
     int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -424,7 +422,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
       myEditor.getSelectionModel().removeSelection();
-    } else if (!hasBlockSelection && selectionStart < myEditor.getDocument().getTextLength()) {
+    } else if (selectionStart < myEditor.getDocument().getTextLength()) {
       myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
 

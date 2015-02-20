@@ -22,11 +22,11 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Delegate class that performs actual work for {@link com.intellij.codeInsight.actions.MultiCaretCodeInsightAction}
+ * Delegate class that performs actual work for {@link MultiCaretCodeInsightAction}
  */
 public abstract class MultiCaretCodeInsightActionHandler {
   /**
-   * Invoked for each caret in editor (in bottom-to-top order). <code>project</code> value is the same for all carets, <code>editor</code>
+   * Invoked for each caret in editor (in top-to-bottom order). <code>project</code> value is the same for all carets, <code>editor</code>
    * and <code>file</code> values can be different in presence of multi-root PSI and injected fragments. For injected fragments
    * caret instance will belong to corresponding injected editor.
    */

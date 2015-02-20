@@ -22,12 +22,14 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -77,7 +79,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       params.getProgramParametersList().add("--debug");
     }
 
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
+    String path = ScriptFileUtil.getLocalFilePath(StringUtil.notNullize(configuration.getScriptPath()));
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(path));
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 

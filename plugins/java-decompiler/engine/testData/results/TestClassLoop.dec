@@ -3,35 +3,35 @@ package pkg;
 public class TestClassLoop {
    public static void testSimpleInfinite() {
       while(true) {
-         System.out.println();
+         System.out.println();// 23
       }
    }
 
    public static void testFinally() {
-      boolean var0 = Math.random() > 0.0D;
+      boolean var0 = Math.random() > 0.0D;// 29
 
       while(true) {
          try {
-            if(!var0) {
+            if(!var0) {// 33
                return;
             }
          } finally {
-            System.out.println("1");
+            System.out.println("1");// 38
          }
       }
    }
 
    public static void testFinallyContinue() {
-      boolean var0 = Math.random() > 0.0D;
+      boolean var0 = Math.random() > 0.0D;// 45
 
       while(true) {
          while(true) {
             try {
-               System.out.println("1");
+               System.out.println("1");// 49
                break;
             } finally {
-               if(var0) {
-                  System.out.println("3");
+               if(var0) {// 52
+                  System.out.println("3");// 53
                   continue;
                }
             }
@@ -41,3 +41,45 @@ public class TestClassLoop {
       }
    }
 }
+
+class 'pkg/TestClassLoop' {
+   method 'testSimpleInfinite ()V' {
+      0      5
+      3      5
+   }
+
+   method 'testFinally ()V' {
+      0      10
+      3      10
+      4      10
+      d      10
+      f      14
+      26      18
+      27      18
+      2a      18
+   }
+
+   method 'testFinallyContinue ()V' {
+      0      24
+      3      24
+      4      24
+      d      24
+      e      29
+      11      29
+      13      29
+      26      32
+      2a      33
+      2d      33
+      2f      33
+   }
+}
+
+Lines mapping:
+23 <-> 6
+29 <-> 11
+33 <-> 15
+38 <-> 19
+45 <-> 25
+49 <-> 30
+52 <-> 33
+53 <-> 34

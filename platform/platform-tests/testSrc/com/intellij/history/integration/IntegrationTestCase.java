@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -62,6 +63,9 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
+    
     Clock.reset();
     Paths.useSystemCaseSensitivity();
 
@@ -175,10 +179,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   protected static void addContentRoot(final Module module, final String path) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ModuleRootManager rm = ModuleRootManager.getInstance(module);
-        ModifiableRootModel m = rm.getModifiableModel();
-        m.addContentEntry(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
-        m.commit();
+        ModuleRootModificationUtil.addContentRoot(module, FileUtil.toSystemIndependentName(path));
       }
     });
   }

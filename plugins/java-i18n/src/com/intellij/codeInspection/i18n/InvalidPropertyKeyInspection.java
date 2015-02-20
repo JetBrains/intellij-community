@@ -169,11 +169,28 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
-      Object value = expression.getValue();
-      if (!(value instanceof String)) return;
-      String key = (String)value;
-      if (isComputablePropertyExpression(expression)) return;
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      final PsiElement resolvedExpression = expression.resolve();
+      if (!(resolvedExpression instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField) resolvedExpression;
+      PsiExpression initializer;
+      if ((initializer = field.getInitializer()) == null || !(initializer instanceof PsiLiteralExpression)) {
+        return;
+      }
+      if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final Object initializerValue = ((PsiLiteralExpression)initializer).getValue();
+      if (!(initializerValue instanceof String)) {
+        return;
+      }
+      String key = (String)initializerValue;
+      visitPropertyKeyAnnotationParameter(expression, key);
+    }
+
+    private void visitPropertyKeyAnnotationParameter(PsiExpression expression, String key) {
       Ref<String> resourceBundleName = new Ref<String>();
       if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
         String bundleName = resourceBundleName.get();
@@ -204,8 +221,12 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
         if (!JavaI18nUtil.mustBePropertyKey(myManager.getProject(), expression, annotationParams)) return;
 
-        final int paramsCount = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
-        if (paramsCount == -1) return;
+        final SortedSet<Integer> paramsCount = JavaI18nUtil.getPropertyValueParamsCount(expression, resourceBundleName.get());
+        if (paramsCount.isEmpty() || (paramsCount.size() != 1 && resourceBundleName.get() == null)) {
+          return;
+        }
+
+        final int maxParamCount = paramsCount.last();
 
         final PsiExpressionList expressions = (PsiExpressionList)expression.getParent();
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expressions.getParent();
@@ -213,14 +234,14 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         final PsiExpression[] args = expressions.getExpressions();
         for (int i = 0; i < args.length; i++) {
           if (args[i] == expression) {
-            if (i + paramsCount >= args.length
+            if (i + maxParamCount >= args.length
                 && method != null
                 && method.getParameterList().getParametersCount() == i + 2
                 && method.getParameterList().getParameters()[i + 1].isVarArgs()
                 && !hasArrayTypeAt(i + 1, methodCall)) {
               myProblems.add(myManager.createProblemDescriptor(methodCall,
-                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, paramsCount, args.length - i - 1),
-                                                               onTheFly, new LocalQuickFix[0],
+                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
+                                                               onTheFly, LocalQuickFix.EMPTY_ARRAY,
                                                                ProblemHighlightType.GENERIC_ERROR));
             }
             break;
@@ -229,9 +250,18 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
+      Object value = expression.getValue();
+      if (!(value instanceof String)) return;
+      String key = (String)value;
+      if (isComputablePropertyExpression(expression)) return;
+      visitPropertyKeyAnnotationParameter(expression, key);
+    }
+
     private static void appendPropertyKeyNotFoundProblem(@NotNull String bundleName,
                                                          @NotNull String key,
-                                                         @NotNull PsiLiteralExpression expression,
+                                                         @NotNull PsiExpression expression,
                                                          @NotNull InspectionManager manager,
                                                          @NotNull List<ProblemDescriptor> problems,
                                                          boolean onTheFly) {

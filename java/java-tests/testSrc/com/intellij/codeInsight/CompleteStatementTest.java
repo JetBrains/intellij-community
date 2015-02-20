@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 @TestDataPath("$CONTENT_ROOT/testData")
 public class CompleteStatementTest extends EditorActionTestCase {
   public void testAddMissingSemicolon() throws Exception { doTest(); }
+  
+  public void testAddMissingSemicolonToPackageStatement() { doTest(); }
 
   public void testAddMissingParen() throws Exception { doTest(); }
 
@@ -267,7 +269,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteMethodCallAtReturn() throws Exception { doTest(); }
   
   public void testGenericMethodBody() throws Exception { doTest(); }
-  
+
+  public void testDefaultMethodBody() { doTest(); }
+
   public void testArrayInitializerRBracket() throws Exception { doTest(); }
   
   public void testReturnInLambda() { doTest(); }

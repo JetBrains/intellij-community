@@ -18,12 +18,12 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
-import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -31,7 +31,8 @@ import java.util.*;
 public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<CommitId> {
 
   @NotNull
-  public static <CommitId> PermanentCommitsInfoIml<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits) {
+  public static <CommitId> PermanentCommitsInfoIml<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
+                                                                         @NotNull Map<Integer, CommitId> notLoadCommits) {
     TimestampGetter timestampGetter = IntTimestampGetter.newInstance(new TimestampGetter() {
       @Override
       public int size() {
@@ -49,7 +50,8 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
     List<CommitId> commitIdIndex;
     if (isIntegerCase) {
       commitIdIndex = (List<CommitId>)createCompressedIntList((List<? extends GraphCommit<Integer>>)graphCommits);
-    } else {
+    }
+    else {
       commitIdIndex = ContainerUtil.map(graphCommits, new Function<GraphCommit<CommitId>, CommitId>() {
         @Override
         public CommitId fun(GraphCommit<CommitId> graphCommit) {
@@ -57,7 +59,7 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
         }
       });
     }
-    return new PermanentCommitsInfoIml<CommitId>(timestampGetter, commitIdIndex);
+    return new PermanentCommitsInfoIml<CommitId>(timestampGetter, commitIdIndex, notLoadCommits);
   }
 
   @NotNull
@@ -74,6 +76,7 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
       }
     }, 30);
     return new AbstractList<Integer>() {
+      @NotNull
       @Override
       public Integer get(int index) {
         return compressedIntList.get(index);
@@ -86,26 +89,31 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
     };
   }
 
-  @NotNull
-  private final TimestampGetter myTimestampGetter;
+  @NotNull private final TimestampGetter myTimestampGetter;
 
-  @NotNull
-  private final List<CommitId> myCommitIdIndexes;
+  @NotNull private final List<CommitId> myCommitIdIndexes;
 
-  public PermanentCommitsInfoIml(@NotNull TimestampGetter timestampGetter, @NotNull List<CommitId> commitIdIndex) {
+  @NotNull private final Map<Integer, CommitId> myNotLoadCommits;
+
+  public PermanentCommitsInfoIml(@NotNull TimestampGetter timestampGetter,
+                                 @NotNull List<CommitId> commitIdIndex,
+                                 @NotNull Map<Integer, CommitId> notLoadCommits) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;
+    myNotLoadCommits = notLoadCommits;
   }
 
   @Override
   @NotNull
-  public CommitId getCommitId(int permanentNodeIndex) {
-    return myCommitIdIndexes.get(permanentNodeIndex);
+  public CommitId getCommitId(int nodeId) {
+    if (nodeId < 0) return myNotLoadCommits.get(nodeId);
+    return myCommitIdIndexes.get(nodeId);
   }
 
   @Override
-  public long getTimestamp(int permanentNodeIndex) {
-    return myTimestampGetter.getTimestamp(permanentNodeIndex);
+  public long getTimestamp(int nodeId) {
+    if (nodeId < 0) return 0;
+    return myTimestampGetter.getTimestamp(nodeId);
   }
 
   @NotNull
@@ -115,8 +123,18 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
 
   // todo optimize with special map
   @Override
-  public int getPermanentNodeIndex(@NotNull CommitId commitId) {
-    return myCommitIdIndexes.indexOf(commitId);
+  public int getNodeId(@NotNull CommitId commitId) {
+    int indexOf = myCommitIdIndexes.indexOf(commitId);
+    if (indexOf != -1) return indexOf;
+
+    return getNotLoadNodeId(commitId);
+  }
+
+  private int getNotLoadNodeId(@NotNull CommitId commitId) {
+    for (Map.Entry<Integer, CommitId> entry : myNotLoadCommits.entrySet()) {
+      if (entry.getValue().equals(commitId)) return entry.getKey();
+    }
+    return -1;
   }
 
   @NotNull
@@ -140,13 +158,16 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
   }
 
   @NotNull
-  public Set<Integer> convertToCommitIndexes(@NotNull Collection<CommitId> commitIds) {
+  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds) {
     Set<Integer> result = ContainerUtil.newHashSet();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {
       CommitId commitId = myCommitIdIndexes.get(i);
       if (commitIds.contains(commitId)) {
         result.add(i);
       }
+    }
+    for (Map.Entry<Integer, CommitId> entry : myNotLoadCommits.entrySet()) {
+      if (commitIds.contains(entry.getValue())) result.add(entry.getKey());
     }
     return result;
   }

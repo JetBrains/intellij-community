@@ -267,16 +267,19 @@ public class JpsGantProjectBuilder {
 
       info("Starting build; incremental: " + myBuildIncrementally + ", cache directory: " + myDataStorageRoot.getAbsolutePath());
       info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
+      long compilationStart = System.currentTimeMillis();
       try {
-        long compilationStart = System.currentTimeMillis();
         Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
-        if (!myStatisticsReported) {
-          myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
-          myStatisticsReported = true;
-        }
       }
       catch (Throwable e) {
         error(e);
+      }
+      if (messageHandler.myFailed) {
+        error("Compilation failed");
+      }
+      else if (!myStatisticsReported) {
+        myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
+        myStatisticsReported = true;
       }
     }
     else {
@@ -316,15 +319,33 @@ public class JpsGantProjectBuilder {
   }
 
   private class AntMessageHandler implements MessageHandler {
+    private boolean myFailed;
+
     @Override
     public void processMessage(BuildMessage msg) {
       BuildMessage.Kind kind = msg.getKind();
       String text = msg.getMessageText();
       switch (kind) {
         case ERROR:
-          String compilerName = msg instanceof CompilerMessage ? ((CompilerMessage)msg).getCompilerName() : "";
-          myBuildInfoPrinter.printCompilationErrors(JpsGantProjectBuilder.this, compilerName, text);
-          error("Compilation failed");
+          String compilerName;
+          String messageText;
+          if (msg instanceof CompilerMessage) {
+            CompilerMessage compilerMessage = (CompilerMessage)msg;
+            compilerName = compilerMessage.getCompilerName();
+            String sourcePath = compilerMessage.getSourcePath();
+            if (sourcePath != null) {
+              messageText = sourcePath + (compilerMessage.getLine() != -1 ? ":" + compilerMessage.getLine() : "") + ":\n" + text;
+            }
+            else {
+              messageText = text;
+            }
+          }
+          else {
+            compilerName = "";
+            messageText = text;
+          }
+          myFailed = true;
+          myBuildInfoPrinter.printCompilationErrors(JpsGantProjectBuilder.this, compilerName, messageText);
           break;
         case WARNING:
           warning(text);

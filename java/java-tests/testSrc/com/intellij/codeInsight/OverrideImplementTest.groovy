@@ -16,7 +16,10 @@
 package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -38,6 +41,41 @@ public class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   public void testSkipUnknownAnnotations() { doTest(true); }
 
   public void testOverrideInInterface() { doTest(false); }
+  public void testImplementInInterface() {
+    myFixture.addClass """
+interface A {
+    void foo();
+}
+"""
+    def file = myFixture.addClass("""
+interface B extends A {
+    <caret>
+}
+""").containingFile.virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+
+    def implementMethodsName = ActionsBundle.message("action.ImplementMethods.text")
+    final Presentation presentation = new Presentation();
+    presentation.setText(implementMethodsName);
+
+    CommandProcessor.instance.executeCommand(project, new Runnable() {
+      @Override
+      void run() {
+        invokeAction(true)
+      }
+    }, presentation.getText(), null)
+    
+
+    myFixture.checkResult """
+interface B extends A {
+    @Override
+    default void foo() {
+        <caret>
+    }
+}
+"""
+
+  }
   public void testMultipleInheritedThrows() {doTest(false);}
 
   public void "test overriding overloaded method"() {

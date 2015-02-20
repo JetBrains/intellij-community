@@ -16,7 +16,8 @@
 package com.intellij.codeStyle;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,8 +34,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author Nikolai Matveev
@@ -155,17 +154,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
                                   LineSeparator.fromString(currentSeparator), LineSeparator.fromString(newSeparator));
     }
 
-    CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(project, new Runnable() {
+    new WriteCommandAction(project, commandText) {
       @Override
-      public void run() {
-        try {
-          LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
+      protected void run(@NotNull Result result) throws Throwable {
+        LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
       }
-    }, commandText, null);
+    }.execute();
   }
 }

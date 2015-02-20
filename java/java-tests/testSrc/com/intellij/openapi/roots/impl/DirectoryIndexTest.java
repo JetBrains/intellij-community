@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -632,15 +632,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
           .addExcludeFolder(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(f.getParentFile().getParent())));
         rootModel.commit();
 
-        rootModel = ModuleRootManager.getInstance(myModule2).getModifiableModel();
-        rootModel.addContentEntry(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(f.getPath())));
-        rootModel.commit();
+        ModuleRootModificationUtil.addContentRoot(myModule2, FileUtil.toSystemIndependentName(f.getPath()));
 
         assertTrue(f.getPath(), f.exists() || f.mkdirs());
         LocalFileSystem.getInstance().refresh(false);
       }
     });
-
 
     assertExcluded(LocalFileSystem.getInstance().findFileByIoFile(f.getParentFile().getParentFile()), myModule);
     assertInProject(LocalFileSystem.getInstance().findFileByIoFile(f));

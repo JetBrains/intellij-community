@@ -45,7 +45,6 @@ public class IgnoredPatternSet {
         addIgnoreMask(ignoredFile);
       }
     }
-
   }
 
   void addIgnoreMask(@NotNull String ignoredFile) {

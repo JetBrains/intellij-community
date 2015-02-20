@@ -60,10 +60,14 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    myFixture.tearDown();
-    myFixture = null;
-    myModule = null;
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myModule = null;
+      super.tearDown();
+    }
   }
 
   protected void doTest() {
@@ -77,23 +81,27 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myModule, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        LibraryTable libraryTable = model.getModuleLibraryTable();
-        Library library = libraryTable.createLibrary("test");
-
-        Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (String annotationsDir : libraryPath) {
-          String path = myFixture.getTestDataPath() + "/libs/" + annotationsDir;
-          VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
-          assertNotNull(libJarLocal);
-          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
-          assertNotNull(jarRoot);
-          libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);
-        }
-        libraryModel.commit();
+        commitLibraryModel(model, myFixture.getTestDataPath(), libraryPath);
 
         String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
     });
+  }
+
+  protected static void commitLibraryModel(ModifiableRootModel model, String testDataPath, @NotNull String... libraryPath) {
+    LibraryTable libraryTable = model.getModuleLibraryTable();
+    Library library = libraryTable.createLibrary("test");
+
+    Library.ModifiableModel libraryModel = library.getModifiableModel();
+    for (String annotationsDir : libraryPath) {
+      String path = testDataPath + "/libs/" + annotationsDir;
+      VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+      assertNotNull(libJarLocal);
+      VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
+      assertNotNull(jarRoot);
+      libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);
+    }
+    libraryModel.commit();
   }
 }

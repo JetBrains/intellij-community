@@ -97,7 +97,7 @@ public abstract class RefManager {
   @Nullable
   public abstract RefEntity getReference(String type, String fqName);
 
-  public abstract int getLastUsedMask();
+  public abstract long getLastUsedMask();
 
   public abstract <T> T getExtension(@NotNull Key<T> key);
 

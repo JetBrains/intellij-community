@@ -21,6 +21,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,14 +29,18 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 public class FileAttribute {
-  private static final Set<String> ourRegisteredIds = new HashSet<String>();
+  private static final Set<String> ourRegisteredIds = new THashSet<String>();
+  private static final int UNDEFINED_VERSION = -1;
   private final String myId;
   private final int myVersion;
   private final boolean myFixedSize;
+
+  public FileAttribute(@NonNls @NotNull String id) {
+    this(id, UNDEFINED_VERSION, false);
+  }
 
   /**
    * @deprecated
@@ -112,5 +117,9 @@ public class FileAttribute {
 
   public int getVersion() {
     return myVersion;
+  }
+
+  public boolean isVersioned() {
+    return myVersion != UNDEFINED_VERSION;
   }
 }

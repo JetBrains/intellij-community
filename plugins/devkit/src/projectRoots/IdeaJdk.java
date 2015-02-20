@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,27 +149,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    @NonNls final String productName;
-    if (new File(sdkHome, "lib/rubymine.jar").exists()) {
-      productName = "RubyMine ";
-    }
-    else if (new File(sdkHome, "lib/pycharm.jar").exists()) {
-      productName = "PyCharm ";
-    }
-    else if (new File(sdkHome, "lib/webide.jar").exists()) {
-      productName = "WebStorm/PhpStorm ";
-    }
-    else if (new File(sdkHome, "license/AppCode_license.txt").exists()) {
-      productName = "AppCode ";
-    }
-    else if (new File(sdkHome, "license/CLion_Preview_License.txt").exists()) {
-      productName = "CLion ";
-    }
-    else {
-      productName = "IDEA ";
-    }
     String buildNumber = getBuildNumber(sdkHome);
-    return productName + (buildNumber != null ? buildNumber : "");
+    return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
 
   @Nullable

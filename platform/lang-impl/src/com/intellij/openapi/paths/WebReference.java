@@ -26,6 +26,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public class WebReference extends PsiReferenceBase<PsiElement> {
+  public WebReference(@NotNull PsiElement element) {
+    super(element, true);
+  }
+
   public WebReference(@NotNull PsiElement element, @NotNull TextRange textRange) {
     super(element, textRange, true);
   }
@@ -33,6 +37,10 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
   @Override
   public PsiElement resolve() {
     return new MyFakePsiElement();
+  }
+
+  protected String getUrl() {
+    return getValue();
   }
 
   @NotNull
@@ -43,25 +51,31 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
 
   class MyFakePsiElement extends FakePsiElement {
     @Override
-      public PsiElement getParent() {
-        return myElement;
-      }
-
-    @Override
-      public void navigate(boolean requestFocus) {
-      BrowserUtil.browse(getValue());
+    public PsiElement getParent() {
+      return myElement;
     }
 
     @Override
-      public String getPresentableText() {
-        return getValue();
-      }
+    public void navigate(boolean requestFocus) {
+      BrowserUtil.browse(getUrl());
+    }
 
-      @Override
-      public TextRange getTextRange() {
-        final TextRange rangeInElement = getRangeInElement();
-        final TextRange elementRange = myElement.getTextRange();
-        return elementRange != null ? rangeInElement.shiftRight(elementRange.getStartOffset()) : rangeInElement;
-      }
+    @Override
+    public String getPresentableText() {
+      return getUrl();
+    }
+
+
+    @Override
+    public String getName() {
+      return getUrl();
+    }
+
+    @Override
+    public TextRange getTextRange() {
+      final TextRange rangeInElement = getRangeInElement();
+      final TextRange elementRange = myElement.getTextRange();
+      return elementRange != null ? rangeInElement.shiftRight(elementRange.getStartOffset()) : rangeInElement;
+    }
   }
 }

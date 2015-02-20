@@ -81,4 +81,23 @@ public class AutoUnboxing {
   int polymorphicSignature(java.lang.invoke.MethodHandle mh) throws Throwable {
     return (int)mh.invokeExact();
   }
+
+  void lambdas() {
+    R r = () -> <warning descr="Auto-unboxing 'Integer.valueOf(1)'">Integer.valueOf(1)</warning>;
+    R s = () -> {
+      return <warning descr="Auto-unboxing 'Integer.valueOf(2)'">Integer.valueOf(2)</warning>;
+    };
+    R t = AutoUnboxing::<warning descr="Auto-unboxing 'bla'">bla</warning>;
+    Runnable z = () -> {
+      System.out.println();
+    };
+  }
+
+  static Integer bla() {
+    return Integer.valueOf(1);
+  }
+
+  interface R {
+    int unbox();
+  }
 }

@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.console;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.console.*;
+import com.intellij.execution.console.ConsoleHistoryController;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -30,7 +32,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -57,7 +58,7 @@ import java.util.*;
 /**
  * Created by Max Medvedev on 9/20/13
  */
-public abstract class GroovyShellActionBase extends DumbAwareAction {
+public abstract class GroovyShellActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance(GroovyShellActionBase.class);
 
   public static final String GROOVY_SHELL_EXECUTE = "Groovy.Shell.Execute";
@@ -183,7 +184,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
 
   public abstract String getTitle();
 
-  protected abstract LanguageConsoleImpl createConsole(Project project, String title);
+  protected abstract LanguageConsoleView createConsole(Project project, String title);
 
   private class GroovyConsoleRunner extends AbstractConsoleRunnerWithHistory<LanguageConsoleView> {
     private final GroovyShellRunner myShellRunner;
@@ -211,8 +212,8 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
 
     @Override
     protected LanguageConsoleView createConsoleView() {
-      LanguageConsoleViewImpl res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
-      GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
+      LanguageConsoleView res = createConsole(getProject(), getConsoleTitle());
+      GroovyFileImpl file = (GroovyFileImpl)res.getFile();
       assert file.getContext() == null;
       file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
 

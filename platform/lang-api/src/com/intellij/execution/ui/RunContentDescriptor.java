@@ -66,6 +66,9 @@ public class RunContentDescriptor implements Disposable {
     myIcon = icon;
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
     myActivationCallback = activationCallback;
+    if (myExecutionConsole != null) {
+      Disposer.register(this, myExecutionConsole);
+    }
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -110,10 +113,7 @@ public class RunContentDescriptor implements Disposable {
 
   @Override
   public void dispose() {
-    if (myExecutionConsole != null) {
-      Disposer.dispose(myExecutionConsole);
-      myExecutionConsole = null;
-    }
+    myExecutionConsole = null;
     myComponent = null;
     myRestarter = null;
     myProcessHandler = null;

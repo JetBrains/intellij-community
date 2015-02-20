@@ -91,7 +91,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @Nls String progressTitle,
+                                                              @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project);
 
@@ -107,7 +107,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @throws E exception thrown by process
    */
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
-                                                                                 @NotNull @Nls String progressTitle,
+                                                                                 @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                                                  boolean canBeCanceled,
                                                                                  @Nullable Project project) throws E;
 
@@ -123,7 +123,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @Nls String progressTitle,
+                                                              @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent);
@@ -139,7 +139,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param process          the operation to execute.
    * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
-   * @deprecated use {@link #run(com.intellij.openapi.progress.Task)}
+   * @deprecated use {@link #run(Task)}
    */
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
@@ -158,7 +158,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
    * @param option           progress indicator behavior controller.
-   * @deprecated use {@link #run(com.intellij.openapi.progress.Task)}
+   * @deprecated use {@link #run(Task)}
    */
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
@@ -170,8 +170,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs a specified <code>task</code> in either background/foreground thread and shows a progress dialog.
    *
-   * @param task task to run (either {@link com.intellij.openapi.progress.Task.Modal}
-   *             or {@link com.intellij.openapi.progress.Task.Backgroundable}).
+   * @param task task to run (either {@link Task.Modal}
+   *             or {@link Task.Backgroundable}).
    */
   public abstract void run(@NotNull Task task);
 

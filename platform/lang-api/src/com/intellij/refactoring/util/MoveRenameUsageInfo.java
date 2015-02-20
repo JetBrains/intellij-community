@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
@@ -90,18 +91,49 @@ public class MoveRenameUsageInfo extends UsageInfo{
   public PsiReference getReference() {
     if (myReference != null) {
       final PsiElement element = myReference.getElement();
-      if (element != null && element.isValid()) return myReference;
+      if (element != null && element.isValid()) {
+        if (myReferenceRangeMarker == null) {
+          return myReference;
+        }
+
+        final PsiReference reference = checkReferenceRange(element, new Function<Integer, PsiReference>() {
+          @Override
+          public PsiReference fun(Integer start) {
+            return myReference;
+          }
+        });
+
+        if (reference != null) {
+          return reference;
+        }
+      }
     }
 
     if (myReferenceRangeMarker == null) return null;
     final PsiElement element = getElement();
-    if (element == null) return null;
+    if (element == null || !element.isValid()) {
+      return null;
+    }
+    return checkReferenceRange(element, new Function<Integer, PsiReference>() {
+      @Override
+      public PsiReference fun(Integer start) {
+        return element.findReferenceAt(start);
+      }
+    });
+  }
+
+  @Nullable
+  private PsiReference checkReferenceRange(PsiElement element, Function<Integer, PsiReference> fn) {
     final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
     final int end = myReferenceRangeMarker.getEndOffset() - element.getTextRange().getStartOffset();
-    final PsiReference reference = element.findReferenceAt(start);
-    if (reference == null) return null;
+    final PsiReference reference = fn.fun(start);
+    if (reference == null) {
+      return null;
+    }
     final TextRange rangeInElement = reference.getRangeInElement();
-    if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) return null;
+    if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) {
+      return null;
+    }
     return reference;
   }
 }

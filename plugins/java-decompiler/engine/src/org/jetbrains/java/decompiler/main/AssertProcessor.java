@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class AssertProcessor {
 
   public static void buildAssertions(ClassNode node) {
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
 
     StructField field = findAssertionField(node);
 
@@ -67,7 +67,7 @@ public class AssertProcessor {
 
   private static StructField findAssertionField(ClassNode node) {
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
 
     boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
@@ -105,7 +105,7 @@ public class AssertProcessor {
 
                     ClassNode nd = node;
                     while (nd != null) {
-                      if (nd.wrapper.getClassStruct().qualifiedName.equals(cexpr.getValue())) {
+                      if (nd.getWrapper().getClassStruct().qualifiedName.equals(cexpr.getValue())) {
                         break;
                       }
                       nd = nd.parent;
@@ -173,8 +173,7 @@ public class AssertProcessor {
 
     Exprent ascond = null, retcond = null;
     if (exprres[0] != null) {
-      ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT,
-                                   Arrays.asList((Exprent)exprres[0]), throwError.bytecode);
+      ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, (Exprent)exprres[0], throwError.bytecode);
       retcond = SecondaryFunctionsHelper.propagateBoolNot(ascond);
     }
 

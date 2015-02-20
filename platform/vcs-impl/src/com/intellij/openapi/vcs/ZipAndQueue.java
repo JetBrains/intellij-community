@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import org.jetbrains.annotations.NotNull;
 

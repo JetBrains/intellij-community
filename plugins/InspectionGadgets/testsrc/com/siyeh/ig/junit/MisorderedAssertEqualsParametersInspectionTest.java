@@ -31,6 +31,7 @@ public class MisorderedAssertEqualsParametersInspectionTest extends LightInspect
       "package org.junit;" +
       "public class Assert {" +
       "  static public void assertEquals(long expected, long actual) {}" +
+      "  static public void assertEquals(String message, long expected, long actual) {}" +
       "  static public void assertEquals(Object expected, Object actual){}" +
       "  static public void assertSame(Object expected, Object actual) {}" +
       "}",

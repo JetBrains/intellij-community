@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.OurHeavyWeightPopup;
+import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +47,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   };
 
+  public static final String DISABLE_EXPANDABLE_HANDLER = "DisableExpandableHandler";
+
   private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
-  private Popup myPopup;
+  private final MovablePopup myPopup;
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
@@ -58,6 +59,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();
+    myPopup = new MovablePopup(myComponent, myTipComponent);
 
     MouseAdapter tipMouseAdapter = new MouseAdapter() {
       @Override
@@ -267,6 +269,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       return;
     }
     myUpdateAlarm.cancelAllRequests();
+    if (selected == null) {
+      hideHint();
+      return;
+    }
+    if (!selected.equals(myKey)) {
+      hideHint();
+    }
     myUpdateAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
@@ -275,10 +284,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }, 10);
   }
 
-  private void doHandleSelectionChange(KeyType selected, boolean processIfUnfocused) {
-    if (!myEnabled) return;
-
-    if (selected == null
+  private void doHandleSelectionChange(@NotNull KeyType selected, boolean processIfUnfocused) {
+    if (!myEnabled
         || !myComponent.isEnabled()
         || !myComponent.isShowing()
         || !myComponent.getVisibleRect().intersects(getVisibleRect(selected))
@@ -288,9 +295,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       return;
     }
 
-    if (!Comparing.equal(myKey, selected)) {
-      hideHint();
-    }
     myKey = selected;
 
     Point location = createToolTipImage(myKey);
@@ -298,11 +302,14 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (location == null) {
       hideHint();
     }
-    else if (myPopup == null) {
-      showHint(location);
-    }
     else {
-      repaintHint(location);
+      Dimension size = myTipComponent.getPreferredSize();
+      myPopup.setBounds(location.x, location.y, size.width, size.height);
+      myPopup.setHeavyWeight(hasOwnedWindows());
+      if (!myPopup.isVisible()) {
+        myPopup.setVisible(true);
+      }
+      repaintKeyItem();
     }
   }
 
@@ -323,43 +330,28 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return false;
   }
 
+  private boolean hasOwnedWindows() {
+    Window owner = SwingUtilities.getWindowAncestor(myComponent);
+    Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
+    for (Window other : owner.getOwnedWindows()) {
+      if (popup != other && other.isVisible()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private void hideHint() {
     myUpdateAlarm.cancelAllRequests();
-    if (myPopup != null) {
-      myPopup.hide();
-      myPopup = null;
+    if (myPopup.isVisible()) {
+      myPopup.setVisible(false);
       repaintKeyItem();
     }
     myKey = null;
   }
 
   public boolean isShowing() {
-    return myPopup != null;
-  }
-
-  private void showHint(Point location) {
-    assert myPopup == null;
-
-    if (!myComponent.isShowing()) {
-      return;
-    }
-
-    SwingUtilities.convertPointToScreen(location, myComponent);
-    myPopup = new OurHeavyWeightPopup(myComponent, myTipComponent, location.x, location.y);
-    WindowManagerEx.getInstanceEx().setWindowShadow(SwingUtilities.getWindowAncestor(myTipComponent),
-                                                    WindowManagerEx.WindowShadowMode.DISABLED);
-    myPopup.show();
-
-    repaintKeyItem();
-  }
-
-  private void repaintHint(Point location) {
-    if (myPopup != null && myKey != null && myComponent.isShowing()) {
-      SwingUtilities.convertPointToScreen(location, myComponent);
-      SwingUtilities.getWindowAncestor(myTipComponent).setBounds(new Rectangle(location, myTipComponent.getPreferredSize()));
-      myTipComponent.repaint();
-      repaintKeyItem();
-    }
+    return myPopup.isVisible();
   }
 
   private void repaintKeyItem() {
@@ -376,22 +368,34 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Component renderer = rendererAndBounds.first;
     if (!(renderer instanceof JComponent)) return null;
 
-    myKeyItemBounds = rendererAndBounds.second;
+    if (((JComponent)renderer).getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
 
-    Point toolTipLocationOnScreen = myKeyItemBounds.getLocation();
-    SwingUtilities.convertPointToScreen(toolTipLocationOnScreen, myComponent);
-    int maximumWidth = Math.max(0, myComponent.getToolkit().getScreenSize().width - toolTipLocationOnScreen.x);
-    myKeyItemBounds.width = Math.min(myKeyItemBounds.width, maximumWidth);
+    myKeyItemBounds = rendererAndBounds.second;
 
     Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
 
-    int width = cellBounds.x + cellBounds.width - (visibleRect.x + visibleRect.width);
+    if (cellBounds.y < visibleRect.y) return null;
+
+    int cellMaxY = cellBounds.y + cellBounds.height;
+    int visMaxY = visibleRect.y + visibleRect.height;
+    if (cellMaxY > visMaxY) return null;
+
+    int cellMaxX = cellBounds.x + cellBounds.width;
+    int visMaxX = visibleRect.x + visibleRect.width;
+
+    Point location = new Point(visMaxX, cellBounds.y);
+    SwingUtilities.convertPointToScreen(location, myComponent);
+
+    Rectangle screen = !Registry.is("ide.expansion.hints.on.all.screens")
+                       ? ScreenUtil.getScreenRectangle(location)
+                       : ScreenUtil.getAllScreensRectangle();
+
+    int borderWidth = isPaintBorder() ? 1 : 0;
+    int width = Math.min(screen.width + screen.x - location.x - borderWidth, cellMaxX - visMaxX);
     int height = cellBounds.height;
 
     if (width <= 0 || height <= 0) return null;
-    if (cellBounds.y < visibleRect.y) return null;
-    if (cellBounds.y + cellBounds.height > visibleRect.y + visibleRect.height) return null;
 
     Dimension size = getImageSize(width, height);
     myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
@@ -399,16 +403,15 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);
     doFillBackground(height, width, g);
-    g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
+    g.translate(cellBounds.x - visMaxX, 0);
     doPaintTooltipImage(renderer, cellBounds, g, key);
 
-    Point location = new Point(visibleRect.x + visibleRect.width, cellBounds.y);
     CustomLineBorder border = null;
-    if (isPaintBorder()) {
-      border = new CustomLineBorder(getBorderColor(), 1, 0, 1, 1);
-      location.y -= 1;
-      size.width += 1;
-      size.height += 2;
+    if (borderWidth > 0) {
+      border = new CustomLineBorder(getBorderColor(), borderWidth, 0, borderWidth, borderWidth);
+      location.y -= borderWidth;
+      size.width += borderWidth;
+      size.height += borderWidth + borderWidth;
     }
 
     g.dispose();

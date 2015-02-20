@@ -11,13 +11,13 @@
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png" caption-url="PyCharmCoreWelcomeCaption.png" slogan-url="/developSlogan.png"/>
 
-  <third-party url="https://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
-
-  <update-urls logo-url="/Logo_welcomeScreen.png"
-               check="https://www.jetbrains.com/updates/updates.xml"
+  <plugins url="http://plugins.jetbrains.com/"/>
+  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/python/"/>
 
   <feedback eap-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
             release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <help file="pycharm-eduhelp.jar" root="pycharm-edu"/>
+  <third-party url="https://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
+  <jetbrains-tv url="http://www.youtube.com/user/JetBrainsTV/search?query=PyCharm"/>
 </component>

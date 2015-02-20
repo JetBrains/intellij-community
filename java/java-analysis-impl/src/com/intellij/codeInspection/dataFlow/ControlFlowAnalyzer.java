@@ -216,7 +216,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ) {
       DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
       if (arrayVar instanceof DfaVariableValue) {
-        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar));
+        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar, true));
       }
     }
   }
@@ -647,11 +647,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             try {
               ControlFlow.ControlFlowOffset offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
-              
-              if (caseValue != null &&
+
+              if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
+                //noinspection SuspiciousMethodCalls
+                enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
+              }
+
+              boolean alwaysTrue = enumValues != null && enumValues.isEmpty();
+              if (alwaysTrue) {
+                addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+              }
+              else if (caseValue != null &&
                   caseExpression instanceof PsiReferenceExpression &&
-                  ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
-                  JavaPsiFacade.getInstance(body.getProject()).getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
+                  ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null) {
                 
                 addInstruction(new PushInstruction(myFactory.createValue(caseExpression), caseExpression));
                 caseValue.accept(this);
@@ -663,12 +671,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
               addInstruction(new ConditionalGotoInstruction(offset, false, statement));
 
-              if (enumValues != null) {
-                if (caseValue instanceof PsiReferenceExpression) {
-                  //noinspection SuspiciousMethodCalls
-                  enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
-                }
-              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -686,6 +688,21 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(switchStmt);
+  }
+
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    startElement(expression);
+
+    PsiExpression qualifier = expression.getQualifierExpression();
+    if (qualifier != null) {
+      qualifier.accept(this);
+      addInstruction(new FieldReferenceInstruction(qualifier, "Method reference qualifier"));
+    }
+
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullness.NOT_NULL), expression));
+
+    finishElement(expression);
   }
 
   @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
@@ -1313,11 +1330,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     startElement(expression);
-    PsiElement[] children = expression.getChildren();
-    for (PsiElement child : children) {
-      child.accept(this);
-    }
-    pushUnknown();
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), expression));
     finishElement(expression);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public abstract class AbstractLayoutManager implements LayoutManager2 {
 
   @Override
   public Dimension minimumLayoutSize(final Container parent) {
-    return new Dimension(0, 0);
+    return JBUI.emptySize();
   }
 
 }

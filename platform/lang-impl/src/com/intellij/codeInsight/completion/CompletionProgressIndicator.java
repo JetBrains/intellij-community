@@ -337,7 +337,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       if (Registry.is("dump.threads.on.empty.lookup") && myLookup.isCalculating() && myLookup.getItems().isEmpty()) {
-        PerformanceWatcher.getInstance().dumpThreads(true);
+        PerformanceWatcher.getInstance().dumpThreads("emptyLookup/", true);
       }
 
       if (!myLookup.showLookup()) {
@@ -598,7 +598,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public boolean isAutopopupCompletion() {
-    return myHandler.autopopup;
+    return myParameters.getInvocationCount() == 0;
   }
 
   @NotNull
@@ -683,6 +683,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
+    if (isAutopopupCompletion() && ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     LOG.assertTrue(!isAutopopupCompletion());
 
     if (ApplicationManager.getApplication().isUnitTestMode() || !myHandler.invokedExplicitly) {

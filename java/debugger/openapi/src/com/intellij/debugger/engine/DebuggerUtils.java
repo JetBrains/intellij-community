@@ -28,6 +28,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
@@ -359,24 +360,30 @@ public abstract class DebuggerUtils {
   @Nullable
   public static PsiClass findClass(@NotNull final String className, @NotNull Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
-    if (getArrayClass(className) != null) {
-      return javaPsiFacade.getElementFactory().getArrayClass(LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
+    try {
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+      if (getArrayClass(className) != null) {
+        return javaPsiFacade.getElementFactory()
+          .getArrayClass(LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
+      }
+      if (project.isDefault()) {
+        return null;
+      }
+
+      PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
+      if (psiClass == null) {
+        GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
+        if (!globalScope.equals(scope)) {
+          psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, globalScope);
+        }
+      }
+
+      return psiClass;
     }
-    if(project.isDefault()) {
+    catch (IndexNotReadyException ignored) {
       return null;
     }
-
-    PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
-    if (psiClass == null) {
-      GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
-      if (!globalScope.equals(scope)) {
-        psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, globalScope);
-      }
-    }
-
-    return psiClass;
   }
 
   @Nullable
@@ -533,24 +540,6 @@ public abstract class DebuggerUtils {
   public abstract PsiClass chooseClassDialog(String title, Project project);
 
   /**
-   * Don't use directly, will be private in IDEA 14.
-   * @deprecated to remove in IDEA 15
-   */
-  @Deprecated
-  public static boolean supportsJVMDebugging(FileType type) {
-    return type instanceof LanguageFileType && ((LanguageFileType)type).isJVMDebuggingSupported();
-  }
-
-  /**
-   * @deprecated Use {@link #isBreakpointAware(com.intellij.psi.PsiFile)}
-   * to remove in IDEA 15
-   */
-  @Deprecated
-  public static boolean supportsJVMDebugging(@NotNull PsiFile file) {
-    return isBreakpointAware(file);
-  }
-
-  /**
    * IDEA-122113
    * Will be removed when Java debugger will be moved to XDebugger API
    */
@@ -562,21 +551,15 @@ public abstract class DebuggerUtils {
     return isDebugAware(file, true);
   }
 
-  @SuppressWarnings("deprecation")
   private static boolean isDebugAware(@NotNull PsiFile file, boolean breakpointAware) {
     FileType fileType = file.getFileType();
-    if (supportsJVMDebugging(fileType)) {
+    //noinspection deprecation
+    if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).isJVMDebuggingSupported()) {
       return true;
     }
 
     for (JavaDebugAware provider : JavaDebugAware.EP_NAME.getExtensions()) {
       if (breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file)) {
-        return true;
-      }
-    }
-
-    for (JVMDebugProvider provider : JVMDebugProvider.EP_NAME.getExtensions()) {
-      if (provider.supportsJVMDebugging(file)) {
         return true;
       }
     }

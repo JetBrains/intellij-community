@@ -88,9 +88,32 @@
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </group>
 
-    <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
-            text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
-    <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
-            text="Emmet Preview" description="Show preview for emmet abbreviation"/>
+    <group id="Emmet" text="Emmet">
+      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
+              text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
+      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction" 
+              text="Emmet Preview" description="Show preview for emmet abbreviation"/>
+      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction" 
+              text="Update tag with Emmet" description="Update existing HTML tag with Emmet abbreviation">
+        <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
+      </action>
+
+      <group id="GoToEditPointGroup">
+        <separator/>
+        <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
+
+        <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward"
+                text="Next Emmet Edit Point" description="Go to next Emmet edit point">
+          <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
+        </action>
+
+        <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward"
+                text="Previous Emmet Edit Point" description="Go to previous Emmet edit point">
+          <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>
+        </action>
+      </group>
+    </group>
   </actions>
 </component>

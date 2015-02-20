@@ -59,7 +59,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -328,12 +328,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (ResolveUtil.isKeyOfMap(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
-      myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(DefaultHighlighter.MAP_KEY);
+      myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.MAP_KEY);
     }
     else if (ResolveUtil.isClassReference(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
-      myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(DefaultHighlighter.KEYWORD);
+      myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
     }
   }
 
@@ -886,11 +886,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         ((LiteralConstructorReference)constructorReference).getConstructedClassType() != null) {
       final PsiElement startToken = listOrMap.getFirstChild();
       if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
-        myHolder.createInfoAnnotation(startToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+        myHolder.createInfoAnnotation(startToken, null).setTextAttributes(GroovySyntaxHighlighter.LITERAL_CONVERSION);
       }
       final PsiElement endToken = listOrMap.getLastChild();
       if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
-        myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+        myHolder.createInfoAnnotation(endToken, null).setTextAttributes(GroovySyntaxHighlighter.LITERAL_CONVERSION);
       }
     }
 
@@ -925,7 +925,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         (((PsiClass)resolved).isAnnotationType() ||
                                          GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved) != null &&
                                          refElement.getParent() instanceof GrAnnotation)) {
-      myHolder.createInfoAnnotation(refElement, null).setTextAttributes(DefaultHighlighter.ANNOTATION);
+      myHolder.createInfoAnnotation(refElement, null).setTextAttributes(GroovySyntaxHighlighter.ANNOTATION);
     }
   }
 
@@ -1170,7 +1170,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     for (GrNamedArgument namedArgument : namedArguments) {
       final GrArgumentLabel label = namedArgument.getLabel();
       if (label != null && label.getExpression() == null && label.getNameElement().getNode().getElementType() != GroovyTokenTypes.mSTAR) {
-        myHolder.createInfoAnnotation(label, null).setTextAttributes(DefaultHighlighter.MAP_KEY);
+        myHolder.createInfoAnnotation(label, null).setTextAttributes(GroovySyntaxHighlighter.MAP_KEY);
       }
     }
   }
@@ -1707,7 +1707,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
               return ref.getManager().areElementsEquivalent(type.resolve(), resolved);
             }
           }) != null) {
-            holder.createInfoAnnotation(nameElement, null).setTextAttributes(DefaultHighlighter.KEYWORD);
+            holder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
             return; // reference to trait method
           }
         }
@@ -1720,7 +1720,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
         if (PsiTreeUtil.isAncestor(resolved, ref, true)) {
           if (PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, true)) {
-            holder.createInfoAnnotation(nameElement, null).setTextAttributes(DefaultHighlighter.KEYWORD);
+            holder.createInfoAnnotation(nameElement, null).setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
           }
         }
         else {
@@ -1744,7 +1744,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     ASTNode node = element.getNode();
     if (node != null && TokenSets.BUILT_IN_TYPES.contains(node.getElementType())) {
       Annotation annotation = holder.createInfoAnnotation(element, null);
-      annotation.setTextAttributes(DefaultHighlighter.KEYWORD);
+      annotation.setTextAttributes(GroovySyntaxHighlighter.KEYWORD);
     }
   }
 

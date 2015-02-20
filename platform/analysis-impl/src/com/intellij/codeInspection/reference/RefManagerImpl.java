@@ -44,12 +44,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -62,7 +64,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
-  private int myLastUsedMask = 256 * 256 * 256 * 4;
+  private long myLastUsedMask = 256 * 256 * 256 * 8;
 
   @NotNull
   private final Project myProject;
@@ -188,7 +190,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public int getLastUsedMask() {
+  public long getLastUsedMask() {
     myLastUsedMask *= 2;
     return myLastUsedMask;
   }
@@ -341,11 +343,6 @@ public class RefManagerImpl extends RefManager {
   }
 
   @NotNull
-  public Map<PsiAnchor, RefElement> getRefTable() {
-    return myRefTable;
-  }
-
-  @NotNull
   public List<RefElement> getSortedElements() {
     LOG.assertTrue(myRefTable != null);
     List<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
@@ -371,7 +368,7 @@ public class RefManagerImpl extends RefManager {
   public void removeReference(@NotNull RefElement refElem) {
     myLock.writeLock().lock();
     try {
-      final Map<PsiAnchor, RefElement> refTable = getRefTable();
+      final Map<PsiAnchor, RefElement> refTable = myRefTable;
       final PsiElement element = refElem.getElement();
       final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
       if (extension != null) {
@@ -460,47 +457,41 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    RefElement ref = getFromRefTable(elem);
-    if (ref != null) return ref;
-    if (!isValidPointForReference()) {
-      //LOG.assertTrue(true, "References may become invalid after process is finished");
-      return null;
-    }
-
-    final RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
-      @Override
-      @Nullable
-      public RefElementImpl compute() {
-        final RefManagerExtension extension = getExtension(elem.getLanguage());
-        if (extension != null) {
-          final RefElement refElement = extension.createRefElement(elem);
-          if (refElement != null) return (RefElementImpl)refElement;
+    return getFromRefTableOrCache(
+      elem,
+      new NullableFactory<RefElementImpl>() {
+        @Override
+        public RefElementImpl create() {
+          return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+            @Override
+            @Nullable
+            public RefElementImpl compute() {
+              final RefManagerExtension extension = getExtension(elem.getLanguage());
+              if (extension != null) {
+                final RefElement refElement = extension.createRefElement(elem);
+                if (refElement != null) return (RefElementImpl)refElement;
+              }
+              if (elem instanceof PsiFile) {
+                return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+              }
+              if (elem instanceof PsiDirectory) {
+                return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
+              }
+              return null;
+            }
+          });
         }
-        if (elem instanceof PsiFile) {
-          return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+      },
+      new Consumer<RefElementImpl>() {
+        @Override
+        public void consume(RefElementImpl element) {
+          element.initialize();
+          for (RefManagerExtension each : myExtensions.values()) {
+            each.onEntityInitialized(element, elem);
+          }
+          fireNodeInitialized(element);
         }
-        if (elem instanceof PsiDirectory) {
-          return new RefDirectoryImpl((PsiDirectory)elem, RefManagerImpl.this);
-        }
-        return null;
-      }
-    });
-    if (refElement == null) return null;
-
-    putToRefTable(elem, refElement);
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        refElement.initialize();
-        for (RefManagerExtension extension : myExtensions.values()) {
-          extension.onEntityInitialized(refElement, elem);
-        }
-        fireNodeInitialized(refElement);
-      }
-    });
-
-    return refElement;
+      });
   }
 
   private RefManagerExtension getExtension(final Language language) {
@@ -509,8 +500,7 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   @Override
-  public
-  RefEntity getReference(final String type, final String fqName) {
+  public RefEntity getReference(final String type, final String fqName) {
     for (RefManagerExtension extension : myExtensions.values()) {
       final RefEntity refEntity = extension.getReference(type, fqName);
       if (refEntity != null) return refEntity;
@@ -535,38 +525,73 @@ public class RefManagerImpl extends RefManager {
     return null;
   }
 
-  protected RefElement getFromRefTable(final PsiElement element) {
+  @Nullable
+  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
+                                                            @NotNull NullableFactory<T> factory) {
+    return getFromRefTableOrCache(element, factory, null); 
+  }
+  
+  @Nullable
+  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
+                                                            @NotNull NullableFactory<T> factory,
+                                                            @Nullable Consumer<T> whenCached) {
+    T result;
+
     myLock.readLock().lock();
     try {
-      return getRefTable().get(ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiAnchor>() {
-            @Override
-            public PsiAnchor compute() {
-              return PsiAnchor.create(element);
-            }
+      //noinspection unchecked
+      result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiAnchor>() {
+          @Override
+          public PsiAnchor compute() {
+            return PsiAnchor.create(element);
           }
+        }
       ));
     }
     finally {
       myLock.readLock().unlock();
     }
-  }
 
-  protected void putToRefTable(final PsiElement element, final RefElement ref) {
+    if (result != null) return result;
+
+    if (!isValidPointForReference()) {
+      //LOG.assertTrue(true, "References may become invalid after process is finished");
+      return null;
+    }
+
     myLock.writeLock().lock();
     try {
-      getRefTable().put(ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiAnchor>() {
-            @Override
-            public PsiAnchor compute() {
-              return PsiAnchor.create(element);
-            }
+      //noinspection unchecked
+      result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiAnchor>() {
+          @Override
+          public PsiAnchor compute() {
+            return PsiAnchor.create(element);
           }
-      ), ref);
+        }
+      ));
+      if (result != null) return result;
+
+      result = factory.create();
+      if (result == null) return null;
+
+      myRefTable.put(ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiAnchor>() {
+          @Override
+          public PsiAnchor compute() {
+            return PsiAnchor.create(element);
+          }
+        }
+      ), result);
     }
     finally {
       myLock.writeLock().unlock();
     }
+    
+    if (whenCached != null) whenCached.consume(result);
+
+    return result;
   }
 
   @Override

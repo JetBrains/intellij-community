@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.ToStringBasedRenderer;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -146,7 +147,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             presentation = new JavaValuePresentation(value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
             if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
-              node.setFullValueEvaluator(((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer()).getFullValueEvaluator(myEvaluationContext, myValueDescriptor));
+              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer())
+                .getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
+              if (evaluator != null) {
+                node.setFullValueEvaluator(evaluator);
+              }
             }
             else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new XFullValueEvaluator() {
@@ -231,17 +236,19 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             if (type != null) {
               final String typeName = type.componentTypeName();
               if (TypeConversionUtil.isPrimitive(typeName) || CommonClassNames.JAVA_LANG_STRING.equals(typeName)) {
-                int max = CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10;
-                final List<Value> values = value.getValues();
+                int size = value.length();
+                int max = Math.min(size, CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10);
+                //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
+                final List<Value> values = value.getValues(0, max);
                 int i = 0;
                 final List<String> vals = new ArrayList<String>(max);
-                while (i < values.size() && i <= max) {
+                while (i < values.size()) {
                   vals.add(StringUtil.first(values.get(i).toString(), 15, true));
                   i++;
                 }
                 String more = "";
-                if (vals.size() < values.size()) {
-                  more = ", + " + (values.size() - vals.size()) + " more";
+                if (vals.size() < size) {
+                  more = ", + " + (size - vals.size()) + " more";
                 }
 
                 renderer.renderValue("{" + StringUtil.join(vals, ", ") + more + "}");
@@ -256,7 +263,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           renderer.renderStringValue(myValue, "\"\\", XValueNode.MAX_VALUE_LENGTH);
           return;
         }
-        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer) {
+        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer ||
+                 myValueDescriptor.getLastRenderer() instanceof ToStringBasedRenderer) {
           value = StringUtil.wrapWithDoubleQuote(truncateToMaxLength(myValue));
         }
         else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer) {
@@ -380,7 +388,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       public Priority getPriority() {
         if (navigatable instanceof XInlineSourcePosition) {
-          return Priority.LOW;
+          return Priority.LOWEST;
         }
         return Priority.NORMAL;
       }
@@ -540,6 +548,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void setRenderer(NodeRenderer nodeRenderer, final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myValueDescriptor.setRenderer(nodeRenderer);
+    reBuild(node);
+  }
+
+  public void reBuild(final XValueNodeImpl node) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     myCurrentChildrenStart = 0;
     node.getTree().getLaterInvocator().offer(new Runnable() {
       @Override

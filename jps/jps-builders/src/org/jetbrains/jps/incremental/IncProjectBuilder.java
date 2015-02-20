@@ -16,10 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -84,7 +81,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
-  private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
+  private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", SystemInfo.isWindows ? "true" : "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
@@ -334,7 +331,25 @@ public class IncProjectBuilder {
              BuildRunner.PARALLEL_BUILD_ENABLED);
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
+    
+    //Deletes class loader classpath index files for changed output roots
+    context.addBuildListener(new BuildListener() {
+      @Override
+      public void filesGenerated(Collection<Pair<String, String>> paths) {
+        final Set<File> outputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+        for (Pair<String, String> pair : paths) {
+          outputs.add(new File(pair.getFirst()));
+        }
+        for (File root : outputs) {
+          //noinspection ResultOfMethodCallIgnored
+          new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
+        }
+      }
 
+      @Override
+      public void filesDeleted(Collection<String> paths) {
+      }
+    });
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
     }
@@ -571,6 +586,9 @@ public class IncProjectBuilder {
     }
 
     context.processMessage(new ProgressMessage("Cleaning output directories..."));
+
+    final long cleanStart = System.currentTimeMillis();
+
     if (SYNC_DELETE) {
       for (File file : filesToDelete) {
         FileUtil.delete(file);
@@ -579,6 +597,8 @@ public class IncProjectBuilder {
     else {
       myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
     }
+
+    LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart));
   }
 
   private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
@@ -965,7 +985,7 @@ public class IncProjectBuilder {
         File outputDir = ((ModuleBuildTarget)target).getOutputDir();
         if (outputDir != null && outputDirs.add(outputDir)) {
           try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FINE_NAME)));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FILE_NAME)));
             try {
               writeIndex(writer, outputDir, "");
             }
@@ -1036,6 +1056,9 @@ public class IncProjectBuilder {
               if (deleted) {
                 doneSomething = true;
               }
+            }
+            for (String outputPath : outputs) {
+              outputToSourceRegistry.removeMapping(outputPath, buildTargetId);
             }
             if (!deletedOutputPaths.isEmpty()) {
               if (logger.isEnabled()) {

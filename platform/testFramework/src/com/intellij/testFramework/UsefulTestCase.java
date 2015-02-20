@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -824,7 +821,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SuppressWarnings("deprecation")
-  protected static void checkSettingsEqual(JDOMExternalizable expected, JDOMExternalizable settings, String message) throws Exception {
+  protected static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings, String message) throws Exception {
     if (expected == null || settings == null) return;
 
     Element oldS = new Element("temp");
@@ -1037,5 +1034,36 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }.process(test);
     return testSuite;
+  }
+
+  @Nullable
+  public static VirtualFile refreshAndFindFile(@NotNull final File file) {
+    return UIUtil.invokeAndWaitIfNeeded(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      }
+    });
+  }
+
+  public static <E extends Exception> void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable<E> runnable) throws Exception {
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      final Ref<Exception> ref = Ref.create();
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            runnable.run();
+          }
+          catch (Exception e) {
+            ref.set(e);
+          }
+        }
+      });
+      if (!ref.isNull()) throw ref.get();
+    }
   }
 }

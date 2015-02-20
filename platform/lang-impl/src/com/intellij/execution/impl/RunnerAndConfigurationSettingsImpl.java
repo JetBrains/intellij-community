@@ -140,7 +140,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     private ProgramRunner findRunner(final String runnerId) {
       List<ProgramRunner> runnersById
-        = ContainerUtil.filter(RunnerRegistry.getInstance().getRegisteredRunners(), new Condition<ProgramRunner>() {
+        = ContainerUtil.filter(ProgramRunner.PROGRAM_RUNNER_EP.getExtensions(), new Condition<ProgramRunner>() {
 
         @Override
         public boolean value(ProgramRunner runner) {

@@ -144,9 +144,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    RangeHighlighterData.ChangeResult changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
-    if (changed != RangeHighlighterData.ChangeResult.NOT_CHANGED) {
-      fireAttributesChanged(highlighter, changed == RangeHighlighterData.ChangeResult.RENDERERS_CHANGED);
+    RangeHighlighterImpl.ChangeResult changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
+    if (changed != RangeHighlighterImpl.ChangeResult.NOT_CHANGED) {
+      fireAttributesChanged(highlighter, changed == RangeHighlighterImpl.ChangeResult.RENDERERS_CHANGED);
     }
   }
 
@@ -213,7 +213,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     });
   }
 
-  public void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
+  void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
     boolean success = myListeners.remove(listener);
     LOG.assertTrue(success);
   }

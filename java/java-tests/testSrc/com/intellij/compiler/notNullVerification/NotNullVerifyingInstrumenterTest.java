@@ -126,6 +126,18 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("Argument for @NotNull parameter 'x' of UseParameterNames.instanceMethod must not be null", instance, instanceMethod, (Object)null);
   }
 
+  public void testLongParameter() throws Exception {
+    Class<?> testClass = prepareTest(true);
+    Method staticMethod = testClass.getMethod("foo", long.class, String.class, String.class);
+    verifyCallThrowsException("Argument for @NotNull parameter 'c' of LongParameter.foo must not be null", null, staticMethod, new Long(2), "z", null);
+  }
+
+  public void testDoubleParameter() throws Exception {
+    Class<?> testClass = prepareTest(true);
+    Method staticMethod = testClass.getMethod("foo", double.class, String.class, String.class);
+    verifyCallThrowsException("Argument for @NotNull parameter 'c' of DoubleParameter.foo must not be null", null, staticMethod, new Long(2), "z", null);
+  }
+
   public void testEnumConstructor() throws Exception {
     Class testClass = prepareTest();
     Object field = testClass.getField("Value");

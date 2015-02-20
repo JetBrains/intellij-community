@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.ide.plugins;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,6 +28,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import com.intellij.util.io.URLUtil;
@@ -54,6 +57,18 @@ public class RepositoryHelper {
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
 
   /**
+   * Returns a list of configured plugin hosts.
+   * Note that the list always ends with {@code null} element denoting a main plugin repository.
+   */
+  @NotNull
+  public static List<String> getPluginHosts() {
+    List<String> hosts = ContainerUtil.newArrayList(UpdateSettings.getInstance().getPluginHosts());
+    ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
+    hosts.add(null);  // main plugin repository
+    return hosts;
+  }
+
+  /**
    * Loads list of plugins, compatible with a current build, from a main plugin repository.
    */
   @NotNull
@@ -68,7 +83,7 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
-    boolean forceHttps = repositoryUrl == null && UpdateSettings.getInstance().SECURE_CONNECTION;
+    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
     return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
   }
 
@@ -171,21 +186,22 @@ public class RepositoryHelper {
 
   private static List<IdeaPluginDescriptor> process(@Nullable String repositoryUrl, List<IdeaPluginDescriptor> list) {
     for (Iterator<IdeaPluginDescriptor> i = list.iterator(); i.hasNext(); ) {
-      IdeaPluginDescriptor descriptor = i.next();
-      if (descriptor.getPluginId() == null || descriptor.getUrl() == null) {
-        LOG.warn("Malformed plugin record at " + repositoryUrl);
+      PluginNode node = (PluginNode)i.next();
+
+      if (node.getPluginId() == null || repositoryUrl != null && node.getDownloadUrl() == null) {
+        LOG.warn("Malformed plugin record (id:" + node.getPluginId() + " repository:" + repositoryUrl + ")");
         i.remove();
+        continue;
       }
-      else if (descriptor instanceof PluginNode) {
-        PluginNode node = (PluginNode)descriptor;
-        if (repositoryUrl != null) {
-          node.setRepositoryName(repositoryUrl);
-        }
-        if (node.getName() == null) {
-          String url = node.getUrl();
-          String name = FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1));
-          ((PluginNode)descriptor).setName(name);
-        }
+
+      if (repositoryUrl != null) {
+        node.setRepositoryName(repositoryUrl);
+      }
+
+      if (node.getName() == null) {
+        String url = node.getDownloadUrl();
+        String name = FileUtil.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1));
+        node.setName(name);
       }
     }
 

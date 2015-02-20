@@ -16,12 +16,14 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -51,13 +53,13 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    if (!handleBackspace(editor, dataContext, false)) {
-      myOriginalHandler.execute(editor, dataContext);
+  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    if (!handleBackspace(editor, caret, dataContext, false)) {
+      myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 
-  protected boolean handleBackspace(Editor editor, DataContext dataContext, boolean toWordStart) {
+  protected boolean handleBackspace(Editor editor, Caret caret, DataContext dataContext, boolean toWordStart) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
@@ -96,7 +98,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     boolean wasClosingQuote = quoteHandler != null && quoteHandler.isClosingQuote(hiterator, offset);
 
-    myOriginalHandler.execute(originalEditor, dataContext);
+    myOriginalHandler.execute(originalEditor, caret, dataContext);
 
     if (!toWordStart) {
       for(BackspaceHandlerDelegate delegate: delegates) {
@@ -109,7 +111,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (offset >= editor.getDocument().getTextLength()) return true;
 
     chars = editor.getDocument().getCharsSequence();
-    if (c == '(' || c == '[' || c == '{'){
+    if ((c == '(' || c == '[' || c == '{') && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
       char c1 = chars.charAt(offset);
       if (c1 != getRightChar(c)) return true;
 
@@ -121,7 +123,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         return true;
       }
 
-      int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, iterator.getTokenType() ,chars,fileType);
+      int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, iterator.getTokenType(), chars, fileType);
       if (rparenOffset >= 0){
         iterator = ((EditorEx)editor).getHighlighter().createIterator(rparenOffset);
         boolean matched = BraceMatchingUtil.matchBrace(chars, fileType, iterator, false);
@@ -130,7 +132,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
       editor.getDocument().deleteString(offset, offset + 1);
     }
-    else if (c == '"' || c == '\'' || c == '`'){
+    else if ((c == '"' || c == '\'' || c == '`') && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE){
       char c1 = chars.charAt(offset);
       if (c1 != c) return true;
       if (wasClosingQuote) return true;
@@ -166,7 +168,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
   @Nullable
   public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
-    if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) return null;
+    if (editor.getSelectionModel().hasSelection()) return null;
 
     final LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     if (caretPos.column == 0) {

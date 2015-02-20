@@ -281,8 +281,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
               }
               PsiElement newElement = doCopyClasses(classes, map, copyClassName, target, project);
               if (newElement != null) {
-                CopyHandler.updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
-                if (openInEditor) EditorHelper.openInEditor(newElement);
+                if (openInEditor) {
+                  CopyHandler.updateSelectionInActiveProjectView(newElement, project, selectInActivePanel);
+                  EditorHelper.openInEditor(newElement);
+                }
 
                 result[0] = true;
               }

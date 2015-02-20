@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -32,46 +33,33 @@ public class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
   private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<String, URL>());
 
-  @NonNls private static final String XML_EXTENSION = ".xml";
-
-  public static URL getDefaults(Object requestor, final String componentResourcePath) {
-    if (RESOURCE_CACHE.containsKey(componentResourcePath)) {
-      return RESOURCE_CACHE.get(componentResourcePath);
+  public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
+    URL url = RESOURCE_CACHE.get(componentResourcePath);
+    if (url == null) {
+      Class<?> requestorClass = requestor.getClass();
+      if (StringUtil.startsWithChar(componentResourcePath, '/')) {
+        url = requestorClass.getResource(componentResourcePath + DirectoryStorageData.DEFAULT_EXT);
+      }
+      else {
+        url = requestorClass.getResource('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath + DirectoryStorageData.DEFAULT_EXT);
+        if (url == null) {
+          url = requestorClass.getResource('/' + componentResourcePath + DirectoryStorageData.DEFAULT_EXT);
+        }
+      }
+      RESOURCE_CACHE.put(componentResourcePath, url);
     }
-
-    URL url = getDefaultsImpl(requestor, componentResourcePath);
-    RESOURCE_CACHE.put(componentResourcePath, url);
     return url;
   }
 
-  private static URL getDefaultsImpl(final Object requestor, final String componentResourcePath) {
-    boolean isPathAbsolute = StringUtil.startsWithChar(componentResourcePath, '/');
-    if (isPathAbsolute) {
-      return requestor.getClass().getResource(componentResourcePath + XML_EXTENSION);
-    }
-    else {
-      return getResourceByRelativePath(requestor, componentResourcePath, XML_EXTENSION);
-    }
-  }
-
   @Nullable
-  public static InputStream getDefaultsInputStream(Object requestor, final String componentResourcePath) {
+  public static InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
     try {
       final URL defaults = getDefaults(requestor, componentResourcePath);
-      return defaults != null ? URLUtil.openStream(defaults) : null;
+      return defaults == null ? null : URLUtil.openStream(defaults);
     }
     catch (IOException e) {
       LOG.error(e);
       return null;
     }
-  }
-
-  private static URL getResourceByRelativePath(Object requestor, final String componentResourcePath, String resourceExtension) {
-    String appName = ApplicationManagerEx.getApplicationEx().getName();
-    URL result = requestor.getClass().getResource("/" + appName + "/" + componentResourcePath + resourceExtension);
-    if (result == null) {
-      result = requestor.getClass().getResource("/" + componentResourcePath + resourceExtension);
-    }
-    return result;
   }
 }

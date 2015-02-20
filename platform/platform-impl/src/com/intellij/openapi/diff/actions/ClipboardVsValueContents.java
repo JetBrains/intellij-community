@@ -30,6 +30,7 @@ import java.awt.datatransfer.DataFlavor;
 /**
  * @author Jeka
  */
+@Deprecated
 public class ClipboardVsValueContents extends DiffRequest {
 
   private DiffContent[] myContents = null;

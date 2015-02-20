@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
   private final boolean countGettersAndSetters;
 
   VariableAccessVisitor(PsiClass aClass, boolean countGettersAndSetters) {
-    super();
     this.aClass = aClass;
     this.countGettersAndSetters = countGettersAndSetters;
   }
@@ -54,7 +53,12 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
   @Override
   public void visitClass(PsiClass classToVisit) {
     calculatePrivateMethodUsagesIfNecessary();
+    final boolean wasInSync = m_inSynchronizedContext;
+    if (!classToVisit.equals(aClass)) {
+      m_inSynchronizedContext = false;
+    }
     super.visitClass(classToVisit);
+    m_inSynchronizedContext = wasInSync;
   }
 
   @Override
@@ -131,11 +135,11 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
         return;
       }
     }
-    final boolean methodIsSynchonized =
+    final boolean methodIsSynchronized =
       method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
       || methodIsAlwaysUsedSynchronized(method);
     boolean wasInSync = false;
-    if (methodIsSynchonized) {
+    if (methodIsSynchronized) {
       wasInSync = m_inSynchronizedContext;
       m_inSynchronizedContext = true;
     }
@@ -144,7 +148,7 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
       m_inInitializer = true;
     }
     super.visitMethod(method);
-    if (methodIsSynchonized) {
+    if (methodIsSynchronized) {
       m_inSynchronizedContext = wasInSync;
     }
     if (isConstructor) {

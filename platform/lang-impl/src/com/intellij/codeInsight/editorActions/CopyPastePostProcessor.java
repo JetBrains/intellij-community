@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * An extension to collect and apply additional transferable data when performing copy-paste in editors.<p/>
+ * 
  * @author yole
  */
 public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData> {

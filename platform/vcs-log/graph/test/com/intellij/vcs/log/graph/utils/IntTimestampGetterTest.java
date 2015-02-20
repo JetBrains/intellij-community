@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -46,14 +45,13 @@ public class IntTimestampGetterTest {
   private static String toStr(@NotNull TimestampGetter timestampGetter) {
     StringBuilder s = new StringBuilder();
     for (int i = 0; i < timestampGetter.size(); i++) {
-      if (i != 0)
-        s.append(", ");
+      if (i != 0) s.append(", ");
       s.append(timestampGetter.getTimestamp(i));
     }
     return s.toString();
   }
 
-  protected void runTest(long ... timestamp) {
+  protected void runTest(long... timestamp) {
     TimestampGetter timestampGetter = create(timestamp);
     IntTimestampGetter intTimestampGetter = IntTimestampGetter.newInstance(timestampGetter, BLOCK_SIZE);
     assertEquals(toStr(timestampGetter), toStr(intTimestampGetter));
@@ -68,7 +66,8 @@ public class IntTimestampGetterTest {
   public void checkEmpty() {
     try {
       runTest();
-    } catch (IllegalArgumentException e) {
+    }
+    catch (IllegalArgumentException e) {
       return;
     }
 

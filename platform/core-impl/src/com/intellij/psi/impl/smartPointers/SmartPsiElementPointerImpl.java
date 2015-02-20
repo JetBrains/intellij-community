@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @NotNull
-  static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
+  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project,
+                                                                                  @NotNull E element,
+                                                                                  PsiFile containingFile) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }
@@ -146,9 +148,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) {
       PsiLanguageInjectionHost hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (hostContext != null) {
+      TextRange elementRange = element.getTextRange();
+      if (hostContext != null && elementRange != null) {
         SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(hostContext);
-        return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostPointer);
+        return new InjectedSelfElementInfo(project, element, elementRange, containingFile, hostPointer);
       }
     }
 
@@ -185,7 +188,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo;
   }
 
-  protected static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+  static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
     if (pointer1 == pointer2) return true;
     if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
       SmartPsiElementPointerImpl impl1 = (SmartPsiElementPointerImpl)pointer1;

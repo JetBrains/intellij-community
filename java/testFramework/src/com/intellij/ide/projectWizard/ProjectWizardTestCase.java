@@ -44,6 +44,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -56,7 +57,6 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 10/29/12
  */
-@SuppressWarnings("unchecked")
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
@@ -64,7 +64,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Nullable
   private Project myCreatedProject;
 
-  protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<Step> adjuster) throws IOException {
+  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
     try {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
@@ -96,13 +96,11 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
   }
 
-  protected void runWizard(String group, final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
-
+  protected void runWizard(@NotNull String group, @Nullable final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
-    boolean condition = step.setSelectedTemplate(group, name);
-    if (!condition) {
-      throw new IllegalArgumentException(group + "/" + name + " template not found");
+    if (!step.setSelectedTemplate(group, name)) {
+      throw new IllegalArgumentException(group + '/' + name + " template not found, available groups " + step.availableTemplateGroupsToString());
     }
 
     runWizard(new Consumer<Step>() {
@@ -118,8 +116,8 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     });
   }
 
-  protected void runWizard(Consumer<Step> adjuster) {
-    while(true) {
+  protected void runWizard(@Nullable Consumer<Step> adjuster) {
+    while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
         adjuster.consume(currentStep);
@@ -150,15 +148,16 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected T createWizard(Project project, File directory) {
+    //noinspection unchecked
     return (T)new AddModuleWizard(project, DefaultModulesProvider.createForProject(project), directory.getPath());
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-    Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
-    for (final Sdk jdk : jdks) {
+    for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectSdk != jdk) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -170,27 +169,28 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     }
   }
 
-  protected void setupJdk() {
+  protected void configureJdk() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-        Sdk defaultJdk = new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome());
-        Sdk otherJdk = new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome());
-        jdkTable.addJdk(otherJdk);
-        jdkTable.addJdk(defaultJdk);
-        mySdks.add(defaultJdk);
-        mySdks.add(otherJdk);
+        addSdk(new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
+        addSdk(new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome()));
 
-        Sdk[] jdks = jdkTable.getAllJdks();
-        System.out.println(Arrays.asList(jdks));
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
 
         if (getName().contains("DefaultSdk")) {
           Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-          ProjectRootManager.getInstance(defaultProject).setProjectSdk(defaultJdk);
+          ProjectRootManager.getInstance(defaultProject).setProjectSdk(
+            new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
         }
       }
     });
+  }
+
+  protected void addSdk(Sdk sdk) {
+    ProjectJdkTable.getInstance().addJdk(sdk);
+    mySdks.add(sdk);
   }
 
   @Override
@@ -243,13 +243,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
 
+    //noinspection unchecked
     myWizard = (T)ImportModuleAction.createImportWizard(project, null, file, providers);
     assertNotNull(myWizard);
     if (myWizard.getStepCount() > 0) {
       runWizard(adjuster);
     }
-    List<Module> modules = ImportModuleAction.createFromWizard(project, myWizard);
-    return modules == null || modules.isEmpty() ? null : modules.get(0);
+    return ContainerUtil.getFirstItem(ImportModuleAction.createFromWizard(project, myWizard));
   }
 
   protected Sdk createSdk(String name, SdkTypeId sdkType) {

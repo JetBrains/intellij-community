@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
@@ -49,9 +50,10 @@ public final class SourceMapDecoder {
 
   public interface SourceResolverFactory {
     @NotNull
-    SourceResolver create(@NotNull List<String> sourcesUrl, @Nullable List<String> sourcesContent);
+    SourceResolver create(@NotNull List<String> sourceUrls, @Nullable List<String> sourceContents);
   }
 
+  @Nullable
   public static SourceMap decode(@NotNull String contents, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
     if (contents.isEmpty()) {
       throw new IOException("source map contents cannot be empty");
@@ -95,6 +97,9 @@ public final class SourceMapDecoder {
       }
       else if (propertyName.equals("sourceRoot")) {
         sourceRoot = readSourcePath(reader);
+        if (sourceRoot != null) {
+          sourceRoot = UriUtil.trimLeadingSlashes(sourceRoot);
+        }
       }
       else if (propertyName.equals("sources")) {
         sourcesReader = reader.subReader();
@@ -416,7 +421,7 @@ public final class SourceMapDecoder {
   }
 
   private static final class GeneratedMappingList extends MappingList {
-    public GeneratedMappingList(List<MappingEntry> mappings) {
+    public GeneratedMappingList(@NotNull List<MappingEntry> mappings) {
       super(mappings);
     }
 

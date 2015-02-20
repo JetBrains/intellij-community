@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
@@ -42,7 +43,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   private volatile boolean myDisposed;
 
-  DebuggerManagerThreadImpl(@NotNull Disposable parent) {
+  DebuggerManagerThreadImpl(@NotNull Disposable parent, Project project) {
+    super(project);
     Disposer.register(parent, this);
   }
 
@@ -52,8 +54,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
   @TestOnly
-  public static DebuggerManagerThreadImpl createTestInstance(@NotNull Disposable parent) {
-    return new DebuggerManagerThreadImpl(parent);
+  public static DebuggerManagerThreadImpl createTestInstance(@NotNull Disposable parent, Project project) {
+    return new DebuggerManagerThreadImpl(parent, project);
   }
 
   public static boolean isManagerThread() {

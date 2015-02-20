@@ -171,8 +171,8 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     if (element == null) return null;
 
     @SuppressWarnings({"unchecked"})
-    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class);
-    if (parent == null || parent instanceof PsiMethod) return null;
+    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class, PsiFunctionalExpression.class);
+    if (parent == null || parent instanceof PsiMethod || parent instanceof PsiFunctionalExpression) return null;
     final PsiTryStatement statement = (PsiTryStatement) parent;
 
     final PsiCodeBlock tryBlock = statement.getTryBlock();

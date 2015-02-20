@@ -61,6 +61,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JPanel myAddonPanel;
   private JCheckBox myCbShowMethodSeparators;
   private JCheckBox myAntialiasingInEditorCheckBox;
+  private JCheckBox myShowCodeLensInEditorCheckBox;
   private JCheckBox myCbShowIconsInGutter;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
 
@@ -108,6 +109,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myTrailingWhitespacesCheckBox.setSelected(editorSettings.isTrailingWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
+    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
     myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
 
     updateWhitespaceCheckboxesState();
@@ -140,8 +142,16 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER = myCbShowIconsInGutter.isSelected();
 
     UISettings uiSettings = UISettings.getInstance();
+    boolean uiSettingsModified = false;
     if (uiSettings.ANTIALIASING_IN_EDITOR != myAntialiasingInEditorCheckBox.isSelected()) {
       uiSettings.ANTIALIASING_IN_EDITOR = myAntialiasingInEditorCheckBox.isSelected();
+      uiSettingsModified = true;
+    }
+    if (uiSettings.SHOW_EDITOR_TOOLTIP != myShowCodeLensInEditorCheckBox.isSelected()) {
+      uiSettings.SHOW_EDITOR_TOOLTIP = myShowCodeLensInEditorCheckBox.isSelected();
+      uiSettingsModified = true;
+    }
+    if (uiSettingsModified) {
       LafManager.getInstance().repaintUI();
       uiSettings.fireUISettingsChanged();
     }
@@ -171,6 +181,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
     isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
+    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().SHOW_EDITOR_TOOLTIP;
 
     return isModified;
   }

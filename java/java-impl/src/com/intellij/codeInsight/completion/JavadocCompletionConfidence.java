@@ -16,17 +16,14 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * @author peter
@@ -36,14 +33,31 @@ public class JavadocCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (psiElement().inside(PsiDocTag.class).inside(
-      or(psiElement(PsiJavaCodeReferenceElement.class), psiElement(PsiDocMethodOrFieldRef.class)))
-      .accepts(contextElement)) {
-      return ThreeState.NO;
-    }
-    if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {
-      return ThreeState.NO;
+    if (psiElement().inside(PsiDocTag.class).accepts(contextElement)) {
+      if (findJavaReference(psiFile, offset - 1) != null) {
+        return ThreeState.NO;
+      }
+      if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {
+        return ThreeState.NO;
+      }
+      if (contextElement.textMatches("#")) {
+        return ThreeState.NO;
+      }
     }
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);
   }
+
+  @Nullable
+  private static PsiJavaReference findJavaReference(final PsiFile file, final int offset) {
+    PsiReference reference = file.findReferenceAt(offset);
+    if (reference instanceof PsiMultiReference) {
+      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
+        if (psiReference instanceof PsiJavaReference) {
+          return (PsiJavaReference)psiReference;
+        }
+      }
+    }
+    return reference instanceof PsiJavaReference ? (PsiJavaReference)reference : null;
+  }
+
 }

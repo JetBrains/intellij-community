@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.UrlPsiReference;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +35,6 @@ public class MavenUrlConverter extends MavenReferenceConverter<String> {
   }
 
   protected PsiReference createReference(PsiElement element, String text, TextRange range) {
-    return new UrlPsiReference(element);
+    return new WebReference(element, range);
   }
 }

@@ -15,9 +15,13 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -47,6 +51,18 @@ public class InferenceVariable extends LightTypeParameter {
 
   public void setInstantiation(PsiType instantiation) {
     myInstantiation = instantiation;
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType[] getExtendsListTypes() {
+    final List<PsiClassType> result = new ArrayList<PsiClassType>();
+    for (PsiType type : getBounds(InferenceBound.UPPER)) {
+      if (type instanceof PsiClassType) {
+        result.add((PsiClassType)type);
+      }
+    }
+    return result.toArray(new PsiClassType[result.size()]);
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {

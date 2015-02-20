@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TempFiles;
 
 public class GlobalSearchScopeTest extends PlatformTestCase {
   public void testUniteDirectorySearchScopeDoesNotSOE() throws Exception {
@@ -52,5 +54,26 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
 
     assertSame(s.uniteWith(childScope), s);
     assertSame(s.uniteWith(s), s);
+  }
+
+  public void testNotScope() throws Exception {
+    VirtualFile moduleRoot = new TempFiles(myFilesToDelete).createTempVDir();
+    ModuleRootModificationUtil.addContentRoot(getModule(), moduleRoot.getPath());
+
+    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
+    assertFalse(projectScope.isSearchInLibraries());
+    assertTrue(projectScope.isSearchInModuleContent(getModule()));
+    assertTrue(projectScope.contains(moduleRoot));
+
+    GlobalSearchScope notProjectScope = GlobalSearchScope.notScope(projectScope);
+    assertTrue(notProjectScope.isSearchInLibraries());
+    assertFalse(notProjectScope.contains(moduleRoot));
+
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(getProject());
+    assertTrue(allScope.isSearchInLibraries());
+    assertTrue(allScope.contains(moduleRoot));
+
+    GlobalSearchScope notAllScope = GlobalSearchScope.notScope(allScope);
+    assertFalse(notAllScope.contains(moduleRoot));
   }
 }

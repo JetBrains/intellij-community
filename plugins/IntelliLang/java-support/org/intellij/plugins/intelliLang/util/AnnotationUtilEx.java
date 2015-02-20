@@ -19,9 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.*;
-import com.intellij.util.Processor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -271,59 +272,36 @@ public class AnnotationUtilEx {
    */
   private static PsiAnnotation[] getAnnotations(@NotNull final PsiModifierListOwner listOwner, final boolean inHierarchy) {
     final PsiModifierList modifierList = listOwner.getModifierList();
-    if (modifierList == null) {
-      return PsiAnnotation.EMPTY_ARRAY;
-    }
     if (!inHierarchy) {
-      return modifierList.getAnnotations();
+      return modifierList == null ? PsiAnnotation.EMPTY_ARRAY : modifierList.getAnnotations();
     }
     return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
       @Nullable
       @Override
       public Result<PsiAnnotation[]> compute() {
-        return Result.create(getHierarchyAnnotations(listOwner, modifierList), PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(getHierarchyAnnotations(listOwner), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
 
-  private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner, PsiModifierList modifierList) {
+  private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {
     final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations
         return !contains(o) && super.add(o);
       }
     };
-    if (listOwner instanceof PsiMethod) {
+
+    PsiModifierList modifierList = listOwner.getModifierList();
+    if (modifierList != null) {
       ContainerUtil.addAll(all, modifierList.getAnnotations());
-      SuperMethodsSearch.search((PsiMethod)listOwner, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-        public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
-          ContainerUtil.addAll(all, superMethod.getMethod().getModifierList().getAnnotations());
-          return true;
-        }
-      });
-      return all.toArray(new PsiAnnotation[all.size()]);
     }
-    if (listOwner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)listOwner;
-      PsiElement declarationScope = parameter.getDeclarationScope();
-      PsiParameterList parameterList;
-      if (declarationScope instanceof PsiMethod && parameter.getParent() == (parameterList = ((PsiMethod)declarationScope).getParameterList())) {
-        PsiMethod method = (PsiMethod)declarationScope;
-        final int parameterIndex = parameterList.getParameterIndex(parameter);
+    for (PsiModifierListOwner superOwner : AnnotationUtil.getSuperAnnotationOwners(listOwner)) {
+      modifierList = superOwner.getModifierList();
+      if (modifierList != null) {
         ContainerUtil.addAll(all, modifierList.getAnnotations());
-        SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-          public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
-            PsiParameter superParameter = superMethod.getMethod().getParameterList().getParameters()[parameterIndex];
-            PsiModifierList modifierList = superParameter.getModifierList();
-            if (modifierList != null) {
-              ContainerUtil.addAll(all, modifierList.getAnnotations());
-            }
-            return true;
-          }
-        });
-        return all.toArray(new PsiAnnotation[all.size()]);
       }
     }
-    return modifierList.getAnnotations();
+    return all.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : all.toArray(new PsiAnnotation[all.size()]);
   }
 }

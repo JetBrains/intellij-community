@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightTypeParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
@@ -36,15 +37,13 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
 
   protected GrMethodWrapper(PsiMethod method, PsiSubstitutor substitutor) {
     super(method.getManager(), method.getName());
-
     myWrappedMethod = method;
-
     setContainingClass(method.getContainingClass());
-
     getModifierList().copyModifiers(method);
-
     getParameterList().copyParameters(method, substitutor, this);
-
+    for (PsiTypeParameter parameter : method.getTypeParameters()) {
+      getTypeParameterList().addParameter(new LightTypeParameter(parameter));
+    }
     if (method instanceof OriginInfoAwareElement) {
       setOriginInfo(((OriginInfoAwareElement)method).getOriginInfo());
     }

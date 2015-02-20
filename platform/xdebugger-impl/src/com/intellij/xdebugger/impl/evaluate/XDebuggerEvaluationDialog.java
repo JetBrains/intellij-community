@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if (BitUtil.isSet(e.getModifiers(), InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) {
+        if (BitUtil.isSet(e.getModifiers(), InputEvent.SHIFT_MASK) || BitUtil.isSet(e.getModifiers(), InputEvent.CTRL_MASK)) {
           addToWatches();
         }
       }

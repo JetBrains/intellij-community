@@ -19,7 +19,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Map;
 
 /**
@@ -41,16 +43,44 @@ import java.util.Map;
 public class TestDialogManager extends DialogManager {
 
   private final Map<Class, TestDialogHandler> myHandlers = ContainerUtil.newHashMap();
+  @Nullable private TestMessageHandler myMessageHandler;
 
   @Override
   protected void showDialog(@NotNull DialogWrapper dialog) {
     TestDialogHandler handler = myHandlers.get(dialog.getClass());
-    int exitCode = handler != null ? handler.handleDialog(dialog) : DialogWrapper.OK_EXIT_CODE;
-    dialog.close(exitCode, exitCode == DialogWrapper.OK_EXIT_CODE);
+    int exitCode = DialogWrapper.OK_EXIT_CODE;
+    try {
+      if (handler != null) {
+        exitCode = handler.handleDialog(dialog);
+      }
+    }
+    finally {
+      dialog.close(exitCode, exitCode == DialogWrapper.OK_EXIT_CODE);
+    }
   }
 
-  public void registerDialogHandler(@NotNull Class<? extends DialogWrapper> dialogClass, @NotNull TestDialogHandler handler) {
+  @Override
+  public int showMessageDialog(@NotNull String description,
+                               @NotNull String title,
+                               @NotNull String[] options,
+                               int defaultButtonIndex,
+                               int focusedButtonIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption dontAskOption) {
+    if (myMessageHandler != null) {
+      return myMessageHandler.handleMessage(description);
+    }
+    else {
+      throw new IllegalStateException("No message handler is defined");
+    }
+  }
+
+  public <T extends DialogWrapper> void registerDialogHandler(@NotNull Class<T> dialogClass, @NotNull TestDialogHandler<T> handler) {
     myHandlers.put(dialogClass, handler);
+  }
+
+  public void registerMessageHandler(@NotNull TestMessageHandler handler) {
+    myMessageHandler = handler;
   }
 
   public void cleanup() {

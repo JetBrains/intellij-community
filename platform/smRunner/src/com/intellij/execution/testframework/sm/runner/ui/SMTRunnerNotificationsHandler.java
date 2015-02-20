@@ -99,6 +99,8 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
         type = null;
     }
 
+    TestStatusListener.notifySuiteFinished(testsRoot, myConsoleProperties.getProject());
+
     if (msg != null) {
       notify(msg, type, testsRoot);
     }

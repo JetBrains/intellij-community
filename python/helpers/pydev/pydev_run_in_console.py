@@ -41,6 +41,8 @@ if __name__ == '__main__':
 
     file = sys.argv[1]
 
+    del sys.argv[0]
+
     import pydev_localhost
 
     if int(port) == 0 and int(client_port) == 0:

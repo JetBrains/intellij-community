@@ -15,7 +15,6 @@
  */
 package com.intellij.projectView;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.openapi.Disposable;
@@ -96,9 +95,5 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
 
   @Override
   public void dispose() {
-  }
-
-  public String getProjectFileRepresentation() {
-    return " " + myProject.getName() + ProjectFileType.DOT_DEFAULT_EXTENSION + "\n";
   }
 }

@@ -53,7 +53,7 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull
   private static MultiMap<Hash, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
-    MultiMap<Hash, VcsRef> map = MultiMap.createSmartList();
+    MultiMap<Hash, VcsRef> map = MultiMap.createSmart();
     for (VcsRef ref : refs) {
       map.putValue(ref.getCommitHash(), ref);
     }

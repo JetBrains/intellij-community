@@ -25,7 +25,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.LightIdeaTestCase;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     super.setUp();
-    InspectionToolRegistrar.getInstance().ensureInitialized();
+    InspectionToolRegistrar.getInstance().createTools();
   }
 
   @Override
@@ -77,88 +76,83 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testConvertOldProfile() throws Exception {
-    final Element element = loadOldStyleProfile();
-    final InspectionProfileImpl profile = createProfile();
+    Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
+                                            "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                            "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                            "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                            "      </value>\n" +
+                                            "    </option>\n" +
+                                            "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                            "      </value>\n" +
+                                            "    </option>\n" +
+                                            "    <option name=\"METHOD_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
+                                            "      </value>\n" + "    </option>\n" +
+                                            "    <option name=\"FIELD_OPTIONS\">\n" +
+                                            "      <value>\n" +
+                                            "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                            "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                            "      </value>\n" +
+                                            "    </option>\n" +
+                                            "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
+                                            "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                            "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
+                                            "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
+                                            "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
+                                            "  </inspection_tool>\n" +
+                                            "</inspections>").getRootElement();
+    InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
-    final ModifiableModel model = profile.getModifiableModel();
+    ModifiableModel model = profile.getModifiableModel();
     model.commit();
-    final Element copy = new Element("inspections");
+
+    Element copy = new Element("inspections");
     profile.writeExternal(copy);
     assertElementsEqual(loadProfile(), copy);
   }
 
-  private static Element loadOldStyleProfile() throws IOException, JDOMException {
-    final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
-                                                    "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                                                    "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                                                    "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"METHOD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
-                                                    "      </value>\n" + "    </option>\n" +
-                                                    "    <option name=\"FIELD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
-                                                    "    <option name=\" AdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
-                                                    "  </inspection_tool>\n" +
-                                                    "</inspections>");
-    return document.getRootElement();
-  }
-
   private static Element loadProfile() throws IOException, JDOMException {
-    final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
-                                                    "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                                                    "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                                                    "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"METHOD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
-                                                    "      </value>\n" + "    </option>\n" +
-                                                    "    <option name=\"FIELD_OPTIONS\">\n" +
-                                                    "      <value>\n" +
-                                                    "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
-                                                    "      </value>\n" +
-                                                    "    </option>\n" +
-                                                    "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
-                                                    "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
-                                                    "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
-                                                    "  </inspection_tool>\n" +
-                                                    "</inspections>");
-    return document.getRootElement();
+    return JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
+                                 "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                 "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                 "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                 "      </value>\n" +
+                                 "    </option>\n" +
+                                 "    <option name=\"INNER_CLASS_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                 "      </value>\n" +
+                                 "    </option>\n" +
+                                 "    <option name=\"METHOD_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
+                                 "      </value>\n" + "    </option>\n" +
+                                 "    <option name=\"FIELD_OPTIONS\">\n" +
+                                 "      <value>\n" +
+                                 "        <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                 "        <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                 "      </value>\n" +
+                                 "    </option>\n" +
+                                 "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
+                                 "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                 "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
+                                 "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
+                                 "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
+                                 "  </inspection_tool>\n" +
+                                 "</inspections>").getRootElement();
   }
 
   public void testReloadProfileWithUnknownScopes() throws Exception {

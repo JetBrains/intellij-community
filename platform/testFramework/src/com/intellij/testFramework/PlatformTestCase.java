@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -362,7 +361,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       localFileSystem.cleanupForNextTest();
     }
 
-    LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
   }
 
   private static Set<VirtualFile> eternallyLivingFiles() {
@@ -709,8 +707,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  protected boolean isRunInEdt() {
+    return true;
+  }
+
   protected void runBareRunnable(Runnable runnable) throws Throwable {
-    SwingUtilities.invokeAndWait(runnable);
+    if (isRunInEdt()) {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   protected boolean isRunInWriteAction() {
@@ -920,6 +927,4 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
   }
-
-
 }

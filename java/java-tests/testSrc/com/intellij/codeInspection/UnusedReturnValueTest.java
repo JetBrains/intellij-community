@@ -12,6 +12,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedReturnValueTest extends InspectionTestCase {
@@ -39,7 +43,17 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     doTest();
   }
 
-  
+  public void testMethodReference() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected Sdk getTestProjectSdk() {
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    return sdk;
+  }
+
   public void testSimpleSetter() throws Exception {
     try {
       myTool.IGNORE_BUILDER_PATTERN = true;

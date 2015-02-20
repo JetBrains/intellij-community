@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExecutionStackImpl extends XExecutionStack {
+class ExecutionStackImpl extends XExecutionStack {
   private final SuspendContext suspendContext;
   private final Script topFrameScript;
   private CallFrameView topCallFrameView;
@@ -42,7 +42,7 @@ public class ExecutionStackImpl extends XExecutionStack {
       return;
     }
 
-    suspendContext.getCallFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
+    suspendContext.getFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
       @Override
       protected void consume(CallFrame[] frames, @NotNull Vm vm) {
         int count = frames.length - firstFrameIndex;

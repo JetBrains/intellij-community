@@ -28,6 +28,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
@@ -127,7 +128,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
               addJUnit4Library(inTests, currentModule);
               final GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
               final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-              if (aClass != null && editor != null) {
+              if (aClass != null && editor != null && !DumbService.isDumb(project)) {
                 new AddImportAction(project, reference, editor, aClass).execute();
               }
             }
@@ -250,7 +251,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             @Override
             public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
               OrderEntryUtil.addLibraryToRoots(libraryEntry, currentModule);
-              if (editor != null) {
+              if (editor != null && !DumbService.isDumb(project)) {
                 new AddImportAction(project, reference, editor, aClass).execute();
               }
             }
@@ -322,6 +323,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                           @NonNls final String className,
                                           @NonNls final String libVirtFile) {
     addJarToRoots(libVirtFile, currentModule, reference != null ? reference.getElement() : null);
+    
+    if (DumbService.isDumb(project)) return;
 
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);

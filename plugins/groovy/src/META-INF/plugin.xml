@@ -223,7 +223,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension" order="after defaultNavbar"/>
+    <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
+
+    <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
 
     <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
@@ -526,6 +529,8 @@
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
                          displayName="Groovy Compiler" parentId="project.propCompiler"/>
+    <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
 
     <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider$GroovyExtensionVetoSPI"/>
 
@@ -1096,6 +1101,15 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection"/>
 
+    <localInspection language="Groovy"
+                     groupPath="Groovy"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupKey="groovy.probable.bugs"
+                     key="equals.between.inconvertible.types"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
+
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
@@ -1550,7 +1564,8 @@
   </extensions>
 
   <actions>
-    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" text="Execute Groovy Code"
+    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
+            text="Execute Groovy Code"
             description="Execute Groovy code in console">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>

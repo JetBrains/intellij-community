@@ -89,6 +89,7 @@ public class FastExtendedPostdominanceHelper {
       stackPath.add(factory.spawnEmptySet());
 
       Set<Statement> setVisited = new HashSet<Statement>();
+      Set<Statement> setStack = new HashSet<Statement>();
 
       while (!stack.isEmpty()) {
 
@@ -122,9 +123,15 @@ public class FastExtendedPostdominanceHelper {
         }
 
         for (StatEdge edge : stat.getSuccessorEdges(StatEdge.TYPE_REGULAR)) {
-          if (!setVisited.contains(edge.getDestination())) {
-            stack.add(edge.getDestination());
+          
+          Statement edge_destination = edge.getDestination();
+          
+          if(!setVisited.contains(edge_destination) && !setStack.contains(edge_destination)) {
+            
+            stack.add(edge_destination);
             stackPath.add(path.getCopy());
+            
+			setStack.add(edge_destination); 
           }
         }
       }

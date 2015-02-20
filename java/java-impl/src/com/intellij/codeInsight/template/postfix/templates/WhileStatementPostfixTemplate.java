@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class WhileStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public WhileStatementPostfixTemplate() {
-    super("while", "while (expr)", JAVA_PSI_INFO, IS_BOOLEAN);
+    super("while", "while (expr)", selectorTopmost(IS_BOOLEAN));
   }
 
 

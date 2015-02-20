@@ -335,7 +335,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return new TokenProcessor();
   }
 
-  protected SyntaxHighlighter getSyntaxHighlighter() {
+  public SyntaxHighlighter getSyntaxHighlighter() {
     return myHighlighter;
   }
 

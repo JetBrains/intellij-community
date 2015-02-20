@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
@@ -114,7 +113,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     myBalloonLayout = new BalloonLayoutImpl(rootPane, new JBInsets(8, 8, 8, 8));
 
     WelcomeFrame.setupCloseAction(this);
-    new MnemonicHelper().register(this);
+    MnemonicHelper.init(this);
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
       public void dispose() {
@@ -242,11 +241,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
           ActionLink registerLink = new ActionLink("Register", register);
           registerLink.setNormalColor(getLinkNormalColor());
           NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
-          button.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
+          button.setBorder(JBUI.Borders.empty(4, 10, 4, 10));
           button.add(registerLink);
           installFocusable(button, register, KeyEvent.VK_UP, KeyEvent.VK_RIGHT, true);
           NonOpaquePanel wrap = new NonOpaquePanel();
-          wrap.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+          wrap.setBorder(JBUI.Borders.empty(0, 10, 0, 0));
           wrap.add(button);
           panel.add(wrap, BorderLayout.WEST);
           registeredVisible = true;
@@ -260,7 +259,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       panel.add(toolbar, BorderLayout.EAST);
 
 
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 11));
+      panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
       return panel;
     }
 
@@ -281,7 +280,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       ref.get().setPaintUnderline(false);
       ref.get().setNormalColor(getLinkNormalColor());
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(4, 6, 4, 6));
+      panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
       panel.add(ref.get());
       panel.add(createArrow(ref.get()), BorderLayout.EAST);
       installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
@@ -290,7 +289,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
 
     private JComponent createActionPanel() {
       JPanel actions = new NonOpaquePanel();
-      actions.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+      actions.setBorder(JBUI.Borders.empty(0, 10, 0, 0));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -300,7 +299,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       for (AnAction action : group.getChildren(null)) {
         JPanel button = new JPanel(new BorderLayout());
         button.setOpaque(false);
-        button.setBorder(IdeBorderFactory.createEmptyBorder(8, 20, 8, 20));
+        button.setBorder(JBUI.Borders.empty(8, 20, 8, 20));
         Presentation presentation = action.getTemplatePresentation();
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
@@ -390,7 +389,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
       JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
-      logo.setBorder(new EmptyBorder(30,0,10,0));
+      logo.setBorder(JBUI.Borders.empty(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
       JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -664,7 +663,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       Map<Icon, Icon> scaled = new HashMap<Icon, Icon>();
 
       {
-        label.setBorder(new EmptyBorder(new Insets(3, 7, 3, 7)));
+        label.setBorder(JBUI.Borders.empty(3, 7, 3, 7));
       }
 
       @NotNull
@@ -689,7 +688,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     actionsListPanel.add(pane, BorderLayout.CENTER);
     if (backAction != null) {
       final JLabel back = new JLabel(AllIcons.Actions.Back);
-      back.setBorder(new EmptyBorder(new Insets(3, 7, 10, 7)));
+      back.setBorder(JBUI.Borders.empty(3, 7, 10, 7));
       back.setHorizontalAlignment(SwingConstants.LEFT);
       new ClickListener() {
         @Override
@@ -713,7 +712,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         Object value = list.getSelectedValue();
         if (value instanceof AbstractActionWithPanel) {
           JPanel panel = ((AbstractActionWithPanel)value).createPanel();
-          panel.setBorder(new EmptyBorder(7, 10, 7, 10));
+          panel.setBorder(JBUI.Borders.empty(7, 10, 7, 10));
           selected.set(panel);
           main.add(selected.get());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -327,9 +327,12 @@ public class NavBarModel {
   @Nullable
   private static PsiElement normalize(@Nullable PsiElement child) {
     if (child == null) return null;
-    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+
+    NavBarModelExtension[] extensions = Extensions.getExtensions(NavBarModelExtension.EP_NAME);
+    for (int i = extensions.length - 1; i >= 0; i--) {
+      NavBarModelExtension modelExtension = extensions[i];
       child = modelExtension.adjustElement(child);
-      if (child == null ) return null;
+      if (child == null) return null;
     }
     return child;
   }

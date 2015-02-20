@@ -19,7 +19,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -32,7 +34,6 @@ import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSeriali
 import org.jetbrains.jps.model.serialization.java.compiler.*;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
-import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootDummyPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.util.Arrays;
@@ -56,6 +57,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
   private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
   public static final String ROOT_TAG = "root";
+  private static final String RELATIVE_OUTPUT_PATH_ATTRIBUTE = "relativeOutputPath";
   private static final String IS_GENERATED_ATTRIBUTE = "generated";
   public static final JavaSourceRootPropertiesSerializer JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER =
     new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
@@ -88,8 +90,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Arrays.asList(JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER,
                          new JavaSourceRootPropertiesSerializer(JavaSourceRootType.TEST_SOURCE, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID),
-                         new JpsModuleSourceRootDummyPropertiesSerializer(JavaResourceRootType.RESOURCE, "java-resource"),
-                         new JpsModuleSourceRootDummyPropertiesSerializer(JavaResourceRootType.TEST_RESOURCE, "java-test-resource"));
+                         new JavaResourceRootPropertiesSerializer(JavaResourceRootType.RESOURCE, "java-resource"),
+                         new JavaResourceRootPropertiesSerializer(JavaResourceRootType.TEST_RESOURCE, "java-test-resource"));
   }
 
   @Override
@@ -322,6 +324,30 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       String packagePrefix = properties.getPackagePrefix();
       if (!packagePrefix.isEmpty()) {
         sourceRootTag.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
+      }
+      if (properties.isForGeneratedSources()) {
+        sourceRootTag.setAttribute(IS_GENERATED_ATTRIBUTE, Boolean.TRUE.toString());
+      }
+    }
+  }
+
+  private static class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaResourceRootProperties> {
+    private JavaResourceRootPropertiesSerializer(JpsModuleSourceRootType<JavaResourceRootProperties> type, String typeId) {
+      super(type, typeId);
+    }
+
+    @Override
+    public JavaResourceRootProperties loadProperties(@NotNull Element sourceRootTag) {
+      String relativeOutputPath = StringUtil.notNullize(sourceRootTag.getAttributeValue(RELATIVE_OUTPUT_PATH_ATTRIBUTE));
+      boolean isGenerated = Boolean.parseBoolean(sourceRootTag.getAttributeValue(IS_GENERATED_ATTRIBUTE));
+      return getService().createResourceRootProperties(relativeOutputPath, isGenerated);
+    }
+
+    @Override
+    public void saveProperties(@NotNull JavaResourceRootProperties properties, @NotNull Element sourceRootTag) {
+      String relativeOutputPath = properties.getRelativeOutputPath();
+      if (!relativeOutputPath.isEmpty()) {
+        sourceRootTag.setAttribute(RELATIVE_OUTPUT_PATH_ATTRIBUTE, relativeOutputPath);
       }
       if (properties.isForGeneratedSources()) {
         sourceRootTag.setAttribute(IS_GENERATED_ATTRIBUTE, Boolean.TRUE.toString());

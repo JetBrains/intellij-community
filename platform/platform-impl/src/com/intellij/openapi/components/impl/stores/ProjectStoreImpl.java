@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -42,17 +42,19 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance(ProjectStoreImpl.class);
+
+  private static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
 
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
@@ -63,8 +65,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private StorageScheme myScheme = StorageScheme.DEFAULT;
   private String myPresentableUrl;
 
-  ProjectStoreImpl(@NotNull ProjectImpl project) {
-    super(project);
+  ProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+    super(pathMacroManager);
 
     myProject = project;
   }
@@ -116,21 +118,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         private void backup(final VirtualFile projectDir, final VirtualFile vile) throws IOException {
           final String oldName = vile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + vile.getExtension();
-          final VirtualFile oldFile = projectDir.findOrCreateChildData(this, oldName);
-          assert oldFile != null : projectDir + ", " + oldName;
-          VfsUtil.saveText(oldFile, VfsUtilCore.loadText(vile));
+          VfsUtil.saveText(projectDir.findOrCreateChildData(this, oldName), VfsUtilCore.loadText(vile));
         }
       });
     }
 
-    if (originalVersion > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-      String message =
-        ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName());
-
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != Messages.YES) return false;
-    }
-
-    return true;
+    return originalVersion <= ProjectManagerImpl.CURRENT_FORMAT_VERSION ||
+           MessageDialogBuilder.yesNo(CommonBundle.getWarningTitle(),
+                                      ProjectBundle.message("project.load.new.version.warning", myProject.getName(), ApplicationNamesInfo.getInstance().getProductName()))
+             .icon(Messages.getWarningIcon())
+             .project(myProject).is();
   }
 
   @Override
@@ -333,11 +330,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException {
-    myProject.init();
-  }
-
-  @Override
   public VirtualFile getProjectFile() {
     return myProject.isDefault() ? null : ((FileBasedStorage)getProjectFileStorage()).getVirtualFile();
   }
@@ -359,16 +351,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public void loadProjectFromTemplate(@NotNull final ProjectImpl defaultProject) {
-    XmlElementStorage stateStorage = getProjectFileStorage();
-
+  public void loadProjectFromTemplate(@NotNull ProjectImpl defaultProject) {
     defaultProject.save();
-    final IProjectStore projectStore = defaultProject.getStateStore();
-    assert projectStore instanceof DefaultProjectStoreImpl;
-    DefaultProjectStoreImpl defaultProjectStore = (DefaultProjectStoreImpl)projectStore;
-    final Element element = defaultProjectStore.getStateCopy();
+
+    Element element = ((DefaultProjectStoreImpl)defaultProject.getStateStore()).getStateCopy();
     if (element != null) {
-      stateStorage.setDefaultState(element);
+      getProjectFileStorage().setDefaultState(element);
     }
   }
 
@@ -387,7 +375,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
-    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
+    return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject);
   }
 
   static class  ProjectStorageData extends BaseStorageData {
@@ -563,5 +551,75 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   protected MessageBus getMessageBus() {
     return myProject.getMessageBus();
+  }
+
+  @NotNull
+  @Override
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+                                                   @NotNull State stateSpec,
+                                                   @NotNull StateStorageOperation operation) {
+    // if we create project from default, component state written not to own storage file, but to project file,
+    // we don't have time to fix it properly, so, ancient hack restored.
+    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, stateSpec, operation);
+    // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
+    for (Storage storage : result) {
+      if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {
+        return result;
+      }
+    }
+
+    Storage[] withProjectFileStorage = new Storage[result.length + 1];
+    System.arraycopy(result, 0, withProjectFileStorage, 0, result.length);
+    withProjectFileStorage[result.length] = DEFAULT_STORAGE_ANNOTATION;
+    return withProjectFileStorage;
+  }
+
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyStorage implements Storage {
+    @Override
+    public String id() {
+      return "___Default___";
+    }
+
+    @Override
+    public boolean isDefault() {
+      return true;
+    }
+
+    @Override
+    public String file() {
+      return StoragePathMacros.PROJECT_FILE;
+    }
+
+    @Override
+    public StorageScheme scheme() {
+      return StorageScheme.DEFAULT;
+    }
+
+    @Override
+    public boolean deprecated() {
+      return true;
+    }
+
+    @Override
+    public RoamingType roamingType() {
+      return RoamingType.PER_USER;
+    }
+
+    @Override
+    public Class<? extends StateStorage> storageClass() {
+      return StateStorage.class;
+    }
+
+    @Override
+    public Class<StateSplitterEx> stateSplitter() {
+      return StateSplitterEx.class;
+    }
+
+    @NotNull
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
+    }
   }
 }

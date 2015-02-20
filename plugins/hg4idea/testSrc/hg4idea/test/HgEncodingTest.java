@@ -24,7 +24,9 @@ import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryImpl;
+import org.zmlx.hg4idea.util.HgEncodingUtil;
 
+import java.nio.charset.Charset;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
@@ -49,6 +51,7 @@ public class HgEncodingTest extends HgPlatformTest {
     cd(myRepository);
     String fileName = "file.txt";
     echo(fileName, "lalala");
+    Charset charset = HgEncodingUtil.getDefaultCharset(myProject);
     String comment = "öäüß";
     HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, comment);
@@ -59,6 +62,6 @@ public class HgEncodingTest extends HgPlatformTest {
     assert file != null;
     List<HgFileRevision> revisions = logCommand.execute(new HgFile(myProject, file), 1, false);
     HgFileRevision rev = revisions.get(0);
-    assertEquals(comment, rev.getCommitMessage());
+    assertEquals(new String(comment.getBytes(charset)), rev.getCommitMessage());
   }
 }

@@ -32,22 +32,16 @@ public interface SuspendContext {
    * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
    */
   @NotNull
-  Promise<CallFrame[]> getCallFrames();
+  Promise<CallFrame[]> getFrames();
 
   /**
-   * @return a set of the breakpoints hit on VM suspension with which this
-   *         context is associated. An empty collection if the suspension was
-   *         not related to hitting breakpoints (e.g. a step end)
+   * list of the breakpoints hit on VM suspension with which this
+   * context is associated. An empty collection if the suspension was
+   * not related to hitting breakpoints (e.g. a step end)
    */
   @NotNull
   List<Breakpoint> getBreakpointsHit();
 
-  /**
-   * @return value mapping that all values have by default; typically unique for a particular {@link SuspendContext}
-   */
   @NotNull
   ValueManager getValueManager();
-
-  @NotNull
-  Vm getVm();
 }

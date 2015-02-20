@@ -178,6 +178,8 @@ public class ExternalProjectSerializer {
 
       output = new Output(new FileOutputStream(configurationFile));
       myKryo.writeObject(output, externalProject);
+
+      LOG.debug("Data saved for imported project from: " + externalProjectPath);
     }
     catch (FileNotFoundException e) {
       LOG.error(e);
@@ -189,13 +191,15 @@ public class ExternalProjectSerializer {
 
   @Nullable
   public ExternalProject load(@NotNull ProjectSystemId externalSystemId, File externalProjectPath) {
+    LOG.debug("Attempt to load project data from: " + externalProjectPath);
+    ExternalProject externalProject = null;
     Input input = null;
     try {
       final File configurationFile = getProjectConfigurationFile(externalSystemId, externalProjectPath.getPath());
-      if (!configurationFile.isFile()) return null;
-
-      input = new Input(new FileInputStream(configurationFile));
-      return myKryo.readObject(input, DefaultExternalProject.class);
+      if (configurationFile.isFile()) {
+        input = new Input(new FileInputStream(configurationFile));
+        externalProject = myKryo.readObject(input, DefaultExternalProject.class);
+      }
     }
     catch (Exception e) {
       LOG.error(e);
@@ -204,7 +208,10 @@ public class ExternalProjectSerializer {
       StreamUtil.closeStream(input);
     }
 
-    return null;
+    if (externalProject != null) {
+      LOG.debug("Loaded project: " + externalProject.getProjectDir());
+    }
+    return externalProject;
   }
 
   private static File getProjectConfigurationFile(ProjectSystemId externalSystemId, String externalProjectPath) {

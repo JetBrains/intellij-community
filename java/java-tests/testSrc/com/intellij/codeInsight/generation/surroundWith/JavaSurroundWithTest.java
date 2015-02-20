@@ -94,11 +94,11 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundNonExpressionWithParenthesis() throws Exception {
-    doTest(getTestName(false), new JavaWithParenthesesSurrounder());
+    doTest(new JavaWithParenthesesSurrounder());
   }
 
   public void testSurroundNonExpressionWithCast() throws Exception {
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundExpressionWithCastEmptyLineAfter() throws Exception {
@@ -110,52 +110,52 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundNonExpressionWithNot() throws Exception {
-    doTest(getTestName(false), new JavaWithNotSurrounder());
+    doTest(new JavaWithNotSurrounder());
   }
 
   public void testSurroundBinaryWithCast() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundConditionalWithCast() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundAssignmentWithCast() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundWithNotNullCheck() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithNullCheckSurrounder());
+    doTest(new JavaWithNullCheckSurrounder());
   }
   
   public void testSurroundExpressionWithIf() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+    doTest(new JavaWithIfExpressionSurrounder());
   }
 
   public void testSurroundExpressionWithIfForBoxedBooleans() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+    doTest(new JavaWithIfExpressionSurrounder());
   }
   
   public void testSurroundExpressionWithNotForBoxedBooleans() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithNotSurrounder());
+    doTest(new JavaWithNotSurrounder());
   }
   
   public void testSurroundExpressionWithElseIf() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+    doTest(new JavaWithIfExpressionSurrounder());
   }
   
   public void testSurroundExpressionWithElseIfElse() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfElseExpressionSurrounder());
+    doTest(new JavaWithIfElseExpressionSurrounder());
   }
 
   public void testSurroundWithTryFinallyUsingIndents() {
@@ -163,7 +163,7 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     try {
       indentOptions.USE_TAB_CHARACTER = true;
-      doTest(getTestName(false), new JavaWithTryFinallySurrounder());
+      doTest(new JavaWithTryFinallySurrounder());
     }
     finally {
       indentOptions.USE_TAB_CHARACTER = oldUseTabs;
@@ -171,9 +171,17 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundWithTryCatchFunctionalExpression() {
-    doTest(getTestName(false), new JavaWithTryCatchSurrounder());
+    doTest(new JavaWithTryCatchSurrounder());
   }
 
+  public void testSurroundIfBranchWithNoBracesAndComment() {
+    doTest(new JavaWithBlockSurrounder());
+  }
+
+  private void doTest(Surrounder surrounder) {
+    doTest(getTestName(false), surrounder);
+  }
+  
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {
     configureByFile(BASE_PATH + fileName + ".java");
     

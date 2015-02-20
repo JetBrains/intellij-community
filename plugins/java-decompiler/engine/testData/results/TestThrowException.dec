@@ -1,0 +1,39 @@
+package pkg;
+
+public class TestThrowException {
+   Runnable r;
+
+   public TestThrowException(int var1) {
+      if(var1 > 0) {// 9
+         throw new IllegalArgumentException("xxx");// 10
+      } else {
+         this.r = new Runnable() {// 12
+            public void run() {
+               boolean var1 = true;// 15
+            }
+         };
+      }
+   }
+}
+
+class 'pkg/TestThrowException$1' {
+   method 'run ()V' {
+      0      11
+      1      11
+   }
+}
+
+class 'pkg/TestThrowException' {
+   method '<init> (I)V' {
+      5      6
+      c      7
+      11      7
+      1b      9
+   }
+}
+
+Lines mapping:
+9 <-> 7
+10 <-> 8
+12 <-> 10
+15 <-> 12

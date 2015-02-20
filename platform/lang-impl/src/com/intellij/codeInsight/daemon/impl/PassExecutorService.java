@@ -114,8 +114,8 @@ public class PassExecutorService implements Disposable {
 
     // null keys are ok
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
-    MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = MultiMap.createSmartList();
-    MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = MultiMap.createSmartList();
+    MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = MultiMap.createSmart();
+    MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = MultiMap.createSmart();
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
       FileEditor fileEditor = entry.getKey();
       HighlightingPass[] passes = entry.getValue();

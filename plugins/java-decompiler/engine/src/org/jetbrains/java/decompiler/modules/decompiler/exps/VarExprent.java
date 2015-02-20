@@ -85,6 +85,7 @@ public class VarExprent extends Exprent {
     if (classDef) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.value);
       new ClassWriter().classToJava(child, buffer, indent, tracer);
+      tracer.incrementCurrentSourceLine(buffer.countLines());
     }
     else {
       String name = null;

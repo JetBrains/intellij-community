@@ -424,7 +424,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setColorsScheme(editor.createBoundColorSchemeDelegate(customGlobalScheme));
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    editor.getSettings().setCaretRowShown(false);
     editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
       @Override
       public TextAttributes getAttributes(TextAttributesKey key) {
@@ -490,7 +490,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     final EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    editor.getSettings().setCaretRowShown(false);
     if (!isEnabled()) {
       editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
         @Nullable

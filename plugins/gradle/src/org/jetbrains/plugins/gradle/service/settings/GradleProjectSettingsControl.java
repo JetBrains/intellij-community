@@ -122,7 +122,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myGradleHomeLabel = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
     initGradleHome();
     myGradleJdkLabel = new JBLabel(GradleBundle.message("gradle.settings.text.jvm.path"));
-    myGradleJdkComboBox = new ExternalSystemJdkComboBox();
+    myGradleJdkComboBox = new ExternalSystemJdkComboBox().withoutJre();
 
     initControls();
     content.add(myUseWrapperButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));

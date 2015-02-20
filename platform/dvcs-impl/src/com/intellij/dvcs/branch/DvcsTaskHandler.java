@@ -27,14 +27,15 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 
 public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandler {
 
@@ -49,8 +50,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   }
 
   @Override
-  public boolean isEnabled(@Nullable Project project) {
-    return project != null && !project.isDisposed() && !myRepositoryManager.getRepositories().isEmpty();
+  public boolean isEnabled() {
+    return !myRepositoryManager.getRepositories().isEmpty();
   }
 
   @Override
@@ -62,17 +63,17 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         return hasBranch(repository, taskName);
       }
     });
-    MultiMap<String, String> map = new MultiMap<String, String>();
+    List<R> map = new ArrayList<R>();
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
           Messages.showDialog(myProject,
                               "<html>The following repositories already have specified " + myBranchType + "<b>" + taskName + "</b>:<br>" +
                               StringUtil.join(problems, "<br>") + ".<br>" +
-                              "Do you want to checkout existing " + myBranchType + "?", myBranchType + " Already Exists",
+                              "Do you want to checkout existing " + myBranchType + "?", StringUtil.capitalize(myBranchType) + " Already Exists",
                               new String[]{Messages.YES_BUTTON, Messages.NO_BUTTON}, 0,
                               Messages.getWarningIcon(), new DialogWrapper.PropertyDoNotAskOption("git.checkout.existing.branch")) == 0) {
         checkout(taskName, problems, null);
-        fillMap(taskName, problems, map);
+        map.addAll(problems);
       }
     }
     repositories.removeAll(problems);
@@ -80,89 +81,88 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
       checkoutAsNewBranch(taskName, repositories);
     }
 
-    fillMap(taskName, repositories, map);
-    return new TaskInfo(map);
-  }
-
-  private static <R extends Repository> void fillMap(String taskName, List<R> repositories, MultiMap<String, String> map) {
-    for (R repository : repositories) {
-      map.putValue(taskName, repository.getPresentableUrl());
-    }
+    map.addAll(repositories);
+    return new TaskInfo(taskName, ContainerUtil.map(map, new Function<R, String>() {
+      @Override
+      public String fun(R r) {
+        return r.getPresentableUrl();
+      }
+    }));
   }
 
   @Override
   public void switchToTask(@NotNull TaskInfo taskInfo, @Nullable Runnable invokeAfter) {
-    for (final String branchName : taskInfo.branches.keySet()) {
-      List<R> repositories = getRepositories(taskInfo.branches.get(branchName));
-      List<R> notFound = ContainerUtil.filter(repositories, new Condition<R>() {
-        @Override
-        public boolean value(R repository) {
-          return !hasBranch(repository, branchName);
-        }
-      });
-      if (!notFound.isEmpty()) {
-        checkoutAsNewBranch(branchName, notFound);
+    final String branchName = taskInfo.getName();
+    List<R> repositories = getRepositories(taskInfo.getRepositories());
+    List<R> notFound = ContainerUtil.filter(repositories, new Condition<R>() {
+      @Override
+      public boolean value(R repository) {
+        return !hasBranch(repository, branchName);
       }
-      repositories.removeAll(notFound);
-      if (!repositories.isEmpty()) {
-        checkout(branchName, repositories, invokeAfter);
-      }
+    });
+    if (!notFound.isEmpty()) {
+      checkoutAsNewBranch(branchName, notFound);
+    }
+    repositories.removeAll(notFound);
+    if (!repositories.isEmpty()) {
+      checkout(branchName, repositories, invokeAfter);
     }
   }
 
   @Override
   public void closeTask(@NotNull final TaskInfo taskInfo, @NotNull TaskInfo original) {
-    Set<String> branches = original.branches.keySet();
-    final AtomicInteger counter = new AtomicInteger(branches.size());
-    for (final String originalBranch : branches) {
-      checkout(originalBranch, getRepositories(original.branches.get(originalBranch)), new Runnable() {
-        @Override
-        public void run() {
-          if (counter.decrementAndGet() == 0) {
-            merge(taskInfo);
-          }
-        }
-      });
-    }
-  }
-
-  private void merge(@NotNull TaskInfo taskInfo) {
-    for (String featureBranch : taskInfo.branches.keySet()) {
-      mergeAndClose(featureBranch, getRepositories(taskInfo.branches.get(featureBranch)));
-    }
+    checkout(original.getName(), getRepositories(original.getRepositories()), new Runnable() {
+      @Override
+      public void run() {
+        mergeAndClose(taskInfo.getName(), getRepositories(taskInfo.getRepositories()));
+      }
+    });
   }
 
   @Override
-  @NotNull
-  public TaskInfo getActiveTask() {
-    List<R> repositories = myRepositoryManager.getRepositories();
-
-    MultiMap<String, String> branches = new MultiMap<String, String>();
-    for (R repository : repositories) {
-      String branchName = repository.getCurrentBranchName();
-      if (branchName != null) {
-        branches.putValue(branchName, repository.getPresentableUrl());
-      }
-    }
-    return new TaskInfo(branches);
+  public boolean isSyncEnabled() {
+    return myRepositoryManager.isSyncEnabled();
   }
 
   @Override
   public TaskInfo[] getCurrentTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
-    final List<String> names = ContainerUtil.map(repositories, new Function<R, String>() {
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    FactoryMap<String, TaskInfo> tasks = new FactoryMap<String, TaskInfo>() {
+      @Nullable
       @Override
-      public String fun(R repository) {
-        return repository.getPresentableUrl();
+      protected TaskInfo create(String key) {
+        return new TaskInfo(key, new ArrayList<String>());
       }
-    });
-    Collection<String> branches = getCommonBranchNames(repositories);
-    return ContainerUtil.map2Array(branches, TaskInfo.class, new Function<String, TaskInfo>() {
+    };
+    for (R repository : repositories) {
+      String branch = getActiveBranch(repository);
+      if (branch != null) {
+        tasks.get(branch).getRepositories().add(repository.getPresentableUrl());
+      }
+    }
+    if (tasks.size() == 0) return new TaskInfo[0];
+    if (isSyncEnabled()) {
+      return new TaskInfo[] { tasks.values().iterator().next() };
+    }
+    else {
+      return tasks.values().toArray(new TaskInfo[tasks.values().size()]);
+    }
+  }
+
+  @Override
+  public TaskInfo[] getAllExistingTasks() {
+    List<R> repositories = myRepositoryManager.getRepositories();
+    MultiMap<String, String> tasks = new MultiMap<String, String>();
+    for (R repository : repositories) {
+      for (String branch : getAllBranches(repository)) {
+        tasks.putValue(branch, repository.getPresentableUrl());
+      }
+    }
+    return ContainerUtil.map2Array(tasks.entrySet(), TaskInfo.class, new Function<Map.Entry<String, Collection<String>>, TaskInfo>() {
       @Override
-      public TaskInfo fun(String branchName) {
-        MultiMap<String, String> map = new MultiMap<String, String>();
-        map.put(branchName, names);
-        return new TaskInfo(map);
+      public TaskInfo fun(Map.Entry<String, Collection<String>> entry) {
+        return new TaskInfo(entry.getKey(), entry.getValue());
       }
     });
   }
@@ -189,8 +189,11 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
 
   protected abstract void checkoutAsNewBranch(@NotNull String name, @NotNull List<R> repositories);
 
+  @Nullable
+  protected abstract String getActiveBranch(R repository);
+
   @NotNull
-  protected abstract Collection<String> getCommonBranchNames(@NotNull List<R> repositories);
+  protected abstract Iterable<String> getAllBranches(@NotNull R repository);
 
   protected abstract void mergeAndClose(@NotNull String branch, @NotNull List<R> repositories);
 

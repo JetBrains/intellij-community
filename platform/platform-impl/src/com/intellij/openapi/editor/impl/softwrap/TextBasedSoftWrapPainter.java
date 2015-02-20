@@ -46,7 +46,8 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 
   private final TextDrawingCallback myDrawingCallback;
   private final ColorProvider myColorHolder;
-  private final boolean myCanUse;
+  private boolean myCanUse;
+  private final Editor myEditor;
 
   public TextBasedSoftWrapPainter(Map<SoftWrapDrawingType, Character> symbols, Editor editor, TextDrawingCallback drawingCallback,
                                   ColorProvider colorHolder)
@@ -58,17 +59,23 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
                       + "are incomplete - expected size %d but got %d (%s)", SoftWrapDrawingType.values().length, symbols.size(), symbols)
       );
     }
+    myEditor = editor;
     myDrawingCallback = drawingCallback;
     myColorHolder = colorHolder;
-    myCanUse = init(symbols, editor);
+    for (Map.Entry<SoftWrapDrawingType, Character> entry : symbols.entrySet()) {
+      mySymbols.put(entry.getKey(), new char[]{entry.getValue()});
+    }
+    reinit();
   }
 
   @Override
   public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
-    char[] buffer = mySymbols.get(drawingType);
     FontInfo fontInfo = myFonts.get(drawingType);
-    int vGap = myVGaps.get(drawingType);
-    myDrawingCallback.drawChars(g, buffer, 0, buffer.length, x, y + lineHeight - vGap, myColorHolder.getColor(), fontInfo);
+    if (fontInfo != null) {
+      char[] buffer = mySymbols.get(drawingType);
+      int vGap = myVGaps.get(drawingType);
+      myDrawingCallback.drawChars(g, buffer, 0, buffer.length, x, y + lineHeight - vGap, myColorHolder.getColor(), fontInfo);
+    }
     return getMinDrawingWidth(drawingType);
   }
 
@@ -89,30 +96,30 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
 
   /**
    * Tries to find fonts that are capable to display all unicode symbols used by the current painter.
-   *
-   * @param symbols   target symbols to use for drawing
-   * @param editor    editor to use during font lookup
-   * @return    <code>true</code> if target font that is capable to display all unicode symbols used by the current painter is found;
-   *            <code>false</code> otherwise
    */
-  private boolean init(Map<SoftWrapDrawingType, Character> symbols, Editor editor) {
+  @Override
+  public void reinit() {
     // We use dummy component here in order to being able to work with font metrics.
     JLabel component = new JLabel();
 
-    for (Map.Entry<SoftWrapDrawingType, Character> entry : symbols.entrySet()) {
-      FontInfo fontInfo = EditorUtil.fontForChar(entry.getValue(), Font.PLAIN, editor);
-      if (!fontInfo.canDisplay(entry.getValue())) {
-        return false;
+    myCanUse = true;
+    for (Map.Entry<SoftWrapDrawingType, char[]> entry : mySymbols.entrySet()) {
+      SoftWrapDrawingType type = entry.getKey();
+      char c = entry.getValue()[0];
+      FontInfo fontInfo = EditorUtil.fontForChar(c, Font.PLAIN, myEditor);
+      if (!fontInfo.canDisplay(c)) {
+        myCanUse = false;
+        myFonts.put(type, null);
+        myVGaps.put(type, null);
+        myWidths[type.ordinal()] = 0;
       }
-      char[] buffer = new char[1];
-      buffer[0] = entry.getValue();
-      mySymbols.put(entry.getKey(), buffer);
-      myFonts.put(entry.getKey(), fontInfo);
-      FontMetrics metrics = component.getFontMetrics(fontInfo.getFont());
-      myWidths[entry.getKey().ordinal()] = metrics.charWidth(buffer[0]);
-      int vGap = metrics.getDescent();
-      myVGaps.put(entry.getKey(), vGap);
+      else {
+        myFonts.put(type, fontInfo);
+        FontMetrics metrics = component.getFontMetrics(fontInfo.getFont());
+        myWidths[type.ordinal()] = metrics.charWidth(c);
+        int vGap = metrics.getDescent();
+        myVGaps.put(type, vGap);
+      }
     }
-    return true;
   }
 }

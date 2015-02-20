@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,31 +42,29 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author mike
- */
 public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
-  @SuppressWarnings("SpellCheckingInspection")
   private static final Pair<byte[], String> NON_EXISTENT_FILE_DATA = Pair.create(null, SystemProperties.getLineSeparator());
 
   private StorageUtil() { }
@@ -86,7 +84,17 @@ public class StorageUtil {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        macros.removeAll(getMacrosFromExistingNotifications(project));
+        List<String> notified = null;
+        NotificationsManager manager = NotificationsManager.getNotificationsManager();
+        for (UnknownMacroNotification notification : manager.getNotificationsOfType(UnknownMacroNotification.class, project)) {
+          if (notified == null) {
+            notified = new SmartList<String>();
+          }
+          notified.addAll(notification.getMacros());
+        }
+        if (!ContainerUtil.isEmpty(notified)) {
+          macros.removeAll(notified);
+        }
 
         if (!macros.isEmpty()) {
           LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
@@ -108,28 +116,6 @@ public class StorageUtil {
         }
       }
     });
-  }
-
-  private static List<String> getMacrosFromExistingNotifications(Project project) {
-    List<String> notified = ContainerUtil.newArrayList();
-    NotificationsManager manager = NotificationsManager.getNotificationsManager();
-    for (final UnknownMacroNotification notification : manager.getNotificationsOfType(UnknownMacroNotification.class, project)) {
-      notified.addAll(notification.getMacros());
-    }
-    return notified;
-  }
-
-  public static boolean isEmpty(@Nullable Parent element) {
-    if (element == null) {
-      return true;
-    }
-    else if (element instanceof Element) {
-      return JDOMUtil.isEmpty((Element)element);
-    }
-    else {
-      Document document = (Document)element;
-      return !document.hasRootElement() || JDOMUtil.isEmpty(document.getRootElement());
-    }
   }
 
   @NotNull
@@ -159,7 +145,7 @@ public class StorageUtil {
         throw e;
       }
       else {
-        throw new ReadOnlyModificationException(virtualFile);
+        throw new ReadOnlyModificationException(virtualFile, e);
       }
     }
     finally {
@@ -187,8 +173,8 @@ public class StorageUtil {
     try {
       virtualFile.delete(requestor);
     }
-    catch (FileNotFoundException ignored) {
-      throw new ReadOnlyModificationException(virtualFile);
+    catch (FileNotFoundException e) {
+      throw new ReadOnlyModificationException(virtualFile, e);
     }
     finally {
       token.finish();
@@ -247,47 +233,6 @@ public class StorageUtil {
       }
     }
     return defaultSeparator == null ? LineSeparator.getSystemLineSeparator() : defaultSeparator;
-  }
-
-  @Nullable
-  public static BufferExposingByteArrayOutputStream newContentIfDiffers(@NotNull Parent element, @Nullable VirtualFile file) {
-    try {
-      Pair<byte[], String> pair = loadFile(file);
-      BufferExposingByteArrayOutputStream out = writeToBytes(element, pair.second);
-      return pair.first != null && equal(pair.first, out) ? null : out;
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      return null;
-    }
-  }
-
-  public static boolean equal(byte[] a1, @NotNull BufferExposingByteArrayOutputStream out) {
-    int length = out.size();
-    if (a1.length != length) {
-      return false;
-    }
-
-    byte[] internalBuffer = out.getInternalBuffer();
-    for (int i = 0; i < length; i++) {
-      if (a1[i] != internalBuffer[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Nullable
-  public static Element loadElement(@Nullable InputStream stream) {
-    try {
-      return JDOMUtil.load(stream);
-    }
-    catch (JDOMException ignored) {
-      return null;
-    }
-    catch (IOException ignored) {
-      return null;
-    }
   }
 
   public static void delete(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ public class GotItMessage {
   private GotItMessage(@NotNull String title, @NotNull String message) {
     myTitle = title;
     myMessage =
-      "<html><body><div align='center' style='font-family: " + UIUtil.getLabelFont().getFontName() + "; font-size: 12pt;'>" +
+      "<html><body><div align='center' style='font-family: " + UIUtil.getLabelFont().getFontName() + "; font-size: " + JBUI.scale(12) + "pt;'>" +
       StringUtil.replace(message, "\n", "<br>") +
       "</div></body></html>";
   }

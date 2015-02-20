@@ -185,12 +185,21 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       MouseEvent mouseEvent = e.getMouseEvent();
 
+      Point prevLocation = myPrevMouseLocation;
+      myPrevMouseLocation = mouseEvent.getLocationOnScreen();
       if (isMouseOverTooltip(mouseEvent.getLocationOnScreen())
-          || ScreenUtil.isMovementTowards(myPrevMouseLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
-        myPrevMouseLocation = mouseEvent.getLocationOnScreen();
+          || ScreenUtil.isMovementTowards(prevLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
         return;
       }
-      myPrevMouseLocation = mouseEvent.getLocationOnScreen();
+      cancelPreviousTooltip();
+
+      myStoredModifiers = mouseEvent.getModifiers();
+      BrowseMode browseMode = getBrowseMode(myStoredModifiers);
+
+      if (browseMode == BrowseMode.None) {
+        disposeHighlighter();
+        return;
+      }
 
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
@@ -208,12 +217,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       int selStart = editor.getSelectionModel().getSelectionStart();
       int selEnd = editor.getSelectionModel().getSelectionEnd();
 
-      myStoredModifiers = mouseEvent.getModifiers();
-      BrowseMode browseMode = getBrowseMode(myStoredModifiers);
-
-      cancelPreviousTooltip();
-
-      if (browseMode == BrowseMode.None || offset >= selStart && offset < selEnd) {
+      if (offset >= selStart && offset < selEnd) {
         disposeHighlighter();
         return;
       }

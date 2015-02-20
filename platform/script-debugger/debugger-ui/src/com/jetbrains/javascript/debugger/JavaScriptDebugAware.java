@@ -3,9 +3,9 @@ package com.jetbrains.javascript.debugger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +16,12 @@ public abstract class JavaScriptDebugAware {
   public static final ExtensionPointName<JavaScriptDebugAware> EP_NAME = ExtensionPointName.create("com.jetbrains.javaScriptDebugAware");
 
   @Nullable
-  public abstract FileType getFileType();
+  protected LanguageFileType getFileType() {
+    return null;
+  }
 
   @Nullable
-  public XLineBreakpointType<?> getBreakpointTypeClass(@NotNull Project project) {
+  public Class<? extends XLineBreakpointType<?>> getBreakpointTypeClass() {
     return null;
   }
 
@@ -31,36 +33,42 @@ public abstract class JavaScriptDebugAware {
     return true;
   }
 
-  @Nullable
-  public TextRange getRangeForNamedElement(@NotNull PsiElement element, @Nullable PsiElement parent, int offset) {
-    return null;
+  public final boolean canGetEvaluationInfo(@NotNull PsiFile file) {
+    return file.getFileType().equals(getFileType());
   }
 
   @Nullable
-  public ExpressionInfo getEvaluationInfo(@NotNull PsiElement element, @NotNull Document document, @NotNull Project project) {
-    return null;
+  public final ExpressionInfo getEvaluationInfo(@NotNull PsiFile file, int offset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory) {
+    PsiElement element = file.findElementAt(offset);
+    return element == null ? null : getEvaluationInfo(element, document, expressionInfoFactory);
   }
 
   @Nullable
-  public static JavaScriptDebugAware find(@Nullable FileType fileType) {
-    if (fileType == null) {
-      return null;
-    }
+  protected ExpressionInfo getEvaluationInfo(@NotNull PsiElement elementAtOffset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory) {
+    return null;
+  }
 
+  public static boolean isBreakpointAware(@NotNull FileType fileType) {
+    return getBreakpointAware(fileType) != null;
+  }
+
+  @Nullable
+  public static JavaScriptDebugAware getBreakpointAware(@NotNull FileType fileType) {
     for (JavaScriptDebugAware debugAware : EP_NAME.getExtensions()) {
-      if (fileType.equals(debugAware.getFileType())) {
+      if (debugAware.getBreakpointTypeClass() == null && fileType.equals(debugAware.getFileType())) {
         return debugAware;
       }
     }
     return null;
   }
 
-  public static boolean isBreakpointAware(@Nullable FileType fileType) {
-    return find(fileType) != null;
+  @Nullable
+  public MemberFilter createMemberFilter(@Nullable NameMapper nameMapper, @NotNull PsiElement element, int end) {
+    return null;
   }
 
   @Nullable
-  public MemberFilter createMemberFilter(@NotNull PsiElement element, int end) {
+  public PsiElement getNavigationElementForSourcemapInspector(@NotNull PsiFile file) {
     return null;
   }
 }

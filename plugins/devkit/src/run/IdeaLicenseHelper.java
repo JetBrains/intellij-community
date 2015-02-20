@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.google.common.io.PatternFilenameFilter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,59 +28,22 @@ import java.io.IOException;
  * Date: Dec 3, 2004
  */
 public class IdeaLicenseHelper {
-  @NonNls private static final String LICENSE_PATH_PREFERRED = "idea80.key";
-  @NonNls private static final String LICENSE_PATH_70 = "idea70.key";
-  @NonNls private static final String LICENSE_PATH_60 = "idea60.key";
-  @NonNls private static final String LICENSE_PATH_50 = "idea50.key";
-  @NonNls private static final String LICENSE_PATH_40 = "idea40.key";
-  @NonNls private static final String LICENSE_PATH_SYSTEM = "idea.license";
-
-  @NonNls private static final String CONFIG_DIR_NAME = "config";
-
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.IdeaLicenseHelper");
 
-  @Nullable
-  public static File isIDEALicenseInSandbox(@NonNls final String configPath, @NonNls final String systemPath, @NonNls final String binPath){
-    final File config = new File(configPath, LICENSE_PATH_PREFERRED);
-    if (config.exists()){
-      return config;
-    }
-    final File idea70 = new File(configPath, LICENSE_PATH_70);
-    if (idea70.exists()){
-      return idea70;
-    }
-    final File idea60 = new File(configPath, LICENSE_PATH_60);
-    if (idea60.exists()){
-      return idea60;
-    }
-    final File idea5 = new File(configPath, LICENSE_PATH_50);
-    if (idea5.exists()){
-      return idea5;
-    }
-    final File idea4 = new File(configPath, LICENSE_PATH_40);
-    if (idea4.exists()){
-      return idea4;
-    }
-    final File system = new File(systemPath, LICENSE_PATH_SYSTEM);
-    if (system.exists()){
-      return system;
-    }
-    final File bin = new File(binPath, LICENSE_PATH_SYSTEM);
-    if (bin.exists()){
-      return bin;
-    }
-    return null;
-  }
-
-  public static void copyIDEALicense(final String sandboxHome, Sdk jdk){
-    if (isIDEALicenseInSandbox(sandboxHome + File.separator + CONFIG_DIR_NAME, sandboxHome + File.separator + "system", jdk.getHomePath() + File.separator + "bin") == null){
-      final File ideaLicense = isIDEALicenseInSandbox(PathManager.getConfigPath(), PathManager.getSystemPath(), PathManager.getBinPath());
-      if (ideaLicense != null){
-        try {
-          FileUtil.copy(ideaLicense, new File(new File(sandboxHome, CONFIG_DIR_NAME), LICENSE_PATH_PREFERRED));
-        }
-        catch (IOException e) {
-          LOG.error(e);
+  public static void copyIDEALicense(final String sandboxHome) {
+    File sandboxSystemPath = new File(sandboxHome, "system");
+    File systemPath = new File(PathManager.getSystemPath());
+    File[] runningIdeaLicenses = systemPath.listFiles(new PatternFilenameFilter("idea\\d+\\.key"));
+    if (runningIdeaLicenses != null) {
+      for (File license : runningIdeaLicenses) {
+        File devIdeaLicense = new File(sandboxSystemPath, license.getName());
+        if (!devIdeaLicense.exists()) {
+          try {
+            FileUtil.copy(license, devIdeaLicense);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
       }
     }

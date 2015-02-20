@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,8 +184,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }
       decompiler.decompileContext();
 
-      file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY,
-                       new ExactMatchLineNumbersMapping(saver.myMapping));
+      if (saver.myMapping != null) {
+        file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY, new ExactMatchLineNumbersMapping(saver.myMapping));
+      }
 
       return saver.myResult;
     }
@@ -292,7 +294,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       myMessage = new JEditorPane();
       myMessage.setEditorKit(UIUtil.getHTMLEditorKit());
       myMessage.setEditable(false);
-      myMessage.setPreferredSize(new Dimension(500, 100));
+      myMessage.setPreferredSize(JBUI.size(500, 100));
       myMessage.setBorder(BorderFactory.createLineBorder(Gray._200));
       String text = "<div style='margin:5px;'>" + IdeaDecompilerBundle.message("legal.notice.text") + "</div>";
       myMessage.setText(text);
@@ -344,7 +346,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private static class ExactMatchLineNumbersMapping implements LineNumbersMapping {
     private int[] myMapping;
 
-    private ExactMatchLineNumbersMapping(int[] mapping) {
+    private ExactMatchLineNumbersMapping(@NotNull int[] mapping) {
       myMapping = mapping;
     }
 

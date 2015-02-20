@@ -16,20 +16,12 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class IfPostfixTemplateBase extends SurroundPostfixTemplateBase {
 
   protected IfPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo,
-                                  @NotNull Condition<PsiElement> typeChecker) {
-    super("if", "if (expr)", psiInfo, typeChecker);
-  }
-
-  @SuppressWarnings("unchecked")
-  protected IfPostfixTemplateBase(@NotNull PostfixTemplatePsiInfo psiInfo) {
-    super("if", "if (expr)", psiInfo, Conditions.<PsiElement>alwaysTrue());
+                                  @NotNull PostfixTemplateExpressionSelector selector) {
+    super("if", "if (expr)", psiInfo, selector);
   }
 }

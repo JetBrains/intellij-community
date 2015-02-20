@@ -129,7 +129,7 @@ public abstract class StubProcessingHelperBase {
             String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
 
             String stubTreeJustBuilt =
-              ((PsiFileStubImpl)((IStubFileElementType)((PsiFileImpl)psiFile).getContentElementType()).getBuilder()
+              ((PsiFileStubImpl)((PsiFileImpl)psiFile).getElementTypeForStubBuilder().getBuilder()
                 .buildStubTree(psiFile)).printTree();
 
             StringBuilder builder = new StringBuilder();

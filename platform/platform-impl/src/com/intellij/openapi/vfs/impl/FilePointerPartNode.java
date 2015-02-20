@@ -180,7 +180,7 @@ class FilePointerPartNode {
       for (FilePointerPartNode child : children) {
         // find the right child (its part should start with ours)
         int i = child.indexOfFirstDifferentChar(path, index);
-        if (i != index && (i > index+1 || path.charAt(index) != '/')) {
+        if (i != index && (i > index+1 || path.charAt(index) != '/' || index == 0)) {
           FilePointerPartNode node = child.findPointerOrCreate(path, index, fileAndUrl);
           if (node.leaf == null) pointersUnder++; // the new node's been created
           return node;
@@ -196,7 +196,7 @@ class FilePointerPartNode {
     // else there is no match
     // split
     // try to make "/" start the splitted part
-    if (index > start && index != path.length() && path.charAt(index-1)== '/') index--;
+    if (index > start + 1 && index != path.length() && path.charAt(index - 1) == '/') index--;
     String pathRest = path.substring(index);
     FilePointerPartNode newNode = pathRest.isEmpty() ? this : new FilePointerPartNode(pathRest, this, fileAndUrl);
     String commonPredecessor = StringUtil.first(part, index - start, false);

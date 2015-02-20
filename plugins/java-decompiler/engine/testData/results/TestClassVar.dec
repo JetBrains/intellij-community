@@ -5,12 +5,12 @@ public class TestClassVar {
    public int field_int = 0;
 
    public void testFieldSSAU() {
-      for(int var1 = 0; var1 < 10; ++var1) {
+      for(int var1 = 0; var1 < 10; ++var1) {// 26
          try {
-            System.out.println();
+            System.out.println();// 29
          } finally {
-            if(this.field_boolean) {
-               System.out.println();
+            if(this.field_boolean) {// 32
+               System.out.println();// 33
             }
 
          }
@@ -19,22 +19,68 @@ public class TestClassVar {
    }
 
    public Long testFieldSSAU1() {
-      return new Long((long)(this.field_int++));
+      return new Long((long)(this.field_int++));// 40
    }
 
    public void testComplexPropagation() {
-      int var1 = 0;
+      int var1 = 0;// 45
 
-      while(var1 < 10) {
+      while(var1 < 10) {// 47
          int var2;
-         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {
+         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {// 49
             ;
          }
 
-         if(var2 != var1) {
-            System.out.println();
+         if(var2 != var1) {// 54
+            System.out.println();// 55
          }
       }
 
    }
 }
+
+class 'pkg/TestClassVar' {
+   method 'testFieldSSAU ()V' {
+      0      7
+      1      7
+      3      7
+      8      9
+      b      9
+      1f      11
+      20      11
+      26      12
+      29      12
+   }
+
+   method 'testFieldSSAU1 ()Ljava/lang/Long;' {
+      6      21
+      b      21
+      f      21
+      13      21
+   }
+
+   method 'testComplexPropagation ()V' {
+      0      25
+      1      25
+      3      27
+      9      29
+      b      29
+      14      29
+      1c      33
+      1f      34
+      22      34
+   }
+}
+
+Lines mapping:
+26 <-> 8
+29 <-> 10
+32 <-> 12
+33 <-> 13
+40 <-> 22
+45 <-> 26
+47 <-> 28
+49 <-> 30
+51 <-> 30
+54 <-> 34
+55 <-> 35

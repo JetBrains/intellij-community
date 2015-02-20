@@ -68,11 +68,11 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     myBreakpointPanelProviders = XBreakpointUtil.collectPanelProviders();
     myTreeController = new BreakpointItemsTreeController(myRulesAvailable);
     myTreeController.setTreeView(new BreakpointsSimpleTree(myProject, myTreeController));
-    updateChildren();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.addListener(this, myProject, myProject);
       provider.createBreakpointsGroupingRules(myRulesAvailable);
     }
+    updateChildren();
   }
 
   @Override

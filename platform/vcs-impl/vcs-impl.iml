@@ -20,5 +20,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="diff-impl" exported="" />
   </component>
 </module>

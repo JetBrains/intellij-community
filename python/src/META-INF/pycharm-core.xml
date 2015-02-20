@@ -15,10 +15,13 @@
     <xi:fallback/>
   </xi:include>
 
-  <project-components>
+  <application-components>
     <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
+      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsComponent</implementation-class>
     </component>
+  </application-components>
+
+  <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
     </component>
@@ -69,8 +72,6 @@
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider" order="before py-function"/>
     <diffPreviewProvider implementation="com.jetbrains.python.configuration.PyDiffPreviewProvider"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.CommonCodeStyleSettingsProvider"/>
-
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
                         serviceImplementation="com.jetbrains.python.PyIdeCommonOptionsFormFactory"/>
 
@@ -85,7 +86,6 @@
     <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
                     serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
 
-    <bundledColorScheme path="/colorSchemes/Darcula"/>
     <bundledColorScheme path="/colorSchemes/monokai"/>
     <bundledColorScheme path="/colorSchemes/twilight"/>
     <bundledColorScheme path="/colorSchemes/WarmNeon"/>

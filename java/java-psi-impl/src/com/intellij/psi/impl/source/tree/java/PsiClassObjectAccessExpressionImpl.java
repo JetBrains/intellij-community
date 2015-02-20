@@ -37,6 +37,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     super(CLASS_OBJECT_ACCESS_EXPRESSION);
   }
 
+  @NotNull
   @Override
   public PsiType getType() {
     return PsiImplUtil.getType(this);

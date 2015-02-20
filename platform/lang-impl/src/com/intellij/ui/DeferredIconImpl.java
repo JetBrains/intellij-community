@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +52,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
   private T myParam;
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
+  private static final Icon EMPTY_ICON = JBUI.emptyIcon(16);
   private final boolean myNeedReadAction;
   private boolean myDone;
   private final boolean myAutoUpdatable;

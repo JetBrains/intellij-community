@@ -32,6 +32,7 @@ import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -316,5 +317,27 @@ public class MergeList implements UserDataHolder {
   @Nullable
   public String getErrorMessage() {
     return myErrorMessage;
+  }
+
+  public void startBulkUpdate() {
+    Document document1 = myBaseToLeftChangeList.getDocument(BRANCH_SIDE);
+    Document document2 = myBaseToRightChangeList.getDocument(BRANCH_SIDE);
+    Document document3 = myBaseToLeftChangeList.getDocument(BASE_SIDE);
+    assert document3 == myBaseToRightChangeList.getDocument(BASE_SIDE);
+
+    ((DocumentEx)document1).setInBulkUpdate(true);
+    ((DocumentEx)document2).setInBulkUpdate(true);
+    ((DocumentEx)document3).setInBulkUpdate(true);
+  }
+
+  public void finishBulkUpdate() {
+    Document document1 = myBaseToLeftChangeList.getDocument(BRANCH_SIDE);
+    Document document2 = myBaseToRightChangeList.getDocument(BRANCH_SIDE);
+    Document document3 = myBaseToLeftChangeList.getDocument(BASE_SIDE);
+    assert document3 == myBaseToRightChangeList.getDocument(BASE_SIDE);
+
+    ((DocumentEx)document1).setInBulkUpdate(false);
+    ((DocumentEx)document2).setInBulkUpdate(false);
+    ((DocumentEx)document3).setInBulkUpdate(false);
   }
 }

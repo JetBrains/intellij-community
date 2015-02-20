@@ -25,16 +25,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +54,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     @NotNull
     @Override
     protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
-      MultiMap<String, Pair<URL, ClassLoader>> map = MultiMap.createSmartList();
+      MultiMap<String, Pair<URL, ClassLoader>> map = MultiMap.createSmart();
       Map<URL, ClassLoader> urls = new THashMap<URL, ClassLoader>();
       //for (IdeaPluginDescriptor plugin : plugins) {
       //  if (!plugin.isEnabled()) continue;
@@ -126,14 +128,21 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(@NotNull String group, WizardContext context) {
-    List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
+  public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
+    // myGroups contains only not-null keys
+    if (group == null) {
+      return ProjectTemplate.EMPTY_ARRAY;
+    }
+
+    List<ProjectTemplate> templates = null;
     for (Pair<URL, ClassLoader> url : myGroups.getValue().get(group)) {
       try {
         for (String child : UrlUtil.getChildrenRelativePaths(url.first)) {
           if (child.endsWith(ZIP)) {
-            URL templateUrl = new URL(url.first.toExternalForm() + "/" + child);
-            templates.add(new LocalArchivedTemplate(templateUrl, url.second));
+            if (templates == null) {
+              templates = new SmartList<ProjectTemplate>();
+            }
+            templates.add(new LocalArchivedTemplate(new URL(url.first.toExternalForm() + '/' + child), url.second));
           }
         }
       }
@@ -141,7 +150,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
         LOG.error(e);
       }
     }
-    return templates.toArray(new ProjectTemplate[templates.size()]);
+    return ContainerUtil.isEmpty(templates) ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
   @Override

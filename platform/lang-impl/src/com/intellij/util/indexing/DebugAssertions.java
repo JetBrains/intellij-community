@@ -31,7 +31,7 @@ public class DebugAssertions {
 
   public static final boolean EXTRA_SANITY_CHECKS = SystemProperties.getBooleanProperty(
     "intellij.idea.indices.debug.extra.sanity",
-    DEBUG
+    false //DEBUG // todo https://youtrack.jetbrains.com/issue/IDEA-134916
   );
 
   public static void assertTrue(boolean value) {

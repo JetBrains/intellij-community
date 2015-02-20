@@ -75,13 +75,24 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         final Map<Integer, String> names = new LinkedHashMap<Integer, String>();
         final Type[] args = Type.getArgumentTypes(desc);
         methodParamNames.put(methodName, names);
-    
+
+        final boolean isStatic = (access & ACC_STATIC) != 0;
+
+        final Map<Integer, Integer> paramSlots = new LinkedHashMap<Integer, Integer>(); // map: localVariableSlot -> methodParameterIndex
+        int slotIndex = isStatic? 0 : 1;
+        for (int paramIndex = 0; paramIndex < args.length; paramIndex++) {
+          final Type arg = args[paramIndex];
+          paramSlots.put(slotIndex, paramIndex);
+          slotIndex += arg.getSize();
+        }
+
         return new MethodVisitor(api) {
+
           @Override
-          public void visitLocalVariable(String name2, String desc, String signature, Label start, Label end, int index) {
-            int parameterIndex = getParameterIndex(index, access, args);
-            if (parameterIndex >= 0) {
-              names.put(parameterIndex, name2);
+          public void visitLocalVariable(String name2, String desc, String signature, Label start, Label end, int slotIndex) {
+            final Integer paramIndex = paramSlots.get(slotIndex);
+            if (paramIndex != null) {
+              names.put(paramIndex, name2);
             }
           }
         };
@@ -253,15 +264,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         }
       }
     };
-  }
-
-  private static int getParameterIndex(int localVarIndex, int methodAccess, Type[] paramTypes) {
-    final boolean isStatic = (methodAccess & ACC_STATIC) != 0;
-    int parameterIndex = isStatic ? localVarIndex : localVarIndex - 1;
-    if (parameterIndex >= paramTypes.length) {
-      parameterIndex = -1;
-    }
-    return parameterIndex;
   }
 
   private static boolean isReferenceType(final Type type) {

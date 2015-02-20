@@ -62,8 +62,13 @@ public class HighlightNamesUtil {
 
     if (!isDeclaration) {
       if (isCalledOnThis(elementToHighlight)) {
-        PsiClass enclosingClass = PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
-        isInherited = enclosingClass != null && enclosingClass.isInheritor(method.getContainingClass(), true);
+        final PsiClass containingClass = method.getContainingClass();
+        PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
+        while (enclosingClass != null) {
+          isInherited = enclosingClass.isInheritor(containingClass, true);
+          if (isInherited) break;
+          enclosingClass = PsiTreeUtil.getParentOfType(enclosingClass, PsiClass.class, true);
+        }
       }
     }
 
@@ -154,10 +159,7 @@ public class HighlightNamesUtil {
   @Nullable
   public static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
                                                             @NotNull TextAttributesScheme colorsScheme) {
-    PsiExpression qualifierExpression = null;
-    if (element instanceof PsiReferenceExpression) {
-      qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
-    }
+    PsiElement qualifierExpression = element.getQualifier();
     if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
       if (resolved instanceof PsiClass) {

@@ -19,6 +19,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
@@ -79,8 +80,13 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
       return;
     }
     presentation.setVisible(true);
-    presentation.setEnabled(hasOccurenceToGo(navigator));
-    presentation.setText(getDescription(navigator));
+    try {
+      presentation.setEnabled(hasOccurenceToGo(navigator));
+      presentation.setText(getDescription(navigator));
+    }
+    catch (IndexNotReadyException e) {
+      presentation.setEnabled(false);
+    }
   }
 
   protected abstract OccurenceNavigator.OccurenceInfo go(OccurenceNavigator navigator);

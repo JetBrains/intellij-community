@@ -107,12 +107,13 @@ public class StubTreeBuilder {
               stubs.add((PsiFileStub)data);
 
               for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
-                if (psi == stubbedRoot.second) continue;
+                final PsiFile secondaryPsi = stubbedRoot.second;
+                if (psi == secondaryPsi) continue;
                 final StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
                 if (stubbedRootBuilder instanceof LightStubBuilder) {
-                  LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(psi.getNode()));
+                  LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
                 }
-                final StubElement element = stubbedRootBuilder.buildStubTree(stubbedRoot.second);
+                final StubElement element = stubbedRootBuilder.buildStubTree(secondaryPsi);
                 if (element instanceof PsiFileStub) {
                   stubs.add((PsiFileStub)element);
                 }

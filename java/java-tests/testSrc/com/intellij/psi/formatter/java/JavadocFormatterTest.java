@@ -43,6 +43,19 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   }
 
+  public void testPackageJavadoc() throws Exception {
+    doTextTest(
+      "/**\n" +
+      " *              super auper\n" +
+      " */\n" +
+      " package com;\n",
+      "/**\n" +
+      " * super auper\n" +
+      " */\n" +
+      "package com;\n"
+    );
+  }
+
   public void testEA49739() throws Exception {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 35;

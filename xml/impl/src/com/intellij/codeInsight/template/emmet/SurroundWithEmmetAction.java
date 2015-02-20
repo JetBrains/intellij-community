@@ -49,7 +49,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
     @Override
     public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
       SelectionModel selectionModel = editor.getSelectionModel();
-      if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+      if (!selectionModel.hasSelection()) {
         selectionModel.selectLineAtCaret();
       }
 

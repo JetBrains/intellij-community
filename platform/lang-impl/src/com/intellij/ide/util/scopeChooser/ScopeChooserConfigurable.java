@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -81,7 +82,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   protected Dimension getPanelPreferredSize() {
-    return new Dimension(400, 200);
+    return JBUI.size(400, 200);
   }
 
   @Override

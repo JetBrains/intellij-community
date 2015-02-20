@@ -31,7 +31,6 @@ import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,22 +42,27 @@ public class GitRebaseUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitRebaseUpdater.class.getName());
   private final GitRebaser myRebaser;
 
-  public GitRebaseUpdater(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
+  public GitRebaseUpdater(@NotNull Project project,
+                          @NotNull Git git,
+                          @NotNull VirtualFile root,
                           @NotNull final Map<VirtualFile, GitBranchPair> trackedBranches,
-                          ProgressIndicator progressIndicator,
-                          UpdatedFiles updatedFiles) {
+                          @NotNull ProgressIndicator progressIndicator,
+                          @NotNull UpdatedFiles updatedFiles) {
     super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
   }
 
-  @Override public boolean isSaveNeeded() {
+  @Override
+  public boolean isSaveNeeded() {
     return true;
   }
 
+  @NotNull
+  @Override
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
-    List<String> params = Arrays.asList(remoteBranch);
+    List<String> params = Collections.singletonList(remoteBranch);
     return myRebaser.rebase(myRoot, params, new Runnable() {
       @Override
       public void run() {

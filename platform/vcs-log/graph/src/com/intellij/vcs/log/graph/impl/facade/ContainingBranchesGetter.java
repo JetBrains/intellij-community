@@ -16,7 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
@@ -26,23 +26,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ContainingBranchesGetter {
-  @NotNull
-  private final LinearGraph myPermanentGraph;
+  @NotNull private final LiteLinearGraph myGraph;
 
-  @NotNull
-  private final Set<Integer> myBranchNodeIndexes;
+  @NotNull private final Set<Integer> myBranchNodeIndexes;
 
-  @NotNull
-  private final DfsUtil myDfsUtil = new DfsUtil();
+  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
 
-  @NotNull
-  private final Flags myTempFlags;
+  @NotNull private final Flags myTempFlags;
 
-  public ContainingBranchesGetter(@NotNull LinearGraph permanentGraph,
-                                  @NotNull Set<Integer> branchNodeIndexes) {
-    myPermanentGraph = permanentGraph;
+  public ContainingBranchesGetter(@NotNull LiteLinearGraph graph, @NotNull Set<Integer> branchNodeIndexes) {
+    myGraph = graph;
     myBranchNodeIndexes = branchNodeIndexes;
-    myTempFlags = new BitSetFlags(permanentGraph.nodesCount());
+    myTempFlags = new BitSetFlags(graph.nodesCount());
   }
 
   public Set<Integer> getBranchNodeIndexes(int nodeIndex) {
@@ -54,7 +49,7 @@ public class ContainingBranchesGetter {
     myDfsUtil.nodeDfsIterator(nodeIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
-        for (int upNode : myPermanentGraph.getUpNodes(currentNode)) {
+        for (int upNode : myGraph.getNodes(currentNode, LiteLinearGraph.NodeFilter.UP)) {
           if (!myTempFlags.get(upNode)) {
             myTempFlags.set(upNode, true);
             checkAndAdd(upNode, result);
@@ -70,7 +65,6 @@ public class ContainingBranchesGetter {
   }
 
   private void checkAndAdd(int nodeIndex, Set<Integer> result) {
-    if (myBranchNodeIndexes.contains(nodeIndex))
-      result.add(nodeIndex);
+    if (myBranchNodeIndexes.contains(nodeIndex)) result.add(nodeIndex);
   }
 }

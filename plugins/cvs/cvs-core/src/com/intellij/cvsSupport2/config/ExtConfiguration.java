@@ -79,7 +79,7 @@ public class ExtConfiguration implements JDOMExternalizable, Cloneable{
     int result = CVS_RSH.hashCode();
     result = 31 * result + PRIVATE_KEY_FILE.hashCode();
     result = 31 * result + ADDITIONAL_PARAMETERS.hashCode();
-    result = 31 * result + (USE_INTERNAL_SSH_IMPLEMENTATION ? 1 : 0);
+    //result = 31 * result + (USE_INTERNAL_SSH_IMPLEMENTATION ? 1 : 0);
     return result;
   }
 }

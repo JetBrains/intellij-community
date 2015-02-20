@@ -33,6 +33,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
@@ -58,20 +59,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdate() throws StorageException, IOException {
-    final File storageFile = FileUtil.createTempFile("indextest", "storage");
-    final File metaIndexFile = FileUtil.createTempFile("indextest_inputs", "storage");
-    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, new EnumeratorStringDescriptor(), new EnumeratorStringDescriptor(), 16 * 1024);
-    final StringIndex index = new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<String>> create() {
-        try {
-          return createMetaIndex(metaIndexFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    StringIndex index = createIndex(new EnumeratorStringDescriptor())
 
     try {
 // build index
@@ -118,6 +106,44 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  public void testUpdateWithCustomEqualityPolicy() {
+    def index = createIndex(new CaseInsensitiveEnumeratorStringDescriptor())
+    try {
+      index.update("a.java", "x", null)
+      assertDataEquals(index.getFilesByWord("x"), "a.java")
+      index.flush() //todo: this should not be required but the following line will fail without it
+      assertDataEquals(index.getFilesByWord("X"), "a.java")
+
+      index.update("b.java", "y", null)
+      assertDataEquals(index.getFilesByWord("y"), "b.java")
+      index.update("c.java", "Y", null)
+      index.flush() //todo: this should not be required but the following line will fail without it
+      assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
+    }
+    finally {
+      index.dispose()
+    }
+  }
+
+  private static StringIndex createIndex(EnumeratorStringDescriptor keyDescriptor) {
+    final File storageFile = FileUtil.createTempFile("indextest", "storage");
+    final File metaIndexFile = FileUtil.createTempFile("indextest_inputs", "storage");
+    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024);
+    final StringIndex index = new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
+      @Override
+      public PersistentHashMap<Integer, Collection<String>> create() {
+        try {
+          return createMetaIndex(metaIndexFile);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+    });
+    index
+  }
+  
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
@@ -141,7 +167,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
-    assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
+    assertSameElements(actual, expected);
   }
 
   public void testCollectedPsiWithChangedDocument() throws IOException {
@@ -285,7 +311,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(findClass("Foo"));
   }
 
-  public void "_test rename unsaved file"() {
+  public void "test rename unsaved file"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -304,7 +330,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
   }
 
-  public void "_test rename dir with unsaved file"() {
+  public void "test rename dir with unsaved file"() {
     def psiFile = myFixture.addFileToProject("foo/Foo.java", "package pkg; class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -324,7 +350,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
   }
 
-  public void "_test language level change"() {
+  public void "test language level change"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def scope = GlobalSearchScope.allScope(project)
 
@@ -336,6 +362,25 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
 
     assert ((PsiJavaFile)psiFile).importList.node
+  }
+
+  public void "test language level change2"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def vFile = psiFile.virtualFile
+    def scope = GlobalSearchScope.allScope(project)
+
+    psiFile.add(elementFactory.createEnum("SomeEnum"))
+
+    CodeStyleManager.getInstance(getProject()).reformat(psiFile)
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
+    assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
   }
 
   public void "test changing a file without psi makes the document committed and updates index"() {

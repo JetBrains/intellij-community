@@ -102,7 +102,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(this);
+    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
   }
 
@@ -329,7 +329,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     parent.removeChild(this);
 
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    VfsData.changeParent(this, directory);
+    VfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
   }

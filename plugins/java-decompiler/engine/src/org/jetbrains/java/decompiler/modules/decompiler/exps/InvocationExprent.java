@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,15 +87,14 @@ public class InvocationExprent extends Exprent {
         break;
       case CodeConstants.opc_invokedynamic:
         invocationTyp = INVOKE_DYNAMIC;
-
         classname = "java/lang/Class"; // dummy class name
         invokeDynamicClassSuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
     }
 
-    if ("<init>".equals(name)) {
+    if (CodeConstants.INIT_NAME.equals(name)) {
       functype = TYP_INIT;
     }
-    else if ("<clinit>".equals(name)) {
+    else if (CodeConstants.CLINIT_NAME.equals(name)) {
       functype = TYP_CLINIT;
     }
 
@@ -112,7 +111,9 @@ public class InvocationExprent extends Exprent {
       }
       else {
         // FIXME: remove the first parameter completely from the list. It's the object type for a virtual lambda method.
-        instance = lstParameters.get(0);
+        if (!lstParameters.isEmpty()) {
+          instance = lstParameters.get(0);
+        }
       }
     }
     else if (opcode == CodeConstants.opc_invokestatic) {
@@ -137,6 +138,7 @@ public class InvocationExprent extends Exprent {
       instance = instance.copy();
     }
     invocationTyp = expr.getInvocationTyp();
+    invokeDynamicClassSuffix = expr.getInvokeDynamicClassSuffix();
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
     lstParameters = new ArrayList<Exprent>(expr.getLstParameters());
@@ -191,39 +193,7 @@ public class InvocationExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    /*if (invocationTyp == INVOKE_DYNAMIC) {
-      //			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
-      //
-      //			if(node != null) {
-      //				ClassNode lambda_node = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName + invokeDynamicClassSuffix);
-      //				if(lambda_node != null) {
-      //
-      //					String typename = ExprProcessor.getCastTypeName(lambda_node.anonimousClassType);
-      //
-      //					StringWriter strwriter = new StringWriter();
-      //					BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
-      //
-      //					ClassWriter clwriter = new ClassWriter();
-      //
-      //					try {
-      //						bufstrwriter.write("new " + typename + "() {");
-      //						bufstrwriter.newLine();
-      //
-      //
-      //
-      //						bufstrwriter.flush();
-      //					} catch(IOException ex) {
-      //						throw new RuntimeException(ex);
-      //					}
-      //
-      //					buf.append(strwriter.toString());
-      //
-      //				}
-      //			}
-
-    }
-    else*/ if (isStatic) {
-
+    if (isStatic) {
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
         buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
@@ -305,7 +275,7 @@ public class InvocationExprent extends Exprent {
 
         break;
       case TYP_CLINIT:
-        throw new RuntimeException("Explicit invocation of <clinit>");
+        throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
       case TYP_INIT:
         if (super_qualifier != null) {
           buf.append("super(");
@@ -314,7 +284,7 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          throw new RuntimeException("Unrecognized invocation of <init>");
+          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
         }
     }
 
@@ -324,8 +294,8 @@ public class InvocationExprent extends Exprent {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
       if (newNode != null) {  // own class
-        if (newNode.wrapper != null) {
-          sigFields = newNode.wrapper.getMethodWrapper("<init>", stringDescriptor).signatureFields;
+        if (newNode.getWrapper() != null) {
+          sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, stringDescriptor).signatureFields;
         }
         else {
           if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class

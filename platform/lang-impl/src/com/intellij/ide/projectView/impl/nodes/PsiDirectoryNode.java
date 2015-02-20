@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IconProvider;
@@ -59,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Locale;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
@@ -71,11 +71,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   protected void updateImpl(PresentationData data) {
-    final Project project = getProject();
-    final PsiDirectory psiDirectory = getValue();
-    final VirtualFile directoryFile = psiDirectory.getVirtualFile();
+    Project project = getProject();
+    assert project != null : this;
+    PsiDirectory psiDirectory = getValue();
+    assert psiDirectory != null : this;
+    VirtualFile directoryFile = psiDirectory.getVirtualFile();
+    Object parentValue = getParentValue();
 
-    final Object parentValue = getParentValue();
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
       ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
       Module module = fi.getModuleForFile(directoryFile);
@@ -106,7 +108,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(directoryFile, project);
           if (sourceRoot != null) {
             String rootTypeName = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType()).getRootTypeName();
-            data.addText(" (" + rootTypeName.toLowerCase() + " root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
+            data.addText(" (" + rootTypeName.toLowerCase(Locale.getDefault()) + " root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
 
@@ -116,9 +118,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       }
     }
 
-    final String name = parentValue instanceof Project
-                        ? psiDirectory.getVirtualFile().getPresentableUrl()
-                        : ProjectViewDirectoryHelper.getInstance(psiDirectory.getProject()).getNodeName(getSettings(), parentValue, psiDirectory);
+    String name = parentValue instanceof Project
+                  ? psiDirectory.getVirtualFile().getPresentableUrl()
+                  : ProjectViewDirectoryHelper.getInstance(psiDirectory.getProject()).getNodeName(getSettings(), parentValue, psiDirectory);
     if (name == null) {
       setValue(null);
       return;

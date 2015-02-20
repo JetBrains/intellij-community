@@ -104,10 +104,8 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    PsiType type = expression.getType();
-    if (type instanceof PsiLambdaExpressionType) {
-      type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
-    }
+    PsiType type = expression instanceof PsiFunctionalExpression ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType() 
+                                                                 : expression.getType();
     if (type == null) {
       return null;
     }

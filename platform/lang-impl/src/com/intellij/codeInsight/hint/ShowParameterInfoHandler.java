@@ -91,11 +91,17 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       return;
     }
 
-    for (ParameterInfoHandler<Object, ?> handler : handlers) {
-      Object element = handler.findElementForParameterInfo(context);
-      if (element != null) {
-        handler.showParameterInfo(element, context);
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+    try {
+      for (ParameterInfoHandler<Object, ?> handler : handlers) {
+        Object element = handler.findElementForParameterInfo(context);
+        if (element != null) {
+          handler.showParameterInfo(element, context);
+        }
       }
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 

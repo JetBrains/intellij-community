@@ -59,7 +59,7 @@ public class OptimizeImportsAction extends AnAction {
       if (file == null) return;
       dir = file.getContainingDirectory();
     }
-    else if (files != null && ReformatCodeAction.areFiles(files)) {
+    else if (files != null && ReformatCodeAction.containsAtLeastOneFile(files)) {
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
       if (!operationStatus.hasReadonlyFiles()) {
         new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
@@ -160,7 +160,7 @@ public class OptimizeImportsAction extends AnAction {
         return;
       }
     }
-    else if (files != null && ReformatCodeAction.areFiles(files)) {
+    else if (files != null && ReformatCodeAction.containsAtLeastOneFile(files)) {
       boolean anyHasOptimizeImports = false;
       for (VirtualFile virtualFile : files) {
         PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);

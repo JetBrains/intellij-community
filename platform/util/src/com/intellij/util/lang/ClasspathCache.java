@@ -65,6 +65,13 @@ public class ClasspathCache {
     public void addNameEntry(String name) {
       myNames.add(transformName(name));
     }
+
+    List<String> getResourcePaths() {
+      return myResourcePaths;
+    }
+    List<String> getNames() {
+      return myNames;
+    }
   }
 
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();

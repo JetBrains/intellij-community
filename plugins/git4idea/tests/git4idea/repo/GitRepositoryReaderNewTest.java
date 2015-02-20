@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,8 @@ import static git4idea.test.GitTestUtil.makeCommit;
 public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
 
   // inspired by IDEA-93806
-  public void test_rebase_with_conflicts_while_being_on_detached_HEAD() {
+  public void test_rebase_with_conflicts_while_being_on_detached_HEAD() throws IOException {
+    makeCommit("file.txt");
     conflict(myRepo, "feature");
     commit(myRepo);
     commit(myRepo);
@@ -52,7 +54,8 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
   }
 
   // inspired by IDEA-124052
-  public void test_remote_reference_without_remote() {
+  public void test_remote_reference_without_remote() throws IOException {
+    makeCommit("file.txt");
     final String INVALID_REMOTE = "invalid-remote";
     final String INVALID_REMOTE_BRANCH = "master";
     git("update-ref refs/remotes/" + INVALID_REMOTE + "/" + INVALID_REMOTE_BRANCH + " HEAD");
@@ -68,11 +71,28 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
 
   // inspired by IDEA-134286
   public void test_detached_HEAD() throws IOException {
-    makeCommit("file.txt");
-    git("checkout HEAD^");
+    String head = getToDetachedHead();
     GitBranchState state = readState();
     assertEquals("Detached HEAD is not detected", GitRepository.State.DETACHED, state.getState());
-    assertEquals("Detached HEAD hash is incorrect", last(), state.getCurrentRevision());
+    assertEquals("Detached HEAD hash is incorrect", head, state.getCurrentRevision());
+  }
+
+  // inspired by IDEA-135966
+  public void test_no_local_branches() throws IOException {
+    String head = getToDetachedHead();
+    git("branch -D master");
+    GitBranchState state = readState();
+    assertEquals("Detached HEAD is not detected", GitRepository.State.DETACHED, state.getState());
+    assertEquals("Detached HEAD hash is incorrect", head, state.getCurrentRevision());
+    assertTrue("There should be no local branches", state.getLocalBranches().isEmpty());
+  }
+
+  @NotNull
+  private static String getToDetachedHead() throws IOException {
+    makeCommit("file.txt");
+    makeCommit("file.txt");
+    git("checkout HEAD^");
+    return last();
   }
 
   @NotNull
@@ -84,4 +104,15 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
     return reader.readState(remotes);
   }
 
+  // inspired by IDEA-134412
+  public void test_fresh_repository_is_on_branch() {
+    GitLocalBranch currentBranch = readState().getCurrentBranch();
+    assertNotNull("Current branch shouldn't be null in a fresh repository", currentBranch);
+    assertEquals("Fresh repository should be on master", "master", currentBranch.getName());
+  }
+
+  @Override
+  protected boolean makeInitialCommit() {
+    return false;
+  }
 }

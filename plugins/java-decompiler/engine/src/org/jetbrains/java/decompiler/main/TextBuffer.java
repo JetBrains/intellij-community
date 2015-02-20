@@ -307,7 +307,12 @@ public class TextBuffer {
     if (lineMapping.length > 0) {
       myLineMapping = new HashMap<Integer, Integer>();
       for (int i = 0; i < lineMapping.length; i+=2) {
-        myLineMapping.put(lineMapping[i+1], lineMapping[i]);
+        int key = lineMapping[i + 1];
+        int value = lineMapping[i];
+        Integer existing = myLineMapping.get(key);
+        if (existing == null || value < existing) {
+          myLineMapping.put(key, value);
+        }
       }
     }
   }

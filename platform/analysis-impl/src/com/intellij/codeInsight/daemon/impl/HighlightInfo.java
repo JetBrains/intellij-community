@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -90,12 +91,12 @@ public class HighlightInfo implements Segment {
   private final ProblemGroup myProblemGroup;
 
   private volatile byte myFlags; // bit packed flags below:
-  private static final int BIJECTIVE_FLAG = 0;
-  private static final int HAS_HINT_FLAG = 1;
-  private static final int FROM_INJECTION_FLAG = 2;
-  private static final int AFTER_END_OF_LINE_FLAG = 3;
-  private static final int FILE_LEVEL_ANNOTATION_FLAG = 4;
-  private static final int NEEDS_UPDATE_ON_TYPING_FLAG = 5;
+  private static final byte BIJECTIVE_MASK = 1;
+  private static final byte HAS_HINT_MASK = 2;
+  private static final byte FROM_INJECTION_MASK = 4;
+  private static final byte AFTER_END_OF_LINE_MASK = 8;
+  private static final byte FILE_LEVEL_ANNOTATION_MASK = 16;
+  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 32;
   PsiElement psiElement;
 
   @NotNull
@@ -104,7 +105,7 @@ public class HighlightInfo implements Segment {
   }
 
   void setFromInjection(boolean fromInjection) {
-    setFlag(FROM_INJECTION_FLAG, fromInjection);
+    setFlag(FROM_INJECTION_MASK, fromInjection);
   }
 
   public String getToolTip() {
@@ -132,31 +133,28 @@ public class HighlightInfo implements Segment {
     return description;
   }
 
-  @MagicConstant(intValues = {BIJECTIVE_FLAG, HAS_HINT_FLAG, FROM_INJECTION_FLAG, AFTER_END_OF_LINE_FLAG, FILE_LEVEL_ANNOTATION_FLAG, NEEDS_UPDATE_ON_TYPING_FLAG})
-  @interface FlagConstant {}
+  @MagicConstant(intValues = {BIJECTIVE_MASK, HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK,
+    NEEDS_UPDATE_ON_TYPING_MASK})
+  private @interface FlagConstant {}
 
-  private boolean isFlagSet(@FlagConstant int flag) {
-    assert flag < 8;
-    int state = myFlags >> flag;
-    return (state & 1) != 0;
+  private boolean isFlagSet(@FlagConstant byte mask) {
+    return BitUtil.isSet(myFlags, mask);
   }
 
-  private void setFlag(@FlagConstant int flag, boolean value) {
-    assert flag < 8;
-    int state = value ? 1 : 0;
-    myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
+  private void setFlag(@FlagConstant byte mask, boolean value) {
+    myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   boolean isFileLevelAnnotation() {
-    return isFlagSet(FILE_LEVEL_ANNOTATION_FLAG);
+    return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
   boolean isBijective() {
-    return isFlagSet(BIJECTIVE_FLAG);
+    return isFlagSet(BIJECTIVE_MASK);
   }
 
   void setBijective(boolean bijective) {
-    setFlag(BIJECTIVE_FLAG, bijective);
+    setFlag(BIJECTIVE_MASK, bijective);
   }
 
   @NotNull
@@ -165,7 +163,7 @@ public class HighlightInfo implements Segment {
   }
 
   public boolean isAfterEndOfLine() {
-    return isFlagSet(AFTER_END_OF_LINE_FLAG);
+    return isFlagSet(AFTER_END_OF_LINE_MASK);
   }
 
   @Nullable
@@ -253,7 +251,7 @@ public class HighlightInfo implements Segment {
   private static final HighlightInfoFilter[] FILTERS = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
 
   public boolean needUpdateOnTyping() {
-    return isFlagSet(NEEDS_UPDATE_ON_TYPING_FLAG);
+    return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
   HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
@@ -284,9 +282,9 @@ public class HighlightInfo implements Segment {
     // optimisation: do not retain extra memory if can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
     this.severity = severity;
-    setFlag(AFTER_END_OF_LINE_FLAG, afterEndOfLine);
-    setFlag(NEEDS_UPDATE_ON_TYPING_FLAG, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
-    setFlag(FILE_LEVEL_ANNOTATION_FLAG, isFileLevelAnnotation);
+    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
+    setFlag(NEEDS_UPDATE_ON_TYPING_MASK, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
+    setFlag(FILE_LEVEL_ANNOTATION_MASK, isFileLevelAnnotation);
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
@@ -701,11 +699,11 @@ public class HighlightInfo implements Segment {
 
 
   public boolean hasHint() {
-    return isFlagSet(HAS_HINT_FLAG);
+    return isFlagSet(HAS_HINT_MASK);
   }
 
   void setHint(final boolean hasHint) {
-    setFlag(HAS_HINT_FLAG, hasHint);
+    setFlag(HAS_HINT_MASK, hasHint);
   }
 
   public int getActualStartOffset() {
@@ -722,6 +720,7 @@ public class HighlightInfo implements Segment {
     private volatile List<IntentionAction> myOptions;
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
+    private final HighlightSeverity mySeverity;
     private final String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
@@ -738,7 +737,7 @@ public class HighlightInfo implements Segment {
                                      @Nullable final List<IntentionAction> options,
                                      @Nullable final String displayName,
                                      @Nullable Icon icon) {
-      this(action, options, displayName, icon, null, null);
+      this(action, options, displayName, icon, null, null, null);
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
@@ -746,13 +745,15 @@ public class HighlightInfo implements Segment {
                                      @Nullable final String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
-                                     @Nullable ProblemGroup problemGroup) {
+                                     @Nullable ProblemGroup problemGroup, 
+                                     @Nullable HighlightSeverity severity) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
       myIcon = icon;
       myKey = key;
       myProblemGroup = problemGroup;
+      mySeverity = severity;
     }
 
     @NotNull
@@ -760,6 +761,10 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
+    public boolean notError() {
+      return mySeverity != null && mySeverity.compareTo(HighlightSeverity.ERROR) < 0; 
+    }
+    
     public boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
@@ -879,7 +884,7 @@ public class HighlightInfo implements Segment {
   }
 
   boolean isFromInjection() {
-    return isFlagSet(FROM_INJECTION_FLAG);
+    return isFlagSet(FROM_INJECTION_MASK);
   }
 
   @NotNull
@@ -900,7 +905,7 @@ public class HighlightInfo implements Segment {
     if (quickFixActionRanges == null) {
       quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
     }
-    IntentionActionDescriptor desc = new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup());
+    IntentionActionDescriptor desc = new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup(), getSeverity());
     quickFixActionRanges.add(Pair.create(desc, fixRange));
     fixStartOffset = Math.min (fixStartOffset, fixRange.getStartOffset());
     fixEndOffset = Math.max (fixEndOffset, fixRange.getEndOffset());

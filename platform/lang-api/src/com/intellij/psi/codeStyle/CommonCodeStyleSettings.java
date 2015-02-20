@@ -43,6 +43,10 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
+  // Dev. notes:
+  // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
+  // - A new options should be added to CodeStyleSettingsCustomizable as well.
+  // - Covered by CodeStyleConfigurationsTest.
 
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
@@ -412,6 +416,15 @@ public class CommonCodeStyleSettings {
 
   public boolean INDENT_CASE_FROM_SWITCH = true;
 
+  /**
+   * Controls "break" position realtive to "case".
+   * <pre>
+   * case 0:
+   * <--->break;
+   * </pre>
+   */
+  public boolean INDENT_BREAK_FROM_CASE = true;
+
   public boolean SPECIAL_ELSE_IF_TREATMENT = true;
 
   /**
@@ -452,6 +465,7 @@ public class CommonCodeStyleSettings {
    * int end   = 10;
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
+  public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
 
 //----------------- SPACES --------------------
 

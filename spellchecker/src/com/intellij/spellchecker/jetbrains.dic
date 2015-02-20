@@ -184,7 +184,9 @@ giud
 globals
 google
 gruntfile
+gruntfiles
 gulpfile
+gulpfiles
 gzip
 gzipped
 hamcrest
@@ -599,6 +601,7 @@ unboxing
 unbuffered
 uncomment
 uncommented
+uncommenting
 undef
 underwave
 undoable
@@ -611,6 +614,7 @@ unpivot
 unprotect
 unwatch
 uploader
+upsource
 urlencoded
 urowid
 username

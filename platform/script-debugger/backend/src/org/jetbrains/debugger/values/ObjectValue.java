@@ -3,8 +3,11 @@ package org.jetbrains.debugger.values;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.debugger.EvaluateContext;
 import org.jetbrains.debugger.Variable;
+import org.jetbrains.debugger.VariablesHost;
 
 import java.util.List;
 
@@ -12,13 +15,17 @@ import java.util.List;
  * A compound value that has zero or more properties
  */
 public interface ObjectValue extends Value {
-  void clearCaches();
-
   @Nullable
   String getClassName();
 
   @NotNull
   Promise<List<Variable>> getProperties();
+
+  @NotNull
+  Promise<List<Variable>> getProperties(@NotNull List<String> names, @NotNull EvaluateContext evaluateContext, @NotNull Obsolescent obsolescent);
+
+  @NotNull
+  VariablesHost getVariablesHost();
 
   /**
    * from (inclusive) to (exclusive) ranges of array elements or elements if less than bucketThreshold
@@ -39,6 +46,4 @@ public interface ObjectValue extends Value {
    */
   @NotNull
   ThreeState hasIndexedProperties();
-
-  int getCacheStamp();
 }

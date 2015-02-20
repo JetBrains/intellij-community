@@ -116,4 +116,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testNotImportedSubmodulesOfNamespacePackage() {
     doMultiFileTest("main.py");
   }
+
+  // PY-15017
+  public void testClassLevelReferenceInMethodAnnotation() {
+    doTest();
+  }
 }

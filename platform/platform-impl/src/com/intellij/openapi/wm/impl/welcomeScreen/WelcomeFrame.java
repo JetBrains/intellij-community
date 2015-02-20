@@ -80,7 +80,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
     myScreen = screen;
     setupCloseAction(this);
-    new MnemonicHelper().register(this);
+    MnemonicHelper.init(this);
     myScreen.setupFrame(this);
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override

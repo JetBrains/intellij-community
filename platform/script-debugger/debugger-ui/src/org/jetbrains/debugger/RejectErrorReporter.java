@@ -4,8 +4,11 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.debugger.values.ValueManager;
+import org.jetbrains.rpc.CommandProcessor;
 
-public final class RejectErrorReporter implements Consumer<String> {
+public final class RejectErrorReporter implements Consumer<Throwable> {
   private final XDebugSession session;
   private final String description;
 
@@ -19,7 +22,12 @@ public final class RejectErrorReporter implements Consumer<String> {
   }
 
   @Override
-  public void consume(@Nullable String error) {
-    session.reportError((description == null ? "" : description + ": ") + (error == null ? "Unknown error" : error));
+  public void consume(Throwable error) {
+    if (!(error instanceof Promise.MessageError)) {
+      CommandProcessor.LOG.error(error);
+    }
+    if (error != ValueManager.OBSOLETE_CONTEXT_ERROR) {
+      session.reportError((description == null ? "" : description + ": ") + error.getMessage());
+    }
   }
 }

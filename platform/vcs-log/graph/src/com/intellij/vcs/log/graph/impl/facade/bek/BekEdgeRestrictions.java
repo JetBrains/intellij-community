@@ -19,11 +19,9 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 class BekEdgeRestrictions {
-  @NotNull
-  private final MultiMap<Integer, Integer> myUpToEdge = new MultiMap<Integer, Integer>();
+  @NotNull private final MultiMap<Integer, Integer> myUpToEdge = new MultiMap<Integer, Integer>();
 
-  @NotNull
-  private final MultiMap<Integer, Integer> myDownToEdge = new MultiMap<Integer, Integer>();
+  @NotNull private final MultiMap<Integer, Integer> myDownToEdge = new MultiMap<Integer, Integer>();
 
   void addRestriction(int upNode, int downNode) {
     myUpToEdge.putValue(upNode, downNode);
@@ -31,7 +29,7 @@ class BekEdgeRestrictions {
   }
 
   void removeRestriction(int downNode) {
-    for (int upNode: myDownToEdge.get(downNode)) {
+    for (int upNode : myDownToEdge.get(downNode)) {
       myUpToEdge.remove(upNode, downNode);
     }
   }

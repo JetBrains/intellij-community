@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
@@ -159,7 +160,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return scope;
-    return new UnionScope(this, scope, null);
+
+    return new UnionScope(this, scope);
   }
 
   @NotNull
@@ -174,22 +176,42 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
-    return new DelegatingGlobalSearchScope(scope) {
-      @Override
-      public boolean contains(@NotNull final VirtualFile file) {
-        return !myBaseScope.contains(file);
-      }
+    return new NotScope(scope);
+  }
+  private static class NotScope extends DelegatingGlobalSearchScope {
+    private NotScope(@NotNull GlobalSearchScope scope) {
+      super(scope);
+    }
 
-      @Override
-      public boolean isSearchOutsideRootModel() {
-        return true;
-      }
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return !myBaseScope.contains(file);
+    }
 
-      @Override
-      public String toString() {
-        return "NOT: "+myBaseScope;
-      }
-    };
+    @Override
+    public boolean isSearchInLibraries() {
+      return true; // not (in library A) is perfectly fine to find classes in another library B.
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
+      return true; // not (some files in module A) is perfectly fine to find classes in another part of module A.
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true; // not (some files in module A) is perfectly fine to find classes in another part of module A.
+    }
+
+    @Override
+    public boolean isSearchOutsideRootModel() {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "NOT: "+myBaseScope;
+    }
   }
 
   /**
@@ -383,22 +405,24 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
-    private final String myDisplayName;
+    private final int myNestingLevel;
 
-    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
+    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
       super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
-      myDisplayName = displayName;
+      myNestingLevel = 1 +
+                     Math.max(scope1 instanceof UnionScope ? ((UnionScope)scope1).myNestingLevel : 0,
+                              scope2 instanceof UnionScope ? ((UnionScope)scope2).myNestingLevel : 0);
+      if (myNestingLevel > 1000) {
+        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel + StringUtil.first(toString(), 500, true));
+      }
     }
 
     @NotNull
     @Override
     public String getDisplayName() {
-      if (myDisplayName == null) {
-        return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
-      }
-      return myDisplayName;
+      return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
     }
 
     @Override

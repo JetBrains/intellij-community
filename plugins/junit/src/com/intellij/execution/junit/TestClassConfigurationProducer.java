@@ -56,6 +56,10 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beClassConfiguration(testClass);
     configuration.restoreOriginalModule(originalModule);
+    final String forkMode = configuration.getForkMode();
+    if (JUnitConfiguration.FORK_KLASS.equals(forkMode)) {
+      configuration.setForkMode(JUnitConfiguration.FORK_NONE);
+    }
     return true;
   }
 

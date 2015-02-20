@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -277,7 +278,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
+      if (e.errorCode() == 32) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("drop.frame.error.no.information"));
+      }
+      else throw EvaluateExceptionUtil.createEvaluateException(e);
     }
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);

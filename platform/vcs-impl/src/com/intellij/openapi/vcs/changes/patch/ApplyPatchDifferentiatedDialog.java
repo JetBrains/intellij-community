@@ -38,7 +38,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -948,12 +947,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (myPatches.isEmpty() || (! myContainBasedChanges)) return;
       final List<FilePatchInProgress.PatchChange> changes = getAllChanges();
       Collections.sort(changes, myMyChangeComparator);
-      final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
+      List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       int selectedIdx = 0;
       final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>(changes.size());
       if (selectedChanges.isEmpty()) {
-        selectedChanges.addAll(changes);
+        selectedChanges = changes;
       }
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);

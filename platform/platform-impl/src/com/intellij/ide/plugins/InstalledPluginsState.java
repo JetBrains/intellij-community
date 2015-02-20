@@ -15,12 +15,14 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +32,11 @@ import java.util.Map;
  * A service to hold a state of plugin changes in a current session (i.e. before the changes are applied on restart).
  */
 public class InstalledPluginsState {
+  @Nullable
+  public static InstalledPluginsState getInstanceIfLoaded() {
+    return IdeaApplication.isLoaded() ? getInstance() : null;
+  }
+
   public static InstalledPluginsState getInstance() {
     return ServiceManager.getService(InstalledPluginsState.class);
   }
@@ -74,14 +81,21 @@ public class InstalledPluginsState {
   public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId id = descriptor.getPluginId();
     IdeaPluginDescriptor existing = PluginManager.getPlugin(id);
-    if (existing != null && !existing.isBundled() && !wasUpdated(id) &&
-        PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 &&
-        !PluginManagerCore.isIncompatible(descriptor)) {
-      String idString = id.getIdString();
-      synchronized (myLock) {
+    if (existing == null || existing.isBundled() || wasUpdated(id)) {
+      return;
+    }
+
+    boolean newer = PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 && !PluginManagerCore.isIncompatible(descriptor);
+    String idString = id.getIdString();
+
+    synchronized (myLock) {
+      if (newer) {
         if (!myUpdateSettings.myOutdatedPlugins.contains(idString)) {
           myUpdateSettings.myOutdatedPlugins.add(idString);
         }
+      }
+      else {
+        myUpdateSettings.myOutdatedPlugins.remove(idString);
       }
     }
   }

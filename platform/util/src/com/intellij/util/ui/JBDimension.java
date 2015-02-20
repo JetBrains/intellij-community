@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 
 /**
@@ -22,7 +23,11 @@ import java.awt.*;
  */
 public class JBDimension extends Dimension {
   public JBDimension(int width, int height) {
-    super(JBUI.scale(width), JBUI.scale(height));
+    super(scale(width), scale(height));
+  }
+
+  private static int scale(int size) {
+    return size == -1 ? -1 : JBUI.scale(size);
   }
 
   public static JBDimension create(Dimension from) {
@@ -30,5 +35,17 @@ public class JBDimension extends Dimension {
       return ((JBDimension)from);
     }
     return new JBDimension(from.width, from.height);
+  }
+
+  public JBDimensionUIResource asUIResource() {
+    return new JBDimensionUIResource(this);
+  }
+
+  public static class JBDimensionUIResource extends JBDimension implements UIResource {
+    public JBDimensionUIResource(JBDimension size) {
+      super(0, 0);
+      width = size.width;
+      height = size.height;
+    }
   }
 }

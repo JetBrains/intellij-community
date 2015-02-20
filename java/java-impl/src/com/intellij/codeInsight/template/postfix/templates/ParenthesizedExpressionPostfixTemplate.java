@@ -17,9 +17,10 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class ParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate {
   public ParenthesizedExpressionPostfixTemplate() {
-    super(JAVA_PSI_INFO, IS_NON_VOID);
+    super(JAVA_PSI_INFO, selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }
 }

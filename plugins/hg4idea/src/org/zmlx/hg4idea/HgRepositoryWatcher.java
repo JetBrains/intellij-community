@@ -85,7 +85,6 @@ public class HgRepositoryWatcher extends AbstractProjectComponent implements Bul
       root = getRootForChangeBranch(file);
       if (root != null) {
         myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
-        myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, root);
       }
     }
   }

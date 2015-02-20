@@ -45,6 +45,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -161,7 +162,12 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         application.invokeLater(new Runnable() {
           @Override
           public void run() {
-            setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value);
+            DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+              @Override
+              public void run() {
+                setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value);
+              }
+            });
           }
         }, project.getDisposed());
       }

@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class AnnotateActionGroup extends ActionGroup {
   private final AnAction[] myActions;
 
@@ -50,13 +47,5 @@ public class AnnotateActionGroup extends ActionGroup {
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myActions;
-  }
-
-  public void setAvailable(boolean available) {
-    for (AnAction action : myActions) {
-      if (action instanceof ShowHideAspectAction) {
-        ((ShowHideAspectAction)action).setAvailable(available);
-      }
-    }
   }
 }

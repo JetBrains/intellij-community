@@ -13,11 +13,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
  * To change this template use Options | File Templates.
  */
 public class JavaDocFilter implements NodeFilter {
-  protected boolean result;
 
   public boolean accepts(PsiElement element) {
-    return element instanceof PsiDocCommentOwner ||
-      element instanceof PsiDocComment;
+    return element instanceof PsiDocCommentOwner || element instanceof PsiDocComment;
   }
 
   private static class NodeFilterHolder {

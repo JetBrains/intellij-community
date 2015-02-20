@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.sorters.SortByStatusAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +34,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,13 +44,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xml.util.XmlStringUtil;
@@ -57,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.html.HTMLDocument;
@@ -83,13 +85,6 @@ public abstract class PluginManagerMain implements Disposable {
 
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
-  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
-                                                    "    <style type=\"text/css\">" +
-                                                    "        p {" +
-                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
-                                                    "        }" +
-                                                    "    </style>" +
-                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   @NonNls private static final String HTML_PREFIX = "<a href=\"";
@@ -146,7 +141,7 @@ public abstract class PluginManagerMain implements Disposable {
 
     myTablePanel.add(installedScrollPane, BorderLayout.CENTER);
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myPanelDescription);
-    myPanelDescription.setBorder(new EmptyBorder(0, 7, 0, 0));
+    myPanelDescription.setBorder(JBUI.Borders.emptyLeft(7));
 
     final JPanel header = new JPanel(new BorderLayout()) {
       @Override
@@ -160,7 +155,7 @@ public abstract class PluginManagerMain implements Disposable {
     header.setBorder(new CustomLineBorder(1, 1, 0, 1));
     final JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
-    mySortLabel.setBorder(new EmptyBorder(1, 1, 1, 5));
+    mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
     mySortLabel.setIcon(AllIcons.General.SplitDown);
     mySortLabel.setHorizontalTextPosition(SwingConstants.LEADING);
     header.add(mySortLabel, BorderLayout.EAST);
@@ -234,6 +229,20 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginTable;
   }
 
+  private static String getTextPrefix() {
+    final int fontSize = JBUI.scale(12);
+    final int m1 = JBUI.scale(2);
+    final int m2 = JBUI.scale(5);
+    return String.format(
+           "<html><head>" +
+           "    <style type=\"text/css\">" +
+           "        p {" +
+           "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
+           "        }" +
+           "    </style>" +
+           "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
+           fontSize, m1, m1, fontSize, m2, m2);
+  }
 
   public PluginTableModel getPluginsModel() {
     return pluginsModel;
@@ -306,16 +315,17 @@ public abstract class PluginManagerMain implements Disposable {
         final List<String> errors = ContainerUtil.newSmartList();
         ProgressIndicator indicator = new EmptyProgressIndicator();
 
-        String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-        List<String> hosts = ContainerUtil.newArrayList();
-        hosts.add(null);  // default repository
-        if (builtinPluginsUrl != null) hosts.add(builtinPluginsUrl);
-        hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-
+        List<String> hosts = RepositoryHelper.getPluginHosts();
+        Set<PluginId> unique = ContainerUtil.newHashSet();
         for (String host : hosts) {
           try {
             if (host == null || acceptHost(host)) {
-              list.addAll(RepositoryHelper.loadPlugins(host, null, indicator));
+              List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(host, null, indicator);
+              for (IdeaPluginDescriptor plugin : plugins) {
+                if (unique.add(plugin.getPluginId())) {
+                  list.add(plugin);
+                }
+              }
             }
           }
           catch (FileNotFoundException e) {
@@ -323,7 +333,7 @@ public abstract class PluginManagerMain implements Disposable {
           }
           catch (IOException e) {
             LOG.info(host, e);
-            if (host != builtinPluginsUrl) {
+            if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
               errors.add(e.getMessage());
             }
           }
@@ -335,6 +345,11 @@ public abstract class PluginManagerMain implements Disposable {
             setDownloadStatus(false);
 
             if (!list.isEmpty()) {
+              InstalledPluginsState state = InstalledPluginsState.getInstance();
+              for (IdeaPluginDescriptor descriptor : list) {
+                state.onDescriptorDownload(descriptor);
+              }
+
               modifyPluginsList(list);
               propagateUpdates(list);
             }
@@ -477,13 +492,13 @@ public abstract class PluginManagerMain implements Disposable {
 
   private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {
     if (text != null) {
-      text.insert(0, TEXT_PREFIX);
+      text.insert(0, getTextPrefix());
       text.append(TEXT_SUFFIX);
       pane.setText(SearchUtil.markup(text.toString(), filter).trim());
       pane.setCaretPosition(0);
     }
     else {
-      pane.setText(TEXT_PREFIX + TEXT_SUFFIX);
+      pane.setText(getTextPrefix() + TEXT_SUFFIX);
     }
   }
 

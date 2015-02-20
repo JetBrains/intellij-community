@@ -19,8 +19,7 @@ import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncFunction;
-import org.jetbrains.concurrency.ConsumerRunnable;
+import org.jetbrains.concurrency.ObsolescentAsyncFunction;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.*;
 
@@ -51,14 +50,15 @@ public final class VariableView extends XNamedValue implements VariableContext {
   private final VariableContext context;
 
   private final Variable variable;
-
   private volatile Value value;
+  // lazy computed
+  private MemberFilter memberFilter;
 
   private volatile List<Variable> remainingChildren;
   private volatile int remainingChildrenOffset;
 
   public VariableView(@NotNull Variable variable, @NotNull VariableContext context) {
-    this(context.getViewSupport().normalizeMemberName(variable), variable, context);
+    this(variable.getName(), variable, context);
   }
 
   public VariableView(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context) {
@@ -99,18 +99,16 @@ public final class VariableView extends XNamedValue implements VariableContext {
       node.setPresentation(icon, null, valueString, true);
     }
     else {
-      context.getEvaluateContext().evaluate("a.length", Collections.<String, EvaluateContextAdditionalParameter>singletonMap("a", value))
-        .done(new Consumer<EvaluateResult>() {
+      context.getEvaluateContext().evaluate("a.length", Collections.<String, Object>singletonMap("a", value), false)
+        .done(new ObsolescentConsumer<EvaluateResult>(node) {
           @Override
           public void consume(EvaluateResult result) {
-            if (!node.isObsolete()) {
-              node.setPresentation(icon, null, "Array[" + result.value.getValueString() + ']', true);
-            }
+            node.setPresentation(icon, null, "Array[" + result.value.getValueString() + ']', true);
           }
         })
-        .rejected(new Consumer<String>() {
+        .rejected(new ObsolescentConsumer<Throwable>(node) {
           @Override
-          public void consume(String error) {
+          public void consume(Throwable error) {
             node.setPresentation(icon, null, "Internal error: " + error, false);
           }
         });
@@ -149,8 +147,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @NotNull
   @Override
-  public MemberFilter createMemberFilter() {
-    return context.getViewSupport().createMemberFilter(this);
+  public Promise<MemberFilter> getMemberFilter() {
+    return context.getViewSupport().getMemberFilter(this);
   }
 
   @Override
@@ -163,10 +161,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-      getEvaluateContext().evaluate(variable.getName()).done(new Consumer<EvaluateResult>() {
-        @Override
-        public void consume(EvaluateResult result) {
-          if (!node.isObsolete()) {
+      getEvaluateContext().evaluate(variable.getName())
+        .done(new ObsolescentConsumer<EvaluateResult>(node) {
+          @Override
+          public void consume(EvaluateResult result) {
             if (result.wasThrown) {
               setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(value, null), null, node);
             }
@@ -175,15 +173,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
               computePresentation(result.value, node);
             }
           }
-        }
-      }).rejected(new Consumer<String>() {
-        @Override
-        public void consume(String error) {
-          if (!node.isObsolete()) {
-            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error), error, node);
+        })
+        .rejected(new ObsolescentConsumer<Throwable>(node) {
+          @Override
+          public void consume(Throwable error) {
+            setEvaluatedValue(getViewSupport().transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node);
           }
-        }
-      });
+        });
       return;
     }
 
@@ -198,15 +194,14 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
         ValueModifier valueModifier = variable.getValueModifier();
         assert valueModifier != null;
-        valueModifier.evaluateGet(variable, getEvaluateContext()).done(new Consumer<Value>() {
-          @Override
-          public void consume(Value value) {
-            if (!node.isObsolete()) {
+        valueModifier.evaluateGet(variable, getEvaluateContext())
+          .done(new ObsolescentConsumer<Value>(node) {
+            @Override
+            public void consume(Value value) {
               callback.evaluated("");
               setEvaluatedValue(value, null, node);
             }
-          }
-        });
+          });
       }
     }.setShowValuePopup(false));
   }
@@ -279,8 +274,9 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
   }
 
+  @NotNull
   private static XValuePresentation createNumberPresentation(@NotNull String value) {
-    return value.equals("NaN") || value.equals("Infinity") ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
+    return value.equals(PrimitiveValue.NA_N_VALUE) || value.equals(PrimitiveValue.INFINITY_VALUE) ? new XKeywordValuePresentation(value) : new XNumericValuePresentation(value);
   }
 
   @Override
@@ -296,7 +292,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
     if (list != null) {
       int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
       boolean isLast = to == list.size();
-      node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, this), isLast);
+      node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, this, memberFilter), isLast);
       if (!isLast) {
         node.tooManyChildren(list.size() - to);
         remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW;
@@ -325,10 +321,15 @@ public final class VariableView extends XNamedValue implements VariableContext {
         promises.add(computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null));
       }
       else {
-        promises.add(additionalProperties.then(new AsyncFunction<Void, List<Variable>>() {
+        promises.add(additionalProperties.then(new ObsolescentAsyncFunction<Void, Void>() {
+          @Override
+          public boolean isObsolete() {
+            return node.isObsolete();
+          }
+
           @NotNull
           @Override
-          public Promise<List<Variable>> fun(Void o) {
+          public Promise<Void> fun(Void o) {
             return computeNamedProperties(objectValue, node, true);
           }
         }));
@@ -336,12 +337,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(new ConsumerRunnable() {
+      Promise.all(promises).processed(new ObsolescentConsumer<Void>(node) {
         @Override
-        public void run() {
-          if (!node.isObsolete()) {
-            node.addChildren(XValueChildrenList.EMPTY, true);
-          }
+        public void consume(Void aVoid) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
         }
       });
     }
@@ -383,10 +382,12 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   @NotNull
-  private Promise<List<Variable>> computeNamedProperties(@NotNull final ObjectValue value, @NotNull XCompositeNode node, final boolean isLastChildren) {
-    return ObsolescentAsyncResults.consume(value.getProperties(), node, new PairConsumer<List<Variable>, XCompositeNode>() {
+  private Promise<Void> computeNamedProperties(@NotNull final ObjectValue value, @NotNull final XCompositeNode node, final boolean isLastChildren) {
+    return Variables.processVariables(this, value.getProperties(), node, new PairConsumer<MemberFilter, List<Variable>>() {
       @Override
-      public void consume(List<Variable> variables, XCompositeNode node) {
+      public void consume(MemberFilter memberFilter, List<Variable> variables) {
+        VariableView.this.memberFilter = memberFilter;
+
         if (value.getType() == ValueType.ARRAY && !(value instanceof ArrayValue)) {
           computeArrayRanges(variables, node);
           return;
@@ -397,7 +398,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
           functionValue = null;
         }
 
-        remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null);
+        remainingChildren = Variables.processNamedObjectProperties(variables, node, VariableView.this, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW,
+                                                                   isLastChildren && functionValue == null);
         if (remainingChildren != null) {
           remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW;
         }
@@ -411,7 +413,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {
-    final List<Variable> variables = Variables.filterAndSort(properties, this, false);
+    final List<Variable> variables = Variables.filterAndSort(properties, memberFilter, false);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
@@ -447,7 +449,8 @@ public final class VariableView extends XNamedValue implements VariableContext {
     }
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
-      groupList.add(new VariableView(variables.get(i), this));
+      Variable variable = variables.get(i);
+      groupList.add(new VariableView(memberFilter.getName(variable), variable, this));
     }
 
     node.addChildren(groupList, true);
@@ -485,22 +488,25 @@ public final class VariableView extends XNamedValue implements VariableContext {
       public void setValue(@NotNull String expression, @NotNull final XModificationCallback callback) {
         ValueModifier valueModifier = variable.getValueModifier();
         assert valueModifier != null;
-        valueModifier.setValue(variable, expression, getEvaluateContext()).done(new ConsumerRunnable() {
-          @Override
-          public void run() {
-            value = null;
-            callback.valueModified();
-          }
-        }).rejected(createErrorMessageConsumer(callback));
+        //noinspection unchecked
+        valueModifier.setValue(variable, expression, getEvaluateContext())
+          .done(new Consumer() {
+            @Override
+            public void consume(Object o) {
+              value = null;
+              callback.valueModified();
+            }
+          })
+          .rejected(createErrorMessageConsumer(callback));
       }
     };
   }
 
-  private static Consumer<String> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
-    return new Consumer<String>() {
+  private static Consumer<Throwable> createErrorMessageConsumer(@NotNull final XValueCallback callback) {
+    return new Consumer<Throwable>() {
       @Override
-      public void consume(@Nullable String errorMessage) {
-        callback.errorOccurred(errorMessage == null ? "Internal error" : errorMessage);
+      public void consume(Throwable error) {
+        callback.errorOccurred(error.getMessage());
       }
     };
   }
@@ -617,14 +623,16 @@ public final class VariableView extends XNamedValue implements VariableContext {
       }
 
       final AtomicBoolean evaluated = new AtomicBoolean();
-      ((StringValue)value).getFullString().done(new ConsumerRunnable() {
-        @Override
-        public void run() {
-          if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
-            callback.evaluated(value.getValueString());
+      ((StringValue)value).getFullString()
+        .done(new Consumer<String>() {
+          @Override
+          public void consume(String s) {
+            if (!callback.isObsolete() && evaluated.compareAndSet(false, true)) {
+              callback.evaluated(value.getValueString());
+            }
           }
-        }
-      }).rejected(createErrorMessageConsumer(callback));
+        })
+        .rejected(createErrorMessageConsumer(callback));
     }
   }
 

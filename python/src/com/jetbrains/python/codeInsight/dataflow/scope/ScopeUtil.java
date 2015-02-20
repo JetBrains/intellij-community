@@ -100,19 +100,28 @@ public class ScopeUtil {
     if (decoratorAncestor != null && !isAncestor(decoratorAncestor, firstOwner, true)) {
       return nextOwner;
     }
-    // References in default values of parameters are resolved outside of the function (if the lambda is not inside the default value)
-    final PyParameter parameterAncestor = getParentOfType(element, PyParameter.class);
+    // References in default values or in annotations of parameters are resolved outside of the function (if the lambda is not inside the
+    // default value)
+    final PyNamedParameter parameterAncestor = getParentOfType(element, PyNamedParameter.class);
     if (parameterAncestor != null && !isAncestor(parameterAncestor, firstOwner, true)) {
       final PyExpression defaultValue = parameterAncestor.getDefaultValue();
-      if (element != null && isAncestor(defaultValue, element, false)) {
+      final PyAnnotation annotation = parameterAncestor.getAnnotation();
+      if (isAncestor(defaultValue, element, false) || isAncestor(annotation, element, false)) {
         return nextOwner;
       }
     }
     // Superclasses are resolved outside of the class
     final PyClass containingClass = getParentOfType(element, PyClass.class);
-    if (containingClass != null && element != null &&
-        isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
+    if (containingClass != null && isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
       return nextOwner;
+    }
+    // Function return annotations are resolved outside of the function
+    if (firstOwner instanceof PyFunction) {
+      final PyFunction function = (PyFunction)firstOwner;
+      final PyAnnotation annotation = function.getAnnotation();
+      if (isAncestor(annotation, element, false)) {
+        return nextOwner;
+      }
     }
     return firstOwner;
   }

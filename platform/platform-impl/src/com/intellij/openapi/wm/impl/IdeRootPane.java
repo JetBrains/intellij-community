@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -342,7 +343,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         mbd = menuBar.getPreferredSize();
       }
       else {
-        mbd = new Dimension(0, 0);
+        mbd = JBUI.emptySize();
       }
       return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right,
                            rd.height + mbd.height + i.top + i.bottom);
@@ -361,7 +362,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         mbd = menuBar.getMinimumSize();
       }
       else {
-        mbd = new Dimension(0, 0);
+        mbd = JBUI.emptySize();
       }
       return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right,
                            rd.height + mbd.height + i.top + i.bottom);
@@ -374,7 +375,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         mbd = menuBar.getMaximumSize();
       }
       else {
-        mbd = new Dimension(0, 0);
+        mbd = JBUI.emptySize();
       }
       if (contentPane != null) {
         rd = contentPane.getMaximumSize();

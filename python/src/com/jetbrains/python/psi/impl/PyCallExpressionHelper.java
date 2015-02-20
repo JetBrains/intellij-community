@@ -360,6 +360,9 @@ public class PyCallExpressionHelper {
         }
       }
     }
+    else if (qtype instanceof PyClassLikeType) {
+      return ((PyClassLikeType)qtype).isDefinition(); //Any definition means callable is classmethod
+    }
     return false;
   }
 
@@ -522,6 +525,10 @@ public class PyCallExpressionHelper {
       final Callable callable = (Callable)target;
       return Ref.create(callable.getCallType(context, call));
     }
+    /*PyCallExpression.PyMarkedCallee markedCallee = call.resolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(context));
+    if (markedCallee != null) {
+      return Ref.create(markedCallee.getCallable().getCallType(context, call));
+    }*/
     return null;
   }
 

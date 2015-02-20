@@ -28,7 +28,7 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
   private MyResult myStepResult;
 
   @NotNull
-  protected abstract DiffRequestPresentable init() throws VcsException;
+  public abstract DiffRequestPresentable init() throws VcsException;
 
   @NotNull
   private DiffRequestPresentable initRequest() throws VcsException {

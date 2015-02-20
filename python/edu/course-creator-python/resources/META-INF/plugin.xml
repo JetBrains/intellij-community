@@ -1,0 +1,46 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.edu.coursecreator.python</id>
+  <name>Course Creator for PyCharm Educational</name>
+  <version>2.0</version>
+
+  <description><![CDATA[
+      Plugin allows you to create new course for PyCharm Education Edition.
+    ]]></description>
+
+  <change-notes><![CDATA[
+    ]]>
+  </change-notes>
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+
+  <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.python</depends>
+  <depends>com.jetbrains.edu.coursecreator</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
+  </extensions>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <action id="CCRunTests" class="com.jetbrains.edu.coursecreator.actions.PyCCRunTestsAction" text="Run Tests" description="Run tests"/>
+  </actions>
+
+</idea-plugin>

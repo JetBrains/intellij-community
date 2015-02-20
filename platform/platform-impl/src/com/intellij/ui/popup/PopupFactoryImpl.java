@@ -742,7 +742,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                                                           ActionManager.getInstance(), eventModifiers);
             event.setInjectedContext(action.isInInjectedContext());
-            action.actionPerformed(event);
+            if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+              action.actionPerformed(event);
+            }
           }
         };
         return FINAL_CHOICE;

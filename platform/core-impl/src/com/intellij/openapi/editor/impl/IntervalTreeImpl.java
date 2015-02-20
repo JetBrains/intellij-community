@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
-    private static final int ATTACHED_TO_TREE_FLAG = COLOR_FLAG+1; // true if the node is inserted to the tree
+    private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
     protected final List<Getter<E>> intervals;
     int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
@@ -268,7 +268,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
       return myEnd = end;
     }
 
-    static final int VALID_FLAG = ATTACHED_TO_TREE_FLAG + 1;
+    static final byte VALID_FLAG = ATTACHED_TO_TREE_FLAG << 1;
     @Override
     public boolean isValid() {
       return isFlagSet(VALID_FLAG);

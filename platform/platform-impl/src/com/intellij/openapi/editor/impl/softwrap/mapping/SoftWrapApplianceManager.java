@@ -362,10 +362,6 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     String placeholder = foldRegion.getPlaceholderText();
-    if (placeholder.isEmpty()) {
-      return false;
-    }
-
     int placeholderWidthInPixels = 0;
     for (int i = 0; i < placeholder.length(); i++) {
       placeholderWidthInPixels += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)

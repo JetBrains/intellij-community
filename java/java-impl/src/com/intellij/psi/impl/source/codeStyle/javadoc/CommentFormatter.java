@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
@@ -79,12 +80,30 @@ public class CommentFormatter {
       replaceDocComment(newCommentText, (PsiDocCommentOwner)psiElement);
     }
     else if (psiElement instanceof PsiDocComment) {
-      processElementComment(psiElement.getParent());
+      PsiDocComment comment = (PsiDocComment)psiElement;
+      if (JavaDocUtil.isInsidePackageInfo(comment)) {
+        String newCommentText = formatPackageComment(comment);
+        replaceCommentText(newCommentText, comment);
+      } else {
+        processElementComment(psiElement.getParent());
+      }
     }
+  }
+
+  private String formatPackageComment(@NotNull PsiDocComment comment) {
+    final String info = getCommentInfo(comment);
+    if (info == null) return null;
+
+    JDComment jdComment = getParser().parse(info, new JDComment(this));
+    return jdComment.generate("");
   }
 
   private void replaceDocComment(@Nullable String newCommentText, @NotNull final PsiDocCommentOwner psiDocCommentOwner) {
     final PsiDocComment oldComment = psiDocCommentOwner.getDocComment();
+    replaceCommentText(newCommentText, oldComment);
+  }
+
+  private void replaceCommentText(@Nullable String newCommentText, @Nullable PsiDocComment oldComment) {
     if (newCommentText != null) newCommentText = stripSpaces(newCommentText);
     if (newCommentText == null || oldComment == null || newCommentText.equals(oldComment.getText())) {
       return;
@@ -149,49 +168,56 @@ public class CommentFormatter {
     return comment.generate(getIndent(psiField));
   }
 
+
   /**
    * Returns the original comment info of the specified element or null
-   * 
+   *
    * @param element the specified element
    * @return text chunk
    */
   @Nullable
   private static String getOrigCommentInfo(PsiDocCommentOwner element) {
-    StringBuilder sb = new StringBuilder();
     PsiElement e = element.getFirstChild();
     if (!(e instanceof PsiComment)) {
-      // no comments for this element
+      //no comments for this element
       return null;
     }
     else {
-      boolean first = true;
-      while (true) {
-        if (e instanceof PsiDocComment) {
-          PsiComment cm = (PsiComment)e;
-          String text = cm.getText();
-          if (text.startsWith("//")) {
-            if (!first) sb.append('\n');
-            sb.append(text.substring(2).trim());
-          }
-          else if (text.startsWith("/*")) {
-            if (text.charAt(2) == '*') {
-              text = text.substring(3, Math.max(3, text.length() - 2));
-            }
-            else {
-              text = text.substring(2, Math.max(2, text.length() - 2));
-            }
-            sb.append(text);
-          }
-        }
-        else if (!(e instanceof PsiWhiteSpace) && !(e instanceof PsiComment)) {
-          break;
-        }
-        first = false;
-        e = e.getNextSibling();
-      }
-
-      return sb.toString();
+      return getCommentInfo(((PsiComment)e));
     }
+  }
+
+  @Nullable
+  private static String getCommentInfo(PsiComment element) {
+    StringBuilder sb = new StringBuilder();
+    PsiElement e = element;
+    boolean first = true;
+    while (true) {
+      if (e instanceof PsiDocComment) {
+        PsiComment cm = (PsiComment)e;
+        String text = cm.getText();
+        if (text.startsWith("//")) {
+          if (!first) sb.append('\n');
+          sb.append(text.substring(2).trim());
+        }
+        else if (text.startsWith("/*")) {
+          if (text.charAt(2) == '*') {
+            text = text.substring(3, Math.max(3, text.length() - 2));
+          }
+          else {
+            text = text.substring(2, Math.max(2, text.length() - 2));
+          }
+          sb.append(text);
+        }
+      }
+      else if (!(e instanceof PsiWhiteSpace) && !(e instanceof PsiComment)) {
+        break;
+      }
+      first = false;
+      e = e.getNextSibling();
+    }
+
+    return sb.toString();
   }
 
   /**
@@ -200,9 +226,9 @@ public class CommentFormatter {
    * @return indentation size
    */
   private int getIndentSpecial(@NotNull PsiElement element) {
-    assert(element instanceof PsiClass ||
-           element instanceof PsiField ||
-           element instanceof PsiMethod);
+    LOG.assertTrue(element instanceof PsiClass ||
+                   element instanceof PsiField ||
+                   element instanceof PsiMethod);
 
     int indentSize = mySettings.getIndentSize(JavaFileType.INSTANCE);
     boolean doNotIndentTopLevelClassMembers = mySettings.getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS;

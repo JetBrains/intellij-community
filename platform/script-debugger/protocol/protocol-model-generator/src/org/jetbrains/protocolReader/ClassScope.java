@@ -11,7 +11,7 @@ abstract class ClassScope {
   private final NamePath contextNamespace;
   final DomainGenerator generator;
 
-  ClassScope(DomainGenerator generator, NamePath classNamespace) {
+  ClassScope(@NotNull DomainGenerator generator, @NotNull NamePath classNamespace) {
     contextNamespace = classNamespace;
     this.generator = generator;
   }
@@ -24,11 +24,16 @@ abstract class ClassScope {
     return contextNamespace;
   }
 
-  void addMember(TextOutConsumer out) {
+  void addMember(@NotNull TextOutConsumer out) {
     additionalMemberTexts.add(out);
   }
 
-  void writeAdditionalMembers(TextOutput out) {
+  void writeAdditionalMembers(@NotNull TextOutput out) {
+    if (additionalMemberTexts.isEmpty()) {
+      return;
+    }
+
+    out.newLine();
     for (TextOutConsumer deferredWriter : additionalMemberTexts) {
       deferredWriter.append(out);
     }

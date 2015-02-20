@@ -1,0 +1,37 @@
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.jetbrains.python.PythonHelpersLocator;
+
+public abstract class StudyTestCase extends UsefulTestCase {
+  protected CodeInsightTestFixture myFixture;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    initPlatformPrefix();
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(
+      getName());
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myFixture.setUp();
+    myFixture.setTestDataPath(getTestDataPath());
+  }
+
+  private static void initPlatformPrefix() {
+    PlatformTestCase.autodetectPlatformPrefix();
+  }
+
+  protected String getTestDataPath() {
+    return PythonHelpersLocator.getPythonCommunityPath() + "/edu/interactive-learning-python/testData";
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
+    super.tearDown();
+  }
+}

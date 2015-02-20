@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.util.WriteExternalException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -31,31 +29,6 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     @NotNull
     public Collection loadSchemes() {
       return Collections.emptySet();
-    }
-
-    @Override
-    @NotNull
-    public Collection loadSharedSchemes() {
-      return Collections.emptySet();
-    }
-
-    @Override
-    public void exportScheme(@NotNull ExternalizableScheme scheme, String name, String description) {
-    }
-
-    @Override
-    public boolean isImportAvailable() {
-      return false;
-    }
-
-    @Override
-    public boolean isExportAvailable() {
-      return false;
-    }
-
-    @Override
-    public boolean isShared(@NotNull Scheme scheme) {
-      return false;
     }
 
     @Override
@@ -101,12 +74,6 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
     }
 
     @Override
-    @NotNull
-    public Collection loadSharedSchemes(Collection currentSchemeList) {
-      return loadSharedSchemes();
-    }
-
-    @Override
     public File getRootDirectory() {
       return null;
     }
@@ -114,31 +81,6 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   @NotNull
   Collection<E> loadSchemes();
-
-  @Deprecated
-  @SuppressWarnings({"unused", "deprecation"})
-  @NotNull
-  Collection<SharedScheme<E>> loadSharedSchemes();
-
-  @SuppressWarnings({"unused", "deprecation"})
-  @NotNull
-  @Deprecated
-  Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList);
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  void exportScheme(@NotNull E scheme, final String name, final String description) throws WriteExternalException, IOException;
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  boolean isImportAvailable();
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  boolean isExportAvailable();
-
-  @Deprecated
-  boolean isShared(@NotNull Scheme scheme);
 
   void addNewScheme(@NotNull T scheme, final boolean replaceExisting);
 
@@ -152,7 +94,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   void save();
 
-  void setCurrentSchemeName(final String schemeName);
+  void setCurrentSchemeName(@Nullable String schemeName);
 
   @Nullable
   T getCurrentScheme();

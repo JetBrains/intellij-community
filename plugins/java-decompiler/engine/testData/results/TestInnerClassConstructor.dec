@@ -2,16 +2,40 @@ package pkg;
 
 class TestInnerClassConstructor {
    void m() {
-      new TestInnerClassConstructor.Inner("text");
+      new TestInnerClassConstructor.Inner("text");// 5
    }
 
    void n(String var1) {
-      System.out.println("n(): " + var1);
+      System.out.println("n(): " + var1);// 9
    }
 
    final class Inner {
       private Inner(String var2) {
-         TestInnerClassConstructor.this.n(var2);
+         TestInnerClassConstructor.this.n(var2);// 14
       }
    }
 }
+
+class 'pkg/TestInnerClassConstructor' {
+   method 'm ()V' {
+      5      4
+   }
+
+   method 'n (Ljava/lang/String;)V' {
+      0      8
+      a      8
+      13      8
+      16      8
+   }
+}
+
+class 'pkg/TestInnerClassConstructor$Inner' {
+   method '<init> (Lpkg/TestInnerClassConstructor;Ljava/lang/String;)V' {
+      b      13
+   }
+}
+
+Lines mapping:
+5 <-> 5
+9 <-> 9
+14 <-> 14

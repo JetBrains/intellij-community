@@ -22,7 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -80,11 +80,30 @@ class GitRepositoryReader {
   @NotNull
   GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
     Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> branches = readBranches(remotes);
+    Set<GitLocalBranch> localBranches = branches.first;
+
     HeadInfo headInfo = readHead();
     Repository.State state = readRepositoryState(headInfo);
-    GitLocalBranch currentBranch = findCurrentBranch(headInfo, state, branches.first);
-    String currentRevision = getCurrentRevision(headInfo, currentBranch);
-    return new GitBranchState(currentRevision, currentBranch, state, branches.first, branches.second);
+
+    GitLocalBranch currentBranch;
+    String currentRevision;
+    if (!headInfo.isBranch) {
+      currentBranch = null;
+      currentRevision = headInfo.content;
+    }
+    else if (!localBranches.isEmpty()) {
+      currentBranch = findCurrentBranch(headInfo, state, localBranches);
+      currentRevision = getCurrentRevision(headInfo, currentBranch);
+    }
+    else if (headInfo.content != null) {
+      currentBranch = new GitLocalBranch(headInfo.content, GitBranch.DUMMY_HASH);
+      currentRevision = null;
+    }
+    else {
+      currentBranch = null;
+      currentRevision = null;
+    }
+    return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
   }
 
   @Nullable
@@ -188,7 +207,7 @@ class GitRepositoryReader {
     }
     try {
       String content = DvcsUtil.tryLoadFile(myPackedRefsFile);
-      return ContainerUtil.map2MapNotNull(StringUtil.splitByLines(content), new Function<String, Pair<String, String>>() {
+      return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), new Function<String, Pair<String, String>>() {
         @Override
         public Pair<String, String> fun(String line) {
           return parsePackedRefsLine(line);

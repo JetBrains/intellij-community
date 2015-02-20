@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2014 Bas Leijdekkers
+ * Copyright 2005-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -486,7 +486,7 @@ public class ExpressionUtils {
     return hasType(expression, CommonClassNames.JAVA_LANG_STRING);
   }
 
-  public static boolean isConversionToStringNecessary(PsiExpression expression) {
+  public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (parent instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
@@ -551,8 +551,10 @@ public class ExpressionUtils {
           if (i == 0 && TypeUtils.expressionHasTypeOrSubtype(expression1, "org.slf4j.Marker")) {
             l = 2;
           }
-          if (expression1 == expression && i < l) {
-            return true;
+          if (expression1 == expression) {
+            if (i < l || (throwable && i == expressions.length - 1)) {
+              return true;
+            }
           }
         }
       } else {

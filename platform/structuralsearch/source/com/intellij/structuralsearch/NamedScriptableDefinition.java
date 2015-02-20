@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import org.jdom.Element;
 import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -29,7 +29,12 @@ public class NamedScriptableDefinition implements JDOMExternalizable, Cloneable 
   }
 
   public void setScriptCodeConstraint(String scriptCodeConstraint) {
-    this.scriptCodeConstraint = scriptCodeConstraint;
+    if ("\"\"".equals(scriptCodeConstraint)) {
+      this.scriptCodeConstraint = "";
+    }
+    else {
+      this.scriptCodeConstraint = scriptCodeConstraint;
+    }
   }
 
   public Object clone() {
@@ -48,7 +53,7 @@ public class NamedScriptableDefinition implements JDOMExternalizable, Cloneable 
 
     String s = element.getAttributeValue(SCRIPT);
     if (s != null) {
-      setScriptCodeConstraint(s);
+      scriptCodeConstraint = s;
     }
   }
 

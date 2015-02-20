@@ -47,6 +47,30 @@ public class GroovyModelSerializerExtension extends JpsModelSerializerExtension 
       @Override
       public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
       }
-    });
+    }, new GreclipseSettingsSerializer());
   }
+
+  private static class GreclipseSettingsSerializer extends JpsProjectExtensionSerializer {
+    private GreclipseSettingsSerializer() {
+      super(GreclipseSettings.COMPONENT_FILE, GreclipseSettings.COMPONENT_NAME);
+    }
+
+    @Override
+    public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
+      GreclipseSettings settings = XmlSerializer.deserialize(componentTag, GreclipseSettings.class);
+      if (settings == null) settings = new GreclipseSettings();
+      GreclipseJpsCompilerSettings component = new GreclipseJpsCompilerSettings(settings);
+      project.getContainer().setChild(GreclipseJpsCompilerSettings.ROLE, component);
+    }
+
+    @Override
+    public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
+      GreclipseJpsCompilerSettings component = new GreclipseJpsCompilerSettings(new GreclipseSettings());
+      project.getContainer().setChild(GreclipseJpsCompilerSettings.ROLE, component);
+    }
+
+    @Override
+    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) { }
+  }
+
 }

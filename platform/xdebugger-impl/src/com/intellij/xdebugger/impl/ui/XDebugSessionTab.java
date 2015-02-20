@@ -55,7 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
-  private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
+  public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();

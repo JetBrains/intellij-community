@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
@@ -237,9 +238,12 @@ public class PySkeletonRefresher {
     final VirtualFile remoteSourcesDir = PySdkUtil.findAnyRemoteLibrary(sdk);
     final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
-    final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    final List<VirtualFile> paths = new ArrayList<VirtualFile>();
 
-    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(classDirs, new Function<VirtualFile, Object>() {
+    paths.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+    paths.addAll(BuildoutFacet.getExtraPathForAllOpenModules());
+
+    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(paths, new Function<VirtualFile, Object>() {
 
       @Override
       public Object fun(VirtualFile file) {

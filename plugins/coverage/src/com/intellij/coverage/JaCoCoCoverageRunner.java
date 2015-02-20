@@ -99,6 +99,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
         for (int i = firstLine; i <= lastLine; i++) {
           final ILine methodLine = method.getLine(i);
           final int methodLineStatus = methodLine.getStatus();
+          if (methodLineStatus == ICounter.EMPTY) continue;
           final LineData lineData = new LineData(i , desc) {
             @Override
             public int getStatus() {

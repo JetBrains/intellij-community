@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +102,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
 
     panel.add(myActionsTree.getComponent());
-    panel.setPreferredSize(new Dimension(400, 500));
+    panel.setPreferredSize(JBUI.size(400, 500));
 
     return panel;
   }

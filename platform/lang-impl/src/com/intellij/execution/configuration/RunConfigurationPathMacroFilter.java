@@ -28,9 +28,16 @@ public class RunConfigurationPathMacroFilter extends PathMacroFilter {
     final Element parent = attribute.getParent();
     final String attrName = attribute.getName();
     String tagName = parent.getName();
-    return tagName.equals(EnvironmentVariablesComponent.ENV) &&
-              (attrName.equals(EnvironmentVariablesComponent.NAME) || attrName.equals(EnvironmentVariablesComponent.VALUE))
-           || tagName.equals("option") && "MAIN_CLASS_NAME".equals(parent.getAttributeValue("name"));
+    if (tagName.equals(EnvironmentVariablesComponent.ENV) &&
+        (attrName.equals(EnvironmentVariablesComponent.NAME) || attrName.equals(EnvironmentVariablesComponent.VALUE))) {
+      return true;
+    }
+
+    if (tagName.equals("configuration") && attrName.equals("name")) {
+      return true;
+    }
+
+    return false;
   }
 
   @Override

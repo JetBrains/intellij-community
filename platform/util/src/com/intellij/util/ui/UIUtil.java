@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,6 +58,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.GeneralPath;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -76,6 +78,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
@@ -385,6 +388,14 @@ public class UIUtil {
     }
   }
 
+  public static boolean isRetina (Graphics2D graphics) {
+    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
+      return DetectRetinaKit.isMacRetina(graphics);
+    } else {
+      return isRetina();
+    }
+  }
+
   //public static boolean isMacRetina(Graphics2D g) {
   //  return DetectRetinaKit.isMacRetina(g);
   //}
@@ -582,6 +593,26 @@ public class UIUtil {
     }
   }
 
+  public static void drawWave(Graphics2D g, Rectangle rectangle) {
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    Stroke oldStroke = g.getStroke();
+    try {
+      g.setStroke(new BasicStroke(0.7F));
+      double cycle = 4;
+      final double wavedAt = rectangle.y + (double)rectangle.height /2 - .5;
+      GeneralPath wavePath = new GeneralPath();
+      wavePath.moveTo(rectangle.x, wavedAt -  Math.cos(rectangle.x * 2 * Math.PI / cycle));
+      for (int x = rectangle.x + 1; x <= rectangle.x + rectangle.width; x++) {
+        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle) );
+      }
+      g.draw(wavePath);
+    }
+    finally {
+      config.restore();
+      g.setStroke(oldStroke);
+    }
+  }
+
   @NotNull
   public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<String>();
@@ -667,6 +698,64 @@ public class UIUtil {
         defColor.getBlue() + 50, 255)), defColor.darker());
     }
     return defColor;
+  }
+
+  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
+  public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
+    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint 
+    ButtonUI ui = cb.getUI();
+    String text = cb.getText();
+
+    Icon buttonIcon = cb.getIcon();
+    if (buttonIcon == null && ui != null) {
+      if (ui instanceof BasicRadioButtonUI) {
+        buttonIcon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+      }
+      else if (isUnderAquaLookAndFeel()) {
+        // inheritors of AquaButtonToggleUI
+        Ref<Method> cached = ourDefaultIconMethodsCache.get(ui.getClass());
+        if (cached == null) {
+          cached = Ref.create(ReflectionUtil.findMethod(Arrays.asList(ui.getClass().getMethods()), "getDefaultIcon", JComponent.class));
+          ourDefaultIconMethodsCache.put(ui.getClass(), cached);
+          if (!cached.isNull()) {
+            cached.get().setAccessible(true);
+          }
+        }
+        Method method = cached.get();
+        if (method != null) {
+          try {
+            buttonIcon = (Icon)method.invoke(ui, cb);
+          }
+          catch (Exception e) {
+            cached.set(null);
+          }
+        }
+      }
+    }
+
+    Dimension size = new Dimension();
+    Rectangle viewRect = new Rectangle();
+    Rectangle iconRect = new Rectangle();
+    Rectangle textRect = new Rectangle();
+
+    Insets i = cb.getInsets();
+
+    size = cb.getSize(size);
+    viewRect.x = i.left;
+    viewRect.y = i.top;
+    viewRect.width = size.width - (i.right + viewRect.x);
+    viewRect.height = size.height - (i.bottom + viewRect.y);
+    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+    textRect.x = textRect.y = textRect.width = textRect.height = 0;
+
+    SwingUtilities.layoutCompoundLabel(
+      cb, cb.getFontMetrics(cb.getFont()), text, buttonIcon,
+      cb.getVerticalAlignment(), cb.getHorizontalAlignment(),
+      cb.getVerticalTextPosition(), cb.getHorizontalTextPosition(),
+      viewRect, iconRect, textRect,
+      text == null ? 0 : cb.getIconTextGap());
+
+    return textRect.x;
   }
 
   public static int getScrollBarWidth() {
@@ -1683,15 +1772,50 @@ public class UIUtil {
     }
   }
 
+  private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
+  private static int BEST_DARK_LCD_CONTRAST = 100;
+  private static int BEST_LIGHT_LCD_CONTRAST = 200;
+
+
   public static void setHintingForLCDText(Graphics2D g2d) {
     if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, Registry.intValue("lcd.contrast.value"));
+
+      // According to JavaDoc we can set values form 100 to 250
+      // So we can use 0 as a special flag
+      int registryLcdContrastValue = Registry.intValue("lcd.contrast.value");
+      if (registryLcdContrastValue == THEME_BASED_TEXT_LCD_CONTRAST) {
+          if (isUnderDarcula()) {
+            registryLcdContrastValue = BEST_DARK_LCD_CONTRAST;
+          } else {
+            registryLcdContrastValue = BEST_LIGHT_LCD_CONTRAST;
+          }
+      }
+
+      // Wrong values prevent IDE from start
+      // So we have to be careful
+      if (registryLcdContrastValue < 100) {
+        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
+        registryLcdContrastValue = 100;
+      } else if (registryLcdContrastValue > 250) {
+        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
+        registryLcdContrastValue = 250;
+      }
+
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, registryLcdContrastValue);
     }
   }
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
+      return RetinaImage.create(width, height, type);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, type);
+  }
+
+  public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
+    if (DetectRetinaKit.isMacRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -1932,7 +2056,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@NotNull JComponent c, Condition<Component> condition) {
+  public static Component findParentByCondition(@NotNull Component c, Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2252,6 +2376,7 @@ public class UIUtil {
       runnable.run();
     }
     else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(runnable);
     }
   }
@@ -2261,8 +2386,9 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -2283,8 +2409,9 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
     final Ref<T> result = Ref.create();
@@ -2302,15 +2429,16 @@ public class UIUtil {
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
+   *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(com.intellij.util.ThrowableRunnable)
+   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      final Ref<Throwable> ref = new Ref<Throwable>();
+      final Ref<Throwable> ref = Ref.create();
       SwingUtilities.invokeAndWait(new Runnable() {
         @Override
         public void run() {
@@ -2505,6 +2633,7 @@ public class UIUtil {
     return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
+  public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
    * The main difference from javax.swing.SwingUtilities#isDescendingFrom(Component, Component) is that this method
@@ -3248,5 +3377,33 @@ public class UIUtil {
     graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
     component.paint(graphics);
     return image;
+  }
+
+  /**
+   * Indicates whether the specified component is scrollable or it contains a scrollable content.
+   */
+  public static boolean hasScrollPane(@NotNull Component component) {
+    return hasComponentOfType(component, JScrollPane.class);
+  }
+
+  /**
+   * Indicates whether the specified component is instance of one of the specified types
+   * or it contains an instance of one of the specified types.
+   */
+  public static boolean hasComponentOfType(Component component, Class<?>... types) {
+    for (Class<?> type : types) {
+      if (type.isAssignableFrom(component.getClass())) {
+        return true;
+      }
+    }
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        if (hasComponentOfType(container.getComponent(i), types)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

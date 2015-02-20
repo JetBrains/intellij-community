@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
@@ -62,7 +63,7 @@ public class CopyHandler extends EditorActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
+    if (!selectionModel.hasSelection(true)) {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
@@ -86,10 +87,16 @@ public class CopyHandler extends EditorActionHandler {
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
-    List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
-    for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-      transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
-    }
+    final List<TextBlockTransferableData> transferableDatas = new ArrayList<TextBlockTransferableData>();
+    
+    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+          transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+        }
+      }
+    });
 
     String text = editor.getCaretModel().supportsMultipleCarets()
                   ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDatas)

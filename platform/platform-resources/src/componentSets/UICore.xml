@@ -23,11 +23,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.ui.UISettings</interface-class>
-      <implementation-class>com.intellij.ide.ui.UISettings</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.ide.IdeTooltipManager</implementation-class>
     </component>
 

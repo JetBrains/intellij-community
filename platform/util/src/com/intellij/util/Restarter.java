@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class Restarter {
 
   public static boolean isSupported() {
     if (getRestartCode() != 0) return true;
-    if (SystemInfo.isWindows) return true;
+    if (SystemInfo.isWindows) return new File(PathManager.getBinPath(), "restarter.exe").exists();
     if (SystemInfo.isMac) return PathManager.getHomePath().contains(".app");
     return false;
   }
@@ -155,6 +155,7 @@ public class Restarter {
 
   public static File createTempExecutable(File executable) throws IOException {
     File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    if (!FileUtilRt.createDirectory(executableDir)) throw new IOException("Cannot create dir: " + executableDir);
     File copy = new File(executableDir.getPath() + "/" + executable.getName());
     if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
        String ext = FileUtilRt.getExtension(executable.getName());

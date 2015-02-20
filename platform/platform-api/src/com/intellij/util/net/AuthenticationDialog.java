@@ -30,7 +30,7 @@ public class AuthenticationDialog extends DialogWrapper {
     super(component, true);
     setTitle(title);
 
-    new MnemonicHelper().register(getContentPane());
+    MnemonicHelper.init(getContentPane());
     panel = new AuthenticationPanel(description, login, password, rememberPassword);
 
     final Window window = getWindow();
@@ -45,7 +45,7 @@ public class AuthenticationDialog extends DialogWrapper {
     super(JOptionPane.getRootFrame(), true);
     setTitle(title);
 
-    new MnemonicHelper().register(getContentPane());
+    MnemonicHelper.init(getContentPane());
     panel = new AuthenticationPanel(description, login, password, rememberPassword);
 
     final Window window = getWindow();

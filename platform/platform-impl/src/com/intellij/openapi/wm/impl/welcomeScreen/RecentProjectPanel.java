@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
@@ -58,18 +58,37 @@ public class RecentProjectPanel extends JPanel {
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
+  private final int closeButtonInset = JBUI.scale(7);
+  private Icon currentIcon = AllIcons.Welcome.Project.Remove;
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
     {
-      setPreferredSize(new Dimension(AllIcons.General.BalloonClose.getIconWidth(), AllIcons.General.BalloonClose.getIconHeight()));
+      setPreferredSize(new Dimension(currentIcon.getIconWidth(), currentIcon.getIconHeight()));
       setOpaque(true);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      AllIcons.General.BalloonClose.paintIcon(this, g, 0, 0);
+      currentIcon.paintIcon(this, g, 0, 0);
     }
   };
+
+
+  private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
+
+    int realCloseButtonInset = (UIUtil.isRetina((Graphics2D)myList.getGraphics())) ?
+                           closeButtonInset * 2 : closeButtonInset;
+
+    Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
+                                              myCloseButtonForEditor.getY() - realCloseButtonInset,
+                                              myCloseButtonForEditor.getWidth() + realCloseButtonInset * 2,
+                                              myCloseButtonForEditor.getHeight() + realCloseButtonInset * 2);
+
+    Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + listCellBounds.x,
+                                                              closeButtonRect.y + listCellBounds.y),
+                                                    closeButtonRect.getSize());
+    return rectInListCoordinates.contains(p);
+  }
 
   public RecentProjectPanel(WelcomeScreen screen) {
     super(new BorderLayout());
@@ -93,12 +112,7 @@ public class RecentProjectPanel extends JPanel {
           Rectangle cellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
           if (cellBounds.contains(event.getPoint())) {
             Object selection = myList.getSelectedValue();
-
-            Rectangle closeButtonRect = myCloseButtonForEditor.getBounds();
-
-            Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + cellBounds.x, closeButtonRect.y + cellBounds.y), closeButtonRect.getSize());
-
-            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinates.contains(event.getPoint())) {
+            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
               removeRecentProjectAction.actionPerformed(null);
             } else if (selection != null) {
               ((AnAction)selection).actionPerformed(
@@ -189,7 +203,7 @@ public class RecentProjectPanel extends JPanel {
   }
 
   protected Dimension getPreferredScrollableViewportSize() {
-    return new Dimension(250, 400);
+    return JBUI.size(250, 400);
   }
   
   protected void addMouseMotionListener() {
@@ -203,11 +217,16 @@ public class RecentProjectPanel extends JPanel {
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);
 
-          final Rectangle bounds = myList.getCellBounds(index, index);
-          if (bounds != null && bounds.contains(point)) {
+          final Rectangle cellBounds = myList.getCellBounds(index, index);
+          if (cellBounds != null && cellBounds.contains(point)) {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            if (rectInListCoordinatesContains(cellBounds, point)) {
+              currentIcon = AllIcons.Welcome.Project.Remove_hover;
+            } else {
+              currentIcon = AllIcons.Welcome.Project.Remove;
+            }
             myHoverIndex = index;
-            myList.repaint(bounds);
+            myList.repaint(cellBounds);
           }
           else {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -223,6 +242,7 @@ public class RecentProjectPanel extends JPanel {
       @Override
       public void mouseExited(MouseEvent e) {
         myHoverIndex = -1;
+        currentIcon = AllIcons.Welcome.Project.Remove;
         myList.repaint();
       }
     };
@@ -245,7 +265,7 @@ public class RecentProjectPanel extends JPanel {
     JPanel title = new JPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(super.getPreferredSize().width, 28);
+        return new Dimension(super.getPreferredSize().width, JBUI.scale(28));
       }
     };
     title.setBorder(new BottomLineBorder());
@@ -261,7 +281,7 @@ public class RecentProjectPanel extends JPanel {
   private static class MyList extends JBList {
     private final Dimension mySize;
 
-    private MyList(Dimension size, @NotNull Object... listData) {
+    private MyList(Dimension size, @NotNull Object ... listData) {
       super(listData);
       mySize = size;
       setEmptyText("  No Project Open Yet  ");
@@ -286,7 +306,7 @@ public class RecentProjectPanel extends JPanel {
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
-      myPath.setFont(myPath.getFont().deriveFont(SystemInfo.isMac ? 10f : 11f));
+      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -330,9 +350,25 @@ public class RecentProjectPanel extends JPanel {
 
       fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
 
-      int labelWidth = pathLabel.getWidth();
-      if (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-        return myShortener.getShortPath(action);
+      FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
+      int maxWidth = RecentProjectPanel.this.getWidth() - JBUI.scale(40);
+      if (fm.stringWidth(fullText) > maxWidth) {
+        int left = 1; int right = 1;
+        int center = fullText.length() / 2;
+        String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+        while (fm.stringWidth(s) > maxWidth) {
+          if (left == right) {
+            left++;
+          } else {
+            right++;
+          }
+
+          if (center - left < 0 || center + right >= fullText.length()) {
+            return "";
+          }
+          s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+        }
+        return s;
       }
 
       return fullText;
@@ -341,7 +377,7 @@ public class RecentProjectPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, 245), size.height);
+      return new Dimension(Math.min(size.width, JBUI.scale(245)), size.height);
     }
   }
 }

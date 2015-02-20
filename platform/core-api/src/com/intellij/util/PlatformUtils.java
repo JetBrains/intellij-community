@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
+  // NOTE: If you add any new prefixes to this list, please update the IntelliJPlatformProduct class in DevKit plugin
   public static final String IDEA_PREFIX = "idea";
   public static final String IDEA_CE_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";

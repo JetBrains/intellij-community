@@ -100,7 +100,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * @param process Process
    * @return True if process tree has been successfully killed.
    */
-  protected boolean killProcessTree(final Process process) {
+  protected boolean killProcessTree(@NotNull Process process) {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessManager.getInstance().killProcessTree(process);
     if (!destroyed) {

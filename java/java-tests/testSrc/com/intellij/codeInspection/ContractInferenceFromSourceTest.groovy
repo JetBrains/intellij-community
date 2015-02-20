@@ -291,6 +291,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  public void "test double constant auto-unboxing"() {
+    def c = inferContracts("""
+      static double method() {
+        return 1;
+      }
+    """)
+    assert c == []
+  }
+
   public void "test non-returning delegation"() {
     def c = inferContracts("""
     static void test2(Object o) {
@@ -433,6 +442,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == ['null -> !null']
   }
 
+  public void "test primitive return type"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
+  }
+
   public void "test return after if without else"() {
     def c = inferContracts("""
 public static boolean isBlank(String s) {
@@ -448,6 +466,24 @@ public static boolean isBlank(String s) {
         return true;
     }    """)
     assert c == ['null -> true']
+  }
+
+  public void "test do not generate too many contract clauses"() {
+    def c = inferContracts("""
+public static void validate(String p1, String p2, String p3, String p4, String p5, String
+            p6, Integer p7, Integer p8, Integer p9, Boolean p10, String p11, Integer p12, Integer p13) {
+        if (p1 == null && p2 == null && p3 == null && p4 == null && p5 == null && p6 == null && p7 == null && p8 ==
+                null && p9 == null && p10 == null && p11 == null && p12 == null && p13 == null)
+            throw new RuntimeException();
+
+        if (p10 != null && (p8 == null && p7 == null && p9 == null))
+            throw new RuntimeException();
+
+        if ((p12 != null || p13 != null) && (p12 == null || p13 == null))
+            throw new RuntimeException();
+    }
+        """)
+    assert c.size() <= ContractInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
   }
 
   public void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {

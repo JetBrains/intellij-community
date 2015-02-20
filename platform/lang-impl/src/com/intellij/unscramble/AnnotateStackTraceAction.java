@@ -26,8 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -48,10 +46,13 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +80,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
     myHyperlinks = hyperlinks;
     myEditor = editor;
-    myEditor.getColorsScheme().setColor(
-      EditorColors.CARET_ROW_COLOR, EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR));
   }
 
   @Override
@@ -88,7 +87,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
     cache = new HashMap<Integer, LastRevision>();
 
     ProgressManager.getInstance().run(
-    new Task.Backgroundable(myEditor.getProject(), "Getting file history", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+    new Task.Backgroundable(myEditor.getProject(), "Getting File History", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       @Override
       public boolean shouldStartInBackground() {
         return true;

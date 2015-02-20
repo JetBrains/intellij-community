@@ -40,10 +40,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public final class EditorHistoryManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorHistoryManager");
@@ -56,10 +53,12 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   /**
    * State corresponding to the most recent file is the last
    */
-  private final ArrayList<HistoryEntry> myEntriesList = new ArrayList<HistoryEntry>();
+  private final List<HistoryEntry> myEntriesList = Collections.synchronizedList(new ArrayList<HistoryEntry>());
 
-  /** Invoked by reflection */
-  EditorHistoryManager(final Project project, final UISettings uiSettings){
+  /**
+   * Invoked by reflection
+   */
+  EditorHistoryManager(final Project project, final UISettings uiSettings) {
     super(project);
     uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
   }

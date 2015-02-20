@@ -1,19 +1,20 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.Consumer;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.io.NettyUtil;
 import org.jetbrains.jsonProtocol.Request;
 import org.jetbrains.rpc.MessageProcessor;
 import org.jetbrains.rpc.MessageWriter;
 
-public class StandaloneVmHelper extends MessageWriter {
+public class StandaloneVmHelper extends MessageWriter implements Vm.AttachStateManager {
   private volatile Channel channel;
 
   private final VmEx vm;
@@ -23,7 +24,7 @@ public class StandaloneVmHelper extends MessageWriter {
   }
 
   @Override
-  public boolean write(@NotNull CharSequence content) {
+  public boolean write(@NotNull ByteBuf content) {
     return write(((Object)content));
   }
 
@@ -61,15 +62,17 @@ public class StandaloneVmHelper extends MessageWriter {
     }
   }
 
+  @Override
   public boolean isAttached() {
     return channel != null;
   }
 
+  @Override
   @NotNull
-  public ActionCallback detach() {
+  public Promise<Void> detach() {
     final Channel currentChannel = channel;
     if (currentChannel == null) {
-      return ActionCallback.DONE;
+      return Promise.DONE;
     }
 
     vm.getCommandProcessor().cancelWaitingRequests();
@@ -81,10 +84,11 @@ public class StandaloneVmHelper extends MessageWriter {
       return closeChannel(currentChannel);
     }
 
+    @SuppressWarnings("unchecked")
     Promise<Void> promise = vm.getCommandProcessor().send(disconnectRequest);
     vm.getCommandProcessor().closed();
     channel = null;
-    final ActionCallback subCallback = new ActionCallback();
+    final AsyncPromise<Void> subCallback = new AsyncPromise<Void>();
     promise.processed(new Consumer<Void>() {
       @Override
       public void consume(Void o) {
@@ -93,7 +97,7 @@ public class StandaloneVmHelper extends MessageWriter {
           NettyUtil.closeAndReleaseFactory(currentChannel);
         }
         finally {
-          subCallback.setDone();
+          subCallback.setResult(null);
         }
       }
     });
@@ -101,8 +105,8 @@ public class StandaloneVmHelper extends MessageWriter {
   }
 
   @NotNull
-  protected ActionCallback closeChannel(@NotNull Channel channel) {
+  protected Promise<Void> closeChannel(@NotNull Channel channel) {
     NettyUtil.closeAndReleaseFactory(channel);
-    return ActionCallback.DONE;
+    return Promise.DONE;
   }
 }

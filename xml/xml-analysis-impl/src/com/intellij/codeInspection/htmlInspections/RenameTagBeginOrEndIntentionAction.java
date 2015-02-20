@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -89,23 +90,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
       }
       else {
         // we're in the other
-        PsiElement parent = psiElement.getParent();
-        if (parent instanceof PsiErrorElement) {
-          parent = parent.getParent();
-        }
-
-        if (parent instanceof XmlTag) {
-          if (myStart) {
-            target = XmlTagUtil.getStartTagNameElement((XmlTag)parent);
-          }
-          else {
-            target = XmlTagUtil.getEndTagNameElement((XmlTag)parent);
-            if (target == null) {
-              final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(parent, PsiErrorElement.class);
-              target = XmlWrongClosingTagNameInspection.findEndTagName(errorElement);
-            }
-          }
-        }
+        target = findOtherSide(psiElement, myStart);
       }
 
       if (target != null) {
@@ -117,6 +102,29 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
       }
 
     }
+  }
+
+  @Nullable
+  public static PsiElement findOtherSide(PsiElement psiElement, final boolean start) {
+    PsiElement target = null;
+    PsiElement parent = psiElement.getParent();
+    if (parent instanceof PsiErrorElement) {
+      parent = parent.getParent();
+    }
+
+    if (parent instanceof XmlTag) {
+      if (start) {
+        target = XmlTagUtil.getStartTagNameElement((XmlTag)parent);
+      }
+      else {
+        target = XmlTagUtil.getEndTagNameElement((XmlTag)parent);
+        if (target == null) {
+          final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(parent, PsiErrorElement.class);
+          target = XmlWrongClosingTagNameInspection.findEndTagName(errorElement);
+        }
+      }
+    }
+    return target;
   }
 
   @Override

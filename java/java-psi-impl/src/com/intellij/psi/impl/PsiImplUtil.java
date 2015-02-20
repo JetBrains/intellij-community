@@ -273,6 +273,7 @@ public class PsiImplUtil {
     return types;
   }
 
+  @NotNull
   public static PsiType getType(@NotNull PsiClassObjectAccessExpression classAccessExpression) {
     GlobalSearchScope resolveScope = classAccessExpression.getResolveScope();
     PsiManager manager = classAccessExpression.getManager();

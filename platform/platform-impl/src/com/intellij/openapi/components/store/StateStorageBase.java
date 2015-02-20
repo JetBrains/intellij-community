@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.store;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.StorageDataBase;
@@ -37,7 +36,7 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
 
   @Override
   @Nullable
-  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto) throws StateStorageException {
+  public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
     return DefaultStateSerializer.deserializeState(getStateAndArchive(getStorageData(), componentName), stateClass, mergeInto);
   }
 

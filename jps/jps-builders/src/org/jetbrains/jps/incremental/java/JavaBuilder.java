@@ -365,15 +365,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
       LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
     }
     try {
-      final boolean rc;
-      if (!shouldForkCompilerProcess(context, chunk, compilingTool)) {
-        final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
-        if (_platformCp == null) {
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, 
+      final int chunkSdkVersion = getChunkSdkVersion(chunk);
+      
+      final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, chunkSdkVersion, options, compilingTool);
+      if (_platformCp == null) {
+        context.processMessage(
+          new CompilerMessage(
+            BUILDER_NAME, BuildMessage.Kind.ERROR,
             "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\" differs from javac's platform (" + System.getProperty("java.version") + ")\nCompilation profiles are not supported for such configuration"
-          ));
-          return true;
-        }
+          )
+        );
+        return true;
+      }
+      final boolean rc;
+      if (!shouldForkCompilerProcess(context, chunkSdkVersion)) {
         rc = JavacMain.compile(
           options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
         );
@@ -389,7 +394,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacServer server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          context, options, vmOptions, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
+          context, options, vmOptions, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
         );
       }
       return rc;
@@ -432,15 +437,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, JavaCompilingTool tool) {
+  private static boolean shouldForkCompilerProcess(CompileContext context, final int chunkSdkVersion) {
     final int compilerSdkVersion = getCompilerSdkVersion(context);
-    if (compilerSdkVersion < 9) {
+    if (compilerSdkVersion < 9 || chunkSdkVersion < 0) {
       // javac up to version 9 supports all previous releases
+      // or: was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    final int chunkSdkVersion = getChunkSdkVersion(chunk);
-    if (chunkSdkVersion < 0) {
-      return false; // was not able to determine jdk version, assuming in-process compiler
+    if (chunkSdkVersion >= 9 && compilerSdkVersion != chunkSdkVersion) {
+      // For these SDK versions libraries are stored in jimage files with unknown format and currently
+      // there is no way to specify full platform classpath for cross-compilation purposes.
+      // We have for fork compiler process with corresponding SDK runtime to ensure that compiler resolves platform classes 
+      // against the SDK version specified for the given chunk.
+      return true;
     }
     // according to JEP 182: Retiring javac "one plus three back" policy
     return Math.abs(compilerSdkVersion - chunkSdkVersion) > 3; 
@@ -449,7 +458,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
-  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, final int chunkSdkVersion, List<String> options, JavaCompilingTool compilingTool) {
+    if (chunkSdkVersion >= 9) {
+      // if chunk's SDK is 9 or higher, there is no way to specify full classpath 
+      // because platform classes are stored in jimage binary files with unknown format
+      // returning empty path so that javac will resolve against its own bootclasspath 
+      return Collections.emptyList();
+    }
+    
     if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
       return platformCp;
     }
@@ -602,8 +618,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (baseDirectory != null) {
       //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
       // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
+      String stringToReplace = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
+      String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
       for (String s : cached) {
-        options.add(StringUtil.replace(s, "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$", baseDirectory.getAbsolutePath()));
+        options.add(StringUtil.replace(s, stringToReplace, moduleDirPath));
       }
     }
     else {

@@ -35,7 +35,7 @@ public class CommitParser {
 
     String parentHashStr = line.substring(separatorIndex + 2, line.length());
     String[] parentsHashes = parentHashStr.split("\\s");
-    return new Pair<String, String[]>(commitHashStr, parentsHashes);
+    return Pair.create(commitHashStr, parentsHashes);
   }
 
   @NotNull
@@ -63,6 +63,24 @@ public class CommitParser {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static List<GraphCommit<String>> parseStringCommitList(@NotNull String input) {
+    List<GraphCommit<String>> vcsCommitParents = new ArrayList<GraphCommit<String>>();
+    for (String line : toLines(input)) {
+      vcsCommitParents.add(CommitParser.parseCommitParentsAsString(line));
+    }
+    return vcsCommitParents;
+  }
+
+  @NotNull
+  public static List<GraphCommit<Integer>> parseIntegerCommitList(@NotNull String input) {
+    List<GraphCommit<Integer>> vcsCommitParents = new ArrayList<GraphCommit<Integer>>();
+    for (String line : toLines(input)) {
+      vcsCommitParents.add(CommitParser.parseCommitParentsAsInteger(line));
+    }
+    return vcsCommitParents;
   }
 
 }

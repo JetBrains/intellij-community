@@ -421,4 +421,176 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testLocalVariablesAlignment() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "int a = 2;\n" +
+      "String myString = \"my string\"",
+      "int    a        = 2;\n" +
+      "String myString = \"my string\""
+    );
+  }
+
+  public void testAlignOnlyDeclarationStatements() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "      String s;\n" +
+      "   int a = 2;\n" +
+      "s = \"abs\";\n" +
+      "long stamp = 12;",
+      "String s;\n" +
+      "int    a = 2;\n" +
+      "s = \"abs\";\n" +
+      "long stamp = 12;"
+    );
+  }
+
+  public void testDoNotAlignWhenBlankLine() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "int a = 2;\n" +
+      "\n" +
+      "String myString = \"my string\"",
+      "int a = 2;\n" +
+      "\n" +
+      "String myString = \"my string\""
+    );
+  }
+
+  public void testDoNotAlignWhenGroupInterrupted() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "int a = 2;\n" +
+      "System.out.println(\"hi!\")\n" +
+      "String myString = \"my string\"",
+      "int a = 2;\n" +
+      "System.out.println(\"hi!\")\n" +
+      "String myString = \"my string\""
+    );
+  }
+
+  public void testDoNotAlignMultiDeclarations() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "  int a, b = 2;\n" +
+      "String myString = \"my string\"",
+      "int    a, b     = 2;\n" +
+      "String myString = \"my string\""
+    );
+  }
+
+  public void testDoNotAlignMultilineParams() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+
+    doMethodTest(
+      "int a = 12;\n" +
+      "  Runnable runnable = new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        System.out.println(\"AAA!\");\n" +
+      "    }\n" +
+      "};",
+
+      "int a = 12;\n" +
+      "Runnable runnable = new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        System.out.println(\"AAA!\");\n" +
+      "    }\n" +
+      "};"
+    );
+
+    doMethodTest(
+      "   Runnable runnable = new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        System.out.println(\"AAA!\");\n" +
+      "    }\n" +
+      "};\n" +
+      "int c = 12;",
+
+      "Runnable runnable = new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        System.out.println(\"AAA!\");\n" +
+      "    }\n" +
+      "};\n" +
+      "int c = 12;"
+    );
+
+    doMethodTest(
+      "    int ac = 99;\n" +
+      "Runnable runnable = new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        System.out.println(\"AAA!\");\n" +
+      "    }\n" +
+      "};\n" +
+      "int c = 12;",
+
+      "int ac = 99;\n" +
+      "Runnable runnable = new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        System.out.println(\"AAA!\");\n" +
+      "    }\n" +
+      "};\n" +
+      "int c = 12;"
+    );
+  }
+
+  public void testDoNotAlign_IfFirstMultiline() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+
+    doMethodTest(
+      "int\n" +
+      "       i = 0;\n" +
+      "int[] a = new int[]{1, 2, 0x0052, 0x0053, 0x0054};\n" +
+      "int var1 = 1;\n" +
+      "int var2 = 2;",
+
+      "int\n" +
+      "        i = 0;\n" +
+      "int[] a    = new int[]{1, 2, 0x0052, 0x0053, 0x0054};\n" +
+      "int   var1 = 1;\n" +
+      "int   var2 = 2;"
+    );
+  }
+
+  public void testAlign_InMethod() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doClassTest(
+      "public void run() {\n" +
+      "\n" +
+      "                int a = 2;\n" +
+      "            String superString = \"\";\n" +
+      "\n" +
+      "     test(call1(), call2(), call3());\n" +
+      "    }",
+
+      "public void run() {\n" +
+      "\n" +
+      "    int    a           = 2;\n" +
+      "    String superString = \"\";\n" +
+      "\n" +
+      "    test(call1(), call2(), call3());\n" +
+      "}"
+    );
+
+    doClassTest(
+      "public void run() {\n" +
+      "\n" +
+      "        test(call1(), call2(), call3());\n" +
+      "\n" +
+      "        int a = 2;\n" +
+      "             String superString = \"\";\n" +
+      "}",
+      "public void run() {\n" +
+      "\n" +
+      "    test(call1(), call2(), call3());\n" +
+      "\n" +
+      "    int    a           = 2;\n" +
+      "    String superString = \"\";\n" +
+      "}");
+  }
 }

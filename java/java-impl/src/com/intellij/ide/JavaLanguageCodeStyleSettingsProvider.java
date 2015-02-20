@@ -152,7 +152,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "FINALLY_ON_NEW_LINE",
                                    "INDENT_CASE_FROM_SWITCH",
                                    "SPECIAL_ELSE_IF_TREATMENT",
-                                   "ENUM_CONSTANTS_WRAP");
+                                   "ENUM_CONSTANTS_WRAP",
+                                   "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS");
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",

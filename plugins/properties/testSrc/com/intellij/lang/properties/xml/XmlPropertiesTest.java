@@ -9,6 +9,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
@@ -53,6 +55,49 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
     final IProperty property = propertiesFile.findPropertyByKey("kkk");
     assertNotNull(property);
     assertEquals("vvv", property.getValue());
+  }
+
+  public void testAddProperty2() {
+    final PsiFile psiFile = myFixture.configureByFile("foo.xml");
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
+    assertNotNull(propertiesFile);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      public void run() {
+        propertiesFile.addProperty("kkk", "vvv");
+      }
+    });
+
+    final IProperty property = propertiesFile.findPropertyByKey("kkk");
+    assertNotNull(property);
+    assertEquals("vvv", property.getValue());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      public void run() {
+        propertiesFile.addProperty("kkk2", "vvv");
+      }
+    });
+
+    final IProperty property2 = propertiesFile.findPropertyByKey("kkk2");
+    assertNotNull(property2);
+    assertEquals("vvv", property2.getValue());
+  }
+
+  public void testAddPropertyInAlphaOrder() {
+    final PsiFile psiFile = myFixture.configureByFile("bar.xml");
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
+    assertNotNull(propertiesFile);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      public void run() {
+        propertiesFile.addProperty("d", "vvv");
+        propertiesFile.addProperty("a", "vvv");
+        propertiesFile.addProperty("l", "vvv");
+        propertiesFile.addProperty("v", "vvv");
+      }
+    });
+    assertTrue(propertiesFile.isAlphaSorted());
+    assertTrue(PropertiesImplUtil.getPropertiesFile(psiFile).isAlphaSorted());
   }
 
   @Override

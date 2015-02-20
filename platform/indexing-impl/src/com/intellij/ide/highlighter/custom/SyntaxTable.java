@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class SyntaxTable implements Cloneable {
   private Set<String> myKeywords3;
   private Set<String> myKeywords4;
 
-  private String myLineComment;
+  private String myLineComment = "";
   public boolean lineCommentOnlyAtStart;
   private String myStartComment;
   private String myEndComment;
@@ -45,10 +46,6 @@ public class SyntaxTable implements Cloneable {
   private boolean myHasParens;
   private boolean myHasStringEscapes;
   private volatile KeywordParser myKeywordParser;
-
-  // -------------------------------------------------------------------------
-  // Constructor
-  // -------------------------------------------------------------------------
 
   public SyntaxTable() {
     myKeywords1 = new TreeSet<String>();
@@ -72,7 +69,7 @@ public class SyntaxTable implements Cloneable {
 
   @Override
   protected Object clone() throws CloneNotSupportedException {
-    SyntaxTable cl = (SyntaxTable) super.clone();
+    SyntaxTable cl = (SyntaxTable)super.clone();
     cl.myKeywords1 = new TreeSet<String>(myKeywords1);
     cl.myKeywords2 = new TreeSet<String>(myKeywords2);
     cl.myKeywords3 = new TreeSet<String>(myKeywords3);
@@ -80,10 +77,6 @@ public class SyntaxTable implements Cloneable {
     cl.myKeywordParser = null;
     return cl;
   }
-
-  // -------------------------------------------------------------------------
-  // Public interface
-  // -------------------------------------------------------------------------
 
   public void addKeyword1(String keyword) {
     myKeywords1.add(keyword);
@@ -121,11 +114,12 @@ public class SyntaxTable implements Cloneable {
     return myKeywords4;
   }
 
+  @NotNull
   public String getLineComment() {
     return myLineComment;
   }
 
-  public void setLineComment(String lineComment) {
+  public void setLineComment(@NotNull String lineComment) {
     myLineComment = lineComment;
   }
 

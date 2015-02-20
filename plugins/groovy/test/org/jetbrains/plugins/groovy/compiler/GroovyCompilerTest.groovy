@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerWorkspaceConfiguration
+import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -43,6 +43,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
@@ -616,6 +617,16 @@ class Main {
     assertEmpty make()
   }
 
+  public void "test extend package-local class from another module"() {
+    addGroovyLibrary(addDependentModule())
+
+    myFixture.addClass("package foo; class Foo {}")
+    myFixture.addFileToProject("dependent/foo/Bar.java", "package foo; class Bar extends Foo {}")
+    myFixture.addFileToProject("dependent/foo/Goo.groovy", "package foo; class Goo extends Bar {}")
+
+    assertEmpty make()
+  }
+
   public void "test module cycle"() {
     def dep = addDependentModule()
     ModuleRootModificationUtil.addDependency(myModule, dep)
@@ -623,8 +634,10 @@ class Main {
 
     myFixture.addFileToProject('Foo.groovy', 'class Foo extends Bar { static void main(String[] args) { println "Hello from Foo" } }')
     myFixture.addFileToProject('FooX.java', 'class FooX extends Bar { }')
+    myFixture.addFileToProject('FooY.groovy', 'class FooY extends BarX { }')
     myFixture.addFileToProject("dependent/Bar.groovy", "class Bar { Foo f; static void main(String[] args) { println 'Hello from Bar' } }")
     myFixture.addFileToProject("dependent/BarX.java", "class BarX { Foo f; }")
+    myFixture.addFileToProject("dependent/BarY.groovy", "class BarY extends FooX { }")
 
     def checkClassFiles = {
       assert findClassFile('Foo', myModule)
@@ -858,6 +871,13 @@ class AppTest {
     assertTrue(exceptionFound.get());
   }
 
+  public void "test extend GroovyTestCase"() {
+    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar");
+
+    myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
+    assertEmpty(make())
+  }
+
   static class GroovycTest extends GroovyCompilerTest {
     public void "test navigate from stub to source"() {
       GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
@@ -880,21 +900,14 @@ class AppTest {
     protected void setUp() {
       super.setUp()
 
-      def conf = CompilerWorkspaceConfiguration.getInstance(project)
-      assert conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS == CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_VM_OPTIONS
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
 
       def jarName = "groovy-eclipse-batch-2.3.4-01.jar"
       def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
-      conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "-Dgroovy.eclipse.batch.jar=" + jarPath
+
+      GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-      def conf = CompilerWorkspaceConfiguration.getInstance(project)
-      conf.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_VM_OPTIONS
-
-      super.tearDown()
-    }
   }
 
 }

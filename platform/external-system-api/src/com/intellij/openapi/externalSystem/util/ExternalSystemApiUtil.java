@@ -795,7 +795,7 @@ public class ExternalSystemApiUtil {
   public static void subscribe(@NotNull Project project,
                                @NotNull ProjectSystemId systemId,
                                @NotNull ExternalSystemSettingsListener listener) {
-    MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(getSettings(project, systemId).getChangesTopic(), listener);
+    //noinspection unchecked
+    getSettings(project, systemId).subscribe(listener);
   }
 }

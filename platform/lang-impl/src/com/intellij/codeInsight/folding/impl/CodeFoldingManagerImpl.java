@@ -288,6 +288,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   public void updateFoldRegions(Editor editor, boolean quick) {
+    if (!editor.getSettings().isAutoCodeFoldingEnabled()) return;
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
     Runnable runnable = updateFoldRegions(editor, false, quick);
     if (runnable != null) {
@@ -321,6 +322,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   @Override
   @Nullable
   public Runnable updateFoldRegionsAsync(@NotNull final Editor editor, final boolean firstTime) {
+    if (!editor.getSettings().isAutoCodeFoldingEnabled()) return null;
     final Runnable runnable = updateFoldRegions(editor, firstTime, false);
     return new Runnable() {
       @Override

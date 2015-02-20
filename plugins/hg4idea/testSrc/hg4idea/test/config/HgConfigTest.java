@@ -20,7 +20,17 @@ public class HgConfigTest extends HgPlatformTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    prepareSecondRepository();
+    try {
+      prepareSecondRepository();
+    }
+    catch (Exception e) {
+      tearDown();
+      throw e;
+    }
+    catch (Error e) {
+      tearDown();
+      throw e;
+    }
   }
 
   public void testDefaultPathInClonedRepo() {
@@ -32,6 +42,17 @@ public class HgConfigTest extends HgPlatformTest {
   }
 
   public void testPushPathInClonedRepo() throws IOException {
+    checkDefaultPushPath();
+  }
+
+  public void testPushPathInClonedRepoWithDebugOption() throws IOException {
+    cd(myChildRepo);
+    appendToHgrc(myChildRepo, "\n[ui]\n" +
+                              "debug=True");
+    checkDefaultPushPath();
+  }
+
+  private void checkDefaultPushPath() throws IOException {
     cd(myChildRepo);
     String pushPath = "somePath";
     appendToHgrc(myChildRepo, "\n[paths]\n" +

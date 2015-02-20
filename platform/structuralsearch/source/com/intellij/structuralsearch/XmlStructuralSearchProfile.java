@@ -62,12 +62,6 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return new XmlCompiledPattern();
   }
 
-  @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP ||
-           fileType == StdFileTypes.JSPX || fileType == StdFileTypes.XHTML;
-  }
-
   public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof XMLLanguage;
   }
@@ -147,14 +141,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         elementToReplace.replace(replacement);
       }
       else {
-        final PsiElement nextSibling = elementToReplace.getNextSibling();
         elementToReplace.delete();
-        assert nextSibling != null;
-        if (nextSibling.isValid()) {
-          if (nextSibling instanceof PsiWhiteSpace) {
-            nextSibling.delete();
-          }
-        }
       }
     }
   }

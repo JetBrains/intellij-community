@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -35,12 +37,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -57,7 +56,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final JavaFileManager myFileManager;
 
   public JavaPsiFacadeImpl(Project project,
-                           PsiManagerImpl psiManager,
+                           PsiManager psiManager,
                            JavaFileManager javaFileManager,
                            MessageBus bus) {
     myProject = project;
@@ -158,7 +157,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   @NotNull
-  private PsiElementFinder[] calcFinders() {
+  protected PsiElementFinder[] calcFinders() {
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
@@ -197,7 +196,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     DumbService dumbService = DumbService.getInstance(getProject());
     PsiElementFinder[] finders = finders();
     if (dumbService.isDumb()) {
-      List<PsiElementFinder> list = dumbService.filterByDumbAwareness(Arrays.asList(finders));
+      List<PsiElementFinder> list = dumbService.filterByDumbAwareness(finders);
       finders = list.toArray(new PsiElementFinder[list.size()]);
     }
     return finders;
@@ -243,49 +242,27 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  private static class AndPredicate<T> implements Predicate<T> {
-    private final List<Predicate<T>> myComponents = new SmartList<Predicate<T>>();
-
-    public AndPredicate(Predicate<T> filter1, Predicate<T> filter2) {
-      myComponents.add(filter1);
-      myComponents.add(filter2);
-    }
-
-    @Override
-    public boolean apply(@Nullable T input) {
-      for (Predicate<T> component : myComponents) {
-        if (!component.apply(input)) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
   @NotNull
   public PsiFile[] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Predicate<PsiFile> filter = null;
+    Condition<PsiFile> filter = null;
 
     for (PsiElementFinder finder : filteredFinders()) {
-      Predicate<PsiFile> finderFilter = finder.getPackageFilesFilter(psiPackage, scope);
+      Condition<PsiFile> finderFilter = finder.getPackageFilesFilter(psiPackage, scope);
       if (finderFilter != null) {
         if (filter == null) {
           filter = finderFilter;
         }
-        else if (filter instanceof AndPredicate) {
-          ((AndPredicate<PsiFile>) filter).myComponents.add(finderFilter);
-        }
         else {
-          filter = new AndPredicate<PsiFile>(filter, finderFilter);
+          filter = Conditions.and(filter, finderFilter);
         }
       }
     }
 
-    Set<PsiFile> result = new HashSet<PsiFile>();
+    Set<PsiFile> result = new LinkedHashSet<PsiFile>();
     PsiDirectory[] directories = psiPackage.getDirectories(scope);
     for (PsiDirectory directory : directories) {
       for (PsiFile file : directory.getFiles()) {
-        if (filter == null || filter.apply(file)) {
+        if (filter == null || filter.value(file)) {
           result.add(file);
         }
       }

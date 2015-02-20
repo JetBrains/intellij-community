@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -150,7 +151,8 @@ public abstract class AbstractModelBuilderTest {
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
-      ModelBuildScriptClasspathBuilderImpl.class
+      ModelBuildScriptClasspathBuilderImpl.class,
+      ShortTypeHandling.class
     );
 
     ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());

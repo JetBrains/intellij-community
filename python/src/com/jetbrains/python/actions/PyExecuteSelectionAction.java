@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.actions;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
@@ -191,7 +192,8 @@ public class PyExecuteSelectionAction extends AnAction {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
     if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
-      return toolWindow.getConsoleContentDescriptors();
+      RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
+      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.<RunContentDescriptor>newArrayList();
     }
 
     Collection<RunContentDescriptor> descriptors =

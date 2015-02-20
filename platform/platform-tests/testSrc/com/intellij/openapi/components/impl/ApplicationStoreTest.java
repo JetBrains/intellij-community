@@ -199,7 +199,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    public void load() throws IOException, StateStorageException {
+    public void load() throws IOException {
     }
 
     @NotNull
@@ -214,7 +214,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
 
     @Nullable
     @Override
-    protected StateStorage getDefaultsStorage() {
+    protected PathMacroManager getPathMacroManagerForDefaults() {
       return null;
     }
 

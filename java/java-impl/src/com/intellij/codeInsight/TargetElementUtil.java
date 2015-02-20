@@ -215,7 +215,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public Collection<PsiElement> getTargetCandidates(final PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
-    if (parent instanceof PsiCallExpression) {
+    if (parent instanceof PsiMethodCallExpression || parent instanceof PsiNewExpression && 
+                                                     ((PsiNewExpression)parent).getArrayDimensions().length == 0 &&
+                                                     ((PsiNewExpression)parent).getArrayInitializer() == null) {
       PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()

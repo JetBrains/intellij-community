@@ -34,6 +34,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -151,7 +153,7 @@ public class HighlightMethodUtil {
                                           : includeRealPositionInfo ? method.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE;
       HighlightInfo highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, methodSignature,
                                                               returnType, JavaErrorMessages.message("incompatible.return.type"),
-                                                              toHighlight, languageLevel);
+                                                              toHighlight, PsiUtil.getLanguageLevel(method));
       if (highlightInfo != null) return highlightInfo;
     }
 
@@ -206,7 +208,8 @@ public class HighlightMethodUtil {
                                                                    @NotNull String detailMessage,
                                                                    @NotNull TextRange textRange) {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
-    HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+    HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(
+      description).create();
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSuperMethodReturnFix(superMethod, returnType));
 
@@ -347,8 +350,13 @@ public class HighlightMethodUtil {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
       if (highlightInfo == null) {
-        if (!LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)resolved, methodCall.getMethodExpression(), resolveResult.getCurrentFileResolveScope(), languageLevel)) {
-          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Static method may be invoked on containing interface class only").range(fixRange).create();
+        final String invalidCallMessage = 
+          LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)resolved, methodCall.getMethodExpression(), resolveResult.getCurrentFileResolveScope(), languageLevel);
+        if (invalidCallMessage != null) {
+          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(invalidCallMessage).range(fixRange).create();
+          if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_8));
+          }
         } else {
           highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, fixRange);
         }
@@ -684,7 +692,7 @@ public class HighlightMethodUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, action);
     }
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createReplaceAddAllArrayToCollectionFix(methodCall));
-    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall,null));
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall, null));
     QualifyThisArgumentFix.registerQuickFixAction(methodCandidates, methodCall, highlightInfo, fixRange);
 
     CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
@@ -758,12 +766,14 @@ public class HighlightMethodUtil {
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
+    final String errorMessage = InferenceSession.getInferenceErrorMessage(list.getParent());
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       Integer.valueOf(cols - parameters.length + 1), parensizedName,
       HighlightUtil.formatClass(aClass, false),
       createMismatchedArgsHtmlTooltipParamsRow(parameters, substitutor, expressions),
-      createMismatchedArgsHtmlTooltipArgumentsRow(expressions, parameters, substitutor, cols)
+      createMismatchedArgsHtmlTooltipArgumentsRow(expressions, parameters, substitutor, cols),
+      errorMessage != null ? "<br/>reason: " + XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>") : ""
     );
   }
 
@@ -864,7 +874,13 @@ public class HighlightMethodUtil {
       s += "</tr>";
     }
 
-    s+= "</table></body></html>";
+    s+= "</table>";
+    final String errorMessage = InferenceSession.getInferenceErrorMessage(list.getParent());
+    if (errorMessage != null) {
+      s+= "reason: "; 
+      s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");
+    }
+    s+= "</body></html>";
     return s;
   }
 
@@ -1142,25 +1158,22 @@ public class HighlightMethodUtil {
 
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
-    PsiClass superClass = aClass.getSuperClass();
-    PsiMethod superMethod = superClass == null
-                            ? null
-                            : MethodSignatureUtil.findMethodBySignature(superClass, method, true);
-
-    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic,superClass, superMethod,containingFile);
-    if (highlightInfo != null) return highlightInfo;
-    if (!isStatic) {
-      // all methods in interface are instance, so no possible errors in this case
+    final HierarchicalMethodSignature methodSignature = PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method);
+    final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
+    if (superSignatures.isEmpty()) {
       return null;
     }
-    PsiClass[] interfaces = aClass.getInterfaces();
-    for (PsiClass aInterfaces : interfaces) {
-        superClass = aInterfaces;
-        superMethod = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(aClass, superClass, method.getSignature(PsiSubstitutor.EMPTY), true);
-        highlightInfo = checkStaticMethodOverride(aClass, method, true, superClass, superMethod,containingFile);
-        if (highlightInfo != null) return highlightInfo;
+
+    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    for (HierarchicalMethodSignature signature : superSignatures) {
+      final PsiMethod superMethod = signature.getMethod();
+      final PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
+      final HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic, superClass, superMethod,containingFile);
+      if (highlightInfo != null) {
+        return highlightInfo;
       }
+    }
     return null;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -94,16 +93,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       myRendererColors.put(severity.getName(), renderColor);
     }
     myOrderMap = null;
-
-    final TextAttributes attributes = info.getAttributes();
-    Color color = attributes.getErrorStripeColor();
-    if (color == null) {
-      color = attributes.getEffectColor();
-    }
-    if (color == null) {
-      color = JBColor.GRAY;
-    }
-    new HighlightDisplayLevel(severity, new HighlightDisplayLevel.TheColorIcon(HighlightDisplayLevel.getEmptyIconDim(), color));
+    HighlightDisplayLevel.registerSeverity(severity, getHighlightInfoTypeBySeverity(severity).getAttributesKey(), null);
     severitiesChanged();
   }
 

@@ -22,7 +22,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author max
@@ -205,6 +204,27 @@ public class FoldingTest extends AbstractEditorTest {
     myEditor.getDocument().deleteString(4, 5);
 
     assertNumberOfValidFoldRegions(1);
+  }
+
+  public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {
+    addCollapsedFoldRegion(10, 15, "...");
+    addCollapsedFoldRegion(10, 14, "...");
+    myEditor.getDocument().deleteString(14, 15);
+
+    FoldRegion region = myModel.getCollapsedRegionAtOffset(10);
+    assertNotNull(region);
+    assertTrue(region.isValid());
+    assertEquals(10, region.getStartOffset());
+    assertEquals(14, region.getEndOffset());
+
+    addFoldRegion(0, 1, "...");
+
+    FoldRegion region2 = myModel.getCollapsedRegionAtOffset(10);
+    assertNotNull(region2);
+    assertTrue(region2.isValid());
+    assertEquals(10, region2.getStartOffset());
+    assertEquals(14, region2.getEndOffset());
+    assertSame(region, region2);
   }
 
   private void assertNumberOfValidFoldRegions(int expectedValue) {

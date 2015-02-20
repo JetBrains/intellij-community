@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jediterm.terminal.*;
 import com.jediterm.terminal.emulator.JediEmulator;
@@ -34,17 +33,7 @@ public class JBTerminalStarter extends TerminalStarter {
   public static void refreshAfterExecution() {
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       //we need to refresh local file system after a command has been executed in the terminal
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              LocalFileSystem.getInstance().refresh(false);
-            }
-          });
-        }
-      });
+      LocalFileSystem.getInstance().refresh(true);
     }
   }
 }

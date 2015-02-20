@@ -32,7 +32,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -504,7 +507,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.getModules();
   }
 
-  private Module[] myCachedSortedModules = null;
+  private volatile Module[] myCachedSortedModules = null;
 
   @Override
   @NotNull
@@ -523,7 +526,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.findModuleByName(name);
   }
 
-  private Comparator<Module> myCachedModuleComparator = null;
+  private volatile Comparator<Module> myCachedModuleComparator = null;
 
   @Override
   @NotNull
@@ -602,7 +605,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>(new EqualityPolicy.ByHashingStrategy<String>(FilePathHashingStrategy.create()));
-    private Module[] myModulesCache;
+    private volatile Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<Module>();
     private final Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
@@ -740,7 +743,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
+    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException {
       filePath = resolveShortWindowsName(filePath);
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {

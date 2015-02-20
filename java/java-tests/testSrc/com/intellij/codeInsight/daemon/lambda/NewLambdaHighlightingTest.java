@@ -75,18 +75,18 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
-  @Bombed(year = 2015, day = 30, month = Calendar.JANUARY)
   public void testIDEA123848() { doTest(); }
   public void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(year = 2015, day = 30, month = Calendar.JANUARY)
+  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
   public void testIDEA125254() { doTest(); }
   public void testIDEA124961() { doTest(); }
+  public void testIDEA124961_1_8_0_40() { doTest(); }
   public void testIDEA126109() { doTest(); }
   public void testIDEA126809() { doTest(); }
   public void testIDEA124424() { doTest(); }
@@ -97,6 +97,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedLambdaExpressionsNoFormalParamsStopAtStandalone() { doTest(); }
 
   public void testNestedLambdaCheckedExceptionsConstraints() throws Exception {
+    doTest();
+  }
+
+  public void testNestedLambdaWithInferenceVariableAsTargetType() throws Exception {
     doTest();
   }
 
@@ -135,7 +139,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(year = 2015, month = Calendar.JANUARY, day = 30)
+  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
     doTest();
   }
@@ -164,7 +168,12 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testIDEA127124() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA123987() throws Exception {
     doTest();
   }
 

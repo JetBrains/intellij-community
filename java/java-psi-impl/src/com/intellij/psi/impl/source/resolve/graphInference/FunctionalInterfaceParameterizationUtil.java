@@ -52,11 +52,16 @@ public class FunctionalInterfaceParameterizationUtil {
 
   @Nullable
   public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr) {
+    return getGroundTargetType(psiClassType, expr, true);
+  }
+
+  @Nullable
+  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr, boolean performFinalCheck) {
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }
 
-    if (expr != null && expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr);
+    if (expr != null && expr.hasFormalParameterTypes()) return getFunctionalTypeExplicit(psiClassType, expr, performFinalCheck);
 
     return psiClassType instanceof PsiClassType ? getNonWildcardParameterization((PsiClassType)psiClassType) : null;
   }
@@ -64,11 +69,11 @@ public class FunctionalInterfaceParameterizationUtil {
   /**
    * 18.5.3. Functional Interface Parameterization Inference 
    */
-  private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr) {
+  private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr, boolean performFinalCheck) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
     if (psiClassType instanceof PsiIntersectionType) {
       for (PsiType psiType : ((PsiIntersectionType)psiClassType).getConjuncts()) {
-        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr);
+        final PsiType functionalType = getFunctionalTypeExplicit(psiType, expr, performFinalCheck);
         if (functionalType != null) return functionalType;
       }
       return null;
@@ -120,12 +125,12 @@ public class FunctionalInterfaceParameterizationUtil {
 
       //If F<A'1, ..., A'm> is not a well-formed type (that is, the type arguments are not within their bounds), 
       // or if F<A'1, ..., A'm> is not a subtype of F<A1, ..., Am>, no valid parameterization exists.
-      if (!isWellFormed(psiClass, typeParameters, newTypeParameters)) {
+      if (!isWellFormed(psiClass, typeParameters, newTypeParameters) || performFinalCheck && !psiClassType.isAssignableFrom(parameterization)) {
         return null;
       }
 
       //Otherwise, the inferred parameterization is either F<A'1, ..., A'm>, if all the type arguments are types,
-      if (!TypeConversionUtil.containsWildcards(parameterization) && psiClassType.isAssignableFrom(parameterization)) {
+      if (!TypeConversionUtil.containsWildcards(parameterization)) {
         return parameterization;
       }
 

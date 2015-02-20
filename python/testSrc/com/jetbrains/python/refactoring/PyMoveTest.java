@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.refactoring;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -148,6 +150,21 @@ public class PyMoveTest extends PyTestCase {
   // PY-14439
   public void testConditionalImportFromPackageToPackage() {
     doMoveFileTest("pkg1", "pkg2");
+  }
+
+  // PY-14979
+  public void testTemplateAttributesExpansionInCreatedDestinationModule() {
+    final FileTemplateManager instance = FileTemplateManager.getInstance(myFixture.getProject());
+    final FileTemplate template = instance.getInternalTemplate("Python Script");
+    assertNotNull(template);
+    final String oldTemplateContent = template.getText();
+    try {
+      template.setText("NAME = '${NAME}'");
+      doMoveSymbolTest("C", "b.py");
+    }
+    finally {
+      template.setText(oldTemplateContent);
+    }
   }
 
   // PY-7378

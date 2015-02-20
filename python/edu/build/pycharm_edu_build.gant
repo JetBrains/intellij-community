@@ -194,7 +194,6 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$pythonEduHome/resources"]
   buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
-  //signExe(launcher)
   executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
@@ -214,12 +213,14 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("learn-python") {
+    layouts.layoutPlugin("interactive-learning")
+    layouts.layoutPlugin("interactive-learning-python") {
       dir("courses") {
-        fileset(dir: "$pythonEduHome/learn-python/resources/courses")
+        fileset(dir: "$pythonEduHome/interactive-learning-python/resources/courses")
       }
     }
     layouts.layoutPlugin("course-creator")
+    layouts.layoutPlugin("course-creator-python")
   }
 
   layouts.layoutCommunityPlugins(ch)
@@ -411,5 +412,6 @@ private layoutMac(Map _args, String target) {
   args.help_id = "PE"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
+  args.executable = "pycharm"
   layoutMacApp(target, ch, args)
 }

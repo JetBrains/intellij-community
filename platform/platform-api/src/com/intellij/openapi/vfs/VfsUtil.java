@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.lang.UrlClassLoader;
@@ -406,7 +403,6 @@ public class VfsUtil extends VfsUtilCore {
    * @return the relative path, or null if the files have no common ancestor.
    * @since 5.0.2
    */
-
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -436,10 +432,11 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   public static VirtualFile createChildSequent(Object requestor, @NotNull VirtualFile dir, @NotNull String prefix, @NotNull String extension) throws IOException {
-    String fileName = prefix + "." + extension;
+    String dotExt = PathUtil.makeFileName("", extension);
+    String fileName = prefix + dotExt;
     int i = 1;
     while (dir.findChild(fileName) != null) {
-      fileName = prefix + i + "." + extension;
+      fileName = prefix + "_" + i + dotExt;
       i++;
     }
     return dir.createChildData(requestor, fileName);

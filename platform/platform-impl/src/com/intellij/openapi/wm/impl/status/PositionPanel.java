@@ -147,35 +147,17 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
       StringBuilder message = new StringBuilder();
 
       SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasBlockSelection()) {
-        LogicalPosition start = selectionModel.getBlockStart();
-        LogicalPosition end = selectionModel.getBlockEnd();
-        if (start == null || end == null) {
-          throw new IllegalStateException(String.format(
-            "Invalid selection model state detected: 'blockSelection' property is 'true' but selection start position (%s) or "
-            + "selection end position (%s) is undefined", start, end
-          ));
-        }
-        appendLogicalPosition(start, message);
-        message.append("-");
-        appendLogicalPosition(
-          new LogicalPosition(Math.abs(end.line - start.line), Math.max(0, Math.abs(end.column - start.column) - 1)),
-          message
-        );
+      int caretCount = editor.getCaretModel().getCaretCount();
+      if (caretCount > 1) {
+        message.append(caretCount).append(" carets");
       }
       else {
-        int caretCount = editor.getCaretModel().getCaretCount();
-        if (caretCount > 1) {
-          message.append(caretCount).append(" carets");
-        }
-        else {
-          LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
 
-          appendLogicalPosition(caret, message);
-          if (selectionModel.hasSelection()) {
-            int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-            if (len != 0) message.append("/").append(len);
-          }
+        appendLogicalPosition(caret, message);
+        if (selectionModel.hasSelection()) {
+          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
+          if (len != 0) message.append("/").append(len);
         }
       }
 

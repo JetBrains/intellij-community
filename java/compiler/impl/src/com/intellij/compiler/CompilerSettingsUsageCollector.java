@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
@@ -30,12 +30,12 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: 4/11/13
  */
-public class CompilerSettingsUsageCollector extends UsagesCollector{
+public class CompilerSettingsUsageCollector extends AbstractApplicationUsagesCollector{
   public static final String GROUP_ID = "compiler";
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getProjectUsages(@Nullable Project project) throws CollectUsagesException {
     final CompilerWorkspaceConfiguration wsConfig = CompilerWorkspaceConfiguration.getInstance(project);
     
     final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();

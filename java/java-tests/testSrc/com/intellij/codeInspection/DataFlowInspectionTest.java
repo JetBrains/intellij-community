@@ -92,8 +92,10 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testVisitFinallyOnce() throws Throwable { doTest(); }
   public void testNotEqualsDoesntImplyNotNullity() throws Throwable { doTest(); }
   public void testEqualsEnumConstant() throws Throwable { doTest(); }
+  public void testSwitchEnumConstant() { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
+  public void testDontSaveTypeValue() { doTest(); }
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
   public void testNotGreaterIsNotEquals() throws Throwable { doTest(); }
@@ -105,6 +107,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAccessorPlusMutator() throws Throwable { doTest(); }
   public void testClosureVariableField() throws Throwable { doTest(); }
   public void testOptionalThis() { doTest(); }
+  public void testQualifiedThis() { doTest(); }
 
   public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
@@ -195,6 +198,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
 
+  public void testExplicitlyNullableLocalVar() { doTest(); }
+
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
   public void testOmnipresentExceptions() { doTest(); }
@@ -213,6 +218,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testContractAnnotation() { doTest(); }
   public void testContractInapplicableComparison() { doTest(); }
   public void testContractInLoopNotTooComplex() { doTest(); }
+  public void testContractWithManyParameters() { doTest(); }
   public void testContractWithNullable() { doTest(); }
   public void testContractWithNotNull() { doTest(); }
   public void testContractPreservesUnknownNullability() { doTest(); }
@@ -277,6 +283,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNumberComparisonsWhenValueIsKnown() { doTest(); }
   public void testFloatComparisons() { doTest(); }
+
+  public void testNullableArray() { doTest(); }
 
   public void testAccessingSameArrayElements() { doTest(); }
 

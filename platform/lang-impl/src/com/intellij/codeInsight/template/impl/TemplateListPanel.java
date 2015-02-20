@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
@@ -117,14 +118,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     myTemplateContext.clear();
 
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
-
-    Collections.sort(groups, new Comparator<TemplateGroup>() {
-      @Override
-      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    List<TemplateGroup> groups = getSortedGroups(templateSettings);
 
     initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
     myExpandByDefaultPanel.setSelectedChar(templateSettings.getDefaultShortcutChar());
@@ -136,6 +130,19 @@ public class TemplateListPanel extends JPanel implements Disposable {
     });
 
     myUpdateNeeded = true;
+  }
+
+  @NotNull
+  private static List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
+    List<TemplateGroup> groups = new ArrayList<TemplateGroup>(templateSettings.getTemplateGroups());
+
+    Collections.sort(groups, new Comparator<TemplateGroup>() {
+      @Override
+      public int compare(@NotNull TemplateGroup o1, @NotNull TemplateGroup o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
+    return groups;
   }
 
   public void apply() throws ConfigurationException {
@@ -185,7 +192,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       return true;
     }
 
-    List<TemplateGroup> originalGroups = templateSettings.getTemplateGroups();
+    List<TemplateGroup> originalGroups = getSortedGroups(templateSettings);
     List<TemplateGroup> newGroups = getTemplateGroups();
 
     List<TemplateImpl> originalGroup = collectTemplates(originalGroups);
@@ -946,13 +953,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
     selectTemplate(lastSelectedGroup, lastSelectedKey);
   }
 
-  private void selectTemplate(final String lastSelectedGroup, final String lastSelectedKey) {
+  void selectNode(@NotNull String searchQuery) {
+    ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(searchQuery);
+  }
+
+  private void selectTemplate(@Nullable final String groupName, @Nullable final String templateKey) {
     TreeUtil.traverseDepth(myTreeRoot, new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {
         Object o = ((DefaultMutableTreeNode)node).getUserObject();
-        if (lastSelectedKey == null && o instanceof TemplateGroup && Comparing.equal(lastSelectedGroup, ((TemplateGroup)o).getName()) ||
-            o instanceof TemplateImpl && Comparing.equal(lastSelectedKey, ((TemplateImpl)o).getKey()) && Comparing.equal(lastSelectedGroup, ((TemplateImpl)o).getGroupName())) {
+        if (templateKey == null && o instanceof TemplateGroup && Comparing.equal(groupName, ((TemplateGroup)o).getName()) ||
+            o instanceof TemplateImpl && Comparing.equal(templateKey, ((TemplateImpl)o).getKey()) && Comparing.equal(groupName, ((TemplateImpl)o).getGroupName())) {
           setSelectedNode((DefaultMutableTreeNode)node);
           return false;
         }

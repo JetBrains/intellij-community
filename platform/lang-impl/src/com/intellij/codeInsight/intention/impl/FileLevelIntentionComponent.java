@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
@@ -70,6 +71,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
         createActionLabel(text, new Runnable() {
           @Override
           public void run() {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
           }
         });

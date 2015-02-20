@@ -63,7 +63,7 @@ public class PyConsoleParser extends PyParser{
     return builder.getTreeBuilt();
   }
 
-  private static boolean startsWithIPythonSpecialSymbol(PsiBuilder builder) {
+  public static boolean startsWithIPythonSpecialSymbol(PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
     return builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK || tokenType == PyTokenTypes.PERC || tokenType == PyTokenTypes.COMMA || tokenType == PyTokenTypes.SEMICOLON ||
       "/".equals(builder.getTokenText());

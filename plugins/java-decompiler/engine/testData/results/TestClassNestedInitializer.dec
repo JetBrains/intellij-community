@@ -8,7 +8,27 @@ public class TestClassNestedInitializer {
          {
             this.secret = "one";
          }
-      };
-      System.out.println(var1.secret);
+      };// 22
+      System.out.println(var1.secret);// 23
    }
 }
+
+class 'pkg/TestClassNestedInitializer$1' {
+   method '<init> (Lpkg/TestClassNestedInitializer;)V' {
+      a      8
+      c      8
+   }
+}
+
+class 'pkg/TestClassNestedInitializer' {
+   method 'test ()V' {
+      8      10
+      9      11
+      d      11
+      10      11
+   }
+}
+
+Lines mapping:
+22 <-> 11
+23 <-> 12

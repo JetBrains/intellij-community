@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
@@ -30,10 +31,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -137,6 +135,17 @@ public class JavaGenerateMemberCompletionContributor {
     List<PsiGenerationInfo<PsiMethod>> newInfos = GenerateMembersUtil
       .insertMembersAtOffset(context.getFile(), context.getStartOffset(), infos);
     if (!newInfos.isEmpty()) {
+      final List<PsiElement> elements = new ArrayList<PsiElement>();
+      for (GenerationInfo member : newInfos) {
+        if (!(member instanceof TemplateGenerationInfo)) {
+          final PsiMember psiMember = member.getPsiMember();
+          if (psiMember != null) {
+            elements.add(psiMember);
+          }
+        }
+      }
+
+      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(new PsiElement[elements.size()]));
       newInfos.get(0).positionCaret(context.getEditor(), true);
     }
   }

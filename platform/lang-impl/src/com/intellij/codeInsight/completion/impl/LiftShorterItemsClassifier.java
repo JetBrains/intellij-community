@@ -34,7 +34,7 @@ import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
 */
 public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<String>();
-  private final MultiMap<String, LookupElement> myElements = MultiMap.createSmartList();
+  private final MultiMap<String, LookupElement> myElements = MultiMap.createSmart();
   private final Map<LookupElement, FList<LookupElement>> myToLift = newIdentityHashMap();
   private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = newIdentityHashMap();
   private final String myName;

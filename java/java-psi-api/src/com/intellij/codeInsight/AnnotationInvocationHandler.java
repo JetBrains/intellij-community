@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.IncompleteAnnotationException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 class AnnotationInvocationHandler implements InvocationHandler {
   @NotNull private final Class<? extends Annotation> type;
@@ -37,10 +38,10 @@ class AnnotationInvocationHandler implements InvocationHandler {
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) {
-    String member = method.getName();
     Class<?>[] paramTypes = method.getParameterTypes();
+    assert paramTypes.length == 0: Arrays.toString(paramTypes);
 
-    assert paramTypes.length == 0;
+    String member = method.getName();
     if (member.equals("toString")) {
       return toStringImpl();
     }
@@ -51,13 +52,13 @@ class AnnotationInvocationHandler implements InvocationHandler {
     // Handle annotation member accessors
     PsiAnnotationMemberValue value = myAnnotation.findAttributeValue(member);
     if (value == null) {
-      throw new IncompleteAnnotationException(type, member);
+      throw new IncompleteAnnotationException(type, member+". (Unable to find attribute in '"+myAnnotation.getText()+"')");
     }
 
     Object result = JavaPsiFacade.getInstance(myAnnotation.getProject()).getConstantEvaluationHelper().computeConstantExpression(value);
 
     if (result == null) {
-      throw new IncompleteAnnotationException(type, member+". (unable to evaluate annotation value '"+value+"')");
+      throw new IncompleteAnnotationException(type, member+". (Unable to evaluate annotation value '"+value+"')");
     }
 
     // todo arrays

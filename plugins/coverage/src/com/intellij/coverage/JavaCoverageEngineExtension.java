@@ -3,7 +3,6 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -81,7 +80,7 @@ public abstract class JavaCoverageEngineExtension {
   }
 
   /**
-   * Returns the summary information for the specified object (other than a class or a file) shown in the coverage view.
+   * Returns the summary information for the specified object (other than a class or a package) shown in the coverage view.
    */
   @Nullable
   public PackageAnnotator.ClassCoverageInfo getSummaryCoverageInfo(JavaCoverageAnnotator coverageAnnotator, PsiNamedElement element) {

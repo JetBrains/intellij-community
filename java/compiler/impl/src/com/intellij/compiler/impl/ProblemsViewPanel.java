@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 
 public class ProblemsViewPanel extends NewErrorTreeViewPanel {
   public ProblemsViewPanel(Project project) {
-    super(project, null, false, true, null);
+    super(project, "reference.problems.tool.window", false, true, null);
     myTree.getEmptyText().setText("No compilation problems found");
   }
 

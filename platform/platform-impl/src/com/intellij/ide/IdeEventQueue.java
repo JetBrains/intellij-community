@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.Patches;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -183,8 +183,7 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void addIdleTimeCounterRequest() {
-    Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) return;
+    if (isTestMode()) return;
 
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
@@ -529,12 +528,6 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
-        return;
-      }
-    }
-    if (e instanceof InputEvent && Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
-      final InputEvent inputEvent = (InputEvent)e;
-      if (!inputEvent.getComponent().isShowing()) {
         return;
       }
     }
@@ -974,7 +967,7 @@ public class IdeEventQueue extends EventQueue {
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
-            return true;
+            return false;
           }
 
           if (ke.getID() == KeyEvent.KEY_PRESSED) {
@@ -1035,6 +1028,31 @@ public class IdeEventQueue extends EventQueue {
   public void postEvent(AWTEvent theEvent) {
     myFrequentEventDetector.eventHappened();
     super.postEvent(theEvent);
+  }
+
+  @Override
+  public AWTEvent peekEvent() {
+    AWTEvent event = super.peekEvent();
+    if (event != null) {
+      return event;
+    }
+    if (isTestMode() && LaterInvocator.ensureFlushRequested()) {
+      return super.peekEvent();
+    }
+    return null;
+  }
+
+  private Boolean myTestMode;
+  private boolean isTestMode() {
+    Boolean testMode = myTestMode;
+    if (testMode != null) return testMode;
+    
+    Application application = ApplicationManager.getApplication();
+    if (application == null) return false;
+
+    testMode = application.isUnitTestMode();
+    myTestMode = testMode;
+    return testMode;
   }
 
   /**

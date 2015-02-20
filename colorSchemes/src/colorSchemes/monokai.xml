@@ -969,12 +969,7 @@
         <option name="FOREGROUND" value="AE81FF" />
       </value>
     </option>
-    <option name="OC_FORMAT_TOKEN">
-      <value>
-        <option name="FOREGROUND" value="E6DB74" />
-      </value>
-    </option>
-    <option name="PROTOCOL_REFERENCE">
+    <option name="OC.PROTOCOL_REFERENCE">
       <value>
         <option name="FOREGROUND" value="A6E22E" />
       </value>

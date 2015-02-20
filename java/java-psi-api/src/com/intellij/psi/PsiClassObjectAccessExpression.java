@@ -28,4 +28,8 @@ public interface PsiClassObjectAccessExpression extends PsiExpression {
    */
   @NotNull
   PsiTypeElement getOperand();
+
+  @NotNull
+  @Override
+  PsiType getType();
 }

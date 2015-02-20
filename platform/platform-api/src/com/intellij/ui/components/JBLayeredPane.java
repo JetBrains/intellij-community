@@ -31,13 +31,4 @@ public class JBLayeredPane extends JLayeredPane {
       return EMPTY;
     return super.getMinimumSize();
   }
-  @Override
-  public void doLayout() {
-    super.doLayout();
-    for (Component component : getComponents()) {
-      if ("Day#16161".equals(String.valueOf(component))) {
-        component.setBounds(getBounds());
-      }
-    }
-  }
 }

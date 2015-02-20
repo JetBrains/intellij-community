@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,10 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     }
     else if (parent instanceof PsiJavaCodeReferenceElement) {
       PsiElement ctx = PsiTreeUtil.skipParentsOfType(parent, PsiJavaCodeReferenceElement.class);
-      if (ctx instanceof PsiReferenceList || ctx instanceof PsiNewExpression || ctx instanceof PsiTypeElement) {
+      if (ctx instanceof PsiReferenceList ||
+          ctx instanceof PsiNewExpression ||
+          ctx instanceof PsiTypeElement ||
+          ctx instanceof PsiAnonymousClass) {
         return new PsiClassReferenceType((PsiJavaCodeReferenceElement)parent, null);
       }
     }

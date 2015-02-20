@@ -17,10 +17,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,25 +41,5 @@ public class EditorHeaderComponent extends JPanel {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     super.paint(g);
-  }
-
-  @Override
-  protected void paintComponent(@NotNull Graphics g) {
-    super.paintComponent(g);
-    if (UIUtil.isUnderGTKLookAndFeel()) return;
-
-    paintGradient(g, this);
-  }
-
-  private void paintGradient(Graphics g, JComponent c) {
-    Color GRADIENT_C1 = isBackgroundSet() ? getBackground() : new JBColor(getBackground(), JBColor.background());
-    Color GRADIENT_C2 = new JBColor(new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
-                                              Math.max(0, GRADIENT_C1.getBlue() - 0x18)), Gray._75);
-
-    Graphics2D g2d = (Graphics2D)g;
-
-    g2d.setPaint(UIUtil.getGradientPaint(0, 0, GRADIENT_C1, 0, c.getHeight(), GRADIENT_C2));
-    g2d.fillRect(0, 0, c.getWidth(), c.getHeight() - 1);
-    g2d.setPaint(null);
   }
 }

@@ -57,7 +57,7 @@ public class ImportOldConfigsPanel extends JDialog {
   }
 
   private void init() {
-    new MnemonicHelper().register(getContentPane());
+    MnemonicHelper.init(getContentPane());
 
     ButtonGroup group = new ButtonGroup();
     group.add(myRbDoNotImport);

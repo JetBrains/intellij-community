@@ -20,13 +20,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class CastExpressionPostfixTemplate extends PostfixTemplateWithExpressionSelector {
   public CastExpressionPostfixTemplate() {
-    super("cast", "((SomeType) expr)", JAVA_PSI_INFO, selectorWithChooser(IS_NON_VOID));
+    super("cast", "((SomeType) expr)", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }
 
   @Override

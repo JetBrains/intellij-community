@@ -33,7 +33,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
@@ -66,9 +65,11 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   private final FileTypeManagerEx myTypeManager;
   private final Project myProject;
 
+  /** Null for default project. */
   @Nullable
   private final FileTemplatesScheme myProjectScheme;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
+  private boolean myInitialized;
 
   private final FTManager myInternalTemplatesManager;
   private final FTManager myDefaultTemplatesManager;
@@ -118,9 +119,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       @NotNull
       @Override
       public String getTemplatesDir() {
-        VirtualFile file = project.getProjectFile();
-        assert file != null;
-        return new File(file.getParent().getCanonicalPath(), TEMPLATES_DIR).getPath();
+        return new File(project.getBasePath(), Project.DIRECTORY_STORE_FOLDER + "/" + TEMPLATES_DIR).getPath();
       }
     };
   }
@@ -133,19 +132,27 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   @Override
   public void setCurrentScheme(@NotNull FileTemplatesScheme scheme) {
-    setScheme(scheme, true);
+    for (FTManager child : myAllManagers) {
+      child.saveTemplates();
+    }
+    setScheme(scheme);
   }
 
-  private void setScheme(@NotNull FileTemplatesScheme scheme, boolean saveBefore) {
-    if (saveBefore) {
-      for (FTManager child : myAllManagers) {
-        child.saveTemplates();
-      }
-    }
+  private void setScheme(@NotNull FileTemplatesScheme scheme) {
     myScheme = scheme;
     for (FTManager manager : myAllManagers) {
       manager.setScheme(scheme);
     }
+    myInitialized = true;
+  }
+
+  @Override
+  protected FileTemplateManager checkInitialized() {
+    if (!myInitialized) {
+      // loadState() not called; init default scheme
+      setScheme(myScheme);
+    }
+    return this;
   }
 
   @Nullable
@@ -439,7 +446,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
-    setScheme(myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT, false);
+    FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
+    setScheme(scheme);
   }
 
   public static class State {

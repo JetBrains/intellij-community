@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,6 +270,13 @@ public class ContainerUtilTest extends TestCase {
     }
     catch (NoSuchElementException ignored) {
     }
+  }
+
+  public void testImmutableListEquals() {
+    String value = "stringValue";
+    List<String> expected = ContainerUtil.immutableList(value);
+    List<String> actual = ContainerUtil.newArrayList(value);
+    assertEquals(expected, actual);
   }
 
 }

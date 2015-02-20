@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 class HighlightersRecycler {
-  private final MultiMap<TextRange, RangeHighlighter> incinerator = MultiMap.createSmartList();
+  private final MultiMap<TextRange, RangeHighlighter> incinerator = MultiMap.createSmart();
 
   void recycleHighlighter(@NotNull RangeHighlighter highlighter) {
     if (highlighter.isValid()) {

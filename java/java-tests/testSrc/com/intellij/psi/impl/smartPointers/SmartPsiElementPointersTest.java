@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -37,6 +38,7 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -468,5 +470,65 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     });
     assertEquals(range1.shiftRight(1), pointer1.getRange());
     assertEquals(range2.shiftRight(1), pointer2.getRange());
+  }
+
+  public void testInXml() {
+    final PsiFile file = configureByText(HtmlFileType.INSTANCE,
+                                         "<!doctype html>\n" +
+                                         "<html>\n" +
+                                         "    <fieldset></fieldset>\n" +
+                                         "    <select></select>\n" +
+                                         "\n" +
+                                         "    <caret>\n" +
+                                         "</html>"
+    );
+
+    final XmlTag fieldSet = PsiTreeUtil.getParentOfType(file.findElementAt(file.getText().indexOf("fieldset")), XmlTag.class);
+    assertNotNull(fieldSet);
+    assertEquals("fieldset", fieldSet.getName());
+
+    final XmlTag select = PsiTreeUtil.getParentOfType(file.findElementAt(file.getText().indexOf("select")), XmlTag.class);
+    assertNotNull(select);
+    assertEquals("select", select.getName());
+
+    final SmartPsiElementPointer<XmlTag> fieldSetPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(
+      fieldSet);
+    final SmartPsiElementPointer<XmlTag> selectPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(select);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        getEditor().getDocument().insertString(getEditor().getCaretModel().getOffset(), "<a></a>");
+      }
+    });
+
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    final XmlTag newFieldSet = fieldSetPointer.getElement();
+    assertNotNull(newFieldSet);
+    assertEquals("fieldset", newFieldSet.getName());
+
+    final XmlTag newSelect = selectPointer.getElement();
+    assertNotNull(newSelect);
+    assertEquals("select", newSelect.getName());
+  }
+  public void testInsertImport() {
+    final PsiFile file = configureByText(JavaFileType.INSTANCE,
+                                         "class S {\n" +
+                                         "}");
+
+    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        getEditor().getDocument().insertString(0, "import java.util.Map;\n");
+      }
+    });
+
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    PsiClass aClass2 = ((PsiJavaFile)file).getClasses()[0];
+    assertSame(aClass, aClass2);
   }
 }

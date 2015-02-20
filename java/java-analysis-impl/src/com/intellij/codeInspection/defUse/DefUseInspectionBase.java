@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -28,10 +29,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS = false;
@@ -90,7 +89,8 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
           }
           else {
             if (REPORT_REDUNDANT_INITIALIZER) {
-              List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(isOnTheFly ? createRemoveInitializerFix() : null);
+              List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
+                isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? createRemoveInitializerFix() : null);
               holder.registerProblem(psiVariable.getInitializer(),
                                      InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
                                                                "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
@@ -102,7 +102,8 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
         else if (context instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
-          List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(isOnTheFly ? createRemoveAssignmentFix() : null);
+          List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
+            isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, assignment.getRExpression()) ? createRemoveAssignmentFix() : null);
           holder.registerProblem(assignment.getLExpression(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
                                                            assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), 
@@ -131,6 +132,12 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
     });
+  }
+
+  private static boolean isOnTheFlyOrNoSideEffects(boolean isOnTheFly,
+                                                   PsiVariable psiVariable,
+                                                   PsiExpression initializer) {
+    return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<PsiElement>());
   }
 
   protected LocalQuickFix createRemoveInitializerFix() {

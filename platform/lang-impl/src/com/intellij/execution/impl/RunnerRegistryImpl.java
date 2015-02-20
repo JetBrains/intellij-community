@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
 // TODO[spLeaner]: eliminate
 public class RunnerRegistryImpl extends RunnerRegistry {
-  private final List<ProgramRunner> myRunnersOrder = new ArrayList<ProgramRunner>();
-
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "RunnerRegistryImpl";
-  }
-
-  @Override
-  public boolean hasRunner(@NotNull final String executorId, @NotNull final RunProfile settings) {
-    final ProgramRunner[] runners = getRegisteredRunners();
-    for (final ProgramRunner runner : runners) {
-      if (runner.canRun(executorId, settings)) {
-        return true;
-      }
-    }
-
-    return false;
+  public boolean hasRunner(@NotNull String executorId, @NotNull RunProfile settings) {
+    return getRunner(executorId, settings) != null;
   }
 
   @Override
@@ -56,55 +35,27 @@ public class RunnerRegistryImpl extends RunnerRegistry {
       return null;
     }
 
-    for (ProgramRunner runner : getRegisteredRunners()) {
+    for (ProgramRunner runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
       if (runner.canRun(executorId, settings)) {
         return runner;
       }
     }
-
     return null;
   }
 
   @Override
-  public void initComponent() {
-    final ProgramRunner[] runners = Extensions.getExtensions(ProgramRunner.PROGRAM_RUNNER_EP);
-    for (ProgramRunner runner : runners) {
-      registerRunner(runner);
-    }
-  }
-
-  @Override
-  public synchronized void disposeComponent() {
-    while (myRunnersOrder.size() > 0) {
-      final ProgramRunner runner = myRunnersOrder.get(myRunnersOrder.size() - 1);
-      unregisterRunner(runner);
-    }
-  }
-
-  public synchronized void registerRunner(final ProgramRunner runner) {
-    if (myRunnersOrder.contains(runner)) return;
-    myRunnersOrder.add(runner);
-  }
-
-  public synchronized void unregisterRunner(final ProgramRunner runner) {
-    myRunnersOrder.remove(runner);
-  }
-
-  @Override
-  public synchronized ProgramRunner[] getRegisteredRunners() {
-    return myRunnersOrder.toArray(new ProgramRunner[myRunnersOrder.size()]);
+  public ProgramRunner[] getRegisteredRunners() {
+    return ProgramRunner.PROGRAM_RUNNER_EP.getExtensions();
   }
 
   @Override
   @Nullable
   public ProgramRunner findRunnerById(String id) {
-    ProgramRunner[] registeredRunners = getRegisteredRunners();
-    for (ProgramRunner registeredRunner : registeredRunners) {
+    for (ProgramRunner registeredRunner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
       if (Comparing.equal(id, registeredRunner.getRunnerId())) {
         return registeredRunner;
       }
     }
     return null;
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     final DefaultActionGroup root = createRootStep();
 
     final Pair<JPanel, JBList> panel = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
-    final Dimension size = new Dimension(666, 385);
+    final Dimension size = JBUI.size(666, 385);
     final JPanel component = panel.first;
     component.setMinimumSize(size);
     component.setPreferredSize(size);

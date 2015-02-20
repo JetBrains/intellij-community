@@ -273,8 +273,17 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   }
 
   @Override
+  public Insets getInsets() {
+    Insets insets = super.getInsets();
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && isEditable) {
+      insets.right += 2;
+    }
+    return insets;
+  }
+
+  @Override
   public boolean hasFocus() {
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && myPaintingNow) {
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() && myPaintingNow && isEditable) {
       return false;
     }
     return super.hasFocus();
@@ -289,7 +298,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
     try {
       myPaintingNow = true;
       super.paint(g);
-      if (Boolean.TRUE != getClientProperty("JComboBox.isTableCellEditor")) MacUIUtil.drawComboboxFocusRing(this, g);
+      if (Boolean.TRUE != getClientProperty("JComboBox.isTableCellEditor") && isEditable) MacUIUtil.drawComboboxFocusRing(this, g);
     } finally {
       myPaintingNow = false;
     }

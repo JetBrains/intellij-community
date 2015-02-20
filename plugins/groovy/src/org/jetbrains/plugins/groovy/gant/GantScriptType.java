@@ -21,6 +21,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -70,8 +71,11 @@ public class GantScriptType extends GroovyRunnableScriptType {
   @Override
   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location place) {
     final String params = existing.getScriptParameters();
-    final String s = getTargetName(place);
-    return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
+    final String targetName = getTargetName(place);
+    if (targetName == null) {
+      return StringUtil.isEmpty(params);
+    }
+    return params != null && (params.startsWith(targetName + " ") || params.equals(targetName));
   }
 
   @Nullable

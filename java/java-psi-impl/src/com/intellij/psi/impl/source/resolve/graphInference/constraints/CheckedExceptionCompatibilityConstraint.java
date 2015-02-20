@@ -107,7 +107,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
           final List<PsiClassType> exceptions = ExceptionUtil.ourThrowsGuard.doPreventingRecursion(myExpression, false, new Computable<List<PsiClassType>>() {
             @Override
             public List<PsiClassType> compute() {
-              return ExceptionUtil.getUnhandledExceptions(body);
+              return ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
             }
           });
           if (exceptions != null) {

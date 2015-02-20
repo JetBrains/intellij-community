@@ -82,8 +82,8 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
       }
     });
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
-    getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
-    getPicoContainer().registerComponentInstance(ModuleFileIndex.class, new ModuleFileIndexImpl(this, DirectoryIndex.getInstance(project)));
+    getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));
+    getPicoContainer().registerComponentInstance(ModuleFileIndex.class, createModuleFileIndex(project));
     myModuleScopeProvider = createModuleScopeProvider();
   }
 
@@ -103,6 +103,14 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   protected ModuleScopeProvider createModuleScopeProvider() {
     return new CoreModuleScopeProvider();
+  }
+
+  protected PathMacroManager createModulePathMacroManager(@NotNull Project project) {
+    return new ModulePathMacroManager(PathMacros.getInstance(), this);
+  }
+
+  protected ModuleFileIndex createModuleFileIndex(@NotNull Project project) {
+    return new ModuleFileIndexImpl(this, DirectoryIndex.getInstance(project));
   }
 
   @Override

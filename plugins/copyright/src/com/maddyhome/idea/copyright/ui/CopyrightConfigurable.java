@@ -121,14 +121,14 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public boolean isModified() {
     return myModified ||
-           !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText().trim()), myCopyrightProfile.getNotice()) ||
+           !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText()), myCopyrightProfile.getNotice()) ||
            !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
            !Comparing.strEqual(myAllowReplaceTextField.getText().trim(), myCopyrightProfile.getAllowReplaceKeyword()) ||
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
   public void apply() throws ConfigurationException {
-    myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText().trim()));
+    myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText()));
     final String keyword = myKeywordTf.getText().trim();
     try {
       if (!StringUtil.isEmptyOrSpaces(keyword)) {
@@ -139,7 +139,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
       throw new ConfigurationException("Keyword pattern syntax is incorrect: " + e.getMessage());
     }
     myCopyrightProfile.setKeyword(keyword);
-    myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText());
+    myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText().trim());
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;

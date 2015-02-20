@@ -39,6 +39,7 @@ public class ReplaceUnderscoresToCamelCaseMacro extends MacroBase {
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context, true);
     if (text != null) {
+
       final List<String> strings = StringUtil.split(text, "_");
       if (strings.size() > 0) {
         final StringBuilder buf = new StringBuilder();

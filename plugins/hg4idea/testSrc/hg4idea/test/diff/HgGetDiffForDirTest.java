@@ -27,11 +27,9 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.List;
 
-import static hg4idea.test.HgExecutor.*;
+import static com.intellij.openapi.vcs.Executor.*;
+import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgGetDiffForDirTest extends HgPlatformTest {
 
   private static final String SHORT_TEMPLATE_REVISION = "{rev}:{node|short}";

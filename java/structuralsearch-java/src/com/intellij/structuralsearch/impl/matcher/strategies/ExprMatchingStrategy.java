@@ -7,6 +7,27 @@ import com.intellij.psi.*;
  */
 public class ExprMatchingStrategy extends MatchingStrategyBase {
 
+  @Override
+  public void visitTypeElement(PsiTypeElement type) {
+    result = true;
+  }
+
+  @Override public void visitReferenceParameterList(PsiReferenceParameterList psiReferenceParameterList) {
+    result = true;
+  }
+
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
+    result = true;
+  }
+
+  @Override public void visitTypeParameterList(PsiTypeParameterList psiTypeParameterList) {
+    result = true;
+  }
+
+  @Override public void visitReferenceList(final PsiReferenceList list) {
+    result = true;
+  }
+
   @Override public void visitAnnotation(final PsiAnnotation annotation) {
     result = true;
   }
@@ -52,6 +73,11 @@ public class ExprMatchingStrategy extends MatchingStrategyBase {
   }
 
   @Override public void visitJavaFile(final PsiJavaFile file) {
+    result = true;
+  }
+
+  @Override
+  public void visitPackageStatement(PsiPackageStatement statement) {
     result = true;
   }
 

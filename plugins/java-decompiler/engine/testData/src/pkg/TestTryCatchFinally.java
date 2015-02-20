@@ -15,6 +15,9 @@
  */
 package pkg;
 
+import java.lang.Exception;
+import java.lang.RuntimeException;
+
 public class TestTryCatchFinally {
   public void test1(String x) {
     try {
@@ -29,6 +32,17 @@ public class TestTryCatchFinally {
       }
     } finally {
       System.out.println("finally");
+    }
+  }
+
+  int foo(int a) throws Exception {
+    if (a < 1) {
+      throw new RuntimeException();
+    } else if ( a <5) {
+      return a;
+    }
+    else {
+      throw new Exception();
     }
   }
 

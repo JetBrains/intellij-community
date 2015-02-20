@@ -73,6 +73,7 @@ import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,7 +156,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myRollbackEnvironment = gitRollbackEnvironment;
     myRevSelector = new GitRevisionSelector();
     myConfigurable = new GitVcsConfigurable(myProject, gitProjectSettings, sharedSettings);
-    myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, gitProjectSettings);
+    myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);

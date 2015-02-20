@@ -21,11 +21,9 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,11 +88,6 @@ public class MockProjectStore implements IProjectStore {
   @NotNull
   public StorageScheme getStorageScheme() {
     throw new UnsupportedOperationException("Method getStorageScheme is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public void loadProject() throws IOException, JDOMException, InvalidDataException {
-    throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
   }
 
   @Override

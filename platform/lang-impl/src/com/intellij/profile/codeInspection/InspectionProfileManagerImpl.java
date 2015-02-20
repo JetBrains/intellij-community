@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -101,9 +102,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
         return profile;
       }
 
+      @NotNull
       @Override
-      public boolean shouldBeSaved(@NotNull InspectionProfileImpl scheme) {
-        return !scheme.isProjectLevel() && scheme.wasInitialized();
+      public State getState(@NotNull InspectionProfileImpl scheme) {
+        return scheme.isProjectLevel() ? State.NON_PERSISTENT : (scheme.wasInitialized() ? State.POSSIBLY_CHANGED : State.UNCHANGED);
       }
 
       @Override
@@ -145,11 +147,12 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   public static void registerProvidedSeverities() {
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
-      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
-        HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(null);
-        SeverityRegistrar.registerStandard(highlightInfoType, highlightSeverity);
-        TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
-        HighlightDisplayLevel.registerSeverity(highlightSeverity, attributesKey);
+      for (HighlightInfoType t : provider.getSeveritiesHighlightInfoTypes()) {
+        HighlightSeverity highlightSeverity = t.getSeverity(null);
+        SeverityRegistrar.registerStandard(t, highlightSeverity);
+        TextAttributesKey attributesKey = t.getAttributesKey();
+        Icon icon = t instanceof HighlightInfoType.Iconable ? ((HighlightInfoType.Iconable)t).getIcon() : null;
+        HighlightDisplayLevel.registerSeverity(highlightSeverity, attributesKey, icon);
       }
     }
   }

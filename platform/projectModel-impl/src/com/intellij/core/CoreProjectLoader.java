@@ -34,6 +34,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -55,9 +56,13 @@ public class CoreProjectLoader {
   private static void loadDirectoryProject(MockProject project, VirtualFile projectDir) throws IOException, JDOMException,
                                                                                            InvalidDataException {
     VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-    assert dotIdea != null;
+    if (dotIdea == null)
+      throw new FileNotFoundException("Missing '" + Project.DIRECTORY_STORE_FOLDER + "' in " + projectDir.getPath());
+
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
-    assert modulesXml != null;
+    if (modulesXml == null)
+      throw new FileNotFoundException("Missing 'modules.xml' in " + dotIdea.getPath());
+
     StorageData storageData = loadStorageFile(project, modulesXml);
     final Element moduleManagerState = storageData.getState("ProjectModuleManager");
     if (moduleManagerState == null) {
@@ -67,7 +72,8 @@ public class CoreProjectLoader {
     moduleManager.loadState(moduleManagerState);
 
     VirtualFile miscXml = dotIdea.findChild("misc.xml");
-    assert miscXml != null;
+    if (miscXml == null)
+      throw new FileNotFoundException("Missing 'misc.xml' in " + dotIdea.getPath());
     storageData = loadStorageFile(project, miscXml);
     final Element projectRootManagerState = storageData.getState("ProjectRootManager");
     if (projectRootManagerState == null) {

@@ -154,7 +154,11 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           else if (buildMessage instanceof BuilderStatisticsMessage) {
             BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
-            LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + message.getElapsedTimeMs() + " ms, " + message.getNumberOfProcessedSources() + " sources processed");
+            int srcCount = message.getNumberOfProcessedSources();
+            long time = message.getElapsedTimeMs();
+            if (srcCount != 0 || time > 50) {
+              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed");
+            }
             response = null;
           }
           else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {

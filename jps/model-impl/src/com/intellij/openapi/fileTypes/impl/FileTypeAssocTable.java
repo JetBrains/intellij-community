@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -226,7 +225,7 @@ public class FileTypeAssocTable<T> {
   }
 
   @NotNull
-  public List<FileNameMatcher> getAssociations(final T type) {
+  public List<FileNameMatcher> getAssociations(@NotNull T type) {
     List<FileNameMatcher> result = new ArrayList<FileNameMatcher>();
     for (Pair<FileNameMatcher, T> mapping : myMatchingMappings) {
       if (mapping.getSecond() == type) {
@@ -255,28 +254,33 @@ public class FileTypeAssocTable<T> {
     return result;
   }
 
-  public boolean hasAssociationsFor(final T fileType) {
-    if (myExtensionMappings.values().contains(fileType)) return true;
-    if (myExactFileNameMappings.values().contains(fileType)) return true;
-    if (myExactFileNameAnyCaseMappings.values().contains(fileType)) return true;
+  public boolean hasAssociationsFor(@NotNull T fileType) {
+    if (myExtensionMappings.values().contains(fileType) ||
+        myExactFileNameMappings.values().contains(fileType) ||
+        myExactFileNameAnyCaseMappings.values().contains(fileType)) {
+      return true;
+    }
     for (Pair<FileNameMatcher, T> mapping : myMatchingMappings) {
-      if (mapping.getSecond() == fileType) return true;
+      if (mapping.getSecond() == fileType) {
+        return true;
+      }
     }
     return false;
   }
 
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
-    final FileTypeAssocTable that = (FileTypeAssocTable)o;
-
-    if (!myExtensionMappings.equals(that.myExtensionMappings)) return false;
-    if (!myMatchingMappings.equals(that.myMatchingMappings)) return false;
-    if (!myExactFileNameMappings.equals(that.myExactFileNameMappings)) return false;
-    if (!myExactFileNameAnyCaseMappings.equals(that.myExactFileNameAnyCaseMappings)) return false;
-
-    return true;
+    FileTypeAssocTable<?> that = (FileTypeAssocTable)o;
+    return myExtensionMappings.equals(that.myExtensionMappings) &&
+           myMatchingMappings.equals(that.myMatchingMappings) &&
+           myExactFileNameMappings.equals(that.myExactFileNameMappings) &&
+           myExactFileNameAnyCaseMappings.equals(that.myExactFileNameAnyCaseMappings);
   }
 
   public int hashCode() {

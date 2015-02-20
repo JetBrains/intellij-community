@@ -22,6 +22,9 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.util.InvalidDataException;
@@ -30,29 +33,39 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl");
   @Deprecated
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
   @Deprecated
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
+  private static final String LANGUAGE_LEVEL = "languageLevel";
+  private static final String DEFAULT_ATTRIBUTE = "default";
 
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
   private final Project myProject;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
+    setDefault(project.isDefault() ? true : null);
+  }
+
+  public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
+    return (LanguageLevelProjectExtensionImpl)getInstance(project);
   }
 
   private void readExternal(final Element element) {
-    String level = element.getAttributeValue("languageLevel");
+    String level = element.getAttributeValue(LANGUAGE_LEVEL);
     if (level == null) {
       myLanguageLevel = migrateFromIdea7(element);
     }
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
     }
+    String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
+    setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
   }
 
   private static LanguageLevel migrateFromIdea7(Element element) {
@@ -70,7 +83,11 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   }
 
   private void writeExternal(final Element element) {
-    element.setAttribute("languageLevel", myLanguageLevel.name());
+    element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
+    Boolean aBoolean = getDefault();
+    if (aBoolean != null) {
+      element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
+    }
     writeAttributesForIdea7(element);
   }
 
@@ -107,21 +124,45 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     LOG.warn("Calling deprecated LanguageLevelProjectExtensionImpl.reloadProjectOnLanguageLevelChange, while project reloading is not needed on language level changes");
   }
 
-  public static class MyProjectExtension extends ProjectExtension {
-    private final Project myProject;
+  private void projectSdkChanged(@Nullable Sdk sdk) {
+    if (isDefault() && sdk != null) {
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      if (version != null) {
+        setLanguageLevel(version.getMaxLanguageLevel());
+      }
+    }
+  }
+
+    private LanguageLevel myCurrentLevel;
+
+    public void setCurrentLevel(LanguageLevel level) {
+      myCurrentLevel = level;
+    }
+
+    public LanguageLevel getCurrentLevel() {
+      return myCurrentLevel;
+    }
+
+    public static class MyProjectExtension extends ProjectExtension {
+    private final LanguageLevelProjectExtensionImpl myInstance;
 
     public MyProjectExtension(final Project project) {
-      myProject = project;
+      myInstance = ((LanguageLevelProjectExtensionImpl)getInstance(project));
     }
 
     @Override
     public void readExternal(final Element element) throws InvalidDataException {
-      ((LanguageLevelProjectExtensionImpl)getInstance(myProject)).readExternal(element);
+      myInstance.readExternal(element);
     }
 
     @Override
     public void writeExternal(final Element element) throws WriteExternalException {
-      ((LanguageLevelProjectExtensionImpl)getInstance(myProject)).writeExternal(element);
+      myInstance.writeExternal(element);
+    }
+
+    @Override
+    public void projectSdkChanged(@Nullable Sdk sdk) {
+      myInstance.projectSdkChanged(sdk);
     }
   }
-}
+  }

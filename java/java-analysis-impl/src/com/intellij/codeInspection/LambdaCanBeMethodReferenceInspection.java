@@ -89,12 +89,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                                  final PsiParameter[] parameters,
                                                                  PsiType functionalInterfaceType) {
     final PsiCallExpression callExpression = extractMethodCallFromBlock(body);
-    if (callExpression instanceof PsiNewExpression && ((PsiNewExpression)callExpression).getAnonymousClass() != null) {
-      return null;
+    if (callExpression instanceof PsiNewExpression) {
+      final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
+      if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
+        return null;
+      }
     }
 
     final String methodReferenceText = createMethodReferenceText(callExpression, functionalInterfaceType, parameters);
     if (methodReferenceText != null) {
+      LOG.assertTrue(callExpression != null);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
       final PsiMethodReferenceExpression methodReferenceExpression = 
         (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, callExpression);
@@ -108,6 +112,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             return null;
           }
           if (!(element instanceof PsiMethod)) {
+            LOG.assertTrue(callExpression instanceof PsiNewExpression);
+            final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
+            if (dims.length == 1 && parameters.length == 1){
+              if (!resolvesToParameter(dims[0], parameters[0])) {
+                return null;
+              }
+            }
+            else if (dims.length > 0) {
+              return null;
+            }
             return callExpression;
           }
 
@@ -406,17 +420,20 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
-      final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
+      String functionalTypeText = functionalInterfaceType.getCanonicalText();
       final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
                                                              lambdaExpression.getParameterList().getParameters());
 
       if (methodRefText != null) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiExpression psiExpression =
-          factory.createExpressionFromText(methodRefText, lambdaExpression);
+        final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambdaExpression);
+        final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(functionalInterfaceType);
         PsiElement replace = lambdaExpression.replace(psiExpression);
-        if (((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType() == null) { //ambiguity
+        final PsiType functionalTypeAfterReplacement = ((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType();
+        functionalInterfaceType = typePointer.getType();
+        if (functionalTypeAfterReplacement == null || functionalInterfaceType != null && !functionalTypeAfterReplacement.equals(functionalInterfaceType)) { //ambiguity
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(A)a", replace);
           cast.getCastType().replace(factory.createTypeElement(functionalInterfaceType));
           cast.getOperand().replace(replace);

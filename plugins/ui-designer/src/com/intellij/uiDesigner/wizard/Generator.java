@@ -572,14 +572,7 @@ public final class Generator {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String suggestGetterName(final String propertyName, final String propertyType) {
-    final StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
-    if ("boolean".equals(propertyType)) {
-      name.insert(0, "is");
-    }
-    else {
-      name.insert(0, "get");
-    }
-    return name.toString();
+    return PropertyUtil.suggestGetterName(propertyName, "boolean".equals(propertyType) ? PsiType.BOOLEAN : null);
   }
 
   public static void prepareWizardData(final WizardData data, PsiClass boundClass) throws MyException {

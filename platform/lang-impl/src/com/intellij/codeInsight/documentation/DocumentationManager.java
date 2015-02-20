@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +264,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public void showJavaDocInfo(@NotNull final PsiElement element,
                               final PsiElement original,
                               @Nullable Runnable closeCallback) {
+    if (!element.isValid()) {
+      return;
+    }
+
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {
@@ -391,7 +395,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       Content content = myToolWindow.getContentManager().getSelectedContent();
       if (content != null) {
         DocumentationComponent component = (DocumentationComponent)content.getComponent();
-        if (element.getManager().areElementsEquivalent(component.getElement(), element)) {
+        boolean sameElement = element.getManager().areElementsEquivalent(component.getElement(), element);
+        if (sameElement) {
           JComponent preferredFocusableComponent = content.getPreferredFocusableComponent();
           // focus toolwindow on the second actionPerformed
           boolean focus = requestFocus || CommandProcessor.getInstance().getCurrentCommand() != null;
@@ -399,7 +404,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusableComponent, true);
           }
         }
-        else {
+        if (!sameElement || !component.isUpToDate()) {
           content.setDisplayName(getTitle(element, true));
           fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
         }
@@ -700,7 +705,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             public void run() {
               String message = ex[0] instanceof IndexNotReadyException
                              ? "Documentation is not available until indices are built."
-                             : CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage());
+                             : CodeInsightBundle.message("javadoc.external.fetch.error.message");
               component.setText(message, null, true);
               callback.setDone();
             }

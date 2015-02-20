@@ -27,6 +27,10 @@
     <projectService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager"
                     serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
+
+    <productivityFeaturesProvider implementation="com.intellij.remoteServer.statistics.CloudFeaturesProvider"/>
+
+    <tipAndTrick file="UploadSshKey.html" feature-id="upload.ssh.key"/>
   </extensions>
   <application-components>
     <component>
@@ -52,5 +56,6 @@
       <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"/>
       <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"/>
     </group>
+    <group id="RemoteServersViewPopup"/>
   </actions>
 </idea-plugin>

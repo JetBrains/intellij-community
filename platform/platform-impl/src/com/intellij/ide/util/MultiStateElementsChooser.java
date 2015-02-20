@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,12 +84,12 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTableModel = new MyTableModel(elementsCanBeMarked);
     myTable = new Table(myTableModel);
     myTable.setShowGrid(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
+    myTable.setIntercellSpacing(JBUI.emptySize());
     myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
-    pane.setPreferredSize(new Dimension(100, 155));
+    pane.setPreferredSize(JBUI.size(100, 155));
     TableColumnModel columnModel = myTable.getColumnModel();
 
     if (elementsCanBeMarked) {

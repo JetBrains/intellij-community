@@ -16,7 +16,10 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -137,23 +140,25 @@ public class RemoteConnectionCredentialsWrapper {
   }
 
   public String getId() {
-    if (isVagrantConnection()) {
-      @NotNull VagrantBasedCredentialsHolder cred = getVagrantCredentials();
+    final Ref<String> result = Ref.create();
+    switchType(new RemoteSdkConnectionAcceptor() {
+      @Override
+      public void ssh(@NotNull RemoteCredentialsHolder cred) {
+        result.set(constructSshCredentialsFullPath(cred));
+      }
 
-      return VAGRANT_PREFIX + cred.getVagrantFolder();
-    }
-    else if (isPlainSshConnection()) {
-      RemoteCredentials cred = getPlainSshCredentials();
+      @Override
+      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
+        result.set(VAGRANT_PREFIX + cred.getVagrantFolder());
+      }
 
-      return constructSshCredentialsFullPath(cred);
-    }
-    else if (isWebDeploymentConnection()) {
-      WebDeploymentCredentialsHolder cred = getWebDeploymentCredentials();
-      return constructSftpCredentialsFullPath(cred.getSshCredentials());
-    }
-    else {
-      throw unknownConnectionType();
-    }
+      @Override
+      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        result.set(constructSftpCredentialsFullPath(cred.getSshCredentials()));
+      }
+    });
+
+    return result.get();
   }
 
   private static String constructSftpCredentialsFullPath(RemoteCredentials cred) {
@@ -183,8 +188,44 @@ public class RemoteConnectionCredentialsWrapper {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof RemoteConnectionCredentialsWrapper) {
-      return getId().equals(((RemoteConnectionCredentialsWrapper)obj).getId());
+      RemoteConnectionCredentialsWrapper w = (RemoteConnectionCredentialsWrapper)obj;
+      if (isVagrantConnection()) {
+        return w.isVagrantConnection() && getVagrantCredentials().equals(w.getVagrantCredentials());
+      }
+      else if (isWebDeploymentConnection()) {
+        return w.isWebDeploymentConnection() && getWebDeploymentCredentials().equals(w.getWebDeploymentCredentials());
+      }
+      else if (isPlainSshConnection()) {
+        return w.isPlainSshConnection() && getPlainSshCredentials().equals(w.getPlainSshCredentials());
+      }
     }
     return false;
+  }
+
+  public String getPresentableDetails(final String interpreterPath) {
+    final Ref<String> result = Ref.create();
+    switchType(new RemoteSdkConnectionAcceptor() {
+      @Override
+      public void ssh(@NotNull RemoteCredentialsHolder cred) {
+        result.set("(" + constructSshCredentialsFullPath(cred) + interpreterPath + ")");
+      }
+
+      @Override
+      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
+        String pathRelativeToHome = FileUtil.getLocationRelativeToUserHome(cred.getVagrantFolder());
+
+        result.set("Vagrant VM " +
+                   (StringUtil.isNotEmpty(cred.getMachineName()) ? "'" + cred.getMachineName() + "' " : "") +
+                   "at " + (pathRelativeToHome.length() < cred.getVagrantFolder().length() ? pathRelativeToHome : cred.getVagrantFolder())
+                   + " (" + interpreterPath + ")");
+      }
+
+      @Override
+      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        result.set("(" + constructSftpCredentialsFullPath(cred.getSshCredentials()) + interpreterPath + ")");
+      }
+    });
+
+    return result.get();
   }
 }

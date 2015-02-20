@@ -23,9 +23,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +171,11 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   private static String getMethodTypes(PsiMethod method) {
     final StringBuilder buf = new StringBuilder();
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      buf.append(", ").append(TypeConversionUtil.erasure(parameter.getType()).getPresentableText()).append(".class");
+      PsiType type = TypeConversionUtil.erasure(parameter.getType());
+      if (type instanceof PsiEllipsisType) {
+        type = new PsiArrayType(((PsiEllipsisType)type).getComponentType());
+      }
+      buf.append(", ").append(type.getPresentableText()).append(".class");
     }
     return buf.toString();
   }

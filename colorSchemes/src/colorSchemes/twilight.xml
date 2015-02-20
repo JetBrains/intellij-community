@@ -1084,12 +1084,7 @@
         <option name="FOREGROUND" value="CF6A4C" />
       </value>
     </option>
-    <option name="OC_FORMAT_TOKEN">
-      <value>
-        <option name="FOREGROUND" value="8F9D6A" />
-      </value>
-    </option>
-    <option name="PROTOCOL_REFERENCE">
+    <option name="OC.PROTOCOL_REFERENCE">
       <value>
         <option name="FOREGROUND" value="9B703F" />
       </value>

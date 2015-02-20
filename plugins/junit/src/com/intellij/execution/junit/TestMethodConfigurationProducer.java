@@ -62,6 +62,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     configuration.beMethodConfiguration(methodLocation);
     configuration.restoreOriginalModule(originalModule);
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
+    configuration.setForkMode(JUnitConfiguration.FORK_NONE);
     return true;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.io;
 
 import com.intellij.CommonBundle;
@@ -110,8 +109,7 @@ public class SafeFileOutputStream extends OutputStream {
     }
 
     if (failed) {
-      throw new IOException(CommonBundle.message("safe.write.failed",
-                                                 myTargetFile, myBackDoorFile.getName()));
+      throw new IOException(CommonBundle.message("safe.write.failed", myTargetFile, myBackDoorFile.getName()));
     }
 
     final File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
@@ -120,8 +118,7 @@ public class SafeFileOutputStream extends OutputStream {
     }
     catch (IOException e) {
       LOG.warn(e);
-      throw new IOException(CommonBundle.message("safe.write.rename.original",
-                                                 myTargetFile, myBackDoorFile.getName()));
+      throw new IOException(CommonBundle.message("safe.write.rename.original", myTargetFile, myBackDoorFile.getName()));
     }
 
     try {
@@ -129,8 +126,7 @@ public class SafeFileOutputStream extends OutputStream {
     }
     catch (IOException e) {
       LOG.warn(e);
-      throw new IOException(CommonBundle.message("safe.write.rename.backup",
-                                                 myTargetFile, oldFile.getName(), myBackDoorFile.getName()));
+      throw new IOException(CommonBundle.message("safe.write.rename.backup", myTargetFile, oldFile.getName(), myBackDoorFile.getName()));
     }
 
     if (myPreserveAttributes) {

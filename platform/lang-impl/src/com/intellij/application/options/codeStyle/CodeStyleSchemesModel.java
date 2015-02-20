@@ -15,14 +15,12 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -188,10 +186,6 @@ public class CodeStyleSchemesModel {
     // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'
     // button processing
     mySettingsToClone.clear();
-  }
-
-  static SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {
-    return ((CodeStyleSchemesImpl) CodeStyleSchemes.getInstance()).getSchemesManager();
   }
 
   public static boolean cannotBeModified(final CodeStyleScheme currentScheme) {

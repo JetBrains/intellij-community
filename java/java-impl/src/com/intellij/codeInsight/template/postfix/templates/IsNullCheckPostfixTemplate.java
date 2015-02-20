@@ -21,10 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class IsNullCheckPostfixTemplate extends SurroundPostfixTemplateBase {
   public IsNullCheckPostfixTemplate() {
-    super("null", "if (expr == null)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
+    super("null", "if (expr == null)", JAVA_PSI_INFO, selectorTopmost(IS_NOT_PRIMITIVE));
   }
 
   @NotNull

@@ -19,8 +19,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -55,6 +57,13 @@ public abstract class XmlNamespaceHelper {
 
   @Nullable
   public String getNamespacePrefix(PsiElement element) {
+    if (element instanceof XmlAttribute) {
+      XmlAttribute attribute = (XmlAttribute)element;
+      String prefix = attribute.getNamespacePrefix();
+      if (!StringUtil.isEmpty(prefix)) {
+        return prefix;
+      }
+    }
     final PsiElement tag = element instanceof XmlTag ? element : element.getParent();
     if (tag instanceof XmlTag) {
       return ((XmlTag)tag).getNamespacePrefix();
