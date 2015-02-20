@@ -612,13 +612,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
 
     protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel(new BorderLayout());
+      final JPanel panel = new JPanel(new BorderLayout());
       panel.add(editor.getComponent(), BorderLayout.CENTER);
       if (!title.isEmpty()) {
-        JTextField f=new JTextField(title);
-        f.setEditable(false);
-        f.setBorder(null);
-        panel.add(f, BorderLayout.SOUTH);
+        panel.add(new JLabel(title), BorderLayout.SOUTH);
       }
       return panel;
     }
