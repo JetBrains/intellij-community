@@ -453,12 +453,6 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
   }
 
-  ant.move(todir: "$path/Resources") {
-    fileset(dir: "$path") {
-      include(name: "*.txt")
-    }
-  }
-
   ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
 })
 
@@ -790,6 +784,8 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
         exclude(name: "MacOS/*")
+        exclude(name: "build.txt")
+        exclude(name: "NOTICE.txt")
         extraBins.each {
           exclude(name: it)
         }
@@ -807,6 +803,13 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         extraBins.each {
           include(name: it)
         }
+      }
+    }
+
+    allPaths.each {
+      zipfileset(dir: it, prefix: "$zipRoot/Resources") {
+        include(name: "build.txt")
+        include(name: "NOTICE.txt")
       }
     }
 
