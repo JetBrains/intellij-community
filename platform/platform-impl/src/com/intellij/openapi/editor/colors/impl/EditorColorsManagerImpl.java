@@ -56,7 +56,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, NamedComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
+  private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
 
   private final EventDispatcher<EditorColorsListener> myListeners = EventDispatcher.create(EditorColorsListener.class);
 
@@ -76,9 +76,49 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(
-      FILE_SPEC,
-      new MySchemeProcessor(), RoamingType.PER_USER);
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
+      @NotNull
+      @Override
+      public EditorColorsSchemeImpl readScheme(@NotNull Element element) throws InvalidDataException {
+        return loadSchemeFromDocument(element, true);
+      }
+
+      @Override
+      public Element writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
+        Element root = new Element(SCHEME_NODE_NAME);
+        try {
+          scheme.writeExternal(root);
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
+          return null;
+        }
+
+        return root;
+      }
+
+      @NotNull
+      @Override
+      public State getState(@NotNull EditorColorsSchemeImpl scheme) {
+        return scheme instanceof ReadOnlyColorsScheme ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
+      }
+
+      @Override
+      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+        fireChanges(mySchemesManager.getCurrentScheme());
+      }
+
+      @NotNull
+      @Override
+      public String getSchemeExtension() {
+        return FILE_EXT;
+      }
+
+      @Override
+      public boolean isUpgradeNeeded() {
+        return true;
+      }
+    }, RoamingType.PER_USER);
 
     addDefaultSchemes();
 
@@ -184,10 +224,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return scheme;
   }
 
-  // -------------------------------------------------------------------------
-  // Schemes manipulation routines
-  // -------------------------------------------------------------------------
-
   @Override
   public void addColorsScheme(@NotNull EditorColorsScheme scheme) {
     if (!isDefaultScheme(scheme) && scheme.getName().trim().length() > 0) {
@@ -207,10 +243,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       mySchemesManager.addNewScheme(defaultScheme, true);
     }
   }
-
-  // -------------------------------------------------------------------------
-  // Getters & Setters
-  // -------------------------------------------------------------------------
 
   @NotNull
   @Override
@@ -267,10 +299,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   private void fireChanges(EditorColorsScheme scheme) {
     myListeners.getMulticaster().globalSchemeChange(scheme);
   }
-
-  // -------------------------------------------------------------------------
-  // Routines responsible for loading & saving colors schemes.
-  // -------------------------------------------------------------------------
 
   private static File getColorsDir(boolean create) {
     @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "colors";
@@ -367,49 +395,5 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   @NotNull
   public String getComponentName() {
     return "EditorColorsManagerImpl";
-  }
-
-  private final class MySchemeProcessor extends BaseSchemeProcessor<EditorColorsSchemeImpl> implements SchemeExtensionProvider {
-    @NotNull
-    @Override
-    public EditorColorsSchemeImpl readScheme(@NotNull Element element) throws InvalidDataException {
-      return loadSchemeFromDocument(element, true);
-    }
-
-    @Override
-    public Element writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
-      Element root = new Element(SCHEME_NODE_NAME);
-      try {
-        scheme.writeExternal(root);
-      }
-      catch (WriteExternalException e) {
-        LOG.error(e);
-        return null;
-      }
-
-      return root;
-    }
-
-    @NotNull
-    @Override
-    public State getState(@NotNull EditorColorsSchemeImpl scheme) {
-      return scheme instanceof ReadOnlyColorsScheme ? State.NON_PERSISTENT : State.POSSIBLY_CHANGED;
-    }
-
-    @Override
-    public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-      fireChanges(mySchemesManager.getCurrentScheme());
-    }
-
-    @NotNull
-    @Override
-    public String getSchemeExtension() {
-      return FILE_EXT;
-    }
-
-    @Override
-    public boolean isUpgradeNeeded() {
-      return true;
-    }
   }
 }

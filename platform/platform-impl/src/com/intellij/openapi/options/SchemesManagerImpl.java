@@ -69,7 +69,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private VirtualFile myDir;
 
   private String mySchemeExtension = DirectoryStorageData.DEFAULT_EXT;
-  private boolean myUpgradeExtension;
+  private boolean myUpdateExtension;
 
   private final Set<String> myFilesToDelete = new THashSet<String>();
 
@@ -85,7 +85,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myIoDir = baseDir;
     if (processor instanceof SchemeExtensionProvider) {
       mySchemeExtension = ((SchemeExtensionProvider)processor).getSchemeExtension();
-      myUpgradeExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
+      myUpdateExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
     }
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
@@ -316,15 +316,17 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private boolean canRead(@NotNull VirtualFile file) {
-    if (!file.isDirectory()) {
-      if (myUpgradeExtension && !DirectoryStorageData.DEFAULT_EXT.equals(mySchemeExtension) && DirectoryStorageData.isStorageFile(file)) {
-        return myDir.findChild(file.getNameSequence() + mySchemeExtension) == null;
-      }
-      else if (StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension)) {
-        return true;
-      }
+    if (file.isDirectory()) {
+      return false;
     }
-    return false;
+
+    if (myUpdateExtension && !DirectoryStorageData.DEFAULT_EXT.equals(mySchemeExtension) && DirectoryStorageData.isStorageFile(file)) {
+      // read file.DEFAULT_EXT only if file.CUSTOM_EXT doesn't exists
+      return myDir.findChild(file.getNameSequence() + mySchemeExtension) == null;
+    }
+    else {
+      return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension);
+    }
   }
 
   @Nullable
