@@ -131,7 +131,7 @@ public abstract class JavaCoverageEngineExtension {
   /**
    * Returns the list of tree nodes to show in the Coverage view for a node that has the specified value.
 
-   * @param val the value of the parent node (normally a PsiPackage, PsiFile or PsiClass)
+   * @param val the value of the parent node (normally a PsiFile or PsiClass)
    * @return the list of nodes to display, or null if the default logic for calculating the list of child nodes should be used.
    */
   public List<AbstractTreeNode> getCoverageViewChildrenNodes(Object val) {

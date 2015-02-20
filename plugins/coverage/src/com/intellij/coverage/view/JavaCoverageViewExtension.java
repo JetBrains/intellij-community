@@ -192,7 +192,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(rootPackage.getProject());
     final PsiPackage[] subPackages = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage[]>() {
       public PsiPackage[] compute() {
-        return rootPackage.getSubPackages(searchScope); 
+        return rootPackage.getSubPackages(searchScope);
       }
     });
     for (final PsiPackage aPackage : subPackages) {
@@ -222,18 +222,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
-
-      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-        List<AbstractTreeNode> childNodes = extension.getCoverageViewChildrenNodes(val);
-        if (childNodes != null) {
-          for (AbstractTreeNode childNode : childNodes) {
-            childNode.setParent(node);
-          }
-          return childNodes;
-        }
-      }
-
-      if (val instanceof PsiClass) return Collections.emptyList();
 
       //append package classes
       if (val instanceof PsiPackage) {
@@ -278,6 +266,19 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         else if (!myStateBean.myFlattenPackages) {
           collectSubPackages(children, (PsiPackage)val);
         }
+      } else {
+        //enable custom processing for non-package nodes only(to preserve package structure)
+        for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+          List<AbstractTreeNode> extChildren = extension.getCoverageViewChildrenNodes(val);
+          if (extChildren != null) {
+            //found the exact extension that should process the node
+            children = extChildren;
+          }
+        }
+
+        if (val instanceof PsiClass && children.isEmpty()) {
+          return Collections.emptyList();
+        }
       }
       if (node instanceof CoverageListRootNode) {
         for (CoverageSuite suite : mySuitesBundle.getSuites()) {
@@ -306,8 +307,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public ColumnInfo[] createColumnInfos() {
     return new ColumnInfo[]{
-      new ElementColumnInfo(), 
-      new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean), 
+      new ElementColumnInfo(),
+      new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean),
       new PercentageCoverageColumnInfo(2, "Method, %", mySuitesBundle, myStateBean),
       new PercentageCoverageColumnInfo(3, "Line, %", mySuitesBundle, myStateBean)
     };
