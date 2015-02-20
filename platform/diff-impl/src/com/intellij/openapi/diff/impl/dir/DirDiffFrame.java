@@ -21,9 +21,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
-
-import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,7 +32,7 @@ public class DirDiffFrame extends FrameWrapper {
 
   public DirDiffFrame(Project project, DirDiffTableModel model) {
     super(project, "DirDiffDialog");
-    setSize(new Dimension(800, 600));
+    setSize(JBUI.size(800, 600));
     setTitle(model.getTitle());
     myPanel = new DirDiffPanel(model, new DirDiffWindow(this));
     Disposer.register(this, myPanel);

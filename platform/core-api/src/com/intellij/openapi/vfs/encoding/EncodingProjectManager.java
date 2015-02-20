@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
-import java.util.Map;
 
 /**
  * @author cdr
@@ -29,11 +27,6 @@ public abstract class EncodingProjectManager extends EncodingManager {
   public static EncodingProjectManager getInstance(Project project) {
     return project.getComponent(EncodingProjectManager.class);
   }
-
-  @NotNull
-  public abstract Map<VirtualFile, Charset> getAllMappings();
-
-  public abstract void setMapping(@NotNull Map<VirtualFile, Charset> result);
 
   /**
    * @return Project encoding name (configured in Settings|File Encodings|Project Encoding) or empty string if it's configured to "System Default"

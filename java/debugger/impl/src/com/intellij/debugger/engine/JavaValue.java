@@ -236,17 +236,19 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             if (type != null) {
               final String typeName = type.componentTypeName();
               if (TypeConversionUtil.isPrimitive(typeName) || CommonClassNames.JAVA_LANG_STRING.equals(typeName)) {
-                int max = CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10;
-                final List<Value> values = value.getValues();
+                int size = value.length();
+                int max = Math.min(size, CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10);
+                //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
+                final List<Value> values = value.getValues(0, max);
                 int i = 0;
                 final List<String> vals = new ArrayList<String>(max);
-                while (i < values.size() && i <= max) {
+                while (i < values.size()) {
                   vals.add(StringUtil.first(values.get(i).toString(), 15, true));
                   i++;
                 }
                 String more = "";
-                if (vals.size() < values.size()) {
-                  more = ", + " + (values.size() - vals.size()) + " more";
+                if (vals.size() < size) {
+                  more = ", + " + (size - vals.size()) + " more";
                 }
 
                 renderer.renderValue("{" + StringUtil.join(vals, ", ") + more + "}");

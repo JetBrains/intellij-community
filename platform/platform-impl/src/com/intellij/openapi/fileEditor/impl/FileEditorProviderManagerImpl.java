@@ -50,10 +50,8 @@ import java.util.*;
 )
 public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
-  private static final FileEditorProvider[] EMPTY_ARRAY = new FileEditorProvider[0];
-  private static final String SEPARATOR = ",";
 
-  private final List<FileEditorProvider> myProviders = new ArrayList<FileEditorProvider>();
+  private final List<FileEditorProvider> myProviders = ContainerUtil.createConcurrentList();
 
   public FileEditorProviderManagerImpl(@NotNull FileEditorProvider[] providers) {
     Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
@@ -79,7 +77,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
   @Override
   @NotNull
-  public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<FileEditorProvider>();
     boolean doNotShowTextEditor = false;
@@ -116,7 +114,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
   @Override
   @Nullable
-  public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId) {
+  public FileEditorProvider getProvider(@NotNull String editorTypeId) {
     for (FileEditorProvider provider : myProviders) {
       if (provider.getEditorTypeId().equals(editorTypeId)) {
         return provider;
@@ -168,7 +166,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   }
 
   private static String computeKey(FileEditorProvider[] providers) {
-    return StringUtil.join(ContainerUtil.map(providers, EDITOR_PROVIDER_STRING_FUNCTION), SEPARATOR);
+    return StringUtil.join(ContainerUtil.map(providers, EDITOR_PROVIDER_STRING_FUNCTION), ",");
   }
 
   @Nullable

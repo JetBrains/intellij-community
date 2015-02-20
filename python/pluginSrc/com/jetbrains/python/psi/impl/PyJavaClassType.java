@@ -163,4 +163,24 @@ public class PyJavaClassType implements PyClassLikeType {
   public PsiClass getPsiClass() {
     return myClass;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PyJavaClassType)) return false;
+
+    PyJavaClassType type = (PyJavaClassType)o;
+
+    if (myDefinition != type.myDefinition) return false;
+    if (myClass != null ? !myClass.equals(type.myClass) : type.myClass != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myClass != null ? myClass.hashCode() : 0;
+    result = 31 * result + (myDefinition ? 1 : 0);
+    return result;
+  }
 }

@@ -9,6 +9,9 @@
 # 3. DEV_IDEA_HOME points to the directory of the project you built at step 1
 # 4. You quit IntelliJ IDEA
 
+if [ ! -f "$WORK_IDEA_HOME/bin/inspect.sh" -a -f "$WORK_IDEA_HOME/Contents/bin/inspect.sh" ]; then
+  WORK_IDEA_HOME="$WORK_IDEA_HOME/Contents"
+fi
 if [ ! -f "$WORK_IDEA_HOME/bin/inspect.sh" ]; then
   echo "WORK_IDEA_HOME must be defined and point to build you're updating."
   exit 1

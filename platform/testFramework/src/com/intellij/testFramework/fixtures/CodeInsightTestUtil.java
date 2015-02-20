@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.ui.UIUtil;
@@ -195,12 +194,12 @@ public class CodeInsightTestUtil {
   }
 
   @TestOnly
-  public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, Editor editor, PsiElement elementAtCaret) {
+  public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
     Project project = editor.getProject();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
     try {
       templateManager.setTemplateTesting(true);
-      InplaceRefactoring renamer = handler.doRename(elementAtCaret, editor, null);
+      handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
       }

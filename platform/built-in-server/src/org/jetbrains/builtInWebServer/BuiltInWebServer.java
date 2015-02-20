@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,15 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.UriUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtf8Writer;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -34,6 +38,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.stream.ChunkedStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver;
+import org.jetbrains.builtInWebServer.ssi.SsiProcessor;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.FileResponses;
 import org.jetbrains.io.Responses;
@@ -42,6 +48,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import static org.jetbrains.io.Responses.addKeepAliveIfNeed;
 
 public final class BuiltInWebServer extends HttpRequestHandler {
   static final Logger LOG = Logger.getInstance(BuiltInWebServer.class);
@@ -59,6 +67,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       for (VirtualFile child : children) {
         if (!child.isDirectory()) {
           String name = child.getName();
+          //noinspection IfStatementWithIdenticalBranches
           if (name.equals(preferredName)) {
             return child;
           }
@@ -81,7 +90,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
 
   @Override
   public boolean process(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
-    String host = HttpHeaders.getHost(request);
+    String host = request.headers().get(HttpHeaderNames.HOST);
     if (StringUtil.isEmpty(host)) {
       return false;
     }
@@ -178,13 +187,23 @@ public final class BuiltInWebServer extends HttpRequestHandler {
   }
 
   static final class StaticFileHandler extends WebServerFileHandler {
+    private SsiProcessor ssiProcessor;
+
     @Override
     public boolean process(@NotNull VirtualFile file,
                            @NotNull CharSequence canonicalRequestPath,
                            @NotNull Project project,
                            @NotNull FullHttpRequest request,
-                           @NotNull Channel channel) throws IOException {
+                           @NotNull Channel channel,
+                           boolean isCustomHost) throws IOException {
       if (file.isInLocalFileSystem()) {
+        CharSequence nameSequence = file.getNameSequence();
+        //noinspection SpellCheckingInspection
+        if (StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtml") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".stm") || StringUtilRt.endsWithIgnoreCase(nameSequence, ".shtm")) {
+          processSsi(file, canonicalRequestPath, project, request, channel, isCustomHost);
+          return true;
+        }
+
         File ioFile = VfsUtilCore.virtualToIoFile(file);
         if (hasAccess(ioFile)) {
           FileResponses.sendFile(request, channel, ioFile);
@@ -199,9 +218,9 @@ public final class BuiltInWebServer extends HttpRequestHandler {
           return true;
         }
 
-        boolean keepAlive = Responses.addKeepAliveIfNeed(response, request);
+        boolean keepAlive = addKeepAliveIfNeed(response, request);
         if (request.method() != HttpMethod.HEAD) {
-          HttpHeaders.setContentLength(response, file.getLength());
+          HttpHeaderUtil.setContentLength(response, file.getLength());
         }
 
         channel.write(response);
@@ -216,6 +235,56 @@ public final class BuiltInWebServer extends HttpRequestHandler {
         }
       }
       return true;
+    }
+
+    private void processSsi(@NotNull VirtualFile file,
+                            @NotNull CharSequence canonicalRequestPath,
+                            @NotNull Project project,
+                            @NotNull FullHttpRequest request, @NotNull Channel channel, boolean isCustomHost) throws IOException {
+      String path = PathUtilRt.getParentPath(canonicalRequestPath.toString());
+      if (!isCustomHost) {
+        // remove project name - SSI resolves files only inside current project
+        path = path.substring(path.indexOf('/', 1) + 1);
+      }
+
+      if (ssiProcessor == null) {
+        ssiProcessor = new SsiProcessor(false);
+      }
+
+      ByteBuf buffer = channel.alloc().ioBuffer();
+      boolean keepAlive;
+      boolean releaseBuffer = true;
+      try {
+        long lastModified = ssiProcessor.process(new SsiExternalResolver(project, request, path, file.getParent()),
+                                                 VfsUtilCore.loadText(file), file.getTimeStamp(), new ByteBufUtf8Writer(buffer));
+
+        HttpResponse response = FileResponses.prepareSend(request, channel, lastModified, file.getPath());
+        if (response == null) {
+          return;
+        }
+
+        keepAlive = addKeepAliveIfNeed(response, request);
+        if (request.method() != HttpMethod.HEAD) {
+          HttpHeaderUtil.setContentLength(response, buffer.readableBytes());
+        }
+
+        channel.write(response);
+
+        if (request.method() != HttpMethod.HEAD) {
+          releaseBuffer = false;
+          channel.write(buffer);
+        }
+      }
+      finally {
+        if (releaseBuffer) {
+          buffer.release();
+        }
+      }
+
+      ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+      if (!keepAlive) {
+        future.addListener(ChannelFutureListener.CLOSE);
+      }
     }
 
     private static boolean hasAccess(File result) {

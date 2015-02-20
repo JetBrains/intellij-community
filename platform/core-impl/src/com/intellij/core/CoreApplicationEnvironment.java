@@ -20,6 +20,7 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
@@ -73,6 +74,7 @@ import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -310,6 +312,10 @@ public class CoreApplicationEnvironment {
 
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
     registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+  }
+
+  public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
+    PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
   }
 
   @NotNull

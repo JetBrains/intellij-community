@@ -37,6 +37,7 @@ public class TwosideContentPanel extends JPanel {
       mySplitter = new DiffSplitter();
       mySplitter.setFirstComponent(new MyPanel(editor1, titleComponents.get(0)));
       mySplitter.setSecondComponent(new MyPanel(editor2, titleComponents.get(1)));
+      mySplitter.setHonorComponentsMinimumSize(false);
       add(mySplitter, BorderLayout.CENTER);
     }
     else {

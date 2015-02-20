@@ -477,7 +477,7 @@
 
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
 
-    <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider"/>
+    <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
 
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>

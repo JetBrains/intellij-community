@@ -4,7 +4,7 @@ class C {
 
   public static void main(A a) {
     switch (a) {
-      case Abc:<caret>
+        case Abc:<caret>
 
     }
   }

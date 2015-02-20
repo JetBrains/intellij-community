@@ -135,10 +135,9 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     return null;
   }
 
-  @Nullable
   @Override
-  public ScriptRegExpSupport getScriptRegExpSupport() {
-    return null;
+  public boolean hasScriptRegExpSupport() {
+    return false;
   }
 
   @NotNull

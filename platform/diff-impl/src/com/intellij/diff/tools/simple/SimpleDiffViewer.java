@@ -661,7 +661,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return side.isLeft() ? AllIcons.Diff.Arrow : AllIcons.Diff.ArrowRight;
+      return side.isLeft() ? AllIcons.Diff.ArrowRight : AllIcons.Diff.Arrow;
     }
 
     @Override
@@ -680,7 +680,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return side.isLeft() ? AllIcons.Diff.ArrowLeftDown : AllIcons.Diff.ArrowRightDown;
+      return side.isLeft() ? AllIcons.Diff.ArrowRightDown : AllIcons.Diff.ArrowLeftDown;
     }
 
     @Override

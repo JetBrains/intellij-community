@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   public void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder> aClass, @NotNull String implClassName) {
     try {
       final Class implClass = Class.forName(implClassName);
-      assert aClass.isAssignableFrom(implClass);
+      Assert.assertTrue(aClass.isAssignableFrom(implClass));
       registerFixtureBuilder(aClass, implClass);
     }
     catch (ClassNotFoundException e) {

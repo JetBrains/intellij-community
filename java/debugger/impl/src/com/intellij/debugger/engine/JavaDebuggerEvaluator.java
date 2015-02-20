@@ -26,6 +26,7 @@ import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -104,14 +105,16 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
     PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
       @Override
       public void run() {
-        PsiElement elementAtCursor = DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
-        if (elementAtCursor == null) {
-          return;
-        }
-        Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
-        if (pair != null) {
-          currentRange.set(pair.getSecond());
-        }
+        try {
+          PsiElement elementAtCursor = DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
+          if (elementAtCursor == null) {
+            return;
+          }
+          Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
+          if (pair != null) {
+            currentRange.set(pair.getSecond());
+          }
+        } catch (IndexNotReadyException ignored) {}
       }
     });
     return currentRange.get();

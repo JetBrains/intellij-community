@@ -310,11 +310,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              final Icon icon = descriptor.getIcon();
-
               boolean alive = false;
               String toolWindowId = executor.getToolWindowId();
               ContentManager manager = myToolwindowIdToContentManagerMap.get(toolWindowId);
+              if (manager == null) return;
               for (Content content : manager.getContents()) {
                 RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
                 if (descriptor != null) {
@@ -325,17 +324,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                   }
                 }
               }
+              Icon base = myToolwindowIdToBaseIconMap.get(toolWindowId);
+              toolWindow.setIcon(alive ? getLiveIndicator(base) : base);
 
-              final boolean finalAlive = alive;
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  toolWindow.setIcon(finalAlive
-                                     ? getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId()))
-                                     : myToolwindowIdToBaseIconMap.get(executor.getToolWindowId()));
-                  content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
-                }
-              });
+              Icon icon = descriptor.getIcon();
+              content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
             }
           });
         }

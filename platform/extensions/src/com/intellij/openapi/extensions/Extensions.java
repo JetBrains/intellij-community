@@ -18,20 +18,19 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
   private static LogProvider ourLogger = new SimpleLogProvider();
-  private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
+  private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
+  private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();
 
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
 
@@ -43,14 +42,6 @@ public class Extensions {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
     return rootArea;
-  }
-
-  public static void setSynchronized() {
-    assert ourAreaInstance2area.isEmpty();
-    assert ourAreaClass2Configuration.isEmpty();
-
-    ourAreaInstance2area = new ConcurrentHashMap<AreaInstance, ExtensionsAreaImpl>();
-    ourAreaClass2Configuration = new ConcurrentHashMap<String, AreaClassConfiguration>();
   }
 
   @NotNull

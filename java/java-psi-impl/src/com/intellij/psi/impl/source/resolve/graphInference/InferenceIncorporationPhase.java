@@ -21,9 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 
 import java.util.*;
@@ -283,52 +280,17 @@ public class InferenceIncorporationPhase {
    * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
    */
   private boolean upUp(List<PsiType> upperBounds) {
-    return findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
+    return mySession.findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
       @Override
       public boolean process(Pair<PsiType, PsiType> pair) {
         final PsiType sType = pair.first;
         final PsiType tType = pair.second;
-        if (!mySession.isProperType(sType) && !mySession.isProperType(tType)) {
-          if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
-            addConstraint(new TypeEqualityConstraint(sType, tType));
-          }
+        if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
+          addConstraint(new TypeEqualityConstraint(sType, tType));
         }
         return true;
       }
     });
-  }
-
-  public static boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds, Processor<Pair<PsiType, PsiType>> processor) {
-    for (int i = 0; i < upperBounds.size(); i++) {
-      final PsiType sBound = upperBounds.get(i);
-      final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
-      if (sClass == null) continue;
-      final LinkedHashSet<PsiClass> superClasses = InheritanceUtil.getSuperClasses(sClass);
-      superClasses.add(sClass);
-      for (int j = i + 1; j < upperBounds.size(); j++) {
-        final PsiType tBound = upperBounds.get(j);
-        final PsiClass tClass = PsiUtil.resolveClassInClassTypeOnly(tBound);
-        if (tClass != null) {
-
-          final LinkedHashSet<PsiClass> tSupers = InheritanceUtil.getSuperClasses(tClass);
-          tSupers.add(tClass);
-          tSupers.retainAll(superClasses);
-
-          for (PsiClass gClass : tSupers) {
-            final PsiSubstitutor sSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)sBound);
-            final PsiSubstitutor tSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)tBound);
-            for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
-              final PsiType sType = sSubstitutor.substitute(typeParameter);
-              final PsiType tType = tSubstitutor.substitute(typeParameter);
-              if (!processor.process(Pair.create(sType, tType))) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-    }
-    return false;
   }
 
   private void addConstraint(ConstraintFormula constraint) {

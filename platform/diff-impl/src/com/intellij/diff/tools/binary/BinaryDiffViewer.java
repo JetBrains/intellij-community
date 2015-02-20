@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -451,6 +452,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
       myBusySpinner.setVisible(false);
 
       add(myBusySpinner, BorderLayout.WEST);
+      setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
     }
 
     public void setBusy(boolean busy) {

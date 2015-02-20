@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ import java.awt.event.MouseEvent;
  */
 public class FramelessNotificationPopup {
   private JComponent myContent;
-  public static final Dimension myPreferredContentSize = new Dimension(300, 100);
+  public static final Dimension myPreferredContentSize = JBUI.size(300, 100);
   private JBPopup myPopup;
   private int myTimerTick;
   private Color myBackgroud;

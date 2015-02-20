@@ -26,7 +26,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
   }
 
   @Override
-  public boolean canCreate(@NotNull Project project, @NotNull Change change) {
+  public boolean canCreate(@Nullable Project project, @NotNull Change change) {
     return change.isPhantom();
   }
 

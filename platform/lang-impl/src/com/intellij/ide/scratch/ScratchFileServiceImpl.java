@@ -17,13 +17,13 @@ package com.intellij.ide.scratch;
 
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -37,7 +37,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,8 +51,6 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -304,31 +301,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     }
   }
 
-
-  @Nullable
-  @Override
-  public VirtualFile createScratchFile(@NotNull Project project, @NotNull final Language language, @NotNull final String initialContent) {
-    final String fileName = "scratch";
-    RunResult<VirtualFile> result =
-      new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
-        @Override
-        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-          VirtualFile dir = VfsUtil.createDirectories(getRootPath(ScratchRootType.getInstance()));
-          VirtualFile file = VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, "");
-          getScratchesMapping().setMapping(file, language);
-          VfsUtil.saveText(file, initialContent);
-          result.setResult(file);
-        }
-      }.execute();
-    if (result.hasException()) {
-      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
-                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-      return null;
-    }
-    updateHistory(project, language);
-    return result.getResultObject();
-  }
-
   @Override
   public VirtualFile findFile(@NotNull final RootType rootType, @NotNull final String pathName, Option option) throws IOException {
     String fullPath = getRootPath(rootType) + "/" + pathName;
@@ -353,20 +325,5 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     finally {
       token.finish();
     }
-  }
-
-  private static void updateHistory(@NotNull Project project, @NotNull Language language) {
-    String[] values = PropertiesComponent.getInstance(project).getValues(ScratchFileService.class.getName());
-    List<String> lastUsed = ContainerUtil.newArrayListWithCapacity(5);
-    lastUsed.add(language.getID());
-    if (values != null) {
-      for (String value : values) {
-        if (!lastUsed.contains(value)) {
-          lastUsed.add(value);
-        }
-        if (lastUsed.size() == 5) break;
-      }
-    }
-    PropertiesComponent.getInstance(project).setValues(ScratchFileService.class.getName(), ArrayUtil.toStringArray(lastUsed));
   }
 }

@@ -355,7 +355,7 @@ public class GitHistoryUtils {
   private static GitLineHandler getLogHandler(Project project, VirtualFile root, GitLogParser parser, FilePath path, String lastCommit, String... parameters) {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setStdoutSuppressed(true);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", "--full-history", "--simplify-merges", lastCommit);
     if (parameters != null && parameters.length > 0) {
       h.addParameters(parameters);
     }

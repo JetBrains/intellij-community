@@ -72,7 +72,7 @@ public class DefaultStateSerializer {
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  public static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws StateStorageException,XmlSerializationException {
+  public static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws XmlSerializationException {
     if (stateElement == null) return mergeInto;
 
     if (stateClass.equals(Element.class)) {

@@ -25,6 +25,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ChangeDiffRequestProvider {
   ExtensionPointName<ChangeDiffRequestProvider> EP_NAME =
@@ -33,7 +34,7 @@ public interface ChangeDiffRequestProvider {
   @NotNull
   ThreeState isEquals(@NotNull Change change1, @NotNull Change change2);
 
-  boolean canCreate(@NotNull Project project, @NotNull Change change);
+  boolean canCreate(@Nullable Project project, @NotNull Change change);
 
   @NotNull
   DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,

@@ -126,7 +126,11 @@ public class ConsoleViewUtil {
 
       @Override
       public Font getFont(EditorFontType key) {
-        return super.getFont(EditorFontType.getConsoleType(key));
+        Font font = super.getFont(EditorFontType.getConsoleType(key));
+        if (font == null) {
+          return super.getFont(key);
+        }
+        return font;
       }
 
       @Override
@@ -195,12 +199,16 @@ public class ConsoleViewUtil {
 
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
-      TextAttributesKey[] keys = highlighter.getTokenHighlights(tokenType);
-      ConsoleViewContentType type = keys.length == 0 ? ConsoleViewContentType.NORMAL_OUTPUT :
-                                    ConsoleViewContentType.getConsoleViewType(ColorCache.keys.get(Arrays.asList(keys)));
-      console.print(lexer.getTokenText(), type);
+      console.print(lexer.getTokenText(), getContentTypeForToken(tokenType, highlighter));
       lexer.advance();
     }
+  }
+
+  @NotNull
+  public static ConsoleViewContentType getContentTypeForToken(@NotNull IElementType tokenType, @NotNull SyntaxHighlighter highlighter) {
+    TextAttributesKey[] keys = highlighter.getTokenHighlights(tokenType);
+    return keys.length == 0 ? ConsoleViewContentType.NORMAL_OUTPUT :
+           ConsoleViewContentType.getConsoleViewType(ColorCache.keys.get(Arrays.asList(keys)));
   }
 
   public static void printAsFileType(@NotNull ConsoleView console, @NotNull String text, @NotNull FileType fileType) {

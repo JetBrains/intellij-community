@@ -50,7 +50,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
 
   @Override
   protected String[] suggestNames(boolean replaceAll, PsiVariable variable) {
-    final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+    final PsiType defaultType = getType();
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
                                 : null;

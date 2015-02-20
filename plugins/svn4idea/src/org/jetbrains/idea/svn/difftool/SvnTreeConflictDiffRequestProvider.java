@@ -38,7 +38,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
   }
 
   @Override
-  public boolean canCreate(@NotNull Project project, @NotNull Change change) {
+  public boolean canCreate(@Nullable Project project, @NotNull Change change) {
     return change instanceof ConflictedSvnChange && ((ConflictedSvnChange)change).getConflictState().isTree();
   }
 

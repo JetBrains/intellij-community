@@ -257,8 +257,6 @@ public class StartupUtil {
   }
 
   private static void fixProcessEnvironment(Logger log) {
-    // winp should not unpack dlls into parent directory
-    System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     if (!Main.isCommandLine()) {
       System.setProperty("__idea.mac.env.lock", "unlocked");
     }
@@ -309,6 +307,11 @@ public class StartupUtil {
       catch (Throwable t) {
         log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
       }
+    }
+
+    if (SystemInfo.isWindows) {
+      // WinP should not unpack .dll files into parent directory
+      System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     }
   }
 

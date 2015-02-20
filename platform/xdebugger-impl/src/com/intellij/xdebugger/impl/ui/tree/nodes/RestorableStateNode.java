@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,15 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.xdebugger.XNamedTreeNode;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 /**
  * @author nik
  */
-public interface RestorableStateNode extends TreeNode {
-  @Nullable
-  String getName();
-
+public interface RestorableStateNode extends XNamedTreeNode {
   @Nullable
   String getRawValue();
 

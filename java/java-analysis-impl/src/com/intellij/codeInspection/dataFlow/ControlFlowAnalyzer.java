@@ -1330,11 +1330,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     startElement(expression);
-    PsiElement[] children = expression.getChildren();
-    for (PsiElement child : children) {
-      child.accept(this);
-    }
-    pushUnknown();
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), expression));
     finishElement(expression);
   }
 

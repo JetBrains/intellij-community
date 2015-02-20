@@ -188,4 +188,8 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   }
 
   protected abstract void doConnect(SC configuration, CloudAgentLogger logger);
+
+  public ServerType<?> getCloudType() {
+    return myServerType;
+  }
 }

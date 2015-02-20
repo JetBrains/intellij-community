@@ -149,7 +149,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void scrollToEnd() {
     if (myEditor == null) return;
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+    EditorUtil.scrollToTheEnd(myEditor);
   }
 
   public void foldImmediately() {
@@ -469,32 +469,36 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     if (myEditor == null) {
-      myEditor = createEditor();
-      registerConsoleEditorActions();
-      myEditor.getScrollPane().setBorder(null);
-      myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
+      initConsoleEditor();
       requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
-      myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
-        @Override
-        public void visibleAreaChanged(VisibleAreaEvent e) {
-          // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
-          // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
-          // are soft wrapped. We want to update viewport position then when the console becomes visible.
-          final Rectangle oldRectangle = e.getOldRectangle();
-          if (oldRectangle == null) {
-            return;
-          }
-
-          Editor myEditor = e.getEditor();
-          if (oldRectangle.height <= 0 && e.getNewRectangle().height > 0 && myEditor.getSoftWrapModel().isSoftWrappingEnabled()
-              && myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength()) {
-            EditorUtil.scrollToTheEnd(myEditor);
-          }
-        }
-      });
     }
     return this;
+  }
+
+  protected void initConsoleEditor() {
+    myEditor = createConsoleEditor();
+    registerConsoleEditorActions();
+    myEditor.getScrollPane().setBorder(null);
+    myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
+    myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
+      @Override
+      public void visibleAreaChanged(VisibleAreaEvent e) {
+        // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
+        // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
+        // are soft wrapped. We want to update viewport position then when the console becomes visible.
+        final Rectangle oldRectangle = e.getOldRectangle();
+        if (oldRectangle == null) {
+          return;
+        }
+
+        Editor myEditor = e.getEditor();
+        if (oldRectangle.height <= 0 && e.getNewRectangle().height > 0 && myEditor.getSoftWrapModel().isSoftWrappingEnabled()
+            && myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength()) {
+          EditorUtil.scrollToTheEnd(myEditor);
+        }
+      }
+    });
   }
 
   protected JComponent createCenterComponent() {
@@ -514,7 +518,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor = null;
       myHyperlinks = null;
     }
-    }
+  }
 
   private void cancelAllFlushRequests() {
     synchronized (myCurrentRequests) {
@@ -847,11 +851,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     printHyperlink(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
   }
 
-  private EditorEx createEditor() {
+  private EditorEx createConsoleEditor() {
     return ApplicationManager.getApplication().runReadAction(new Computable<EditorEx>() {
       @Override
       public EditorEx compute() {
-        EditorEx editor = createRealEditor();
+        EditorEx editor = doCreateConsoleEditor();
         editor.addEditorMouseListener(new EditorPopupHandler() {
           @Override
           public void invokePopup(final EditorMouseEvent event) {
@@ -907,7 +911,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  protected EditorEx createRealEditor() {
+  protected EditorEx doCreateConsoleEditor() {
     return ConsoleViewUtil.setupConsoleEditor(myProject, true, false);
   }
 

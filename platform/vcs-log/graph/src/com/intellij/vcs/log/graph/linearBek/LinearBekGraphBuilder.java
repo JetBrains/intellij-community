@@ -145,7 +145,7 @@ class LinearBekGraphBuilder {
             }
             else {
               if (next > leftChild + MAGIC_SET_SIZE) {
-                fragment.addTail(upNodeIndex);
+                if (!fragment.hasTailEdge(upNodeIndex) && !fragment.isBody(upNodeIndex)) return null;
               }
               else {
                 if (magicSet == null) {
@@ -308,6 +308,14 @@ class LinearBekGraphBuilder {
 
     public int getParent() {
       return myParent;
+    }
+
+    public boolean hasTailEdge(Integer index) {
+      return !myTailEdges.get(index).isEmpty();
+    }
+
+    public boolean isBody(Integer index) {
+      return myBlockBody.contains(index);
     }
   }
 

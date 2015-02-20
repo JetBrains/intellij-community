@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -663,12 +664,17 @@ public class TemplateState implements Disposable {
           calcedSegments.clear();
           for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
             String variableName = myTemplate.getVariableNameAt(i);
-            int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+            final int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
             if (segmentNumber < 0) continue;
-            Expression expression = myTemplate.getExpressionAt(i);
-            Expression defaultValue = myTemplate.getDefaultValueAt(i);
+            final Expression expression = myTemplate.getExpressionAt(i);
+            final Expression defaultValue = myTemplate.getDefaultValueAt(i);
             String oldValue = getVariableValueText(variableName);
-            recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+            DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+              @Override
+              public void run() {
+                recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+              }
+            });
             final TextResult value = getVariableValue(variableName);
             assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
             String newValue = value.getText();
@@ -1104,9 +1110,14 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-        optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
-      }
+      DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+        @Override
+        public void run() {
+          for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+            optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
+          }
+        }
+      });
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
       // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
       // and reformat wouldn't be able to fix them

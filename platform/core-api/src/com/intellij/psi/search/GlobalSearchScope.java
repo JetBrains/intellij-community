@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
@@ -414,7 +415,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
                      Math.max(scope1 instanceof UnionScope ? ((UnionScope)scope1).myNestingLevel : 0,
                               scope2 instanceof UnionScope ? ((UnionScope)scope2).myNestingLevel : 0);
       if (myNestingLevel > 1000) {
-        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel);
+        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel + StringUtil.first(toString(), 500, true));
       }
     }
 

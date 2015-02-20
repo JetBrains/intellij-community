@@ -61,6 +61,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   };
 
+  private static final int MAX_NAME_LENGTH = 100;
+
   private final String myName;
   @Nullable
   private String myRawValue;
@@ -215,7 +217,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
       SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
-      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_VALUE_LENGTH, null);
+      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_NAME_LENGTH, null);
     }
   }
 

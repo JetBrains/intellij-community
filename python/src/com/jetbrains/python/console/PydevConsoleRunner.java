@@ -126,7 +126,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static final int PORTS_WAITING_TIMEOUT = 20000;
 
   private Sdk mySdk;
-  @NotNull private CommandLineArgumentsProvider myCommandLineArgumentsProvider;
+  private CommandLineArgumentsProvider myCommandLineArgumentsProvider;
   protected int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -238,10 +238,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }));
 
     return command.replace(WORKING_DIR_ENV, path);
-  }
-
-  public void setStatementsToExecute(String... statementsToExecute) {
-    myStatementsToExecute = statementsToExecute;
   }
 
   public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {
@@ -415,7 +411,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   @Override
   protected PythonConsoleView createConsoleView() {
     PythonConsoleView consoleView = new PythonConsoleView(getProject(), getConsoleTitle(), mySdk);
-    myPydevConsoleCommunication.setConsoleFile(consoleView.getConsoleVirtualFile());
+    myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(getProject()));
     return consoleView;
   }
@@ -629,13 +625,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
       @Override
       public void update(final AnActionEvent e) {
-        EditorEx consoleEditor = getConsoleView().getConsole().getConsoleEditor();
+        EditorEx consoleEditor = getConsoleView().getConsoleEditor();
         boolean enabled = IJSwingUtilities.hasFocus(consoleEditor.getComponent()) && !consoleEditor.getSelectionModel().hasSelection();
         e.getPresentation().setEnabled(enabled);
       }
     };
     anAction
-      .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, getConsoleView().getConsole().getConsoleEditor().getComponent());
+      .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, getConsoleView().getConsoleEditor().getComponent());
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }

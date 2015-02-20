@@ -32,7 +32,7 @@ public interface StateStorage {
   Topic<Listener> PROJECT_STORAGE_TOPIC = new Topic<Listener>("PROJECT_STORAGE_LISTENER", Listener.class, Topic.BroadcastDirection.NONE);
 
   @Nullable
-  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
+  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto);
 
   boolean hasState(@Nullable Object component, @NotNull String componentName, final Class<?> aClass, final boolean reloadData);
 

@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -207,7 +208,8 @@ public class HighlightMethodUtil {
                                                                    @NotNull String detailMessage,
                                                                    @NotNull TextRange textRange) {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
-    HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+    HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(
+      description).create();
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSuperMethodReturnFix(superMethod, returnType));
 
@@ -690,7 +692,7 @@ public class HighlightMethodUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, action);
     }
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createReplaceAddAllArrayToCollectionFix(methodCall));
-    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall,null));
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall, null));
     QualifyThisArgumentFix.registerQuickFixAction(methodCandidates, methodCall, highlightInfo, fixRange);
 
     CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
@@ -764,12 +766,14 @@ public class HighlightMethodUtil {
 
     @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
+    final String errorMessage = InferenceSession.getInferenceErrorMessage(list.getParent());
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
       Integer.valueOf(cols - parameters.length + 1), parensizedName,
       HighlightUtil.formatClass(aClass, false),
       createMismatchedArgsHtmlTooltipParamsRow(parameters, substitutor, expressions),
-      createMismatchedArgsHtmlTooltipArgumentsRow(expressions, parameters, substitutor, cols)
+      createMismatchedArgsHtmlTooltipArgumentsRow(expressions, parameters, substitutor, cols),
+      errorMessage != null ? "<br/>reason: " + XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>") : ""
     );
   }
 
@@ -870,7 +874,13 @@ public class HighlightMethodUtil {
       s += "</tr>";
     }
 
-    s+= "</table></body></html>";
+    s+= "</table>";
+    final String errorMessage = InferenceSession.getInferenceErrorMessage(list.getParent());
+    if (errorMessage != null) {
+      s+= "reason: "; 
+      s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");
+    }
+    s+= "</body></html>";
     return s;
   }
 

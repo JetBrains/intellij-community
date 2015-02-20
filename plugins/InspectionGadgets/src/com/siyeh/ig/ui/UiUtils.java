@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public class UiUtils {
         }
       }).setRemoveAction(new RemoveAction(table))
       .disableUpDownActions().createPanel();
-    panel.setPreferredSize(new Dimension(150, 100));
+    panel.setPreferredSize(JBUI.size(150, 100));
     return panel;
   }
 
@@ -112,7 +113,7 @@ public class UiUtils {
         }
       }).setRemoveAction(new RemoveAction(table))
       .disableUpDownActions().createPanel();
-    panel.setPreferredSize(new Dimension(150, 100));
+    panel.setPreferredSize(JBUI.size(150, 100));
     return panel;
   }
 
@@ -184,7 +185,7 @@ public class UiUtils {
           ListUtil.removeSelectedItems(list);
         }
       }).createPanel();
-    panel.setPreferredSize(new Dimension(150, 100));
+    panel.setPreferredSize(JBUI.size(150, 100));
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
                                                                false, new Insets(10, 0, 0, 0)));
     optionsPanel.add(panel);

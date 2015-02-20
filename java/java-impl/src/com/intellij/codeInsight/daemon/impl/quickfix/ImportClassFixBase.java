@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
@@ -51,10 +52,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -149,7 +147,22 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     filterAlreadyImportedButUnresolved(classList);
+    filerByPackageName(classList, file);
     return classList;
+  }
+
+  protected void filerByPackageName(List<PsiClass> classList, PsiFile file) {
+    final String packageName = StringUtil.getPackageName(getQualifiedName(myElement));
+    if (!packageName.isEmpty() && 
+        file instanceof PsiJavaFile && 
+        Arrays.binarySearch(((PsiJavaFile)file).getImplicitlyImportedPackages(), packageName) < 0) {
+      for (Iterator<PsiClass> iterator = classList.iterator(); iterator.hasNext(); ) {
+        final String classQualifiedName = iterator.next().getQualifiedName();
+        if (classQualifiedName != null && !packageName.equals(StringUtil.getPackageName(classQualifiedName))) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   protected boolean canReferenceClass(R ref) {

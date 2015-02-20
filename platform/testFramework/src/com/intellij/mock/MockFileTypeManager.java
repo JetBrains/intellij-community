@@ -17,8 +17,6 @@ package com.intellij.mock;
 
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -178,12 +176,6 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     catch (Exception ignored) {
       return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase(Locale.ENGLISH));
     }
-  }
-
-  @NotNull
-  @Override
-  public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
-    return SchemesManager.EMPTY;
   }
 
   @Override

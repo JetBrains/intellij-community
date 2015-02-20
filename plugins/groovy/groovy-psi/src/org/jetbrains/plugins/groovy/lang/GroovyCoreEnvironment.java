@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
@@ -328,9 +329,10 @@ public class GroovyCoreEnvironment {
       project.registerService(GroovyExtensionProvider.class, GroovyExtensionProvider.class);
       projectEnvironment.addProjectExtension(PsiShortNamesCache.EP_NAME, new GroovyShortNamesCache(project));
       projectEnvironment.addProjectExtension(PsiElementFinder.EP_NAME, new GroovyClassFinder(project));
-      projectEnvironment.registerProjectComponent(GroovyUnusedImportsPassFactory.class, new GroovyUnusedImportsPassFactory(project));
-      projectEnvironment.registerProjectComponent(GrKeywordAndDeclarationHighlightFactory.class, new GrKeywordAndDeclarationHighlightFactory(project));
-      projectEnvironment.registerProjectComponent(GrReferenceHighlighterFactory.class, new GrReferenceHighlighterFactory(project));
+      TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
+      projectEnvironment.registerProjectComponent(GroovyUnusedImportsPassFactory.class, new GroovyUnusedImportsPassFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GrKeywordAndDeclarationHighlightFactory.class, new GrKeywordAndDeclarationHighlightFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GrReferenceHighlighterFactory.class, new GrReferenceHighlighterFactory(project, registrar));
     }
   }
 }

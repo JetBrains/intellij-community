@@ -99,7 +99,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       @Nullable
-      public StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException {
+      public StateStorage getStateStorage(@NotNull Storage storageSpec) {
         return storage;
       }
 

@@ -59,6 +59,6 @@ public abstract class Breakpoint {
   /**
    * Visitor interface that includes all extensions.
    */
-  public interface TargetExtendedVisitor<R> extends FunctionSupport.Visitor<R>, ScriptRegExpSupport.Visitor<R> {
+  public interface TargetExtendedVisitor<R> extends FunctionSupport.Visitor<R>, ScriptRegExpSupportVisitor<R> {
   }
 }

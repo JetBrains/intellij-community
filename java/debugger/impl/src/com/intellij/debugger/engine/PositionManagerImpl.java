@@ -190,9 +190,11 @@ public class PositionManagerImpl implements PositionManager {
       return null;
     }
 
-    if (DumbService.getInstance(project).isDumb()) {
-      return null;
-    }
+    // We should find a class no matter what
+    // setAlternativeResolveEnabled is turned on here
+    //if (DumbService.getInstance(project).isDumb()) {
+    //  return null;
+    //}
 
     final String originalQName = refType.name();
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();

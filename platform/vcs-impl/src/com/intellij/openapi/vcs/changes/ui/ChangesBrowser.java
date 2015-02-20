@@ -329,7 +329,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myDiffAction = new ShowDiffAction() {
       public void update(AnActionEvent e) {
         Change[] changes = e.getData(VcsDataKeys.CHANGES);
-        e.getPresentation().setEnabled(canShowDiff(changes));
+        e.getPresentation().setEnabled(canShowDiff(myProject, changes));
       }
 
       public void actionPerformed(AnActionEvent e) {

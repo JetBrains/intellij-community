@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -765,6 +765,10 @@ public class StringUtil extends StringUtilRt {
       return "These";
     }
 
+    if (endsWithIgnoreCase(suggestion, "es")) {
+      return suggestion;
+    }
+
     if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
       return suggestion + "es";
     }
@@ -1525,8 +1529,8 @@ public class StringUtil extends StringUtilRt {
    */
   @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(long size) {
-    return formatValue(size, null,
+  public static String formatFileSize(long fileSize) {
+    return formatValue(fileSize, null,
                        new String[]{"B", "K", "M", "G", "T", "P", "E"},
                        new long[]{1000, 1000, 1000, 1000, 1000, 1000});
   }

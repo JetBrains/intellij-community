@@ -120,7 +120,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
       @Override
       public VirtualFile compute() {
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
-        assert from != null: "Cannot find testdata directory " + dataDir;
+        Assert.assertNotNull("Cannot find testdata directory " + dataDir, from);
         try {
           UsefulTestCase.refreshRecursively(from);
 

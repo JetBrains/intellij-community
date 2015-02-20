@@ -36,6 +36,16 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     return key;
   }
 
+  /**
+   * Creates UI component for the specified configurable.
+   * If a component is created successfully the configurable will be reset.
+   * If the configurable implements {@link MasterDetails},
+   * created component will not have the following modifications.
+   * If the configurable does not implement {@link Configurable.NoMargin},
+   * this method sets an empty border with default margins for created component.
+   * If the configurable does not implement {@link Configurable.NoScroll},
+   * this method adds a scroll bars for created component.
+   */
   @Override
   protected JComponent create(final Configurable configurable) {
     return configurable == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {

@@ -1228,6 +1228,28 @@ public class PluginManagerCore {
     }
   }
 
+  /**
+   * Load extensions points and extensions from a configuration file in plugin.xml format
+   * @param pluginRoot jar file or directory which contains the configuration file
+   * @param fileName name of the configuration file located in 'META-INF' directory under {@code pluginRoot}
+   * @param area area which extension points and extensions should be registered (e.g. {@link Extensions#getRootArea()} for application-level extensions)
+   */
+  public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
+    IdeaPluginDescriptorImpl descriptor;
+    if (pluginRoot.isDirectory()) {
+      descriptor = loadDescriptorFromDir(pluginRoot, fileName);
+    }
+    else {
+      descriptor = loadDescriptorFromJar(pluginRoot, fileName);
+    }
+    if (descriptor != null) {
+      registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));
+    }
+    else {
+      getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
+    }
+  }
+
   public static void initPlugins(@Nullable StartupProgress progress) {
     long start = System.currentTimeMillis();
     try {

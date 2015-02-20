@@ -23,6 +23,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -129,7 +130,7 @@ public class PythonConsoleToolWindow {
   private static Content createContent(final @NotNull RunContentDescriptor contentDescriptor) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
+    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
     content.setCloseable(true);
 
     resetContent(contentDescriptor, panel, content);
@@ -138,9 +139,13 @@ public class PythonConsoleToolWindow {
   }
 
   private static void resetContent(RunContentDescriptor contentDescriptor, SimpleToolWindowPanel panel, Content content) {
+    RunContentDescriptor oldDescriptor = content.getDisposer() instanceof RunContentDescriptor ? (RunContentDescriptor)content.getDisposer() : null;
+    if (oldDescriptor != null) Disposer.dispose(oldDescriptor);
+
     panel.setContent(contentDescriptor.getComponent());
 
     content.setComponent(panel);
+    content.setDisposer(contentDescriptor);
     content.setPreferredFocusableComponent(contentDescriptor.getComponent());
 
     content.putUserData(CONTENT_DESCRIPTOR, contentDescriptor);

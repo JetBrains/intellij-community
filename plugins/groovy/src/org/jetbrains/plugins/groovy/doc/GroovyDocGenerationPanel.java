@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocAddPackageAction;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocReducePackageAction;
@@ -63,7 +64,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
     myDataModel = new DefaultListModel();
 
     myPackagesList = new JBList(myDataModel);
-    myPackagesList.setMinimumSize(new Dimension(100, 150));
+    myPackagesList.setMinimumSize(JBUI.size(100, 150));
 
     JScrollPane packagesScrollPane = ScrollPaneFactory.createScrollPane(myPackagesList);
     myPackagesPanel.setLayout(new BorderLayout());
@@ -75,7 +76,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
 
     actionToolbar.updateActionsImmediately();
 
-    myPanel.setMinimumSize(new Dimension(275, 350));
+    myPanel.setMinimumSize(JBUI.size(275, 350));
   }
 
 

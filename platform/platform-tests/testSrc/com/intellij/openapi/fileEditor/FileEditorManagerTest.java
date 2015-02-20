@@ -31,6 +31,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,6 +171,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       VirtualFile file = getFile("/src/foo.bar");
       assertEquals(1, myManager.openFile(file, false).length);
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
+      UIUtil.dispatchAllInvocationEvents();
       assertEquals(2, myManager.getAllEditors(file).length);
       //assertFalse(FileEditorManagerImpl.isDumbAware(editors[0]));
     }

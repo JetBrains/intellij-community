@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -38,7 +37,7 @@ public interface IComponentStore {
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
-  void load() throws IOException, StateStorageException;
+  void load() throws IOException;
 
   @NotNull
   StateStorageManager getStateStorageManager();

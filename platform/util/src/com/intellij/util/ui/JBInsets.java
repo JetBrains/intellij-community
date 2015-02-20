@@ -48,8 +48,15 @@ public class JBInsets extends Insets {
   }
 
   public static JBInsets create(@NotNull Insets insets) {
-    return insets instanceof JBInsets ? (JBInsets)insets
-                                      : new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
+    if (insets instanceof JBInsets) {
+      JBInsets copy = new JBInsets(0, 0, 0, 0);
+      copy.top = insets.top;
+      copy.left = insets.left;
+      copy.bottom = insets.bottom;
+      copy.right = insets.right;
+      return copy;
+    }
+     return new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
   }
 
   public JBInsetsUIResource asUIResource() {

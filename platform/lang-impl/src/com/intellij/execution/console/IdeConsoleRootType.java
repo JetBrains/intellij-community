@@ -16,11 +16,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -43,13 +39,6 @@ public class IdeConsoleRootType extends ConsoleRootType {
 
   @Nullable
   @Override
-  public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    FileType fileType = getFileType(file);
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
-  }
-
-  @Nullable
-  @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     return AllIcons.Debugger.ToolConsole;
   }
@@ -59,10 +48,4 @@ public class IdeConsoleRootType extends ConsoleRootType {
     RunIdeConsoleAction.configureConsole(file, source);
   }
 
-  @Nullable
-  private static FileType getFileType(@NotNull VirtualFile file) {
-    String extension = file.getExtension();
-    if (extension == null) return null;
-    return FileTypeManager.getInstance().getFileTypeByExtension(extension);
-  }
 }

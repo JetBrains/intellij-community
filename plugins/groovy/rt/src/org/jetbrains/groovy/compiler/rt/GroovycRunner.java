@@ -84,17 +84,26 @@ public class GroovycRunner {
   }
 
   public static int intMain(String[] args) {
+    boolean indy = false;
     if (args.length != 3) {
       if (args.length != 4 || !"--indy".equals(args[3])) {
         System.err.println("There is no arguments for groovy compiler");
         return 1;
       }
-      System.setProperty("groovy.target.indy", "true");
+      indy = true;
     }
 
     final boolean optimize = GroovyRtConstants.OPTIMIZE.equals(args[0]);
     final boolean forStubs = "stubs".equals(args[1]);
     String argPath = args[2];
+
+    return intMain2(indy, optimize, forStubs, argPath);
+  }
+
+  public static int intMain2(boolean indy, boolean optimize, boolean forStubs, String argPath) {
+    if (indy) {
+      System.setProperty("groovy.target.indy", "true");
+    }
 
     if (!new File(argPath).exists()) {
       System.err.println("Arguments file for groovy compiler not found");

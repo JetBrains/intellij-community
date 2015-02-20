@@ -90,7 +90,7 @@ final class DefaultWebServerPathHandler extends WebServerPathHandler {
 
     for (WebServerFileHandler fileHandler : WebServerFileHandler.EP_NAME.getExtensions()) {
       try {
-        if (fileHandler.process(result, canonicalRequestPath, project, request, channel)) {
+        if (fileHandler.process(result, canonicalRequestPath, project, request, channel, isCustomHost)) {
           return true;
         }
       }

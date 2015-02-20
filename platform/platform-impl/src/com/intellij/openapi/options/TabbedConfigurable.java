@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author yole
@@ -38,7 +38,7 @@ public abstract class TabbedConfigurable extends CompositeConfigurable<Configura
     myTabbedPane = new TabbedPaneWrapper(myParent);
     createConfigurableTabs();
     final JComponent component = myTabbedPane.getComponent();
-    component.setPreferredSize(new Dimension(500, 400));
+    component.setPreferredSize(JBUI.size(500, 400));
     return component;
   }
 

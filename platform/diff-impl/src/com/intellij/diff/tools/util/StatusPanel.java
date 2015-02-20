@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 
@@ -34,6 +35,7 @@ public abstract class StatusPanel extends JPanel {
 
     add(myTextLabel, BorderLayout.CENTER);
     add(myBusySpinner, BorderLayout.WEST);
+    setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
   }
 
   public void update() {

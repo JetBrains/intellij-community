@@ -398,11 +398,13 @@ public class DiffUtil {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
-    panel.add(createTitlePanel(title), BorderLayout.WEST);
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
+    panel.add(createTitlePanel(title), BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
+      panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
       panel2.add(createCharsetPanel(charset));
+      panel2.add(Box.createRigidArea(new Dimension(4, 0)));
       panel2.add(createSeparatorPanel(separator));
       panel.add(panel2, BorderLayout.EAST);
     }
@@ -752,6 +754,7 @@ public class DiffUtil {
 
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
+    if (document.isWritable()) return true;
     if (project == null) return false;
     return ReadonlyStatusHandler.ensureDocumentWritable(project, document);
   }

@@ -931,7 +931,7 @@ public class BuildManager implements ApplicationComponent{
 
       // validate tools.jar presence
       final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
-      if (projectJdk.equals(internalJdk)) {
+      if (FileUtil.pathsEqual(projectJdk.getHomePath(), internalJdk.getHomePath())) {
         // important: because internal JDK can be either JDK or JRE,
         // this is the most universal way to obtain tools.jar path in this particular case
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();

@@ -15,15 +15,11 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractExpandableItemsHandler;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -37,12 +33,6 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.font.TextAttribute;
-import java.awt.font.TextLayout;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
-import java.text.CharacterIterator;
 
 /**
  * @author nik
@@ -56,10 +46,9 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
   public XDebuggerTreeRenderer() {
-    Insets myLinkIpad = myLink.getIpad();
-    myLink.setIpad(new JBInsets(myLinkIpad.top, 0, myLinkIpad.bottom, myLinkIpad.right));
-    Insets myIpad = getIpad();
-    setIpad(new JBInsets(myLinkIpad.top, myIpad.left, myLinkIpad.bottom, 0));
+    setSupportFontFallback(true);
+    getIpad().right = 0;
+    myLink.getIpad().left = 0;
   }
 
   public void customizeCellRenderer(@NotNull final JTree tree,
@@ -102,7 +91,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {
     Dimension linkSize = myLink.getPreferredSize();
     myLinkWidth = linkSize.width;
-    myLink.setBounds(0, 0, linkSize.width, linkSize.height);
     myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
   }
 
@@ -127,59 +115,13 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         textGraphics.dispose();
       }
       g.translate(myLinkOffset, 0);
+      myLink.setHeight(getHeight());
       myLink.doPaint(g);
       g.translate(-myLinkOffset, 0);
     }
     else {
       super.doPaint(g);
     }
-  }
-
-  @Override
-  protected void doDrawString(Graphics2D g, String text, int x, int y) {
-    TextLayout layout = createTextLayout(text, g.getFont(), g.getFontRenderContext());
-    if (layout != null) {
-      layout.draw(g, x, y);
-    }
-  }
-
-  @Override
-  protected int computeStringWidth(String text, Font font) {
-    TextLayout layout = createTextLayout(text, font, getFontMetrics(font).getFontRenderContext());
-    if (layout != null) {
-      return (int)layout.getAdvance();
-    }
-    return 0;
-  }
-
-  @Nullable
-  private static TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
-    if (StringUtil.isEmpty(text)) return null;
-    FontPreferences fontPreferences = EditorColorsManager.getInstance().getGlobalScheme().getFontPreferences();
-    AttributedString string = new AttributedString(text);
-    int start = 0;
-    int end = text.length();
-    AttributedCharacterIterator it = string.getIterator(new AttributedCharacterIterator.Attribute[0], start, end);
-    Font currentFont = basefont;
-    int currentIndex = start;
-    for(char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
-      Font font = basefont;
-      if (!font.canDisplay(c)) {
-        font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, basefont.getStyle(), fontPreferences).getFont();
-      }
-      int i = it.getIndex();
-      if (!font.equals(currentFont)) {
-        if (i > currentIndex) {
-          string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, i);
-        }
-        currentFont = font.deriveFont(basefont.getSize2D());
-        currentIndex = i;
-      }
-    }
-    if (currentIndex < end) {
-      string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
-    }
-    return new TextLayout(string.getIterator(), fontRenderContext);
   }
 
   @NotNull
@@ -202,6 +144,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    private int myHeight;
+
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -214,6 +158,15 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
+    }
+
+    public void setHeight(int height) {
+      myHeight = height;
+    }
+
+    @Override
+    public int getHeight() {
+      return myHeight;
     }
   }
 

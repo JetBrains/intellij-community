@@ -730,9 +730,19 @@ public class ControlFlowUtil {
         if (throwToOffset == nextOffset) {
 
           if (nextOffset == endOffset) {
-            final Instruction lastInstruction = flow.getInstructions().get(endOffset - 1);
-            isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
-                       !(lastInstruction instanceof ThrowToInstruction);
+            int lastOffset = endOffset - 1;
+            Instruction lastInstruction = flow.getInstructions().get(lastOffset);
+            if (lastInstruction instanceof GoToInstruction &&
+                ((GoToInstruction)lastInstruction).role == BranchingInstruction.Role.END &&
+                !((GoToInstruction)lastInstruction).isReturn) {
+              lastOffset--;
+            }
+
+            if (lastOffset >= 0) {
+              lastInstruction = flow.getInstructions().get(lastOffset);
+              isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
+                         !(lastInstruction instanceof ThrowToInstruction);
+            }
           }
 
           isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];

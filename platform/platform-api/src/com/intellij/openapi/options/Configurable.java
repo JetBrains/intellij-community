@@ -87,11 +87,14 @@ public interface Configurable extends UnnamedConfigurable {
    * the configurable contains its own scrollable components.
    */
   interface NoScroll {
+    // see ConfigurableCardPanel#create(Configurable)
   }
 
   /**
    * Forbids setting an empty border to the content of the configurable.
+   * Required when the configurable represents is a tabbed pane.
    */
   interface NoMargin {
+    // see ConfigurableCardPanel#create(Configurable)
   }
 }
