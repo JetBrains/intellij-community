@@ -827,6 +827,7 @@ public class SearchDialog extends DialogWrapper {
     for (Variable variable : variables) {
       variableNames.add(variable.getName());
     }
+    variableNames.add(Configuration.CONTEXT_VAR_NAME);
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 
