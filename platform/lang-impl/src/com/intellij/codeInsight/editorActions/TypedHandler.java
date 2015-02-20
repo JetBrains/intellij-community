@@ -339,13 +339,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (!iterator.atEnd()) {
       iterator.advance();
 
-      if (!iterator.atEnd()) {
-        if (!BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
-          return;
-        }
-        if (BraceMatchingUtil.isLBraceToken(iterator, fileText, fileType)) {
-          return;
-        }
+      if (!iterator.atEnd() && 
+          !BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
+        return;
       }
 
       iterator.retreat();
