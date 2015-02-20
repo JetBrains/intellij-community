@@ -166,7 +166,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     return getConsoleEditor().getContentComponent();
   }
 
-  public void initComponents() {
+  private void initComponents() {
     setupComponents();
 
     myPanel.add(myHistoryViewer.getComponent());

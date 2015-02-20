@@ -316,14 +316,9 @@ class AdditionalEventInfo {
   }
 }
 
-class MockReformatFileSettings implements LayoutCodeOptions {
-  private boolean myProcessWholeFile;
-  private boolean myProcessDirectories;
-  private boolean myRearrange;
-  private boolean myIncludeSubdirs;
+class MockReformatFileSettings implements ReformatFilesOptions {
   private boolean myOptimizeImports;
-  private boolean myProcessOnlyChangedText;
-  private boolean myIsOK = true;
+  private boolean myIncludeSubdirs;
 
   @Nullable
   @Override
@@ -338,33 +333,13 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   }
 
   @Override
-  public boolean isProcessWholeFile() {
-    return myProcessWholeFile;
-  }
-
-  MockReformatFileSettings setProcessWholeFile(boolean processWholeFile) {
-    myProcessWholeFile = processWholeFile;
-    return this;
+  public TextRangeType getTextRangeType() {
+    return TextRangeType.WHOLE_FILE;
   }
 
   @Override
-  public boolean isProcessDirectory() {
-    return myProcessDirectories;
-  }
-
-  MockReformatFileSettings setProcessDirectory(boolean processDirectories) {
-    myProcessDirectories = processDirectories;
-    return this;
-  }
-
-  @Override
-  public boolean isRearrangeEntries() {
-    return myRearrange;
-  }
-
-  @Override
-  public boolean isIncludeSubdirectories() {
-    return myIncludeSubdirs;
+  public boolean isRearrangeCode() {
+    return false;
   }
 
   @Override
@@ -375,23 +350,6 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   @NotNull
   MockReformatFileSettings setOptimizeImports(boolean optimizeImports) {
     myOptimizeImports = optimizeImports;
-    return this;
-  }
-
-  @Override
-  public boolean isProcessOnlyChangedText() {
-    return myProcessOnlyChangedText;
-  }
-
-  @NotNull
-  MockReformatFileSettings setProcessOnlyChangedText(boolean processOnlyChangedText) {
-    myProcessOnlyChangedText = processOnlyChangedText;
-    return this;
-  }
-
-  @NotNull
-  MockReformatFileSettings setRearrange(boolean rearrange) {
-    myRearrange = rearrange;
     return this;
   }
 

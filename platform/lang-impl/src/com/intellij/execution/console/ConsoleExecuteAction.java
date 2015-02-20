@@ -17,7 +17,6 @@ package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -108,7 +107,6 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   public static abstract class ConsoleExecuteActionHandler {
-    private ConsoleHistoryModel myCommandHistoryModel;
 
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
@@ -117,18 +115,6 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
     public ConsoleExecuteActionHandler(boolean preserveMarkup) {
       myPreserveMarkup = preserveMarkup;
-    }
-
-    @NotNull
-    public ConsoleHistoryModel getConsoleHistoryModel() {
-      if (myCommandHistoryModel == null) {
-        myCommandHistoryModel = new ConsoleHistoryModel();
-      }
-      return myCommandHistoryModel;
-    }
-
-    void setConsoleHistoryModel(@NotNull ConsoleHistoryModel model) {
-      myCommandHistoryModel = model;
     }
 
     public boolean isEmptyCommandExecutionAllowed() {
@@ -162,7 +148,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     }
 
     private void addToCommandHistoryAndExecute(@NotNull LanguageConsoleView consoleView, @NotNull String text) {
-      getConsoleHistoryModel().addToHistory(text);
+      ConsoleHistoryController.addToHistory(consoleView, text);
       doExecute(text, consoleView);
     }
 

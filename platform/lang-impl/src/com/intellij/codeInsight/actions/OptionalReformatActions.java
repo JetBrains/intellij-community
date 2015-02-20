@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,10 @@
  */
 package com.intellij.codeInsight.actions;
 
-import org.jetbrains.annotations.NonNls;
+public interface OptionalReformatActions {
 
-/**
- * @author Denis Zhdanov
- * @since 12/16/11 6:10 PM
- */
-public class LayoutCodeConstants {
+  boolean isOptimizeImports();
 
-  @NonNls public static final String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
-  @NonNls public static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
-  @NonNls public static final String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
+  boolean isRearrangeCode();
 
-  private LayoutCodeConstants() {
-  }
 }

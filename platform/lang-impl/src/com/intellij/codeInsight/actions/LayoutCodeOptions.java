@@ -15,10 +15,14 @@
  */
 package com.intellij.codeInsight.actions;
 
-public interface LayoutCodeOptions extends DirectoryFormattingOptions {
+public interface LayoutCodeOptions extends OptionalReformatActions {
 
-  boolean isProcessWholeFile();
+  TextRangeType getTextRangeType();
 
-  boolean isProcessDirectory();
+}
 
+enum TextRangeType {
+  VCS_CHANGED_TEXT,
+  SELECTED_TEXT,
+  WHOLE_FILE
 }

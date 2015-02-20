@@ -2,6 +2,7 @@ package com.intellij.jarFinder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.xpath.XPath;
@@ -19,7 +20,10 @@ public class SonatypeSourceSearcher extends SourceSearcher {
 
   @Nullable
   @Override
-  public String findSourceJar(@NotNull final ProgressIndicator indicator, @NotNull String artifactId, @NotNull String version)
+  public String findSourceJar(@NotNull final ProgressIndicator indicator,
+                              @NotNull String artifactId,
+                              @NotNull String version,
+                              @NotNull VirtualFile classesJar)
     throws SourceSearchException {
     try {
       indicator.setIndeterminate(true);
@@ -28,6 +32,11 @@ public class SonatypeSourceSearcher extends SourceSearcher {
       indicator.checkCanceled();
 
       String url = "https://oss.sonatype.org/service/local/lucene/search?collapseresults=true&c=sources&a=" + artifactId + "&v=" + version;
+      String groupId = findMavenGroupId(classesJar, artifactId);
+      if(groupId != null) {
+        url += ("&g=" + groupId);
+      }
+
       List<Element> artifactList = (List<Element>)XPath.newInstance("/searchNGResponse/data/artifact").selectNodes(readDocumentCancelable(indicator, url));
       if (artifactList.isEmpty()) {
         return null;
@@ -50,7 +59,7 @@ public class SonatypeSourceSearcher extends SourceSearcher {
         return null;
       }
 
-      String groupId = element.getChildTextTrim("groupId");
+      groupId = element.getChildTextTrim("groupId");
       String repositoryId = artifactHintList.get(0).getChildTextTrim("repositoryId");
 
       return "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=" +

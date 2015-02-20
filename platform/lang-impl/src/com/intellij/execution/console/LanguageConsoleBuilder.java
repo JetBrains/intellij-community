@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -110,17 +109,17 @@ public final class LanguageConsoleBuilder {
   private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    setupHistoryController(console, historyType, null, executeActionHandler);
+    new ConsoleHistoryController(historyType, null, console).install();
   }
 
   /**
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
-  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsoleView console,
-                                                                               @NotNull final Consumer<String> executeActionHandler,
-                                                                               @NotNull String historyType,
-                                                                               @Nullable String historyPersistenceId,
-                                                                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
+  public static AnAction registerExecuteAction(@NotNull LanguageConsoleView console,
+                                               @NotNull final Consumer<String> executeActionHandler,
+                                               @NotNull String historyType,
+                                               @Nullable String historyPersistenceId,
+                                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
       void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
@@ -130,19 +129,8 @@ public final class LanguageConsoleBuilder {
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-
-    return new Pair<AnAction, ConsoleHistoryController>(action, setupHistoryController(console, historyType, historyPersistenceId, handler));
-  }
-
-  @NotNull
-  private static ConsoleHistoryController setupHistoryController(@NotNull LanguageConsoleView console,
-                                                                 @NotNull String historyType,
-                                                                 @Nullable String historyPersistenceId,
-                                                                 @NotNull ConsoleExecuteAction.ConsoleExecuteActionHandler handler) {
-    ConsoleHistoryController historyController = new ConsoleHistoryController(new ConsoleRootType(historyType, null) {}, historyPersistenceId, console);
-    historyController.install();
-    handler.setConsoleHistoryModel(historyController.getModel());
-    return historyController;
+    new ConsoleHistoryController(historyType, historyPersistenceId, console).install();
+    return action;
   }
 
   public LanguageConsoleBuilder gutterContentProvider(@Nullable GutterContentProvider value) {

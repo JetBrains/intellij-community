@@ -49,6 +49,7 @@ import java.util.*;
 
 @State(
   name = "RunManager",
+  defaultStateAsResource = true,
   storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class RunManagerImpl extends RunManagerEx implements PersistentStateComponent<Element>, NamedComponent, Disposable {

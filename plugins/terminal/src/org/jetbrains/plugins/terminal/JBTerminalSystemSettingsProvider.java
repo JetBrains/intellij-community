@@ -27,8 +27,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TerminalColor;
@@ -401,11 +399,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
-    }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void readExternal(Element element) {
     }
 
     public void updateGlobalScheme(EditorColorsScheme scheme) {

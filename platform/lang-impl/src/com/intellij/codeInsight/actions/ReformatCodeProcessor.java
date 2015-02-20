@@ -18,15 +18,14 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -46,11 +45,22 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.ReformatCodeProcessor");
 
-  private final Collection<TextRange> myRanges = new ArrayList<TextRange>();
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
+  private final Collection<TextRange> myRanges = new ArrayList<TextRange>();
+  private SelectionModel mySelectionModel;
 
   public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
+  }
+
+  public ReformatCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
+    super(file.getProject(), file, COMMAND_NAME, PROGRESS_TEXT, false);
+    mySelectionModel = selectionModel;
+  }
+
+  public ReformatCodeProcessor(AbstractLayoutCodeProcessor processor, @NotNull SelectionModel selectionModel) {
+    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+    mySelectionModel = selectionModel;
   }
 
   public ReformatCodeProcessor(AbstractLayoutCodeProcessor processor, boolean processChangedTextOnly) {
@@ -73,6 +83,10 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
+  public ReformatCodeProcessor(@NotNull PsiFile file, boolean processChangedTextOnly) {
+    super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
+  }
+
   public ReformatCodeProcessor(Project project, PsiFile[] files, @Nullable Runnable postRunnable, boolean processChangedTextOnly) {
     this(project, files, COMMAND_NAME, postRunnable, processChangedTextOnly);
   }
@@ -92,23 +106,31 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     throws IncorrectOperationException
   {
     return new FutureTask<Boolean>(new Callable<Boolean>() {
+      private Document myDocument;
+
       @Override
       public Boolean call() throws Exception {
         FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
         try {
           Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
+
+          CharSequence before = null;
+          if (getInfoCollector() != null) {
+            myDocument = PsiDocumentManager.getInstance(myProject).getDocument(file);
+            LOG.assertTrue(myDocument != null);
+            before = myDocument.getImmutableCharSequence();
+          }
+
           CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
+
+          if (before != null) {
+            prepareUserNotificationMessage(myDocument, before);
+          }
+
           return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
         }
         catch (FilesTooBigForDiffException e) {
-          LOG.info("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            Notification notification = new Notification(ApplicationBundle.message("reformat.changed.text.file.too.big.notification.groupId"),
-                                                         ApplicationBundle.message("reformat.changed.text.file.too.big.notification.title"),
-                                                         ApplicationBundle.message("reformat.changed.text.file.too.big.notification.text", file.getName()),
-                                                         NotificationType.INFORMATION);
-            notification.notify(file.getProject());
-          }
+          handleFileTooBigException(LOG, e, file);
           return false;
         } 
         catch (IncorrectOperationException e) {
@@ -122,8 +144,21 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     });
   }
 
+  private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
+    LOG.assertTrue(getInfoCollector() != null);
+    int number = FormatChangedTextUtil.calculateChangedLinesNumber(document, before);
+    if (number > 0) {
+      String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
+      getInfoCollector().setReformatCodeNotification(message);
+    }
+  }
+
   @NotNull
   private Collection<TextRange> getRangesToFormat(boolean processChangedTextOnly, PsiFile file) throws FilesTooBigForDiffException {
+    if (mySelectionModel != null) {
+      return getSelectedRanges(mySelectionModel);
+    }
+
     if (processChangedTextOnly) {
       return FormatChangedTextUtil.getChangedTextRanges(myProject, file);
     }

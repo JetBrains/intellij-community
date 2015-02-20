@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -61,6 +62,13 @@ public class RearrangeCodeAction extends AnAction {
     if (file == null) {
       return;
     }
-    new RearrangeCodeProcessor(project, file, editor.getSelectionModel()).run();
+
+    SelectionModel model = editor.getSelectionModel();
+    if (model.hasSelection()) {
+      new RearrangeCodeProcessor(file, model).run();
+    }
+    else {
+      new RearrangeCodeProcessor(file).run();
+    }
   }
 }

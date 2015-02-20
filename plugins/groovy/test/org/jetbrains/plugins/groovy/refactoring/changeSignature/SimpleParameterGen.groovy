@@ -44,7 +44,7 @@ class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
       final SimpleInfo sim = myInfos[i];
       int oldIndex = sim.myOldIndex;
 
-      final GrParameterInfo info;
+      GrParameterInfo info;
       String name = null;
       String defInitializer = null;
       PsiType type = null;
