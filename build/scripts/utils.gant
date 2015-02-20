@@ -453,6 +453,12 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
   }
 
+  ant.move(todir: "$path/Resources") {
+    fileset(dir: "$path") {
+      include(name: "*.txt")
+    }
+  }
+
   ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
 })
 
