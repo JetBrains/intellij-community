@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -28,12 +29,14 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static com.intellij.openapi.editor.colors.FontPreferencesTest.checkState;
-import static com.intellij.openapi.editor.colors.FontPreferencesTest.getAnotherExistingNonDefaultFontName;
-import static com.intellij.openapi.editor.colors.FontPreferencesTest.getExistingNonDefaultFontName;
+import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
 
 public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
-  EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null, null);
+  EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+
+  static {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),
@@ -173,7 +176,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
     Element root = new Element("scheme");
-    editorColorsScheme.writeExternal(root);
+    ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
     assertXmlOutputEquals("<scheme name=\"test\" version=\"124\" parent_scheme=\"Default\" />", root);
   }
@@ -183,7 +186,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
     editorColorsScheme.setName("test");
     Element root = new Element("scheme");
-    editorColorsScheme.writeExternal(root);
+    ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
     assertXmlOutputEquals("<scheme name=\"test\" version=\"124\" parent_scheme=\"Darcula\" />", root);
   }

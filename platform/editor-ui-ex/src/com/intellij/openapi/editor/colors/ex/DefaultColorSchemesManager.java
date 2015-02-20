@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.colors.ex;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
-import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -52,13 +51,8 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
   @Override
   public void loadState(Element state) {
     for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
-      DefaultColorsScheme newScheme = new DefaultColorsScheme(this);
-      try {
-        newScheme.readExternal(schemeElement);
-      }
-      catch (InvalidDataException e) {
-        throw new RuntimeException(e);
-      }
+      DefaultColorsScheme newScheme = new DefaultColorsScheme();
+      newScheme.readExternal(schemeElement);
       mySchemes.add(newScheme);
     }
   }

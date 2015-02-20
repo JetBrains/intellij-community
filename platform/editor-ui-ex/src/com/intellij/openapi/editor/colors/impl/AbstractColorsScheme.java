@@ -27,12 +27,10 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -73,7 +71,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String CONSOLE_FONT      = "console-font";
   @NonNls private static final String EDITOR_FONT_NAME  = "EDITOR_FONT_NAME";
   @NonNls private static final String CONSOLE_FONT_NAME = "CONSOLE_FONT_NAME";
-  protected DefaultColorSchemesManager myDefaultColorSchemesManager;
   private                      Color  myDeprecatedBackgroundColor    = null;
   @NonNls private static final String SCHEME_ELEMENT                 = "scheme";
   @NonNls public static final  String NAME_ATTR                      = "name";
@@ -91,9 +88,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   @NonNls private static final String CONSOLE_FONT_SIZE              = "CONSOLE_FONT_SIZE";
   @NonNls private static final String EDITOR_QUICK_JAVADOC_FONT_SIZE = "EDITOR_QUICK_DOC_FONT_SIZE";
 
-  protected AbstractColorsScheme(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
+  protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
     myParentScheme = parentScheme;
-    myDefaultColorSchemesManager = defaultColorSchemesManager;
     myFontPreferences.setChangeListener(new Runnable() {
       @Override
       public void run() {
@@ -102,8 +98,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     });
   }
 
-  public AbstractColorsScheme(DefaultColorSchemesManager defaultColorSchemesManager) {
-    myDefaultColorSchemesManager = defaultColorSchemesManager;
+  public AbstractColorsScheme() {
   }
 
   @NotNull
@@ -263,13 +258,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return getName();
   }
 
-  @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
+  public void readExternal(Element parentNode) {
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
-    } else {
-      for (final Object o : parentNode.getChildren(SCHEME_ELEMENT)) {
-        Element element = (Element)o;
+    }
+    else {
+      for (Element element : parentNode.getChildren(SCHEME_ELEMENT)) {
         readScheme(element);
       }
     }
@@ -277,66 +271,66 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     myVersion = CURR_VERSION;
   }
 
-  private void readScheme(Element node) throws InvalidDataException {
+  private void readScheme(Element node) {
     myDeprecatedBackgroundColor = null;
-    if (SCHEME_ELEMENT.equals(node.getName())) {
-      setName(node.getAttributeValue(NAME_ATTR));
-      int readVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
-      if (readVersion > CURR_VERSION) throw new InvalidDataException("Unsupported color scheme version: " + readVersion);
-      myVersion = readVersion;
-      String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
-      if (isDefaultScheme == null || !Boolean.parseBoolean(isDefaultScheme)) {
-        String parentSchemeName = node.getAttributeValue(PARENT_SCHEME_ATTR);
-        if (parentSchemeName == null) parentSchemeName = DEFAULT_SCHEME_NAME;
-        myParentScheme = myDefaultColorSchemesManager.getScheme(parentSchemeName);
-      }
-
-      for (final Object o : node.getChildren()) {
-        Element childNode = (Element)o;
-        String childName = childNode.getName();
-        if (OPTION_ELEMENT.equals(childName)) {
-          readSettings(childNode);
-        }
-        else if (EDITOR_FONT.equals(childName)) {
-          readFontSettings(childNode, myFontPreferences);
-        }
-        else if (CONSOLE_FONT.equals(childName)) {
-          readFontSettings(childNode, myConsoleFontPreferences);
-        }
-        else if (COLORS_ELEMENT.equals(childName)) {
-          readColors(childNode);
-        }
-        else if (ATTRIBUTES_ELEMENT.equals(childName)) {
-          readAttributes(childNode);
-        }
-      }
-
-      if (myDeprecatedBackgroundColor != null) {
-        TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT);
-        if (textAttributes == null) {
-          textAttributes = new TextAttributes(Color.black, myDeprecatedBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
-          myAttributesMap.put(HighlighterColors.TEXT, textAttributes);
-        }
-        else {
-          textAttributes.setBackgroundColor(myDeprecatedBackgroundColor);
-        }
-      }
-
-      if (myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty()) {
-        myFontPreferences.copyTo(myConsoleFontPreferences);
-      }
-      
-      initFonts();
+    if (!SCHEME_ELEMENT.equals(node.getName())) {
+      return;
     }
+
+    setName(node.getAttributeValue(NAME_ATTR));
+    int readVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
+    if (readVersion > CURR_VERSION) {
+      throw new IllegalStateException("Unsupported color scheme version: " + readVersion);
+    }
+
+    myVersion = readVersion;
+    String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
+    if (isDefaultScheme == null || !Boolean.parseBoolean(isDefaultScheme)) {
+      myParentScheme = DefaultColorSchemesManager.getInstance().getScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, DEFAULT_SCHEME_NAME));
+    }
+
+    for (final Object o : node.getChildren()) {
+      Element childNode = (Element)o;
+      String childName = childNode.getName();
+      if (OPTION_ELEMENT.equals(childName)) {
+        readSettings(childNode);
+      }
+      else if (EDITOR_FONT.equals(childName)) {
+        readFontSettings(childNode, myFontPreferences);
+      }
+      else if (CONSOLE_FONT.equals(childName)) {
+        readFontSettings(childNode, myConsoleFontPreferences);
+      }
+      else if (COLORS_ELEMENT.equals(childName)) {
+        readColors(childNode);
+      }
+      else if (ATTRIBUTES_ELEMENT.equals(childName)) {
+        readAttributes(childNode);
+      }
+    }
+
+    if (myDeprecatedBackgroundColor != null) {
+      TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT);
+      if (textAttributes == null) {
+        textAttributes = new TextAttributes(Color.black, myDeprecatedBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
+        myAttributesMap.put(HighlighterColors.TEXT, textAttributes);
+      }
+      else {
+        textAttributes.setBackgroundColor(myDeprecatedBackgroundColor);
+      }
+    }
+
+    if (myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty()) {
+      myFontPreferences.copyTo(myConsoleFontPreferences);
+    }
+
+    initFonts();
   }
 
-  protected void readAttributes(Element childNode) throws InvalidDataException {
-    for (final Object o : childNode.getChildren(OPTION_ELEMENT)) {
-      Element e = (Element)o;
-      String key = e.getAttributeValue(NAME_ATTR);
-      TextAttributesKey name = TextAttributesKey.find(key);
-      Element value = e.getChild(VALUE_ELEMENT);
-      TextAttributes attr = new TextAttributes(value);
+  protected void readAttributes(@NotNull Element childNode) {
+    for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
+      TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
+      TextAttributes attr = new TextAttributes(e.getChild(VALUE_ELEMENT));
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom45(name, attr);
     }
@@ -446,7 +440,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return value == null ? e.getAttributeValue(VALUE_ELEMENT) : value;
   }
 
-  @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
@@ -545,9 +538,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
   
-  private boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
-    if (key.getFallbackAttributeKey() != null && value.isFallbackEnabled()) return false;
-    return !value.equals(defaultAttribute);
+  private static boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
+    return !(key.getFallbackAttributeKey() != null && value.isFallbackEnabled()) && !value.equals(defaultAttribute);
   }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
