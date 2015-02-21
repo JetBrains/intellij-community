@@ -21,6 +21,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -70,7 +71,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
-  private static final Object EVALUATING = new Object();
 
   private List<PyTargetExpression> myInstanceAttributes;
   private final NotNullLazyValue<CachedValue<Boolean>> myNewStyle = new NotNullLazyValue<CachedValue<Boolean>>() {
@@ -401,25 +401,19 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
 
+  @NotNull
   private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type,
                                                     boolean addThisType,
-                                                    @NotNull TypeEvalContext context) throws MROException {
-    return mroLinearize(type, addThisType, context, new HashMap<PyClassLikeType, Object>());
-  }
-
-  @NotNull
-  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, boolean addThisType,
                                                     @NotNull TypeEvalContext context,
-                                                    @NotNull Map<PyClassLikeType, Object> cache) throws MROException {
-    final Object computed = cache.get(type);
-    if (computed == EVALUATING) {
-      throw new MROException("Circular class inheritance");
-    }
+                                                    @NotNull Map<PyClassLikeType, Ref<List<PyClassLikeType>>> cache) throws MROException {
+    final Ref<List<PyClassLikeType>> computed = cache.get(type);
     if (computed != null) {
-      //noinspection unchecked
-      return (List<PyClassLikeType>)computed;
+      if (computed.isNull()) {
+        throw new MROException("Circular class inheritance");
+      }
+      return computed.get();
     }
-    cache.put(type, EVALUATING);
+    cache.put(type, Ref.<List<PyClassLikeType>>create());
     List<PyClassLikeType> result = null;
     try {
       final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
@@ -441,7 +435,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     finally {
-      cache.put(type, result);
+      cache.put(type, Ref.create(result));
     }
     return result;
   }
@@ -1352,7 +1346,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
       final PyClassLikeType thisClassLikeType = (PyClassLikeType)thisType;
-      final List<PyClassLikeType> ancestorTypes = mroLinearize(thisClassLikeType, false, context, new HashMap<PyClassLikeType, Object>());
+      final List<PyClassLikeType> ancestorTypes =
+        mroLinearize(thisClassLikeType, false, context, new HashMap<PyClassLikeType, Ref<List<PyClassLikeType>>>());
       if (isOverriddenMRO(ancestorTypes, context)) {
         ancestorTypes.add(null);
       }
