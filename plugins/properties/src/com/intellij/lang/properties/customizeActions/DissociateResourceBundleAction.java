@@ -54,15 +54,7 @@ public class DissociateResourceBundleAction extends AnAction {
     }
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     assert resourceBundles.size() > 0;
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    for (ResourceBundle resourceBundle : resourceBundles) {
-      fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
-      for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-        fileEditorManager.closeFile(propertiesFile.getVirtualFile());
-      }
-      ResourceBundleManager.getInstance(e.getProject()).dissociateResourceBundle(resourceBundle);
-    }
-    ProjectView.getInstance(project).refresh();
+    dissociate(resourceBundles, project);
   }
 
   @Override
@@ -77,6 +69,18 @@ public class DissociateResourceBundleAction extends AnAction {
     } else {
       e.getPresentation().setVisible(false);
     }
+  }
+
+  public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    for (ResourceBundle resourceBundle : resourceBundles) {
+      fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
+      for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
+        fileEditorManager.closeFile(propertiesFile.getVirtualFile());
+      }
+      ResourceBundleManager.getInstance(project).dissociateResourceBundle(resourceBundle);
+    }
+    ProjectView.getInstance(project).refresh();
   }
 
   @NotNull
