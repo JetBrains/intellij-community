@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -16,11 +17,12 @@ public class WithinPredicate extends AbstractStringBasedPredicate {
   private final MatchOptions myMatchOptions;
   private Matcher matcher;
 
-  public WithinPredicate(String name, String within, Project project) {
+  public WithinPredicate(String name, String within, FileType fileType, Project project) {
     super(name, within);
     myMatchOptions = new MatchOptions();
 
     myMatchOptions.setLooseMatching(true);
+    myMatchOptions.setFileType(fileType);
     final String unquoted = StringUtil.stripQuotesAroundValue(within);
     if (!unquoted.equals(within)) {
       myMatchOptions.setSearchPattern(unquoted);
