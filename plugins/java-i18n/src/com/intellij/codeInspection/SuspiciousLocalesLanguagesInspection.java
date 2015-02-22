@@ -115,7 +115,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     }
     final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     final List<PropertiesFile> files = resourceBundle.getPropertiesFiles();
-    if (files.isEmpty()) {
+    if (files.size() < 2) {
       return null;
     }
     List<Locale> bundleLocales = ContainerUtil.mapNotNull(files, new Function<PropertiesFile, Locale>() {
