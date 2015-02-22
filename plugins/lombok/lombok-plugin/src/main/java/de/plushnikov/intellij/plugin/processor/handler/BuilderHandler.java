@@ -13,6 +13,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -150,7 +151,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public PsiMethod createBuilderMethod(@NotNull PsiClass containingClass, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
+  public PsiMethod createBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     final PsiType psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
     final LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), getBuilderMethodName(psiAnnotation))
         .withMethodReturnType(psiTypeWithGenerics)
@@ -158,8 +159,9 @@ public class BuilderHandler {
         .withNavigationElement(psiAnnotation)
         .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
-    method.withBody(PsiMethodUtil.createCodeBlockFromText(String.format("return new %s();", psiTypeWithGenerics.getPresentableText()), containingClass));
+    addTypeParameters(builderPsiClass, psiMethod, method);
 
+    method.withBody(PsiMethodUtil.createCodeBlockFromText(String.format("return new %s();", psiTypeWithGenerics.getPresentableText()), containingClass));
     return method;
   }
 
@@ -284,12 +286,22 @@ public class BuilderHandler {
   }
 
   @NotNull
-  private Collection<PsiField> createFields(@NotNull PsiMethod psiMethod) {
+  public Collection<PsiField> createFields(@NotNull PsiMethod psiMethod) {
+    return createFields(psiMethod, Collections.<PsiField>emptySet());
+  }
+
+  @NotNull
+  public Collection<PsiField> createFields(@NotNull PsiMethod psiMethod, @NotNull Collection<PsiField> existedFields) {
+    final Set<String> existedFieldNames = new HashSet<String>(existedFields.size());
+    for (PsiField existedField : existedFields) {
+      existedFieldNames.add(existedField.getName());
+    }
+
     final PsiManager psiManager = psiMethod.getManager();
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
       final String parameterName = psiParameter.getName();
-      if (null != parameterName) {
+      if (null != parameterName && !existedFieldNames.contains(parameterName)) {
         fields.add(
             new LombokLightFieldBuilder(psiManager, parameterName, psiParameter.getType())
                 .withModifier(PsiModifier.PRIVATE)
@@ -338,16 +350,17 @@ public class BuilderHandler {
   @NotNull
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType, @NotNull String buildMethodName) {
     final String codeBlockFormat;
-    if (PsiType.VOID.equals(psiBuilderType)) {
-      codeBlockFormat = "%s(%s);";
-    } else {
-      codeBlockFormat = "return new %s(%s);";
-    }
 
     final String callExpressionText;
     if (null == psiMethod) {
+      codeBlockFormat = "return new %s(%s);";
       callExpressionText = psiBuilderType.getPresentableText();
     } else {
+      if (PsiType.VOID.equals(psiBuilderType)) {
+        codeBlockFormat = "%s(%s);";
+      } else {
+        codeBlockFormat = "return %s(%s);";
+      }
       callExpressionText = psiMethod.getName();
     }
 
@@ -357,12 +370,29 @@ public class BuilderHandler {
         String.format(codeBlockFormat, callExpressionText, callParameterText),
         builderClass);
 
-    return new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
         .withMethodReturnType(psiBuilderType)
         .withContainingClass(builderClass)
         .withNavigationElement(parentClass)
         .withModifier(PsiModifier.PUBLIC)
         .withBody(psiCodeBlock);
+
+    addTypeParameters(builderClass, psiMethod, methodBuilder);
+
+    return methodBuilder;
+  }
+
+  private void addTypeParameters(PsiClass builderClass, PsiMethod psiMethod, LombokLightMethodBuilder methodBuilder) {
+    final PsiTypeParameter[] psiTypeParameters;
+    if (null == psiMethod) {
+      psiTypeParameters = builderClass.getTypeParameters();
+    } else {
+      psiTypeParameters = psiMethod.getTypeParameters();
+    }
+
+    for (PsiTypeParameter psiTypeParameter : psiTypeParameters) {
+      methodBuilder.withTypeParameter(psiTypeParameter);
+    }
   }
 
   private String joinParameters(PsiField[] psiFields) {

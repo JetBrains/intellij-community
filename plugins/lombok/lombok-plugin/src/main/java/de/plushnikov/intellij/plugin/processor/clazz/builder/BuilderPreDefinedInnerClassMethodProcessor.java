@@ -9,6 +9,7 @@ import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -29,11 +30,18 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
     super(builderClass, PsiMethod.class);
   }
 
-  protected void generatePsiElements(@NotNull PsiClass psiParentClass, @NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentClass);
-    final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiParentClass);
-    target.addAll(builderHandler.createConstructors(psiClass, psiAnnotation));
-    target.addAll(builderHandler.createMethods(psiParentClass, null, psiClass, psiBuilderType, psiAnnotation, tmpFields));
+  protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    if (null == psiParentMethod) {
+      final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentClass);
+      final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiParentClass);
+      target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
+      target.addAll(builderHandler.createMethods(psiParentClass, null, psiBuilderClass, psiBuilderType, psiAnnotation, tmpFields));
+    } else {
+      final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentMethod);
+      final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentMethod, psiParentClass);
+      target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
+      target.addAll(builderHandler.createMethods(psiParentClass, psiParentMethod, psiBuilderClass, psiBuilderType, psiAnnotation, tmpFields));
+    }
   }
 
 }
