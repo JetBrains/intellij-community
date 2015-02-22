@@ -34,35 +34,42 @@ import java.util.HashSet;
 import java.util.List;
 
 public class BaseDelombokHandler {
-
+  private final boolean processInnerClasses;
   private final Collection<AbstractProcessor> lombokProcessors;
 
   protected BaseDelombokHandler(AbstractProcessor... lombokProcessors) {
+    this(false, lombokProcessors);
+  }
+
+  protected BaseDelombokHandler(boolean processInnerClasses, AbstractProcessor... lombokProcessors) {
+    this.processInnerClasses = processInnerClasses;
     this.lombokProcessors = new ArrayList<AbstractProcessor>(Arrays.asList(lombokProcessors));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiClass psiClass) {
     if (psiFile.isWritable()) {
-      invoke(project, psiClass);
+      invoke(project, psiClass, processInnerClasses);
       finish(project, psiFile);
     }
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiJavaFile psiFile) {
     for (PsiClass psiClass : psiFile.getClasses()) {
-      invoke(project, psiClass);
-
-      for (PsiClass innerClass : psiClass.getAllInnerClasses()) {
-        invoke(project, innerClass);
-      }
+      invoke(project, psiClass, true);
     }
     finish(project, psiFile);
   }
 
-  private void invoke(Project project, PsiClass psiClass) {
+  private void invoke(Project project, PsiClass psiClass, boolean processInnerClasses) {
     Collection<PsiAnnotation> processedAnnotations = new HashSet<PsiAnnotation>();
     for (AbstractProcessor lombokProcessor : lombokProcessors) {
       processedAnnotations.addAll(processClass(project, psiClass, lombokProcessor));
+    }
+
+    if (processInnerClasses) {
+      for (PsiClass innerClass : psiClass.getAllInnerClasses()) {
+        invoke(project, innerClass, processInnerClasses);
+      }
     }
     deleteAnnotations(processedAnnotations);
   }

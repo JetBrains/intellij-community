@@ -41,7 +41,7 @@ public class DelombokEverythingAction extends BaseDelombokAction {
   }
 
   private static BaseDelombokHandler createHandler() {
-    return new BaseDelombokHandler(
+    return new BaseDelombokHandler(true,
         new RequiredArgsConstructorProcessor(), new AllArgsConstructorProcessor(), new NoArgsConstructorProcessor(),
         new DataProcessor(), new GetterProcessor(), new ValueProcessor(), new WitherProcessor(),
         new SetterProcessor(), new EqualsAndHashCodeProcessor(), new ToStringProcessor(),

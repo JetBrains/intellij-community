@@ -16,7 +16,7 @@ import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 public class DelombokBuilderAction extends BaseDelombokAction {
 
   public DelombokBuilderAction() {
-    super(new BaseDelombokHandler(
+    super(new BaseDelombokHandler(true,
         new BuilderPreDefinedInnerClassFieldProcessor(), new BuilderPreDefinedInnerClassMethodProcessor(),
         new BuilderExperimentalPreDefinedInnerClassFieldProcessor(), new BuilderExperimentalPreDefinedInnerClassMethodProcessor(),
         new BuilderClassProcessor(), new BuilderClassMethodProcessor(),
