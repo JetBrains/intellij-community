@@ -16,10 +16,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
@@ -115,7 +113,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     }
     final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     final List<PropertiesFile> files = resourceBundle.getPropertiesFiles();
-    if (files.isEmpty()) {
+    if (!(resourceBundle instanceof ResourceBundleImpl) || files.size() < 2) {
       return null;
     }
     List<Locale> bundleLocales = ContainerUtil.mapNotNull(files, new Function<PropertiesFile, Locale>() {
