@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -96,5 +97,13 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
 
   public Comparable getTypeSortKey() {
     return new PsiFileNode.ExtensionSortKey(StdFileTypes.PROPERTIES.getDefaultExtension());
+  }
+
+  @Override
+  public boolean validate() {
+    if (!super.validate()) {
+      return false;
+    }
+    return Comparing.equal(getValue().getDefaultPropertiesFile().getResourceBundle(), getValue());
   }
 }
