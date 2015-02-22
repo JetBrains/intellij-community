@@ -32,7 +32,7 @@ public class BuilderExample {
 
     @java.lang.Override
     public String toString() {
-      return "BuilderExample.HelloWorld(name = " + this.name + ", age = " + this.age + ")";
+      return "BuilderExample.HelloWorldBuilder(name = " + this.name + ", age = " + this.age + ")";
     }
   }
 }

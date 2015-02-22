@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -92,7 +93,7 @@ public class AccessorsInfo {
   public String removePrefix(String fieldName) {
     for (String prefix : prefixes) {
       if (canPrefixApply(fieldName, prefix)) {
-        return fieldName.substring(prefix.length());
+        return StringUtil.decapitalize(fieldName.substring(prefix.length()));
       }
     }
     return fieldName;
@@ -101,6 +102,6 @@ public class AccessorsInfo {
   private boolean canPrefixApply(String fieldName, String prefix) {
     final int prefixLength = prefix.length();
     return fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
-        (prefixLength == 0 || Character.isUpperCase(fieldName.charAt(prefixLength)) || !Character.isLetter(fieldName.charAt(prefixLength-1)) );
+        (prefixLength == 0 || Character.isUpperCase(fieldName.charAt(prefixLength)) || !Character.isLetter(fieldName.charAt(prefixLength - 1)));
   }
 }

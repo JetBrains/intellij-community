@@ -9,10 +9,6 @@ import java.io.IOException;
  */
 public class BuilderTestCase extends LombokParsingTestCase {
 
-  protected boolean shouldCompareCodeBlocks() {
-    return false;
-  }
-
   // This test is lombok's homepage example.
   public void testBuilderExample() throws IOException {
     doTest();
@@ -31,12 +27,20 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
+  public void testBuilderChainAndFluent() throws IOException {
+    doTest();
+  }
+
+  public void testBuilderWithAccessors() throws IOException {
+    doTest();
+  }
+
   // This test is lombok's homepage example with predefined elements and another inner class.
   public void testBuilderPredefined() throws IOException {
     doTest();
   }
 
-  // TODO support Predefined inner builder class
+  // TODO support Predefined inner builder class for @Builder on methods
   public void testBuilderWithExistingBuilderClass() throws IOException {
     doTest();
   }

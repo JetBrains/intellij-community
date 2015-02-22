@@ -17,6 +17,7 @@ import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
+import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -189,10 +190,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         .withNavigationElement(psiAnnotation)
         .withModifier(modifier);
 
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
+
     if (!suppressConstructorProperties && !params.isEmpty()) {
       StringBuilder constructorPropertiesAnnotation = new StringBuilder("java.beans.ConstructorProperties( {");
       for (PsiField param : params) {
-        constructorPropertiesAnnotation.append('"').append(param.getName()).append('"').append(',');
+        constructorPropertiesAnnotation.append('"').append(accessorsInfo.removePrefix(param.getName())).append('"').append(',');
       }
       constructorPropertiesAnnotation.deleteCharAt(constructorPropertiesAnnotation.length() - 1);
       constructorPropertiesAnnotation.append("} ) ");
@@ -202,11 +205,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     for (PsiField param : params) {
       UserMapKeys.addWriteUsageFor(param);
-      constructor.withParameter(param.getName(), param.getType());
+      constructor.withParameter(accessorsInfo.removePrefix(param.getName()), param.getType());
     }
 
     final StringBuilder blockText = new StringBuilder();
-    appendParamInitialization(params, blockText);;
+    for (PsiField param : params) {
+      blockText.append(String.format("this.%s = %s;\n", param.getName(), accessorsInfo.removePrefix(param.getName())));
+    }
     constructor.withBody(PsiMethodUtil.createCodeBlockFromText(blockText.toString(), psiClass));
 
     return constructor;
@@ -261,10 +266,4 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
   }
 
-  private StringBuilder appendParamInitialization(Collection<PsiField> params, StringBuilder builder) {
-    for (PsiField param : params) {
-      builder.append("\nthis.").append(param.getName()).append(" = ").append(param.getName()).append(';');
-    }
-    return builder;
-  }
 }
