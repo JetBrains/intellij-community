@@ -82,14 +82,18 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPackUpdater) {
       @Override
       protected void startNewBackgroundTask() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(new MyRefreshTask(myDataPack));
-          }
-        });
+        VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
       }
     };
+  }
+
+  protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask);
+      }
+    });
   }
 
   @NotNull
