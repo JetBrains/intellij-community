@@ -23,7 +23,7 @@ public class MatchOptions implements JDOMExternalizable {
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
-  private FileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  private FileType myFileType = null;
   private Language myDialect = null;
 
   private SearchScope scope;
@@ -268,8 +268,7 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public int hashCode() {
-    int result;
-    result = (looseMatching ? 1 : 0);
+    int result = (looseMatching ? 1 : 0);
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     // @TODO support scope
@@ -285,6 +284,9 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public FileType getFileType() {
+    if (myFileType == null) {
+      myFileType =  StructuralSearchUtil.getDefaultFileType();
+    }
     return myFileType;
   }
 
