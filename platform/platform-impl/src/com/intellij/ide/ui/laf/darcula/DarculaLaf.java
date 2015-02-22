@@ -56,7 +56,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   public DarculaLaf() {
     try {
-      if (SystemInfo.isWindows || SystemInfo.isLinux) {
+      if (SystemInfo.isWindows) {
         base = new IdeaLaf();
       } else {
         final String name = UIManager.getSystemLookAndFeelClassName();
