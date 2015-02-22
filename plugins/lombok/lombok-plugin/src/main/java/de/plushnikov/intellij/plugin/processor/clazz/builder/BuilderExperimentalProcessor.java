@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.processor.clazz;
+package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import lombok.experimental.Builder;
 

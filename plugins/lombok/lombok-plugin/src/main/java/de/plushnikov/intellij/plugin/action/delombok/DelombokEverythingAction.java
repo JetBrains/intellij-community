@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import de.plushnikov.intellij.plugin.processor.clazz.BuilderClassProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
@@ -9,6 +7,8 @@ import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;

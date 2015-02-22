@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -156,6 +157,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     for (PsiMethod psiMethod : psiMethods) {
       if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiMethod, registeredAnnotationNames)) {
+        return true;
+      }
+    }
+    final PsiElement psiClassParent = psiClass.getParent();
+    if (psiClassParent instanceof PsiClass) {
+      if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn((PsiModifierListOwner) psiClassParent, registeredAnnotationNames)) {
         return true;
       }
     }

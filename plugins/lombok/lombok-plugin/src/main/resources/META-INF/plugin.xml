@@ -71,10 +71,14 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
 
-		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderClassProcessor"/>
-		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor"/>
-		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderExperimentalClassProcessor"/>
-		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderExperimentalProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassMethodProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassMethodProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalClassProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalProcessor"/>
 
 		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 		<processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueExperimentalProcessor"/>
@@ -195,6 +199,7 @@
 		<ul>
 		<li>0.9.1
 				<ol>
+				    <li>Fixed #33: Builder annotation with partial implementation shows errors</li>
 				    <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>
 				</ol>
 			</li>

@@ -1,6 +1,4 @@
-import lombok.experimental.Builder;
-
-@Builder
+@lombok.experimental.Builder
 public class BuilderPredefined {
   private String name;
   private int age;

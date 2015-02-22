@@ -33,13 +33,15 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiAnnotation, psiMethod, true, builder);
+    return builderHandler.validate(psiMethod, psiAnnotation, builder);
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
-      target.add(builderHandler.createBuilderClass(psiClass, psiMethod, psiAnnotation));
+      if (builderHandler.existInnerClass(psiClass, psiAnnotation)) {
+        target.add(builderHandler.createBuilderClass(psiClass, psiMethod, psiAnnotation));
+      }
     }
   }
 }

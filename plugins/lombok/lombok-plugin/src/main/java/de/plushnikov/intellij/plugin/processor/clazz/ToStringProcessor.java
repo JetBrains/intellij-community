@@ -95,11 +95,12 @@ public class ToStringProcessor extends AbstractClassProcessor {
     }
 
     final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, false);
-    return createToStringMethod(psiClass, psiFields, psiAnnotation);
+    final PsiMethod stringMethod = createToStringMethod(psiClass, psiFields, psiAnnotation);
+    return Collections.singletonList(stringMethod);
   }
 
   @NotNull
-  public Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
+  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager psiManager = psiClass.getManager();
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
         .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
@@ -112,8 +113,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
     UserMapKeys.addReadUsageFor(psiFields);
-
-    return Collections.<PsiMethod>singletonList(method);
+    return method;
   }
 
   private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
