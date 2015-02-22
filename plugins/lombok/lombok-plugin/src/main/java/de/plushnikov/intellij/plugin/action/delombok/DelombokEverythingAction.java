@@ -8,6 +8,12 @@ import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalPreDefinedInnerClassMethodProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderExperimentalProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderPreDefinedInnerClassMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
@@ -23,6 +29,8 @@ import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor;
+import de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor;
+import de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
 import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
 
@@ -40,7 +48,12 @@ public class DelombokEverythingAction extends BaseDelombokAction {
         new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
         new GetterFieldProcessor(), new SetterFieldProcessor(), new WitherFieldProcessor(), new DelegateFieldProcessor(),
         new DelegateMethodProcessor(),
-        new BuilderClassProcessor(), new BuilderClassMethodProcessor(), new BuilderMethodProcessor(), new BuilderProcessor()
+
+        new BuilderPreDefinedInnerClassFieldProcessor(), new BuilderPreDefinedInnerClassMethodProcessor(),
+        new BuilderExperimentalPreDefinedInnerClassFieldProcessor(), new BuilderExperimentalPreDefinedInnerClassMethodProcessor(),
+        new BuilderClassProcessor(), new BuilderClassMethodProcessor(), new BuilderMethodProcessor(), new BuilderProcessor(),
+        new BuilderExperimentalClassProcessor(), new BuilderExperimentalClassMethodProcessor(),
+        new BuilderExperimentalMethodProcessor(), new BuilderExperimentalProcessor()
     );
   }
 
