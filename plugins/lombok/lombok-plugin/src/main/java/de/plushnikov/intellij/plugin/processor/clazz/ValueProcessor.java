@@ -43,7 +43,7 @@ public class ValueProcessor extends AbstractClassProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     validateCallSuperParam(psiAnnotation, psiClass, builder, "equals/hashCode");
 
-    return validateAnnotationOnRigthType(psiClass, builder);
+    return validateAnnotationOnRightType(psiClass, builder);
   }
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
@@ -57,7 +57,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     }
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("'@Value' is only supported on a class type");

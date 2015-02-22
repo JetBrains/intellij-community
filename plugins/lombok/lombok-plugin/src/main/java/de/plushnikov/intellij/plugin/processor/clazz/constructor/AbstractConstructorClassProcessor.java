@@ -24,6 +24,8 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,6 +121,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   @NotNull
   protected Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<PsiField>();
+    final boolean classAnnotatedWithValue = PsiAnnotationUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class);
     for (PsiField psiField : psiClass.getFields()) {
       // skip fields named $
       boolean addField = !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
@@ -127,8 +130,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       if (null != modifierList) {
         // skip static fields
         addField &= !modifierList.hasModifierProperty(PsiModifier.STATIC);
+
+        boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
         // skip initialized final fields
-        addField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
+        addField &= (!isFinal || null == psiField.getInitializer());
       }
 
       if (addField) {
@@ -136,6 +141,14 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       }
     }
     return allNotInitializedNotStaticFields;
+  }
+
+  protected boolean isFieldFinal(@NotNull PsiField psiField, @NotNull PsiModifierList modifierList, boolean classAnnotatedWithValue) {
+    boolean isFinal = modifierList.hasModifierProperty(PsiModifier.FINAL);
+    if (!isFinal && classAnnotatedWithValue) {
+      isFinal = PsiAnnotationUtil.isNotAnnotatedWith(psiField, NonFinal.class);
+    }
+    return isFinal;
   }
 
   @NotNull

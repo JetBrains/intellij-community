@@ -13,6 +13,11 @@ public class ValueTestCase extends LombokParsingTestCase {
     return false;
   }
 
+  public void testValueIssue78() throws IOException {
+    //TODO After adding support for final Modifier on class/fields -> adapt test
+    doTest();
+  }
+
   public void testValueIssue94() throws IOException {
     //TODO After adding support for final Modifier on class/fields -> adapt test
     doTest();
