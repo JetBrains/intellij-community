@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
@@ -35,6 +36,9 @@ public class WithinPredicate extends AbstractStringBasedPredicate {
 
   public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
     final MatchResult result = matcher.isMatchedByDownUp(match, myMatchOptions);
-    return result != null;
+    if (result == null) {
+      return false;
+    }
+    return PsiTreeUtil.isAncestor(result.getMatch(), match, false);
   }
 }

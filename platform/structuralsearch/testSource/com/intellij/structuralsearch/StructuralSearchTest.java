@@ -842,6 +842,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "return !(x);";
     String s10034 = "return ('a);";
     assertEquals("Find statement with parenthesized expr",2,findMatchesCount(s10033,s10034));
+
+    String in = "if (true) {" +
+                "  System.out.println();" +
+                "} else {" +
+                "  System.out.println();" +
+                "}" +
+                "if (true) System.out.println();";
+    String pattern1 = "if ('_exp) { '_statement*; }";
+    assertEquals("Find if statement with else", 2, findMatchesCount(in, pattern1));
+
+    String pattern2 = "if ('_exp) { '_statement*; } else { '_statement2{0,0}; }";
+    assertEquals("Find if statement without else", 1, findMatchesCount(in, pattern2));
   }
 
   public void testSearchClass() {
