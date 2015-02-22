@@ -195,7 +195,7 @@
 		<ul>
 		<li>0.9.1
 				<ol>
-				    <li></li>
+				    <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>
 				</ol>
 			</li>
 			<li>0.9.0
