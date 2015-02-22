@@ -31,25 +31,20 @@ public class SuspiciousLanguagesInspectionTest extends LightCodeInsightFixtureTe
   }
 
   public void testSimple1() {
-    doTest();
+    doTest("p.properties", "p_en.properties");
   }
 
   public void testSimple2() {
-    doTest();
+    doTest("p.properties", "p_asd.properties");
   }
 
   public void testWithAdditionalLocales() {
-    doTest("asd");
+    doTest("p.properties", "p_asd.properties", "asd");
   }
 
-  private void doTest(final String... additionalLocales) {
-    final File tesDataDir = new File(getHomePath() + File.separator + getBasePath() + File.separator + getTestName(true));
-    final File[] files = tesDataDir.listFiles();
-    assertNotNull(files);
-    for (File file : files) {
-      final String path = file.getAbsolutePath();
-      myFixture.configureByFile(path);
-    }
+  private void doTest(final String file1, final String file2, final String... additionalLocales) {
+    myFixture.configureByFile(getTestName(true) + "/" + file1);
+    myFixture.configureByFile(getTestName(true) + "/" + file2);
     final SuspiciousLocalesLanguagesInspection inspection = new SuspiciousLocalesLanguagesInspection();
     if (additionalLocales.length != 0) {
       inspection.setAdditionalLanguages(ContainerUtil.newArrayList(additionalLocales));
