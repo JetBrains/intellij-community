@@ -55,10 +55,10 @@ public class PatchReader {
     this(patchContent, true);
   }
 
-  public PatchReader(CharSequence patchContent, boolean parseHunks) {
+  public PatchReader(CharSequence patchContent, boolean saveHunks) {
     myLines = LineTokenizer.tokenizeIntoList(patchContent, false);
-    myAdditionalInfoParser = new AdditionalInfoParser(!parseHunks);
-    myPatchContentParser = new PatchContentParser(parseHunks);
+    myAdditionalInfoParser = new AdditionalInfoParser(!saveHunks);
+    myPatchContentParser = new PatchContentParser(saveHunks);
   }
 
   public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
@@ -254,15 +254,15 @@ public class PatchReader {
 
 
   private static class PatchContentParser implements Parser {
-    private final boolean myParseHunks;
+    private final boolean mySaveHunks;
     private DiffFormat myDiffFormat = null;
     private final List<TextFilePatch> myPatches;
 
     private boolean myDiffCommandLike;
     private boolean myIndexLike;
 
-    private PatchContentParser(boolean parseHunks) {
-      myParseHunks = parseHunks;
+    private PatchContentParser(boolean saveHunks) {
+      mySaveHunks = saveHunks;
       myPatches = new SmartList<TextFilePatch>();
     }
 
@@ -303,7 +303,7 @@ public class PatchReader {
     }
 
     private TextFilePatch readPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
-      final TextFilePatch curPatch = new TextFilePatch(null);
+      final TextFilePatch curPatch = mySaveHunks ? new TextFilePatch(null) : new EmptyTextFilePatch();
       extractFileName(curLine, curPatch, true, myDiffCommandLike && myIndexLike);
 
       if (! iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
@@ -314,7 +314,7 @@ public class PatchReader {
       }
       extractFileName(curLine, curPatch, false, myDiffCommandLike && myIndexLike);
 
-      while (myParseHunks && iterator.hasNext()) {
+      while (iterator.hasNext()) {
         PatchHunk hunk;
         if (myDiffFormat == DiffFormat.UNIFIED) {
           hunk = readNextHunkUnified(iterator);
@@ -594,5 +594,38 @@ public class PatchReader {
   private interface Parser {
     boolean testIsStart(final String start);
     void parse(final String start, final ListIterator<String> iterator) throws PatchSyntaxException;
+  }
+
+  private static class EmptyTextFilePatch extends TextFilePatch {
+    private int myHunkCount = 0;
+    private boolean myNew;
+    private boolean myDeleted;
+
+    EmptyTextFilePatch() {
+      super(null);
+    }
+
+    @Override
+    public void addHunk(PatchHunk hunk) {
+      if (myHunkCount == 0) {
+        if (hunk.isNewContent()) {
+          myNew = true;
+        }
+        else if (hunk.isDeletedContent()) {
+          myDeleted = true;
+        }
+      }
+      myHunkCount++;
+    }
+
+    @Override
+    public boolean isNewFile() {
+      return myHunkCount == 1 && myNew;
+    }
+
+    @Override
+    public boolean isDeletedFile() {
+      return myHunkCount == 1 && myDeleted;
+    }
   }
 }
