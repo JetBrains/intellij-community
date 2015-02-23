@@ -114,6 +114,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   @State(
     name = Configuration.COMPONENT_NAME,
+    defaultStateAsResource = true,
     storages = {
       @Storage(file = StoragePathMacros.PROJECT_FILE),
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
