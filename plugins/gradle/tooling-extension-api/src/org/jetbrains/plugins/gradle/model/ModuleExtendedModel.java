@@ -20,6 +20,8 @@ import org.gradle.tooling.model.DomainObjectSet;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @deprecated Use {@link com.intellij.openapi.externalSystem.model.ExternalProject} model instead.
@@ -77,4 +79,11 @@ public interface ModuleExtendedModel extends Serializable {
    * @return the compiler output directories.
    */
   ExtIdeaCompilerOutput getCompilerOutput();
+
+  /**
+   * The artifacts per configuration.
+   *
+   * @return a mapping between the name of a configuration and the files associated with it.
+   */
+  Map<String, Set<File>> getArtifactsByConfiguration();
 }

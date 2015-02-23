@@ -17,6 +17,8 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -175,6 +177,17 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     moduleVersionModel.setContentRoots(Collections.<ExtIdeaContentRoot>singleton(contentRoot));
     moduleVersionModel.setCompilerOutput(compilerOutput);
+
+    ConfigurationContainer configurations = project.getConfigurations();
+    SortedMap<String, Configuration> configurationsByName = configurations.getAsMap();
+
+    Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>();
+    for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
+      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles();
+      artifactsByConfiguration.put(configurationEntry.getKey(), files);
+    }
+    moduleVersionModel.setArtifactsByConfiguration(artifactsByConfiguration);
+
     return moduleVersionModel;
   }
 
