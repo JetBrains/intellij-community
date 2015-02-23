@@ -102,7 +102,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
   }
 
   private static Language findXmlLikeLanguage(Project project, VirtualFile file) {
-    final PsiFile psiFile = file != null ? PsiManager.getInstance(project).findFile(file) : null;
+    final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
         if (SUPPORTED_LANGUAGES.contains(language.getID())) return language;
