@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -62,6 +61,9 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
   protected static boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
     if (!processor.process(pkg)) return false;
 
-    return ContainerUtil.process(pkg.getSubPackages(), processor);
+    for (final PsiPackage aPackage : pkg.getSubPackages()) {
+      if (!processSubPackages(aPackage, processor)) return false;
+    }
+    return true;
   }
 }
