@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.StateSplitter;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
-import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -178,7 +179,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
   }
 
-  private static class MySaveSession implements SaveSession, ExternalizationSession {
+  private static class MySaveSession extends SaveSessionBase {
     private final DirectoryBasedStorage storage;
     private final DirectoryStorageData originalStorageData;
     private DirectoryStorageData copiedStorageData;
@@ -192,26 +193,13 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     @Override
-    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
-      Element compositeState;
-      try {
-        compositeState = DefaultStateSerializer.serializeState(state, storageSpec);
-      }
-      catch (WriteExternalException e) {
-        LOG.debug(e);
-        return;
-      }
-      catch (Throwable e) {
-        LOG.error("Unable to serialize " + componentName + " state", e);
-        return;
-      }
-
+    protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
       removedFileNames.addAll(originalStorageData.getFileNames(componentName));
-      if (JDOMUtil.isEmpty(compositeState)) {
+      if (JDOMUtil.isEmpty(element)) {
         doSetState(componentName, null, null);
       }
       else {
-        for (Pair<Element, String> pair : storage.mySplitter.splitState(compositeState)) {
+        for (Pair<Element, String> pair : storage.mySplitter.splitState(element)) {
           removedFileNames.remove(pair.second);
           doSetState(componentName, pair.second, pair.first);
         }

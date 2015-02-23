@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
@@ -31,7 +30,7 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
 
   @Override
   protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
-    final Object defValue = accessor.read(getDefaultBean(bean));
+    Object defValue = accessor.read(getDefaultBean(bean));
     if (defValue instanceof Element && beanValue instanceof Element) {
       return !JDOMUtil.areElementsEqual((Element)beanValue, (Element)defValue);
     }

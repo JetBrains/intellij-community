@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,8 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -175,7 +172,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
   }
 
-  protected abstract class XmlElementStorageSaveSession implements SaveSession, ExternalizationSession {
+  protected abstract class XmlElementStorageSaveSession extends SaveSessionBase {
     private final StorageData myOriginalStorageData;
     private StorageData myCopiedStorageData;
 
@@ -192,20 +189,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
 
     @Override
-    public final void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, @Nullable Storage storageSpec) {
-      Element element;
-      try {
-        element = DefaultStateSerializer.serializeState(state, storageSpec);
-      }
-      catch (WriteExternalException e) {
-        LOG.debug(e);
-        return;
-      }
-      catch (Throwable e) {
-        LOG.error("Unable to serialize " + componentName + " state", e);
-        return;
-      }
-
+    protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
       if (myCopiedStorageData == null) {
         myCopiedStorageData = StorageData.setStateAndCloneIfNeed(componentName, element, myOriginalStorageData, myNewLiveStates);
       }
