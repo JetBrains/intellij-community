@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -12,6 +13,13 @@ import java.io.IOException;
  */
 @SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    options.getMatchOptions().setFileType(StdFileTypes.JAVA);
+  }
+
   public void testReplaceInLiterals() {
     String s1 = "String ID_SPEED = \"Speed\";";
     String s2 = "String 'name = \"'string\";";
