@@ -80,7 +80,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
@@ -168,7 +167,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testIDEA127124() throws Exception {
     doTest();
   }
