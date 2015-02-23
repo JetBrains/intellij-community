@@ -130,6 +130,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     return checkIsSavingDisabled() ? null : createSaveSession(getStorageData());
   }
 
+  @NotNull
   protected abstract XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData);
 
   @Nullable

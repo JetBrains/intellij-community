@@ -94,6 +94,7 @@ public class FileBasedStorage extends XmlElementStorage {
     return isUseXmlProlog();
   }
 
+  @NotNull
   @Override
   protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
     return new FileSaveSession(storageData);
@@ -106,7 +107,7 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private class  FileSaveSession extends XmlElementStorageSaveSession {
+  private class FileSaveSession extends XmlElementStorageSaveSession {
     protected FileSaveSession(@NotNull StorageData storageData) {
       super(storageData);
     }
