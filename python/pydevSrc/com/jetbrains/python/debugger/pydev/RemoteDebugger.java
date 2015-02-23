@@ -488,7 +488,7 @@ public class RemoteDebugger implements ProcessDebugger {
     private StringBuilder myTextBuilder = new StringBuilder();
 
     private DebuggerReader(final InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET); //TODO: correct encoding?
+      super(stream, CharsetToolkit.UTF8_CHARSET, SleepingPolicy.BLOCKING); //TODO: correct encoding?
       start();
     }
 

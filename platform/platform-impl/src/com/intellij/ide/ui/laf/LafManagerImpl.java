@@ -560,6 +560,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                          "Tree.rightChildIndent");
+    List<String> patched = new ArrayList<String>();
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
@@ -569,9 +570,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
       } else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
-          entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
+          if (!"true".equals(defaults.get(key +".hidpi.patched"))) {
+            entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
+            patched.add(key);
+          }
         }
       }
+    }
+    for (String key : patched) {
+      defaults.put(key + ".hidpi.patched", "true");
     }
   }
 

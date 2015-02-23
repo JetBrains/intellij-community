@@ -42,10 +42,8 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
 
 /**
  * @author Konstantin Bulenkov
@@ -82,7 +80,7 @@ public class DarculaLaf extends BasicLookAndFeel {
   @SuppressWarnings("UnusedParameters")
   private static void log(Exception e) {
 //    everything is gonna be alright
-//    e.printStackTrace();
+    e.printStackTrace();
   }
 
   @Override
@@ -91,6 +89,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
       final UIDefaults metalDefaults = (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
+
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       if (SystemInfo.isLinux) {
         if (!Registry.is("darcula.use.native.fonts.on.linux")) {
@@ -124,6 +123,9 @@ public class DarculaLaf extends BasicLookAndFeel {
       if (SystemInfo.isWindows) {
         //JFrame.setDefaultLookAndFeelDecorated(true);
       }
+      if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+        applySystemFonts(defaults);
+      }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
       return defaults;
     }
@@ -131,6 +133,23 @@ public class DarculaLaf extends BasicLookAndFeel {
       log(e);
     }
     return super.getDefaults();
+  }
+
+  private static void applySystemFonts(UIDefaults defaults) {
+    try {
+      String fqn = UIManager.getSystemLookAndFeelClassName();
+      Object systemLookAndFeel = Class.forName(fqn).newInstance();
+      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
+      superMethod.setAccessible(true);
+      final UIDefaults systemDefaults = (UIDefaults)superMethod.invoke(systemLookAndFeel);
+      for (Map.Entry<Object, Object> entry : systemDefaults.entrySet()) {
+        if (entry.getValue() instanceof Font) {
+          defaults.put(entry.getKey(), entry.getValue());
+        }
+      }
+    } catch (Exception e) {
+      log(e);
+    }
   }
 
   protected DefaultMetalTheme createMetalTheme() {

@@ -17,6 +17,7 @@ package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleManager;
@@ -27,12 +28,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -54,15 +58,7 @@ public class DissociateResourceBundleAction extends AnAction {
     }
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     assert resourceBundles.size() > 0;
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    for (ResourceBundle resourceBundle : resourceBundles) {
-      fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
-      for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-        fileEditorManager.closeFile(propertiesFile.getVirtualFile());
-      }
-      ResourceBundleManager.getInstance(e.getProject()).dissociateResourceBundle(resourceBundle);
-    }
-    ProjectView.getInstance(project).refresh();
+    dissociate(resourceBundles, project);
   }
 
   @Override
@@ -76,6 +72,26 @@ public class DissociateResourceBundleAction extends AnAction {
       e.getPresentation().setVisible(true);
     } else {
       e.getPresentation().setVisible(false);
+    }
+  }
+
+  public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<PsiFileSystemItem>();
+    for (ResourceBundle resourceBundle : resourceBundles) {
+      fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
+      for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
+        fileEditorManager.closeFile(propertiesFile.getVirtualFile());
+        PsiDirectory containingDirectory = propertiesFile.getContainingFile().getContainingDirectory();
+        if (containingDirectory != null) {
+          toUpdateInProjectView.add(containingDirectory);
+        }
+      }
+      ResourceBundleManager.getInstance(project).dissociateResourceBundle(resourceBundle);
+    }
+    AbstractTreeBuilder treeBuilder = ProjectView.getInstance(project).getCurrentProjectViewPane().getTreeBuilder();
+    for (PsiFileSystemItem item : toUpdateInProjectView) {
+      treeBuilder.queueUpdateFrom(item, false);
     }
   }
 

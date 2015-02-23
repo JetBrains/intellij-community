@@ -51,6 +51,7 @@ public class LayoutCodeDialog extends DialogWrapper {
 
   private JPanel myActionsPanel;
   private JPanel myScopePanel;
+  private JLabel myOptionalLabel;
 
   private LayoutCodeOptions myRunOptions;
 
@@ -127,6 +128,8 @@ public class LayoutCodeDialog extends DialogWrapper {
     if (canRearrangeCode) {
       myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myFile.getLanguage()));
     }
+
+    myOptionalLabel.setVisible(canOptimizeImports || canRearrangeCode);
   }
 
   @Nullable
