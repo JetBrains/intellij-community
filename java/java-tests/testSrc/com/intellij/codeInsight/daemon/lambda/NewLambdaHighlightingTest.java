@@ -138,7 +138,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
     doTest();
   }
