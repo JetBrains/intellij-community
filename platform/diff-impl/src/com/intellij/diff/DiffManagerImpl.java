@@ -26,7 +26,6 @@ import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.fragmented.OnesideDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DiffManagerImpl extends DiffManagerEx {
-  private static final Logger LOG = Logger.getInstance(DiffManagerImpl.class);
-
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequest request) {
     showDiff(project, request, DiffDialogHints.DEFAULT);
@@ -88,16 +86,11 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public List<DiffTool> getDiffTools() {
     List<DiffTool> result = new ArrayList<DiffTool>();
-
     result.add(SimpleDiffTool.INSTANCE);
     result.add(OnesideDiffTool.INSTANCE);
     result.add(BinaryDiffTool.INSTANCE);
     result.add(DirDiffTool.INSTANCE);
-
-    for (DiffTool tool : DiffTool.EP_NAME.getExtensions()) {
-      result.add(tool);
-    }
-
+    Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
     return result;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.config.*;
@@ -102,24 +100,13 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
   @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      myProperties.writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
+    myProperties.writeExternal(element);
     return element;
   }
 
   @Override
   public void loadState(Element state) {
-    try {
-      myProperties.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+    myProperties.readExternal(state);
   }
 
   public static GlobalAntConfiguration getInstance() {
