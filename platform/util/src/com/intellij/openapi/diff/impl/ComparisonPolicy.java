@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.Formatting;
 import com.intellij.openapi.diff.impl.processing.Word;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -241,8 +242,7 @@ public abstract class ComparisonPolicy {
       if (fragment.isOneSide()) {
         FragmentSide side = FragmentSide.chooseSide(fragment);
         DiffString text = side.getText(fragment);
-        DiffString trimed = text.trim();
-        if (trimed.isEmpty()) {
+        if (StringUtil.isEmptyOrSpaces(text)) {
           collector.add(side.createFragment(text, DiffString.EMPTY, false));
           return;
         }
