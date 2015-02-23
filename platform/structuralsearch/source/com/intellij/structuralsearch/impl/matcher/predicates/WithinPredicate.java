@@ -11,6 +11,8 @@ import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 
+import java.util.List;
+
 /**
  * @author Maxim.Mossienko
  */
@@ -35,10 +37,12 @@ public class WithinPredicate extends AbstractStringBasedPredicate {
   }
 
   public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
-    final MatchResult result = matcher.isMatchedByDownUp(match, myMatchOptions);
-    if (result == null) {
-      return false;
+    final List<MatchResult> results = matcher.matchByDownUp(match, myMatchOptions);
+    for (MatchResult result : results) {
+      if (PsiTreeUtil.isAncestor(result.getMatch(), match, false)) {
+        return true;
+      }
     }
-    return PsiTreeUtil.isAncestor(result.getMatch(), match, false);
+    return false;
   }
 }
