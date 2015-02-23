@@ -50,7 +50,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
       target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
     }
 
-    final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
+    final PsiType psiBuilderType = builderHandler.getBuilderType(psiClass);
 
     final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
     final PsiClass builderClass = PsiClassUtil.getInnerClassByName(psiClass, builderClassName);

@@ -51,14 +51,12 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       }
 
       if (null != psiAnnotation) {
-        final PsiType psiBuilderType;
+        final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
         final String builderClassName;
 
         if (null == psiParentMethod) {
-          psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiParentClass);
           builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiBuilderType);
         } else {
-          psiBuilderType = builderHandler.getBuilderType(psiParentMethod, psiParentClass);
           builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
         }
 

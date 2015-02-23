@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,14 +30,13 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
     if (null == psiParentMethod) {
       final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentClass);
-      final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiParentClass);
       target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
       target.addAll(builderHandler.createMethods(psiParentClass, null, psiBuilderClass, psiBuilderType, psiAnnotation, tmpFields));
     } else {
       final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentMethod);
-      final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentMethod, psiParentClass);
       target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
       target.addAll(builderHandler.createMethods(psiParentClass, psiParentMethod, psiBuilderClass, psiBuilderType, psiAnnotation, tmpFields));
     }

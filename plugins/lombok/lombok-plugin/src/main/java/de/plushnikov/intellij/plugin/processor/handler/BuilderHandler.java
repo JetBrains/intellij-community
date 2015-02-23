@@ -77,7 +77,7 @@ public class BuilderHandler {
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
     boolean result = validateAnnotationOnRightType(psiClass, problemBuilder);
     if (result) {
-      final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
+      final PsiType psiBuilderType = getBuilderType(psiClass);
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
           validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
@@ -120,7 +120,7 @@ public class BuilderHandler {
     if (result) {
       result = validateAnnotationOnRightType(psiMethod, problemBuilder);
       if (result) {
-        final PsiType psiBuilderType = getBuilderType(psiMethod, psiClass);
+        final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
         final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
         result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
             validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
@@ -138,15 +138,23 @@ public class BuilderHandler {
   }
 
   public boolean existInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
+    return existInnerClass(psiClass, null, psiAnnotation);
+  }
+
+  public boolean existInnerClass(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
     final PsiClass innerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
     return null == innerBuilderClass;
   }
 
-  public PsiType getBuilderType(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiClass) {
+  public PsiType getBuilderType(@NotNull PsiClass psiClass) {
+    return getBuilderType(psiClass, null);
+  }
+
+  public PsiType getBuilderType(@NotNull PsiClass psiClass, @Nullable PsiMethod psiMethod) {
     final PsiType psiBuilderTargetClass;
-    if (psiMethod.isConstructor()) {
+    if (null == psiMethod || psiMethod.isConstructor()) {
       psiBuilderTargetClass = PsiClassUtil.getTypeWithGenerics(psiClass);
     } else {
       psiBuilderTargetClass = psiMethod.getReturnType();
@@ -198,7 +206,7 @@ public class BuilderHandler {
 
   @NotNull
   public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiType psiBuilderType = getBuilderType(psiMethod, psiClass);
+    final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
 
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
@@ -214,8 +222,7 @@ public class BuilderHandler {
 
   @NotNull
   public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
-
+    final PsiType psiBuilderType = getBuilderType(psiClass);
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, psiAnnotation);
