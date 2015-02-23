@@ -664,7 +664,20 @@ public class GenerateMembersUtil {
       }
     }
     result = (PsiMethod)CodeStyleManager.getInstance(project).reformat(result);
-    PropertyUtil.annotateWithNullableStuff(field, result);
+
+    PsiModifierListOwner listOwner = null;
+    if (templatesManager instanceof GetterTemplatesManager) {
+      listOwner = result;
+    }
+    else {
+      final PsiParameter[] parameters = result.getParameterList().getParameters();
+      if (parameters.length == 1) {
+        listOwner = parameters[0];
+      }
+    }
+    if (listOwner != null) {
+      PropertyUtil.annotateWithNullableStuff(field, listOwner);
+    }
     return generatePrototype(field, result);
   }
 

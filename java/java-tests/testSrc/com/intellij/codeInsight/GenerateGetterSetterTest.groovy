@@ -122,6 +122,38 @@ class Foo {
 '''
   }
 
+  public void "test nullable stuff"() {
+    myFixture.addClass("package org.jetbrains.annotations;\n" +
+                       "public @interface NotNull {}")
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    @org.jetbrains.annotations.NotNull
+    private String myName;
+
+    <caret>
+}
+'''
+    generateGetter()
+    generateSetter()
+    myFixture.checkResult '''import org.jetbrains.annotations.NotNull;
+
+class Foo {
+    @org.jetbrains.annotations.NotNull
+    private String myName;
+
+    public void setMyName(@NotNull String myName) {
+        this.myName = myName;
+    }
+
+    @NotNull
+    public String getMyName() {
+    
+        return myName;
+    }
+}
+'''
+  }
+
   private void generateGetter() {
     WriteCommandAction.runWriteCommandAction(getProject(), {
     new GenerateGetterHandler() {
