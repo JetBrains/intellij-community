@@ -19,14 +19,14 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession {
-  private SkipDefaultValuesSerializationFilters serializationFilter;
+  private SkipDefaultsSerializationFilter serializationFilter;
 
   @SuppressWarnings("deprecation")
   @Override
@@ -42,7 +42,7 @@ abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage
       }
       else {
         if (serializationFilter == null) {
-          serializationFilter = new SkipDefaultValuesSerializationFilters();
+          serializationFilter = new SkipDefaultsSerializationFilter();
         }
         element = XmlSerializer.serializeIfNotDefault(state, serializationFilter);
       }

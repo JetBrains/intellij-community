@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,13 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithSubBean>",
       bean);
+  }
+
+  public void testSubBeanSerializationAndSkipDefaults() {
+    BeanWithSubBean bean = new BeanWithSubBean();
+    doSerializerTest(
+      "<BeanWithSubBean />",
+      bean, new SkipDefaultsSerializationFilter());
   }
 
   public void testNullFieldValue() {
@@ -538,7 +545,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithPublicFields>",
                      new SerializationFilter() {
       @Override
-      public boolean accepts(@NotNull Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         return accessor.getName().startsWith("I");
       }
     });
@@ -851,7 +858,7 @@ public class XmlSerializerTest extends TestCase {
   }
   public static class PropertyFilterTest implements SerializationFilter {
     @Override
-    public boolean accepts(@NotNull Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
       return !accessor.read(bean).equals("skip");
     }
   }

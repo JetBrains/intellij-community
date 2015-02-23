@@ -39,7 +39,8 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
     }
   }
 
-  private Object getDefaultBean(@NotNull Object bean) {
+  @NotNull
+  Object getDefaultBean(@NotNull Object bean) {
     Class<?> c = bean.getClass();
     Object o = myDefaultBeans.get(c);
     if (o == null) {

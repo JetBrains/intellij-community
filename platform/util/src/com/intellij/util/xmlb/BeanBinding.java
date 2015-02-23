@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.List;
 
 class BeanBinding extends Binding {
-  private static final Logger LOG = Logger.getInstance(BeanBinding.class);
+  static final Logger LOG = Logger.getInstance(BeanBinding.class);
 
   private static final Map<Class, List<Accessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
@@ -47,7 +47,7 @@ class BeanBinding extends Binding {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Binding[] myBindings;
 
-  private final Class<?> myBeanClass;
+  final Class<?> myBeanClass;
 
   public BeanBinding(@NotNull Class<?> beanClass, @Nullable Accessor accessor) {
     super(accessor);
@@ -86,7 +86,13 @@ class BeanBinding extends Binding {
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
-      if (!filter.accepts(accessor, o)) {
+
+      if (filter instanceof SkipDefaultsSerializationFilter) {
+        if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
+          continue;
+        }
+      }
+      else if (!filter.accepts(accessor, o)) {
         continue;
       }
 
@@ -119,6 +125,16 @@ class BeanBinding extends Binding {
     Object instance = ReflectionUtil.newInstance(myBeanClass);
     deserializeInto(instance, (Element)node, null);
     return instance;
+  }
+
+  boolean equalByFields(@NotNull Object currentValue, @NotNull Object defaultValue, @NotNull SkipDefaultsSerializationFilter filter) {
+    for (Binding binding : myBindings) {
+      Accessor accessor = binding.getAccessor();
+      if (!filter.equal(binding, accessor.read(currentValue), accessor.read(defaultValue))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull
