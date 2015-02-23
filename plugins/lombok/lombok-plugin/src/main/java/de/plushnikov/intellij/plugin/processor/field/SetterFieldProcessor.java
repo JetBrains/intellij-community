@@ -45,8 +45,9 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
-    if (methodVisibility != null) {
-      target.add(createSetterMethod(psiField, methodVisibility));
+    final PsiClass psiClass = psiField.getContainingClass();
+    if (methodVisibility != null && psiClass != null) {
+      target.add(createSetterMethod(psiField, psiClass, methodVisibility));
     }
   }
 
@@ -126,14 +127,11 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @NotNull
-  public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
+  public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
 
     final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
-
-    PsiClass psiClass = psiField.getContainingClass();
-    assert psiClass != null;
 
     UserMapKeys.addWriteUsageFor(psiField);
 

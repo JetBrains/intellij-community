@@ -22,3 +22,6 @@ public class DelegateWithException implements Callable<Integer> {
 interface Callable<V> {
   V call() throws Exception;
 }
+class Exception {
+
+}

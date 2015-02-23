@@ -40,7 +40,6 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
-  // TODO support Predefined inner builder class for @Builder on methods
   public void testBuilderWithExistingBuilderClass() throws IOException {
     doTest();
   }

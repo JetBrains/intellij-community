@@ -28,7 +28,18 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.Value;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +66,12 @@ public class BuilderHandler {
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
 
+  @SuppressWarnings("deprecation")
+  private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+      Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
+      RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
+      Data.class.getSimpleName(), Value.class.getSimpleName(), lombok.experimental.Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
+
   private final ToStringProcessor toStringProcessor = new ToStringProcessor();
 
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
@@ -62,7 +79,8 @@ public class BuilderHandler {
     if (result) {
       final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
-      result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder);
+      result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
+          validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
     }
     return result;
   }
@@ -72,6 +90,18 @@ public class BuilderHandler {
     if (!psiNameHelper.isIdentifier(builderClassName)) {
       builder.addError("%s ist not a valid identifier", builderClassName);
       return false;
+    }
+    return true;
+  }
+
+  protected boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    for (PsiClass psiInnerClass : PsiClassUtil.collectInnerClassesIntern(psiClass)) {
+      if (builderClassName.equals(psiInnerClass.getName())) {
+        if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiInnerClass, INVALID_ON_BUILDERS)) {
+          builder.addError("Lombok annotations are not allowed on builder class.");
+          return false;
+        }
+      }
     }
     return true;
   }
@@ -92,7 +122,8 @@ public class BuilderHandler {
       if (result) {
         final PsiType psiBuilderType = getBuilderType(psiMethod, psiClass);
         final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
-        result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder);
+        result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
+            validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
       }
     }
     return result;

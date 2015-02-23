@@ -15,3 +15,6 @@ public class DelegateOnMethod implements Callable<Void> {
 interface Callable<V> {
   V call() throws Exception;
 }
+class Exception {
+
+}

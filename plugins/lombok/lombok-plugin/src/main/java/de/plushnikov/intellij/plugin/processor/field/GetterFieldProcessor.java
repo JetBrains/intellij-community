@@ -42,8 +42,9 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
-    if (methodVisibility != null) {
-      target.add(createGetterMethod(psiField, methodVisibility));
+    final PsiClass psiClass = psiField.getContainingClass();
+    if (null != methodVisibility && null != psiClass) {
+      target.add(createGetterMethod(psiField, psiClass, methodVisibility));
     }
   }
 
@@ -118,10 +119,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @NotNull
-  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
-    PsiClass psiClass = psiField.getContainingClass();
-    assert psiClass != null;
-
+  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
     final String methodName = getGetterName(psiField, psiClass);
 
     UserMapKeys.addReadUsageFor(psiField);

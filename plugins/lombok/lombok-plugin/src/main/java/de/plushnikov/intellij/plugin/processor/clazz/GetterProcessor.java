@@ -92,7 +92,7 @@ public class GetterProcessor extends AbstractClassProcessor {
       }
 
       if (createGetter) {
-        result.add(fieldProcessor.createGetterMethod(psiField, methodModifier));
+        result.add(fieldProcessor.createGetterMethod(psiField, psiClass, methodModifier));
       }
     }
     return result;
