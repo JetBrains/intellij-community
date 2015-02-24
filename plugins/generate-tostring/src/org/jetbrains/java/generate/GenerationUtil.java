@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +155,7 @@ public class GenerationUtil {
    * @return code (usually javacode). Returns null if templateMacro is null.
    * @throws GenerateCodeException is thrown when there is an error generating the javacode.
    */
-  public static String velocityGenerateCode(PsiClass clazz,
+  public static String velocityGenerateCode(@Nullable PsiClass clazz,
                                             Collection<? extends PsiMember> selectedMembers,
                                             Collection<? extends PsiMember> selectedNotNullMembers,
                                             Map<String, String> params,
@@ -172,8 +173,6 @@ public class GenerationUtil {
     try {
       VelocityContext vc = new VelocityContext();
 
-      vc.put("java_version", PsiAdapter.getJavaVersion(clazz));
-
       // field information
       logger.debug("Velocity Context - adding fields");
       final List<FieldElement> fieldElements = ElementUtils.getOnlyAsFieldElements(selectedMembers, selectedNotNullMembers, useAccessors);
@@ -181,6 +180,8 @@ public class GenerationUtil {
       if (fieldElements.size() == 1) {
         vc.put("field", fieldElements.get(0));
       }
+
+      PsiMember member = clazz != null ? clazz : ContainerUtil.getFirstItem(selectedMembers);
 
       // method information
       logger.debug("Velocity Context - adding methods");
@@ -196,17 +197,25 @@ public class GenerationUtil {
       vc.put("members", elements);
 
       // class information
-      ClassElement ce = ElementFactory.newClassElement(clazz);
-      vc.put("class", ce);
-      if (logger.isDebugEnabled()) logger.debug("Velocity Context - adding class: " + ce);
+      if (clazz != null) {
+        ClassElement ce = ElementFactory.newClassElement(clazz);
+        vc.put("class", ce);
+        if (logger.isDebugEnabled()) logger.debug("Velocity Context - adding class: " + ce);
 
-      // information to keep as it is to avoid breaking compatibility with prior releases
-      vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
-      vc.put("FQClassname", ce.getQualifiedName());
-      vc.put("settings", CodeStyleSettingsManager.getSettings(clazz.getProject()));
+        // information to keep as it is to avoid breaking compatibility with prior releases
+        vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
+        vc.put("FQClassname", ce.getQualifiedName());
+      }
+
+      if (member != null) {
+        vc.put("java_version", PsiAdapter.getJavaVersion(member));
+        final Project project = member.getProject();
+        vc.put("settings", CodeStyleSettingsManager.getSettings(project));
+        vc.put("project", project);
+      }
+
       vc.put("helper", GenerationHelper.class);
       vc.put("StringUtil", StringUtil.class);
-      vc.put("project", clazz.getProject());
 
       for (String paramName : contextMap.keySet()) {
         vc.put(paramName, contextMap.get(paramName));
