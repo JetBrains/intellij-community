@@ -861,8 +861,8 @@ public class AbstractPopup implements JBPopup {
           }
         }
       };
-      ListenerUtil.addMouseListener(myCaption, moveListener);
-      ListenerUtil.addMouseMotionListener(myCaption, moveListener);
+      myCaption.addMouseListener(moveListener);
+      myCaption.addMouseMotionListener(moveListener);
       final MyContentPanel saved = myContent;
       Disposer.register(this, new Disposable() {
         @Override
