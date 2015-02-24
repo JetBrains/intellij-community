@@ -98,7 +98,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
     if (myConnected) {
       try {
-        myDebuggerReader = createReader(mySocket);
+        myDebuggerReader = createReader();
       }
       catch (Exception e) {
         synchronized (mySocketObject) {
@@ -231,7 +231,9 @@ public class RemoteDebugger implements ProcessDebugger {
   private void cleanUp() {
     myThreads.clear();
     myResponseQueue.clear();
-    mySequence = -1;
+    synchronized (mySequenceObject) {
+      mySequence = -1;
+    }
     myTempVars.clear();
   }
 
@@ -477,10 +479,10 @@ public class RemoteDebugger implements ProcessDebugger {
     execute(command);
   }
 
-  public DebuggerReader createReader(@NotNull Socket socket) throws IOException {
+  private DebuggerReader createReader() throws IOException {
     synchronized (mySocketObject) {
       //noinspection IOResourceOpenedButNotSafelyClosed
-      return new DebuggerReader(socket.getInputStream());
+      return new DebuggerReader(mySocket.getInputStream());
     }
   }
 
