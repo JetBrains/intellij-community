@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -215,6 +216,8 @@ public class ResolveImportUtil {
   @NotNull
   private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
                                                                   @NotNull QualifiedName qualifiedName) {
+    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
+    if (inSource) return Collections.emptyList();
     final PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (containingDirectory != null) {
       final QualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
