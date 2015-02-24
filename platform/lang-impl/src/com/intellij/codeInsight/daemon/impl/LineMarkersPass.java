@@ -109,7 +109,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     myMarkers = mergeLineMarkers(lineMarkers, myEditor);
   }
 
-  static List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers, Editor editor) {
+  static List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers, @Nullable Editor editor) {
     List<MergeableLineMarkerInfo> forMerge = new ArrayList<MergeableLineMarkerInfo>();
     final Iterator<LineMarkerInfo> iterator = markers.iterator();
     while (iterator.hasNext()) {

@@ -65,7 +65,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
           CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
           CommonCodeStyleSettings.IndentOptions userOptions = settings.getIndentOptions(psiFile.getFileType());
           CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(
-            psiFile, null, true,
+            psiFile, null, false,
             new Processor<FileIndentOptionsProvider>() {
               @Override
               public boolean process(FileIndentOptionsProvider provider) {

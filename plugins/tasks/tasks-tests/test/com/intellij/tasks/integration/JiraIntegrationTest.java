@@ -18,10 +18,7 @@ package com.intellij.tasks.integration;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskManagerTestCase;
-import com.intellij.tasks.TaskState;
+import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -197,7 +194,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   private void changeTaskStateAndCheck(@NotNull String issueKey) throws Exception {
     final Task original = myRepository.findTask(issueKey);
     assertNotNull(original);
-    myRepository.setTaskState(original, TaskState.IN_PROGRESS);
+    myRepository.setTaskState(original, new CustomTaskState("4", "In Progress"));
     final Task updated = myRepository.findTask(issueKey);
     assertNotNull(updated);
     assertEquals(TaskState.IN_PROGRESS, updated.getState());

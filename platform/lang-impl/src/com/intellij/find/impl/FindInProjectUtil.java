@@ -49,10 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
@@ -443,7 +440,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
+  static SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
     SearchScope customScope = findModel.getCustomScope();
     PsiDirectory psiDir = getPsiDirectory(findModel, project);
     VirtualFile directory = psiDir == null ? null : psiDir.getVirtualFile();
@@ -452,8 +449,8 @@ public class FindInProjectUtil {
            // we don't have to check for myProjectFileIndex.isExcluded(file) here like FindInProjectTask.collectFilesInScope() does
            // because all found usages are guaranteed to be not in excluded dir
            directory != null ? GlobalSearchScopesCore.directoryScope(project, directory, findModel.isWithSubdirectories()) :
-           module != null ? GlobalSearchScope.moduleScope(module) :
-           findModel.isProjectScope() ? GlobalSearchScope.projectScope(project) :
+           module != null ? module.getModuleContentScope() :
+           findModel.isProjectScope() ? ProjectScope.getContentScope(project) :
            GlobalSearchScope.allScope(project);
   }
 }

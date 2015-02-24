@@ -9,7 +9,7 @@ public class SvnPropertiesDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Svn Properties Viewer";
+    return "SVN properties viewer";
   }
 
   @Override

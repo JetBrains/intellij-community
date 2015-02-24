@@ -308,6 +308,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     if (mySearchResults.getMatchesCount() >= mySearchResults.getMatchesLimit())
       return;
     for (FindResult range : mySearchResults.getOccurrences()) {
+      if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       if (range.getLength() == 0) {
         attributes = attributes.clone();

@@ -273,8 +273,6 @@
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
-    <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
-
     <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
 
     <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
@@ -1343,8 +1341,6 @@
     <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
 
     <printOption implementation="com.intellij.codeEditor.printing.HyperlinksToClassesOption"/>
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
-                        serviceImplementation="com.intellij.codeEditor.printing.MethodSeparatorProvider"/>
 
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JspIndexPatternBuilder"/>

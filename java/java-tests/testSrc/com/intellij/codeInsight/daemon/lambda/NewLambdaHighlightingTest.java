@@ -17,13 +17,12 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Calendar;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
@@ -80,7 +79,6 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
@@ -139,8 +137,11 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
+    doTest();
+  }
+
+  public void testCheckedExceptionsConstraintsSubstitutions1() throws Exception {
     doTest();
   }
 
@@ -168,12 +169,15 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(year = 2015, month = Calendar.MARCH, day = 30)
   public void testIDEA127124() throws Exception {
     doTest();
   }
 
   public void testIDEA123987() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA136759() throws Exception {
     doTest();
   }
 
@@ -193,7 +197,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 /*
   public static Test suite() {
     final TestSuite suite = new TestSuite();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       suite.addTestSuite(NewLambdaHighlightingTest.class);
     }
     return suite;

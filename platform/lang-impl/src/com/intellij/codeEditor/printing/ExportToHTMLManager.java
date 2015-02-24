@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -130,32 +131,39 @@ class ExportToHTMLManager {
     }
   }
 
-  private static boolean exportPsiFile(final PsiFile psiFile, String outputDirectoryName, Project project, HashMap<PsiFile, PsiFile> filesMap) {
-    ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
+  private static boolean exportPsiFile(final PsiFile psiFile,
+                                       final String outputDirectoryName,
+                                       final Project project,
+                                       final HashMap<PsiFile, PsiFile> filesMap) {
+    final ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
 
     if (psiFile instanceof PsiBinaryFile) {
       return true;
     }
 
-    TreeMap<Integer, PsiReference> refMap = null;
-    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
-      final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
-      if (map != null) {
-        refMap = new TreeMap<Integer, PsiReference>();
-        refMap.putAll(map);
-      }
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        TreeMap<Integer, PsiReference> refMap = null;
+        for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+          final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
+          if (map != null) {
+            refMap = new TreeMap<Integer, PsiReference>();
+            refMap.putAll(map);
+          }
+        }
 
-    String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
-    HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, dirName, exportToHTMLSettings.PRINT_LINE_NUMBERS);
-    try {
-      textPainter.paint(refMap, psiFile.getFileType());
-    }
-    catch (FileNotFoundException e) {
-      myLastException = e;
-      return false;
-    }
-    return true;
+        String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
+        HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, dirName, exportToHTMLSettings.PRINT_LINE_NUMBERS);
+        try {
+          textPainter.paint(refMap, psiFile.getFileType());
+        }
+        catch (FileNotFoundException e) {
+          myLastException = e;
+        }
+      }
+    });
+    return myLastException == null;
   }
 
   private static String constructOutputDirectory(PsiFile psiFile, String outputDirectoryName) {
@@ -241,11 +249,18 @@ class ExportToHTMLManager {
       final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
       final boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
-      try {
-        addToPsiFileList(myPsiDirectory, filesList, isRecursive, myOutputDirectoryName);
-      }
-      catch (FileNotFoundException e) {
-        myLastException = e;
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            addToPsiFileList(myPsiDirectory, filesList, isRecursive, myOutputDirectoryName);
+          }
+          catch (FileNotFoundException e) {
+            myLastException = e;
+          }
+        }
+      });
+      if (myLastException != null) {
         return;
       }
       HashMap<PsiFile, PsiFile> filesMap = new HashMap<PsiFile, PsiFile>();

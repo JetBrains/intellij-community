@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1352,8 +1352,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
-  // public for testing purposes
-  public void _saveSettings() {
+  @Override
+  public void saveSettings() {
+    if (myDoNotSave) return;
+
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
         StoreUtil.save(getStateStore(), null);
@@ -1362,12 +1364,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         mySaveSettingsIsInProgress.set(false);
       }
     }
-  }
-
-  @Override
-  public void saveSettings() {
-    if (myDoNotSave) return;
-    _saveSettings();
   }
 
   @Override

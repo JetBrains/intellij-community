@@ -307,7 +307,10 @@ public abstract class SourcePosition implements Navigatable{
   }
      
   public static SourcePosition createFromElement(PsiElement element) {
-    final PsiElement navigationElement = element.getNavigationElement();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiElement navigationElement = element.getNavigationElement();
+    final SmartPsiElementPointer<PsiElement> pointer =
+      SmartPointerManager.getInstance(navigationElement.getProject()).createSmartPsiElementPointer(navigationElement);
     final PsiFile psiFile;
     if (JspPsiUtil.isInJspFile(navigationElement)) {
       psiFile = JspPsiUtil.getJspFile(navigationElement);
@@ -318,12 +321,19 @@ public abstract class SourcePosition implements Navigatable{
     return new SourcePositionCache(psiFile) {
       @Override
       protected PsiElement calcPsiElement() {
-        return navigationElement;
+        ApplicationManager.getApplication().assertReadAccessAllowed();
+        return pointer.getElement();
       }
 
       @Override
       protected int calcOffset() {
-        return navigationElement.getTextOffset();
+        return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+          @Override
+          public Integer compute() {
+            PsiElement elem = pointer.getElement();
+            return elem != null ? elem.getTextOffset() : -1;
+          }
+        });
       }
     };
   }

@@ -49,6 +49,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -276,6 +277,8 @@ public class GenerationNode extends UserDataHolderBase {
     /*assert generator == null || generator instanceof XmlZenCodingGenerator :
       "The generator cannot process TemplateToken because it doesn't inherit XmlZenCodingGenerator";*/
 
+    ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.INSTANCE);
+    
     Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
     assert template != null;
@@ -307,7 +310,7 @@ public class GenerationNode extends UserDataHolderBase {
         }
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
-      setAttributeValues(tag1, attributes, callback);
+      setAttributeValues(tag1, attributes, callback, zenCodingGenerator.isHtml(callback));
       XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, tag1.getContainingFile().getText());
       VirtualFile vFile = physicalFile.getVirtualFile();
       if (vFile != null) {
@@ -315,7 +318,6 @@ public class GenerationNode extends UserDataHolderBase {
       }
       token.setFile(physicalFile);
     }
-    ZenCodingGenerator zenCodingGenerator = generator != null ? generator : XmlZenCodingGeneratorImpl.INSTANCE;
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);
     return template;
@@ -445,7 +447,10 @@ public class GenerationNode extends UserDataHolderBase {
     return predefinedValues;
   }
 
-  private void setAttributeValues(@NotNull XmlTag tag, @NotNull final Map<String, String> attributes, CustomTemplateCallback callback) {
+  private void setAttributeValues(@NotNull XmlTag tag,
+                                  @NotNull final Map<String, String> attributes,
+                                  @NotNull CustomTemplateCallback callback, 
+                                  boolean isHtml) {
     // default and implied attributes
     final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
     if (defaultAttributeValue != null) {
@@ -495,7 +500,7 @@ public class GenerationNode extends UserDataHolderBase {
         myContainsSurroundedTextMarker = true;
       }
 
-      if (isBooleanAttribute(attributeValue, xmlAttribute, callback)) {
+      if (isHtml && isBooleanAttribute(attributeValue, xmlAttribute, callback)) {
         if (HtmlUtil.isShortNotationOfBooleanAttributePreferred()) {
           if (xmlAttributeValueElement != null) {
             final PsiElement prevSibling = xmlAttributeValueElement.getPrevSibling();
@@ -536,7 +541,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
-    if (ZenCodingUtil.isHtml(callback) && StringUtil.isEmpty(attributeValue)) {
+    if (StringUtil.isEmpty(attributeValue)) {
       final XmlAttributeDescriptor descriptor = xmlAttribute.getDescriptor();
       return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, callback.getContext());
     }

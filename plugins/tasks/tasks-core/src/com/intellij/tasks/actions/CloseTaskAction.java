@@ -41,11 +41,13 @@ public class CloseTaskAction extends BaseTaskAction {
     LocalTask task = taskManager.getActiveTask();
     CloseTaskDialog dialog = new CloseTaskDialog(project, task);
     if (dialog.showAndGet()) {
-      if (dialog.isCloseIssue()) {
+      final CustomTaskState taskState = dialog.getCloseIssueState();
+      if (taskState != null) {
         try {
           TaskRepository repository = task.getRepository();
           assert repository != null;
-          repository.setTaskState(task, TaskState.RESOLVED);
+          repository.setTaskState(task, taskState);
+          repository.setPreferredCloseTaskState(taskState);
         }
         catch (Exception e1) {
           Messages.showErrorDialog(project, e1.getMessage(), "Cannot Resolve Issue");

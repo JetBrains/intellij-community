@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -711,6 +712,10 @@ public class PsiClassImplUtil {
 
   @Nullable
   public static PsiClassType correctType(PsiClassType originalType, final GlobalSearchScope resolveScope) {
+    if (!Registry.is("java.correct.class.type.by.place.resolve.scope")) {
+      return originalType;
+    }
+
     final PsiClassType.ClassResolveResult originalResolveResult = originalType.resolveGenerics();
     PsiClass superClass = originalResolveResult.getElement();
     if (superClass == null) {
@@ -746,7 +751,7 @@ public class PsiClassImplUtil {
             }
           });
           if (substitute == null) return null;
-          
+
           substitutor = substitutor.put(typeParameters[i], substitute);
         }
       }

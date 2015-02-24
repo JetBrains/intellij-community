@@ -35,7 +35,7 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
     "int8", "int16", "int32", "int64", "int128",
     "uint8", "uint16", "uint32", "uint64", "uint128",
     "float16", "float32", "float64", "float80", "float96", "float128", "float256",
-    "complex32", "complex64", "complex128", "complex160", "complex192", "complex256", "complex512"
+    "complex32", "complex64", "complex128", "complex160", "complex192", "complex256", "complex512", "double"
   };
 
   @Override

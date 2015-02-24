@@ -15,16 +15,30 @@
  */
 package com.intellij.tasks;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
+ * Predefined common task states were used before {@link CustomTaskState} was introduced.
+ *
  * @author Dmitry Avdeev
  */
 public enum TaskState {
+  SUBMITTED("Submitted"),
+  OPEN("Open"),
+  IN_PROGRESS("In Progress"),
+  REOPENED("Reopened"),
+  RESOLVED("Resolved"),
 
-  SUBMITTED,
-  OPEN,
-  IN_PROGRESS,
-  REOPENED,
-  RESOLVED,
+  OTHER("Other");
 
-  OTHER
+  private String myPresentableName;
+
+  TaskState(@NotNull String presentableName) {
+    myPresentableName = presentableName;
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return myPresentableName;
+  }
 }

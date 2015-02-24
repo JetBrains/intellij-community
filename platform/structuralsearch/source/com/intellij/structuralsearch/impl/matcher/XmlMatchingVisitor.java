@@ -77,14 +77,15 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
         PsiElement[] matchedNodes = another.getValue().getChildren();
 
         if (contentChildren.length != 1) {
-          patternNodes = expandXmlTexts(patternNodes);
-          matchedNodes = expandXmlTexts(matchedNodes);
+          patternNodes = filterOutWhitespace(patternNodes);
+          matchedNodes = filterOutWhitespace(matchedNodes);
         }
 
-        myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(
+        final boolean result = myMatchingVisitor.matchSequentially(
           new ArrayBackedNodeIterator(patternNodes),
           new ArrayBackedNodeIterator(matchedNodes)
-        ));
+        );
+        myMatchingVisitor.setResult(result);
       }
     }
 
@@ -97,34 +98,27 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
   }
 
-  private static PsiElement[] expandXmlTexts(PsiElement[] children) {
+  private static PsiElement[] filterOutWhitespace(PsiElement[] children) {
     final List<PsiElement> result = new ArrayList<PsiElement>(children.length);
-    for(PsiElement c:children) {
-      if (c instanceof XmlText) {
-        for(PsiElement p:c.getChildren()) {
-          if (!(p instanceof PsiWhiteSpace)) result.add(p);
+    for(PsiElement child : children) {
+      if (child instanceof XmlText) {
+        final PsiElement[] grandChildren = child.getChildren();
+        if (grandChildren.length == 1 && grandChildren[0] instanceof PsiWhiteSpace) {
+          continue;
         }
-      } else if (!(c instanceof PsiWhiteSpace)) {
-        result.add(c);
       }
+      result.add(child);
     }
     return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override public void visitXmlText(XmlText text) {
-    myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(text.getFirstChild(), myMatchingVisitor.getElement().getFirstChild()));
-  }
-
-  @Override public void visitXmlToken(XmlToken token) {
-    if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
-      final String text = token.getText();
-      final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text);
-
-      if (isTypedVar) {
-        myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(token, myMatchingVisitor.getElement()));
-      } else {
-        myMatchingVisitor.setResult(matches(text, myMatchingVisitor.getElement().getText()));
-      }
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text);
+    final PsiElement element = myMatchingVisitor.getElement();
+    if (isTypedVar) {
+      myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(text, element));
+    } else {
+      myMatchingVisitor.setResult(matches(text.getText(), element.getText()));
     }
   }
 

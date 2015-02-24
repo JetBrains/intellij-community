@@ -390,8 +390,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return container;
   }
 
-  private void ensureFileSetCapacityForValue(Value value, int count) {
-    if (count <= 1) return;
+  private @Nullable ChangeBufferingList ensureFileSetCapacityForValue(Value value, int count) {
+    if (count <= 1) return null;
     Object fileSetObject = getFileSetObject(value);
 
     if (fileSetObject != null) {
@@ -399,15 +399,18 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         ChangeBufferingList list = new ChangeBufferingList(count + 1);
         list.add(((Integer)fileSetObject).intValue());
         resetFileSetForValue(value, list);
+        return list;
       } else if (fileSetObject instanceof ChangeBufferingList) {
         ChangeBufferingList list = (ChangeBufferingList)fileSetObject;
         list.ensureCapacity(count);
+        return list;
       }
-      return;
+      return null;
     }
 
-    final Object fileSet = new ChangeBufferingList(count);
+    final ChangeBufferingList fileSet = new ChangeBufferingList(count);
     attachFileSetForNewValue(value, fileSet);
+    return fileSet;
   }
 
   private void attachFileSetForNewValue(Value value, Object fileSet) {
@@ -551,12 +554,13 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
             if (mapping != null) mapping.associateFileIdToValue(idCountOrSingleValue, value);
           } else {
             idCountOrSingleValue = -idCountOrSingleValue;
-            ensureFileSetCapacityForValue(value, idCountOrSingleValue);
+            ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idCountOrSingleValue);
             int prev = 0;
 
             for (int i = 0; i < idCountOrSingleValue; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
-              addValue(prev + id, value);
+              if (changeBufferingList != null)  changeBufferingList.add(prev + id);
+              else addValue(prev + id, value);
               if (mapping != null) mapping.associateFileIdToValue(prev + id, value);
               prev += id;
             }

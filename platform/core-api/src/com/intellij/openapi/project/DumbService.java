@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
@@ -37,9 +38,6 @@ import java.util.List;
  * A service managing IDEA's 'dumb' mode: when indices are updated in background and the functionality is very much limited.
  * Only the explicitly allowed functionality is available. Usually it's allowed by implementing {@link DumbAware} interface.
  *
- * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link com.intellij.openapi.wm.ToolWindowManager}'s
- * registration methods which have 'canWorkInDumMode' parameter. 
- *
  * @author peter
  */
 public abstract class DumbService {
@@ -49,6 +47,11 @@ public abstract class DumbService {
    * @see Project#getMessageBus()
    */
   public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
+
+  /**
+   * The tracker is advanced each time we enter/exit from dumb mode.
+   */
+  public abstract ModificationTracker getModificationTracker();
 
   /**
    * @return whether IntelliJ IDEA is in dumb mode, which means that right now indices are updated in background.

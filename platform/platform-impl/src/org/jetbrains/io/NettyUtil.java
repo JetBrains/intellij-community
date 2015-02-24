@@ -225,6 +225,7 @@ public final class NettyUtil {
                                                                        .allowCredentials()
                                                                        .allowNullOrigin()
                                                                        .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
+                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type")
                                                                        .build()));
   }
 

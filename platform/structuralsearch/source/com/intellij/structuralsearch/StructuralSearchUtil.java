@@ -32,6 +32,7 @@ public class StructuralSearchUtil {
 
   @Contract("null -> false")
   public static boolean isIdentifier(PsiElement element) {
+    if (element == null) return false;
     final StructuralSearchProfile profile = getProfileByPsiElement(element);
     return profile != null && profile.isIdentifier(element);
   }

@@ -1205,9 +1205,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitIfStatement(final PsiIfStatement if1) {
     final PsiIfStatement if2 = (PsiIfStatement)myMatchingVisitor.getElement();
 
+    final PsiStatement elseBranch = if1.getElseBranch();
     myMatchingVisitor.setResult(myMatchingVisitor.match(if1.getCondition(), if2.getCondition()) &&
                                 compareBody(if1.getThenBranch(), if2.getThenBranch()) &&
-                                compareBody(if1.getElseBranch(), if2.getElseBranch()));
+                                (elseBranch == null || compareBody(elseBranch, if2.getElseBranch())));
   }
 
   @Override

@@ -49,9 +49,9 @@ class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements Persis
   public Element getState() {
     return XmlSerializer.serialize(this, new SerializationFilter() {
       @Override
-      public boolean accepts(@NotNull Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         if ("CURRENT_SCHEME_NAME".equals(accessor.getName())) {
-          return bean != null && !DEFAULT_SCHEME_NAME.equals(accessor.read(bean));
+          return !DEFAULT_SCHEME_NAME.equals(accessor.read(bean));
         }
         else {
           return accessor.getValueClass().equals(String.class);

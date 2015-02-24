@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -40,9 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -235,7 +234,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     mySpotlightPainter = new SpotlightPainter(myEditor, this) {
       void updateNow() {
         Configurable configurable = myFilter.myContext.getCurrentConfigurable();
-        update(myFilter, configurable, myEditor.getContent(configurable));
+        if (myTreeView.myTree.hasFocus() || mySearch.getTextEditor().hasFocus()) {
+          update(myFilter, configurable, myEditor.getContent(configurable));
+        }
       }
     };
     add(BorderLayout.CENTER, mySplitter);
@@ -250,6 +251,29 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myFilter.update(filter, false, true);
     myTreeView.select(configurable);
     Disposer.register(this, myTreeView);
+    installSpotlightRemover();
+  }
+
+  private void installSpotlightRemover() {
+    final FocusAdapter spotlightRemover = new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        final Component comp = e.getOppositeComponent();
+        if (comp == mySearch.getTextEditor() || comp == myTreeView.myTree) {
+          return;
+        }
+        mySpotlightPainter.update(null, null, null);
+      }
+
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (!StringUtil.isEmpty(mySearch.getText())) {
+          mySpotlightPainter.updateNow();
+        }
+      }
+    };
+    myTreeView.myTree.addFocusListener(spotlightRemover);
+    mySearch.getTextEditor().addFocusListener(spotlightRemover);
   }
 
   @Override
