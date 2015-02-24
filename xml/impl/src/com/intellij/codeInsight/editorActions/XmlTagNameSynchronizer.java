@@ -76,14 +76,14 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        uninstallSynchronizer(event);
+        uninstallSynchronizer(event.getEditor());
       }
     }, ApplicationManager.getApplication());
     processor.addCommandListener(this);
   }
 
-  public void uninstallSynchronizer(@NotNull EditorFactoryEvent event) {
-    final Document document = event.getEditor().getDocument();
+  public void uninstallSynchronizer(final Editor editor) {
+    final Document document = editor.getDocument();
     final TagNameSynchronizer synchronizer = findSynchronizer(document);
     if (synchronizer != null) {
       synchronizer.clearMarkers();
@@ -91,7 +91,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     document.putUserData(SYNCHRONIZER_KEY, null);
   }
 
-  private void installSynchronizer(Editor editor) {
+  private void installSynchronizer(final Editor editor) {
     final Project project = editor.getProject();
     if (project == null) return;
 
