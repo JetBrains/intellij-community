@@ -21,6 +21,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -120,7 +121,7 @@ public class StudyEditInputAction extends DumbAwareAction {
     finally {
       StudyUtils.closeSilently(printWriter);
     }
-    StudyUtils.synchronize();
+    EduUtils.synchronize();
   }
 
   private static UserTest createUserTest(@NotNull final VirtualFile testsDir,
@@ -208,7 +209,7 @@ public class StudyEditInputAction extends DumbAwareAction {
       File testInputFile = new File(userTest.getInput());
       File testOutputFile = new File(userTest.getOutput());
       if (testInputFile.delete() && testOutputFile.delete()) {
-        StudyUtils.synchronize();
+        EduUtils.synchronize();
       } else {
         LOG.error("failed to delete user tests");
       }
