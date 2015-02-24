@@ -57,7 +57,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
     @NotNull
     @Override
     public String getName() {
-      return "SVN Phantom Changes Viewer";
+      return "SVN phantom changes viewer";
     }
 
     @Override

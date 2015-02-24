@@ -126,11 +126,7 @@ public class ConsoleViewUtil {
 
       @Override
       public Font getFont(EditorFontType key) {
-        Font font = super.getFont(EditorFontType.getConsoleType(key));
-        if (font == null) {
-          return super.getFont(key);
-        }
-        return font;
+        return super.getFont(EditorFontType.getConsoleType(key));
       }
 
       @Override

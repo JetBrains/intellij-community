@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
@@ -990,7 +989,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private boolean myIsNew = false;
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
-      super(parentScheme, DefaultColorSchemesManager.getInstance());
+      super(parentScheme);
+
       parentScheme.getFontPreferences().copyTo(getFontPreferences());
       setLineSpacing(parentScheme.getLineSpacing());
 

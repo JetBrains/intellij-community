@@ -770,10 +770,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void assertInsideCommand() {
+    if (!myAssertThreading) return;
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     if (!commandProcessor.isUndoTransparentActionInProgress() &&
-        commandProcessor.getCurrentCommand() == null &&
-      myAssertThreading) {
+        commandProcessor.getCurrentCommand() == null) {
       throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
     }
   }

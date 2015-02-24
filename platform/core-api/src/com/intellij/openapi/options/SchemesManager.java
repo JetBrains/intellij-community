@@ -15,94 +15,43 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.util.ThrowableConvertor;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-public interface SchemesManager <T extends Scheme, E extends ExternalizableScheme>{
-  SchemesManager EMPTY = new SchemesManager(){
-    @Override
-    @NotNull
-    public Collection loadSchemes() {
-      return Collections.emptySet();
-    }
+public abstract class SchemesManager<T extends Scheme, E extends ExternalizableScheme> {
+  @NotNull
+  public abstract Collection<E> loadSchemes();
 
-    @Override
-    public void addNewScheme(@NotNull final Scheme scheme, final boolean replaceExisting) {
-    }
+  public abstract void addNewScheme(@NotNull T scheme, final boolean replaceExisting);
 
-    @Override
-    public void clearAllSchemes() {
-    }
-
-    @Override
-    @NotNull
-    public List getAllSchemes() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public Scheme findSchemeByName(@NotNull String schemeName) {
-      return null;
-    }
-
-    @Override
-    public void save() {
-    }
-
-    @Override
-    public void setCurrentSchemeName(String schemeName) {
-    }
-
-    @Override
-    public Scheme getCurrentScheme() {
-      return null;
-    }
-
-    @Override
-    public void removeScheme(@NotNull Scheme scheme) {
-    }
-
-    @Override
-    @NotNull
-    public Collection getAllSchemeNames() {
-      return Collections.emptySet();
-    }
-
-    @Override
-    public File getRootDirectory() {
-      return null;
-    }
-  };
+  public abstract void clearAllSchemes();
 
   @NotNull
-  Collection<E> loadSchemes();
-
-  void addNewScheme(@NotNull T scheme, final boolean replaceExisting);
-
-  void clearAllSchemes();
-
-  @NotNull
-  List<T> getAllSchemes();
+  public abstract List<T> getAllSchemes();
 
   @Nullable
-  T findSchemeByName(@NotNull String schemeName);
+  public abstract T findSchemeByName(@NotNull String schemeName);
 
-  void save();
+  public abstract void save();
 
-  void setCurrentSchemeName(@Nullable String schemeName);
+  public abstract void setCurrentSchemeName(@Nullable String schemeName);
 
   @Nullable
-  T getCurrentScheme();
+  public abstract T getCurrentScheme();
 
-  void removeScheme(@NotNull T scheme);
+  public abstract void removeScheme(@NotNull T scheme);
 
   @NotNull
-  Collection<String> getAllSchemeNames();
+  public abstract Collection<String> getAllSchemeNames();
 
-  File getRootDirectory();
+  public abstract File getRootDirectory();
+
+  public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
+  }
 }

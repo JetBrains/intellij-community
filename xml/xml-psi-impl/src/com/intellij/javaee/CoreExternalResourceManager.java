@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,17 +56,17 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   }
 
   @Override
-  public void addIgnoredResource(String url) {
+  public void addIgnoredResource(@NotNull String url) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeIgnoredResource(String url) {
+  public void removeIgnoredResource(@NotNull String url) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean isIgnoredResource(String url) {
+  public boolean isIgnoredResource(@NotNull String url) {
     return false;
   }
 
@@ -103,7 +103,7 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
 
   @Nullable
   @Override
-  public String getStdResource(String url, String version) {
+  public String getStdResource(@NotNull String url, @Nullable String version) {
     throw new UnsupportedOperationException();
   }
 
@@ -134,37 +134,37 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   }
 
   @Override
-  public void addResource(@NonNls String url, @NonNls String location) {
+  public void addResource(@NotNull @NonNls String url, @NonNls String location) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void addResource(@NonNls String url, @NonNls String version, @NonNls String location) {
+  public void addResource(@NotNull @NonNls String url, @NonNls String version, @NonNls String location) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeResource(String url) {
+  public void removeResource(@NotNull String url) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeResource(String url, String version) {
+  public void removeResource(@NotNull String url, @Nullable String version) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String getResourceLocation(@NonNls String url) {
+  public String getResourceLocation(@NotNull @NonNls String url) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String getResourceLocation(@NonNls String url, String version) {
+  public String getResourceLocation(@NotNull @NonNls String url, @Nullable String version) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String getResourceLocation(@NonNls String url, @NotNull Project project) {
+  public String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project) {
     throw new UnsupportedOperationException();
   }
 
@@ -180,7 +180,7 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   }
 
   @Override
-  public String[] getResourceUrls(@Nullable FileType fileType, @NonNls String version, boolean includeStandard) {
+  public String[] getResourceUrls(@Nullable FileType fileType, @NotNull @NonNls String version, boolean includeStandard) {
     throw new UnsupportedOperationException();
   }
 }

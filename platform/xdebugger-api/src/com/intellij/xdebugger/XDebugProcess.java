@@ -30,6 +30,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.HyperlinkListener;
 
@@ -131,7 +132,15 @@ public abstract class XDebugProcess {
    * Stop debugging and dispose resources.
    * Do not call this method directly. Use {@link XDebugSession#stop} instead
    */
-  public abstract void stop();
+  public void stop() {
+    throw new AbstractMethodError();
+  }
+
+  @NotNull
+  public Promise<Void> stopAsync() {
+    stop();
+    return Promise.DONE;
+  }
 
   /**
    * Resume execution.

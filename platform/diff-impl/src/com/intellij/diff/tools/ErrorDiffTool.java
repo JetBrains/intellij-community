@@ -44,7 +44,7 @@ public class ErrorDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Error Viewer";
+    return "Error viewer";
   }
 
   private static class MyViewer implements DiffViewer {

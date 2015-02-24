@@ -211,4 +211,9 @@ public class MethodEvaluator implements Evaluator {
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return "call " + myMethodName;
+  }
 }

@@ -17,8 +17,6 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -30,7 +28,7 @@ import java.awt.*;
 /**
  * Defines the visual representation (colors and effects) of text.
  */
-public class TextAttributes implements JDOMExternalizable, Cloneable {
+public class TextAttributes implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
@@ -77,7 +75,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     myEnforcedDefaults = enforced;
   }
 
-  public TextAttributes(@NotNull Element element) throws InvalidDataException {
+  public TextAttributes(@NotNull Element element) {
     readExternal(element);
   }
 
@@ -191,14 +189,20 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return myAttrs.hashCode();
   }
 
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    myAttrs = AttributesFlyweight.create(element);
-    if (isEmpty()) myEnforcedDefaults = true;
+  public void readExternal(Element element) {
+    try {
+      myAttrs = AttributesFlyweight.create(element);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
+
+    if (isEmpty()) {
+      myEnforcedDefaults = true;
+    }
   }
 
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     myAttrs.writeExternal(element);
   }
 

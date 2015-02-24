@@ -267,7 +267,7 @@ class FindInProjectTask {
 
   @NotNull
   private Collection<VirtualFile> collectFilesInScope(@NotNull final Set<VirtualFile> alreadySearched, final boolean skipIndexed) {
-    SearchScope customScope = myFindModel.getCustomScope();
+    SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
@@ -432,17 +432,7 @@ class FindInProjectTask {
       return Collections.emptySet();
     }
 
-    SearchScope customScope = myFindModel.getCustomScope();
-    GlobalSearchScope scope = myPsiDirectory != null
-                              ? GlobalSearchScopesCore.directoryScope(myPsiDirectory, myFindModel.isWithSubdirectories())
-                              : myModule != null
-                                ? myModule.getModuleContentScope()
-                                : customScope instanceof GlobalSearchScope
-                                  ? (GlobalSearchScope)customScope
-                                  : toGlobal(customScope);
-    if (scope == null) {
-      scope = ProjectScope.getContentScope(myProject);
-    }
+    GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
 
     final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
 

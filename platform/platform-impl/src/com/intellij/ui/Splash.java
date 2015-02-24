@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class Splash extends JDialog implements StartupProgress {
   @Nullable public static Rectangle BOUNDS;
 
   private final Icon myImage;
-  private int myProgressHeight = 2;
+  private int myProgressHeight = JBUI.scale(2);
   private Color myProgressColor = null;
   private int myProgressY;
   private float myProgress;
@@ -102,7 +102,7 @@ public class Splash extends JDialog implements StartupProgress {
     this(info.getSplashImageUrl(), info.getSplashTextColor());
     if (info instanceof ApplicationInfoImpl) {
       final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
-      myProgressHeight = 2;
+      myProgressHeight = JBUI.scale(2);
       myProgressColor = appInfo.getProgressColor();
       myProgressY = appInfo.getProgressY();
       myProgressTail = appInfo.getProgressTailIcon();
@@ -143,8 +143,8 @@ public class Splash extends JDialog implements StartupProgress {
     g.setColor(color);
     g.fillRect(1, getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, width - (myProgressTail.getIconWidth()/2),
-                               getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight())/2);
+      myProgressTail.paintIcon(this, g, width - (myProgressTail.getIconWidth() / JBUI.scale(1) / 2 * JBUI.scale(1)),
+                               getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / JBUI.scale(1) / 2 * JBUI.scale(1)); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
   }

@@ -16,52 +16,17 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-public class ReformatCodeActionInEditorTest extends LightCodeInsightFixtureTestCase {
+import static com.intellij.codeInsight.actions.TextRangeType.*;
+
+public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/actions/reformatFileInEditor/";
-  }
-
-  public void doTest(@NotNull ReformatFilesOptions options) {
-    setOptions(options);
-
-    String before = null;
-    if (options.isProcessOnlyChangedText()) {
-      myFixture.configureByFile(getTestName(true) + "_revision.java");
-      PsiFile file = myFixture.getFile();
-      Document document = myFixture.getDocument(file);
-      before = document.getText();
-    }
-
-    myFixture.configureByFile(getTestName(true) + "_before.java");
-
-    if (before != null) {
-      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, before);
-    }
-
-    final String actionId = IdeActions.ACTION_EDITOR_REFORMAT;
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-
-    AnActionEvent event = createEventFor(action, getProject(), myFixture.getEditor());
-
-    action.actionPerformed(event);
-    myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
   @Override
@@ -70,52 +35,71 @@ public class ReformatCodeActionInEditorTest extends LightCodeInsightFixtureTestC
     super.tearDown();
   }
 
-  protected AnActionEvent createEventFor(@NotNull AnAction action, @NotNull final Project project, @NotNull final Editor editor) {
-    return new AnActionEvent(null, new DataContext() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.PROJECT.is(dataId)) return project;
-        if (CommonDataKeys.EDITOR.is(dataId)) return editor;
-        return null;
-      }
-    }, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
+  public void doTest(LayoutCodeOptions options) {
+    CharSequence revisionContent = null;
+    if (options.getTextRangeType() == VCS_CHANGED_TEXT) {
+      myFixture.configureByFile(getTestName(true) + "_revision.java");
+      PsiFile file = myFixture.getFile();
+      Document document = myFixture.getDocument(file);
+      revisionContent = document.getCharsSequence();
+    }
+
+    myFixture.configureByFile(getTestName(true) + "_before.java");
+    if (revisionContent != null) {
+      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, revisionContent);
+    }
+
+    FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
+
+    processor.processCode();
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
-  protected void setOptions(ReformatFilesOptions options) {
-    ReformatCodeAction.setTestOptions(options);
+  public void testSelectionReformat() {
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
+  }
+
+  public void testWholeFileReformat() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE));
+  }
+
+  public void testWholeFileReformatAndOptimize() {
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true));
+  }
+
+  public void testSelectedTextAndOptimizeImports() {
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT).setOptimizeImports(true));
   }
 
   public void testFormatWholeFile() {
-    doTest(new MockReformatFileSettings().setProcessWholeFile(true));
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE));
   }
 
   public void testFormatOptimizeWholeFile() {
-    doTest(new MockReformatFileSettings().setProcessWholeFile(true).setOptimizeImports(true));
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true));
   }
 
   public void testFormatOptimizeRearrangeWholeFile() {
-    doTest(new MockReformatFileSettings().setProcessWholeFile(true).setOptimizeImports(true).setRearrange(true));
+    doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true).setRearrangeCode(true));
   }
 
   public void testFormatSelection() {
-    doTest(new MockReformatFileSettings().setProcessWholeFile(false));
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
   }
 
   public void testFormatRearrangeSelection() {
-    doTest(new MockReformatFileSettings().setProcessWholeFile(false).setRearrange(true));
+    doTest(new ReformatCodeRunOptions(SELECTED_TEXT).setRearrangeCode(true));
   }
 
   public void testFormatVcsChanges() {
-    doTest(new MockReformatFileSettings().setProcessOnlyChangedText(true));
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT));
   }
 
   public void testFormatOptimizeVcsChanges() {
-    doTest(new MockReformatFileSettings().setProcessOnlyChangedText(true).setOptimizeImports(true));
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
   }
 
   public void testFormatOptimizeRearrangeVcsChanges() {
-    doTest(new MockReformatFileSettings().setProcessOnlyChangedText(true).setOptimizeImports(true).setRearrange(true));
+    doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true).setRearrangeCode(true));
   }
-
 }

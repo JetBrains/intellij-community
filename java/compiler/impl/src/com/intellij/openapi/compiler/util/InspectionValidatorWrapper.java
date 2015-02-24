@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,11 @@ import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -143,41 +141,41 @@ public class InspectionValidatorWrapper implements Validator {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
-    final List<ProcessingItem> items = new ReadAction<List<ProcessingItem>>() {
-      @Override
-      protected void run(final Result<List<ProcessingItem>> result) {
-        final CompileScope compileScope = context.getCompileScope();
-        if (!myValidator.isAvailableOnScope(compileScope)) return;
+    final List<ProcessingItem> items =
+      DumbService.getInstance(project).runReadActionInSmartMode(new Computable<List<ProcessingItem>>() {
+        @Override
+        public List<ProcessingItem> compute() {
+          final CompileScope compileScope = context.getCompileScope();
+          if (!myValidator.isAvailableOnScope(compileScope)) return null;
 
-        final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
+          final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
 
-        final Processor<VirtualFile> processor = new ReadActionProcessor<VirtualFile>() {
-          @Override
-          public boolean processInReadAction(VirtualFile file) {
-            if (!file.isValid()) {
-              return true;
-            }
-
-            if (myCompilerManager.isExcludedFromCompilation(file) ||
-                excludesConfiguration.isExcluded(file)) {
-              return true;
-            }
-
-            final Module module = context.getModuleByFile(file);
-            if (module != null) {
-              final PsiFile psiFile = myPsiManager.findFile(file);
-              if (psiFile != null) {
-                items.add(new MyValidatorProcessingItem(psiFile));
+          final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
+            @Override
+            public boolean process(VirtualFile file) {
+              if (!file.isValid()) {
+                return true;
               }
-            }
-            return true;
-          }
-        };
-        ContainerUtil.process(myValidator.getFilesToProcess(myPsiManager.getProject(), context), processor);
 
-        result.setResult(items);
-      }
-    }.execute().getResultObject();
+              if (myCompilerManager.isExcludedFromCompilation(file) ||
+                  excludesConfiguration.isExcluded(file)) {
+                return true;
+              }
+
+              final Module module = context.getModuleByFile(file);
+              if (module != null) {
+                final PsiFile psiFile = myPsiManager.findFile(file);
+                if (psiFile != null) {
+                  items.add(new MyValidatorProcessingItem(psiFile));
+                }
+              }
+              return true;
+            }
+          };
+          ContainerUtil.process(myValidator.getFilesToProcess(myPsiManager.getProject(), context), processor);
+          return items;
+        }
+      });
     if (items == null) return ProcessingItem.EMPTY_ARRAY;
 
     return items.toArray(new ProcessingItem[items.size()]);

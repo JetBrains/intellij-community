@@ -35,10 +35,8 @@ import java.util.Map;
 
 @State(
   name = "DebuggerSettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
-    )}
+  defaultStateAsResource = true,
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);

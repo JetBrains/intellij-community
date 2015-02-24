@@ -399,23 +399,25 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull
   public Selection getSelection() {
-    return new Selection();
+    return new Selection(this);
   }
 
-  public class Selection {
+  public static class Selection {
     private final TIntHashSet myCommits;
+    private final VcsLogGraphTable myTable;
 
-    public Selection() {
-      myCommits = getCommitsAtRows(myDataPack.getVisibleGraph(), getSelectedRows());
+    public Selection(@NotNull VcsLogGraphTable table) {
+      myTable = table;
+      myCommits = getCommitsAtRows(myTable.myDataPack.getVisibleGraph(), myTable.getSelectedRows());
     }
 
     public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph) {
-      TIntHashSet rowsToSelect = findNewRowsToSelect(getGraphTableModel(), newVisibleGraph, myCommits);
+      TIntHashSet rowsToSelect = findNewRowsToSelect(myTable.getGraphTableModel(), newVisibleGraph, myCommits);
       if (!rowsToSelect.isEmpty()) {
         rowsToSelect.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int row) {
-            addRowSelectionInterval(row, row);
+            myTable.addRowSelectionInterval(row, row);
             return true;
           }
         });

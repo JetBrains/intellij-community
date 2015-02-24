@@ -131,7 +131,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     contentDescriptor.setFocusComputable(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return getLanguageConsole().getConsoleEditor().getContentComponent();
+        return getConsoleView().getConsoleEditor().getContentComponent();
       }
     });
     contentDescriptor.setAutoFocusContent(isAutoFocusContent());
@@ -139,7 +139,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
     // tool bar actions
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
-    registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
+    registerActionShortcuts(actions, getConsoleView().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
 
     showConsole(defaultExecutor, contentDescriptor);
@@ -232,10 +232,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   protected AnAction createStopAction() {
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
-  }
-
-  public LanguageConsoleView getLanguageConsole() {
-    return myConsoleView;
   }
 
   @SuppressWarnings("UnusedDeclaration")

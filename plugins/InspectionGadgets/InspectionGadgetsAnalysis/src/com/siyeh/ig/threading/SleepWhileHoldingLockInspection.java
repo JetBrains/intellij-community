@@ -45,9 +45,7 @@ public class SleepWhileHoldingLockInspection extends BaseInspection {
     return new SleepWhileHoldingLockVisitor();
   }
 
-  private static class SleepWhileHoldingLockVisitor
-    extends BaseInspectionVisitor {
-
+  private static class SleepWhileHoldingLockVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodCallExpression(
       @NotNull PsiMethodCallExpression expression) {
@@ -59,16 +57,14 @@ public class SleepWhileHoldingLockInspection extends BaseInspection {
       if (!"sleep".equals(methodName)) {
         return;
       }
-      final PsiMethod containingMethod =
-        PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      final PsiMethod containingMethod = 
+        PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       boolean isSynced = false;
-      if (containingMethod != null && containingMethod
-        .hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
         isSynced = true;
       }
-      final PsiSynchronizedStatement containingSyncStatement =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiSynchronizedStatement.class);
+      final PsiSynchronizedStatement containingSyncStatement = 
+        PsiTreeUtil.getParentOfType(expression, PsiSynchronizedStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (containingSyncStatement != null) {
         isSynced = true;
       }
@@ -81,8 +77,7 @@ public class SleepWhileHoldingLockInspection extends BaseInspection {
       }
       final PsiClass methodClass = method.getContainingClass();
       if (methodClass == null ||
-          !InheritanceUtil.isInheritor(methodClass,
-                                       "java.lang.Thread")) {
+          !InheritanceUtil.isInheritor(methodClass, "java.lang.Thread")) {
         return;
       }
       registerMethodCallError(expression);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,13 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithSubBean>",
       bean);
+  }
+
+  public void testSubBeanSerializationAndSkipDefaults() {
+    BeanWithSubBean bean = new BeanWithSubBean();
+    doSerializerTest(
+      "<BeanWithSubBean />",
+      bean, new SkipDefaultsSerializationFilter());
   }
 
   public void testNullFieldValue() {
@@ -538,7 +545,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithPublicFields>",
                      new SerializationFilter() {
       @Override
-      public boolean accepts(@NotNull Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         return accessor.getName().startsWith("I");
       }
     });
@@ -851,7 +858,7 @@ public class XmlSerializerTest extends TestCase {
   }
   public static class PropertyFilterTest implements SerializationFilter {
     @Override
-    public boolean accepts(@NotNull Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
       return !accessor.read(bean).equals("skip");
     }
   }
@@ -1195,10 +1202,10 @@ public class XmlSerializerTest extends TestCase {
 
   public void testConverterUsingSkipDefaultsFilters() {
     BeanWithConverter bean = new BeanWithConverter();
-    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultsSerializationFilter());
 
     bean.foo = Ref.create("testValue");
-    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultsSerializationFilter());
 
     bean.foo = Ref.create();
     bean.bar = Ref.create("testValue2");
@@ -1237,7 +1244,7 @@ public class XmlSerializerTest extends TestCase {
     Bean2 bean = new Bean2();
     bean.module = "module";
     bean.ab = "ab";
-    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultsSerializationFilter());
 
     checkSmartSerialization(new Bean2(), "<Bean2 module=\"1\" ab=\"2\" ac=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ab=\"2\" module=\"1\" ac=\"32\" />");
@@ -1264,7 +1271,7 @@ public class XmlSerializerTest extends TestCase {
                      "    <item value=\"two\" />\n" +
                      "    <item value=\"three\" />\n" +
                      "  </list>\n" +
-                     "</b>", bean, new SkipDefaultValuesSerializationFilters());
+                     "</b>", bean, new SkipDefaultsSerializationFilter());
   }
 
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {

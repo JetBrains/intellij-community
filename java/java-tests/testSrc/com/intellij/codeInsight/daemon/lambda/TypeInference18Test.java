@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
@@ -28,6 +29,14 @@ public class TypeInference18Test extends ResolveTestCase {
 
   public void testIDEA122406() throws Exception {
     doTest();
+  }
+
+  public void testSecondConflictResolution() throws Exception {
+    PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
+    assertNotNull(ref);
+    PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodCallExpression.class);
+    assertNotNull(methodCallExpression);
+    assertNotNull(methodCallExpression.resolveMethod());
   }
 
   private LanguageLevel myOldLanguageLevel;

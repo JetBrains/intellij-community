@@ -54,8 +54,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FormatChangedTextUtil {
-  public static final Key<String> TEST_REVISION_CONTENT = Key.create("test.revision.content");
+  public static final Key<CharSequence> TEST_REVISION_CONTENT = Key.create("test.revision.content");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.FormatChangedTextUtil");
+
 
   private FormatChangedTextUtil() {
   }
@@ -71,26 +72,9 @@ public class FormatChangedTextUtil {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       final Change change = ChangeListManager.getInstance(project).getChange(virtualFile);
-      if (change != null && change.getType() == Change.Type.NEW) {
-        return true;
-      }
+      return change != null;
     }
-
-    final LineStatusTrackerManagerI manager = LineStatusTrackerManager.getInstance(project);
-    if (manager == null) {
-      return false;
-    }
-    
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) {
-      return false;
-    }
-    final LineStatusTracker lineStatusTracker = manager.getLineStatusTracker(document);
-    if (lineStatusTracker == null) {
-      return false;
-    }
-    final List<Range> ranges = lineStatusTracker.getRanges();
-    return !ranges.isEmpty();
+    return false;
   }
 
   /**
@@ -249,15 +233,18 @@ public class FormatChangedTextUtil {
 
   @NotNull
   public static List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
-    List<TextRange> cachedChangedLines = getCachedChangedLines(project, file);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return ContainerUtil.emptyList();
+
+    List<TextRange> cachedChangedLines = getCachedChangedLines(project, document);
     if (cachedChangedLines != null) {
       return cachedChangedLines;
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String testContent = file.getUserData(TEST_REVISION_CONTENT);
+      CharSequence testContent = file.getUserData(TEST_REVISION_CONTENT);
       if (testContent != null) {
-        return calculateChangedTextRanges(file.getProject(), file, testContent);
+        return calculateChangedTextRanges(document, testContent);
       }
     }
 
@@ -270,17 +257,12 @@ public class FormatChangedTextUtil {
     }
 
     String contentFromVcs = getRevisionedContentFrom(change);
-    return contentFromVcs != null ? calculateChangedTextRanges(project, file, contentFromVcs)
+    return contentFromVcs != null ? calculateChangedTextRanges(document, contentFromVcs)
                                   : ContainerUtil.<TextRange>emptyList();
   }
 
   @Nullable
-  private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) {
-      return ContainerUtil.emptyList();
-    }
-
+  private static List<TextRange> getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
     if (tracker != null) {
       List<Range> ranges = tracker.getRanges();
@@ -307,19 +289,49 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  private static List<TextRange> calculateChangedTextRanges(@NotNull Project project, 
-                                                            @NotNull PsiFile file, 
-                                                            @NotNull String contentFromVcs) throws FilesTooBigForDiffException 
+  protected static List<TextRange> calculateChangedTextRanges(@NotNull Document document,
+                                                              @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
+  {
+    return getChangedTextRanges(document, getRanges(document, contentFromVcs));
+  }
+
+  @NotNull
+  private static List<Range> getRanges(@NotNull Document document,
+                                       @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
     Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    return new RangesBuilder(document, documentFromVcs).getRanges();
+  }
 
-    if (document == null) {
-      return ContainerUtil.emptyList();
+  protected static int calculateChangedLinesNumber(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
+    try {
+      List<Range> changedRanges = getRanges(document, contentFromVcs);
+      int linesChanges = 0;
+      for (Range range : changedRanges) {
+        linesChanges += countLines(range);
+      }
+      return linesChanges;
+    } catch (FilesTooBigForDiffException e) {
+      LOG.info("File too big, can not calculate changed lines number");
+      return -1;
+    }
+  }
+
+  private static int countLines(Range range) {
+    byte rangeType = range.getType();
+    if (rangeType == Range.MODIFIED) {
+      int currentChangedLines = range.getLine2() - range.getLine1();
+      int revisionLinesChanged = range.getVcsLine2() - range.getVcsLine1();
+      return Math.max(currentChangedLines, revisionLinesChanged);
+    }
+    else if (rangeType == Range.DELETED) {
+      return range.getVcsLine2() - range.getVcsLine1();
+    }
+    else if (rangeType == Range.INSERTED) {
+      return range.getLine2() - range.getLine1();
     }
 
-    List<Range> changedRanges = new RangesBuilder(document, documentFromVcs).getRanges();
-    return getChangedTextRanges(document, changedRanges);
+    return 0;
   }
 
   @NotNull

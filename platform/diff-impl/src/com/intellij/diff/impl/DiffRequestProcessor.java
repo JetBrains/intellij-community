@@ -15,6 +15,9 @@
  */
 package com.intellij.diff.impl;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffTool;
@@ -37,15 +40,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -624,7 +632,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       if (myIterationState != IterationState.NEXT) {
         // TODO: provide "change" word in chain UserData - for tests/etc
-        if (iterable != null) iterable.notify("Press again to go to the next file");
+        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the next file", true);
         myIterationState = IterationState.NEXT;
         return;
       }
@@ -667,12 +675,35 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasPrevChange()) return;
 
       if (myIterationState != IterationState.PREV) {
-        if (iterable != null) iterable.notify("Press again to go to the previous file");
+        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the previous file", false);
         myIterationState = IterationState.PREV;
         return;
       }
 
       goToPrevChange(true);
+    }
+  }
+
+  private void notifyMessage(@Nullable Editor editor, @NotNull String message, boolean next) {
+    final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
+    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
+
+    final HintHint hintHint = new HintHint(myContentPanel, point)
+      .setPreferredPosition(next ? Balloon.Position.above : Balloon.Position.below)
+      .setAwtTooltip(true)
+      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setTextBg(HintUtil.INFORMATION_COLOR)
+      .setShowImmediately(true);
+
+    if (editor == null) {
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      hint.show(myContentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+    }
+    else {
+      Point editorPoint = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent());
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, editorPoint, HintManager.HIDE_BY_ANY_KEY |
+                                                                                  HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                                  HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     }
   }
 

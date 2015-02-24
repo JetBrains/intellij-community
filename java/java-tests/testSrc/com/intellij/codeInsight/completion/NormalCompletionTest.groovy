@@ -932,6 +932,7 @@ public class ListUtils {
 
   public void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
+  public void testInnerAnnotation() { doTest('\n'); }
   public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
   public void testClassReferenceInFor() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor2() throws Throwable { doTest ' ' }

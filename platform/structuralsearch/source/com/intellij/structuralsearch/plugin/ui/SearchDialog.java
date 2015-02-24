@@ -436,11 +436,9 @@ public class SearchDialog extends DialogWrapper {
     );
 
     model.getConfig().getMatchOptions().clearVariableConstraints();
-    if (matchOptions.hasVariableConstraints()) {
-      for (Iterator<String> i = matchOptions.getVariableConstraintNames(); i.hasNext(); ) {
-        final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(i.next()).clone();
-        model.getConfig().getMatchOptions().addVariableConstraint(constraint);
-      }
+    for (String name : matchOptions.getVariableConstraintNames()) {
+      final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(name).clone();
+      model.getConfig().getMatchOptions().addVariableConstraint(constraint);
     }
 
     MatchOptions options = configuration.getMatchOptions();
@@ -829,6 +827,7 @@ public class SearchDialog extends DialogWrapper {
     for (Variable variable : variables) {
       variableNames.add(variable.getName());
     }
+    variableNames.add(Configuration.CONTEXT_VAR_NAME);
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 

@@ -263,13 +263,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
 
-      final PsiMethod psiMethod = methodCall.resolveMethod();
+      JavaResolveResult result = methodCall.resolveMethodGenerics();
+      final PsiMethod psiMethod = (PsiMethod)result.getElement();
       if (psiMethod == null) {
         return null;
       }
 
       final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-      final String qualifierByMethodCall = getQualifierTextByMethodCall(methodCall, functionalInterfaceType, parameters, psiMethod);
+      final String qualifierByMethodCall = getQualifierTextByMethodCall(methodCall, functionalInterfaceType, parameters, psiMethod, result.getSubstitutor());
       if (qualifierByMethodCall != null) {
         return qualifierByMethodCall + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodExpression.getReferenceName();
       }
@@ -324,7 +325,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   private static String getQualifierTextByMethodCall(final PsiMethodCallExpression methodCall,
                                                      final PsiType functionalInterfaceType,
                                                      final PsiParameter[] parameters,
-                                                     final PsiMethod psiMethod) {
+                                                     final PsiMethod psiMethod, 
+                                                     final PsiSubstitutor substitutor) {
 
     final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
 
@@ -332,7 +334,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     LOG.assertTrue(containingClass != null);
 
     if (qualifierExpression != null) {
-      boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
+      boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(functionalInterfaceType, methodCall), containingClass, substitutor);
       return isReceiverType ? composeReceiverQualifierText(parameters, psiMethod, containingClass, qualifierExpression)
                             : qualifierExpression.getText();
     }
@@ -422,7 +424,6 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       if (lambdaExpression == null) return;
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
-      String functionalTypeText = functionalInterfaceType.getCanonicalText();
       final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
                                                              lambdaExpression.getParameterList().getParameters());
 

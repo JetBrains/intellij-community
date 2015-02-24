@@ -19,10 +19,10 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import org.jetbrains.annotations.NotNull;
 
 public enum IgnorePolicy {
-  DEFAULT("Do Not Ignore"),
-  TRIM_WHITESPACES("Trim Whitespaces"),
-  IGNORE_WHITESPACES("Ignore Whitespaces"),
-  IGNORE_WHITESPACES_CHUNKS("Ignore Whitespaces And Empty Lines");
+  DEFAULT("Do not ignore"),
+  TRIM_WHITESPACES("Trim whitespaces"),
+  IGNORE_WHITESPACES("Ignore whitespaces"),
+  IGNORE_WHITESPACES_CHUNKS("Ignore whitespaces and empty lines");
 
   @NotNull private final String myText;
 

@@ -182,6 +182,8 @@ public class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = XmlStringUtil.stripHtml(descriptionTemplate);
     }
     else {
+      descriptionTemplate = StringUtil.replace(descriptionTemplate, "<code>", "'");
+      descriptionTemplate = StringUtil.replace(descriptionTemplate, "</code>", "'");
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
     //noinspection HardCodedStringLiteral

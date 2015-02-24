@@ -19,9 +19,12 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 
 public interface DiffDataKeys {
+  DataKey<Editor> CURRENT_EDITOR = DataKey.create("diff_current_editor");
+
   DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("diff_request");
   DataKey<DiffContext> DIFF_CONTEXT = DataKey.create("diff_context");
   DataKey<FrameDiffTool.DiffViewer> DIFF_VIEWER = DataKey.create("diff_frame_viewer");

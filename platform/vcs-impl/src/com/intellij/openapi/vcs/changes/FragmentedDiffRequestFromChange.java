@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -87,11 +86,10 @@ public class FragmentedDiffRequestFromChange {
       filePath.hardRefresh();
       file = filePath.getVirtualFile();
     }
-    final PreparedFragmentedContent preparedFragmentedContent = new PreparedFragmentedContent(myProject, fragmentedContent,
+    return new PreparedFragmentedContent(myProject, fragmentedContent,
                                     filePath.getName(), filePath.getFileType(),
                                     change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber(),
                                     change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber(), filePath, file);
-    return preparedFragmentedContent;
   }
 
   private static class RangesCalculator {
@@ -138,12 +136,8 @@ public class FragmentedDiffRequestFromChange {
           }
         }
 
-        ComparisonPolicy comparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
-        if (comparisonPolicy == null) {
-          comparisonPolicy = ComparisonPolicy.DEFAULT;
-        }
-        final TextCompareProcessor processor = new TextCompareProcessor(comparisonPolicy);
-        final List<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
+        TextCompareProcessor processor = new TextCompareProcessor(DiffManagerImpl.getInstanceEx().getComparisonPolicy());
+        List<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
         myRanges = new ArrayList<BeforeAfter<TextRange>>(lineFragments.size());
         for (LineFragment lineFragment : lineFragments) {
           if (!lineFragment.isEqual()) {
@@ -174,7 +168,7 @@ public class FragmentedDiffRequestFromChange {
       }
     }
     
-    private int correctRangeEnd(final int end, final Document document) {
+    private static int correctRangeEnd(final int end, final Document document) {
       if (end == 0) return end;
       return "\n".equals(document.getText(new TextRange(end - 1, end))) ? end - 1 : end;
     }
@@ -187,7 +181,7 @@ public class FragmentedDiffRequestFromChange {
       return myException;
     }
 
-    private Document documentFromRevision(final ContentRevision cr) throws VcsException {
+    private static Document documentFromRevision(final ContentRevision cr) throws VcsException {
       final Document oldDocument = new DocumentImpl(StringUtil.convertLineSeparators(notNullContentRevision(cr)),true);
       // todo !!! a question how to show line separators in diff etc
       // todo currently document doesn't allow to put \r as separator
@@ -195,7 +189,7 @@ public class FragmentedDiffRequestFromChange {
       return oldDocument;
     }
 
-    private String notNullContentRevision(final ContentRevision cr) throws VcsException {
+    private static String notNullContentRevision(final ContentRevision cr) throws VcsException {
       if (cr == null) return "";
       String content = cr.getContent();
       return content == null ? "" : content;

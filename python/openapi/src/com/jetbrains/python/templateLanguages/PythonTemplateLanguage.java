@@ -20,10 +20,6 @@ public abstract class PythonTemplateLanguage extends Language implements Templat
     super(baseLanguage, ID, mimeTypes);
   }
 
-  protected PythonTemplateLanguage(@NotNull @NonNls final String id) {
-    super(id);
-  }
-
   /**
    * @return template language readable name
    */

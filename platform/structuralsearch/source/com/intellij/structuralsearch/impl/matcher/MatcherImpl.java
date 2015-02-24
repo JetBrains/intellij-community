@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -627,15 +628,11 @@ public class MatcherImpl {
     }
   }
 
-  @Nullable
-  protected MatchResult isMatchedByDownUp(PsiElement element, final MatchOptions options) {
+  @NotNull
+  protected List<MatchResult> matchByDownUp(PsiElement element, final MatchOptions options) {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-    CompiledPattern compiledPattern = prepareMatching(sink, options);
-
-    if (compiledPattern== null) {
-      assert false;
-      return null;
-    }
+    final CompiledPattern compiledPattern = prepareMatching(sink, options);
+    matchContext.setShouldRecursivelyMatch(false);
 
     PsiElement targetNode = compiledPattern.getTargetNode();
     PsiElement elementToStartMatching = null;
@@ -647,21 +644,26 @@ public class MatcherImpl {
         assert !compiledPattern.getNodes().hasNext();
         compiledPattern.getNodes().rewind();
 
+        element = element.getParent();
+        if (element == null) {
+          return Collections.emptyList();
+        }
         while (element.getClass() != targetNode.getClass()) {
           element = element.getParent();
-          if (element == null)  return null;
+          if (element == null)  return Collections.emptyList();
         }
 
         elementToStartMatching = element;
       }
     } else {
-      targetNode = StructuralSearchUtil.getProfileByPsiElement(element).extendMatchedByDownUp(targetNode);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+      if (profile == null) return Collections.emptyList();
+      targetNode = profile.extendMatchedByDownUp(targetNode);
 
       MatchingHandler handler = null;
 
       while (element.getClass() == targetNode.getClass() ||
-             compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element)
-            ) {
+             compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element)) {
         handler = compiledPattern.getHandler(targetNode);
         handler.setPinnedElement(element);
         elementToStartMatching = element;
@@ -670,21 +672,21 @@ public class MatcherImpl {
         targetNode = targetNode.getParent();
 
         if (options.isLooseMatching()) {
-          element = StructuralSearchUtil.getProfileByPsiElement(element).updateCurrentNode(element);
-          targetNode = StructuralSearchUtil.getProfileByPsiElement(element).updateCurrentNode(targetNode);
+          element = profile.updateCurrentNode(element);
+          targetNode = profile.updateCurrentNode(targetNode);
         }
       }
 
-      if (!(handler instanceof TopLevelMatchingHandler)) return null;
+      if (!(handler instanceof TopLevelMatchingHandler)) return Collections.emptyList();
     }
 
     assert targetNode != null : "Could not match down up when no target node";
 
+    System.out.println("elementToStartMatching = " + elementToStartMatching.getText());
     match(elementToStartMatching);
     matchContext.getSink().matchingFinished();
-    final int matchCount = sink.getMatches().size();
-    assert matchCount <= 1;
-    return matchCount > 0 ? sink.getMatches().get(0) : null;
+    final List<MatchResult> matches = sink.getMatches();
+    return matches;
   }
 
   private class MatchOneVirtualFile extends MatchOneFile {

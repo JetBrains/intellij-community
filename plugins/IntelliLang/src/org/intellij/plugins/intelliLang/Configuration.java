@@ -76,6 +76,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   @State(
     name = Configuration.COMPONENT_NAME,
+    defaultStateAsResource = true,
     storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
   public static class App extends Configuration {
 
@@ -110,8 +111,10 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       return getState(element);
     }
   }
+
   @State(
     name = Configuration.COMPONENT_NAME,
+    defaultStateAsResource = true,
     storages = {
       @Storage(file = StoragePathMacros.PROJECT_FILE),
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)

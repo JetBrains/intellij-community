@@ -18,6 +18,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StateStorageException;
@@ -27,6 +28,7 @@ import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -41,7 +43,9 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -55,6 +59,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.*;
 
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
@@ -69,7 +74,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private VirtualFile myDir;
 
   private String mySchemeExtension = DirectoryStorageData.DEFAULT_EXT;
-  private boolean myUpgradeExtension;
+  private boolean myUpdateExtension;
 
   private final Set<String> myFilesToDelete = new THashSet<String>();
 
@@ -85,7 +90,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myIoDir = baseDir;
     if (processor instanceof SchemeExtensionProvider) {
       mySchemeExtension = ((SchemeExtensionProvider)processor).getSchemeExtension();
-      myUpgradeExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
+      myUpdateExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
     }
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
@@ -161,6 +166,23 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           }
         }
       }, false, ApplicationManager.getApplication());
+    }
+  }
+
+  public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
+    try {
+      URL url = requestor instanceof AbstractExtensionPointBean
+                ? (((AbstractExtensionPointBean)requestor).getLoaderForClass().getResource(resourceName))
+                : DecodeDefaultsUtil.getDefaults(requestor, resourceName);
+      if (url == null) {
+        // Error shouldn't occur during this operation thus we report error instead of info
+        LOG.error("Cannot read scheme from " + resourceName);
+        return;
+      }
+      addNewScheme(convertor.convert(JDOMUtil.load(URLUtil.openStream(url))), false);
+    }
+    catch (Throwable e) {
+      LOG.error("Cannot read scheme from " + resourceName, e);
     }
   }
 
@@ -316,15 +338,17 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private boolean canRead(@NotNull VirtualFile file) {
-    if (!file.isDirectory()) {
-      if (myUpgradeExtension && !DirectoryStorageData.DEFAULT_EXT.equals(mySchemeExtension) && DirectoryStorageData.isStorageFile(file)) {
-        return myDir.findChild(file.getNameSequence() + mySchemeExtension) == null;
-      }
-      else if (StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension)) {
-        return true;
-      }
+    if (file.isDirectory()) {
+      return false;
     }
-    return false;
+
+    if (myUpdateExtension && !DirectoryStorageData.DEFAULT_EXT.equals(mySchemeExtension) && DirectoryStorageData.isStorageFile(file)) {
+      // read file.DEFAULT_EXT only if file.CUSTOM_EXT doesn't exists
+      return myDir.findChild(file.getNameSequence() + mySchemeExtension) == null;
+    }
+    else {
+      return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension);
+    }
   }
 
   @Nullable

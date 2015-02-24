@@ -68,9 +68,6 @@ public class ZipFileCache {
     }
   }
 
-  private static final boolean ourEnabled =
-    ZipFileCache.class.getClassLoader().getResource("com/intellij/openapi/application/Application.class") != null;
-
   private static final Object ourLock = new Object();
   private static final Map<String, CacheRecord> ourPathCache = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   private static final Map<ZipFile, CacheRecord> ourFileCache = ContainerUtil.newHashMap();
@@ -79,29 +76,20 @@ public class ZipFileCache {
   private static final ScheduledThreadPoolExecutor ourExecutor;
 
   static {
-    if (ourEnabled) {
-      ourExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY);
-      ourExecutor.scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          List<ZipFile> toClose = getFilesToClose(0, System.currentTimeMillis() - TIMEOUT);
-          if (toClose != null) {
-            close(toClose);
-          }
+    ourExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY);
+    ourExecutor.scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        List<ZipFile> toClose = getFilesToClose(0, System.currentTimeMillis() - TIMEOUT);
+        if (toClose != null) {
+          close(toClose);
         }
-      }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
-    }
-    else {
-      ourExecutor = null;
-    }
+      }
+    }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
   }
 
   @NotNull
   public static ZipFile acquire(@NotNull String path) throws IOException {
-    if (!ourEnabled) {
-      return new ZipFile(path);
-    }
-
     path = FileUtil.toCanonicalPath(path);
 
     synchronized (ourLock) {
@@ -178,11 +166,6 @@ public class ZipFileCache {
   }
 
   public static void release(@NotNull ZipFile file) {
-    if (!ourEnabled) {
-      close(file);
-      return;
-    }
-
     synchronized (ourLock) {
       CacheRecord record = ourFileCache.get(file);
       if (record != null) {

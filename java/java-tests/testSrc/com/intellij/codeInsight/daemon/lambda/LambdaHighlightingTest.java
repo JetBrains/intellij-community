@@ -32,6 +32,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testStaticAccess() { doTest(); }
   public void testEffectiveFinal() { doTest(); }
+  public void testFieldInitializedUsedInLambda() {doTest();}
   public void testReassignUsedVars() { doTest(); }
   public void testLambdaContext() { doTest(); }
   public void testReturnTypeCompatibility() { doTest(); }

@@ -67,7 +67,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
   @NotNull
   @Override
   public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
-    VirtualFile jar = getJarByPsiFile(psiFile);
+    final VirtualFile jar = getJarByPsiFile(psiFile);
     if (jar == null) return Collections.emptyList();
 
     final String jarName = jar.getNameWithoutExtension();
@@ -145,7 +145,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
             SourceSearcher[] searchers = {new MavenCentralSourceSearcher(), new SonatypeSourceSearcher()};
             for (SourceSearcher searcher : searchers) {
               try {
-                artifactUrl = searcher.findSourceJar(indicator, artifactId, version);
+                artifactUrl = searcher.findSourceJar(indicator, artifactId, version, jar);
               }
               catch (SourceSearchException e) {
                 LOG.warn(e);
