@@ -70,15 +70,28 @@ public class DiffDrawUtil {
                                    int start1, int end1,
                                    int start2, int end2,
                                    @NotNull Color color) {
+    drawTrapezium(g, x1, x2, start1, end1, start2, end2, color, getFramingColor(color));
+  }
+
+  public static void drawTrapezium(@NotNull Graphics2D g,
+                                   int x1, int x2,
+                                   int start1, int end1,
+                                   int start2, int end2,
+                                   @Nullable Color fillColor,
+                                   @Nullable Color borderColor) {
     final int[] xPoints = new int[]{x1, x2, x2, x1};
     final int[] yPoints = new int[]{start1, start2, end2, end1};
 
-    g.setColor(color);
-    g.fillPolygon(xPoints, yPoints, xPoints.length);
+    if (fillColor != null) {
+      g.setColor(fillColor);
+      g.fillPolygon(xPoints, yPoints, xPoints.length);
+    }
 
-    g.setColor(getFramingColor(color));
-    g.drawLine(x1, start1, x2, start2);
-    g.drawLine(x1, end1, x2, end2);
+    if (borderColor != null) {
+      g.setColor(borderColor);
+      g.drawLine(x1, start1, x2, start2);
+      g.drawLine(x1, end1, x2, end2);
+    }
   }
 
   public static void drawCurveTrapezium(@NotNull Graphics2D g,
