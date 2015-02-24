@@ -42,6 +42,7 @@ class StringToConstraintsTransformer {
 
       StringBuilder miscBuffer = null;
       int anonymousTypedVarsCount = 0;
+      boolean targetFound = false;
 
       for(int index=0;index < pattern.length();++index) {
         char ch = pattern.charAt(index);
@@ -187,6 +188,10 @@ class StringToConstraintsTransformer {
               constraint.setMaxCount(maxOccurs);
               constraint.setGreedy(greedy);
               constraint.setPartOfSearchResults(!anonymous);
+              if (targetFound && !anonymous) {
+                throw new MalformedPatternException("Pattern may have only one target");
+              }
+              targetFound = !anonymous;
             }
 
             if (index < length && pattern.charAt(index) == ':') {
