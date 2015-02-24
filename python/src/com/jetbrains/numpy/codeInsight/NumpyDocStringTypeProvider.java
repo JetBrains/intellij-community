@@ -40,6 +40,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   static {
     NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
     // 184 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex");
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
@@ -50,6 +51,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex");
     // 10 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array", "numpy.core.multiarray.ndarray");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.array", "numpy.core.multiarray.ndarray");
     // 9 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("any", "object");
     // 5 occurrences
