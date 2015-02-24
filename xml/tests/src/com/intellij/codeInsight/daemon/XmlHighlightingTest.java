@@ -1769,7 +1769,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final String testName = getTestName(false);
     String[][] urls = {
       {"urn:jboss:bean-deployer:2.0", testName + ".xsd"},
-      {null, testName + "_2.xsd"}
+      {"", testName + "_2.xsd"}
     };
     doTestWithLocations(urls,"xml");
   }
