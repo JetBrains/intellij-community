@@ -631,7 +631,7 @@ public final class UpdateChecker {
 
   private static boolean ourHasFailedPlugins = false;
   public static void checkForUpdate(IdeaLoggingEvent event) {
-    if (!ourHasFailedPlugins && UpdateSettings.getInstance().CHECK_NEEDED) {
+    if (!ourHasFailedPlugins && UpdateSettings.getInstance().isCheckNeeded()) {
       final Throwable throwable = event.getThrowable();
       final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(throwable));
       if (pluginDescriptor != null && !pluginDescriptor.isBundled()) {
