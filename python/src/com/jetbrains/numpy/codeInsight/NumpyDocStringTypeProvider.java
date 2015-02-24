@@ -49,7 +49,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     // 16 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex");
     // 10 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "numpy.core.multiarray.ndarray");
     // 9 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("any", "object");
     // 5 occurrences

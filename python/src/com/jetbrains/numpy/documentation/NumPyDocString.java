@@ -17,12 +17,12 @@ package com.jetbrains.numpy.documentation;
 
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -280,6 +280,10 @@ public class NumPyDocString {
   @NotNull
   public static String cleanupOptional(@NotNull String typeString) {
     int index = typeString.indexOf(", optional");
+    if (index >= 0) {
+      return typeString.substring(0, index);
+    }
+    index = typeString.indexOf(" of ");  // e.g. ndarray of dtype float
     if (index >= 0) {
       return typeString.substring(0, index);
     }
