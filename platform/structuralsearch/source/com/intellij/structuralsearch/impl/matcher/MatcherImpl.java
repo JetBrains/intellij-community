@@ -682,11 +682,9 @@ public class MatcherImpl {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    System.out.println("elementToStartMatching = " + elementToStartMatching.getText());
     match(elementToStartMatching);
     matchContext.getSink().matchingFinished();
-    final List<MatchResult> matches = sink.getMatches();
-    return matches;
+    return sink.getMatches();
   }
 
   private class MatchOneVirtualFile extends MatchOneFile {
