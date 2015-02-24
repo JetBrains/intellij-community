@@ -217,15 +217,14 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static String getReadOnlyToken(@NotNull GithubConnection connection,
-                                        @NotNull String user,
-                                        @NotNull String repo,
-                                        @NotNull String note)
+  public static String getTasksToken(@NotNull GithubConnection connection,
+                                     @NotNull String user,
+                                     @NotNull String repo,
+                                     @NotNull String note)
     throws IOException {
     GithubRepo repository = getDetailedRepoInfo(connection, user, repo);
 
-    // TODO: use read-only token for private repos when it will be available
-    List<String> scopes = repository.isPrivate() ? Collections.singletonList("repo") : Collections.<String>emptyList();
+    List<String> scopes = repository.isPrivate() ? Collections.singletonList("repo") : Collections.singletonList("public_repo");
 
     return getScopedToken(connection, scopes, note);
   }
