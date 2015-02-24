@@ -107,7 +107,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
     if ((PyTypeChecker.isUnknown(qualifierType) ||
          (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) &&
-        myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
+        myContext.allowImplicits() && canQualifyAnImplicitName(qualifier)) {
       addImplicitResolveResults(referencedName, ret);
     }
 
@@ -210,14 +210,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return rate;
   }
 
-  private static boolean canQualifyAnImplicitName(@NotNull PyExpression qualifier, @Nullable PyType qualType) {
-    if (qualType == null) {
-      if (qualifier instanceof PyCallExpression) {
-        PyExpression callee = ((PyCallExpression)qualifier).getCallee();
-        if (callee instanceof PyReferenceExpression && PyNames.SUPER.equals(callee.getName())) {
-          PsiElement target = ((PyReferenceExpression)callee).getReference().resolve();
-          if (target != null && PyBuiltinCache.getInstance(qualifier).isBuiltin(target)) return false; // super() of unresolved type
-        }
+  private static boolean canQualifyAnImplicitName(@NotNull PyExpression qualifier) {
+    if (qualifier instanceof PyCallExpression) {
+      final PyExpression callee = ((PyCallExpression)qualifier).getCallee();
+      if (callee instanceof PyReferenceExpression && PyNames.SUPER.equals(callee.getName())) {
+        final PsiElement target = ((PyReferenceExpression)callee).getReference().resolve();
+        if (target != null && PyBuiltinCache.getInstance(qualifier).isBuiltin(target)) return false; // super() of unresolved type
       }
     }
     return true;
