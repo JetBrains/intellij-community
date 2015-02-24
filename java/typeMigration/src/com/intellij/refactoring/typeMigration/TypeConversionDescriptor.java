@@ -1,6 +1,7 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
@@ -65,7 +66,9 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     if (getExpression() != null) expression = getExpression();
     final Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
-    options.setMatchOptions(new MatchOptions());
+    final MatchOptions matchOptions = new MatchOptions();
+    matchOptions.setFileType(StdFileTypes.JAVA);
+    options.setMatchOptions(matchOptions);
     final Replacer replacer = new Replacer(project, null);
     try {
       final String replacement = replacer.testReplace(expression.getText(), getStringToReplace(), getReplaceByString(), options);
