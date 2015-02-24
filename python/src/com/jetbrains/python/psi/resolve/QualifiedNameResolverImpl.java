@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -38,6 +39,7 @@ import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,6 +248,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (!myWithoutRoots) {
       addResultsFromRoots();
     }
+    else if (footholdFile != null){
+      addResultsFromSkeletons(footholdFile);
+    }
 
     mySourceResults.addAll(myLibResults);
     myLibResults.clear();
@@ -266,6 +271,33 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       cache.put(myQualifiedName, results);
     }
     return results;
+  }
+
+  /**
+   * Resolve relative imports from sdk root to the skeleton dir
+   */
+  private void addResultsFromSkeletons(@NotNull final PsiFile foothold) {
+    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
+    if (inSource) return;
+    PsiDirectory containingDirectory = foothold.getContainingDirectory();
+    if (myRelativeLevel > 0) {
+      containingDirectory = ResolveImportUtil.stepBackFrom(foothold, myRelativeLevel);
+    }
+    if (containingDirectory != null) {
+      final QualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
+      if (containingPath != null && containingPath.getComponentCount() > 0) {
+        final QualifiedName absolutePath = containingPath.append(myQualifiedName.toString());
+        final QualifiedNameResolverImpl absoluteVisitor =
+          (QualifiedNameResolverImpl)new QualifiedNameResolverImpl(absolutePath).fromElement(foothold);
+
+        final Sdk sdk = PythonSdkType.getSdk(foothold);
+        if (sdk == null) return;
+        final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(sdk);
+        if (skeletonsDir == null) return;
+        final PsiDirectory directory = myContext.getPsiManager().findDirectory(skeletonsDir);
+        myLibResults.add(absoluteVisitor.resolveModuleAt(directory));
+      }
+    }
   }
 
   private void addResultsFromRoots() {
