@@ -86,20 +86,20 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     LOG.assertTrue(virtualFile != null);
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     final LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-    if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
-      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
+          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+          rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
           rootModel.commit();
         }
-      });
-    }
-    else {
-      LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
-      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
-    }
+        else {
+          LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+        }
+      }
+    });
   }
 
   @Nullable
