@@ -356,7 +356,7 @@ public class EnterHandler extends BaseEnterHandler {
                   commentContext.docStart = false;
                 }
                 else {
-                  commentContext.docAsterisk = true;
+                  commentContext.docAsterisk = CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED;
                   commentContext.docStart = false;
                 }
               }
