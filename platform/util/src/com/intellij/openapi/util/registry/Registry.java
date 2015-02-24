@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ public class Registry  {
   public static final String REGISTRY_BUNDLE = "misc.registry";
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
-  private final Map<String, String> myLoadedUserProperties = new HashMap<String, String>();
   private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
 
   private static final Registry ourInstance = new Registry();
@@ -119,19 +118,17 @@ public class Registry  {
   }
 
   public void loadState(@NotNull Element state) {
-    final List entries = state.getChildren("entry");
-    for (Object each : entries) {
-      final Element eachEntry = (Element) each;
-      final String eachKey = eachEntry.getAttributeValue("key");
-      final String eachValue = eachEntry.getAttributeValue("value");
-      if (eachKey != null && eachValue != null) {
-        myUserProperties.put(eachKey, eachValue);
+    myUserProperties.clear();
+    for (Element eachEntry : state.getChildren("entry")) {
+      String key = eachEntry.getAttributeValue("key");
+      String value = eachEntry.getAttributeValue("value");
+      if (key != null && value != null) {
+        RegistryValue registryValue = get(key);
+        if (registryValue.isChangedFromDefault(value)) {
+          myUserProperties.put(key, value);
+          registryValue.resetCache();
+        }
       }
-    }
-    myLoadedUserProperties.putAll(myUserProperties);
-
-    for (RegistryValue each : myValues.values()) {
-      each.resetCache();
     }
   }
 
@@ -165,11 +162,11 @@ public class Registry  {
   }
 
   public boolean isInDefaultState() {
-    return getUserProperties().isEmpty();
+    return myUserProperties.isEmpty();
   }
 
   public boolean isRestartNeeded() {
-    return isRestartNeeded(myUserProperties) || isRestartNeeded(myLoadedUserProperties);
+    return isRestartNeeded(myUserProperties);
   }
 
   private static boolean isRestartNeeded(@NotNull Map<String, String> map) {
