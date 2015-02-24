@@ -248,8 +248,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (!myWithoutRoots) {
       addResultsFromRoots();
     }
-    else if (footholdFile != null){
-      addResultsFromSkeletons(footholdFile);
+    else if (footholdFile != null) {
+      addRelativeImportResultsFromSkeletons(footholdFile);
     }
 
     mySourceResults.addAll(myLibResults);
@@ -276,7 +276,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   /**
    * Resolve relative imports from sdk root to the skeleton dir
    */
-  private void addResultsFromSkeletons(@NotNull final PsiFile foothold) {
+  private void addRelativeImportResultsFromSkeletons(@NotNull final PsiFile foothold) {
     final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
     if (inSource) return;
     PsiDirectory containingDirectory = foothold.getContainingDirectory();
@@ -284,11 +284,11 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       containingDirectory = ResolveImportUtil.stepBackFrom(foothold, myRelativeLevel);
     }
     if (containingDirectory != null) {
-      final QualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
-      if (containingPath != null && containingPath.getComponentCount() > 0) {
-        final QualifiedName absolutePath = containingPath.append(myQualifiedName.toString());
+      final QualifiedName containingQName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
+      if (containingQName != null && containingQName.getComponentCount() > 0) {
+        final QualifiedName absoluteQName = containingQName.append(myQualifiedName.toString());
         final QualifiedNameResolverImpl absoluteVisitor =
-          (QualifiedNameResolverImpl)new QualifiedNameResolverImpl(absolutePath).fromElement(foothold);
+          (QualifiedNameResolverImpl)new QualifiedNameResolverImpl(absoluteQName).fromElement(foothold);
 
         final Sdk sdk = PythonSdkType.getSdk(foothold);
         if (sdk == null) return;
