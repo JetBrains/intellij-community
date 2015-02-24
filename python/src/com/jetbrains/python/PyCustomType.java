@@ -22,6 +22,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
+import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -35,17 +37,17 @@ import java.util.*;
  * Custom (aka dynamic) type that delegates calls to some classes you pass to it.
  * We say this this class <strong>mimics</strong> such classes.
  * To be used for cases like "type()".
- * It optionally filters methods using {@link ParentsMemberFilter}
+ * It optionally filters methods using {@link Processor}
  *
  * @author Ilya.Kazakevich
  */
-public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResult> {
+public class PyCustomType implements PyClassLikeType {
 
   @NotNull
   private final List<PyClassLikeType> myTypesToMimic = new ArrayList<PyClassLikeType>();
 
   @Nullable
-  private final ParentsMemberFilter myFilter;
+  private final Processor<PyElement> myFilter;
 
   private final boolean myInstanceType;
 
@@ -53,15 +55,16 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
   /**
    * @param filter       filter to filter methods from classes (may be null to do no filtering)
    * @param instanceType if true, then this class implements instance (it reports it is not definition and returns "this
-   *                     for {@link #toInstance()} call).
+   *                     for {@link #toInstance()} call). If false, <strong>calling this type creates similar type with instance=true</strong>
+   *                     (like ctor)
    * @param typesToMimic types to "mimic": delegate calls to  (must be one at least!)
    */
-  public PyCustomType(@Nullable final ParentsMemberFilter filter,
+  public PyCustomType(@Nullable final Processor<PyElement> filter,
                       final boolean instanceType,
                       @NotNull final PyClassLikeType... typesToMimic) {
     Preconditions.checkArgument(typesToMimic.length > 0, "Provide at least one class");
     myFilter = filter;
-    myTypesToMimic.addAll(Arrays.asList(typesToMimic));
+    myTypesToMimic.addAll(Collections2.filter(Arrays.asList(typesToMimic), NotNullPredicate.INSTANCE));
     myInstanceType = instanceType;
   }
 
@@ -80,7 +83,9 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
 
   @Override
   public final PyClassLikeType toInstance() {
-    return myInstanceType ? this : new PyCustomType(myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[myTypesToMimic.size()]));
+    return myInstanceType
+           ? this
+           : new PyCustomType(myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[myTypesToMimic.size()]));
   }
 
 
@@ -106,10 +111,10 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
     final List<RatedResolveResult> globalResult = new ArrayList<RatedResolveResult>();
 
     // Delegate calls to classes, we mimic but filter if filter is set.
-    for (final PyClassLikeType parentType : myTypesToMimic) {
-      final List<? extends RatedResolveResult> results = parentType.resolveMember(name, location, direction, resolveContext, inherited);
+    for (final PyClassLikeType typeToMimic : myTypesToMimic) {
+      final List<? extends RatedResolveResult> results = typeToMimic.resolveMember(name, location, direction, resolveContext, inherited);
       if (results != null) {
-        globalResult.addAll(Collections2.filter(results, this));
+        globalResult.addAll(Collections2.filter(results, new ResolveFilter()));
       }
     }
     return globalResult;
@@ -117,6 +122,12 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
 
   @Override
   public final boolean isValid() {
+    for (final PyClassLikeType type : myTypesToMimic) {
+      if (!type.isValid()) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -128,7 +139,16 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
 
   @Override
   public final boolean isCallable() {
-    return true; // We do not know, actually
+    if (!myInstanceType) {
+      return true; // Due to ctor
+    }
+    for (final PyClassLikeType typeToMimic : myTypesToMimic) {
+      if (typeToMimic.isCallable()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Nullable
@@ -201,23 +221,24 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
   }
 
 
-  @Override
-  public final boolean apply(@Nullable final RatedResolveResult input) {
-    if (input == null) {
-      return false;
+  /**
+   * Predicate that filters resolve candidates using {@link #myFilter}
+   */
+  private class ResolveFilter implements Predicate<RatedResolveResult> {
+    @Override
+    public final boolean apply(@Nullable final RatedResolveResult input) {
+      if (input == null) {
+        return false;
+      }
+      if (myFilter == null) {
+        return true; // No need to check
+      }
+      final PyElement pyElement = PyUtil.as(input.getElement(), PyElement.class);
+      if (pyElement == null) {
+        return false;
+      }
+      return myFilter.process(pyElement);
     }
-    if (myFilter == null) {
-      return true; // No need to check
-    }
-    final PyElement pyElement = PyUtil.as(input.getElement(), PyElement.class);
-    if (pyElement == null) {
-      return false;
-    }
-    return myFilter.acceptMember(pyElement);
-  }
-
-  public interface ParentsMemberFilter {
-    boolean acceptMember(@NotNull PyElement element);
   }
 
   /**
@@ -239,7 +260,7 @@ public class PyCustomType implements PyClassLikeType, Predicate<RatedResolveResu
       if (pyElement == null) {
         return false;
       }
-      return myFilter.acceptMember(pyElement);
+      return myFilter.process(pyElement);
     }
   }
 }
