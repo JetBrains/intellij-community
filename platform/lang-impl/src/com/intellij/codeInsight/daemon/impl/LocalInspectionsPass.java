@@ -698,8 +698,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private static class InspectionResult {
-    @NotNull public final LocalInspectionToolWrapper tool;
-    @NotNull public final List<ProblemDescriptor> foundProblems;
+    @NotNull private final LocalInspectionToolWrapper tool;
+    @NotNull private final List<ProblemDescriptor> foundProblems;
 
     private InspectionResult(@NotNull LocalInspectionToolWrapper tool, @NotNull List<ProblemDescriptor> foundProblems) {
       this.tool = tool;
@@ -718,9 +718,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       this.languageIds = languageIds;
     }
 
-    @NotNull final LocalInspectionToolWrapper tool;
-    @NotNull final ProblemsHolder holder;
-    @NotNull final PsiElementVisitor visitor;
-    @Nullable final Collection<String> languageIds;
+    @NotNull private final LocalInspectionToolWrapper tool;
+    @NotNull private final ProblemsHolder holder;
+    @NotNull private final PsiElementVisitor visitor;
+    @Nullable private final Collection<String> languageIds;
   }
 }
