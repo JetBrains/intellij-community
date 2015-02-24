@@ -176,7 +176,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
   private static boolean isAddressed(List<PsiType> expectedThrownTypes, PsiType thrownType) {
     for (PsiType expectedThrownType : expectedThrownTypes) {
-      if (TypeConversionUtil.isAssignable(expectedThrownType, thrownType)) {
+      if (TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(thrownType), expectedThrownType)) {
         return true;
       }
     }
