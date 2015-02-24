@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
@@ -49,6 +50,11 @@ public abstract class DumbService {
    * @see Project#getMessageBus()
    */
   public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
+
+  /**
+   * The tracker is advanced each time we enter/exit from dumb mode.
+   */
+  public abstract ModificationTracker getModificationTracker();
 
   /**
    * @return whether IntelliJ IDEA is in dumb mode, which means that right now indices are updated in background.

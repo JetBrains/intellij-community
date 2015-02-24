@@ -18,7 +18,6 @@ package com.intellij.xml.impl.schema;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
@@ -99,12 +98,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
             dependencies.add(myTag.getContainingFile());
           }
           if (DumbService.isDumb(myTag.getProject())) {
-            dependencies.add(new ModificationTracker() {
-              @Override
-              public long getModificationCount() {
-                return DumbService.isDumb(myTag.getProject()) ? 0 : 1;
-              }
-            });
+            dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
           }
           return Result.create(type, ArrayUtil.toObjectArray(dependencies));
         }
