@@ -1202,10 +1202,10 @@ public class XmlSerializerTest extends TestCase {
 
   public void testConverterUsingSkipDefaultsFilters() {
     BeanWithConverter bean = new BeanWithConverter();
-    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultsSerializationFilter());
 
     bean.foo = Ref.create("testValue");
-    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultsSerializationFilter());
 
     bean.foo = Ref.create();
     bean.bar = Ref.create("testValue2");
@@ -1244,7 +1244,7 @@ public class XmlSerializerTest extends TestCase {
     Bean2 bean = new Bean2();
     bean.module = "module";
     bean.ab = "ab";
-    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultsSerializationFilter());
 
     checkSmartSerialization(new Bean2(), "<Bean2 module=\"1\" ab=\"2\" ac=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ab=\"2\" module=\"1\" ac=\"32\" />");
@@ -1271,7 +1271,7 @@ public class XmlSerializerTest extends TestCase {
                      "    <item value=\"two\" />\n" +
                      "    <item value=\"three\" />\n" +
                      "  </list>\n" +
-                     "</b>", bean, new SkipDefaultValuesSerializationFilters());
+                     "</b>", bean, new SkipDefaultsSerializationFilter());
   }
 
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {
