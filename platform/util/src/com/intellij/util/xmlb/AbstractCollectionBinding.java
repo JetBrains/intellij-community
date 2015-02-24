@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Map;
 abstract class AbstractCollectionBinding extends Binding implements MultiNodeBinding {
   private Map<Class, Binding> myElementBindings;
 
-  private final Class myElementType;
+  private final Class<?> myElementType;
   private final String myTagName;
   private final AbstractCollection myAnnotation;
 
@@ -247,7 +247,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
     return myAnnotation == null || myAnnotation.surroundWithTag() ? getCollectionTagName(target) : null;
   }
 
-  protected String getCollectionTagName(final Object target) {
+  protected String getCollectionTagName(Object target) {
     return myTagName;
   }
 }

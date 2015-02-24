@@ -4,6 +4,7 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -119,6 +120,14 @@ public class StringToConstraintsTransformerTest {
   public void testMethodReference() {
     test("'_a::'_b");
     assertEquals("$a$::$b$", myOptions.getSearchPattern());
+  }
+
+  @Test
+  public void testScriptEscaping() {
+    test("'_type 'a:[within( \"if ('_a:[regex( .*e.* )\\]) { '_st*; }\" )] = '_b;");
+    assertEquals("$type$ $a$ = $b$;", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    assertEquals("\"if ('_a:[regex( .*e.* )]) { '_st*; }\"", constraint.getWithinConstraint());
   }
 
   private void test(String pattern) {

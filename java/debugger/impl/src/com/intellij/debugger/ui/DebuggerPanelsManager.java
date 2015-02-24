@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -222,12 +223,9 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
   private static DebuggerSession getSession(Project project, RunContentDescriptor descriptor) {
-    for (XDebugSession session : XDebuggerManager.getInstance(project).getDebugSessions()) {
-      if (session.getRunContentDescriptor().equals(descriptor)) {
-        XDebugProcess process = session.getDebugProcess();
-        if (process instanceof JavaDebugProcess) {
-          return ((JavaDebugProcess)process).getDebuggerSession();
-        }
+    for (JavaDebugProcess process : XDebuggerManager.getInstance(project).getDebugProcesses(JavaDebugProcess.class)) {
+      if (Comparing.equal(process.getProcessHandler(), descriptor.getProcessHandler())) {
+        return process.getDebuggerSession();
       }
     }
     return null;

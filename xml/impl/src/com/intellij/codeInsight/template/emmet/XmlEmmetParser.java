@@ -74,6 +74,7 @@ public class XmlEmmetParser extends EmmetParser {
     put("object", "param");
     put("map", "area");
   }};
+  private boolean isHtml;
 
   public XmlEmmetParser(List<ZenCodingToken> tokens,
                         CustomTemplateCallback callback,
@@ -84,6 +85,7 @@ public class XmlEmmetParser extends EmmetParser {
     if (surroundWithTemplate && parentTag != null && context.getNode().getElementType() == XmlTokenType.XML_START_TAG_START) {
       parentTag = PsiTreeUtil.getParentOfType(parentTag, XmlTag.class);
     }
+    isHtml = generator.isHtml(callback);
     if (parentTag != null) {
       hasTagContext = true;
       tagLevel.push(parentTag.getName());
@@ -210,7 +212,7 @@ public class XmlEmmetParser extends EmmetParser {
 
   @Nullable
   private String getDefaultTemplateKey() {
-    return ZenCodingUtil.isHtml(myCallback) ? suggestTagName() : null;
+    return isHtml ? suggestTagName() : null;
   }
 
   @Nullable
