@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -167,7 +168,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       if (!NetUtils.isSniEnabled()) {
         myUseSecureConnection.setEnabled(false);
-        myUseSecureConnection.setToolTipText(IdeBundle.message("update.sni.disabled.notification"));
+        boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
+        String message = IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification");
+        myUseSecureConnection.setToolTipText(message);
       }
     }
 

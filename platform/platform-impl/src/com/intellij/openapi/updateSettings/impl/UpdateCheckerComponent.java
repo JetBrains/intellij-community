@@ -25,6 +25,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.net.NetUtils;
@@ -59,7 +60,8 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         @Override
         public void run() {
           String title = IdeBundle.message("update.notifications.title");
-          String message = IdeBundle.message("update.sni.disabled.notification");
+          boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
+          String message = IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification");
           UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, null).notify(null);
         }
       }, ModalityState.NON_MODAL);
