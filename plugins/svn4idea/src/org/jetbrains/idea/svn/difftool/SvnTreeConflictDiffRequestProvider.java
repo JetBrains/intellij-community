@@ -73,7 +73,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     @NotNull
     @Override
     public String getName() {
-      return "SVN Phantom Changes Viewer";
+      return "SVN tree conflict viewer";
     }
 
     @Override

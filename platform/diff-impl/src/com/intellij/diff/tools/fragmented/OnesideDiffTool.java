@@ -37,6 +37,6 @@ public class OnesideDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Oneside Viewer";
+    return "Oneside viewer";
   }
 }

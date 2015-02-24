@@ -37,6 +37,6 @@ public class BinaryDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Binary File Viewer";
+    return "Binary file viewer";
   }
 }
