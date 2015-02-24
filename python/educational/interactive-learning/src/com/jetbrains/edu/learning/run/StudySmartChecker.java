@@ -27,25 +27,28 @@ public class StudySmartChecker {
   private StudySmartChecker() {
 
   }
+
   private static final Logger LOG = Logger.getInstance(StudySmartChecker.class);
 
   public static void smartCheck(@NotNull final AnswerPlaceholder placeholder,
-                         @NotNull final Project project,
-                         @NotNull final VirtualFile answerFile,
-                         @NotNull final TaskFile answerTaskFile,
-                         @NotNull final TaskFile usersTaskFile,
-                         @NotNull final StudyTestRunner testRunner,
-                         @NotNull final VirtualFile virtualFile,
-                         @NotNull final Document usersDocument) {
+                                @NotNull final Project project,
+                                @NotNull final VirtualFile answerFile,
+                                @NotNull final TaskFile answerTaskFile,
+                                @NotNull final TaskFile usersTaskFile,
+                                @NotNull final StudyTestRunner testRunner,
+                                @NotNull final VirtualFile virtualFile,
+                                @NotNull final Document usersDocument) {
 
     try {
       final int index = placeholder.getIndex();
+      String windowCopyName = answerFile.getNameWithoutExtension() + index + EduNames.WINDOW_POSTFIX + answerFile.getExtension();
       final VirtualFile windowCopy =
-        answerFile.copy(project, answerFile.getParent(), answerFile.getNameWithoutExtension() + index + EduNames.WINDOW_POSTFIX);
+        answerFile.copy(project, answerFile.getParent(), windowCopyName);
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
-        final File resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
+        final File resourceFile =
+          StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
         final TaskFile windowTaskFile = new TaskFile();
         TaskFile.copy(answerTaskFile, windowTaskFile);
         EduDocumentListener listener = new EduDocumentListener(windowTaskFile);
@@ -85,5 +88,4 @@ public class StudySmartChecker {
       LOG.error(e);
     }
   }
-
 }

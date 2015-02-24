@@ -23,17 +23,21 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.impl.dir.DirDiffFrame;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +50,8 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull private final DiffContext myContext;
   @NotNull private final ContentDiffRequest myRequest;
 
-  @NotNull private final DirDiffPanel myPanel;
+  @NotNull private final DirDiffPanel myDirDiffPanel;
+  @NotNull private final JPanel myPanel;
 
   public DifDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myContext = context;
@@ -57,7 +62,7 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
     DiffElement element2 = createDiffElement(contents.get(1));
     DirDiffTableModel model = new DirDiffTableModel(context.getProject(), element1, element2, new DirDiffSettings());
 
-    myPanel = new DirDiffPanel(model, new DirDiffWindow((DirDiffFrame)null) {
+    myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow((DirDiffFrame)null) {
       @Override
       public Window getWindow() {
         return null;
@@ -72,31 +77,43 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
       public void setTitle(String title) {
       }
     });
+
+    myPanel = new JPanel(new BorderLayout());
+    myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
+    DataManager.registerDataProvider(myPanel, new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return "reference.dialogs.diff.folder";
+        }
+        return null;
+      }
+    });
   }
 
   @NotNull
   @Override
   public FrameDiffTool.ToolbarComponents init() {
-    myPanel.setupSplitter();
+    myDirDiffPanel.setupSplitter();
 
     return new FrameDiffTool.ToolbarComponents();
   }
 
   @Override
   public void dispose() {
-    Disposer.dispose(myPanel);
+    Disposer.dispose(myDirDiffPanel);
   }
 
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myPanel.getPanel();
+    return myPanel;
   }
 
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getTable();
+    return myDirDiffPanel.getTable();
   }
 
   //

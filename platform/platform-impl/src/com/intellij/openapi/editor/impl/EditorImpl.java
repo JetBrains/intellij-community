@@ -308,6 +308,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public final boolean myUseNewRendering = Registry.is("editor.new.rendering");
   final EditorView myView;
 
+  private boolean myCharKeyPressed;
+  private boolean myNeedToSelectPreviousChar;
+
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
     public int execute(int lineNumber) {
@@ -902,15 +905,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPanel.add(myScrollPane);
     }
 
-    myEditorComponent.addKeyListener(new KeyAdapter() {
+    myEditorComponent.addKeyListener(new KeyListener() {
       @Override
       public void keyTyped(@NotNull KeyEvent event) {
+        myNeedToSelectPreviousChar = false;
         if (event.isConsumed()) {
           return;
         }
         if (processKeyTyped(event)) {
           event.consume();
         }
+      }
+
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() >= KeyEvent.VK_A && e.getKeyCode() <= KeyEvent.VK_Z) {
+          myCharKeyPressed = true;
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        myCharKeyPressed = false;
       }
     });
 
@@ -5413,6 +5429,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     @Nullable
     public AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
+      if (myCharKeyPressed) {
+        myNeedToSelectPreviousChar = true;
+      }
       String text = getSelectionModel().getSelectedText();
       return text == null ? null : new AttributedString(text).getIterator();
     }
@@ -5457,6 +5476,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
+      if (myNeedToSelectPreviousChar && SystemInfo.isMac && Registry.is("ide.mac.pressAndHold.workaround")) {
+        // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
+        // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
+        // For our editor component we need this workaround.
+        myNeedToSelectPreviousChar = false;
+        getCaretModel().runForEachCaret(new CaretAction() {
+          @Override
+          public void perform(Caret caret) {
+            int caretOffset = caret.getOffset();
+            if (caretOffset > 0) {
+              caret.setSelection(caretOffset - 1, caretOffset);
+            }
+          }
+        });
+      }
+
       int commitCount = e.getCommittedCharacterCount();
       AttributedCharacterIterator text = e.getText();
 

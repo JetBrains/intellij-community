@@ -30,10 +30,10 @@ public class PsiMethodReferenceUtil {
   public static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
 
   public static boolean hasReceiver(PsiType[] parameterTypes, QualifierResolveResult qualifierResolveResult, PsiMethodReferenceExpression methodRef) {
-    if (parameterTypes.length > 0 && 
+    if (parameterTypes.length > 0 &&
         !methodRef.isConstructor() &&
-        isReceiverType(parameterTypes[0], qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()) &&
-        isStaticallyReferenced(methodRef)) {
+        isStaticallyReferenced(methodRef) &&
+        isReceiverType(parameterTypes[0], qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor())) {
       return true;
     }
     return false;
@@ -46,7 +46,7 @@ public class PsiMethodReferenceUtil {
       LOG.assertTrue(containingClass != null);
       PsiSubstitutor subst = result.getSubstitutor();
       PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
-      if (qContainingClass != null && isReceiverType(functionalInterfaceType, containingClass, (PsiMethod)resolve)) {
+      if (qContainingClass != null && isReceiverType(getFirstParameterType(functionalInterfaceType, expression), qContainingClass,  subst)) {
         subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
         LOG.assertTrue(subst != null);
       }
@@ -202,53 +202,27 @@ public class PsiMethodReferenceUtil {
     return true;
   }
 
-  public static boolean isReceiverType(@Nullable PsiClass aClass, @Nullable PsiClass containingClass) {
-    return InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true);
-  }
-
-  public static boolean isReceiverType(PsiType receiverType, @Nullable PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
-    if (containingClass != null) {
-      receiverType = getExpandedType(receiverType, containingClass);
+  //if P1, ..., Pn is not empty and P1 is a subtype of ReferenceType, then the method reference expression is treated as 
+  // if it were a method invocation expression with argument expressions of types P2, ...,Pn.
+  public static boolean isReceiverType(@Nullable PsiType receiverType, PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
+    if (receiverType == null) {
+      return false;
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(receiverType);
-    final PsiClass receiverClass = resolveResult.getElement();
-    if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
-      if (emptyOrRaw(containingClass, psiSubstitutor)) {
-        return true;
-      }
-      final PsiSubstitutor derivedSubstitutor = TypeConversionUtil.getClassSubstitutor(containingClass, receiverClass, psiSubstitutor);
-      return derivedSubstitutor != null && TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, derivedSubstitutor), receiverType);
-    }
-    return false;
+    return TypeConversionUtil.isAssignable(JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, psiSubstitutor), 
+                                           getExpandedType(receiverType, containingClass));
   }
 
-  private static boolean emptyOrRaw(PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
-    return PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor) ||
-           psiSubstitutor.getSubstitutionMap().isEmpty();
-  }
-
-  public static boolean isReceiverType(PsiType functionalInterfaceType, PsiClass containingClass, @Nullable PsiMethod referencedMethod) {
+  public static PsiType getFirstParameterType(PsiType functionalInterfaceType, PsiElement context) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final MethodSignature function = LambdaUtil.getFunction(resolveResult.getElement());
     if (function != null) {
       final int interfaceMethodParamsLength = function.getParameterTypes().length;
       if (interfaceMethodParamsLength > 0) {
-        final PsiType firstParamType = resolveResult.getSubstitutor().substitute(function.getParameterTypes()[0]);
-        boolean isReceiver = isReceiverType(firstParamType,
-                                            containingClass, PsiUtil.resolveGenericsClassInType(firstParamType).getSubstitutor());
-        if (isReceiver) {
-          if (referencedMethod == null){
-            if (interfaceMethodParamsLength == 1) return true;
-            return false;
-          }
-          if (referencedMethod.getParameterList().getParametersCount() != interfaceMethodParamsLength - 1) {
-            return false;
-          }
-          return true;
-        }
+        PsiType type = resolveResult.getSubstitutor().substitute(function.getParameterTypes()[0]);
+        return type != null ? PsiUtil.captureToplevelWildcards(type, context) : null;
       }
     }
-    return false;
+    return null;
   }
 
   private static PsiType getExpandedType(PsiType type, @NotNull PsiElement typeElement) {

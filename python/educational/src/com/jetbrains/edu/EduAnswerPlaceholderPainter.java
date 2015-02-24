@@ -49,7 +49,6 @@ public class EduAnswerPlaceholderPainter {
         g.drawRect(point.x, point.y - 2, (pointEnd.x - point.x), editor.getLineHeight() + 1);
       }
     });
-    editor.getCaretModel().moveToOffset(startOffset);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }

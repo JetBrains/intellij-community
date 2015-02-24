@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.tasks.impl.TaskStateCombo;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
@@ -53,7 +55,6 @@ public class OpenTaskDialog extends DialogWrapper {
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
   private JCheckBox myClearContext;
-  private JCheckBox myMarkAsInProgressBox;
   private JLabel myTaskNameLabel;
   private JPanel myVcsPanel;
   private JTextField myBranchName;
@@ -62,6 +63,8 @@ public class OpenTaskDialog extends DialogWrapper {
   private JBCheckBox myCreateChangelist;
   private JBLabel myFromLabel;
   private ComboBox myBranchFrom;
+  private JLabel myTaskStateLabel;
+  private TaskStateCombo myTaskStateCombo;
 
   private final Project myProject;
   private final Task myTask;
@@ -81,10 +84,10 @@ public class OpenTaskDialog extends DialogWrapper {
     binder.bindAnnotations(this);
     binder.reset();
 
-    TaskRepository repository = task.getRepository();
-    myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
-    if (!TaskUtil.isStateSupported(repository, TaskState.IN_PROGRESS)) {
-      myMarkAsInProgressBox.setVisible(false);
+    myTaskStateLabel.setLabelFor(myTaskStateCombo);
+    if (!TaskStateCombo.isStateSupportedFor(task)) {
+      myTaskStateLabel.setVisible(false);
+      myTaskStateCombo.setVisible(false);
     }
 
     TaskManagerImpl.Config state = taskManager.getState();
@@ -162,6 +165,11 @@ public class OpenTaskDialog extends DialogWrapper {
       myChangelistName.setText(taskManager.getChangelistName(task));
       updateFields(true);
     }
+    final JComponent preferredFocusedComponent = getPreferredFocusedComponent();
+    if (preferredFocusedComponent != null) {
+      myTaskStateCombo.registerUpDownAction(preferredFocusedComponent);
+    }
+    myTaskStateCombo.scheduleUpdate();
     init();
   }
 
@@ -186,14 +194,15 @@ public class OpenTaskDialog extends DialogWrapper {
   public void createTask() {
     final TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
-    taskManager.getState().markAsInProgress = isMarkAsInProgress();
     taskManager.getState().createChangelist = myCreateChangelist.isSelected();
     taskManager.getState().createBranch = myCreateBranch.isSelected();
 
-    TaskRepository repository = myTask.getRepository();
-    if (isMarkAsInProgress() && repository != null) {
+    final CustomTaskState taskState = myTaskStateCombo.getSelectedState();
+    final TaskRepository repository = myTask.getRepository();
+    if (repository != null && taskState != null) {
       try {
-        repository.setTaskState(myTask, TaskState.IN_PROGRESS);
+        repository.setTaskState(myTask, taskState);
+        repository.setPreferredOpenTaskState(taskState);
       }
       catch (Exception ex) {
         Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
@@ -252,10 +261,6 @@ public class OpenTaskDialog extends DialogWrapper {
     return myClearContext.isSelected();
   }
 
-  private boolean isMarkAsInProgress() {
-    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible();
-  }
-
   @NonNls
   protected String getDimensionServiceKey() {
     return "SimpleOpenTaskDialog";
@@ -270,11 +275,21 @@ public class OpenTaskDialog extends DialogWrapper {
       return myChangelistName;
     }
     else {
-      return null;
+      return myTaskStateCombo.getComboBox();
     }
   }
 
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  private void createUIComponents() {
+    myTaskStateCombo = new TaskStateCombo(myProject, myTask) {
+      @Nullable
+      @Override
+      protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {
+        return repository.getPreferredOpenTaskState();
+      }
+    };
   }
 }

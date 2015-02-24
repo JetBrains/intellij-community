@@ -134,13 +134,19 @@ public class ResponseUtil {
         if (LOG.isDebugEnabled()) {
           String content = getResponseContentAsString(response);
           TaskUtil.prettyFormatJsonToLog(LOG, content);
-          return myGson.fromJson(content, myClass);
+            return myGson.fromJson(content, myClass);
         }
-        return myGson.fromJson(getResponseContentAsReader(response), myClass);
+        else {
+          return myGson.fromJson(getResponseContentAsReader(response), myClass);
+        }
       }
       catch (JsonSyntaxException e) {
         LOG.warn("Malformed server response", e);
         return null;
+      }
+      catch (NumberFormatException e) {
+        LOG.error("NFE in response: " + getResponseContentAsString(response), e);
+        throw new RequestFailedException("Malformed response");
       }
     }
   }
@@ -175,11 +181,17 @@ public class ResponseUtil {
           TaskUtil.prettyFormatJsonToLog(LOG, content);
           return myGson.fromJson(content, myTypeToken.getType());
         }
-        return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
+        else {
+          return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
+        }
       }
       catch (JsonSyntaxException e) {
         LOG.warn("Malformed server response", e);
         return Collections.emptyList();
+      }
+      catch (NumberFormatException e) {
+        LOG.error("NFE in response: " + getResponseContentAsString(response), e);
+        throw new RequestFailedException("Malformed response");
       }
     }
   }

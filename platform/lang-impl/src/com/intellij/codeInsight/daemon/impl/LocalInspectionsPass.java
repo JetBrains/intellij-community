@@ -289,7 +289,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     advanceProgress(1);
 
-    tool.inspectionFinished(session, holder);
     if (holder.hasResults()) {
       appendDescriptors(myFile, holder.getResults(), toolWrapper);
     }

@@ -215,7 +215,10 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     });
 
-    Registry.get("ide.firstStartup").setValue(false);
+    // otherwise will be stored - we must not create config files in tests
+    if (!app.isUnitTestMode()) {
+      Registry.get("ide.firstStartup").setValue(false);
+    }
   }
 
   public void scheduleInitialVfsRefresh() {

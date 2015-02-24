@@ -38,6 +38,6 @@ public class SimpleDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Default Viewer";
+    return "Default viewer";
   }
 }
