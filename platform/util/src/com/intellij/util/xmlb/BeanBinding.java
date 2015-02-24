@@ -21,6 +21,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -48,6 +49,8 @@ class BeanBinding extends Binding {
   private Binding[] myBindings;
 
   final Class<?> myBeanClass;
+
+  ThreeState hasEqualMethod = ThreeState.UNSURE;
 
   public BeanBinding(@NotNull Class<?> beanClass, @Nullable Accessor accessor) {
     super(accessor);

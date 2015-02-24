@@ -18,16 +18,11 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ThreeState;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializationFilters {
-  private Map<Class<?>, ThreeState> hasEqualMethod;
-
   boolean equal(@NotNull Binding binding, @NotNull Object bean) {
     Accessor accessor = binding.getAccessor();
     return equal(binding, accessor.read(bean), accessor.read(getDefaultBean(bean)));
@@ -48,33 +43,25 @@ public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSeri
       if (binding instanceof BasePrimitiveBinding) {
         Binding referencedBinding = ((BasePrimitiveBinding)binding).myBinding;
         if (referencedBinding instanceof BeanBinding) {
-          Class<?> referencedBeanClass = ((BeanBinding)referencedBinding).myBeanClass;
-          ThreeState compareByFields;
-          if (hasEqualMethod == null) {
-            compareByFields = null;
-            hasEqualMethod = new THashMap<Class<?>, ThreeState>();
-          }
-          else {
-            compareByFields = hasEqualMethod.get(referencedBeanClass);
-          }
-
-          if (compareByFields == null) {
+          BeanBinding classBinding = (BeanBinding)referencedBinding;
+          ThreeState compareByFields = classBinding.hasEqualMethod;
+          if (compareByFields == ThreeState.UNSURE) {
             try {
-              referencedBeanClass.getDeclaredMethod("equals", Object.class);
+              classBinding.myBeanClass.getDeclaredMethod("equals", Object.class);
               compareByFields = ThreeState.NO;
-              hasEqualMethod.put(referencedBeanClass, compareByFields);
             }
             catch (NoSuchMethodException ignored) {
               compareByFields = ThreeState.YES;
-              hasEqualMethod.put(referencedBeanClass, compareByFields);
             }
             catch (Exception e) {
               BeanBinding.LOG.warn(e);
             }
+
+            classBinding.hasEqualMethod = compareByFields;
           }
 
           if (compareByFields == ThreeState.YES) {
-            return ((BeanBinding)referencedBinding).equalByFields(currentValue, defaultValue, this);
+            return classBinding.equalByFields(currentValue, defaultValue, this);
           }
         }
       }
