@@ -216,7 +216,9 @@ public class ResolveImportUtil {
   @NotNull
   private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
                                                                   @NotNull QualifiedName qualifiedName) {
-    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(foothold.getVirtualFile());
+    final VirtualFile virtualFile = foothold.getVirtualFile();
+    if (virtualFile == null) return Collections.emptyList();
+    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(virtualFile);
     if (inSource) return Collections.emptyList();
     final PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (containingDirectory != null) {
