@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -293,7 +294,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       myMessage = new JEditorPane();
       myMessage.setEditorKit(UIUtil.getHTMLEditorKit());
       myMessage.setEditable(false);
-      myMessage.setPreferredSize(new Dimension(500, 100));
+      myMessage.setPreferredSize(JBUI.size(500, 100));
       myMessage.setBorder(BorderFactory.createLineBorder(Gray._200));
       String text = "<div style='margin:5px;'>" + IdeaDecompilerBundle.message("legal.notice.text") + "</div>";
       myMessage.setText(text);

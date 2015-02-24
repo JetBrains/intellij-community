@@ -22,9 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -48,6 +45,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
@@ -72,7 +70,6 @@ import java.util.List;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
-  public static final Topic<HgUpdater> BRANCH_TOPIC = new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<HgUpdater>("hg4idea.status", HgUpdater.class);
   public static final Topic<HgHideableWidget> INCOMING_OUTGOING_CHECK_TOPIC =
@@ -295,14 +292,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myHgRemoteStatusUpdater.activate();
 
     messageBusConnection = myProject.getMessageBus().connect();
-    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        Project project = event.getManager().getProject();
-        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project, null);
-      }
-    });
-
     myVFSListener = new HgVFSListener(myProject, this);
 
     // ignore temporary files
@@ -315,9 +304,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         }
       });
     }
-
-    // Force a branch topic update
-    myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject, null);
   }
 
   private void checkExecutableAndVersion() {

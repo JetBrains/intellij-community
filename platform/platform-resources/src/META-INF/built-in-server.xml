@@ -1,0 +1,43 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerRootsProvider" interface="org.jetbrains.builtInWebServer.WebServerRootsProvider"/>
+
+    <extensionPoint name="httpRequestHandler" interface="org.jetbrains.ide.HttpRequestHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.binaryRequestHandler" interface="org.jetbrains.ide.BinaryRequestHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.customPortServerManager" interface="org.jetbrains.ide.CustomPortServerManager"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.jsonRpcDomain" beanClass="org.jetbrains.io.jsonRpc.JsonRpcDomainBean">
+      <with attribute="implementation" implements="java.lang.Object"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
+    <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
+    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
+
+    <projectService serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
+
+    <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="org.jetbrains.ide.XmlRpcServerImpl"/>
+
+    <xmlRpcHandler name="fileOpener" implementation="org.jetbrains.ide.OpenFileXmlRpcHandler"/>
+
+    <httpRequestHandler implementation="org.jetbrains.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.ProjectSetRequestHandler"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.OpenFileHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains">
+    <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
+
+    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler" order="last"/>
+    <webServerFileHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer$StaticFileHandler" order="last"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
+
+    <binaryRequestHandler implementation="org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler"/>
+  </extensions>
+</idea-plugin>

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.ContextUtil
@@ -51,9 +52,11 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
@@ -92,7 +95,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     def configuration = createScriptConfiguration(script.virtualFile.path, myModule)
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      def listener = [onTextAvailable: { ProcessEvent evt, type -> /*println evt.text*/}] as ProcessAdapter
+      def listener = [onTextAvailable: { ProcessEvent evt, type -> /*println evt.text*/ }] as ProcessAdapter
       runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
     }
     try {
@@ -104,7 +107,8 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
       if (!handler.waitFor(ourTimeout)) {
         if (handler instanceof OSProcessHandler) {
           OSProcessManager.instance.killProcessTree(handler.process)
-        } else {
+        }
+        else {
           println "can't terminate $handler"
         }
         fail('too long waiting for process termination')
@@ -201,7 +205,6 @@ println 2 //4
       eval 'call(2)', '-1'
       eval 'call(foo)', '-1'
     }
-
   }
 
   public void testStaticContext() {
@@ -229,7 +232,6 @@ class B {
       eval 'owner.name', 'B'
       eval 'this.name', 'B'
     }
-
   }
 
   public void "test closures in instance context with delegation"() {
@@ -252,7 +254,6 @@ def getFoo() { 13 }
       eval 'this.foo', '13'
       eval 'foo', '13'
     }
-
   }
 
   public void testClassOutOfSourceRoots() {
@@ -335,7 +336,7 @@ foo()
     }
   }
 
-  public void "test_navigation_outside_source"() {
+  public void "test navigation outside source"() {
     def module1 = addModule("module1", false)
     def module2 = addModule("module2", true)
     addGroovyLibrary(module1)
@@ -387,6 +388,32 @@ public static void main(String[] args) {
     }
   }
 
+  public void "test evaluation within trait method"() {
+    def file = myFixture.addFileToProject 'Foo.groovy', '''
+trait Introspector {  // 1
+    def whoAmI() {
+        this          // 3
+    }
+}
+
+class FooT implements Introspector {
+    def a = 1
+    def b = 3
+    
+    String toString() { 'fooInstance' }
+}
+
+new FooT().whoAmI()
+'''
+    addBreakpoint 'Foo.groovy', 3
+    runDebugger file, {
+      waitForBreakpoint()
+      eval 'a', '1'
+      eval 'b', '3'
+      eval 'this', 'fooInstance'
+    }
+  }
+
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {
@@ -416,16 +443,16 @@ public static void main(String[] args) {
       }
     });
     def finished = semaphore.waitFor(ourTimeout);
-    assert finished : 'Too long debugger actions'
+    assert finished: 'Too long debugger actions'
 
     int i = 0
     def suspendManager = debugProcess.suspendManager
-    while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
+    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
       Thread.sleep(10)
     }
 
     def context = suspendManager.pausedContext
-    assert context : "too long process, terminated=$debugProcess.processHandler.processTerminated"
+    assert context: "too long process, terminated=$debugProcess.processHandler.processTerminated"
     return context
   }
 
@@ -459,7 +486,7 @@ public static void main(String[] args) {
       }
     })
     def finished = semaphore.waitFor(ourTimeout)
-    assert finished : 'Too long debugger action'
+    assert finished: 'Too long debugger action'
     return result
   }
 
@@ -472,12 +499,18 @@ public static void main(String[] args) {
     managed {
       ctx = evaluationContext()
       item.setContext(ctx)
-      item.updateRepresentation(ctx, { } as DescriptorLabelListener)
+      item.updateRepresentation(ctx, {} as DescriptorLabelListener)
       semaphore.up()
     }
-    assert semaphore.waitFor(ourTimeout):  "too long evaluation: $item.label $item.evaluateException"
+    assert semaphore.waitFor(ourTimeout): "too long evaluation: $item.label $item.evaluateException"
 
-    String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
+    String result = managed {
+      def e = item.evaluateException
+      if (e) {
+        return ExceptionUtil.getThrowableText(e)
+      }
+      return DebuggerUtils.getValueAsString(ctx, item.value)
+    }
     assert result == expected
   }
 

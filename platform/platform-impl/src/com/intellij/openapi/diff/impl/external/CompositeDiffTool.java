@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import org.jetbrains.annotations.NotNull;
@@ -26,14 +29,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class CompositeDiffTool implements DiffTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.CompositeDiffTool");
   private final List<DiffTool> myTools;
 
-  public CompositeDiffTool(List<DiffTool> tools) {
+  public CompositeDiffTool(@NotNull List<DiffTool> tools) {
     myTools = new ArrayList<DiffTool>(tools);
+  }
+
+  public CompositeDiffTool(@NotNull DiffTool[] tools) {
+    myTools = Arrays.asList(tools);
   }
 
   public void show(DiffRequest data) {

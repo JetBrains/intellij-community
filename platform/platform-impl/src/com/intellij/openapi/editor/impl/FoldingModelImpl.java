@@ -71,7 +71,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
-    myIsFoldingEnabled = true;
+    myIsFoldingEnabled = !editor.myUseNewRendering;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
     myFoldTree = new FoldRegionsTree() {
@@ -149,7 +149,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   @Override
   public void setFoldingEnabled(boolean isEnabled) {
     assertIsDispatchThreadForEditor();
-    myIsFoldingEnabled = isEnabled;
+    myIsFoldingEnabled = isEnabled && !myEditor.myUseNewRendering;
   }
 
   @Override
@@ -368,9 +368,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myEditor.updateCaretCursor();
     myEditor.recalculateSizeAndRepaint();
-    if (myEditor.getGutterComponentEx().isFoldingOutlineShown()) {
-      myEditor.getGutterComponentEx().repaint();
-    }
+    myEditor.getGutterComponentEx().updateSize();
+    myEditor.getGutterComponentEx().repaint();
 
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded

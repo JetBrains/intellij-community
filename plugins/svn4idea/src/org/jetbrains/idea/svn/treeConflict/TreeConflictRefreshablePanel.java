@@ -95,7 +95,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return true;
   }
 
-  private static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
+  public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
     if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
     if (d1.isTextConflict() != d2.isTextConflict()) return false;
     if (d1.isTreeConflict() != d2.isTreeConflict()) return false;

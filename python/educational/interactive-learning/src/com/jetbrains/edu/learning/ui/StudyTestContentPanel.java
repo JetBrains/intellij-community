@@ -1,8 +1,9 @@
 package com.jetbrains.edu.learning.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
-import com.jetbrains.edu.learning.course.UserTest;
+import com.jetbrains.edu.learning.courseFormat.UserTest;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,10 +12,12 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 
 public class StudyTestContentPanel extends JPanel {
-  public static final Dimension PREFERRED_SIZE = new Dimension(300, 200);
-  private static final Font HEADER_FONT = new Font("Arial", Font.BOLD, 16);
+  private static final Dimension ourPreferredSize = new Dimension(300, 200);
+  private static final Font ourHeaderFont = new Font("Arial", Font.BOLD, 16);
   private final JTextArea myInputArea = new JTextArea();
   private final JTextArea myOutputArea = new JTextArea();
+  private static final Logger LOG = Logger.getInstance(StudyTestContentPanel.class.getName());
+
   public StudyTestContentPanel(UserTest userTest) {
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     initContentLabel("input", myInputArea);
@@ -24,13 +27,13 @@ public class StudyTestContentPanel extends JPanel {
     setEditable(userTest.isEditable());
   }
 
-  private void initContentLabel(final String headerText, @NotNull final JTextArea contentArea) {
+  private void initContentLabel(@NotNull final String headerText, @NotNull final JTextArea contentArea) {
     JLabel headerLabel = new JLabel(headerText);
-    headerLabel.setFont(HEADER_FONT);
+    headerLabel.setFont(ourHeaderFont);
     this.add(headerLabel);
     this.add(new JSeparator(SwingConstants.HORIZONTAL));
     JScrollPane scroll = new JBScrollPane(contentArea);
-    scroll.setPreferredSize(PREFERRED_SIZE);
+    scroll.setPreferredSize(ourPreferredSize);
     this.add(scroll);
   }
 
@@ -38,15 +41,16 @@ public class StudyTestContentPanel extends JPanel {
     myInputArea.setEditable(isEditable);
     myOutputArea.setEditable(isEditable);
   }
+
   public void addInputContent(final String content) {
     myInputArea.setText(content);
   }
 
-  public  void addOutputContent(final String content) {
+  public void addOutputContent(final String content) {
     myOutputArea.setText(content);
   }
 
-  private class BufferUpdater extends DocumentAdapter {
+  private static class BufferUpdater extends DocumentAdapter {
     private final StringBuilder myBuffer;
 
     private BufferUpdater(StringBuilder buffer) {
@@ -59,8 +63,8 @@ public class StudyTestContentPanel extends JPanel {
       try {
         myBuffer.append(e.getDocument().getText(0, e.getDocument().getLength()));
       }
-      catch (BadLocationException e1) {
-        e1.printStackTrace();
+      catch (BadLocationException exception) {
+        LOG.warn(exception);
       }
     }
   }

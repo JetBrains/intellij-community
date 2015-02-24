@@ -83,7 +83,7 @@
       <keyboard-shortcut first-keystroke="shift control F5" />
       <keyboard-shortcut first-keystroke="shift alt F5" />
     </action>
-    <action id="Debugger.NewWatch">
+    <action id="XDebugger.NewWatch">
       <keyboard-shortcut first-keystroke="shift control F7" />
     </action>
     <action id="Debugger.ResumeThread">
@@ -182,6 +182,9 @@
     <action id="ToggleBookmark9" />
 
     <action id="GotoClass">
+      <keyboard-shortcut first-keystroke="control O" />
+    </action>
+    <action id="GotoChangedFile">
       <keyboard-shortcut first-keystroke="control O" />
     </action>
     <action id="GotoFile">

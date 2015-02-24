@@ -18,6 +18,7 @@ package org.jetbrains.java.generate.view;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LanguageTextField;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.config.Config;
@@ -188,25 +189,25 @@ public class ConfigUI extends JPanel {
         innerPanel.add(new JLabel("Exclude fields by name (reg exp)"));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterFieldName);
-        filterFieldName.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
+        filterFieldName.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
         innerPanel.add(new JLabel("Exclude fields by type name (reg exp)"));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterFieldType);
-        filterFieldType.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
+        filterFieldType.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
         innerPanel.add(new JLabel("Exclude methods by name (reg exp)"));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterMethodName);
-        filterMethodName.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
+        filterMethodName.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
         innerPanel.add(new JLabel("Exclude methods by return type name (reg exp)"));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterMethodType);
-        filterMethodType.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
+        filterMethodType.setMinimumSize(JBUI.size(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         constraint.gridx = 0;
         constraint.gridy = 3;

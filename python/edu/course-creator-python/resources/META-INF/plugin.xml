@@ -24,8 +24,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
-    <fileTypeFactory implementation="com.jetbrains.edu.coursecreator.PyCCAnswerFileTypeFactory" />
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
   </extensions>
 
   <application-components>

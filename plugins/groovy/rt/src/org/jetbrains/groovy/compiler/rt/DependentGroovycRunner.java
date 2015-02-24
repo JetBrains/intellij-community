@@ -26,6 +26,8 @@ import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
+import org.codehaus.groovy.tools.javac.JavaCompiler;
+import org.codehaus.groovy.tools.javac.JavaCompilerFactory;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -361,20 +363,7 @@ public class DependentGroovycRunner {
       }
 
       public void gotoPhase(int phase) throws CompilationFailedException {
-        if (phase == Phases.SEMANTIC_ANALYSIS) {
-          System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Generating Groovy stubs...");
-          // clear javaSources field so that no javac is invoked
-          try {
-            Field field = JavaAwareCompilationUnit.class.getDeclaredField("javaSources");
-            field.setAccessible(true);
-            LinkedList javaSources = (LinkedList)field.get(this);
-            javaSources.clear();
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-        else if (phase <= Phases.ALL) {
+        if (phase <= Phases.ALL) {
           System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
         }
 
@@ -382,6 +371,15 @@ public class DependentGroovycRunner {
       }
 
     };
+    unit.setCompilerFactory(new JavaCompilerFactory() {
+      public JavaCompiler createCompiler(CompilerConfiguration config) {
+        return new JavaCompiler() {
+          public void compile(List<String> files, CompilationUnit cu) {
+            //do nothing
+          }
+        };
+      }
+    });
     unit.addSources(new String[]{"SomeClass.java"});
     return unit;
   }

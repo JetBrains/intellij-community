@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,18 +286,19 @@ public class ApplicationImplTest extends PlatformTestCase {
   }
 
   public void testAsyncProgressVsReadAction() throws Throwable {
-    Future<?> future = ProgressManagerImpl.runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(), "xx") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
-          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+    Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+      new Task.Backgroundable(getProject(), "xx") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
+            assertFalse(ApplicationManager.getApplication().isDispatchThread());
+          }
+          catch (Exception e) {
+            exception = e;
+          }
         }
-        catch (Exception e) {
-          exception = e;
-        }
-      }
-    });
+      });
     future.get();
     if (exception != null) throw exception;
   }

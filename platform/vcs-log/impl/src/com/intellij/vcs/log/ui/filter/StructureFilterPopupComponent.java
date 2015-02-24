@@ -73,7 +73,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
-  private String getText(@NotNull Collection<VirtualFile> files, @NotNull String category, boolean shorten, boolean full) {
+  private static String getText(@NotNull Collection<VirtualFile> files, @NotNull String category, boolean shorten, boolean full) {
     if (full) {
       return ALL;
     }
@@ -149,14 +149,14 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
 
     if (roots.size() > 15) {
-      return new DefaultActionGroup(createAllAction(),
-                                    new Separator("Folders"), new DefaultActionGroup(structureActions),
-                                    new SelectAction(), new Separator("Roots"), new DefaultActionGroup(rootActions));
+      return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
+                                    new Separator("Recent"), new DefaultActionGroup(structureActions),
+                                    new Separator("Roots"), new DefaultActionGroup(rootActions));
     }
     else {
-      return new DefaultActionGroup(createAllAction(),
+      return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
                                     new Separator("Roots"), new DefaultActionGroup(rootActions),
-                                    new Separator("Folders"), new DefaultActionGroup(structureActions), new SelectAction());
+                                    new Separator("Recent"), new DefaultActionGroup(structureActions));
     }
   }
 
@@ -204,7 +204,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     myFilterModel.setFilter(new VcsLogFileFilter(null, new VcsLogRootFilterImpl(Collections.singleton(root))));
   }
 
-  private String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
+  private static String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
     return getText(filter.getFiles(), "items", false, filter.getFiles().isEmpty());
   }
 
@@ -286,10 +286,10 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
-  private class SelectAction extends DumbAwareAction {
+  private class SelectFoldersAction extends DumbAwareAction {
     public static final String STRUCTURE_FILTER_TEXT = "Select Folders...";
 
-    SelectAction() {
+    SelectFoldersAction() {
       super(STRUCTURE_FILTER_TEXT);
     }
 
@@ -301,7 +301,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       Collection<VirtualFile> files = filter == null || filter.getStructureFilter() == null
                                       ? Collections.<VirtualFile>emptySet()
                                       : filter.getStructureFilter().getFiles();
-      VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter", files,
+      VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
                                                             new ArrayList<VirtualFile>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
         VcsLogStructureFilterImpl structureFilter = new VcsLogStructureFilterImpl(new HashSet<VirtualFile>(chooser.getSelectedFiles()));

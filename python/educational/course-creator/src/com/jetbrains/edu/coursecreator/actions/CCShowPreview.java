@@ -30,20 +30,23 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.JBColor;
+import com.jetbrains.edu.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.format.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CCShowPreview extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
@@ -85,25 +88,30 @@ public class CCShowPreview extends DumbAwareAction {
     if (lessonDir == null) {
       return;
     }
-    Course course = CCProjectService.getInstance(project).getCourse();
+    final CCProjectService service = CCProjectService.getInstance(project);
+    Course course = service.getCourse();
     if (course == null) {
       return;
     }
-    Lesson lesson = course.getLesson(lessonDir.getName());
-    Task task = lesson.getTask(taskDir.getName());
-    TaskFile taskFile = task.getTaskFile(file.getName());
-    final Map<TaskFile, TaskFile> taskFilesCopy = new HashMap<TaskFile, TaskFile>();
-    for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-      if (entry.getValue() == taskFile) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            CCCreateCourseArchive.createUserFile(project, taskFilesCopy, taskDir.getVirtualFile(), taskDir.getVirtualFile(), entry);
-          }
-        });
-      }
+    TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
+    if (taskFile == null) {
+      return;
     }
-    String userFileName = FileUtil.getNameWithoutExtension(file.getName()) + ".py";
+    final TaskFile taskFileCopy = new TaskFile();
+    TaskFile.copy(taskFile, taskFileCopy);
+    final String taskFileName = CCProjectService.getRealTaskFileName(file.getVirtualFile().getName());
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+        EduUtils.createStudentFileFromAnswer(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(),
+                                             new AbstractMap.SimpleEntry<String, TaskFile>(taskFileName, taskFileCopy));
+      }
+    });
+
+    String userFileName = CCProjectService.getRealTaskFileName(file.getName());
+    if (userFileName == null) {
+      return;
+    }
     VirtualFile userFile = taskDir.getVirtualFile().findChild(userFileName);
     if (userFile == null) {
       LOG.info("Generated file " + userFileName + "was not found");
@@ -123,8 +131,8 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (TaskWindow taskWindow : taskFile.getTaskWindows()) {
-      taskWindow.drawHighlighter(createdEditor, true);
+    for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -137,6 +145,5 @@ public class CCShowPreview extends DumbAwareAction {
     createdEditor.setCaretEnabled(false);
     showPreviewFrame.setComponent(labeledEditor);
     showPreviewFrame.show();
-    CCCreateCourseArchive.resetTaskFiles(taskFilesCopy);
   }
 }

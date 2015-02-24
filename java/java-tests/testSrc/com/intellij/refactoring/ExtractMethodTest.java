@@ -661,6 +661,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testExtractUnresolvedLambdaParameter() throws Exception {
+    doTest();
+  }
+
+  public void testExtractUnresolvedLambdaExpression() throws Exception {
+    doTest();
+  }
+
   public void testTheOnlyParenthesisExpressionWhichIsSkippedInControlFlow() throws Exception {
     doTest();
   }

@@ -16,7 +16,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 ]]></description>
 
   <!-- <PyCharm version> <Build number> (<Beta>|<EAP>|<RC>)? -->
-  <version>4.1 @@BUILD_NUMBER@@ EAP</version>
+  <version>@@PYCHARM_VERSION@@ @@BUILD_NUMBER@@ EAP</version>
   <depends>com.intellij.modules.java</depends>
 
 

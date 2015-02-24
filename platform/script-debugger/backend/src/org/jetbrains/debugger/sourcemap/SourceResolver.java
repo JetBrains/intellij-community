@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
 import com.intellij.util.UrlImpl;
 import com.intellij.util.Urls;
@@ -21,7 +22,7 @@ import java.util.List;
 
 public class SourceResolver {
   private final List<String> rawSources;
-  @Nullable private final List<String> sourcesContent;
+  @Nullable private final List<String> sourceContents;
 
   final Url[] canonicalizedSources;
   private final ObjectIntHashMap<Url> canonicalizedSourcesMap;
@@ -30,15 +31,15 @@ public class SourceResolver {
   // absoluteLocalPathToSourceIndex contains canonical paths too, but this map contains only used (specified in the source map) path
   private String[] sourceIndexToAbsoluteLocalPath;
 
-  public SourceResolver(@NotNull List<String> sourcesUrl, boolean trimFileScheme, @Nullable Url baseFileUrl, @Nullable List<String> sourcesContent) {
-    rawSources = sourcesUrl;
-    this.sourcesContent = sourcesContent;
-    canonicalizedSources = new Url[sourcesUrl.size()];
+  public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, @Nullable List<String> sourceContents) {
+    rawSources = sourceUrls;
+    this.sourceContents = sourceContents;
+    canonicalizedSources = new Url[sourceUrls.size()];
     canonicalizedSourcesMap = SystemInfo.isFileSystemCaseSensitive
                               ? new ObjectIntHashMap<Url>(canonicalizedSources.length)
                               : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
-    for (int i = 0; i < sourcesUrl.size(); i++) {
-      String rawSource = sourcesUrl.get(i);
+    for (int i = 0; i < sourceUrls.size(); i++) {
+      String rawSource = sourceUrls.get(i);
       Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i);
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
@@ -50,7 +51,7 @@ public class SourceResolver {
   }
 
   // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
-  private Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex) {
+  protected Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex) {
     if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
       return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length()), '/'));
     }
@@ -115,12 +116,24 @@ public class SourceResolver {
 
   @Nullable
   public String getSourceContent(@NotNull MappingEntry entry) {
-    if (ContainerUtil.isEmpty(sourcesContent)) {
+    if (ContainerUtil.isEmpty(sourceContents)) {
       return null;
     }
 
     int index = entry.getSource();
-    return index < 0 || index >= sourcesContent.size() ? null : sourcesContent.get(index);
+    return index < 0 || index >= sourceContents.size() ? null : sourceContents.get(index);
+  }
+
+  @Nullable
+  public String getSourceContent(int sourceIndex) {
+    if (ContainerUtil.isEmpty(sourceContents)) {
+      return null;
+    }
+    return sourceIndex < 0 || sourceIndex >= sourceContents.size() ? null : sourceContents.get(sourceIndex);
+  }
+
+  public int getSourceIndex(@NotNull Url url) {
+    return ArrayUtil.indexOf(canonicalizedSources, url);
   }
 
   @Nullable

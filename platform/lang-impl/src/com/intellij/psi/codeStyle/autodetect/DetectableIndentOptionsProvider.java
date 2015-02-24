@@ -15,16 +15,19 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +35,15 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
+
 /**
  * @author Rustam Vishnyakov
  */
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private boolean myIsEnabledInTest;
   private final List<VirtualFile> myAcceptedFiles = new WeakList<VirtualFile>();
+  private final List<VirtualFile> myDisabledFiles = new WeakList<VirtualFile>();
 
   @Nullable
   @Override
@@ -60,7 +66,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return myIsEnabledInTest;
     }
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null || vFile instanceof LightVirtualFile) return false;
+    if (vFile == null || vFile instanceof LightVirtualFile || myDisabledFiles.contains(vFile)) return false;
     return settings.AUTODETECT_INDENTS;
   }
 
@@ -72,21 +78,93 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   @Nullable
   @Override
-  public String getDisplayName() {
-    return ApplicationBundle.message("code.style.indents.detector.display.name");
+  public EditorNotificationInfo getNotificationInfo(@NotNull final Project project,
+                                                    @NotNull final VirtualFile file,
+                                                    @NotNull final FileEditor fileEditor,
+                                                    @NotNull CommonCodeStyleSettings.IndentOptions userOptions,
+                                                    @NotNull CommonCodeStyleSettings.IndentOptions detectedOptions)
+  {
+    final NotificationLabels labels = getNotificationLabels(userOptions, detectedOptions);
+    final Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    if (labels == null || editor == null) return null;
+
+    ActionLabelData okAction = new ActionLabelData(
+      ApplicationBundle.message("code.style.indents.detector.accept"),
+      new Runnable() {
+        @Override
+        public void run() {
+          setAccepted(file);
+        }
+      }
+    );
+
+    ActionLabelData disableForSingleFile = new ActionLabelData(
+      labels.revertToOldSettingsLabel,
+      new Runnable() {
+        @Override
+        public void run() {
+          disableForFile(file);
+          if (editor instanceof EditorEx) {
+            ((EditorEx)editor).reinitSettings();
+          }
+        }
+      }
+    );
+
+    ActionLabelData showSettings = new ActionLabelData(
+      ApplicationBundle.message("code.style.indents.detector.show.settings"),
+      new Runnable() {
+        @Override
+        public void run() {
+          ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.sourceCode",
+                                                  ApplicationBundle.message("settings.code.style.general.autodetect.indents"));
+        }
+      }
+    );
+
+    final List<ActionLabelData> actions = ContainerUtil.newArrayList(okAction, disableForSingleFile, showSettings);
+    return new EditorNotificationInfo() {
+      @NotNull
+      @Override
+      public List<ActionLabelData> getLabelAndActions() {
+        return actions;
+      }
+
+      @NotNull
+      @Override
+      public String getTitle() {
+        return labels.title;
+      }
+    };
   }
 
-  @Override
-  public boolean canBeDisabled() {
-    return true;
+  @Nullable
+  private static NotificationLabels getNotificationLabels(@NotNull CommonCodeStyleSettings.IndentOptions userOptions,
+                                                          @NotNull CommonCodeStyleSettings.IndentOptions detectedOptions) {
+    if (userOptions.USE_TAB_CHARACTER) {
+      if (!detectedOptions.USE_TAB_CHARACTER) {
+        return new NotificationLabels(ApplicationBundle.message("code.style.space.indent.detected", detectedOptions.INDENT_SIZE),
+                                                   ApplicationBundle.message("code.style.detector.use.tabs"));
+      }
+    }
+    else {
+      String restoreToSpaces = ApplicationBundle.message("code.style.detector.use.spaces", userOptions.INDENT_SIZE);
+      if (detectedOptions.USE_TAB_CHARACTER) {
+        return new NotificationLabels(ApplicationBundle.message("code.style.tab.usage.detected", userOptions.INDENT_SIZE),
+                                                   restoreToSpaces);
+      }
+      if (userOptions.INDENT_SIZE != detectedOptions.INDENT_SIZE) {
+        return new NotificationLabels(ApplicationBundle.message("code.style.different.indent.size.detected", detectedOptions.INDENT_SIZE, userOptions.INDENT_SIZE),
+                                                   restoreToSpaces);
+      }
+    }
+    return null;
   }
 
-  @Override
-  public void disable(@NotNull Project project) {
-    CodeStyleSettingsManager.getSettings(project).AUTODETECT_INDENTS = false;
-    myAcceptedFiles.clear();
+  private void disableForFile(@NotNull VirtualFile file) {
+    myDisabledFiles.add(file);
   }
-
+  
   @Override
   public void setAccepted(@NotNull VirtualFile file) {
     myAcceptedFiles.add(file);
@@ -95,5 +173,15 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   @Override
   public boolean isAcceptedWithoutWarning(@NotNull VirtualFile file) {
     return myAcceptedFiles.contains(file);
+  }
+
+  private static class NotificationLabels {
+    public final String title;
+    public final String revertToOldSettingsLabel;
+
+    public NotificationLabels(@NotNull String title, @NotNull String revertToOldSettingsLabel) {
+      this.title = title;
+      this.revertToOldSettingsLabel = revertToOldSettingsLabel;
+    }
   }
 }

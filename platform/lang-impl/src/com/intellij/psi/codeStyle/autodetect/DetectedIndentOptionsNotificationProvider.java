@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -27,21 +27,21 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
+
 /**
  * @author Rustam Vishnyakov
  */
 public class DetectedIndentOptionsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
+  private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
 
   @NotNull
   @Override
@@ -52,7 +52,8 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor) {
-    if (fileEditor instanceof TextEditor) {
+    Boolean notifiedFlag = fileEditor.getUserData(NOTIFIED_FLAG);
+    if (fileEditor instanceof TextEditor && notifiedFlag != null) {
       final Editor editor = ((TextEditor)fileEditor).getEditor();
       final Project project = editor.getProject();
       if (project != null) {
@@ -64,7 +65,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
           CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
           CommonCodeStyleSettings.IndentOptions userOptions = settings.getIndentOptions(psiFile.getFileType());
           CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(
-            psiFile, null, true,
+            psiFile, null, false,
             new Processor<FileIndentOptionsProvider>() {
               @Override
               public boolean process(FileIndentOptionsProvider provider) {
@@ -73,40 +74,24 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
               }
             });
           final FileIndentOptionsProvider provider = indentOptionsProviderRef.get();
-          if (provider != null &&
-              !provider.isAcceptedWithoutWarning(file) &&
-              provider.getDisplayName() != null &&
-              !userOptions.equals(detectedOptions)) {
-            final EditorNotificationPanel panel =
-              new EditorNotificationPanel()
-                .text(ApplicationBundle.message("code.style.indents.detector.message", provider.getDisplayName()));
-            if (provider.getIcon() != null) {
-              panel.icon(provider.getIcon());
+          EditorNotificationInfo info = provider != null && !provider.isAcceptedWithoutWarning(file) && !userOptions.equals(detectedOptions)
+                                        ? provider.getNotificationInfo(project, file, fileEditor, userOptions, detectedOptions)
+                                        : null;
+
+          if (info != null) {
+            EditorNotificationPanel panel = new EditorNotificationPanel().text(info.getTitle());
+            if (info.getIcon() != null) {
+              panel.icon(info.getIcon());
             }
-            panel.createActionLabel(
-              ApplicationBundle.message("code.style.indents.detector.accept"),
-              new Runnable() {
+            for (final ActionLabelData actionLabelData : info.getLabelAndActions()) {
+              Runnable onClickAction = new Runnable() {
                 @Override
                 public void run() {
-                  provider.setAccepted(file);
+                  actionLabelData.action.run();
                   EditorNotifications.getInstance(project).updateAllNotifications();
                 }
-              }
-            );
-            if (provider.canBeDisabled()) {
-              panel.createActionLabel(
-                ApplicationBundle.message("code.style.indents.detector.disable"),
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    provider.disable(project);
-                    if (editor instanceof EditorEx) {
-                      ((EditorEx)editor).reinitSettings();
-                    }
-                    EditorNotifications.getInstance(project).updateAllNotifications();
-                  }
-                }
-              );
+              };
+              panel.createActionLabel(actionLabelData.label, onClickAction);
             }
             return panel;
           }
@@ -116,4 +101,16 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     return null;
   }
 
+  public static void updateIndentNotification(@NotNull PsiFile file, boolean enforce) {
+    if (!(ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())) {
+      FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(file.getVirtualFile());
+      if (fileEditor != null) {
+        Boolean notifiedFlag = fileEditor.getUserData(NOTIFIED_FLAG);
+        if (notifiedFlag == null || enforce) {
+          fileEditor.putUserData(NOTIFIED_FLAG, Boolean.TRUE);
+          EditorNotifications.getInstance(file.getProject()).updateNotifications(file.getVirtualFile());
+        }
+      }
+    }
+  }
 }

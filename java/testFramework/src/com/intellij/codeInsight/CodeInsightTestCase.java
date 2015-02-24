@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,18 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
-import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -181,6 +175,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
       new WriteAction() {
+        @Override
         protected void run(@NotNull Result result) throws Throwable {
           vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
           VfsUtil.saveText(vFile, text);
@@ -353,32 +348,6 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
     return editorInfos;
   }
-
-  /*protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir) throws IOException {
-    final LinkedHashMap<VirtualFile, EditorInfo> map = new LinkedHashMap<VirtualFile, EditorInfo>();
-    copyFilesFillingEditorInfos(fromDir, toDir, map);
-    return map;
-  }
-
-
-  private void copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, LinkedHashMap<VirtualFile, EditorInfo> editorInfos) throws IOException {
-
-    List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
-
-    final VirtualFile[] files = fromDir.getChildren();
-    for (final VirtualFile fromFile : files) {
-      if (fromFile.isDirectory()) {
-        copyFilesFillingEditorInfos(fromFile, toDir.createChildDirectory(this, fromFile.getName()), editorInfos);
-      } else {
-        final VirtualFile toFile = toDir.createChildData(this, fromFile.getName());
-        editorInfos.put(toFile, copyContent(fromFile, toFile, streamsToClose));
-      }
-    }
-
-    for(int i = streamsToClose.size() -1; i >= 0 ; --i) {
-      streamsToClose.get(i).close();
-    }
-  }*/
 
   private EditorInfo copyContent(@NotNull VirtualFile from, @NotNull VirtualFile to, @NotNull List<OutputStream> streamsToClose) throws IOException {
     byte[] content = from.getFileType().isBinary() ? from.contentsToByteArray(): null;
@@ -590,40 +559,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void type(char c) {
-    type(c, getEditor());
-  }
-
-  protected static void type(char c, Editor editor) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    DataContext dataContext = DataManager.getInstance().getDataContext();
-    if (c == '\n') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
-      return;
-    }
-    TypedAction action = actionManager.getTypedAction();
-    action.actionPerformed(editor, c, dataContext);
-  }
-
-  protected void caretRight() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-  protected void caretUp() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-  protected void deleteLine() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-
-  protected void type(@NonNls @NotNull String s) {
-    for (char c : s.toCharArray()) {
-      type(c);
-    }
+    LightPlatformCodeInsightTestCase.type(c, getEditor(),getProject());
   }
 
   protected void undo() {
@@ -632,39 +568,44 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     undoManager.undo(textEditor);
   }
 
+  protected void caretRight() {
+    caretRight(getEditor());
+  }
+  protected void caretRight(Editor editor) {
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor, getProject());
+  }
+  protected void caretUp() {
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, myEditor, getProject());
+  }
+
+  protected void deleteLine() {
+    LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
+  }
+
+  protected void type(@NonNls @NotNull String s) {
+    for (char c : s.toCharArray()) {
+      type(c);
+    }
+  }
+
   protected void backspace() {
     backspace(getEditor());
   }
+
   protected void backspace(@NotNull final Editor editor) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
-
-        actionHandler.execute(editor, DataManager.getInstance().getDataContext());
-      }
-    }, "backspace", editor.getDocument());
+    LightPlatformCodeInsightTestCase.backspace(editor,getProject());
   }
 
-  protected void ctrlShiftF7() {
-    HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
+  protected void ctrlW() {
+    LightPlatformCodeInsightTestCase.ctrlW(getEditor(),getProject());
   }
 
-  public static void ctrlW() {
-    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    DataContext dataContext = DataManager.getInstance().getDataContext();
-    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-    event.setInjectedContext(true);
-    action.actionPerformed(event);
+  protected void ctrlD() {
+    LightPlatformCodeInsightTestCase.ctrlD(getEditor(),getProject());
   }
 
-  public static void ctrlD() {
-    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE);
-    DataContext dataContext = DataManager.getInstance().getDataContext();
-    AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
-    event.setInjectedContext(true);
-    action.actionPerformed(event);
+  protected void delete(@NotNull final Editor editor) {
+    LightPlatformCodeInsightTestCase.delete(editor, getProject());
   }
 
   @NotNull
@@ -679,17 +620,5 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
-  }
-
-  protected void delete(@NotNull final Editor editor) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        EditorActionManager actionManager = EditorActionManager.getInstance();
-        EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE);
-
-        actionHandler.execute(editor, DataManager.getInstance().getDataContext());
-      }
-    }, "delete", editor.getDocument());
   }
 }

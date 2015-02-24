@@ -18,9 +18,12 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,8 +38,14 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   private LanguageLevelCombo myLanguageLevelCombo;
   private JPanel myPanel = new JPanel(new GridBagLayout());
 
-  public LanguageLevelConfigurable() {
-    myLanguageLevelCombo = new LanguageLevelCombo();
+  public LanguageLevelConfigurable(final Project project) {
+    myLanguageLevelCombo = new LanguageLevelCombo(ProjectBundle.message("project.language.level.combo.item")) {
+      @Override
+      protected LanguageLevel getDefaultLevel() {
+        return LanguageLevelProjectExtensionImpl.getInstanceImpl(project).getCurrentLevel();
+      }
+    };
+    myLanguageLevelCombo.addDefaultItem();
     myLanguageLevelCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -44,14 +53,16 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
         getLanguageLevelExtension().setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
       }
     });
-    myLanguageLevelCombo.insertItemAt(LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL, 0);
 
-    myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level")),
+    JLabel label = new JLabel(ProjectBundle.message("module.module.language.level"));
+    label.setLabelFor(myLanguageLevelCombo);
+    myPanel.add(label,
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
     myPanel.add(myLanguageLevelCombo,
                 new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 12, 0), 0, 0));
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     return myPanel;

@@ -217,7 +217,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   // Read-only calculation
   private XmlAttributeDescriptor[] doCollectAttributes(@Nullable final XmlElement context) {
-    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    final List<XmlAttributeDescriptorImpl> result = new ArrayList<XmlAttributeDescriptorImpl>();
 
     XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor, "element") {
       @Override
@@ -234,7 +234,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           if (use == null) use = tag.getAttributeValue("use");
 
           if (PROHIBITED_ATTR_VALUE.equals(use)) {
-            removeAttributeDescriptor(result, name);
+            removeAttributeDescriptor(result, name, null);
           }
           else {
             XmlAttributeDescriptorImpl descriptor = myDocumentDescriptor.createAttributeDescriptor(tag);
@@ -260,18 +260,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     result.put(element.getName(),element);
   }
 
-  private static void removeAttributeDescriptor(List<XmlAttributeDescriptor> result, String name) {
-    for (Iterator<XmlAttributeDescriptor> iterator = result.iterator(); iterator.hasNext();) {
-      XmlAttributeDescriptor attributeDescriptor = iterator.next();
+  private static void removeAttributeDescriptor(List<XmlAttributeDescriptorImpl> result, String name, String referenceName) {
+    for (Iterator<XmlAttributeDescriptorImpl> iterator = result.iterator(); iterator.hasNext();) {
+      XmlAttributeDescriptorImpl descriptor = iterator.next();
 
-      if (attributeDescriptor.getName().equals(name)) {
+      if (descriptor.getName().equals(name) && (referenceName == null || referenceName.equals(descriptor.myReferenceName))) {
         iterator.remove();
       }
     }
   }
 
-  private static void addAttributeDescriptor(List<XmlAttributeDescriptor> result, XmlAttributeDescriptor descriptor) {
-    removeAttributeDescriptor(result, descriptor.getName());
+  private static void addAttributeDescriptor(List<XmlAttributeDescriptorImpl> result, XmlAttributeDescriptorImpl descriptor) {
+    removeAttributeDescriptor(result, descriptor.getName(), descriptor.myReferenceName);
 
     result.add(descriptor);
   }

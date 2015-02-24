@@ -43,7 +43,7 @@
     <action id="Debug">
       <keyboard-shortcut first-keystroke="meta F11" />
     </action>
-    <action id="Debugger.Inspect">
+    <action id="XDebugger.Inspect">
       <keyboard-shortcut first-keystroke="shift meta I" />
     </action>
     <action id="DelegateMethods"/>
@@ -133,6 +133,9 @@
     </action>
     <action id="GotoTest"/>
     <action id="GotoClass">
+      <keyboard-shortcut first-keystroke="shift meta T" />
+    </action>
+    <action id="GotoChangedFile">
       <keyboard-shortcut first-keystroke="shift meta T" />
     </action>
     <action id="GotoDeclaration">

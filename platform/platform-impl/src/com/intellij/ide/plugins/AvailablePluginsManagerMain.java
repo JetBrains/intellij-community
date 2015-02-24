@@ -97,7 +97,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     AvailablePluginsTableModel model = new AvailablePluginsTableModel();
     model.setVendor(myVendorFilter);
     if (PluginManagerUISettings.getInstance().availableSortByStatus) {
-      pluginsModel.setSortByStatus(true);
+      model.setSortByStatus(true);
     }
 
     pluginsModel = model;

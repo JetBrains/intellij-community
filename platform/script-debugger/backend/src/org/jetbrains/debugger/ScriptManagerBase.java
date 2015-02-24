@@ -11,6 +11,7 @@ import org.jetbrains.concurrency.PromiseManager;
 public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
   @SuppressWarnings("unchecked")
   private final PromiseManager<ScriptBase, String> scriptSourceLoader = new PromiseManager<ScriptBase, String>(ScriptBase.class) {
+    @NotNull
     @Override
     public Promise<String> load(@NotNull ScriptBase script) {
       //noinspection unchecked

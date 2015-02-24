@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.impl.ui.XValueTextProvider;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
@@ -75,18 +75,16 @@ public abstract class XFetchValueActionBase extends AnAction {
       if (node instanceof XValueNodeImpl) {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
-        if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
-          String rawValue;
-          if (valueNode.getValueContainer() instanceof XValueTextProvider) {
-            rawValue = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
-          }
-          else {
-            rawValue = valueNode.getRawValue();
-          }
-          valueCollector.add(StringUtil.notNullize(rawValue));
+        if (paths.length > 1) { // multiselection - copy the whole node text, see IDEA-136722
+          valueCollector.add(valueNode.getText().toString(), valueNode.getPath().getPathCount());
         }
         else {
-          new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
+          if (fullValueEvaluator == null || !fullValueEvaluator.isShowValuePopup()) {
+            valueCollector.add(StringUtil.notNullize(DebuggerUIUtil.getNodeRawValue(valueNode)));
+          }
+          else {
+            new CopyValueEvaluationCallback(valueNode, valueCollector).startFetchingValue(fullValueEvaluator);
+          }
         }
       }
       else if (node instanceof WatchMessageNode) {
@@ -104,6 +102,7 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   protected class ValueCollector {
     private final List<String> values = new SmartList<String>();
+    private final List<Integer> indents = new SmartList<Integer>();
     private final XDebuggerTree myTree;
     private volatile boolean processed;
 
@@ -112,12 +111,30 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
 
     public void add(@NotNull String value) {
+      add(value, 0);
+    }
+
+    public void add(@NotNull String value, int indent) {
       values.add(value);
+      indents.add(indent);
     }
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
-        handleInCollector(project, StringUtil.join(values, "\n"), myTree);
+        int minIndent = Integer.MAX_VALUE;
+        for (Integer indent : indents) {
+          minIndent = Math.min(minIndent, indent);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.size(); i++) {
+          if (i > 0) {
+            sb.append("\n");
+          }
+          Integer indent = indents.get(i);
+          StringUtil.repeatSymbol(sb, ' ', indent - minIndent);
+          sb.append(values.get(i));
+        }
+        handleInCollector(project, sb.toString(), myTree);
       }
     }
 

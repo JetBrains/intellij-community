@@ -52,7 +52,9 @@ public class GCUtil {
       if (q.poll() != null) {
         break;
       }
-      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
+      TimeoutUtil.sleep(10);
+      long bytes = Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE);
+      list.add(new SoftReference<byte[]>(new byte[(int)bytes]));
     }
   }
 

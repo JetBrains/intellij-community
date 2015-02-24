@@ -480,31 +480,55 @@ public final class PsiUtil extends PsiUtilCore {
     return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, true, true);
   }
 
+
+  public interface ApplicabilityChecker {
+    ApplicabilityChecker ASSIGNABILITY_CHECKER = new ApplicabilityChecker() {
+      @Override
+      public boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId) {
+        return TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
+      }
+    };
+
+    boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId);
+  }
+
+  @MethodCandidateInfo.ApplicabilityLevelConstant
+  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                          @NotNull final PsiSubstitutor substitutorForMethod,
+                                          @NotNull final PsiType[] args,
+                                          @NotNull final LanguageLevel languageLevel,
+                                          final boolean allowUncheckedConversion,
+                                          final boolean checkVarargs) {
+    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, 
+                                 allowUncheckedConversion, checkVarargs, ApplicabilityChecker.ASSIGNABILITY_CHECKER);
+  }
+
   @MethodCandidateInfo.ApplicabilityLevelConstant
   public static int getApplicabilityLevel(@NotNull final PsiMethod method,
                                           @NotNull final PsiSubstitutor substitutorForMethod,
                                           @NotNull final PsiType[] args,
                                           @NotNull final LanguageLevel languageLevel,
                                                    final boolean allowUncheckedConversion,
-                                                   final boolean checkVarargs) {
+                                                   final boolean checkVarargs,
+                                          @NotNull final ApplicabilityChecker function) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
     final PsiClass containingClass = method.getContainingClass();
     final boolean isRaw = containingClass != null && isRawSubstitutor(method, substitutorForMethod) && isRawSubstitutor(containingClass, substitutorForMethod);
-    if (!areFirstArgumentsApplicable(args, parms, languageLevel, substitutorForMethod, isRaw)) return ApplicabilityLevel.NOT_APPLICABLE;
+    if (!areFirstArgumentsApplicable(args, parms, languageLevel, substitutorForMethod, isRaw, allowUncheckedConversion, function)) return ApplicabilityLevel.NOT_APPLICABLE;
     if (args.length == parms.length) {
       if (parms.length == 0) return ApplicabilityLevel.FIXED_ARITY;
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
-      if (TypeConversionUtil.isAssignable(parmType, argType, allowUncheckedConversion)) return ApplicabilityLevel.FIXED_ARITY;
+      if (function.isApplicable(parmType, argType, allowUncheckedConversion, parms.length - 1)) return ApplicabilityLevel.FIXED_ARITY;
 
       if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
         final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
         if (erasedArgType != null &&  erasedParamType != null &&
-            TypeConversionUtil.isAssignable(erasedParamType, erasedArgType)) {
+            function.isApplicable(erasedParamType, erasedArgType, allowUncheckedConversion, parms.length - 1)) {
           return ApplicabilityLevel.FIXED_ARITY;
         }
       }
@@ -523,7 +547,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
       for (int i = parms.length - 1; i < args.length; i++) {
         PsiType argType = args[i];
-        if (argType == null || !TypeConversionUtil.isAssignable(lastParmType, argType)) {
+        if (argType == null || !function.isApplicable(lastParmType, argType, allowUncheckedConversion, i)) {
           return ApplicabilityLevel.NOT_APPLICABLE;
         }
       }
@@ -536,7 +560,9 @@ public final class PsiUtil extends PsiUtilCore {
   private static boolean areFirstArgumentsApplicable(@NotNull PsiType[] args,
                                                      @NotNull final PsiParameter[] parms,
                                                      @NotNull LanguageLevel languageLevel,
-                                                     @NotNull final PsiSubstitutor substitutorForMethod, boolean isRaw) {
+                                                     @NotNull final PsiSubstitutor substitutorForMethod,
+                                                     boolean isRaw,
+                                                     boolean allowUncheckedConversion, ApplicabilityChecker function) {
     for (int i = 0; i < parms.length - 1; i++) {
       final PsiType type = args[i];
       if (type == null) return false;
@@ -545,10 +571,11 @@ public final class PsiUtil extends PsiUtilCore {
       if (isRaw) {
         final PsiType substErasure = TypeConversionUtil.erasure(substitutedParmType);
         final PsiType typeErasure = TypeConversionUtil.erasure(type);
-        if (substErasure != null && typeErasure != null && !TypeConversionUtil.isAssignable(substErasure, typeErasure)) {
+        if (substErasure != null && typeErasure != null && !function.isApplicable(substErasure, typeErasure, allowUncheckedConversion, i)) {
           return false;
         }
-      } else if (!TypeConversionUtil.isAssignable(substitutedParmType, type)) {
+      }
+      else if (!function.isApplicable(substitutedParmType, type, allowUncheckedConversion, i)) {
         return false;
       }
     }
@@ -823,8 +850,9 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Nullable
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
-    PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiEnumConstantInitializer.class, PsiMethod.class);
+    PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiEnumConstantInitializer.class, PsiMethod.class, PsiField.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
+    if (parent instanceof PsiField && parent.hasModifierProperty(PsiModifier.STATIC)) return null;
     return parent;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ import java.io.IOException;
 /**
  * @author yole
  */
-public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T> {
+public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implements SchemeProcessor<T>, SchemeExtensionProvider {
   @Override
   public void initScheme(@NotNull T scheme) {
   }
 
   @Override
-  public void onSchemeAdded(@NotNull final T scheme) {
+  public void onSchemeAdded(@NotNull T scheme) {
   }
 
   @Override
-  public void onSchemeDeleted(@NotNull final T scheme) {
+  public void onSchemeDeleted(@NotNull T scheme) {
   }
 
   @Override
-  public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+  public void onCurrentSchemeChanged(Scheme newCurrentScheme) {
   }
 
   @Nullable
@@ -49,8 +49,41 @@ public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implem
     return readScheme(new Document((Element)element.detach()));
   }
 
+  @Nullable
+  /**
+   * @param duringLoad If occurred during {@link SchemesManager#loadSchemes()} call
+   */
+  public T readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
+    return readScheme(element);
+  }
+
   @Override
   public T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException {
     throw new AbstractMethodError();
+  }
+
+  public enum State {
+    UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
+  }
+
+  @Override
+  public boolean shouldBeSaved(@NotNull T scheme) {
+    return true;
+  }
+
+  @NotNull
+  public State getState(@NotNull T scheme) {
+    return shouldBeSaved(scheme) ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+  }
+
+  @Override
+  public boolean isUpgradeNeeded() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public String getSchemeExtension() {
+    return ".xml";
   }
 }

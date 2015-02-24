@@ -194,7 +194,7 @@ public class GroovyCompilerWrapper {
 
     if (forStubs) {
       collector.add(new CompilerMessage(GroovyCompilerMessageCategories.INFORMATION,
-                                        "Groovyc stub generation failed", null, -1, -1));
+                                        GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED, null, -1, -1));
     }
 
     final StringWriter writer = new StringWriter();
@@ -248,7 +248,10 @@ public class GroovyCompilerWrapper {
       return ((ClassNode)node).getModule();
     }
     if (node instanceof AnnotatedNode) {
-      return ((AnnotatedNode)node).getDeclaringClass().getModule();
+      ClassNode declaringClass = ((AnnotatedNode)node).getDeclaringClass();
+      if (declaringClass != null) {
+        return declaringClass.getModule();
+      }
     }
     return null;
   }

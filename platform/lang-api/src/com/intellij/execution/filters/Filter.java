@@ -15,7 +15,10 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +34,18 @@ public interface Filter {
   Filter[] EMPTY_ARRAY = new Filter[0];
 
   class Result extends ResultItem {
+
+    private static final TextAttributes INACTIVE_HYPERLINK_ATTRIBUTES;
+    static {
+      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+      if (attributes != null) {
+        attributes = attributes.clone();
+        attributes.setForegroundColor(UIUtil.getInactiveTextColor());
+        attributes.setEffectColor(UIUtil.getInactiveTextColor());
+      }
+      INACTIVE_HYPERLINK_ATTRIBUTES = attributes;
+    }
+
     protected NextAction myNextAction = NextAction.EXIT;
     protected final List<ResultItem> myResultItems;
 
@@ -43,6 +58,14 @@ public interface Filter {
                   @Nullable final HyperlinkInfo hyperlinkInfo,
                   @Nullable final TextAttributes highlightAttributes) {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes);
+      myResultItems = null;
+    }
+
+    public Result(final int highlightStartOffset,
+                  final int highlightEndOffset,
+                  @Nullable final HyperlinkInfo hyperlinkInfo,
+                  boolean inactiveHyperlink) {
+      super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, inactiveHyperlink ? INACTIVE_HYPERLINK_ATTRIBUTES : null);
       myResultItems = null;
     }
 

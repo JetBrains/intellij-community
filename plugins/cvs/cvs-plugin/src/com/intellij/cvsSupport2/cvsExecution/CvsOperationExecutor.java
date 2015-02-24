@@ -23,14 +23,13 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -44,9 +43,6 @@ import java.util.List;
  * author: lesya
  */
 public class CvsOperationExecutor {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor");
-
   private final CvsResultEx myResult = new CvsResultEx();
 
   private final boolean myShowProgress;
@@ -87,7 +83,7 @@ public class CvsOperationExecutor {
         try {
           myResult.addAllErrors(handler.getErrorsExceptAborted());
           handler.finish();
-          if (myProject == null || myProject != null && !myProject.isDisposed()) {
+          if (myProject == null || !myProject.isDisposed()) {
             showErrors(handler, tabbedWindow);
           }
         }
@@ -212,10 +208,10 @@ public class CvsOperationExecutor {
       for (final VcsException exception : errors) {
         final String groupName = DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ' ' + handler.getTitle();
         if (exception.isWarning()) {
-          errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), groupName, DummyNavigatable.INSTANCE,
+          errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), groupName, NonNavigatable.INSTANCE,
                                    null, null, exception);
         } else {
-          errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), groupName, DummyNavigatable.INSTANCE,
+          errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), groupName, NonNavigatable.INSTANCE,
                                    null, null, exception);
         }
       }
@@ -268,25 +264,6 @@ public class CvsOperationExecutor {
 
   public CvsResult getResult() {
     return myResult;
-  }
-
-  private static class DummyNavigatable implements Navigatable {
-    public static final Navigatable INSTANCE = new DummyNavigatable();
-
-    private DummyNavigatable() {}
-
-    @Override
-    public void navigate(boolean requestFocus) {}
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
   }
 
   public void setShowErrors(boolean showErrors) {

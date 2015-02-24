@@ -3,6 +3,9 @@ package org.jetbrains.io;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.ByteBufUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +65,43 @@ public class JsonUtil {
     sb.append('"');
   }
 
-  public static <T> List<T> nextList(JsonReaderEx reader) {
+  public static void escape(@NotNull CharSequence value, @NotNull ByteBuf buffer) {
+    int length = value.length();
+    buffer.ensureWritable(length * 2);
+    buffer.writeByte('"');
+    int last = 0;
+    for (int i = 0; i < length; i++) {
+      char c = value.charAt(i);
+      String replacement;
+      if (c < 128) {
+        replacement = REPLACEMENT_CHARS[c];
+        if (replacement == null) {
+          continue;
+        }
+      }
+      else if (c == '\u2028') {
+        replacement = "\\u2028";
+      }
+      else if (c == '\u2029') {
+        replacement = "\\u2029";
+      }
+      else {
+        continue;
+      }
+      if (last < i) {
+        ByteBufUtilEx.writeUtf8(buffer, value, last, i);
+      }
+      ByteBufUtil.writeAscii(buffer, replacement);
+      last = i + 1;
+    }
+    if (last < length) {
+      ByteBufUtilEx.writeUtf8(buffer, value, last, length);
+    }
+    buffer.writeByte('"');
+  }
+
+  @NotNull
+  public static <T> List<T> nextList(@NotNull JsonReaderEx reader) {
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
@@ -75,12 +114,14 @@ public class JsonUtil {
     return list;
   }
 
-  public static Object[] nextArray(JsonReaderEx reader) {
+  @NotNull
+  public static Object[] nextArray(@NotNull JsonReaderEx reader) {
     List<Object> list = nextList(reader);
     return ArrayUtil.toObjectArray(list);
   }
 
-  public static Map<String, Object> nextObject(JsonReaderEx reader) {
+  @NotNull
+  public static Map<String, Object> nextObject(@NotNull JsonReaderEx reader) {
     Map<String, Object> map = new THashMap<String, Object>();
     reader.beginObject();
     while (reader.hasNext()) {

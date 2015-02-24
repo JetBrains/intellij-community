@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,6 +71,6 @@ public class UsageTargetUtil {
 
   @NotNull
   private static List<UsageTargetProvider> getProviders(Project project) {
-    return DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(Extensions.getExtensions(EP_NAME)));
+    return DumbService.getInstance(project).filterByDumbAwareness(Extensions.getExtensions(EP_NAME));
   }
 }

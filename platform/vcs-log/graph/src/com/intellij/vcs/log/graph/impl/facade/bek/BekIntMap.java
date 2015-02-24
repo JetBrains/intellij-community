@@ -17,6 +17,9 @@ package com.intellij.vcs.log.graph.impl.facade.bek;
 
 public interface BekIntMap {
   int size();
+
+  // usualIndex == id
   int getBekIndex(int usualIndex);
+
   int getUsualIndex(int bekIndex);
 }

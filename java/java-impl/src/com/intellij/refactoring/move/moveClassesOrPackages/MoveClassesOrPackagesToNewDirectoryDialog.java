@@ -189,7 +189,11 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
     saveOpenInEditorOption();
-    invokeRefactoring(createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences));
+    final BaseRefactoringProcessor refactoringProcessor =
+      createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences);
+    if (refactoringProcessor != null) {
+      invokeRefactoring(refactoringProcessor);
+    }
   }
 
   @Override

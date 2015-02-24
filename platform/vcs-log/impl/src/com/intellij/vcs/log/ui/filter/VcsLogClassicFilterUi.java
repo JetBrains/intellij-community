@@ -124,25 +124,25 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel);
+        return new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new UserFilterPopupComponent(myUiProperties, myLogDataHolder, myUserFilterModel);
+        return new UserFilterPopupComponent(myUiProperties, myLogDataHolder, myUserFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new DateFilterPopupComponent(myDateFilterModel);
+        return new DateFilterPopupComponent(myDateFilterModel).initUi();
       }
     }));
     actionGroup.add(new FilterActionComponent(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager());
+        return new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager()).initUi();
       }
     }));
     return actionGroup;

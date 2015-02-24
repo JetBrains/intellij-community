@@ -675,6 +675,7 @@ public class ListUtils {
   }
 
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
+  public void testNothingAfterTypeParameterQualifier() { doAntiTest(); }
 
   public void testSpacesAroundEq() throws Throwable { doTest('='); }
 
@@ -840,6 +841,11 @@ public class ListUtils {
   public void testOnlyClassesInExtends() throws Throwable {
     configure()
     assertStringItems 'Inner'
+  }
+
+  public void testNoThisClassInExtends() throws Throwable {
+    configure()
+    assertStringItems 'Fooxxxx2'
   }
 
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
@@ -1496,4 +1502,6 @@ class Bar {
     }
 }'''
   }
+  
+  public void testIndentingForSwitchCase() { doTest() }
 }

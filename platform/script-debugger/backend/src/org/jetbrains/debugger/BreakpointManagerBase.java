@@ -135,10 +135,9 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     return null;
   }
 
-  @Nullable
   @Override
-  public ScriptRegExpSupport getScriptRegExpSupport() {
-    return null;
+  public boolean hasScriptRegExpSupport() {
+    return false;
   }
 
   @NotNull
@@ -151,5 +150,11 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   @Override
   public Promise<Void> flush(@NotNull Breakpoint breakpoint) {
     return ((T)breakpoint).flush(this);
+  }
+
+  @NotNull
+  @Override
+  public Promise<?> enableBreakpoints(boolean enabled) {
+    return Promise.reject("Unsupported");
   }
 }

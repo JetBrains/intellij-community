@@ -52,7 +52,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.GenerationUtil;
-import org.jetbrains.java.generate.element.GenerationHelper;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.util.*;
@@ -621,20 +621,28 @@ public class GenerateMembersUtil {
   }
 
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
-    return generatePrototype(field, field.getContainingClass(), GetterTemplatesManager.getInstance());
+    return generateGetterPrototype(field, true);
   }
 
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field) {
-    return generateSetterPrototype(field, field.getContainingClass());
+    return generateSetterPrototype(field, true);
   }
 
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field, PsiClass aClass) {
-    return generatePrototype(field, aClass, SetterTemplatesManager.getInstance());
+    return generatePrototype(field, aClass, true, SetterTemplatesManager.getInstance());
+  }
+
+  static PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
+    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, GetterTemplatesManager.getInstance());
+  }
+
+  static PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
+    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, SetterTemplatesManager.getInstance());
   }
 
   private static PsiMethod generatePrototype(@NotNull PsiField field,
                                              PsiClass psiClass,
-                                             TemplatesManager templatesManager) {
+                                             boolean ignoreInvalidTemplate, TemplatesManager templatesManager) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final String methodText = GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field),
@@ -646,12 +654,30 @@ public class GenerateMembersUtil {
       result = factory.createMethodFromText(methodText, psiClass);
     }
     catch (IncorrectOperationException e) {
-      LOG.info(e);
-      result = templatesManager instanceof GetterTemplatesManager ? PropertyUtil.generateGetterPrototype(field) 
-                                                                  : PropertyUtil.generateSetterPrototype(field);
+      if (ignoreInvalidTemplate) {
+        LOG.info(e);
+        result = templatesManager instanceof GetterTemplatesManager ? PropertyUtil.generateGetterPrototype(field)
+                                                                    : PropertyUtil.generateSetterPrototype(field);
+      }
+      else {
+        throw new GenerateCodeException(e);
+      }
     }
     result = (PsiMethod)CodeStyleManager.getInstance(project).reformat(result);
-    PropertyUtil.annotateWithNullableStuff(field, result);
+
+    PsiModifierListOwner listOwner = null;
+    if (templatesManager instanceof GetterTemplatesManager) {
+      listOwner = result;
+    }
+    else {
+      final PsiParameter[] parameters = result.getParameterList().getParameters();
+      if (parameters.length == 1) {
+        listOwner = parameters[0];
+      }
+    }
+    if (listOwner != null) {
+      PropertyUtil.annotateWithNullableStuff(field, listOwner);
+    }
     return generatePrototype(field, result);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -228,9 +229,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
           }
           else {
             label.append(name.substring(dotIndex + 1));
-            label.append(" {");
-            label.append(name.substring(0, dotIndex));
-            label.append("}");
+            if (settings.SHOW_PACKAGE_NAME) {
+              label.append(" {");
+              label.append(name.substring(0, dotIndex));
+              label.append("}");
+            }
           }
         }
       }
@@ -294,7 +297,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     catch (EvaluateException ignored) {
     }
-    return AllIcons.Debugger.StackFrame;
+    return EmptyIcon.create(6);//AllIcons.Debugger.StackFrame;
   }
 
   public Icon getIcon() {

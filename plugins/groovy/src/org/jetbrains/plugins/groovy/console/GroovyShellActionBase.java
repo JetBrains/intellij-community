@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.console;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.console.*;
+import com.intellij.execution.console.ConsoleHistoryController;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -182,7 +184,7 @@ public abstract class GroovyShellActionBase extends AnAction {
 
   public abstract String getTitle();
 
-  protected abstract LanguageConsoleImpl createConsole(Project project, String title);
+  protected abstract LanguageConsoleView createConsole(Project project, String title);
 
   private class GroovyConsoleRunner extends AbstractConsoleRunnerWithHistory<LanguageConsoleView> {
     private final GroovyShellRunner myShellRunner;
@@ -210,8 +212,8 @@ public abstract class GroovyShellActionBase extends AnAction {
 
     @Override
     protected LanguageConsoleView createConsoleView() {
-      LanguageConsoleViewImpl res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
-      GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
+      LanguageConsoleView res = createConsole(getProject(), getConsoleTitle());
+      GroovyFileImpl file = (GroovyFileImpl)res.getFile();
       assert file.getContext() == null;
       file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
 
@@ -252,7 +254,7 @@ public abstract class GroovyShellActionBase extends AnAction {
           return GROOVY_SHELL_EXECUTE;
         }
       };
-      new ConsoleHistoryController(getConsoleTitle(), null, getLanguageConsole(), handler.getConsoleHistoryModel()).install();
+      new ConsoleHistoryController(getConsoleTitle(), null, getConsoleView()).install();
       return handler;
     }
   }

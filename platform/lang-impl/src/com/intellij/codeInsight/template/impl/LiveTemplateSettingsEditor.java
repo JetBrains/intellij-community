@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -148,7 +149,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
     
     JPanel editorPanel = new JPanel(new BorderLayout(4, 4));
-    editorPanel.setPreferredSize(new Dimension(250, 100));
+    editorPanel.setPreferredSize(JBUI.size(250, 100));
     editorPanel.setMinimumSize(editorPanel.getPreferredSize());
     editorPanel.add(myTemplateEditor.getComponent(), BorderLayout.CENTER);
     JLabel templateTextLabel = new JLabel(CodeInsightBundle.message("dialog.edit.template.template.text.title"));

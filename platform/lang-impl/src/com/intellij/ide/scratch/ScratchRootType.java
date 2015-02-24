@@ -17,13 +17,16 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.lang.PerFileMappings;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,86 +36,58 @@ import javax.swing.*;
 /**
  * @author gregsh
  */
-public class ScratchRootType extends RootType {
+public final class ScratchRootType extends RootType {
 
-  public static final LanguageFileType SCRATCH_FILE_TYPE = new MyFileType();
+  @NotNull
+  public static ScratchRootType getInstance() {
+    return findByClass(ScratchRootType.class);
+  }
 
-  protected ScratchRootType() {
+  ScratchRootType() {
     super("scratches", "Scratches");
   }
 
   @Override
-  public boolean canBeProject() {
-    return false;
-  }
-
-  @Override
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    PerFileMappings<Language> mapping = ScratchFileService.getInstance().getScratchesMapping();
-    Language language = mapping.getMapping(file);
-    return language != null && language != SCRATCH_FILE_TYPE.getLanguage() ?
-           LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
+    Language language = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
+    return substituteLanguageImpl(language, file, project);
   }
 
   @Nullable
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
-    Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), SCRATCH_FILE_TYPE.getIcon());
+    Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), ScratchFileType.INSTANCE.getIcon());
     return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
   }
 
-  public static class TypeFactory extends FileTypeFactory {
+  public VirtualFile createScratchFile(Project project, final String fileName, final Language language, final String text) {
+    RunResult<VirtualFile> result =
+      new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.file.command.name")) {
+        @Override
+        protected boolean isGlobalUndoAction() {
+          return true;
+        }
 
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-      consumer.consume(SCRATCH_FILE_TYPE);
-    }
-  }
+        @Override
+        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
+        }
 
-  private static class MyFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, InternalFileType {
+        @Override
+        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+          ScratchFileService fileService = ScratchFileService.getInstance();
+          VirtualFile file = fileService.findFile(ScratchRootType.this, "scratch", ScratchFileService.Option.create_new_always);
+          fileService.getScratchesMapping().setMapping(file, language);
+          VfsUtil.saveText(file, text);
+          result.setResult(file);
 
-    MyFileType() {
-      super(PlainTextLanguage.INSTANCE);
-    }
-
-    @Override
-    public boolean isMyFileType(@NotNull VirtualFile file) {
-      return ScratchFileService.getInstance().getRootType(file) != null;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "Scratch";
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return "Scratch";
-    }
-
-    @NotNull
-    @Override
-    public String getDefaultExtension() {
-      return "";
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon() {
-      return PlainTextFileType.INSTANCE.getIcon();
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+        }
+      }.execute();
+    if (result.hasException()) {
+      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
+                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
       return null;
     }
+    return result.getResultObject();
   }
 }

@@ -61,6 +61,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -160,7 +161,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)newProfile.getModifiableModel();
           modifiableModel.setModified(true);
           modifiableModel.setProjectLevel(false);
-          addProfile(modifiableModel);
+          addProfile(modifiableModel, newProfile);
           rename(modifiableModel);
         }
       }
@@ -337,7 +338,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               }
               final ModifiableModel model = profile.getModifiableModel();
               model.setModified(true);
-              addProfile((InspectionProfileImpl)model);
+              addProfile((InspectionProfileImpl)model, profile);
 
               //TODO myDeletedProfiles ? really need this
               myDeletedProfiles.remove(profile);
@@ -391,7 +392,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static JComponent withBorderOnTop(final JComponent component) {
     final JPanel panel = new JPanel();
     panel.add(component);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(UIUtil.isUnderDarcula() ? 10 : 13, 0, 0, 0));
     return panel;
   }
 
@@ -418,9 +419,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return inspectionProfile;
   }
 
-  private void addProfile(InspectionProfileImpl model) {
+  private void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
     final String modelName = model.getName();
-    final SingleInspectionProfilePanel panel = createPanel(model, modelName);
+    final SingleInspectionProfilePanel panel = createPanel(model, profile, modelName);
     myPanel.add(getCardName(model), panel);
 
     myProfiles.getModel().addElement(model);
@@ -541,7 +542,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       final ModifiableModel modifiableProfile = ((InspectionProfileImpl)profile).getModifiableModel();
       modifiableProfiles.add(modifiableProfile);
       final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)modifiableProfile;
-      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile, profileName);
+      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile, profile, profileName);
       putProfile(modifiableProfile, panel);
       myPanel.add(getCardName(inspectionProfile), panel);
     }
@@ -575,8 +576,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return (inspectionProfile.isProjectLevel() ? "s" : "a") + inspectionProfile.getName();
   }
 
-  private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, String profileName) {
-    return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, profile) {
+  private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, Profile original, String profileName) {
+    return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, profile, original) {
       @Override
       protected boolean accept(InspectionToolWrapper entry) {
         return super.accept(entry) && acceptTool(entry);

@@ -388,9 +388,9 @@ public class UIUtil {
     }
   }
 
-  public static boolean isRetina (GraphicsDevice device) {
+  public static boolean isRetina (Graphics2D graphics) {
     if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-      return DetectRetinaKit.isOracleMacRetinaDevice(device);
+      return DetectRetinaKit.isMacRetina(graphics);
     } else {
       return isRetina();
     }
@@ -1774,7 +1774,7 @@ public class UIUtil {
 
   private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
   private static int BEST_DARK_LCD_CONTRAST = 100;
-  private static int BEST_LIGHT_LCD_CONTRAST = 250;
+  private static int BEST_LIGHT_LCD_CONTRAST = 200;
 
 
   public static void setHintingForLCDText(Graphics2D g2d) {
@@ -1794,9 +1794,9 @@ public class UIUtil {
 
       // Wrong values prevent IDE from start
       // So we have to be careful
-      if (registryLcdContrastValue < 140) {
+      if (registryLcdContrastValue < 100) {
         LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
-        registryLcdContrastValue = 140;
+        registryLcdContrastValue = 100;
       } else if (registryLcdContrastValue > 250) {
         LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
         registryLcdContrastValue = 250;
@@ -1808,6 +1808,14 @@ public class UIUtil {
 
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
+      return RetinaImage.create(width, height, type);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(width, height, type);
+  }
+
+  public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
+    if (DetectRetinaKit.isMacRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -2048,7 +2056,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@NotNull JComponent c, Condition<Component> condition) {
+  public static Component findParentByCondition(@NotNull Component c, Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2625,6 +2633,7 @@ public class UIUtil {
     return SystemInfo.isMac && isUnderAquaLookAndFeel() ? 28 : height;
   }
 
+  public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
    * The main difference from javax.swing.SwingUtilities#isDescendingFrom(Component, Component) is that this method

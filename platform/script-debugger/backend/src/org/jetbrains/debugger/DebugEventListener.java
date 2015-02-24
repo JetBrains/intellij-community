@@ -16,8 +16,7 @@ public interface DebugEventListener extends EventListener {
 
   /**
    * Reports the virtual machine has resumed. This can happen
-   * asynchronously, due to a user action in the browser (without explicitly
-   * resuming the VM through
+   * asynchronously, due to a user action in the browser (without explicitly resuming the VM through
    */
   void resumed();
 

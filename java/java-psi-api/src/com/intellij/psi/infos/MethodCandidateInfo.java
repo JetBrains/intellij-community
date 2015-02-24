@@ -312,17 +312,17 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public static CurrentCandidateProperties getCurrentMethod(PsiElement context) {
+    if (isOverloadCheck()) {
+      ourOverloadGuard.prohibitResultCaching(ourOverloadGuard.currentStack().get(0));
+    }
     final Map<PsiElement, CurrentCandidateProperties> currentMethodCandidates = CURRENT_CANDIDATE.get();
     return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
   }
 
   public static void updateSubstitutor(PsiElement context, PsiSubstitutor newSubstitutor) {
-    final Map<PsiElement, CurrentCandidateProperties> currentMethodCandidates = CURRENT_CANDIDATE.get();
-    if (currentMethodCandidates != null) {
-      final CurrentCandidateProperties properties = currentMethodCandidates.get(context);
-      if (properties != null) {
-        properties.setSubstitutor(newSubstitutor);
-      }
+    CurrentCandidateProperties candidateProperties = getCurrentMethod(context);
+    if (candidateProperties != null) {
+      candidateProperties.setSubstitutor(newSubstitutor);
     }
   }
 

@@ -172,6 +172,19 @@ target(name: "compile", description: "Compile module python") {
     fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
   }
 
+  // set version to PyCharm current version from ApplicationInfo.xml
+  ant.loadfile(property: "appInfo", srcFile: "${pluginHome}/resources/idea/PyCharmCoreApplicationInfo.xml") {
+  }
+
+  major = ("${appInfo}" =~ /major\s*=\s*\"([^"])\"/)[0][1]
+  minor = ("${appInfo}" =~ /minor\s*=\s*\"([^"])\"/)[0][1]
+
+
+  ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
+                    match: "@@PYCHARM_VERSION@@",
+                    replace: "${major}.${minor}")
+
+  // set since-build to the current idea build number
   ant.replace(file: "${classesDir}/META-INF/plugin.xml") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: "${buildNumber}")
   }

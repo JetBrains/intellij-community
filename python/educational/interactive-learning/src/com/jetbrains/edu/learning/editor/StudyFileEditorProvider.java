@@ -8,8 +8,8 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.course.TaskFile;
+import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +24,7 @@ class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(file);
+    TaskFile taskFile = StudyUtils.getTaskFile(project, file);
     return taskFile != null && !taskFile.isUserCreated();
   }
 

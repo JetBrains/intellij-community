@@ -93,8 +93,7 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto)
-    throws StateStorageException {
+  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
     assert stateClass == ModuleRootManagerImpl.ModuleRootManagerState.class;

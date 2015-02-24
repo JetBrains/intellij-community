@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -218,7 +218,7 @@ public class ITNProxy {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
-    if (!(SystemInfo.isJavaVersionAtLeast("1.7") && SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true))) {
+    if (!NetUtils.isSniEnabled()) {
       connection.setHostnameVerifier(new EaHostnameVerifier(url.getHost(), "ftp.intellij.net"));
     }
 

@@ -52,6 +52,10 @@ public class IntStack {
     return data[--size];
   }
 
+  public int size() {
+    return size;
+  }
+
   public boolean empty() {
     return size == 0;
   }

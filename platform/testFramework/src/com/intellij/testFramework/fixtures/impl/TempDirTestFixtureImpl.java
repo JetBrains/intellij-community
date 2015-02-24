@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,8 +70,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
         try {
           VirtualFile tempDir =
             LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/'));
+          Assert.assertNotNull(tempDir);
           if (targetDir.length() > 0) {
-            assert !targetDir.contains("/") : "nested directories not implemented";
+            Assert.assertFalse("nested directories not implemented", targetDir.contains("/"));
             VirtualFile child = tempDir.findChild(targetDir);
             if (child == null) {
               child = tempDir.createChildDirectory(this, targetDir);
@@ -78,7 +80,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
             tempDir = child;
           }
           final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
-          assert from != null : dataDir + " not found";
+          Assert.assertNotNull(dataDir + " not found", from);
           VfsUtil.copyDirectory(null, from, tempDir, filter);
           return tempDir;
         }
@@ -118,7 +120,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
           result.set(file);
         }
         catch (IOException e) {
-          assert false : "Cannot find " + path + ": " + e;
+          Assert.fail("Cannot find " + path + ": " + e);
         }
       }
     });
@@ -168,7 +170,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   public void tearDown() throws Exception {
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);
-      assert deleted : "Can't delete "+fileToDelete;
+      Assert.assertTrue("Can't delete " + fileToDelete, deleted);
     }
     super.tearDown();
   }

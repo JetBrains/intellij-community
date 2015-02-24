@@ -50,7 +50,6 @@ import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -195,7 +194,6 @@ public abstract class DialogWrapper {
   }
 
   private ErrorText myErrorText;
-  private int myMaxErrorTextLength;
 
   private final Alarm myErrorTextAlarm = new Alarm();
 
@@ -223,7 +221,7 @@ public abstract class DialogWrapper {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
             if (myErrorText != null && myErrorText.isVisible()) {
-              myActualSize.height -= myErrorText.getHeight() + 10;
+              myActualSize.height -= myErrorText.myLabel.getHeight();
             }
           }
         }
@@ -1184,6 +1182,25 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
+    myErrorText.myLabel.addComponentListener(new ComponentAdapter() {
+      private int myHeight;
+
+      @Override
+      public void componentResized(ComponentEvent event) {
+        int height = !myErrorText.isVisible() ? 0 : event.getComponent().getHeight();
+        if (height != myHeight) {
+          myHeight = height;
+          myResizeInProgress = true;
+          myErrorText.setMinimumSize(new Dimension(0, height));
+          myPeer.getRootPane().validate();
+          if (myActualSize != null) {
+            myPeer.setSize(myActualSize.width, myActualSize.height + height);
+          }
+          myErrorText.revalidate();
+          myResizeInProgress = false;
+        }
+      }
+    });
 
     final JPanel root = new JPanel(createRootLayout());
     //{
@@ -1242,7 +1259,7 @@ public abstract class DialogWrapper {
       southSection.add(south, BorderLayout.SOUTH);
     }
 
-    new MnemonicHelper().register(root);
+    MnemonicHelper.init(root);
     if (!postponeValidation()) {
       startTrackingValidation();
     }
@@ -1869,25 +1886,10 @@ public abstract class DialogWrapper {
       @Override
       public void run() {
         final String text = myLastErrorText;
-        if (myActualSize == null && !StringUtil.isEmpty(text)) {
+        if (myActualSize == null && !myErrorText.isVisible()) {
           myActualSize = getSize();
         }
         myErrorText.setError(text);
-        if (text != null && text.length() > myMaxErrorTextLength) {
-          // during the first update, resize only for growing. during a subsequent update,
-          // if error text becomes longer, the min size calculation may not calculate enough size,
-          // so we pack() even though it could cause the dialog to become smaller.
-          if (myMaxErrorTextLength == 0) {
-            updateHeightForErrorText();
-          }
-          myMaxErrorTextLength = text.length();
-          updateHeightForErrorText();
-        }
-        myErrorText.repaint();
-        if (StringUtil.isEmpty(text) && myActualSize != null) {
-          resizeWithAnimation(myActualSize);
-          myMaxErrorTextLength = 0;
-        }
       }
     }, 300, null);
   }
@@ -1941,19 +1943,14 @@ public abstract class DialogWrapper {
     }.start();
   }
 
-  private void updateHeightForErrorText() {
-    Dimension errorSize = myErrorText.getPreferredSize();
-    myErrorText.setMinimumSize(new Dimension(0, errorSize.height));
-    resizeWithAnimation(new Dimension(Math.max(myActualSize.width, errorSize.width + 40), myActualSize.height + errorSize.height + 10));
-  }
-
   private static class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private Dimension myPrefSize;
     private String myText;
 
     private ErrorText() {
       setLayout(new BorderLayout());
+      myLabel.setIcon(AllIcons.Actions.Lightning);
+      myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       pane.setBorder(JBUI.Borders.empty());
@@ -1964,27 +1961,12 @@ public abstract class DialogWrapper {
     }
 
     public void setError(String text) {
-      final Dimension oldSize = getPreferredSize();
       myText = text;
-
-      if (text == null) {
-        myLabel.setText("");
-        myLabel.setIcon(null);
-        setVisible(false);
-        setBorder(null);
-      }
-      else {
-        myLabel
-          .setText(XmlStringUtil.wrapInHtml("<font color='#" + ColorUtil.toHex(JBColor.RED) + "'><left>" + text + "</left></b></font>"));
-        myLabel.setIcon(AllIcons.Actions.Lightning);
-        myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
-        setVisible(true);
-      }
-
-      final Dimension size = getPreferredSize();
-      if (oldSize.height < size.height) {
-        revalidate();
-      }
+      myLabel.setBounds(0, 0, 0, 0);
+      setVisible(text != null);
+      myLabel.setText(text != null
+                      ? "<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'><left>" + text + "</left></b></font></html>"
+                      : "");
     }
 
     public boolean shouldBeVisible() {
@@ -1993,11 +1975,6 @@ public abstract class DialogWrapper {
 
     public boolean isTextSet(@Nullable String text) {
       return StringUtil.equals(text, myText);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return myPrefSize == null ? myLabel.getPreferredSize() : myPrefSize;
     }
   }
 
@@ -2129,7 +2106,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private static enum ErrorPaintingType {DOT, SIGN, LINE}
+  private enum ErrorPaintingType {DOT, SIGN, LINE}
 
   public enum DialogStyle {NO_STYLE, COMPACT}
 }

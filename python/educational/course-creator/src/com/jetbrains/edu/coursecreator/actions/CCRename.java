@@ -26,14 +26,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.CCProjectService;
-import com.jetbrains.edu.coursecreator.format.Course;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public abstract class CCRename extends DumbAwareAction {
-  public CCRename(String text, String description, Icon icon) {
+  protected CCRename(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
@@ -74,7 +74,7 @@ public abstract class CCRename extends DumbAwareAction {
     presentation.setEnabled(true);
   }
 
-  public abstract String getFolderName();
+  protected abstract String getFolderName();
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -96,5 +96,5 @@ public abstract class CCRename extends DumbAwareAction {
     ProjectView.getInstance(project).refresh();
   }
 
-  public abstract boolean processRename(Project project, PsiDirectory directory, Course course);
+  protected abstract boolean processRename(Project project, PsiDirectory directory, Course course);
 }

@@ -2,6 +2,17 @@ public ##
 #if($field.modifierStatic)
   static ##
 #end
-$field.type $helper.suggestGetterName($field, $project)() {
+$field.type ##
+#set($name = $StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project))))
+#if ($field.boolean)
+  #if ($StringUtil.startsWithIgnoreCase($name, 'is'))
+    #set($name = $StringUtil.decapitalize($name))
+  #else
+    is##
+#end
+#else
+  get##
+#end
+${name}() {
   return $field.name;
 }

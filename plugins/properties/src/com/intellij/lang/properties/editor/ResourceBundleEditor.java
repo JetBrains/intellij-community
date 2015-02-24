@@ -33,10 +33,14 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
+import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -46,13 +50,11 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -70,6 +72,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -92,6 +95,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
   private final ResourceBundle              myResourceBundle;
+  private final ResourceBundlePropertiesInsertManager myPropertiesInsertDeleteManager;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
   private final Project           myProject;
@@ -124,6 +128,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
+    myPropertiesInsertDeleteManager = ResourceBundlePropertiesInsertManagerImpl.create(resourceBundle);
+
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
@@ -197,6 +203,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
 
+  @NotNull
+  public ResourceBundlePropertiesInsertManager getPropertiesInsertDeleteManager() {
+    return myPropertiesInsertDeleteManager;
+  }
+
   private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
     // Ignore events which don't target current editor.
     FileEditor oldEditor = event.getOldEditor();
@@ -208,6 +219,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     // We want to sync selected property key on selection change.
     if (newEditor == this) {
       if (oldEditor instanceof TextEditor) {
+        myPropertiesInsertDeleteManager.reload();
         setStructureViewSelectionFromPropertiesFile(((TextEditor)oldEditor).getEditor());
       } else if (myPropertyToSelectWhenVisible != null) {
         setStructureViewSelection(myPropertyToSelectWhenVisible);
@@ -337,7 +349,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             final IProperty property = propertiesFile.findPropertyByKey(currentSelectedProperty);
             try {
               if (property == null) {
-                propertiesFile.addProperty(currentSelectedProperty, currentValue);
+                myPropertiesInsertDeleteManager.insertTranslation(currentSelectedProperty, currentValue, propertiesFile);
               }
               else {
                 property.setValue(currentValue);
@@ -489,7 +501,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
+              final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
+              if (!undoManager.isActive() || !(undoManager.isRedoInProgress() || undoManager.isUndoInProgress())) {
+                updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
+              }
             }
           });
         }
@@ -550,8 +565,27 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         childrenChanged(event);
       }
 
+      @Nullable
+      private String getPropertyKey(final @Nullable PsiElement element) {
+        if (!(element instanceof PropertyKeyImpl)) {
+          return null;
+        }
+        final IProperty property = (IProperty)PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
+          @Override
+          public boolean value(PsiElement element) {
+            return element instanceof IProperty;
+          }
+        });
+        return property == null ? null : property.getKey();
+      }
+
       @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
+        final String oldKey = getPropertyKey(event.getOldChild());
+        if (oldKey == null || !oldKey.equals(getSelectedPropertyName())) {
+          return;
+        }
+        final String newKey = getPropertyKey(event.getNewChild());
         childrenChanged(event);
       }
 
@@ -562,7 +596,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        final PsiFile file = event.getFile();
+           final PsiFile file = event.getFile();
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (propertiesFile == null) return;
         if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
@@ -588,7 +622,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (myBackSlashPressed.contains(propertiesFile)) {
       text += "\\";
     }
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     document.replaceString(0, document.getTextLength(), text);
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.FALSE);
   }
 
   @NotNull

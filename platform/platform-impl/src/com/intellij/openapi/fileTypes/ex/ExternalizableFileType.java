@@ -22,5 +22,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
  */
 public interface ExternalizableFileType extends JDOMExternalizable {
   void markDefaultSettings();
+
   boolean isModified();
 }

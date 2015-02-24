@@ -508,18 +508,16 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testRelativeImportExcludeToplevel() {  // PY-6304
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    try {
-      myFixture.copyDirectoryToProject("completion/relativeImportExcludeToplevel", "");
-      myFixture.configureByFile("pack/subpack/modX.py");
-      myFixture.completeBasic();
-      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-      assertNotNull(lookupElementStrings);
-      assertFalse(lookupElementStrings.contains("sys"));
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
+      @Override
+      public void run() {
+        myFixture.copyDirectoryToProject("completion/relativeImportExcludeToplevel", "");
+        myFixture.configureByFile("pack/subpack/modX.py");
+        myFixture.completeBasic();
+        assertNull(myFixture.getLookupElementStrings());
+        myFixture.checkResult("from ...subpack import");
+      }
+    });
   }
 
   // PY-2813

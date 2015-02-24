@@ -1,6 +1,7 @@
 package com.intellij.internal.statistic.connect;
 
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -28,30 +29,32 @@ public class RemotelyConfigurableStatisticsService implements StatisticsService 
 
   @Override
   public StatisticsResult send() {
-    final String serviceUrl = myConnectionService.getServiceUrl();
+    synchronized (ApplicationStatisticsPersistenceComponent.class) {
+      final String serviceUrl = myConnectionService.getServiceUrl();
 
-    if (serviceUrl == null) {
-      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR");
-    }
+      if (serviceUrl == null) {
+        return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR");
+      }
 
-    if (!myConnectionService.isTransmissionPermitted()) {
-      return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
-    }
+      if (!myConnectionService.isTransmissionPermitted()) {
+        return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
+      }
 
-    String content = myAssistant.getData(myConnectionService.getDisabledGroups());
+      String content = myAssistant.getData(myConnectionService.getDisabledGroups());
 
-    if (StringUtil.isEmptyOrSpaces(content)) {
-      return new StatisticsResult(StatisticsResult.ResultCode.NOTHING_TO_SEND, "NOTHING_TO_SEND");
-    }
+      if (StringUtil.isEmptyOrSpaces(content)) {
+        return new StatisticsResult(StatisticsResult.ResultCode.NOTHING_TO_SEND, "NOTHING_TO_SEND");
+      }
 
-    try {
-      sender.send(serviceUrl, content);
-      StatisticsUploadAssistant.persistSentPatch(content);
+      try {
+        sender.send(serviceUrl, content);
+        StatisticsUploadAssistant.updateSentTime();
 
-      return new StatisticsResult(StatisticsResult.ResultCode.SEND, content);
-    }
-    catch (Exception e) {
-      return new StatisticsResult(StatisticsResult.ResultCode.SENT_WITH_ERRORS, e.getMessage() != null ? e.getMessage() : "NPE");
+        return new StatisticsResult(StatisticsResult.ResultCode.SEND, content);
+      }
+      catch (Exception e) {
+        return new StatisticsResult(StatisticsResult.ResultCode.SENT_WITH_ERRORS, e.getMessage() != null ? e.getMessage() : "NPE");
+      }
     }
   }
 

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +40,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
   @Override
   public void coloredTextAvailable(final String text, final Key attributes) {
-    final String string = PyConsoleUtil.processPrompts(getConsole(), StringUtil.convertLineSeparators(text));
+    String string = PyConsoleUtil.processPrompts(myConsoleView, StringUtil.convertLineSeparators(text));
 
     myConsoleView.print(string, attributes);
 
@@ -82,10 +81,6 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
       // waiting for REPL communication before destroying process handler
     }
-  }
-
-  private LanguageConsoleImpl getConsole() {
-    return myConsoleView.getConsole();
   }
 }
 

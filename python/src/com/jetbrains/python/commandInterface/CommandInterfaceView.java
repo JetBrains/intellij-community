@@ -15,9 +15,14 @@
  */
 package com.jetbrains.python.commandInterface;
 
+import com.intellij.util.Range;
+import com.jetbrains.python.WordWithPosition;
 import com.jetbrains.python.suggestionList.SuggestionsBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * View for command-line interface to be paired with view.
@@ -25,6 +30,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public interface CommandInterfaceView {
+
+  /**
+   * Special place in command line that represents "after the last character" place.
+   * To be used in methods like {@link #setInfoAndErrors(java.util.Collection, java.util.Collection)} to mark it.
+   */
+  @NotNull
+  Range<Integer> AFTER_LAST_CHARACTER_RANGE = new Range<Integer>(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
   /**
    * Launches view
@@ -35,43 +47,34 @@ public interface CommandInterfaceView {
    * Suggests user some elements (for completion reason)
    *
    * @param suggestions what to suggest (see {@link com.jetbrains.python.suggestionList.SuggestionsBuilder})
-   * @param absolute    display list in its main position, or directly near the text
-   * @param toSelect    word to select if list (if any)
+   * @param absolute    display list in its main position, or directly near the caret
+   * @param toSelect    word to select in list (if any)
    */
   void displaySuggestions(@NotNull SuggestionsBuilder suggestions, boolean absolute, @Nullable String toSelect);
 
-  /**
-   * Displays error (like red line)
-   *
-   * @param lastOnly underline only last letter
-   */
-  void showError(boolean lastOnly);
 
   /**
-   * Change text to the one provided
+   * Each time caret meets certain place, view should check whether some subtext has to be displayed.
+   * There are 2 types of subtext to be displayed:
+   * <ol>
+   * <li>Suggestion Text: View says something like "click FOO to see list of suggestions". Only presenter knows exact places where
+   * suggestions are available, so it should provide them</li>
+   * <li>Default text: In all other cases view displays default text (if available).</li>
+   * </ol>
+   * <p/>
+   * Presenter provides view list of special places
    *
-   * @param newText text to display
+   * @param defaultSubText            default text
+   * @param suggestionAvailablePlaces list of places where suggestions are available in format [from, to].
    */
-  void forceText(@NotNull String newText);
-
-  /**
-   * Display text in sub part (like hint)
-   *
-   * @param subText text to display
-   */
-  void setSubText(@NotNull String subText);
+  void configureSubTexts(@Nullable String defaultSubText,
+                         @NotNull List<Range<Integer>> suggestionAvailablePlaces);
 
   /**
    * Hide suggestion list
    */
   void removeSuggestions();
 
-  /**
-   * Displays baloon with message right under the last letter.
-   *
-   * @param message text to display
-   */
-  void displayInfoBaloon(@NotNull String message);
 
   /**
    * @return text, entered by user
@@ -79,10 +82,40 @@ public interface CommandInterfaceView {
   @NotNull
   String getText();
 
+
   /**
-   * Enlarges view to make it as big as required to display appropriate number of chars
+   * When caret meets certain place, view may display some info and some errors.
+   * Errors, how ever, may always be emphasized (with something like red line).
+   * This function configures view with pack of ranges and texts to display.
+   * Special place {@link #AFTER_LAST_CHARACTER_RANGE} may also be used.
+   * Each place is described as start-end position (in chars) where it should be enabled.
+   * Each call removes previously enabled information.
    *
-   * @param widthInChars number of chars
+   * @param errors       places to be marked as errors with error text.
+   * @param infoBalloons places to display info balloon
+   * @see #AFTER_LAST_CHARACTER_RANGE
    */
-  void setPreferredWidthInChars(int widthInChars);
+  void setInfoAndErrors(@NotNull final Collection<WordWithPosition> infoBalloons, @NotNull final Collection<WordWithPosition> errors);
+
+
+  /**
+   * Inserts text after caret moving next chars to the right
+   *
+   * @param text text to insert
+   */
+  void insertTextAfterCaret(@NotNull String text);
+
+  /**
+   * Replaces current text with another one.
+   *
+   * @param from    from
+   * @param to      to
+   * @param newText text to replace
+   */
+  void replaceText(final int from, final int to, @NotNull String newText);
+
+  /**
+   * @return position of caret (in chars)
+   */
+  int getCaretPosition();
 }

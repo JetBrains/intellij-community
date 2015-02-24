@@ -159,7 +159,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
-    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps() 
+    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps() && !((EditorImpl) myEditor).myUseNewRendering 
            && (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
   }
 
@@ -185,6 +185,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     if ((myUseSoftWraps ^ softWrapsUsedBefore) || (tabWidthBefore >= 0 && myTabWidth != tabWidthBefore) || fontsChanged) {
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
+      myStorage.removeAll();
       myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
@@ -286,9 +287,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * @return    total number of soft wrap-introduced new visual lines
    */
   public int getSoftWrapsIntroducedLinesNumber() {
-    if (!isSoftWrappingEnabled()) {
-      return 0;
-    }
     return myStorage.getSoftWraps().size(); // Assuming that soft wrap has single line feed all the time
   }
 

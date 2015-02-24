@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +28,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -40,7 +38,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -55,6 +52,7 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 5/24/11 2:28 PM
  */
+@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class TestDataGuessByExistingFilesUtil {
 
   private TestDataGuessByExistingFilesUtil() {
@@ -290,25 +288,17 @@ public class TestDataGuessByExistingFilesUtil {
                                                     @NotNull PsiClass psiClass)
   {
     GotoFileModel gotoModel = new GotoFileModel(psiClass.getProject());
-    List<Trinity<Matcher, String, String>> input = new ArrayList<Trinity<Matcher, String, String>>();
     Set<String> testNamesLowerCase = new HashSet<String>();
     for (String testName : testNames) {
-      String pattern = String.format("*%s*", testName);
-      input.add(new Trinity<Matcher, String, String>(
-        NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern)), testName, pattern
-      ));
       testNamesLowerCase.add(testName.toLowerCase());
     }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
-    MultiMap<String, Trinity<Matcher, String, String>> map = getAllFileNames(input, gotoModel);
+    MultiMap<String, String> map = getAllFileNames(testNames, gotoModel);
     for (String name : map.keySet()) {
       ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
-      for (Trinity<Matcher, String, String> trinity : map.get(name)) {
-        final Object[] elements = gotoModel.getElementsByName(name, false, trinity.third);
-        if (elements == null) {
-          continue;
-        }
+      for (String test : map.get(name)) {
+        final Object[] elements = gotoModel.getElementsByName(name, false, name);
         for (Object element : elements) {
           if (!(element instanceof PsiFile)) {
             continue;
@@ -320,18 +310,18 @@ public class TestDataGuessByExistingFilesUtil {
 
 
           final String filePath = PathUtil.getFileName(file.getPath()).toLowerCase();
-          int i = filePath.indexOf(trinity.second.toLowerCase());
+          int i = filePath.indexOf(test.toLowerCase());
           // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
           // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
           // to be matched to the test 'testEnter()'.
-          if (i < 0 || (i + trinity.second.length() < filePath.length())
-                       && Character.isDigit(filePath.charAt(i + trinity.second.length())))
+          if (i < 0 || (i + test.length() < filePath.length())
+                       && Character.isDigit(filePath.charAt(i + test.length())))
           {
             continue;
           }
 
           TestLocationDescriptor current = new TestLocationDescriptor();
-          current.populate(trinity.second, file);
+          current.populate(test, file);
           if (!current.isComplete()) {
             continue;
           }
@@ -354,7 +344,7 @@ public class TestDataGuessByExistingFilesUtil {
           boolean checkSuffix = !StringUtil.isEmpty(suffixPattern);
           boolean skip = false;
           for (String testName : testNamesLowerCase) {
-            if (testName.equals(trinity.second)) {
+            if (testName.equals(test)) {
               continue;
             }
             if ((checkPrefix && testName.startsWith(prefixPattern)) || (checkSuffix && testName.endsWith(suffixPattern))) {
@@ -384,16 +374,15 @@ public class TestDataGuessByExistingFilesUtil {
     return new TestDataDescriptor(descriptors);
   }
 
-  private static MultiMap<String, Trinity<Matcher, String, String>> getAllFileNames(final List<Trinity<Matcher, String, String>> input,
-                                                                                                 final GotoFileModel model) {
-    final LinkedMultiMap<String, Trinity<Matcher, String, String>> map = new LinkedMultiMap<String, Trinity<Matcher, String, String>>();
+  private static MultiMap<String, String> getAllFileNames(final Collection<String> testNames, final GotoFileModel model) {
+    final LinkedMultiMap<String, String> map = new LinkedMultiMap<String, String>();
     model.processNames(new Processor<String>() {
       @Override
       public boolean process(String name) {
         ProgressManager.checkCanceled();
-        for (Trinity<Matcher, String, String> trinity : input) {
-          if (trinity.first.matches(name)) {
-            map.putValue(name, trinity);
+        for (String testName : testNames) {
+          if (StringUtil.containsIgnoreCase(name, testName)) {
+            map.putValue(name, testName);
           }
         }
         return true;

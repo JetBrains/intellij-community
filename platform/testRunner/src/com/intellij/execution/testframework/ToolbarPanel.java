@@ -102,7 +102,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                     properties, TestConsoleProperties.OPEN_FAILURE_LINE)).setAsSecondary(true);
 
     actionGroup.addAction(new ShowStatisticsAction(properties)).setAsSecondary(true);
-    actionGroup.addAction(new AdjustAutotestDelayActionGroup(environment)).setAsSecondary(true);
+    actionGroup.addAction(new AdjustAutotestDelayActionGroup(parent)).setAsSecondary(true);
 
     for (ToggleModelActionProvider actionProvider : Extensions.getExtensions(ToggleModelActionProvider.EP_NAME)) {
       final ToggleModelAction toggleModelAction = actionProvider.createToggleModelAction(properties);

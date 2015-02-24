@@ -38,12 +38,17 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     return state.get();
   }
 
+  @SuppressWarnings("unused")
   public void addDebugListener(@NotNull DebugEventListener listener, @NotNull Disposable parentDisposable) {
     dispatcher.addListener(listener, parentDisposable);
   }
 
+  public void addDebugListener(@NotNull DebugEventListener listener) {
+    dispatcher.addListener(listener);
+  }
+
   @NotNull
-  public AsyncPromise<Void> opened() {
+  public Promise<Void> opened() {
     return opened;
   }
 

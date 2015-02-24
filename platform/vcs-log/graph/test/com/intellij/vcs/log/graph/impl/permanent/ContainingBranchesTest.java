@@ -16,11 +16,12 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
 import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.Set;
 import static com.intellij.vcs.log.graph.GraphStrUtils.containingBranchesGetterToStr;
 import static org.junit.Assert.assertEquals;
 
-public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithTextFile {
+public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithTwoTextFile {
   private final static String SEPARATOR = "\nBRANCH NODES:\n";
 
   public ContainingBranchesTest() {
@@ -52,8 +53,8 @@ public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithT
     List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in.substring(0, i));
 
     LinearGraph graph = PermanentLinearGraphBuilder.newInstance(commits).build();
-    ContainingBranchesGetter containingBranchesGetter = new ContainingBranchesGetter(graph,
-                                                                                     parseBranchNodeIndex(in.substring(i + SEPARATOR.length())));
+    ContainingBranchesGetter containingBranchesGetter =
+      new ContainingBranchesGetter(LinearGraphUtils.asLiteLinearGraph(graph), parseBranchNodeIndex(in.substring(i + SEPARATOR.length())));
 
     assertEquals(out, containingBranchesGetterToStr(containingBranchesGetter, graph.nodesCount()));
   }

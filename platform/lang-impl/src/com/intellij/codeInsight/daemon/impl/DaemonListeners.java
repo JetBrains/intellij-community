@@ -47,7 +47,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -261,19 +260,7 @@ public class DaemonListeners implements Disposable {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        final FileEditor[] editors = fileEditorManager.getSelectedEditors();
-        if (editors.length == 0) return;
-        application.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            for (FileEditor fileEditor : editors) {
-              if (fileEditor instanceof TextEditor) {
-                repaintErrorStripeRenderer(((TextEditor)fileEditor).getEditor(), myProject);
-              }
-            }
-          }
-        }, ModalityState.stateForComponent(editors[0].getComponent()));
+        stopDaemonAndRestartAllFiles();
       }
     });
 
@@ -359,18 +346,10 @@ public class DaemonListeners implements Disposable {
     messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, new Runnable() {
       @Override
       public void run() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              for (Editor editor : editorTracker.getActiveEditors()) {
-                repaintErrorStripeRenderer(editor, project);
-              }
-            }
-          }
-        });
+        stopDaemonAndRestartAllFiles();
       }
     });
+
     if (RefResolveService.ENABLED) {
       RefResolveService resolveService = RefResolveService.getInstance(project);
       resolveService.addListener(this, new RefResolveService.Listener() {
@@ -384,6 +363,7 @@ public class DaemonListeners implements Disposable {
   
   static boolean isUnderIgnoredAction(@Nullable Object action) {
     return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
+           action == DocumentRunnable.IgnoreDocumentRunnable.class ||
            ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
   }
 
@@ -455,9 +435,7 @@ public class DaemonListeners implements Disposable {
 
     @Override
     public void writeActionFinished(Object action) {
-      if (myDaemonWasRunning) {
-        stopDaemon(true, "Write action finish");
-      }
+      stopDaemon(true, "Write action finish");
     }
   }
 
@@ -545,10 +523,6 @@ public class DaemonListeners implements Disposable {
     @Override
     public void profilesInitialized() {
       inspectionProfilesInitialized();
-    }
-
-    @Override
-    public void profilesShutdown() {
     }
   }
 

@@ -25,7 +25,7 @@ public abstract class CCTestCase extends UsefulTestCase {
   }
 
   protected String getTestDataPath() {
-    return PythonHelpersLocator.getPythonCommunityPath() + "/educational_python/course_creator_python/testData";
+    return PythonHelpersLocator.getPythonCommunityPath() + "/edu/course-creator-python/testData";
   }
 
   @Override

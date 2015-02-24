@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,13 +81,14 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     return myChangedFiles;
   }
 
+  @Override
   public String toString(){
     final StringBuilder buffer = new StringBuilder();
     final Iterator<XmlChange> iterator = myChanges.iterator();
     while (iterator.hasNext()) {
       XmlChange xmlChange = iterator.next();
       buffer.append("(");
-      buffer.append(xmlChange.toString());
+      buffer.append(xmlChange);
       buffer.append(")");
       if(iterator.hasNext()) buffer.append(", ");
     }

@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -20,11 +21,13 @@ public class SSBasedInspectionTest extends InspectionTestCase {
     List<Configuration> configurations = new ArrayList<Configuration>();
     SearchConfiguration configuration = new SearchConfiguration();
     MatchOptions options = new MatchOptions();
+    options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern("int i;");
     configuration.setMatchOptions(options);
     configurations.add(configuration);
     configuration = new SearchConfiguration();
     options = new MatchOptions();
+    options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern("f();");
     configuration.setMatchOptions(options);
     configurations.add(configuration);

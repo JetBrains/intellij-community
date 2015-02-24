@@ -556,22 +556,29 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
-    if (JBUI.isHiDPI()) {
-      List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                           "Tree.rightChildIndent");
-      for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
-        Object value = entry.getValue();
-        String key = entry.getKey().toString();
-        if (value instanceof DimensionUIResource) {
-          entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
-        } else if (value instanceof InsetsUIResource) {
-          entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
-        } else if (value instanceof Integer) {
-          if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
+    if (!JBUI.isHiDPI()) return;
+
+    List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
+                                         "Tree.rightChildIndent");
+    List<String> patched = new ArrayList<String>();
+    for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
+      Object value = entry.getValue();
+      String key = entry.getKey().toString();
+      if (value instanceof DimensionUIResource) {
+        entry.setValue(JBUI.size((DimensionUIResource)value).asUIResource());
+      } else if (value instanceof InsetsUIResource) {
+        entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
+      } else if (value instanceof Integer) {
+        if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
+          if (!"true".equals(defaults.get(key +".hidpi.patched"))) {
             entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
+            patched.add(key);
           }
         }
       }
+    }
+    for (String key : patched) {
+      defaults.put(key + ".hidpi.patched", "true");
     }
   }
 

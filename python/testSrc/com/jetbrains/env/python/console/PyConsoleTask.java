@@ -57,7 +57,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @NotNull
   protected String output() {
-    return myConsoleView.getConsole().getHistoryViewer().getDocument().getText();
+    return myConsoleView.getHistoryViewer().getDocument().getText();
   }
 
   public void setProcessCanTerminate(boolean processCanTerminate) {
@@ -364,7 +364,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        getConsoleView().getLanguageConsole().setInputText(text);
+        getConsoleView().setInputText(text);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
     }

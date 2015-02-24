@@ -21,8 +21,6 @@ import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -30,7 +28,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ik, dsl
@@ -134,11 +134,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  private abstract static class SubstitutionVisitorBase extends PsiTypeVisitorEx<PsiType> {
+  private abstract static class SubstitutionVisitorBase extends PsiTypeMapper {
     @Override
-    public PsiType visitType(PsiType type) {
-      LOG.error(type);
-      return null;
+    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType type) {
+      return visitWildcardType(type.getWildcard());
     }
 
     @Override
@@ -210,65 +209,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     @Override
-    public PsiType visitPrimitiveType(PsiPrimitiveType primitiveType) {
-      return primitiveType;
-    }
-
-    @Override
-    public PsiType visitArrayType(PsiArrayType arrayType) {
-      final PsiType componentType = arrayType.getComponentType();
-      final PsiType substitutedComponentType = componentType.accept(this);
-      if (substitutedComponentType == null) return null;
-      if (substitutedComponentType == componentType) return arrayType; // optimization
-      return new PsiArrayType(substitutedComponentType);
-    }
-
-    @Override
-    public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
-      final PsiType componentType = ellipsisType.getComponentType();
-      final PsiType substitutedComponentType = componentType.accept(this);
-      if (substitutedComponentType == null) return null;
-      if (substitutedComponentType == componentType) return ellipsisType; // optimization
-      return new PsiEllipsisType(substitutedComponentType);
-    }
-
-    @Override
-    public PsiType visitTypeVariable(final PsiTypeVariable var) {
-      return var;
-    }
-
-    @Override
-    public PsiType visitBottom(final Bottom bottom) {
-      return bottom;
-    }
-
-    @Override
     public abstract PsiType visitClassType(PsiClassType classType);
 
-    @Nullable
-    @Override
-    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
-      final List<PsiType> substituted = ContainerUtil.map(intersectionType.getConjuncts(), new Function<PsiType, PsiType>() {
-        @Override
-        public PsiType fun(PsiType psiType) {
-          return psiType.accept(SubstitutionVisitorBase.this);
-        }
-      });
-      return PsiIntersectionType.createIntersection(substituted);
-    }
-
-    @Override
-    public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
-      final List<PsiType> substituted = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
-        @Override public PsiType fun(PsiType psiType) { return psiType.accept(SubstitutionVisitorBase.this); }
-      });
-      return disjunctionType.newDisjunctionType(substituted);
-    }
-
-    @Override
-    public PsiType visitDiamondType(PsiDiamondType diamondType) {
-      return diamondType;
-    }
   }
 
   private final SubstitutionVisitor myAddingBoundsSubstitutionVisitor = new SubstitutionVisitor(SubstituteKind.ADD_BOUNDS);

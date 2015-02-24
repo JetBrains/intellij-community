@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 
 /**
@@ -54,12 +53,10 @@ public class SvnProcessHandler extends OSProcessHandler {
     return myBinaryOutput;
   }
 
+  @Nullable
   @Override
-  protected Reader createProcessOutReader() {
-    if (myForceUtf8) {
-      return new InputStreamReader(myProcess.getInputStream(), CharsetToolkit.UTF8_CHARSET);
-    }
-    return super.createProcessOutReader();
+  public Charset getCharset() {
+    return myForceUtf8 ? CharsetToolkit.UTF8_CHARSET : super.getCharset();
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
@@ -118,16 +119,18 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   public PsiField getPsiField() {
     final SourcePosition sourcePosition = getSourcePosition();
-    final PsiField field = ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
-      @Override
-      public PsiField compute() {
-        final PsiClass psiClass = getPsiClassAt(sourcePosition);
-        return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
+    try {
+      final PsiField field = ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
+        @Override
+        public PsiField compute() {
+          final PsiClass psiClass = getPsiClassAt(sourcePosition);
+          return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
+        }
+      });
+      if (field != null) {
+        return field;
       }
-    });
-    if (field != null) {
-      return field;
-    }
+    } catch (IndexNotReadyException ignored) {}
     return PositionUtil.getPsiElementAt(getProject(), PsiField.class, sourcePosition);
   }
 

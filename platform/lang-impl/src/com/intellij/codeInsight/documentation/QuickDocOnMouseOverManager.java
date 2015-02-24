@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.IdeFrame;
@@ -159,6 +160,10 @@ public class QuickDocOnMouseOverManager {
     }
     
     Editor editor = e.getEditor();
+    if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) {
+      return;
+    }
+
     if (editor.isOneLineMode()) {
       // Don't want auto quick doc to mess at, say, editor used for debugger condition.
       return;

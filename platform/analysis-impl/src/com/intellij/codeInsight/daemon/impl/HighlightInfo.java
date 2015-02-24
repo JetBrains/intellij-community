@@ -720,6 +720,7 @@ public class HighlightInfo implements Segment {
     private volatile List<IntentionAction> myOptions;
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
+    private final HighlightSeverity mySeverity;
     private final String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
@@ -736,7 +737,7 @@ public class HighlightInfo implements Segment {
                                      @Nullable final List<IntentionAction> options,
                                      @Nullable final String displayName,
                                      @Nullable Icon icon) {
-      this(action, options, displayName, icon, null, null);
+      this(action, options, displayName, icon, null, null, null);
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
@@ -744,13 +745,15 @@ public class HighlightInfo implements Segment {
                                      @Nullable final String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
-                                     @Nullable ProblemGroup problemGroup) {
+                                     @Nullable ProblemGroup problemGroup, 
+                                     @Nullable HighlightSeverity severity) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
       myIcon = icon;
       myKey = key;
       myProblemGroup = problemGroup;
+      mySeverity = severity;
     }
 
     @NotNull
@@ -758,6 +761,10 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
+    public boolean notError() {
+      return mySeverity != null && mySeverity.compareTo(HighlightSeverity.ERROR) < 0; 
+    }
+    
     public boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
@@ -898,7 +905,7 @@ public class HighlightInfo implements Segment {
     if (quickFixActionRanges == null) {
       quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
     }
-    IntentionActionDescriptor desc = new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup());
+    IntentionActionDescriptor desc = new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup(), getSeverity());
     quickFixActionRanges.add(Pair.create(desc, fixRange));
     fixStartOffset = Math.min (fixStartOffset, fixRange.getStartOffset());
     fixEndOffset = Math.max (fixEndOffset, fixRange.getEndOffset());

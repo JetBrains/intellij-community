@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,6 @@ public class SyntaxTable implements Cloneable {
   private boolean myHasStringEscapes;
   private volatile KeywordParser myKeywordParser;
 
-  // -------------------------------------------------------------------------
-  // Constructor
-  // -------------------------------------------------------------------------
-
   public SyntaxTable() {
     myKeywords1 = new TreeSet<String>();
     myKeywords2 = new TreeSet<String>();
@@ -73,7 +69,7 @@ public class SyntaxTable implements Cloneable {
 
   @Override
   protected Object clone() throws CloneNotSupportedException {
-    SyntaxTable cl = (SyntaxTable) super.clone();
+    SyntaxTable cl = (SyntaxTable)super.clone();
     cl.myKeywords1 = new TreeSet<String>(myKeywords1);
     cl.myKeywords2 = new TreeSet<String>(myKeywords2);
     cl.myKeywords3 = new TreeSet<String>(myKeywords3);
@@ -81,10 +77,6 @@ public class SyntaxTable implements Cloneable {
     cl.myKeywordParser = null;
     return cl;
   }
-
-  // -------------------------------------------------------------------------
-  // Public interface
-  // -------------------------------------------------------------------------
 
   public void addKeyword1(String keyword) {
     myKeywords1.add(keyword);

@@ -32,13 +32,14 @@ public class DiffTreeTest extends TestCase {
   private static class Node {
     @NotNull
     private final Node[] myChildren;
-    int myId;
+    private final int myId;
 
     public Node(final int id, @NotNull Node... children) {
       myChildren = children;
       myId = id;
     }
 
+    @Override
     public int hashCode() {
       return myId + myChildren.length; // This is intentionally bad hashcode
     }
@@ -52,6 +53,7 @@ public class DiffTreeTest extends TestCase {
       return myId;
     }
 
+    @Override
     public String toString() {
       return String.valueOf(myId);
     }
@@ -60,7 +62,7 @@ public class DiffTreeTest extends TestCase {
   private static class TreeStructure implements FlyweightCapableTreeStructure<Node> {
     private final Node myRoot;
 
-    public TreeStructure(final Node root) {
+    private TreeStructure(final Node root) {
       myRoot = root;
     }
 
@@ -110,7 +112,7 @@ public class DiffTreeTest extends TestCase {
     }
   }
 
-  public static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
+  private static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
     private final List<String> myResults = new ArrayList<String>();
 
     @Override
@@ -202,7 +204,7 @@ public class DiffTreeTest extends TestCase {
     Node r1 = new Node(0, new Node(1, new Node(21), new Node(22)));
     Node r2 = new Node(0, new Node(1, new Node(21), new Node(22), new Node(23), new Node(24)));
 
-    performTest(r1, r2, "INSERTED to 1: 23 at 2", "INSERTED to 1: 24 at 3");
+    performTest(r1, r2, "INSERTED to 1: 24 at 2", "INSERTED to 1: 23 at 2");
   }
 
   public void testSubtreeAppears() throws Exception {

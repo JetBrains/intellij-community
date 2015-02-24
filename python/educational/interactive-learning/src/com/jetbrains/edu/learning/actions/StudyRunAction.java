@@ -14,10 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.Task;
-import com.jetbrains.edu.learning.course.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,7 @@ public class StudyRunAction extends DumbAwareAction {
   public static final String ACTION_ID = "StudyRunAction";
   private ProcessHandler myHandler;
 
-  public void run(@NotNull final Project project, @NotNull final Sdk sdk) {
+  public void run(@NotNull final Project project) {
     if (myHandler != null && !myHandler.isProcessTerminated()) return;
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
@@ -35,21 +34,26 @@ public class StudyRunAction extends DumbAwareAction {
 
     if (openedFile != null && openedFile.getCanonicalPath() != null) {
       String filePath = openedFile.getCanonicalPath();
-      executeFile(project, sdk, openedFile, filePath);
+      executeFile(project, openedFile, filePath);
     }
   }
 
-  private void executeFile(@NotNull final Project project, @NotNull final Sdk sdk,
+  private void executeFile(@NotNull final Project project,
                            @NotNull final VirtualFile openedFile, @NotNull final String filePath) {
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     GeneralCommandLine cmd = new GeneralCommandLine();
     cmd.withWorkDirectory(openedFile.getParent().getCanonicalPath());
+
+    TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
+    assert selectedTaskFile != null;
+    final Task currentTask = selectedTaskFile.getTask();
+    final Sdk sdk = StudyUtils.findSdk(currentTask, project);
+    if (sdk == null) {
+      StudyUtils.showNoSdkNotification(currentTask, project);
+      return;
+    }
     String sdkHomePath = sdk.getHomePath();
     if (sdkHomePath != null) {
       cmd.setExePath(sdkHomePath);
-      TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
-      assert selectedTaskFile != null;
-      Task currentTask = selectedTaskFile.getTask();
       Process process;
       StudyUtils.setCommandLineParameters(cmd, project, filePath, sdkHomePath, currentTask);
 
@@ -61,22 +65,18 @@ public class StudyRunAction extends DumbAwareAction {
         return;
       }
       myHandler = new OSProcessHandler(process);
-      RunContentExecutor executor = StudyUtils.getExecutor(project, myHandler);
-      Disposer.register(project, executor);
-      executor.run();
-
+      final RunContentExecutor executor = StudyUtils.getExecutor(project, currentTask, myHandler);
+      if (executor != null) {
+        Disposer.register(project, executor);
+        executor.run();
+      }
     }
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
+    final Project project = e.getProject();
+    if (project != null) {
+      run(project);
     }
-    Sdk sdk = StudyUtils.findSdk(project);
-    if (sdk == null) {
-      return;
-    }
-    run(project, sdk);
   }
 }

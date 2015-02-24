@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,7 @@ public class JavaDebugProcess extends XDebugProcess {
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
       @Override
       public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-        // value gathered here is required for correct renderers work. e.g. array renderer
-        //((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
-        final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(null, descriptor);
-        //((NodeDescriptorImpl)descriptor).updateRepresentation((EvaluationContextImpl)evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
-        return node;
+        return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
       @Override
@@ -322,7 +318,6 @@ public class JavaDebugProcess extends XDebugProcess {
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
     Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
     leftToolbar.add(Separator.getInstance(), beforeRunner);
-    leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.EXPORT_THREADS), beforeRunner);
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
@@ -339,10 +334,10 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean autoModeEnabled = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      final boolean autoModeEnabled = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
       presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
@@ -374,10 +369,10 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean watchValues = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      final boolean watchValues = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
       final String actionText = watchValues ? myMyTextDisable : myTextEnable;
       if (process == null || process.canGetMethodReturnValue()) {

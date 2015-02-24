@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.util.ui.ColorIcon;
 import com.sun.jdi.*;
@@ -29,20 +28,11 @@ import java.awt.*;
 /**
 * Created by Egor on 04.10.2014.
 */
-class ColorObjectRenderer extends CompoundReferenceRenderer {
-
+class ColorObjectRenderer extends ToStringBasedRenderer {
   public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Color", null, null);
     setClassName("java.awt.Color");
-  }
-
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws
-                                                                                                                             EvaluateException {
-    String res = calcToStringLabel(descriptor, evaluationContext, listener);
-    if (res != null) {
-      return res;
-    }
-    return super.calcLabel(descriptor, evaluationContext, listener);
+    setEnabled(true);
   }
 
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
@@ -55,6 +45,7 @@ class ColorObjectRenderer extends CompoundReferenceRenderer {
         if (valueField != null) {
           final Value rgbValue = objRef.getValue(valueField);
           if (rgbValue instanceof IntegerValue) {
+            @SuppressWarnings("UseJBColor")
             final Color color = new Color(((IntegerValue)rgbValue).value(), true);
             return new ColorIcon(16, 12, color, true);
           }

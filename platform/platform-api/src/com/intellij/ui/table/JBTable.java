@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.table;
 
-import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -24,10 +23,13 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -36,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
 
@@ -46,7 +49,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
-  private MyCellEditorRemover myEditorRemover;
   private boolean myEnableAntialiasing;
 
   private int myRowHeight = -1;
@@ -115,11 +117,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     });
 
-
-    //noinspection UnusedDeclaration
-    boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
-
     myUiUpdating = false;
+
+    new MyCellEditorRemover();
   }
 
   @Override
@@ -217,7 +217,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         final RowSorter.SortKey sortKey = sortableModel.getDefaultSortKey();
         if (sortKey != null && sortKey.getColumn() >= 0 && sortKey.getColumn() < model.getColumnCount()) {
           if (sortableModel.getColumnInfos()[sortKey.getColumn()].isSortable()) {
-            rowSorter.setSortKeys(Arrays.asList(sortKey));
+            rowSorter.setSortKeys(Collections.singletonList(sortKey));
           }
         }
       }
@@ -299,19 +299,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void removeNotify() {
+    super.removeNotify();
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      //noinspection HardCodedStringLiteral
-      keyboardFocusManager.removePropertyChangeListener("permanentFocusOwner", myEditorRemover);
-      super.removeNotify();
       if (myBusyIcon != null) {
         remove(myBusyIcon);
         Disposer.dispose(myBusyIcon);
         myBusyIcon = null;
       }
-    }
-    else {
-      super.removeNotify();
     }
   }
 
@@ -421,13 +415,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     }
 
-    if (myEditorRemover == null) {
-      final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      myEditorRemover = new MyCellEditorRemover();
-      //noinspection HardCodedStringLiteral
-      keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", myEditorRemover);
-    }
-
     final TableCellEditor editor = getCellEditor(row, column);
     if (editor != null && editor.isCellEditable(e)) {
       editorComp = prepareEditor(editor, row, column);
@@ -515,15 +502,57 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
-  private final class MyCellEditorRemover implements PropertyChangeListener {
-    private final IdeFocusManager myFocusManager;
+  private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
+    private final IdeFocusManager myFocusManager = IdeFocusManager.findInstanceByComponent(JBTable.this);
+    private boolean myIsActive = false;
 
     public MyCellEditorRemover() {
-      myFocusManager = IdeFocusManager.findInstanceByComponent(JBTable.this);
+      addPropertyChangeListener("tableCellEditor", this);
+      new UiNotifyConnector(JBTable.this, this);
+    }
+
+    public void activate() {
+      if (!myIsActive) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("permanentFocusOwner", this);
+      }
+      myIsActive = true;
+    }
+
+    public void deactivate() {
+      if (myIsActive) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("permanentFocusOwner", this);
+      }
+      myIsActive = false;
+    }
+
+    @Override
+    public void hideNotify() {
+      removeCellEditor();
     }
 
     @Override
     public void propertyChange(@NotNull final PropertyChangeEvent e) {
+      if ("tableCellEditor".equals(e.getPropertyName())) {
+        tableCellEditorChanged(e.getOldValue(), e.getNewValue());
+      }
+      else if ("permanentFocusOwner".equals(e.getPropertyName())) {
+        permanentFocusOwnerChanged();
+      }
+    }
+
+    private void tableCellEditorChanged(Object from, Object to) {
+      boolean editingStarted = from == null && to != null;
+      boolean editingStopped = from != null && to == null;
+
+      if (editingStarted) {
+        activate();
+      }
+      else if (editingStopped) {
+        deactivate();
+      }
+    }
+
+    private void permanentFocusOwnerChanged() {
       if (!isEditing()) {
         return;
       }
@@ -551,7 +580,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
             }
             else if (c instanceof Window) {
               if (c == SwingUtilities.getWindowAncestor(JBTable.this)) {
-                getCellEditor().stopCellEditing();
+                removeCellEditor();
               }
               break;
             }
@@ -559,6 +588,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           }
         }
       });
+    }
+
+    private void removeCellEditor() {
+      TableCellEditor cellEditor = getCellEditor();
+      if (cellEditor != null && !cellEditor.stopCellEditing()) {
+        cellEditor.cancelCellEditing();
+      }
     }
   }
 

@@ -106,7 +106,9 @@ public class CodeInsightUtil {
     if (parent == null) return PsiElement.EMPTY_ARRAY;
     while (true) {
       if (parent instanceof PsiStatement) {
-        parent = parent.getParent();
+        if (!(element1 instanceof PsiComment)) {
+          parent = parent.getParent();
+        }
         break;
       }
       if (parent instanceof PsiCodeBlock) break;

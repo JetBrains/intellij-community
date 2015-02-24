@@ -18,7 +18,8 @@ package com.intellij.xdebugger;
 /**
  * @author nik
  */
-public interface Obsolescent {
+@SuppressWarnings("ClassNameSameAsAncestorName")
+public interface Obsolescent extends org.jetbrains.concurrency.Obsolescent {
 
   /**
    * @return <code>true</code> if result of computation won't be used so computation may be interrupted 

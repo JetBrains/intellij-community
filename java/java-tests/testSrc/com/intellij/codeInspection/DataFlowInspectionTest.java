@@ -198,6 +198,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
 
+  public void testExplicitlyNullableLocalVar() { doTest(); }
+
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
   public void testOmnipresentExceptions() { doTest(); }
@@ -281,6 +283,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNumberComparisonsWhenValueIsKnown() { doTest(); }
   public void testFloatComparisons() { doTest(); }
+
+  public void testNullableArray() { doTest(); }
 
   public void testAccessingSameArrayElements() { doTest(); }
 

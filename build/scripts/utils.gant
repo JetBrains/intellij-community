@@ -64,9 +64,8 @@ binding.setVariable("isEap", {
 
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
-binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
-                                        "-Djsse.enableSNIExtension=false " +
-                                        "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
+binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
+                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
@@ -244,11 +243,12 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
 })
 
-binding.setVariable("commonJvmArgs", {
+binding.setVariable("commonJvmArgsForTests", {
   def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
   if (debugPort != null) jdwp += ",address=$debugPort"
   return [
     "-ea",
+    "-Dio.netty.leakDetectionLevel=PARANOID",
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
@@ -272,7 +272,9 @@ binding.setVariable("classPathLibs", [
 
 binding.setVariable("platformApiModules", [
   "analysis-api",
+  "built-in-server-api",
   "core-api",
+  "diff-api",
   "dvcs-api",
   "editor-ui-api",
   "external-system-api",
@@ -280,56 +282,57 @@ binding.setVariable("platformApiModules", [
   "jps-model-api",
   "lang-api",
   "lvcs-api",
-  "projectModel-api",
   "platform-api",
+  "projectModel-api",
+  "remote-servers-agent-rt",
+  "remote-servers-api",
   "structure-view-api",
   "usageView",
-  "vcs-api",
   "vcs-api-core",
+  "vcs-api",
   "vcs-log-api",
   "vcs-log-graph-api",
   "xdebugger-api",
-  "remote-servers-api",
-  "remote-servers-agent-rt",
   "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
-  "xml-structure-view-api",
+  "xml-structure-view-api"
 ])
-
 
 binding.setVariable("platformImplementationModules", [
   "analysis-impl",
+  "built-in-server",
   "core-impl",
+  "diff-impl",
   "dvcs-impl",
   "editor-ui-ex",
   "images",
   "indexing-impl",
   "jps-model-impl",
   "jps-model-serialization",
+  "json",
   "lang-impl",
   "lvcs-impl",
-  "projectModel-impl",
   "platform-impl",
+  "projectModel-impl",
+  "protocol-reader-runtime",
+  "RegExpSupport",
+  "relaxng",
+  "remote-servers-impl",
+  "script-debugger-backend",
+  "script-debugger-ui",
+  "smRunner",
+  "spellchecker",
   "structure-view-impl",
+  "testRunner",
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
-  "testRunner",
-  "smRunner",
-  "relaxng",
-  "RegExpSupport",
-  "spellchecker",
   "xdebugger-impl",
-  "remote-servers-impl",
-  "xml",
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
-  "json",
-  "protocol-reader-runtime",
-  "script-debugger-backend",
-  "script-debugger-ui"
+  "xml"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -364,10 +367,11 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
+  String EAP = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "-EAP" : ""
 
   Map properties = readIdeaProperties(args)
 
-  def coreKeys = ["idea.platform.prefix", "idea.paths.selector"]
+  def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
   String coreProperties = submapToXml(properties, coreKeys);
 
@@ -383,7 +387,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
+  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -424,6 +428,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@executable@@", value: executable)
     replacefilter(token: "@@icns@@", value: icns)
     replacefilter(token: "@@bundle_name@@", value: fullName)
+    replacefilter(token: "@@product_state@@", value: EAP)
     replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
     replacefilter(token: "@@year@@", value: "$todayYear")
     replacefilter(token: "@@version@@", value: version)
@@ -686,6 +691,7 @@ private Map readIdeaProperties(Map args) {
                            "JVMVersion": "1.6*",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
+                           "idea.executable": args.executable,
                            "java.endorsed.dirs": "",
                            "idea.smooth.progress": "false",
                            "apple.laf.useScreenMenuBar": "true",
@@ -778,6 +784,8 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
         exclude(name: "MacOS/*")
+        exclude(name: "build.txt")
+        exclude(name: "NOTICE.txt")
         extraBins.each {
           exclude(name: it)
         }
@@ -795,6 +803,13 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         extraBins.each {
           include(name: it)
         }
+      }
+    }
+
+    allPaths.each {
+      zipfileset(dir: it, prefix: "$zipRoot/Resources") {
+        include(name: "build.txt")
+        include(name: "NOTICE.txt")
       }
     }
 
@@ -853,7 +868,8 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   if (pathsSelector != null) {
     def paths = getProperty("paths")
     def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
-    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector,
+                                                                  "IDE-NAME": p("component.names.product").toUpperCase()])
     launcherProperties = launcherPropertiesTemp
   }
 

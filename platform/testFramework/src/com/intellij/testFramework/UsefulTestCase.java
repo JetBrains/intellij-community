@@ -821,7 +821,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SuppressWarnings("deprecation")
-  protected static void checkSettingsEqual(JDOMExternalizable expected, JDOMExternalizable settings, String message) throws Exception {
+  protected static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings, String message) throws Exception {
     if (expected == null || settings == null) return;
 
     Element oldS = new Element("temp");

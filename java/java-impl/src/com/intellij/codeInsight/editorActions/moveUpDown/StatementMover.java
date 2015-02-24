@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.StatementMover");
@@ -98,45 +100,50 @@ class StatementMover extends LineMover {
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
 
-    if (!checkMovingInsideOutside(file, editor, range, info, down)) {
+    if (!checkMovingInsideOutside(file, editor, info, down)) {
       info.toMove2 = null;
       return true;
     }
     return true;
   }
 
-  private int getDestLineForAnon(PsiFile file, Editor editor, LineRange range, MoveInfo info, boolean down) {
+  private static int getDestLineForAnon(Editor editor, LineRange range, boolean down) {
     int destLine = down ? range.endLine+1 : range.startLine - 1;
     if (!(range.firstElement instanceof PsiStatement)) {
       return destLine;
     }
     PsiElement sibling =
-      StatementUpDownMover.firstNonWhiteElement(down ? range.firstElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
-    PsiElement toMove = sibling;
-    if (!(sibling instanceof PsiStatement)) {
-      return destLine;
+      StatementUpDownMover.firstNonWhiteElement(down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
+    final PsiClass aClass = findChildOfType(sibling, PsiClass.class, PsiStatement.class);
+    if (aClass != null && PsiTreeUtil.getParentOfType(aClass, PsiStatement.class) == sibling) {
+      destLine =
+        editor.getDocument().getLineNumber(down ? sibling.getTextRange().getEndOffset() + 1 : sibling.getTextRange().getStartOffset());
     }
-    if (sibling instanceof PsiDeclarationStatement) {
-      PsiElement[] elements = ((PsiDeclarationStatement)sibling).getDeclaredElements();
-      if (elements.length == 0) return destLine;
-      sibling = down ? elements[elements.length - 1] : elements[0];
-    }
-    if (sibling instanceof PsiVariable) {
-      sibling = ((PsiVariable)sibling).getInitializer();
-    }
-    if (sibling instanceof PsiExpressionStatement) {
-      sibling = ((PsiExpressionStatement)sibling).getExpression();
-    }
-    if (sibling instanceof PsiNewExpression) {
-      sibling = ((PsiNewExpression)sibling).getAnonymousClass();
-    }
-    if (!(sibling instanceof PsiClass)) return destLine;
-    destLine = editor.getDocument().getLineNumber(down ? toMove.getTextRange().getEndOffset() : toMove.getTextRange().getStartOffset());
-
     return destLine;
   }
+
+  @Nullable
+  private static <T extends PsiElement> T findChildOfType(@Nullable final PsiElement element,
+                                                          @NotNull final Class<T> aClass,
+                                                          @Nullable final Class<? extends PsiElement> stopAt) {
+    final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
+      @Override
+      public boolean execute(@NotNull PsiElement each) {
+        if (each == element) return true; // strict
+        if (aClass.isInstance(each)) {
+          return setFound(each);
+        }
+        return stopAt == null || !stopAt.isInstance(each);
+      }
+    };
+
+    PsiTreeUtil.processElements(element, processor);
+    //noinspection unchecked
+    return (T)processor.getFoundElement();
+  }
+
   private boolean calcInsertOffset(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineRange range, @NotNull final MoveInfo info, final boolean down) {
-    int destLine = getDestLineForAnon(file, editor, range, info, down);
+    int destLine = getDestLineForAnon(editor, range, down);
 
     int startLine = down ? range.endLine : range.startLine - 1;
     if (destLine < 0 || startLine < 0) return false;
@@ -209,7 +216,7 @@ class StatementMover extends LineMover {
     return false;
   }
 
-  private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, LineRange range, @NotNull final MoveInfo info, final boolean down) {
+  private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, @NotNull final MoveInfo info, final boolean down) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement elementAtOffset = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);

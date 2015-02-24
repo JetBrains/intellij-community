@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class FailedConversionsDialog extends DialogWrapper {
     final JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, "");
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
-    scrollPane.setPreferredSize(new Dimension(500, 400));
+    scrollPane.setPreferredSize(JBUI.size(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 

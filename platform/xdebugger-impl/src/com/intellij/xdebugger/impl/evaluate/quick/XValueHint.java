@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.execution.console.LanguageConsole;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
@@ -96,7 +95,7 @@ public class XValueHint extends AbstractValueHint {
     VirtualFile file;
     ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
     if (consoleView instanceof LanguageConsoleView) {
-      LanguageConsole console = ((LanguageConsoleView)consoleView).getConsole();
+      LanguageConsoleView console = ((LanguageConsoleView)consoleView);
       file = console.getHistoryViewer() == editor ? console.getVirtualFile() : null;
     }
     else {

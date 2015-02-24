@@ -5,11 +5,9 @@ import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -18,7 +16,7 @@ import java.util.Set;
 public class LaFUsagesCollector extends UsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
     String key = SystemInfo.OS_NAME + " - ";
     if (!StringUtil.isEmptyOrSpaces(SystemInfo.SUN_DESKTOP)) {

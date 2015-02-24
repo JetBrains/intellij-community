@@ -27,6 +27,8 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -84,19 +86,20 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     LOG.assertTrue(virtualFile != null);
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     final LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-    if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
-      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
+          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+          rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
           rootModel.commit();
         }
-      });
-    }
-    else {
-      LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
-    }
+        else {
+          LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+        }
+      }
+    });
   }
 
   @Nullable

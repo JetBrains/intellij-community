@@ -17,14 +17,21 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
+import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntList;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.USUAL;
 
 public class PermanentLinearGraphImpl implements LinearGraph {
   private final Flags mySimpleNodes;
@@ -39,6 +46,11 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     myLongEdges = CompressedIntList.newInstance(longEdges);
   }
 
+  @TestOnly
+  public PermanentLinearGraphImpl() {
+    this(new BitSetFlags(0), new int[0], new int[0]);
+  }
+
   @Override
   public int nodesCount() {
     return mySimpleNodes.size();
@@ -46,36 +58,48 @@ public class PermanentLinearGraphImpl implements LinearGraph {
 
   @NotNull
   @Override
-  public List<Integer> getUpNodes(int nodeIndex) {
-    List<Integer> result = new SmartList<Integer>();
-    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1)) {
-      result.add(nodeIndex - 1);
-    }
+  public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+    List<GraphEdge> result = new SmartList<GraphEdge>();
+
+    boolean hasUpSimpleEdge = nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1);
+    if (hasUpSimpleEdge && filter.upNormal) result.add(new GraphEdge(nodeIndex - 1, nodeIndex, null, USUAL));
 
     for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
-      int node = myLongEdges.get(i);
-      if (node < nodeIndex)
-        result.add(node);
+      int adjacentNode = myLongEdges.get(i);
+
+      if (adjacentNode < 0 && filter.special) {
+        result.add(GraphEdge.createEdgeWithTargetId(nodeIndex, adjacentNode, GraphEdgeType.NOT_LOAD_COMMIT));
+      }
+      if (adjacentNode < 0) continue;
+
+      if (nodeIndex > adjacentNode && filter.upNormal) result.add(new GraphEdge(adjacentNode, nodeIndex, null, USUAL));
+      if (nodeIndex < adjacentNode && filter.downNormal) result.add(new GraphEdge(nodeIndex, adjacentNode, null, USUAL));
     }
+
+    if (mySimpleNodes.get(nodeIndex) && filter.downNormal) result.add(new GraphEdge(nodeIndex, nodeIndex + 1, null, USUAL));
 
     return result;
   }
 
-
   @NotNull
   @Override
-  public List<Integer> getDownNodes(int nodeIndex) {
-    if (mySimpleNodes.get(nodeIndex)) {
-      return Collections.singletonList(nodeIndex + 1);
-    }
+  public GraphNode getGraphNode(int nodeIndex) {
+    return new GraphNode(nodeIndex);
+  }
 
-    List<Integer> result = new SmartList<Integer>();
-    for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
-      int node = myLongEdges.get(i);
-      if (nodeIndex < node)
-        result.add(node);
-    }
+  @Override
+  public int getNodeId(int nodeIndex) {
+    assert nodeIndex >= 0 && nodeIndex < nodesCount() : "Bad nodeIndex: " + nodeIndex;
+    return nodeIndex;
+  }
 
-    return result;
+  @Override
+  public Integer getNodeIndex(int nodeId) {
+    if (nodeId >= 0 && nodeId < nodesCount()) {
+      return nodeId;
+    }
+    else {
+      return null;
+    }
   }
 }

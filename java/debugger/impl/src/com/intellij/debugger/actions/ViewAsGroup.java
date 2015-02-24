@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.List;
 public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ViewAsGroup");
 
-  private AnAction[] myChildren = AnAction.EMPTY_ARRAY;
+  private volatile AnAction[] myChildren = AnAction.EMPTY_ARRAY;
 
   public ViewAsGroup() {
     super(null, true);
@@ -161,6 +161,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       return;
     }
 
+    myChildren = AnAction.EMPTY_ARRAY;
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final List<JavaValue> values = getSelectedValues(event);
     if (values.isEmpty()) {

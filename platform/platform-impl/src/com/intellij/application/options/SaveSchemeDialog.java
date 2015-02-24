@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,7 +66,7 @@ public class SaveSchemeDialog extends DialogWrapper {
     gc.insets = new Insets(0, 0, 5, 0);
     panel.add(mySchemeName, gc);
 
-    panel.setPreferredSize(new Dimension(220, 40));
+    panel.setPreferredSize(JBUI.size(220, 40));
     return panel;
   }
 

@@ -96,7 +96,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return processValue(p, myMap.get(key));
   }
 
-  private boolean processValue(@NotNull Processor<V> p, Object v) {
+  private boolean processValue(@NotNull Processor<? super V> p, Object v) {
     if (v instanceof Object[]) {
       for (Object o : (Object[])v) {
         if (!p.process((V)o)) return false;
@@ -109,7 +109,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return true;
   }
 
-  public boolean processAllValues(@NotNull Processor<V> p) {
+  public boolean processAllValues(@NotNull Processor<? super V> p) {
     for (Object v : myMap.values()) {
       if (!processValue(p, v)) return false;
     }

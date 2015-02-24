@@ -48,8 +48,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -226,10 +226,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     customScriptCode.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(@NotNull final ActionEvent e) {
-        Set<String> strings = ContainerUtil.collectSet(model.getConfig().getMatchOptions().getVariableConstraintNames());
-        strings.remove(current.getName());
-        strings.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
-        EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), strings);
+        final List<String> variableNames = ContainerUtil.newArrayList(model.getConfig().getMatchOptions().getVariableConstraintNames());
+        variableNames.remove(current.getName());
+        variableNames.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+        final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
           customScriptCode.getChildComponent().setText(dialog.getScriptText());
@@ -423,13 +423,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
       invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
     }
 
-    boolean isExprContext = true;
     final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
-    if (contextVar) isExprContext = false;
     containedInConstraints.setVisible(contextVar);
-    expressionConstraints.setVisible(isExprContext);
-    partOfSearchResults.setEnabled(!contextVar); //?
-
+    textConstraintsPanel.setVisible(!contextVar);
+    expressionConstraints.setVisible(!contextVar);
+    partOfSearchResults.setVisible(!contextVar);
     occurencePanel.setVisible(!contextVar);
   }
 
@@ -439,7 +437,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     expressionConstraints.setVisible(b);
     partOfSearchResults.setVisible(b);
     containedInConstraints.setVisible(b);
-    pack();
   }
 
   private void restoreScriptCode(NamedScriptableDefinition varInfo) {
@@ -593,7 +590,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     private final Editor editor;
     private final String title;
 
-    public EditScriptDialog(Project project, String text, Set<String> names) {
+    public EditScriptDialog(Project project, String text, Collection<String> names) {
       super(project, true);
       setTitle(SSRBundle.message("edit.groovy.script.constraint.title"));
       editor = createEditor(project, text, "1.groovy");
@@ -612,13 +609,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
 
     protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel(new BorderLayout());
+      final JPanel panel = new JPanel(new BorderLayout());
       panel.add(editor.getComponent(), BorderLayout.CENTER);
       if (!title.isEmpty()) {
-        JTextField f=new JTextField(title);
-        f.setEditable(false);
-        f.setBorder(null);
-        panel.add(f, BorderLayout.SOUTH);
+        panel.add(new JLabel(title), BorderLayout.SOUTH);
       }
       return panel;
     }

@@ -1,7 +1,8 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.jetbrains.edu.learning.course.Task;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,6 +24,6 @@ public class StudyNextStudyTaskAction extends StudyTaskNavigationAction {
 
   @Override
   protected Task getTargetTask(@NotNull final Task sourceTask) {
-    return sourceTask.next();
+    return StudyNavigator.nextTask(sourceTask);
   }
 }

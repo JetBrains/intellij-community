@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.*;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,6 +101,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
   public final void actionPerformed(AnActionEvent e) {
     WebBrowser browser = getBrowser(e);
     if (browser != null) {
+      UsageTrigger.trigger("OpenInBrowser." + browser.getName());
       open(e, browser);
     }
   }

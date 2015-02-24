@@ -586,6 +586,9 @@ public class IncProjectBuilder {
     }
 
     context.processMessage(new ProgressMessage("Cleaning output directories..."));
+
+    final long cleanStart = System.currentTimeMillis();
+
     if (SYNC_DELETE) {
       for (File file : filesToDelete) {
         FileUtil.delete(file);
@@ -594,6 +597,8 @@ public class IncProjectBuilder {
     else {
       myAsyncTasks.add(FileUtil.asyncDelete(filesToDelete));
     }
+
+    LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart));
   }
 
   private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
@@ -1051,6 +1056,9 @@ public class IncProjectBuilder {
               if (deleted) {
                 doneSomething = true;
               }
+            }
+            for (String outputPath : outputs) {
+              outputToSourceRegistry.removeMapping(outputPath, buildTargetId);
             }
             if (!deletedOutputPaths.isEmpty()) {
               if (logger.isEnabled()) {

@@ -3,11 +3,21 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
+import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.CourseCreatorPythonIcons;
@@ -44,8 +54,38 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    CCProjectGeneratorUtil.generateProject(project, baseDir, mySettingsPanel.getName(),
-                                           mySettingsPanel.getAuthor(), mySettingsPanel.getDescription());
+    generateProject(project, baseDir, mySettingsPanel.getName(),
+                    mySettingsPanel.getAuthor(), mySettingsPanel.getDescription());
+  }
+
+  private static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+                                     @NotNull final String name, @NotNull final String author,
+                                     @NotNull final String description) {
+
+    final CCProjectService service = CCProjectService.getInstance(project);
+    final Course course = new Course();
+    course.setName(name);
+    course.setAuthor(author);
+    course.setDescription(description);
+    course.setLanguage("Python");
+    service.setCourse(course);
+
+    final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
+    if (projectDir == null) return;
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
+        try {
+          FileTemplateUtil.createFromTemplate(template, "test_helper.py", null, projectDir);
+        }
+        catch (Exception ignored) {
+        }
+        DirectoryUtil.createSubdirectories("hints", projectDir, "\\/");
+        final PsiDirectory lessonDir = CCCreateLesson.createLessonDir(project, 1, null, null);
+        CCCreateTask.createTask(null, project, lessonDir, false);
+      }
+    }.execute();
   }
 
   @NotNull

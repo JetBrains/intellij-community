@@ -18,10 +18,12 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -45,7 +47,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(final InferenceSession session, List<ConstraintFormula> constraints) {
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
@@ -111,7 +113,12 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
             }
           });
           if (exceptions != null) {
-            thrownTypes.addAll(exceptions);
+            thrownTypes.addAll(ContainerUtil.filter(exceptions, new Condition<PsiClassType>() {
+              @Override
+              public boolean value(PsiClassType type) {
+                return session.isProperType(type) && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_EXCEPTION);
+              }
+            }));
           }
         }
       } else {

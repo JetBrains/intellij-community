@@ -148,9 +148,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) {
       PsiLanguageInjectionHost hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (hostContext != null) {
+      TextRange elementRange = element.getTextRange();
+      if (hostContext != null && elementRange != null) {
         SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(hostContext);
-        return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostPointer);
+        return new InjectedSelfElementInfo(project, element, elementRange, containingFile, hostPointer);
       }
     }
 

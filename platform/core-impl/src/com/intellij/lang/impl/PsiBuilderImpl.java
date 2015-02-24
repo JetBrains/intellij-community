@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -66,6 +65,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
     CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
 
+  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
+
   private final Project myProject;
   private PsiFile myFile;
 
@@ -75,7 +76,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private final MyList myProduction = new MyList();
 
-  @NotNull private final Lexer myLexer;
+  private final Lexer myLexer;
   private final TokenSet myWhitespaces;
   private TokenSet myComments;
 
@@ -91,8 +92,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final ASTNode myOriginalTree;
   private final MyTreeStructure myParentLightTree;
   private final int myOffset;
-
-  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
   private Map<Key, Object> myUserData = null;
   private IElementType myCachedTokenType;
@@ -450,6 +449,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         myDoneMarker.myEdgeTokenBinder = right;
       }
     }
+
+    public CharSequence getText() {
+      int startOffset = getStartOffset();
+      int endOffset = getEndOffset();
+      return myBuilder.getOriginalText().subSequence(startOffset, endOffset);
+    }
+
+    @Override
+    public String toString() {
+      return getText().toString();
+    }
   }
 
   private Marker precede(final StartMarker marker) {
@@ -527,6 +537,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class TokenNode extends Token implements LighterASTTokenNode {
+    @Override
+    public String toString() {
+      return getText().toString();
+    }
   }
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
@@ -764,14 +778,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @Override
   public void advanceLexer() {
+    ProgressIndicatorProvider.checkCanceled();
+
     if (eof()) return;
 
     if (!myTokenTypeChecked) {
-      LOG.assertTrue(eof(), "Probably a bug: eating token without its type checking");
+      LOG.error("Probably a bug: eating token without its type checking");
     }
+
     myTokenTypeChecked = false;
     myCurrentLexeme++;
-    ProgressIndicatorProvider.checkCanceled();
     clearCachedTokenType();
   }
 

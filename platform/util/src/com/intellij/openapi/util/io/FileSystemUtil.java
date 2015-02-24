@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -298,8 +299,7 @@ public class FileSystemUtil {
       }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
-        if (cause != null && ("java.nio.file.NoSuchFileException".equals(cause.getClass().getName()) ||
-                              "java.nio.file.InvalidPathException".equals(cause.getClass().getName()))) {
+        if (cause instanceof IOException || cause != null && "java.nio.file.InvalidPathException".equals(cause.getClass().getName())) {
           LOG.debug(cause);
           return null;
         }
@@ -322,11 +322,10 @@ public class FileSystemUtil {
         Object sourcePath = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
         Object targetPath = myGetPath.invoke(myDefaultFileSystem, target, ArrayUtil.EMPTY_STRING_ARRAY);
         Collection sourcePermissions = getPermissions(sourcePath);
-        if (sourcePermissions != null) {
-          Collection permissionsToSet;
+        Collection targetPermissions = getPermissions(targetPath);
+        if (sourcePermissions != null && targetPermissions != null) {
           if (onlyPermissionsToExecute) {
-            Collection targetPermissions = getPermissions(targetPath);
-            permissionsToSet = new HashSet();
+            Collection<Object> permissionsToSet = ContainerUtil.newHashSet();
             for (Object permission : targetPermissions) {
               if (!permission.toString().endsWith("_EXECUTE")) {
                 permissionsToSet.add(permission);
@@ -337,11 +336,11 @@ public class FileSystemUtil {
                 permissionsToSet.add(permission);
               }
             }
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", permissionsToSet, myLinkOptions);
           }
           else {
-            permissionsToSet = sourcePermissions;
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", sourcePermissions, myLinkOptions);
           }
-          mySetAttribute.invoke(null, targetPath, "posix:permissions", permissionsToSet, myLinkOptions);
           return true;
         }
       }
@@ -353,7 +352,7 @@ public class FileSystemUtil {
       Map attributes = (Map)myReadAttributes.invoke(null, sourcePath, "posix:permissions", myLinkOptions);
       if (attributes == null) return null;
       Object permissions = attributes.get("permissions");
-      return permissions instanceof Collection<?> ? (Collection)permissions : null;
+      return permissions instanceof Collection ? (Collection)permissions : null;
     }
   }
 
@@ -399,11 +398,14 @@ public class FileSystemUtil {
 
     private static final int[] LINUX_32 =  {16, 44, 72, 24, 28};
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
+    private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
+    private static final int[] LNX_PPC64 = LINUX_64;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
     private static final int[] SUN_OS_64 = {16, 40, 64, 24, 28};
 
+    private static final int STAT_VER = 1;
     private static final int OFF_MODE = 0;
     private static final int OFF_SIZE = 1;
     private static final int OFF_TIME = 2;
@@ -417,11 +419,23 @@ public class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP, false);
 
     private JnaUnixMediatorImpl() throws Exception {
-      myOffsets = SystemInfo.isLinux ? (SystemInfo.is32Bit ? LINUX_32 : LINUX_64) :
-                  SystemInfo.isMac | SystemInfo.isFreeBSD ? (SystemInfo.is32Bit ? BSD_32 : BSD_64) :
-                  SystemInfo.isSolaris ? (SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64) :
-                  null;
-      if (myOffsets == null || myOffsets.length != 5) throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
+      if (SystemInfo.isLinux) {
+        if ("ppc".equals(SystemInfo.OS_ARCH)) {
+          myOffsets = SystemInfo.is32Bit ? LNX_PPC32 : LNX_PPC64;
+        }
+        else {
+          myOffsets = SystemInfo.is32Bit ? LINUX_32 : LINUX_64;
+        }
+      }
+      else if (SystemInfo.isMac | SystemInfo.isFreeBSD) {
+        myOffsets = SystemInfo.is32Bit ? BSD_32 : BSD_64;
+      }
+      else if (SystemInfo.isSolaris) {
+        myOffsets = SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64;
+      }
+      else {
+        throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
+      }
 
       myLibC = (LibC)Native.loadLibrary("c", LibC.class);
       myUid = myLibC.getuid();
@@ -431,7 +445,7 @@ public class FileSystemUtil {
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, buffer) : myLibC.lstat(path, buffer);
+      int res = SystemInfo.isLinux ? myLibC.__lxstat64(STAT_VER, path, buffer) : myLibC.lstat(path, buffer);
       if (res != 0) return null;
 
       int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -456,7 +470,7 @@ public class FileSystemUtil {
     }
 
     private boolean loadFileStatus(@NotNull String path, Memory buffer) {
-      return (SystemInfo.isLinux ? myLibC.__xstat64(0, path, buffer) : myLibC.stat(path, buffer)) == 0;
+      return (SystemInfo.isLinux ? myLibC.__xstat64(STAT_VER, path, buffer) : myLibC.stat(path, buffer)) == 0;
     }
 
     @Override

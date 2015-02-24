@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -43,17 +42,35 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-class InProcessGroovyc {
+class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.InProcessGroovyc");
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
+  private static final Object ourInProcessGroovycLock = new Object();
+  private final Collection<String> myOutputs;
+
+  InProcessGroovyc(Collection<String> outputs) {
+    myOutputs = outputs;
+  }
+
+  @Override
+  public void runGroovyc(Collection<String> compilationClassPath,
+                         boolean forStubs,
+                         JpsGroovySettings settings,
+                         File tempFile,
+                         GroovycOutputParser parser) throws Exception {
+    synchronized (ourInProcessGroovycLock) {
+      runGroovycInThisProcess(compilationClassPath, forStubs, settings, tempFile, parser);
+    }
+  }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  static void runGroovycInThisProcess(Collection<String> compilationClassPath,
-                                      final Collection<String> outputs,
-                                      List<String> programParams,
-                                      final GroovycOutputParser parser)
+  private void runGroovycInThisProcess(Collection<String> compilationClassPath,
+                                       boolean forStubs,
+                                       JpsGroovySettings settings,
+                                       File tempFile,
+                                       final GroovycOutputParser parser)
     throws MalformedURLException {
 
     ClassLoader parent = obtainParentLoader(compilationClassPath);
@@ -65,7 +82,7 @@ class InProcessGroovyc {
         public boolean shouldCacheData(@NotNull URL url) {
           try {
             String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
-            for (String output : outputs) {
+            for (String output : myOutputs) {
               if (FileUtil.startsWith(output, file)) {
                 return false;
               }
@@ -88,8 +105,8 @@ class InProcessGroovyc {
     Thread.currentThread().setContextClassLoader(loader);
     try {
       Class<?> runnerClass = loader.loadClass("org.jetbrains.groovy.compiler.rt.GroovycRunner");
-      Method intMain = runnerClass.getDeclaredMethod("intMain", String[].class);
-      Integer exitCode = (Integer)intMain.invoke(null, new Object[]{ArrayUtil.toStringArray(programParams)});
+      Method intMain = runnerClass.getDeclaredMethod("intMain2", boolean.class, boolean.class, boolean.class, String.class);
+      Integer exitCode = (Integer)intMain.invoke(null, settings.invokeDynamic, false, forStubs, tempFile.getPath());
       parser.notifyFinished(exitCode);
     }
     catch (Exception e) {
@@ -126,8 +143,15 @@ class InProcessGroovyc {
       return pair.second;
     }
 
-    UrlClassLoader groovyAllLoader = 
-      UrlClassLoader.build().urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).useCache().get();
+    UrlClassLoader groovyAllLoader = UrlClassLoader.build().
+      urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).
+      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+        @Override
+        public boolean shouldCacheData(
+          @NotNull URL url) {
+          return true;
+        }
+      }).get();
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
@@ -144,7 +168,7 @@ class InProcessGroovyc {
         }
       }
     };
-      ;
+
     ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, wrapper));
     return wrapper;
   }

@@ -67,7 +67,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onStartTesting() {
     addToInvokeLater(new Runnable() {
       public void run() {
-        myTestsRootNode.setState(State.RUNNING);
+        myTestsRootNode.setState(State.RUNNING, GeneralIdBasedToSMTRunnerEventsConvertor.this);
         myTestsRootProxy.setStarted();
         fireOnTestingStarted();
       }
@@ -492,7 +492,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private void setNodeAndAncestorsRunning(@NotNull Node lowestNode) {
     Node node = lowestNode;
     while (node != null && node != myTestsRootNode && node.getState() == State.NOT_RUNNING) {
-      node.setState(State.RUNNING);
+      node.setState(State.RUNNING, this);
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
       if (proxy.isSuite()) {
@@ -506,7 +506,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private void terminateNode(@NotNull Node node, @NotNull State terminateState) {
-    node.setState(terminateState);
+    node.setState(terminateState, this);
     myRunningTestNodes.remove(node);
   }
 
@@ -568,15 +568,17 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myState;
     }
 
-    public void setState(@NotNull State newState) {
+    public void setState(@NotNull State newState, @NotNull GeneralIdBasedToSMTRunnerEventsConvertor convertor) {
       boolean accepted = false;
       if (myState == State.NOT_RUNNING || myState == State.RUNNING) {
         accepted = myState.ordinal() < newState.ordinal();
       }
-      if (!accepted) {
-        throw new RuntimeException("Illegal state change [" + myState + " -> " + newState + "]: " + toString());
+      if (accepted) {
+        myState = newState;
       }
-      myState = newState;
+      else {
+        convertor.logProblem("Illegal state change [" + myState + " -> " + newState + "]: " + toString(), false);
+      }
     }
 
     @Override

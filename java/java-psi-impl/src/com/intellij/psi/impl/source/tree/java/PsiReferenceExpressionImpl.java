@@ -239,9 +239,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @NotNull
   private JavaResolveResult[] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
+      JavaResolveResult[] variable = null;
       JavaResolveResult[] result = resolveToVariable(containingFile);
-      if (result.length == 1 && result[0].isAccessible()) {
-        return result;
+      if (result.length == 1) {
+        if (result[0].isAccessible()) {
+          return result;
+        }
+        variable = result;
       }
 
       PsiElement classNameElement = getReferenceNameElement();
@@ -260,7 +264,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         result = resolveToPackage(containingFile);
       }
 
-      return result;
+      return result.length == 0 && variable != null ? variable : result;
     }
 
     if (parentType == JavaElementType.METHOD_CALL_EXPRESSION) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -22,6 +23,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
 import static java.beans.EventHandler.create;
 
 public class ColorPanel extends JComponent {
@@ -32,7 +34,7 @@ public class ColorPanel extends JComponent {
 
   public ColorPanel() {
     setEditable(true);
-    setMinimumSize(new Dimension(10, 10));
+    setMinimumSize(JBUI.size(10, 10));
     addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
     addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
     addFocusListener(create(FocusListener.class, this, "repaint"));

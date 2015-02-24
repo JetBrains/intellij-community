@@ -167,7 +167,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
 
-  public boolean AUTODETECT_INDENTS = false;
+  public boolean AUTODETECT_INDENTS = true;
 
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
@@ -694,7 +694,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
                                               @Nullable Processor<FileIndentOptionsProvider> providerProcessor) {
-    if (file != null && file.isValid()) {
+    if (file != null && file.isValid() && file.isWritable()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {
         IndentOptions docOptions = IndentOptions.retrieveFromAssociatedDocument(file);

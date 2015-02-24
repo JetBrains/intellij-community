@@ -28,6 +28,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -44,7 +45,10 @@ public class JavaImportOptimizer implements ImportOptimizer {
     Project project = file.getProject();
     final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
     if (newImportList == null) return EmptyRunnable.getInstance();
-    return new Runnable() {
+
+    return new CollectingInfoRunnable() {
+      private int myImportListLengthDiff = 0;
+
       @Override
       public void run() {
         try {
@@ -55,11 +59,22 @@ public class JavaImportOptimizer implements ImportOptimizer {
           }
           final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
           assert oldImportList != null;
+          int importsBefore = oldImportList.getAllImportStatements().length;
           oldImportList.replace(newImportList);
+          myImportListLengthDiff = importsBefore - newImportList.getAllImportStatements().length;
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
+      }
+
+      @Nullable
+      @Override
+      public String getUserNotificationInfo() {
+        if (myImportListLengthDiff > 0) {
+          return "removed " + myImportListLengthDiff + " import" + (myImportListLengthDiff > 1 ? "s" : "");
+        }
+        return null;
       }
     };
   }

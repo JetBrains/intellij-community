@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.CalledInAwt;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -23,7 +23,7 @@ public interface VariableContext {
   DebuggerViewSupport getViewSupport();
 
   @NotNull
-  Promise<MemberFilter> createMemberFilter();
+  Promise<MemberFilter> getMemberFilter();
 
   @Nullable
   Scope getScope();

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.Patches;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
@@ -2083,9 +2082,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     @Override
     public void run() {
       try {
-        if (Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
-          myFloatingDecorator.remove(myFloatingDecorator.getRootPane());
-        }
         myFloatingDecorator.dispose();
       }
       finally {

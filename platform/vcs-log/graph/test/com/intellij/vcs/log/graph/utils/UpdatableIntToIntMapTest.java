@@ -17,7 +17,6 @@
 package com.intellij.vcs.log.graph.utils;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -30,8 +29,7 @@ public abstract class UpdatableIntToIntMapTest {
 
   private static Set<Integer> parseSet(String visibility) {
     Set<Integer> visibleNodes = new HashSet<Integer>();
-    if (visibility.length() == 0)
-      return visibleNodes;
+    if (visibility.length() == 0) return visibleNodes;
 
     for (String number : visibility.split("\\|")) {
       visibleNodes.add(Integer.decode(number));
@@ -39,7 +37,7 @@ public abstract class UpdatableIntToIntMapTest {
     return visibleNodes;
   }
 
-  
+
   private static class Tester {
 
     private final Set<Integer> myVisibleNodes;
@@ -62,8 +60,7 @@ public abstract class UpdatableIntToIntMapTest {
     public String mapToString() {
       StringBuilder s = new StringBuilder();
       for (int shortIndex = 0; shortIndex < myUpdatableIntToIntMap.shortSize(); shortIndex++) {
-        if (shortIndex != 0)
-          s.append("|");
+        if (shortIndex != 0) s.append("|");
 
         s.append(myUpdatableIntToIntMap.getLongIndex(shortIndex));
       }
@@ -73,8 +70,7 @@ public abstract class UpdatableIntToIntMapTest {
     public String reverseMapToString() {
       StringBuilder s = new StringBuilder();
       for (int longIndex = 0; longIndex < myUpdatableIntToIntMap.longSize(); longIndex++) {
-        if (longIndex != 0)
-          s.append("|");
+        if (longIndex != 0) s.append("|");
 
         s.append(myUpdatableIntToIntMap.getShortIndex(longIndex));
       }

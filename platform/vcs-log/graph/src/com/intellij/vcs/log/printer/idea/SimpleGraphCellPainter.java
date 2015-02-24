@@ -34,14 +34,15 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private static final Color MARK_COLOR = JBColor.BLACK;
 
   private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke hide = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+  private final Stroke hide =
+    new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
   private final Stroke selectUsual = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke selectHide = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+  private final Stroke selectHide =
+    new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
 
   private Graphics2D g2;
 
-  @NotNull
-  private final ColorGenerator myColorGenerator;
+  @NotNull private final ColorGenerator myColorGenerator;
 
   public SimpleGraphCellPainter(@NotNull ColorGenerator colorGenerator) {
     myColorGenerator = colorGenerator;
@@ -126,7 +127,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       printer.print(MARK_COLOR);
       setStroke(isUsual, false);
       printer.print(usualColor);
-    } else {
+    }
+    else {
       setStroke(isUsual, false);
       printer.print(usualColor);
     }
@@ -138,14 +140,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private static boolean isUsual(PrintElement printElement) {
-    if (!(printElement instanceof EdgePrintElement))
-      return true;
+    if (!(printElement instanceof EdgePrintElement)) return true;
     EdgePrintElement.LineStyle lineStyle = ((EdgePrintElement)printElement).getLineStyle();
     return lineStyle == EdgePrintElement.LineStyle.SOLID;
   }
 
   @Override
-  public void draw(@NotNull Graphics2D g2, @NotNull Collection<PrintElement> printElements) {
+  public void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -161,7 +162,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
             if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
               paintDownLine(from, to, color);
-            } else {
+            }
+            else {
               paintUpLine(from, to, color);
             }
           }
@@ -175,7 +177,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
             if (printElement.isSelected()) {
               paintCircle(position, MARK_COLOR, true);
               paintCircle(position, getColor(printElement), false);
-            } else {
+            }
+            else {
               paintCircle(position, getColor(printElement), false);
             }
             break;
@@ -198,14 +201,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         }
       }
 
-      if (printer != null)
-        drawLogic(printElement.isSelected(), isUsual(printElement), getColor(printElement), printer);
+      if (printer != null) drawLogic(printElement.isSelected(), isUsual(printElement), getColor(printElement), printer);
     }
   }
 
   @Nullable
   @Override
-  public PrintElement mouseOver(@NotNull Collection<PrintElement> printElements, int x, int y) {
+  public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof SimplePrintElement) {
         if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType())) {
@@ -221,7 +223,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y)) {
             return printElement;
           }
-        } else {
+        }
+        else {
           if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y)) {
             return printElement;
           }

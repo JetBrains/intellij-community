@@ -730,8 +730,19 @@ public class ControlFlowUtil {
         if (throwToOffset == nextOffset) {
 
           if (nextOffset == endOffset) {
-            final Instruction lastInstruction = flow.getInstructions().get(endOffset - 1);
-            isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn);
+            int lastOffset = endOffset - 1;
+            Instruction lastInstruction = flow.getInstructions().get(lastOffset);
+            if (lastInstruction instanceof GoToInstruction &&
+                ((GoToInstruction)lastInstruction).role == BranchingInstruction.Role.END &&
+                !((GoToInstruction)lastInstruction).isReturn) {
+              lastOffset--;
+            }
+
+            if (lastOffset >= 0) {
+              lastInstruction = flow.getInstructions().get(lastOffset);
+              isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
+                         !(lastInstruction instanceof ThrowToInstruction);
+            }
           }
 
           isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
@@ -841,6 +852,7 @@ public class ControlFlowUtil {
 
   private static PsiReferenceExpression findReferenceTo(PsiElement element, PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
+        && !((PsiReferenceExpression)element).isQualified()
         && ((PsiReferenceExpression)element).resolve() == variable) {
       return (PsiReferenceExpression)element;
     }

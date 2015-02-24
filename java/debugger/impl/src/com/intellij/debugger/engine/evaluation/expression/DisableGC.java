@@ -46,4 +46,9 @@ public class DisableGC implements Evaluator{
   public Modifier getModifier() {
     return myDelegate.getModifier();
   }
+
+  @Override
+  public String toString() {
+    return "NoGC -> " + myDelegate;
+  }
 }

@@ -29,12 +29,8 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
-import com.intellij.openapi.components.impl.stores.FileBasedStorage;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -887,7 +883,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
         listener.projectClosing(project);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("From listener "+listener+" ("+listener.getClass()+")", e);
       }
     }
   }

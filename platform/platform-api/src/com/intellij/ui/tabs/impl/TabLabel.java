@@ -136,8 +136,8 @@ public class TabLabel extends JPanel {
           super.doPaint(g);
           return;
         }
-        int dimSize = 20;
-        int dimStep = 1;
+        int dimSize = 30;
+        int dimStep = 2;
         Composite oldComposite = g.getComposite();
         Shape oldClip = g.getClip();
         try {
@@ -146,8 +146,7 @@ public class TabLabel extends JPanel {
 
           for (int x = clip.x + clip.width - dimSize; x < clip.x + clip.width; x+=dimStep) {
             g.setClip(x, clip.y, dimStep, clip.height);
-            float linear = 1 - ((float)x - (clip.x + clip.width - dimSize)) / dimSize;
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float)(1 - Math.cos(Math.PI * linear)) / 2));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - ((float)x - (clip.x + clip.width - dimSize)) / dimSize));
             super.doPaint(g);
           }
         } finally {
@@ -169,14 +168,14 @@ public class TabLabel extends JPanel {
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs()) {
-      int right = insets.right;
       if (!Registry.is("editor.use.compressible.tabs")) {
-        if (UISettings.getInstance().SHOW_CLOSE_BUTTON) right = 3;
+        if (UISettings.getInstance().SHOW_CLOSE_BUTTON) insets.right = 3;
       }
       else {
-        right = (UISettings.getInstance().SHOW_CLOSE_BUTTON || !UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) ? 3 : 6;
+        insets.right = (UISettings.getInstance().SHOW_CLOSE_BUTTON || !UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) ? 3 : 6;
+        insets.left = 5;
       }
-      return new Insets(insets.top, insets.left, insets.bottom, right);
+      return new Insets(insets.top, insets.left, insets.bottom, insets.right);
     }
 
     return insets;

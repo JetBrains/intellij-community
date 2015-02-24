@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -129,10 +130,13 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
         assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
 
-        ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), myFileHistoryPanel, "History", myFileHistoryPanel.getVirtualFile().getName(), myRefresherI.isFirstTime());
+        final VirtualFile file = myFileHistoryPanel.getVirtualFile();
+        if (file != null) {
+          ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), myFileHistoryPanel, "History", file.getName(), myRefresherI.isFirstTime());
 
-        if (myRefresherI.isFirstTime()) {
-          toolWindow.activate(null);
+          if (myRefresherI.isFirstTime()) {
+            toolWindow.activate(null);
+          }
         }
       }
     });

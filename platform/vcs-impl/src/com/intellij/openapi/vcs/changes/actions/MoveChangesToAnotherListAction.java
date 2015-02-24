@@ -56,7 +56,11 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     }
   }
 
-  private static boolean isEnabled(final AnActionEvent e) {
+  protected boolean isEnabled(final AnActionEvent e) {
+    return checkEnabled(e);
+  }
+
+  private static boolean checkEnabled(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
     if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;

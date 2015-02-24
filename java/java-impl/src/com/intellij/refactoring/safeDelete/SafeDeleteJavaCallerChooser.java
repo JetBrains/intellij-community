@@ -96,7 +96,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                                                                             public void run() {
                                                                               ApplicationManager.getApplication().runReadAction(runnable);
                                                                             }
-                                                                          }, "Search for caller method usages...", true, myProject)) {
+                                                                          }, "Search for Caller Method Usages...", true, myProject)) {
       myResult.addAll(foreignMethodUsages);
     }
     super.doOKAction();
@@ -105,7 +105,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   /**
    * @return parameter if it is used inside method only as argument in nodeMethod call at parameterIndex
    */
-  static PsiParameter isTheOnlyOneParameterUsage(PsiElement call, int parameterIndex, final PsiMethod nodeMethod) {
+  static PsiParameter isTheOnlyOneParameterUsage(PsiElement call, final int parameterIndex, final PsiMethod nodeMethod) {
     if (call instanceof PsiCallExpression) {
       final PsiExpressionList argumentList = ((PsiCallExpression)call).getArgumentList();
       if (argumentList != null) {
@@ -129,19 +129,22 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
             if (parameter != null && !parameter.isVarArgs()) {
               final PsiElement scope = parameter.getDeclarationScope();
               if (scope instanceof PsiMethod && ((PsiMethod)scope).findDeepestSuperMethods().length == 0) {
+                final int scopeParamIdx = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter);
                 final Ref<Boolean> ref = new Ref<Boolean>(false);
                 if (ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
                   @Override
                   public boolean process(PsiReference reference) {
                     final PsiElement element = reference.getElement();
                     if (element instanceof PsiReferenceExpression) {
-                      PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
+                      PsiCallExpression parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
                       while (parent != null) {
-                        final PsiMethod resolved = ((PsiCallExpression)parent).resolveMethod();
+                        final PsiMethod resolved = parent.resolveMethod();
                         if (scope.equals(resolved)) {
+                          if (usedInQualifier(element, parent, scopeParamIdx)) return false;
                           return true;
                         }
                         if (nodeMethod.equals(resolved)) {
+                          if (usedInQualifier(element, parent, parameterIndex)) return false;
                           ref.set(true);
                           return true;
                         }
@@ -151,8 +154,25 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                     }
                     return true;
                   }
+
+                  private boolean usedInQualifier(PsiElement element, PsiCallExpression parent, int parameterIndex) {
+                    PsiExpression qualifier = null;
+                    if (parent instanceof PsiMethodCallExpression) {
+                      qualifier = ((PsiMethodCallExpression)parent).getMethodExpression();
+                    }
+                    else if (parent instanceof PsiNewExpression) {
+                      qualifier = ((PsiNewExpression)parent).getQualifier();
+                    }
+
+                    if (PsiTreeUtil.isAncestor(qualifier, element, true)) {
+                      return true;
+                    }
+
+                    final PsiExpressionList list = parent.getArgumentList();
+                    return list != null && !PsiTreeUtil.isAncestor(list.getExpressions()[parameterIndex], element, false);
+                  }
                 }) && ref.get()) {
-                  return (PsiParameter)parameter;
+                  return parameter;
                 }
               }
             }

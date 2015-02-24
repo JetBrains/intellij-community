@@ -93,6 +93,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.internal.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -104,8 +105,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.swing.*;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -600,7 +601,8 @@ public class BuildManager implements ApplicationComponent{
     final Map<String, String> userData, final DefaultMessageHandler messageHandler) {
 
     final String projectPath = getProjectPath(project);
-    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, messageHandler instanceof AutoMakeMessageHandler);
+    final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
+    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, isAutomake);
     try {
       ensureListening();
     }
@@ -646,6 +648,7 @@ public class BuildManager implements ApplicationComponent{
           CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(PathManager.getOptionsPath()).build();
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
         final SequentialTaskExecutor projectTaskQueue;
+        final boolean needRescan;
         synchronized (myProjectDataMap) {
           final ProjectData data = getProjectData(projectPath);
           if (isRebuild) {
@@ -659,7 +662,8 @@ public class BuildManager implements ApplicationComponent{
                      "; DELETED: " +
                      new HashSet<String>(convertToStringPaths(data.myDeleted)));
           }
-          currentFSChanges = data.getAndResetRescanFlag() ? null : data.createNextEvent();
+          needRescan = data.getAndResetRescanFlag();
+          currentFSChanges = needRescan ? null : data.createNextEvent();
           projectTaskQueue = data.taskQueue;
         }
 
@@ -703,6 +707,22 @@ public class BuildManager implements ApplicationComponent{
                   errorsOnLaunch = STDERR_OUTPUT.get(processHandler);
                 }
                 else {
+                  if (isAutomake && needRescan) {
+                    // if project state was cleared because of roots changed or this is the first compilation after project opening,
+                    // ensure project model is saved on disk, so that automake sees the latest model state.
+                    // For ordinary make all project, app settings and unsaved docs are always saved before build starts.
+                    try {
+                      SwingUtilities.invokeAndWait(new Runnable() {
+                        public void run() {
+                          project.save();
+                        }
+                      });
+                    }
+                    catch(Throwable e) {
+                      LOG.info(e);
+                    }
+                  }
+                  
                   processHandler = launchBuildProcess(project, myListenPort, sessionId, false);
                   errorsOnLaunch = new StringBuffer();
                   processHandler.addProcessListener(new StdOutputCollector((StringBuffer)errorsOnLaunch));
@@ -912,7 +932,7 @@ public class BuildManager implements ApplicationComponent{
 
       // validate tools.jar presence
       final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
-      if (projectJdk.equals(internalJdk)) {
+      if (FileUtil.pathsEqual(projectJdk.getHomePath(), internalJdk.getHomePath())) {
         // important: because internal JDK can be either JDK or JRE,
         // this is the most universal way to obtain tools.jar path in this particular case
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
@@ -974,6 +994,14 @@ public class BuildManager implements ApplicationComponent{
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
     }
+
+    final String isFSCaseSensitive = System.getProperty("idea.case.sensitive.fs", null);
+    if (isFSCaseSensitive != null) {
+      cmdLine.addParameter("-Didea.case.sensitive.fs=" + isFSCaseSensitive);
+    }
+
+    // this will make netty initialization faster on some systems
+    cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
 
     boolean isProfilingMode = false;
     final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;

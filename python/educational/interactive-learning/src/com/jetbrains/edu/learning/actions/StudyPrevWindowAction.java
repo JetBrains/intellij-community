@@ -1,7 +1,7 @@
 package com.jetbrains.edu.learning.actions;
 
+import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.TaskWindow;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +23,9 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
 
   @Nullable
   @Override
-  protected TaskWindow getNextTaskWindow(@NotNull final TaskWindow window) {
+  protected AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window) {
     int prevIndex = window.getIndex() - 1;
-    List<TaskWindow> windows = window.getTaskFile().getTaskWindows();
+    List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
     if (StudyUtils.indexIsValid(prevIndex, windows)) {
       return windows.get(prevIndex);
     }

@@ -57,11 +57,14 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1574,6 +1577,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testDocBookRole() throws Exception {
+    doTestWithLocations(
+      new String[][] {
+        {"http://docbook.org/ns/docbook", "DocBookV5.xsd"},
+        {"http://www.w3.org/1999/xlink", "xlink.xsd"},
+        {"http://www.w3.org/XML/1998/namespace", "xml.xsd"}
+      },
+      "xml"
+    );
+  }
+
   public void testCorrectGeneratedDtdUpdate() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".xml");
     Collection<HighlightInfo> infos = filterInfos(doHighlighting());
@@ -2051,16 +2065,19 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAnyAttributeNavigation() throws Exception {
-    doTest(
-      new VirtualFile[] {
-        getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
-        getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
-        getVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd")
-      },
-      true,
-      false
-    );
+    configureByFiles(null, getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
+                     getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
+                     getVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));
+
     PsiReference at = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+
+    XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
+    XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)tag.getDescriptor();
+    XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
+    System.out.println(Arrays.asList(descriptors));
+
+    doDoTest(true, false);
+
     PsiElement resolve = at.resolve();
     assertTrue(resolve instanceof XmlTag);
   }

@@ -93,7 +93,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         if (!super.canSelect(file)) return false;
         final VirtualFile vFile = file.getVirtualFile();
         if (vFile == null || !vFile.isValid()) return false;
-        return ScratchFileService.getInstance(myProject).getRootType(file.getVirtualFile()) != null;
+        return ScratchFileService.getInstance().getRootType(vFile) != null;
       }
 
       @Override
@@ -126,7 +126,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   @Nullable
   private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
-    // todo project roots not supported
     String path = ScratchFileService.getInstance().getRootPath(rootId);
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
@@ -162,7 +161,9 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       List<AbstractTreeNode> list = ContainerUtil.newArrayList();
       for (RootType rootId : RootType.getAllRootIds()) {
         if (rootId.isHidden()) continue;
-        list.add(new MyRootNode(getProject(), rootId));
+        MyRootNode e = new MyRootNode(getProject(), rootId);
+        if (e.getDirectory() == null) continue;
+        list.add(e);
       }
       return list;
     }
@@ -182,9 +183,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
       RootType rootType = getValue();
-      PsiDirectory directory = getDirectory(getProject(), rootType);
+      PsiDirectory directory = getDirectory();
       if (directory == null) return Collections.emptyList();
       return new MyPsiNode(getProject(), rootType, directory).getChildren();
+    }
+
+    PsiDirectory getDirectory() {
+      return ScratchProjectViewPane.getDirectory(getProject(), getValue());
     }
 
     @Override

@@ -34,6 +34,7 @@ import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClassPath {
   private static final ResourceStringLoaderIterator ourCheckedIterator = new ResourceStringLoaderIterator(true);
@@ -42,6 +43,10 @@ public class ClassPath {
 
   private final Stack<URL> myUrls = new Stack<URL>();
   private final List<Loader> myLoaders = new ArrayList<Loader>();
+
+  private volatile boolean myAllUrlsWereProcessed;
+
+  private final AtomicInteger myLastLoaderProcessed = new AtomicInteger();
   private final Map<URL, Loader> myLoadersMap = new HashMap<URL, Loader>();
   private final ClasspathCache myCache = new ClasspathCache();
 
@@ -82,6 +87,7 @@ public class ClassPath {
         for (int i = urls.size() - 1; i >= 0; i--) {
           myUrls.push(urls.get(i));
         }
+        myAllUrlsWereProcessed = false;
       }
     }
   }
@@ -92,14 +98,13 @@ public class ClassPath {
     try {
       int i;
       if (myCanUseCache) {
+        boolean allUrlsWereProcessed;
+
+        allUrlsWereProcessed = myAllUrlsWereProcessed;
+        i = allUrlsWereProcessed ? 0 : myLastLoaderProcessed.get();
+
         Resource prevResource = myCache.iterateLoaders(s, flag ? ourCheckedIterator : ourUncheckedIterator, s, this);
-        if (prevResource != null) return prevResource;
-
-        synchronized (myUrls) {
-          if (myUrls.isEmpty()) return null;
-        }
-
-        i = myLoaders.size();
+        if (prevResource != null || allUrlsWereProcessed) return prevResource;
       }
       else {
         i = 0;
@@ -136,7 +141,10 @@ public class ClassPath {
       URL url;
       synchronized (myUrls) {
         if (myUrls.empty()) {
-          if (myCanUseCache) myCache.nameSymbolsLoaded();
+          if (myCanUseCache) {
+            myCache.nameSymbolsLoaded();
+            myAllUrlsWereProcessed = true;
+          }
           return null;
         }
         url = myUrls.pop();
@@ -157,8 +165,13 @@ public class ClassPath {
 
       myLoaders.add(loader);
       myLoadersMap.put(url, loader);
-      if (lastOne && myCanUseCache) {
-        myCache.nameSymbolsLoaded();
+      if (myCanUseCache) {
+        if (lastOne) {
+          myCache.nameSymbolsLoaded();
+          myAllUrlsWereProcessed = true;
+        }
+        myLastLoaderProcessed.incrementAndGet();
+        //assert myLastLoaderProcessed.get() == myLoaders.size();
       }
     }
 
@@ -221,15 +234,11 @@ public class ClassPath {
       myCheck = check;
       List<Loader> loaders = null;
 
-      if (myCanUseCache) {
-        synchronized (myUrls) {
-          if (myUrls.isEmpty()) {
-            loaders = new SmartList<Loader>();
-            myCache.iterateLoaders(name, ourLoaderCollector, loaders, this);
-            if (!name.endsWith("/")) {
-              myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loaders, this);
-            }
-          }
+      if (myCanUseCache && myAllUrlsWereProcessed) {
+        loaders = new SmartList<Loader>();
+        myCache.iterateLoaders(name, ourLoaderCollector, loaders, this);
+        if (!name.endsWith("/")) {
+          myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loaders, this);
         }
       }
 

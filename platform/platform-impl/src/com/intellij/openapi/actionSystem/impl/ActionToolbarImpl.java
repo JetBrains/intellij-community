@@ -45,6 +45,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -921,13 +922,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void setTargetComponent(final JComponent component) {
     myTargetComponent = component;
 
-    if (myTargetComponent != null && myTargetComponent.isVisible()) {
-      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+    if (myTargetComponent != null) {
+      UiNotifyConnector.doWhenFirstShown(myTargetComponent, new DumbAwareRunnable() {
         @Override
         public void run() {
           myUpdater.updateActions(false, false);
         }
-      }, ModalityState.stateForComponent(myTargetComponent));
+      });
     }
   }
 
@@ -999,6 +1000,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setMovable(true) // fit the screen automatically
+      .setMayBeParent(true) // a dialog-based popup is not always on top
       .setRequestFocus(false)
       .setTitle(null)
       .setCancelOnClickOutside(true)

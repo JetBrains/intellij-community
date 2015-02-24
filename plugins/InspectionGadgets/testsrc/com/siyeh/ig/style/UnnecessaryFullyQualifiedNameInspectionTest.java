@@ -10,7 +10,7 @@ public class UnnecessaryFullyQualifiedNameInspectionTest extends IGInspectionTes
   private static final String BASE_DIR = "com/siyeh/igtest/style/";
 
   public void testFqnInJavadoc_Unnecessary_WhenFullyQualifyIfNotImported() throws Exception {
-    doTestWithFqnInJavadocSetting(BASE_DIR + "unnecessary_fully_qualified_name/", JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED);
+    doTestWithFqnInJavadocSetting(BASE_DIR + "unnecessary_fqn_javadoc_fully_qualify_if_not_imported", JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED);
   }
 
   public void testFqnInJavadoc_Unnecessary_WhenShortNamesAlways() {

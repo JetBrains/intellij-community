@@ -367,6 +367,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     );
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
+    if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
+      return;
+    }
     if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
@@ -443,7 +446,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           ParameterInfo nameInfo = builder.findParameterization(name);
           ParameterInfo typeInfo = builder.findParameterization(type);
 
-          if (nameInfo != null && typeInfo != null && !(parameter.getParent() instanceof PsiCatchSection)) {
+          final PsiElement scope = parameter.getDeclarationScope();
+          if (nameInfo != null && typeInfo != null && !(scope instanceof PsiCatchSection) && !(scope instanceof PsiForeachStatement)) {
             nameInfo.setArgumentContext(false);
             typeInfo.setArgumentContext(false);
             typeInfo.setMethodParameterContext(true);

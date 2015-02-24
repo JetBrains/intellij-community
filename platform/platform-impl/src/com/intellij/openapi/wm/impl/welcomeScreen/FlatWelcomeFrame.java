@@ -113,7 +113,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     myBalloonLayout = new BalloonLayoutImpl(rootPane, new JBInsets(8, 8, 8, 8));
 
     WelcomeFrame.setupCloseAction(this);
-    new MnemonicHelper().register(this);
+    MnemonicHelper.init(this);
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
       public void dispose() {

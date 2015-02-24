@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
@@ -23,11 +22,11 @@ public class StatisticsNotificationManager {
   private StatisticsNotificationManager() {
   }
 
-  public static void showNotification(@NotNull StatisticsService statisticsService, Project project) {
+  public static void showNotification(@NotNull StatisticsService statisticsService) {
     MyNotificationListener listener =
       new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent.getInstance());
 
-    Notifications.Bus.notify(statisticsService.createNotification(GROUP_DISPLAY_ID, listener), project);
+    Notifications.Bus.notify(statisticsService.createNotification(GROUP_DISPLAY_ID, listener));
   }
 
   private static class MyNotificationListener implements NotificationListener {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,7 +287,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
 
     leftToolbar.addSeparator();
-    addAction(leftToolbar, DebuggerActions.EXPORT_THREADS);
     addAction(leftToolbar, DebuggerActions.DUMP_THREADS);
     leftToolbar.addSeparator();
 
@@ -523,10 +522,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean autoModeEnabled = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      final boolean autoModeEnabled = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
       presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
@@ -558,10 +557,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean watchValues = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      final boolean watchValues = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
       final DebugProcessImpl process = getDebugProcess();
       final String actionText = watchValues ? myMyTextDisable : myTextEnable;
       if (process != null && process.canGetMethodReturnValue()) {

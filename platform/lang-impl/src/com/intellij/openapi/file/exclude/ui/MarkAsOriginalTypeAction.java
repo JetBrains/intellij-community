@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -29,7 +30,7 @@ import java.util.Collection;
 /**
  * @author Rustam Vishnyakov
  */
-public class MarkAsOriginalTypeAction extends AnAction {
+public class MarkAsOriginalTypeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();

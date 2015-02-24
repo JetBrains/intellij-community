@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,5 +140,9 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   public void saveLastCheckedInfo() {
     LAST_TIME_CHECKED = System.currentTimeMillis();
     LAST_BUILD_CHECKED = ApplicationInfo.getInstance().getBuild().asString();
+  }
+
+  public boolean canUseSecureConnection() {
+    return SECURE_CONNECTION && NetUtils.isSniEnabled();
   }
 }

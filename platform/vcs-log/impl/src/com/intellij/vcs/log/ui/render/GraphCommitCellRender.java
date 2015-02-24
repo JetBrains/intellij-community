@@ -98,14 +98,14 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
 
     setBorder(null);
     append("");
-    appendFixedTextFragmentWidth(textPadding);
+    appendTextPadding(textPadding);
     myGraphTable.applyHighlighters(this, row, isSelected);
     myIssueLinkRenderer.appendTextWithLinks(cell.getText());
   }
 
   @Nullable
   private PaintInfo getGraphImage(int row) {
-    Collection<PrintElement> printElements = myVisibleGraph.getRowInfo(row).getPrintElements();
+    Collection<? extends PrintElement> printElements = myVisibleGraph.getRowInfo(row).getPrintElements();
     int maxIndex = 0;
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());

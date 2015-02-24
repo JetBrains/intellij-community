@@ -73,12 +73,12 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     PsiFile containingFile = null;
     for (PsiElement operand : operands) {
       if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
+        hasLiteral = true;
         if (containingFile == null) {
           containingFile = operands[0].getContainingFile();
         }
 
         tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
-        hasLiteral = true;
         if (tempInjectedLanguage != null) break;
       }
     }
@@ -140,7 +140,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
       final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
       places.add(firstOperand);
-      final AnnotationUtilEx.AnnotatedElementVisitor visitor = new AnnotationUtilEx.AnnotatedElementVisitor() {
+      class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
         public boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression) {
           final PsiExpressionList list = psiCallExpression.getArgumentList();
           assert list != null;
@@ -181,7 +181,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
-        public boolean visitVariable(PsiVariable variable) {
+        private void visitVariableUsages(PsiVariable variable) {
+          if (variable == null) return;
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
               @Override
@@ -198,7 +199,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
               }
             });
           }
-          if (!processCommentInjections(variable)) {
+        }
+
+        public boolean visitVariable(PsiVariable variable) {
+          visitVariableUsages(variable);
+          PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
+                              variable.getModifierList() != null ? variable.getModifierList() :
+                              variable.getTypeElement();
+
+          if (anchor != null && !processCommentInjection(anchor)) {
             myShouldStop = true;
           }
           else if (areThereInjectionsWithName(variable.getName(), false)) {
@@ -240,28 +249,29 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
           return !myShouldStop;
         }
-      };
 
+        private boolean processCommentInjection(@NotNull PsiElement anchor) {
+          Ref<PsiElement> causeRef = Ref.create();
+          BaseInjection injection = mySupport.findCommentInjection(anchor, causeRef);
+          if (injection != null) {
+            PsiVariable variable = PsiTreeUtil.getParentOfType(anchor, PsiVariable.class);
+            visitVariableUsages(variable);
+            return processCommentInjectionInner(causeRef.get(), injection);
+          }
+          return true;
+        }
+      };
+      MyAnnoVisitor visitor = new MyAnnoVisitor();
+      if (!visitor.processCommentInjection(firstOperand)) {
+        return;
+      }
       while (!places.isEmpty() && !myShouldStop) {
         final PsiElement curPlace = places.removeFirst();
         AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
       }
     }
 
-    private boolean processCommentInjections(PsiVariable owner) {
-      if (owner instanceof PsiCompiledElement) return true;
-
-      PsiElement anchor = !(owner.getFirstChild() instanceof PsiComment) ? owner :
-                          owner.getModifierList() != null ? owner.getModifierList() :
-                          owner.getTypeElement();
-      if (anchor == null) return true;
-
-      Ref<PsiElement> causeRef = Ref.create();
-      BaseInjection injection = mySupport.findCommentInjection(anchor, causeRef);
-      return injection == null || processCommentInjectionInner(owner, causeRef.get(), injection);
-    }
-
-    protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
+    protected boolean processCommentInjectionInner(PsiElement comment, BaseInjection injection) {
       processInjectionWithContext(injection, false);
       return false;
     }

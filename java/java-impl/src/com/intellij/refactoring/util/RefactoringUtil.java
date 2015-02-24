@@ -386,7 +386,7 @@ public class RefactoringUtil {
 
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
     PsiType type = getTypeByExpression(expr);
-    final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType;
+    final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType || type instanceof PsiLambdaParameterType;
     if (type != null && !isFunctionalType) {
       return type;
     }

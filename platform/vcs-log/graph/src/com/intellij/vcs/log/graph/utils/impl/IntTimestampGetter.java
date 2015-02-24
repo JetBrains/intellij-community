@@ -37,14 +37,13 @@ public class IntTimestampGetter implements TimestampGetter {
 
   @NotNull
   public static IntTimestampGetter newInstance(@NotNull TimestampGetter delegateGetter, int blockSize) {
-    if (delegateGetter.size() < 0)
-      throw new NegativeArraySizeException("delegateGetter.size() < 0: " + delegateGetter.size());
-    if (delegateGetter.size() == 0)
-      throw new IllegalArgumentException("Empty TimestampGetter not supported");
+    if (delegateGetter.size() < 0) throw new NegativeArraySizeException("delegateGetter.size() < 0: " + delegateGetter.size());
+    if (delegateGetter.size() == 0) throw new IllegalArgumentException("Empty TimestampGetter not supported");
 
     long[] saveTimestamps = new long[(delegateGetter.size() - 1) / blockSize + 1];
-    for (int i = 0; i < saveTimestamps.length; i++)
+    for (int i = 0; i < saveTimestamps.length; i++) {
       saveTimestamps[i] = delegateGetter.getTimestamp(blockSize * i);
+    }
 
     Map<Integer, Long> brokenDeltas = new HashMap<Integer, Long>();
     int[] deltas = new int[delegateGetter.size()];
@@ -54,19 +53,16 @@ public class IntTimestampGetter implements TimestampGetter {
       long delta = delegateGetter.getTimestamp(i) - delegateGetter.getTimestamp(blockIndex);
       int intDelta = deltaToInt(delta);
       deltas[i] = intDelta;
-      if (intDelta == BROKEN_DELTA)
-        brokenDeltas.put(i, delta);
+      if (intDelta == BROKEN_DELTA) brokenDeltas.put(i, delta);
     }
 
     return new IntTimestampGetter(deltas, blockSize, saveTimestamps, brokenDeltas);
   }
 
   private static int deltaToInt(long delta) {
-    if (delta >= 0 && delta <= MAX_DELTA)
-      return (int)delta;
+    if (delta >= 0 && delta <= MAX_DELTA) return (int)delta;
 
-    if (delta < 0 && -delta <= MAX_DELTA)
-      return (int)delta;
+    if (delta < 0 && -delta <= MAX_DELTA) return (int)delta;
 
     return BROKEN_DELTA;
   }
@@ -74,8 +70,7 @@ public class IntTimestampGetter implements TimestampGetter {
   // myDeltas[i] = getTimestamp(i + 1) - getTimestamp(i)
   private final IntList myDeltas;
 
-  @NotNull
-  private final Map<Integer, Long> myBrokenDeltas;
+  @NotNull private final Map<Integer, Long> myBrokenDeltas;
 
   private final int myBlockSize;
 
@@ -104,16 +99,13 @@ public class IntTimestampGetter implements TimestampGetter {
 
   private long getDelta(int index) {
     int delta = myDeltas.get(index);
-    if (delta != BROKEN_DELTA)
-      return delta;
+    if (delta != BROKEN_DELTA) return delta;
 
     return myBrokenDeltas.get(index);
   }
 
   private void checkRange(int index) {
-    if (index < 0)
-      throw new IndexOutOfBoundsException("index < 0:" + index);
-    if (index >= size())
-      throw new IndexOutOfBoundsException("index: " + index + " >= size: " + size());
+    if (index < 0) throw new IndexOutOfBoundsException("index < 0:" + index);
+    if (index >= size()) throw new IndexOutOfBoundsException("index: " + index + " >= size: " + size());
   }
 }

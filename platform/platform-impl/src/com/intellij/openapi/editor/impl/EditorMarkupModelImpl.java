@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,11 +84,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
 
   private static int getErrorIconWidth() {
-    return JBUI.scale(13);
+    return JBUI.scale(14);
   }
 
   private static int getErrorIconHeight() {
-    return JBUI.scale(13);
+    return JBUI.scale(14);
   }
 
   private static int getThinGap() {
@@ -481,9 +481,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private boolean isMirrored() {
     return myEditor.isMirrored();
   }
-
-  private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() +
-                                                                                                                  getThinGap());
 
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
@@ -1269,7 +1266,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           @NotNull
           @Override
           public Dimension getPreferredSize() {
-            int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width;
+            int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
+                        - myEditor.getVerticalScrollBar().getWidth();
             if (!ToolWindowManagerEx.getInstanceEx(myEditor.getProject()).getIdsOn(ToolWindowAnchor.LEFT).isEmpty()) width--;
             return new Dimension(width - BalloonImpl.POINTER_WIDTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }

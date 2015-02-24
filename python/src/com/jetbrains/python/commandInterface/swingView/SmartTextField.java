@@ -17,13 +17,14 @@ package com.jetbrains.python.commandInterface.swingView;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.util.Pair;
+import com.intellij.util.Range;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Text field that has width to be changed and accepts error underline
@@ -37,11 +38,10 @@ public class SmartTextField extends JTextField {
    */
   private StatusText myPlaceHolder;
   /**
-   * error (underline) info in format "lastOnly => Color" where "lastOnly" is to underline last letter only (not the whole line)
-   * Null if nothing should be displayed.
+   * Error (underline) info to display. Check {@link UnderlineInfo} class for more info
    */
-  @Nullable
-  private Pair<Boolean, Color> myUnderlineInfo;
+  @NotNull
+  private final Collection<UnderlineInfo> myUnderlineInfo = new ArrayList<UnderlineInfo>();
   private int myPreferredWidth;
 
   public SmartTextField() {
@@ -54,20 +54,33 @@ public class SmartTextField extends JTextField {
     if (myPlaceHolder != null) {
       myPlaceHolder.paint(this, g);
     }
-    if (myUnderlineInfo != null) {
-      final int lineStart = (myUnderlineInfo.first ? getTextEndPosition() : getColumnWidth());
-      final int lineEnd = getTextEndPosition() + (myUnderlineInfo.first ? getColumnWidth() : 0);
-      g.setColor(myUnderlineInfo.second);
-      final int verticalPosition = getHeight() - 5;
-      g.drawLine(lineStart, verticalPosition, lineEnd, verticalPosition);
+    synchronized (myUnderlineInfo) {
+      for (final UnderlineInfo underlineInfo : myUnderlineInfo) {
+        g.setColor(underlineInfo.myColor);
+        // To prevent too long underlines: last char should really be last
+        underline(g, underlineInfo.getFrom(), underlineInfo.getTo());
+      }
     }
   }
 
   /**
-   * @return place (in px) where entered text ends.
+   * Underlines certain place
+   *
+   * @param g    canvas
+   * @param from from where (int px)
+   * @param to   to where (int px)
    */
-  int getTextEndPosition() {
-    return (getText().length() + 1) * getColumnWidth();
+  private void underline(@NotNull final Graphics g, final int from, final int to) {
+    final int verticalPosition = getHeight() - 5;
+    g.drawLine(from + getColumnWidth(), verticalPosition, to + getColumnWidth(), verticalPosition);
+  }
+
+
+  /**
+   * @return place (in px) where caret.
+   */
+  int getTextCaretPositionInPx() {
+    return (getCaretPosition() + 1) * getColumnWidth();
   }
 
   void setWaterMarkPlaceHolderText(@NotNull final String watermark) {
@@ -89,34 +102,34 @@ public class SmartTextField extends JTextField {
    * Display underline
    *
    * @param color color to underline
-   * @param lastOnly last letter only (whole line otherwise)
+   * @param from  from (in chars)
+   * @param to    (in chars)
    */
-  void underlineText(@NotNull final Color color, final boolean lastOnly) {
-    myUnderlineInfo = new Pair<Boolean, Color>(lastOnly, color);
+  final void underlineText(@NotNull final Color color, final int from, final int to) {
+    final int columnWidth = getColumnWidth();
+    synchronized (myUnderlineInfo) {
+      myUnderlineInfo.add(new UnderlineInfo(from * columnWidth, to * columnWidth, color));
+    }
   }
 
   /**
    * Removes underline
    */
   void hideUnderline() {
-    myUnderlineInfo = null;
-  }
-
-  /**
-   * Sets appropriate width in chars
-   * @param widthInChars num of chars
-   */
-  void setPreferredWidthInChars(final int widthInChars) {
-    setColumns(widthInChars);
+    synchronized (myUnderlineInfo) {
+      myUnderlineInfo.clear();
+    }
   }
 
   /**
    * Sets appropriate width in pixels
+   *
    * @param width width in px
    */
   void setPreferredWidthInPx(final int width) {
     myPreferredWidth = width;
   }
+
 
   /**
    * Wrapper to display placeholder
@@ -129,6 +142,29 @@ public class SmartTextField extends JTextField {
     @Override
     protected boolean isStatusVisible() {
       return SmartTextField.this.getText().isEmpty();
+    }
+  }
+
+  /**
+   * Information about underline
+   *
+   * @author Ilya.Kazakevich
+   */
+  private static final class UnderlineInfo extends Range<Integer> {
+    /**
+     * Color to use to underline
+     */
+    @NotNull
+    private final Color myColor;
+
+    /**
+     * @param from  underline from where (in px)
+     * @param to    underline to where (in px)
+     * @param color color to use to underline
+     */
+    UnderlineInfo(final int from, final int to, @NotNull final Color color) {
+      super(from, to);
+      myColor = color;
     }
   }
 }

@@ -617,6 +617,16 @@ class Main {
     assertEmpty make()
   }
 
+  public void "test extend package-local class from another module"() {
+    addGroovyLibrary(addDependentModule())
+
+    myFixture.addClass("package foo; class Foo {}")
+    myFixture.addFileToProject("dependent/foo/Bar.java", "package foo; class Bar extends Foo {}")
+    myFixture.addFileToProject("dependent/foo/Goo.groovy", "package foo; class Goo extends Bar {}")
+
+    assertEmpty make()
+  }
+
   public void "test module cycle"() {
     def dep = addDependentModule()
     ModuleRootModificationUtil.addDependency(myModule, dep)
@@ -624,8 +634,10 @@ class Main {
 
     myFixture.addFileToProject('Foo.groovy', 'class Foo extends Bar { static void main(String[] args) { println "Hello from Foo" } }')
     myFixture.addFileToProject('FooX.java', 'class FooX extends Bar { }')
+    myFixture.addFileToProject('FooY.groovy', 'class FooY extends BarX { }')
     myFixture.addFileToProject("dependent/Bar.groovy", "class Bar { Foo f; static void main(String[] args) { println 'Hello from Bar' } }")
     myFixture.addFileToProject("dependent/BarX.java", "class BarX { Foo f; }")
+    myFixture.addFileToProject("dependent/BarY.groovy", "class BarY extends FooX { }")
 
     def checkClassFiles = {
       assert findClassFile('Foo', myModule)

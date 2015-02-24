@@ -49,6 +49,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.DefaultProjectProfileManager;
+import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -70,6 +71,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -110,6 +112,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final Alarm myAlarm = new Alarm();
   private final StorageAccessors myProperties = StorageAccessors.createGlobal("SingleInspectionProfilePanel");
   private final InspectionProjectProfileManager myProjectProfileManager;
+  @NotNull private Profile myOriginal;
   private InspectionProfileImpl mySelectedProfile;
   private JEditorPane myBrowser;
   private JPanel myOptionsPanel;
@@ -139,9 +142,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public SingleInspectionProfilePanel(@NotNull InspectionProjectProfileManager projectProfileManager,
                                       @NotNull String inspectionProfileName,
-                                      @NotNull ModifiableModel profile) {
+                                      @NotNull ModifiableModel profile,
+                                      @NotNull Profile original) {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
+    myOriginal = original;
     mySelectedProfile = (InspectionProfileImpl)profile;
     myCurrentProfileName = inspectionProfileName;
     myShareProfile = profile.getProfileManager() == projectProfileManager;
@@ -155,43 +160,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       DefaultProjectProfileManager projectProfileManager = (DefaultProjectProfileManager)profile.getProfileManager();
       return ProjectInspectionProfilesVisibleTreeState.getInstance(projectProfileManager.getProject()).getVisibleTreeState(profile);
     }
-  }
-
-  @Nullable
-  public static ModifiableModel createNewProfile(final int initValue,
-                                                 ModifiableModel selectedProfile,
-                                                 JPanel parent,
-                                                 String profileName,
-                                                 Set<String> existingProfileNames,
-                                                 @NotNull Project project) {
-    profileName = Messages.showInputDialog(parent, profileName, "Create New Inspection Profile", Messages.getQuestionIcon());
-    if (profileName == null) return null;
-    final ProfileManager profileManager = selectedProfile.getProfileManager();
-    if (existingProfileNames.contains(profileName)) {
-      Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
-                               InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
-      return null;
-    }
-    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
-    if (initValue == -1) {
-      inspectionProfile.initInspectionTools(project);
-      ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
-      final InspectionToolWrapper[] profileEntries = profileModifiableModel.getInspectionTools(null);
-      for (InspectionToolWrapper toolWrapper : profileEntries) {
-        profileModifiableModel.disableTool(toolWrapper.getShortName(), null, project);
-      }
-      profileModifiableModel.setProjectLevel(false);
-      profileModifiableModel.setModified(true);
-      return profileModifiableModel;
-    }
-    else if (initValue == 0) {
-      inspectionProfile.copyFrom(selectedProfile);
-      inspectionProfile.setName(profileName);
-      inspectionProfile.initInspectionTools(project);
-      inspectionProfile.setModified(true);
-      return inspectionProfile;
-    }
-    return null;
   }
 
   @Nullable
@@ -959,25 +927,40 @@ public class SingleInspectionProfilePanel extends JPanel {
 
             @Override
             protected void onSettingsChanged() {
-              myTreeTable.updateUI();
+              update(false);
             }
 
             @Override
             protected void onScopeAdded() {
-              myTreeTable.updateUI();
-              updateOptionsAndDescriptionPanel();
+              update(true);
             }
 
             @Override
             protected void onScopesOrderChanged() {
-              myTreeTable.updateUI();
-              updateOptionsAndDescriptionPanel();
+              update(true);
             }
 
             @Override
             protected void onScopeRemoved(final int scopesCount) {
+              update(scopesCount == 1);
+            }
+
+            private void update(final boolean updateOptionsAndDescriptionPanel) {
+              Queue<InspectionConfigTreeNode> q = new Queue<InspectionConfigTreeNode>(nodes.size());
+              for (InspectionConfigTreeNode node : nodes) {
+                q.addLast(node);
+              }
+              while (!q.isEmpty()) {
+                final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
+                inspectionConfigTreeNode.dropCache();
+                final TreeNode parent = inspectionConfigTreeNode.getParent();
+                if (parent != null && parent.getParent() != null) {
+                  q.addLast((InspectionConfigTreeNode)parent);
+                }
+              }
+
               myTreeTable.updateUI();
-              if (scopesCount == 1) {
+              if (updateOptionsAndDescriptionPanel) {
                 updateOptionsAndDescriptionPanel();
               }
             }
@@ -1158,19 +1141,23 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     final ModifiableModel selectedProfile = getSelectedProfile();
 
-    if (!Comparing.equal(myCurrentProfileName, selectedProfile.getName())) {
-      selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
-      selectedProfile.setName(myCurrentProfileName);
-      selectedProfile.getProfileManager().updateProfile(selectedProfile);
-    }
     ProfileManager profileManager = myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
     selectedProfile.setProjectLevel(myShareProfile);
     if (selectedProfile.getProfileManager() != profileManager) {
-      if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) != null) {
+      if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) == myOriginal) {
         selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
       }
+      selectedProfile.setName(myCurrentProfileName);
       copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
       selectedProfile.setProfileManager(profileManager);
+    } else {
+      if (!Comparing.equal(myCurrentProfileName, selectedProfile.getName())) {
+        if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) == myOriginal) {
+          selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
+        }
+        selectedProfile.setName(myCurrentProfileName);
+        selectedProfile.getProfileManager().updateProfile(selectedProfile);
+      }
     }
 
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
@@ -1183,6 +1170,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;
+    myOriginal = selectedProfile.getProfileManager().getProfile(selectedProfile.getName());
   }
 
   private boolean descriptorsAreChanged() {

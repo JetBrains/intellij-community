@@ -196,7 +196,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     DumbService dumbService = DumbService.getInstance(getProject());
     PsiElementFinder[] finders = finders();
     if (dumbService.isDumb()) {
-      List<PsiElementFinder> list = dumbService.filterByDumbAwareness(Arrays.asList(finders));
+      List<PsiElementFinder> list = dumbService.filterByDumbAwareness(finders);
       finders = list.toArray(new PsiElementFinder[list.size()]);
     }
     return finders;

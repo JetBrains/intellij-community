@@ -4,15 +4,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.courseFormat.Lesson;
+import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.course.Course;
-import com.jetbrains.edu.learning.course.Lesson;
-import com.jetbrains.edu.learning.course.LessonInfo;
-import com.jetbrains.edu.learning.course.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,14 +20,16 @@ import java.util.List;
 
 public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
   public static final String STUDY_TOOL_WINDOW = "Course Description";
-  JPanel contentPanel = new JPanel();
+
 
   @Override
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
-    if (StudyTaskManager.getInstance(project).getCourse() != null) {
+    JPanel contentPanel = new JPanel();
+    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    if (taskManager.getCourse() != null) {
       contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
       contentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+
       Course course = taskManager.getCourse();
       if (course == null) {
         return;
@@ -47,32 +48,42 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       int lessonsCompleted = 0;
       List<Lesson> lessons = course.getLessons();
       for (Lesson lesson : lessons) {
-        if (lesson.getStatus() == StudyStatus.Solved) {
+        StudyStatus status = taskManager.getStatus(lesson);
+        if (status == StudyStatus.Solved) {
           lessonsCompleted++;
         }
-        LessonInfo lessonInfo = lesson.getLessonInfo();
-        taskNum += lessonInfo.getTaskNum();
-        taskSolved += lessonInfo.getTaskSolved();
+        taskNum += lesson.getTaskList().size();
+        taskSolved += getSolvedTasks(lesson, taskManager);
       }
       String completedLessons = String.format("%d of %d lessons completed", lessonsCompleted, course.getLessons().size());
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
       String tasksLeft = String.format("%d of %d tasks left", taskNum - taskSolved, taskNum);
       contentPanel.add(Box.createVerticalStrut(10));
-      addStatistics(completedLessons);
-      addStatistics(completedTasks);
+      addStatistics(completedLessons, contentPanel);
+      addStatistics(completedTasks, contentPanel);
 
       double percent = (taskSolved * 100.0) / taskNum;
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-      StudyProgressBar studyProgressBar = new StudyProgressBar(percent / 100, JBColor.GREEN, 40, 10);
+      StudyProgressBar studyProgressBar = new StudyProgressBar(percent / 100, 40, 10);
       contentPanel.add(studyProgressBar);
-      addStatistics(tasksLeft);
+      addStatistics(tasksLeft, contentPanel);
       ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
       Content content = contentFactory.createContent(contentPanel, "", true);
       toolWindow.getContentManager().addContent(content);
     }
   }
 
-  private void addStatistics(String statistics) {
+  private static int getSolvedTasks(@NotNull final Lesson lesson, StudyTaskManager taskManager) {
+    int solved = 0;
+    for (Task task : lesson.getTaskList()) {
+      if (taskManager.getStatus(task) == StudyStatus.Solved) {
+        solved += 1;
+      }
+    }
+    return solved;
+  }
+
+  private static void addStatistics(String statistics, JPanel contentPanel) {
     String labelText = UIUtil.toHtml(statistics, 5);
     contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
     JLabel statisticLabel = new JLabel(labelText);

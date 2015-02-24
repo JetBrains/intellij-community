@@ -132,7 +132,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       case FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED:
         if (file instanceof PsiJavaFile) {
           PsiJavaFile javaFile = ((PsiJavaFile)file);
-          return !ImportHelper.isAlreadyImported(javaFile, item.getQualifiedName());
+          return item.getQualifiedName() != null && !ImportHelper.isAlreadyImported(javaFile, item.getQualifiedName());
         }
       default:
         return false;

@@ -3,12 +3,16 @@ package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.Condition;
 import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAction {
@@ -20,38 +24,49 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    T targetNode = getTargetNode(e);
+    List<T> targetNodes = getTargetNodes(e);
 
-    boolean visible = false;
-    boolean enabled = false;
+    boolean visible;
+    boolean enabled;
 
-    if (targetNode != null) {
-      visible = isVisible4(targetNode);
-      if (visible) {
-        enabled = isEnabled4(targetNode);
+    if (targetNodes == null) {
+      visible = false;
+      enabled = false;
+    }
+    else {
+      visible = true;
+      enabled = true;
+      for (T targetNode : targetNodes) {
+        visible &= isVisible4(targetNode);
+        enabled &= visible && isEnabled4(targetNode);
       }
     }
 
     presentation.setVisible(visible);
     presentation.setEnabled(enabled);
-    updatePresentation(presentation, targetNode);
+    updatePresentation(presentation, ContainerUtil.getFirstItem(targetNodes));
   }
 
-  private T getTargetNode(AnActionEvent e) {
+  private List<T> getTargetNodes(AnActionEvent e) {
     ServersToolWindowContent content = getContent(e);
     if (content == null) {
       return null;
     }
     Set<Object> selectedElements = content.getBuilder().getSelectedElements();
-    if (selectedElements.size() != 1) {
+    int selectionCount = selectedElements.size();
+    if (selectionCount == 0 || selectionCount > 1 && !isMultiSelectionAllowed()) {
       return null;
     }
-    ServersTreeNode node = (ServersTreeNode)selectedElements.iterator().next();
     Class<T> targetNodeClass = getTargetNodeClass();
-    if (!targetNodeClass.isInstance(node)) {
-      return null;
+    List<T> result = new ArrayList<T>();
+    for (Object selectedElement : selectedElements) {
+      ServersTreeNode node = (ServersTreeNode)selectedElement;
+      if (!targetNodeClass.isInstance(node)) {
+        return null;
+      }
+      result.add(targetNodeClass.cast(node));
     }
-    return targetNodeClass.cast(node);
+    return result;
   }
 
   private static ServersToolWindowContent getContent(AnActionEvent e) {
@@ -60,12 +75,23 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    T targetNode = getTargetNode(e);
-    if (targetNode != null && isVisible4(targetNode) && isEnabled4(targetNode)) {
-      doActionPerformed(getContent(e), e, targetNode);
+    List<T> targetNodes = getTargetNodes(e);
+    if (targetNodes == null) {
+      return;
     }
+
+    List<T> verifiedTargetNodes = ContainerUtil.filter(targetNodes, new Condition<T>() {
+      @Override
+      public boolean value(T targetNode) {
+        return isVisible4(targetNode) && isEnabled4(targetNode);
+      }
+    });
+    doActionPerformed(getContent(e), e, verifiedTargetNodes);
   }
 
+  protected boolean isMultiSelectionAllowed() {
+    return false;
+  }
 
   protected boolean isVisible4(T node) {
     return true;
@@ -78,6 +104,11 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
   protected void updatePresentation(@NotNull Presentation presentation, @Nullable T node) {
   }
 
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, List<T> nodes) {
+    for (T node : nodes) {
+      doActionPerformed(content, e, node);
+    }
+  }
 
   protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, T node) {
     doActionPerformed(node);

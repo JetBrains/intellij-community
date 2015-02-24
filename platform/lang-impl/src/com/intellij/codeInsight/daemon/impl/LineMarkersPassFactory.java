@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcessForSyntaxPass(editor);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
-    return new LineMarkersPass(myProject, file, editor, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
+    return new LineMarkersPass(myProject, file, editor, editor.getDocument(), textRange);
   }
 
   @Nullable

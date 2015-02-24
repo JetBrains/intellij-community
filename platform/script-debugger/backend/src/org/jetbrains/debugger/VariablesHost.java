@@ -1,6 +1,7 @@
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.PromiseManager;
 import org.jetbrains.debugger.values.ValueManager;
@@ -16,6 +17,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
+      @NotNull
       @Override
       public Promise<List<Variable>> load(@NotNull VariablesHost host) {
         if (host.valueManager.isObsolete()) {
@@ -44,6 +46,11 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
   @NotNull
   public final Promise<List<Variable>> get() {
     return VARIABLES_LOADER.get(this);
+  }
+
+  @Nullable
+  public final Promise.State getState() {
+    return VARIABLES_LOADER.getState(this);
   }
 
   public final void set(@NotNull List<Variable> result) {

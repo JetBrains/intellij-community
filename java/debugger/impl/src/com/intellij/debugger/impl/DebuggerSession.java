@@ -65,6 +65,7 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -261,25 +262,37 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myDebugProcess.getManagerThread().schedule(command);
   }
 
-  public void stepOut() {
+  public void stepOut(int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOutCommand(suspendContext);
+    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
+    mySteppingThroughThreads.add(cmd.getContextThread());
+    resumeAction(cmd, EVENT_STEP);
+  }
+
+  public void stepOut() {
+    stepOut(StepRequest.STEP_LINE);
+  }
+
+  public void stepOver(boolean ignoreBreakpoints, int stepSize) {
+    final SuspendContextImpl suspendContext = getSuspendContext();
+    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
     mySteppingThroughThreads.add(cmd.getContextThread());
     resumeAction(cmd, EVENT_STEP);
   }
 
   public void stepOver(boolean ignoreBreakpoints) {
+    stepOver(ignoreBreakpoints, StepRequest.STEP_LINE);
+  }
+
+  public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
-    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints);
+    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
     mySteppingThroughThreads.add(cmd.getContextThread());
     resumeAction(cmd, EVENT_STEP);
   }
 
   public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter) {
-    final SuspendContextImpl suspendContext = getSuspendContext();
-    final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
-    mySteppingThroughThreads.add(cmd.getContextThread());
-    resumeAction(cmd, EVENT_STEP);
+    stepInto(ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
   }
 
   public void runToCursor(Document document, int line, final boolean ignoreBreakpoints) {

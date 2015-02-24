@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -49,7 +48,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
-  private final FileIndexFacade myExcludedFileIndex;
+  private final FileIndexFacade myFileIndex;
   private final MessageBus myMessageBus;
   private final PsiModificationTracker myModificationTracker;
 
@@ -71,11 +70,11 @@ public class PsiManagerImpl extends PsiManagerEx {
   public PsiManagerImpl(Project project,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
-                        FileIndexFacade excludedFileIndex,
+                        FileIndexFacade fileIndex,
                         MessageBus messageBus,
                         PsiModificationTracker modificationTracker) {
     myProject = project;
-    myExcludedFileIndex = excludedFileIndex;
+    myFileIndex = fileIndex;
     myMessageBus = messageBus;
     myModificationTracker = modificationTracker;
 
@@ -84,7 +83,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, fileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
     Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
@@ -131,10 +130,9 @@ public class PsiManagerImpl extends PsiManagerEx {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
     if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
-    if (virtualFile != null && virtualFile.getFileType() instanceof InternalFileType) return true;
 
     if (virtualFile != null) {
-      return myExcludedFileIndex.isInContent(virtualFile);
+      return myFileIndex.isInContent(virtualFile);
     }
     return false;
   }
@@ -182,25 +180,20 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public PsiFile findFile(@NotNull VirtualFile file) {
+    ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findFile(file);
   }
 
   @Override
   @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
-  }
-
-  @TestOnly
-  public void cleanupForNextTest() {
-    myFileManager.cleanupForNextTest();
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
-
     return myFileManager.findDirectory(file);
   }
 
@@ -464,39 +457,27 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         if (isPhysical) runnable.run();
-      }
-
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
       }
     });
   }
 
   @Override
   public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         runnable.run();
-      }
-
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
       }
     });
   }
 
   @Override
   public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-      }
-
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void afterPsiChanged(boolean isPhysical) {
         runnable.run();
@@ -534,5 +515,11 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public boolean isBatchFilesProcessingMode() {
     return myBatchFilesProcessingModeCount.get() > 0;
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myFileManager.cleanupForNextTest();
   }
 }

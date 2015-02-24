@@ -20,8 +20,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -39,6 +41,7 @@ import java.awt.event.ActionListener;
  * @author dsl
  */
 public class SafeDeleteDialog extends DialogWrapper {
+  private final Project myProject;
   private final PsiElement[] myElements;
   private final Callback myCallback;
 
@@ -55,6 +58,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   public SafeDeleteDialog(Project project, PsiElement[] elements, Callback callback) {
     super(project, true);
+    myProject = project;
     myElements = elements;
     myCallback = callback;
     myDelegate = getDelegate();
@@ -190,6 +194,11 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    if (DumbService.isDumb(myProject)) {
+      Messages.showMessageDialog(myProject, "Safe delete refactoring is not available while indexing is in progress", "Indexing", null);
+      return;
+    }
+
     if (myCallback != null && isSafeDelete()) {
       myCallback.run(this);
     } else {

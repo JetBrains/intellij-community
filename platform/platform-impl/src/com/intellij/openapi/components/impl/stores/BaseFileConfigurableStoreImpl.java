@@ -17,7 +17,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PathMacroSubstitutor;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
@@ -102,7 +101,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   @Override
-  public void load() throws IOException, StateStorageException {
+  public void load() throws IOException {
     getMainStorageData(); //load it
   }
 

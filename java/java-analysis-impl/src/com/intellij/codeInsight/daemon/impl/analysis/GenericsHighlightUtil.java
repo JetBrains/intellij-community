@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -346,17 +347,21 @@ public class GenericsHighlightUtil {
     Map<PsiClass, PsiSubstitutor> inheritedClasses = new HashMap<PsiClass, PsiSubstitutor>();
     final TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
     return checkInterfaceMultipleInheritance(aClass,
+                                             aClass,
                                              PsiSubstitutor.EMPTY, inheritedClasses,
                                              new HashSet<PsiClass>(), textRange);
   }
 
   private static HighlightInfo checkInterfaceMultipleInheritance(PsiClass aClass,
+                                                                 PsiElement place, 
                                                                  PsiSubstitutor derivedSubstitutor,
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
                                                                  TextRange textRange) {
     final PsiClassType[] superTypes = aClass.getSuperTypes();
     for (PsiClassType superType : superTypes) {
+      superType = PsiClassImplUtil.correctType(superType, place.getResolveScope());
+      if (superType == null) continue;
       final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
@@ -381,7 +386,7 @@ public class GenericsHighlightUtil {
       }
       inheritedClasses.put(superClass, superTypeSubstitutor);
       visited.add(superClass);
-      final HighlightInfo highlightInfo = checkInterfaceMultipleInheritance(superClass, superTypeSubstitutor, inheritedClasses, visited, textRange);
+      final HighlightInfo highlightInfo = checkInterfaceMultipleInheritance(superClass, place, superTypeSubstitutor, inheritedClasses, visited, textRange);
       visited.remove(superClass);
 
       if (highlightInfo != null) return highlightInfo;
@@ -1185,6 +1190,23 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  public static HighlightInfo checkEnumWithoutConstantsCantHaveAbstractMethods(final PsiClass aClass) {
+    if (!aClass.isEnum()) return null;
+    for (PsiField field : aClass.getFields()) {
+      if (field instanceof PsiEnumConstant) {
+        return null;
+      }
+    }
+    for (PsiMethod method : aClass.getMethods()) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final String description = "Enum declaration without enum constants cannot have abstract methods";
+        final TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+      }
+    }
+    return null;
+  }
+
   public static HighlightInfo checkSelectStaticClassFromParameterizedType(final PsiElement resolved, final PsiJavaCodeReferenceElement ref) {
     if (resolved instanceof PsiClass && ((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
       final PsiElement qualifier = ref.getQualifier();
@@ -1324,6 +1346,61 @@ public class GenericsHighlightUtil {
               }
             }
           }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass) {
+    return areSupersAccessible(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+  }
+
+  public static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass, PsiElement ref) {
+    return areSupersAccessible(aClass, ref.getResolveScope(), ref.getTextRange());
+  }
+
+  private static HighlightInfo areSupersAccessible(@NotNull PsiClass aClass,
+                                                   GlobalSearchScope resolveScope,
+                                                   TextRange range) {
+    final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
+    for (PsiClassType superType : aClass.getSuperTypes()) {
+      final String notAccessibleErrorMessage = isSuperTypeAccessible(superType, new HashSet<PsiClass>(), resolveScope, factory);
+      if (notAccessibleErrorMessage != null) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip(notAccessibleErrorMessage)
+          .range(range)
+          .create();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String isSuperTypeAccessible(PsiType superType,
+                                              HashSet<PsiClass> classes,
+                                              GlobalSearchScope resolveScope,
+                                              JavaPsiFacade factory) {
+    final PsiClass aClass = PsiUtil.resolveClassInType(superType);
+    if (aClass != null && classes.add(aClass)) {
+      final String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
+        return "Cannot access " + HighlightUtil.formatClass(aClass);
+      }
+
+      if (superType instanceof PsiClassType) {
+        for (PsiType psiType : ((PsiClassType)superType).getParameters()) {
+          final String notAccessibleMessage = isSuperTypeAccessible(psiType, classes, resolveScope, factory);
+          if (notAccessibleMessage != null) {
+            return notAccessibleMessage;
+          }
+        }
+      }
+
+      for (PsiClassType type : aClass.getSuperTypes()) {
+        final String notAccessibleMessage = isSuperTypeAccessible(type, classes, resolveScope, factory);
+        if (notAccessibleMessage != null) {
+          return notAccessibleMessage;
         }
       }
     }

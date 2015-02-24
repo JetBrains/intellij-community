@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil.canBeMethodOf;
-import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.MAP_KEY;
+import static org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.MAP_KEY;
 
 /**
  * @author Vladislav.Soroka

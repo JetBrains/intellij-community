@@ -3,31 +3,24 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.jetbrains.edu.learning.StudyProjectGenerator;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.course.CourseInfo;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.stepic.CourseInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * author: liana
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel{
-  private Set<CourseInfo> myAvailableCourses = new HashSet<CourseInfo>();
+  private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
   private JComboBox myCoursesComboBox;
-  private JButton myBrowseButton;
   private JButton myRefreshButton;
   private JPanel myContentPanel;
   private JLabel myAuthorLabel;
@@ -40,12 +33,11 @@ public class StudyNewProjectPanel{
 
   public StudyNewProjectPanel(StudyProjectGenerator generator) {
     myGenerator = generator;
-    Map<CourseInfo, File> courses = myGenerator.getCourses();
-    if (courses.isEmpty()) {
+    myAvailableCourses = myGenerator.getCourses();
+    if (myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
     else {
-      myAvailableCourses = courses.keySet();
       for (CourseInfo courseInfo : myAvailableCourses) {
         myCoursesComboBox.addItem(courseInfo);
       }
@@ -64,52 +56,11 @@ public class StudyNewProjectPanel{
 
   private void initListeners() {
 
-    final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return file.isDirectory() || StudyUtils.isZip(file.getName());
-      }
-
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return StudyUtils.isZip(file.getName());
-      }
-    };
-    myBrowseButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooser.chooseFile(fileChooser, null, null,
-                               new Consumer<VirtualFile>() {
-                                 @Override
-                                 public void consume(VirtualFile file) {
-                                   String fileName = file.getPath();
-                                   int oldSize = myAvailableCourses.size();
-                                   CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
-                                   if (courseInfo != null)  {
-                                     if (oldSize != myAvailableCourses.size()) {
-                                       myCoursesComboBox.addItem(courseInfo);
-                                     }
-                                     myCoursesComboBox.setSelectedItem(courseInfo);
-                                     setOK();
-                                   }
-                                   else {
-                                     setError(INVALID_COURSE);
-                                     myCoursesComboBox.removeAllItems();
-                                     myCoursesComboBox.addItem(CourseInfo.INVALID_COURSE);
-                                     for (CourseInfo course : myAvailableCourses) {
-                                       myCoursesComboBox.addItem(course);
-                                     }
-                                     myCoursesComboBox.setSelectedItem(CourseInfo.INVALID_COURSE);
-                                   }
-                                 }
-                               });
-      }
-    });
     myRefreshButton.addActionListener(new RefreshActionListener());
     myCoursesComboBox.addActionListener(new CourseSelectedListener());
   }
 
-  private void setError(String errorMessage) {
+  private void setError(@NotNull final String errorMessage) {
     myGenerator.fireStateChanged(new ValidationResult(errorMessage));
     if (myValidationManager != null) {
       myValidationManager.validate();
@@ -140,35 +91,20 @@ public class StudyNewProjectPanel{
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      myGenerator.downloadAndUnzip(true);
-      Map<CourseInfo, File> downloadedCourses = myGenerator.loadCourses();
-      if (downloadedCourses.isEmpty()) {
+      final List<CourseInfo> courses = myGenerator.getCourses();
+      if (courses.isEmpty()) {
         setError(CONNECTION_ERROR);
         return;
       }
-      Map<CourseInfo, File> oldCourses = myGenerator.getLoadedCourses();
-      Map<CourseInfo, File> newCourses = new HashMap<CourseInfo, File>();
-      for (Map.Entry<CourseInfo, File> course : oldCourses.entrySet()) {
-        File courseFile = course.getValue();
-        if (courseFile.exists()) {
-          newCourses.put(course.getKey(), courseFile);
-        }
-      }
-      for (Map.Entry<CourseInfo, File> course : downloadedCourses.entrySet()) {
-        CourseInfo courseName = course.getKey();
-        if (newCourses.get(courseName) == null) {
-          newCourses.put(courseName, course.getValue());
-        }
-      }
       myCoursesComboBox.removeAllItems();
 
-      for (CourseInfo courseInfo : newCourses.keySet()) {
+      for (CourseInfo courseInfo : courses) {
         myCoursesComboBox.addItem(courseInfo);
       }
-      myGenerator.setSelectedCourse(StudyUtils.getFirst(newCourses.keySet()));
+      myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
 
-      myGenerator.setCourses(newCourses);
-      myAvailableCourses = newCourses.keySet();
+      myGenerator.setCourses(courses);
+      myAvailableCourses = courses;
       myGenerator.flushCache();
     }
   }

@@ -64,13 +64,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    VfsRootAccess.allowRootAccess(PathManager.getOptionsPath());
     super.setUp();
     myGlobalSettingsFile =
       MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
     if (myGlobalSettingsFile != null) {
       VfsRootAccess.allowRootAccess(myGlobalSettingsFile.getAbsolutePath());
     }
-    VfsRootAccess.allowRootAccess(PathManager.getOptionsPath());
   }
 
   @Override
@@ -86,7 +86,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       if (myGlobalSettingsFile != null) {
         VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
       }
-      VfsRootAccess.allowRootAccess(PathManager.getOptionsPath());
+      VfsRootAccess.disallowRootAccess(PathManager.getOptionsPath());
       Messages.setTestDialog(TestDialog.DEFAULT);
       myProjectsManager.projectClosed();
       removeFromLocalRepository("test");

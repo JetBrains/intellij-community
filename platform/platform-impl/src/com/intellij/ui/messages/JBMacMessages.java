@@ -49,7 +49,9 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {defaultButton, alternateButton, otherButton}, doNotAskOption, defaultButton, alternateButton);
+                                                 new String [] {defaultButton, otherButton, alternateButton},
+                                                 doNotAskOption, defaultButton, alternateButton);
+
     String resultString = sheetMessage.getResult();
     int result = resultString.equals(defaultButton) ? Messages.YES : resultString.equals(alternateButton) ? Messages.NO : Messages.CANCEL;
     if (doNotAskOption != null) {
@@ -73,12 +75,8 @@ public class JBMacMessages extends MacMessagesEmulation {
 
     Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
-    if (focusedOptionIndex != -1) {
-      focusedOptionIndex = (defaultOptionIndex == focusedOptionIndex) ? buttons.length - 1 : focusedOptionIndex;
-    }
-
-    final String defaultOptionTitle = defaultOptionIndex == -1 ? null : buttons[defaultOptionIndex];
-    final String focusedButtonTitle = focusedOptionIndex == -1 ? null : buttons[focusedOptionIndex];
+    final String defaultOptionTitle = defaultOptionIndex != -1 ? buttons[buttons.length - 1 - defaultOptionIndex] : null;
+    final String focusedButtonTitle = focusedOptionIndex != -1 ? buttons[buttons.length - 1 - focusedOptionIndex] : null;
 
     final SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, defaultOptionTitle, focusedButtonTitle);
     String result = sheetMessage.getResult();
