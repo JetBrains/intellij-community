@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,7 +220,9 @@ public class PluginsAdvertiser implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (!UpdateSettings.getInstance().CHECK_NEEDED) return;
+    if (!UpdateSettings.getInstance().isCheckNeeded()) {
+      return;
+    }
     final UnknownFeaturesCollector collectorSuggester = UnknownFeaturesCollector.getInstance(project);
     final Set<UnknownFeature> unknownFeatures = collectorSuggester.getUnknownFeatures();
     final KnownExtensions extensions = loadExtensions();

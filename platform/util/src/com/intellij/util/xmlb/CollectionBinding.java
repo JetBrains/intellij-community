@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,13 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
-  public CollectionBinding(ParameterizedType type, final Accessor accessor) {
+  public CollectionBinding(ParameterizedType type, Accessor accessor) {
     super(getComponentClass(type), Constants.COLLECTION, accessor);
   }
 
-  private static Class getComponentClass(ParameterizedType type) {
+  private static Class getComponentClass(@NotNull ParameterizedType type) {
     Type arg = type.getActualTypeArguments()[0];
-    if (arg instanceof ParameterizedType) {
-      return (Class)((ParameterizedType)arg).getRawType();
-    }
-    return (Class)arg;
+    return arg instanceof ParameterizedType ? (Class)((ParameterizedType)arg).getRawType() : (Class)arg;
   }
 
   @Override
@@ -58,7 +55,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
   }
 
   @Override
-  protected String getCollectionTagName(final Object target) {
+  protected String getCollectionTagName(Object target) {
     if (target instanceof Set) {
       return Constants.SET;
     }

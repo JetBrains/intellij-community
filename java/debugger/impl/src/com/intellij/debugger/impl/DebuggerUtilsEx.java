@@ -33,7 +33,14 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -47,6 +54,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.ui.content.Content;
+import com.intellij.unscramble.ThreadDumpPanel;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -397,6 +407,43 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, defaultExpression);
     }
     return null;
+  }
+
+  private static int myThreadDumpsCount = 0;
+  private static int myCurrentThreadDumpId = 1;
+
+  private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
+
+  public static void addThreadDump(Project project, List<ThreadState> threads, final RunnerLayoutUi ui, DebuggerSession session) {
+    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    consoleBuilder.filters(ExceptionFilters.getFilters(session.getSearchScope()));
+    final ConsoleView consoleView = consoleBuilder.getConsole();
+    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    consoleView.allowHeavyFilters();
+    final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
+
+    final String id = THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
+    final Content content = ui.createContent(id, panel, id, null, null);
+    content.setCloseable(true);
+    content.setDescription("Thread Dump");
+    ui.addContent(content);
+    ui.selectAndFocus(content, true, true);
+    myThreadDumpsCount++;
+    myCurrentThreadDumpId++;
+    Disposer.register(content, new Disposable() {
+      @Override
+      public void dispose() {
+        myThreadDumpsCount--;
+        if (myThreadDumpsCount == 0) {
+          myCurrentThreadDumpId = 1;
+        }
+      }
+    });
+    Disposer.register(content, consoleView);
+    ui.selectAndFocus(content, true, false);
+    if (threads.size() > 0) {
+      panel.selectStackFrame(0);
+    }
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);

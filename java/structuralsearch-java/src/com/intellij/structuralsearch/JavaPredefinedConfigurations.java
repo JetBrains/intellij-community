@@ -165,7 +165,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.typed.symbol"),"'Symbol <'_GenericArgument+>", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.casts"),"( '_Type <'_GenericArgument+> ) '_Expr", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.type.var.substitutions.in.intanceof.with.generic.types"),"'_Expr instanceof '_Type <'Substitutions+> ", GENERICS_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = 'Init?;", GENERICS_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.variables.of.generic.types"),"'_Type <'_GenericArgument+>  'Var = '_Init?;", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.diamond.operators"), "new 'ClassName<>('_Argument*)", GENERICS_TYPE),
 
       // Add comments and metadata
@@ -226,7 +226,7 @@ class JavaPredefinedConfigurations {
                                                                                                "  public void ejbRemove();\n" +
                                                                                                "}", J2EE_TYPE),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.ejb.interface"),"interface 'EjbInterface extends EJBObject {\n" +
-                                                                                                 "  'Type+ 'Method+('ParamType* 'ParamName*);\n" +
+                                                                                                 "  '_Type+ '_Method+('_ParamType* '_ParamName*);\n" +
                                                                                                  "}", J2EE_TYPE),
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.servlets"),"public class 'Servlet extends '_ParentClass:*HttpServlet {\n" +
                                                                                             "  public void '_InitServletMethod?:init ();\n" +
@@ -243,19 +243,19 @@ class JavaPredefinedConfigurations {
 
       // Misc types
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.serializable.classes.and.their.serialization.implementation"),
-                               "class '_Class implements '_Serializable:*Serializable {\n" +
-                               "  static final long 'VersionField?:serialVersionUID = '_VersionFieldInit?;\n" +
+                               "class 'Class implements '_Serializable:*Serializable {\n" +
+                               "  static final long '_VersionField?:serialVersionUID = '_VersionFieldInit?;\n" +
                                "  private static final ObjectStreamField[] '_persistentFields?:serialPersistentFields = '_persistentFieldInitial?; \n" +
-                               "  private void 'SerializationWriteHandler?:writeObject (ObjectOutputStream '_stream) throws IOException;\n" +
-                               "  private void 'SerializationReadHandler?:readObject (ObjectInputStream '_stream2) throws IOException, ClassNotFoundException;\n" +
-                               "  Object 'SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;\n" +
-                               "  Object 'SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;\n" +
+                               "  private void '_SerializationWriteHandler?:writeObject (ObjectOutputStream '_stream) throws IOException;\n" +
+                               "  private void '_SerializationReadHandler?:readObject (ObjectInputStream '_stream2) throws IOException, ClassNotFoundException;\n" +
+                               "  Object '_SpecialSerializationReadHandler?:readResolve () throws ObjectStreamException;\n" +
+                               "  Object '_SpecialSerializationWriteHandler?:writeReplace () throws ObjectStreamException;\n" +
                                "}",MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.cloneable.implementations"),
                                "class '_Class implements '_Interface:*Cloneable {\n" +
                                "  Object 'CloningMethod:*clone ();\n" +
                                "}",MISC_TYPE),
-      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.]junit.test.cases"),"public class 'TestCase extends 'TestCaseClazz:*TestCase {\n" +
+      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.]junit.test.cases"),"public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
                                                                                                      "  public void '_testMethod+:test.* ();\n" +
                                                                                                      "}", MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.singletons"),"class 'Class {\n" +
@@ -285,7 +285,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"),"'Symbol",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),"'Symbol:[read]",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),"'Symbol:[regex( name ) && write]",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*Base ) 'Expr",INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*[regex( Base )]) '_Expr",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )]",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )]",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.method.calls"),"'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",INTERESTING_TYPE),

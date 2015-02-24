@@ -86,6 +86,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   @Override
   public boolean isValid() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!super.isValid()) {
       return false;
     }

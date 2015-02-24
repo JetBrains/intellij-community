@@ -57,4 +57,10 @@ class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
   public String getCommentReferencesText(final int usagesCount, final int filesCount) {
     return getCodeReferencesText(usagesCount, filesCount);
   }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.pull.up";
+  }
 }

@@ -180,7 +180,6 @@
       </action>
       <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
-      <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>

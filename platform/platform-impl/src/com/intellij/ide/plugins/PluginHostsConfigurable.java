@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,13 +67,13 @@ public class PluginHostsConfigurable extends BaseConfigurable {
   public void apply() throws ConfigurationException {
     UpdateSettings settings = UpdateSettings.getInstance();
 
-    settings.myPluginHosts.clear();
-    settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
+    settings.getStoredPluginHosts().clear();
+    settings.getStoredPluginHosts().addAll(myUpdatesSettingsPanel.getPluginsHosts());
   }
 
   @Override
   public void reset() {
-    myUpdatesSettingsPanel.setPluginHosts(UpdateSettings.getInstance().myPluginHosts);
+    myUpdatesSettingsPanel.setPluginHosts(UpdateSettings.getInstance().getStoredPluginHosts());
   }
 
   @Override
@@ -82,7 +82,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
       return false;
     }
     //noinspection EqualsBetweenInconvertibleTypes
-    return !UpdateSettings.getInstance().myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts());
+    return !UpdateSettings.getInstance().getStoredPluginHosts().equals(myUpdatesSettingsPanel.getPluginsHosts());
   }
 
   @Override

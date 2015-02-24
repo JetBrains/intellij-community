@@ -92,6 +92,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     myProject = project;
   }
 
+  @NotNull
   public ExternalSystemJdkComboBox withoutJre() {
     suggestJre = false;
     return this;

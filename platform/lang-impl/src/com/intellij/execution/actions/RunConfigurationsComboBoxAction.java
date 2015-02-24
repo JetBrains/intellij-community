@@ -22,62 +22,46 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
-  private static final Key<ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
   public static final Icon CHECKED_ICON = new SizedIcon(AllIcons.Actions.Checked, 16, 16);
   public static final Icon CHECKED_SELECTED_ICON = new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16);
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    final IdeFrame ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
-    final ComboBoxButton button = (ComboBoxButton)ideFrame.getComponent().getRootPane().getClientProperty(BUTTON_KEY);
+  public void actionPerformed(AnActionEvent e) {
+    ComboBoxButton button = (ComboBoxButton)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
     if (button == null || !button.isShowing()) return;
     button.showPopup();
   }
 
-  private static IdeFrame findFrame(final Component component) {
-    return UIUtil.getParentOfType(IdeFrame.class, component);
-  }
-
   @Override
-  public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    ComboBoxButton button = (ComboBoxButton)presentation.getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
-      presentation.setEnabled(findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) != null);
+      presentation.setEnabled(button != null);
       return;
     }
 
     try {
       if (project == null || project.isDisposed() || !project.isInitialized()) {
-        //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
-        //  // do nothing if frame is not active
-        //  return;
-        //}
-
         updateButton(null, null, null, presentation);
         presentation.setEnabled(false);
       }
@@ -135,31 +119,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
-    final ComboBoxButton comboBoxButton = new ComboBoxButton(presentation) {
-      @Override
-      public void addNotify() {
-        super.addNotify();    //To change body of overriden methods use Options | File Templates.;
-        final IdeFrame frame = findFrame(this);
-        LOG.assertTrue(frame != null);
-        frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
-      }
-
-      @Override
-      public void removeNotify() {
-        final IdeFrame frame = findFrame(this);
-        LOG.assertTrue(frame != null);
-        frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, null);
-        presentation.setIcon(null);
-        setIcon(null);
-        super.removeNotify();
-      }
-    };
-
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-    panel.add(comboBoxButton);
-    panel.setOpaque(false);
-    return panel;
+    ComboBoxButton button = new ComboBoxButton(presentation);
+    button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+    return button;
   }
 
 

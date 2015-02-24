@@ -55,7 +55,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
 
-    if (mySettings.SECURE_CONNECTION && !NetUtils.isSniEnabled()) {
+    if (mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -76,7 +76,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   }
 
   private void scheduleOnStartCheck(@NotNull Application app) {
-    if (!mySettings.CHECK_NEEDED || mySettings.SECURE_CONNECTION && !NetUtils.isSniEnabled()) {
+    if (!mySettings.isCheckNeeded() || mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
       return;
     }
 
@@ -84,9 +84,9 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
-        long timeToNextCheck = mySettings.LAST_TIME_CHECKED + CHECK_INTERVAL - System.currentTimeMillis();
+        long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
 
-        if (StringUtil.compareVersionNumbers(mySettings.LAST_BUILD_CHECKED, currentBuild) < 0 || timeToNextCheck <= 0) {
+        if (StringUtil.compareVersionNumbers(mySettings.getLasBuildChecked(), currentBuild) < 0 || timeToNextCheck <= 0) {
           myCheckRunnable.run();
         }
         else {

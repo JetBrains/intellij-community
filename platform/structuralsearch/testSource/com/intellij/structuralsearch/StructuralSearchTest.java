@@ -826,7 +826,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String s10031 = "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
                     "try { a(); } catch(Exception ex) {}";
-    String s10032 = "try { a(); } catch('_Type+ 'Arg+) { 'Statements*; }\n";
+    String s10032 = "try { a(); } catch('_Type+ 'Arg+) { '_Statements*; }\n";
     assertEquals(
       "finally matching",
       2,
@@ -2440,12 +2440,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "@Foo(value2=baz4) int a3;\n" +
                  "}";
     String s12 = "@Foo(value=baz) int 'a;)";
-    String s12_2 = "@Foo(value='baz:baz2 ) int 'a;)";
-    String s12_3 = "@Foo('value:value2 = baz3 ) int 'a;)";
-    String s12_4 = "@Foo('value:value2 = 'baz3:baz3 ) int 'a;)";
-    String s12_5 = "@Foo('value:value2 = 'baz3:baz ) int 'a;)";
-    String s12_6 = "@Foo('value:value2 = 'baz3 ) int 'a;)";
-    String s12_7 = "@Foo('value:value2 = ) int 'a;";
+    String s12_2 = "@Foo(value='baz:baz2 ) int '_a;)";
+    String s12_3 = "@Foo('value:value2 = baz3 ) int '_a;)";
+    String s12_4 = "@Foo('value:value2 = '_baz3:baz3 ) int '_a;)";
+    String s12_5 = "@Foo('value:value2 = '_baz3:baz ) int '_a;)";
+    String s12_6 = "@Foo('value:value2 = '_baz3 ) int '_a;)";
+    String s12_7 = "@Foo('value:value2 = ) int '_a;";
 
     assertEquals("Find anno parameter value",1,findMatchesCount(s11,s12));
     assertEquals("Find anno parameter value",2,findMatchesCount(s11,s12_2));

@@ -1223,8 +1223,7 @@ public class InferenceSession {
                                                       PsiImplUtil.normalizeWildcardTypeByPosition(pType, reference)));
       }
     }
-    else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || 
-             !isStatic && varargs && functionalMethodParameters.length > 0 && PsiMethodReferenceUtil.hasReceiver(reference, method)) { //instance methods
+    else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
       initBounds(containingClass.getTypeParameters());
 
       final PsiType pType = signature.getParameterTypes()[0];

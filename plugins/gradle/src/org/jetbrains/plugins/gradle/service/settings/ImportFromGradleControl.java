@@ -52,9 +52,7 @@ public class ImportFromGradleControl
   @NotNull
   @Override
   protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
-    GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(settings);
-    settingsControl.hideUseAutoImportBox();
-    return settingsControl;
+    return new GradleProjectSettingsControl(settings);
   }
 
   @Nullable
@@ -65,7 +63,7 @@ public class ImportFromGradleControl
 
   @Override
   protected void onLinkedProjectPathChange(@NotNull String path) {
-    ((GradleProjectSettingsControl)getProjectSettingsControl()).updateWrapperControls(path, false);
+    ((GradleProjectSettingsControl)getProjectSettingsControl()).update(path, false);
   }
 
   @Override

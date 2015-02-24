@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -119,7 +119,8 @@ class XmlSerializerImpl {
       map.put(key, binding);
       try {
         binding.init();
-      } catch (XmlSerializationException e) {
+      }
+      catch (XmlSerializationException e) {
         map.remove(key);
         throw e;
       }
@@ -156,6 +157,12 @@ class XmlSerializerImpl {
       return new PrimitiveValueBinding(aClass, accessor);
     }
     if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+      if (accessor != null) {
+        CollectionBean listBean = accessor.getAnnotation(CollectionBean.class);
+        if (listBean != null) {
+          return new CompactCollectionBinding(accessor);
+        }
+      }
       return new CollectionBinding((ParameterizedType)originalType, accessor);
     }
     if (accessor != null) {
@@ -167,7 +174,7 @@ class XmlSerializerImpl {
       }
       //noinspection deprecation
       if (JDOMExternalizableStringList.class == aClass) {
-        return new JDOMExternalizableStringListBinding(accessor);
+        return new CompactCollectionBinding(accessor);
       }
     }
     if (Date.class.isAssignableFrom(aClass)) {
@@ -177,21 +184,6 @@ class XmlSerializerImpl {
       return new PrimitiveValueBinding(aClass, accessor);
     }
     return new BeanBinding(aClass, accessor);
-  }
-
-  @Nullable
-  @Deprecated
-  @SuppressWarnings({"unchecked", "unused"})
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  static <T> T findAnnotation(Annotation[] annotations, Class<T> aClass) {
-    if (annotations == null) return null;
-
-    for (Annotation annotation : annotations) {
-      if (aClass.isAssignableFrom(annotation.getClass())) return (T)annotation;
-    }
-    return null;
   }
 
   @Nullable
