@@ -15,6 +15,7 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.coverage.view.CoverageListNodeFactory;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.editor.Editor;
@@ -134,7 +135,19 @@ public abstract class JavaCoverageEngineExtension {
    * @param val the value of the parent node (normally a PsiFile or PsiClass)
    * @return the list of nodes to display, or null if the default logic for calculating the list of child nodes should be used.
    */
-  public List<AbstractTreeNode> getCoverageViewChildrenNodes(Object val) {
+  public List<AbstractTreeNode> getCoverageViewChildrenNodes(Object val, CoverageListNodeFactory nodeFactory) {
+    return null;
+  }
+
+  /**
+   * Returns summary string containing coverage information for a node.
+   * @param annotator coverage annotator used to collect coverage information
+   * @param node node to get summary for
+   * @return summary string for the node, usually containing percentage of covered classes and lines, or null if no custom summary is
+   * provided by the extension
+   */
+  @Nullable
+  public String getSummaryForNode(JavaCoverageAnnotator annotator, AbstractTreeNode node) {
     return null;
   }
 }
