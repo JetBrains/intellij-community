@@ -15,10 +15,11 @@
  */
 package com.intellij.xml.impl.schema;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
@@ -85,16 +86,25 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new ConcurrentFactoryMap<String, CachedValue<CanContainAttributeType>>() {
     @Override
     protected CachedValue<CanContainAttributeType> create(final String key) {
       return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(new CachedValueProvider<CanContainAttributeType>() {
         @Override
         public Result<CanContainAttributeType> compute() {
-          THashSet<PsiFile> dependencies = new THashSet<PsiFile>();
+          THashSet<Object> dependencies = new THashSet<Object>();
           CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<String>(), dependencies);
           if (dependencies.isEmpty()) {
             dependencies.add(myTag.getContainingFile());
+          }
+          if (DumbService.isDumb(myTag.getProject())) {
+            dependencies.add(new ModificationTracker() {
+              @Override
+              public long getModificationCount() {
+                return DumbService.isDumb(myTag.getProject()) ? 0 : 1;
+              }
+            });
           }
           return Result.create(type, ArrayUtil.toObjectArray(dependencies));
         }
@@ -398,7 +408,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
                                                        XmlTag tag,
                                                        @Nullable String qName,
                                                        Set<String> visited,
-                                                       @Nullable Set<PsiFile> dependencies) {
+                                                       @Nullable Set<Object> dependencies) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "anyAttribute")) {
       if (dependencies != null) {
         dependencies.add(tag.getContainingFile());

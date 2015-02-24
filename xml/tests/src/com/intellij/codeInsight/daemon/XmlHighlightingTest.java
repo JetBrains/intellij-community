@@ -49,6 +49,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -64,6 +65,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.*;
 import gnu.trove.THashSet;
@@ -1422,7 +1424,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     final Editor schemaEditor = allEditors[0] == myEditor ? allEditors[1]:allEditors[0];
     final String text = schemaEditor.getDocument().getText();
-    final String newText = text.replaceAll("xsd","xs");
+    final String newText = text.replaceAll("xsd", "xs");
     WriteCommandAction.runWriteCommandAction(null, new Runnable(){
       @Override
       public void run() {
@@ -2080,6 +2082,26 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     PsiElement resolve = at.resolve();
     assertTrue(resolve instanceof XmlTag);
+  }
+
+  public void testDropAnyAttributeCacheOnExitFromDumbMode() throws Exception {
+    try {
+      DumbServiceImpl.getInstance(myProject).setDumb(true);
+      configureByFiles(null, getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
+                       getVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
+                       getVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));
+      PsiReference at = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+
+      XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
+      XmlElementDescriptor descriptor = tag.getDescriptor();
+      XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
+      System.out.println(Arrays.asList(descriptors));
+    }
+    finally {
+      DumbServiceImpl.getInstance(myProject).setDumb(false);
+    }
+
+    doDoTest(true, false);
   }
 
   public void testQualifiedAttributeReference() throws Exception {
