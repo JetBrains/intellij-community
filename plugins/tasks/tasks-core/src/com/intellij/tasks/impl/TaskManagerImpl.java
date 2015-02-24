@@ -1034,13 +1034,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean createBranch = true;
 
     // close task options
-    public boolean closeIssue = true;
     public boolean commitChanges = true;
     public boolean mergeBranch = true;
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
-    public boolean markAsInProgress = false;
 
     public String changelistNameFormat = "{id} {summary}";
     public String branchNameFormat = "{id}";
