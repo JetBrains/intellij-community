@@ -92,7 +92,7 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
       
       myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, project, editor, file);
       
-      setTitle("Configure Code Style Settings on Selected Fragment");
+      setTitle("Configure Code Style Settings: " + file.getLanguage().getDisplayName());
       setOKButtonText("Save");
       init();
     }
