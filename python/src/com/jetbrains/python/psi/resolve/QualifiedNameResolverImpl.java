@@ -295,7 +295,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
         final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(sdk);
         if (skeletonsDir == null) return;
         final PsiDirectory directory = myContext.getPsiManager().findDirectory(skeletonsDir);
-        myLibResults.add(absoluteVisitor.resolveModuleAt(directory));
+        final PsiElement psiElement = absoluteVisitor.resolveModuleAt(directory);
+        if (psiElement != null)
+          myLibResults.add(psiElement);
       }
     }
   }
