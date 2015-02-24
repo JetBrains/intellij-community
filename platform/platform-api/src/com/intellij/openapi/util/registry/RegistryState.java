@@ -28,7 +28,10 @@ import java.util.TreeMap;
 
 @State(
   name = "Registry",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/ide.general.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class RegistryState implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(RegistryState.class);

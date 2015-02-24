@@ -38,7 +38,7 @@ public abstract class ExternalResourceManager extends SimpleModificationTracker 
   public abstract void removeResource(@NotNull String url, @Nullable String version);
 
   /**
-   * @see #getResourceLocation(String, com.intellij.openapi.project.Project)
+   * @see #getResourceLocation(String, Project)
    */
   @Deprecated
   public abstract String getResourceLocation(@NotNull @NonNls String url);

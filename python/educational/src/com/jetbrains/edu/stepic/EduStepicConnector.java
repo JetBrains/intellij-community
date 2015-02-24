@@ -41,6 +41,8 @@ public class EduStepicConnector {
   private static final String ourDomain = "stepic.org";
   private static String ourSessionId = "524iethiwju2tjywaqmf7tbwx0p0jk1b";
   private static String ourCSRFToken = "LJ9n6OyLVA7hxU94dlYWUu65MF51Nx37";
+  //this prefix indicates that course can be opened by educational plugin
+  public static final String PYCHARM_PREFIX = "pycharm ";
 
   private EduStepicConnector() {
   }
@@ -84,7 +86,8 @@ public class EduStepicConnector {
     course.setAuthor(info.getAuthor());
     course.setDescription(info.getDescription());
     course.setName(info.getName());
-    course.setLanguage("Python");  // TODO: get from stepic
+    String courseType = info.getType();
+    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length()));
     course.setUpToDate(true);  // TODO: get from stepic
     try {
       for (Integer section : info.sections) {
