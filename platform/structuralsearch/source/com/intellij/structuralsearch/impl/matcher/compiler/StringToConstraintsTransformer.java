@@ -248,7 +248,19 @@ class StringToConstraintsTransformer {
       // eat complete condition
 
       miscBuffer.setLength(0);
-      for(++index; index < length && ((ch = pattern.charAt(index))!=']' || pattern.charAt(index-1)=='\\'); ++index) {
+      for(++index; index < length && ((ch = pattern.charAt(index)) != ']' || pattern.charAt(index-1) == '\\'); ++index) {
+        if (ch == '"') {
+          miscBuffer.append(ch);
+          for (++index; index < length && (ch = pattern.charAt(index)) != '"'; ++index) {
+            if (ch == '\\') {
+              ++index;
+              if (index >= length) break;
+              ch = pattern.charAt(index);
+            }
+            miscBuffer.append(ch);
+          }
+          if (ch != '"') throw new MalformedPatternException(SSRBundle.message("error.expected.end.quote"));
+        }
         miscBuffer.append(ch);
       }
       if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.condition.or.bracket"));
