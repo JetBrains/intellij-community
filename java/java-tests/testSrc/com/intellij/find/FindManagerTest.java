@@ -365,6 +365,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(1, findUsages(findModel));
   }
 
+  public void testNonSourceContent() throws Exception {
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    PsiTestUtil.addContentRoot(myModule, root);
+
+    createFile(myModule, root, "A.txt", "goo doo");
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("goo");
+    findModel.setProjectScope(false);
+    findModel.setModuleName(myModule.getName());
+
+    assertSize(1, findUsages(findModel));
+  }
+
   public void testReplaceRegexp() {
     FindModel findModel = new FindModel();
     findModel.setStringToFind("bug_(?=here)");
@@ -537,6 +550,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       findModel.setFromCursor(false);
       findModel.setGlobal(true);
       findModel.setMultipleFiles(true);
+      findModel.setCustomScope(true);
 
       ThrowableRunnable test = new ThrowableRunnable() {
         @Override
@@ -573,6 +587,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       VirtualFile file = tempDirFixture.createFile("a.txt", "foo bar foo");
       FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
       findModel.setWholeWordsOnly(true);
+      findModel.setCustomScope(true);
       findModel.setCustomScope(new LocalSearchScope(PsiManager.getInstance(myProject).findFile(file)));
       assertSize(2, findUsages(findModel));
     }

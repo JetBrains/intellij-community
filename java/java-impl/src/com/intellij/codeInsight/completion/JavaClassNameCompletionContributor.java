@@ -37,9 +37,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -117,26 +119,52 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
-        @Override
-        public void consume(PsiClass psiClass) {
-          if (filter.isAcceptable(psiClass, insertedElement)) {
-            if (!inJavaContext) {
-              consumer.consume(AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING));
-            } else {
-              for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew,
-                                                                                 JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
+      @Override
+      public void consume(PsiClass psiClass) {
+        processClass(psiClass, ContainerUtil.<PsiClass>newHashSet(), "");
+      }
+
+      private void processClass(PsiClass psiClass, Set<PsiClass> visited, String prefix) {
+        if (!visited.add(psiClass)) return;
+
+        boolean isInnerClass = StringUtil.isNotEmpty(prefix);
+        if (isInnerClass && isProcessedIndependently(psiClass)) {
+          return;
+        }
+
+        if (filter.isAcceptable(psiClass, insertedElement)) {
+          if (!inJavaContext) {
+            JavaPsiClassReferenceElement element = AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING);
+            element.setLookupString(prefix + element.getLookupString());
+            consumer.consume(element);
+          } else {
+            for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew,
+                                                                               JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
                 @Override
                 public boolean value(PsiClass psiClass) {
                   return filter.isAcceptable(psiClass, insertedElement) &&
                          AllClassesGetter.isAcceptableInContext(insertedElement, psiClass, filterByScope, pkgContext);
                 }
               })) {
-                consumer.consume(element);
-              }
+              element.setLookupString(prefix + element.getLookupString());
+              consumer.consume(element);
+            }
+          }
+        } else {
+          String name = psiClass.getName();
+          if (name != null) {
+            for (PsiClass innerClass : psiClass.getInnerClasses()) {
+              processClass(innerClass, visited, prefix + name + ".");
             }
           }
         }
-      });
+      }
+
+      private boolean isProcessedIndependently(PsiClass psiClass) {
+        String innerName = psiClass.getName();
+        return innerName != null && matcher.prefixMatches(innerName);
+      }
+    });
   }
 
   static LookupElement highlightIfNeeded(JavaPsiClassReferenceElement element, CompletionParameters parameters) {
