@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -212,7 +213,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
     @Nullable
     @Override
-    public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
+    protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
       if (mySignature == null) return null;
 
       if (conflicts.size() > 1) checkSameSignatures(conflicts);

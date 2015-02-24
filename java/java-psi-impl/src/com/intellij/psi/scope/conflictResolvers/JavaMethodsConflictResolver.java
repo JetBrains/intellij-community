@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -68,7 +69,17 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @Override
-  public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts){
+  public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
+    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, true, new Computable<CandidateInfo>() {
+      @Override
+      public CandidateInfo compute() {
+        return guardedOverloadResolution(conflicts);
+      }
+    });
+  }
+
+  @Nullable
+  protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 

@@ -396,8 +396,17 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
             return parent instanceof PsiNewExpression ? ((PsiNewExpression)parent).getArgumentList() : super.getMarkerList();
           }
         };
-      if (!varargs && staticFactoryMethod.isVarArgs() && staticFactoryCandidateInfo.getPertinentApplicabilityLevel() < MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
-        return inferTypeParametersForStaticFactory(staticFactoryMethod, expression, parent, true);
+      if (!varargs && staticFactoryMethod.isVarArgs()) {
+        final Computable<Integer> computable = new Computable<Integer>() {
+          @Override
+          public Integer compute() {
+            return staticFactoryCandidateInfo.getPertinentApplicabilityLevel();
+          }
+        };
+        final Integer applicability = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(expression, true, computable);
+        if ((applicability != null ? applicability : staticFactoryCandidateInfo.getApplicabilityLevel()) < MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
+          return inferTypeParametersForStaticFactory(staticFactoryMethod, expression, parent, true);
+        }
       }
       return staticFactoryCandidateInfo.getSubstitutor();
     }
