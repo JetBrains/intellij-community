@@ -359,7 +359,7 @@ public class PathManager {
       return platformPath(PATHS_SELECTOR, "Library/Preferences", /*"APPDATA", "XDG_CONFIG_HOME", ".config",*/ "") + "/idea.properties";
     }
     else {
-      return getUserHome() + "/.idea.properties";
+      return getUserHome() + "/idea.properties";
     }
   }
 
