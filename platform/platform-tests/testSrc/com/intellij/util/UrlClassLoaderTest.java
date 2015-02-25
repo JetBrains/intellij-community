@@ -27,7 +27,6 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.zip.ZipEntry;
@@ -45,7 +44,7 @@ public class UrlClassLoaderTest extends TestCase {
     assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
   }
 
-  public void testConcurrentResourceLoading() throws IOException, ClassNotFoundException, ExecutionException, InterruptedException {
+  public void testConcurrentResourceLoading() throws Exception {
     final List<String> resourceNames = ContainerUtil.newArrayList();
     List<URL> urls = ContainerUtil.newArrayList();
 
@@ -107,7 +106,7 @@ public class UrlClassLoaderTest extends TestCase {
 
           private final Random findResourceOrFindResourcesChooser = new Random();
           private URL findResource(String name) {
-            if (findResourceOrFindResourcesChooser.nextInt(10) < 5) {
+            if (findResourceOrFindResourcesChooser.nextBoolean()) {
               try {
                 Enumeration<URL> resources = loader.getResources(name);
                 assertTrue(resources.hasMoreElements());
