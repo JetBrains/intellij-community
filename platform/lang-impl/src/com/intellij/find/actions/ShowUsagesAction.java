@@ -1055,8 +1055,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     window.validate();
     window.repaint();
-    table.revalidate();
-    table.repaint();
   }
 
   private static Rectangle fitToScreen(@NotNull Dimension newDim, @NotNull RelativePoint popupPosition, JTable table) {

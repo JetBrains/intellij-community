@@ -92,7 +92,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return myMap.isEmpty();
   }
 
-  public boolean processForKey(@NotNull K key, @NotNull Processor<V> p) {
+  public boolean processForKey(@NotNull K key, @NotNull Processor<? super V> p) {
     return processValue(p, myMap.get(key));
   }
 

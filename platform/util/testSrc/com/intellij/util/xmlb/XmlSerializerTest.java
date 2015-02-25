@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.*;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -1259,6 +1260,12 @@ public class XmlSerializerTest extends TestCase {
     public JDOMExternalizableStringList list = new JDOMExternalizableStringList();
   }
 
+  @Tag("b")
+  static class Bean4 {
+    @CollectionBean
+    public final List<String> list = new SmartList<String>();
+  }
+
   @SuppressWarnings("deprecation")
   public void testJDOMExternalizableStringList() throws IOException, JDOMException {
     Bean3 bean = new Bean3();
@@ -1272,6 +1279,39 @@ public class XmlSerializerTest extends TestCase {
                      "    <item value=\"three\" />\n" +
                      "  </list>\n" +
                      "</b>", bean, new SkipDefaultsSerializationFilter());
+  }
+
+  public void testCollectionBean() throws IOException, JDOMException {
+    Bean4 bean = new Bean4();
+    bean.list.add("one");
+    bean.list.add("two");
+    bean.list.add("three");
+    doSerializerTest("<b>\n" +
+                     "  <list>\n" +
+                     "    <item value=\"one\" />\n" +
+                     "    <item value=\"two\" />\n" +
+                     "    <item value=\"three\" />\n" +
+                     "  </list>\n" +
+                     "</b>", bean, new SkipDefaultsSerializationFilter());
+  }
+
+  public void testCollectionBeanReadJDOMExternalizableStringList() throws IOException, JDOMException {
+    @SuppressWarnings("deprecation")
+    JDOMExternalizableStringList list = new JDOMExternalizableStringList();
+    list.add("one");
+    list.add("two");
+    list.add("three");
+
+    Element value = new Element("value");
+    list.writeExternal(value);
+    Bean4 o = XmlSerializer.deserialize(new Element("state").addContent(new Element("option").setAttribute("name", "myList").addContent(value)), Bean4.class);
+    assertSerializer(o, "<b>\n" +
+                        "  <list>\n" +
+                        "    <item value=\"one\" />\n" +
+                        "    <item value=\"two\" />\n" +
+                        "    <item value=\"three\" />\n" +
+                        "  </list>\n" +
+                        "</b>", "Deserialization failure", new SkipDefaultsSerializationFilter());
   }
 
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {

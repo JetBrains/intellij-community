@@ -148,6 +148,10 @@ public abstract class ZenCodingGenerator {
     return false;
   }
   
+  public boolean isHtml(@NotNull CustomTemplateCallback callback) {
+    return false;
+  }
+  
   public void disableEmmet() {
   }
 }

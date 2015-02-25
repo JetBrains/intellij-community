@@ -55,7 +55,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public GithubRepository(GithubRepositoryType type) {
     super(type);
-    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
+    setUrl("https://" + GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   @NotNull

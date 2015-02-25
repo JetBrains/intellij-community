@@ -301,14 +301,17 @@ class BeanBinding extends Binding {
     do {
       for (Field field : currentClass.getDeclaredFields()) {
         int modifiers = field.getModifiers();
+        //noinspection deprecation
         if (!Modifier.isStatic(modifiers) &&
             (field.getAnnotation(OptionTag.class) != null ||
              field.getAnnotation(Tag.class) != null ||
              field.getAnnotation(Attribute.class) != null ||
              field.getAnnotation(Property.class) != null ||
              field.getAnnotation(Text.class) != null ||
+             field.getAnnotation(CollectionBean.class) != null ||
              (Modifier.isPublic(modifiers) &&
-              !Modifier.isFinal(modifiers) &&
+              // we don't want to allow final fields of all types, but only supported
+              (!Modifier.isFinal(modifiers) || Collection.class.isAssignableFrom(field.getType())) &&
               !Modifier.isTransient(modifiers) &&
               field.getAnnotation(Transient.class) == null))) {
           accessors.add(new FieldAccessor(field));
@@ -361,7 +364,7 @@ class BeanBinding extends Binding {
       return new TextBinding(accessor);
     }
 
-    if (binding instanceof JDOMExternalizableStringListBinding) {
+    if (binding instanceof CompactCollectionBinding) {
       return new AccessorBindingWrapper(accessor, binding);
     }
 

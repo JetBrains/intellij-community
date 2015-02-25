@@ -37,7 +37,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessHandlerBase;
@@ -52,7 +55,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
@@ -801,7 +803,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
 
   @Nullable
-  public XSourcePosition getCurrentFrameSourcePosition() {
+  private XSourcePosition getCurrentFrameSourcePosition() {
     try {
       PyStackFrame frame = currentFrame();
 
@@ -862,21 +864,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       return null;
     }
 
-    VirtualFile virtualFile = currentPosition.getFile();
-
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (document == null) {
-      return null;
-    }
-    final FileViewProvider viewProvider = PsiManager.getInstance(getProject()).findViewProvider(virtualFile);
-    if (viewProvider == null) {
-      return null;
-    }
-    final PsiFile file = viewProvider.getPsi(PythonLanguage.getInstance());
-    if (file == null) {
-      return null;
-    }
-    return file;
+    return PsiManager.getInstance(getProject()).findFile(currentPosition.getFile());
   }
 
 

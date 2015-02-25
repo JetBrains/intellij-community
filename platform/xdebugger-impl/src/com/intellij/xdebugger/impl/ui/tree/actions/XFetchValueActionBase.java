@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.IntIntHashMap;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -102,7 +103,7 @@ public abstract class XFetchValueActionBase extends AnAction {
 
   protected class ValueCollector {
     private final List<String> values = new SmartList<String>();
-    private final List<Integer> indents = new SmartList<Integer>();
+    private final IntIntHashMap indents = new IntIntHashMap();
     private final XDebuggerTree myTree;
     private volatile boolean processed;
 
@@ -111,18 +112,18 @@ public abstract class XFetchValueActionBase extends AnAction {
     }
 
     public void add(@NotNull String value) {
-      add(value, 0);
+      values.add(value);
     }
 
     public void add(@NotNull String value, int indent) {
       values.add(value);
-      indents.add(indent);
+      indents.put(values.size() - 1, indent);
     }
 
     public void finish(Project project) {
       if (processed && !values.contains(null) && !project.isDisposed()) {
         int minIndent = Integer.MAX_VALUE;
-        for (Integer indent : indents) {
+        for (int indent : indents.getValues()) {
           minIndent = Math.min(minIndent, indent);
         }
         StringBuilder sb = new StringBuilder();
@@ -130,8 +131,10 @@ public abstract class XFetchValueActionBase extends AnAction {
           if (i > 0) {
             sb.append("\n");
           }
-          Integer indent = indents.get(i);
-          StringUtil.repeatSymbol(sb, ' ', indent - minIndent);
+          int indent = indents.get(i);
+          if (indent > 0) {
+            StringUtil.repeatSymbol(sb, ' ', indent - minIndent);
+          }
           sb.append(values.get(i));
         }
         handleInCollector(project, sb.toString(), myTree);

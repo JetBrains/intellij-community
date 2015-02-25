@@ -30,6 +30,8 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -58,6 +60,7 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class XmlTagNameSynchronizer extends CommandAdapter implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
                                                                            XMLLanguage.INSTANCE.getID(),
                                                                            XHTMLLanguage.INSTANCE.getID(),
@@ -76,14 +79,14 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        uninstallSynchronizer(event);
+        uninstallSynchronizer(event.getEditor());
       }
     }, ApplicationManager.getApplication());
     processor.addCommandListener(this);
   }
 
-  public void uninstallSynchronizer(@NotNull EditorFactoryEvent event) {
-    final Document document = event.getEditor().getDocument();
+  public void uninstallSynchronizer(final Editor editor) {
+    final Document document = editor.getDocument();
     final TagNameSynchronizer synchronizer = findSynchronizer(document);
     if (synchronizer != null) {
       synchronizer.clearMarkers();
@@ -91,7 +94,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     document.putUserData(SYNCHRONIZER_KEY, null);
   }
 
-  private void installSynchronizer(Editor editor) {
+  private void installSynchronizer(final Editor editor) {
     final Project project = editor.getProject();
     if (project == null) return;
 
@@ -265,12 +268,17 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       int start = -1;
       int end = -1;
       for (int i = offset - 1; i >= Math.max(0, offset - 50); i--) {
-        final char c = sequence.charAt(i);
-        if (c == '<' || (c == '/' && i > 0 && sequence.charAt(i - 1) == '<')) {
-          start = i + 1;
-          break;
+        try {
+          final char c = sequence.charAt(i);
+          if (c == '<' || (c == '/' && i > 0 && sequence.charAt(i - 1) == '<')) {
+            start = i + 1;
+            break;
+          }
+          if (!XmlUtil.isValidTagNameChar(c)) break;
+        } catch (IndexOutOfBoundsException e) {
+          LOG.error("incorrect offset:" + i + ", initial: " + offset, new Attachment("document.txt", sequence.toString()));
+          return null;
         }
-        if (!XmlUtil.isValidTagNameChar(c)) break;
       }
       if (start < 0) return null;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {

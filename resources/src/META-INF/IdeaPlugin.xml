@@ -1341,8 +1341,6 @@
     <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
 
     <printOption implementation="com.intellij.codeEditor.printing.HyperlinksToClassesOption"/>
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
-                        serviceImplementation="com.intellij.codeEditor.printing.MethodSeparatorProvider"/>
 
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JspIndexPatternBuilder"/>

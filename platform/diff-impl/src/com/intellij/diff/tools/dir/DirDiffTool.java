@@ -38,6 +38,6 @@ public class DirDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Directory Viewer";
+    return "Directory viewer";
   }
 }

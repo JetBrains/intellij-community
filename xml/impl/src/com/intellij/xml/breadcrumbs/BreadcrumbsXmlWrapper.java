@@ -344,7 +344,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   private void updateCrumbs(final LogicalPosition position) {
-    if (myFile != null && myEditor != null) {
+    if (myFile != null && myEditor != null && !myProject.isDisposed()) {
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         return;
       }
