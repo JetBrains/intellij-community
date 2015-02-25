@@ -649,7 +649,6 @@ public class SearchDialog extends DialogWrapper {
             new EditVarConstraintsDialog(
               searchContext.getProject(),
               model, getVariablesFromListeners(),
-              isReplaceDialog(),
               (FileType)fileTypes.getSelectedItem()
             ).show();
             initiateValidation();

@@ -94,7 +94,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private static Project myProject;
 
-  EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
+  EditVarConstraintsDialog(final Project project, SearchModel _model, List<Variable> _variables, final FileType fileType) {
     super(project, false);
 
     variables = _variables;
@@ -102,7 +102,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
-    regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, applyWithinTypeHierarchy, wholeWordsOnly));
+    regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, wholeWordsOnly));
+    regexp.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
+      }
+    });
     read.addChangeListener(new MyChangeListener(notRead, false));
     write.addChangeListener(new MyChangeListener(notWrite, false));
     regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
