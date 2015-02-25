@@ -28,12 +28,7 @@ public class PyIndentTest extends PyTestCase {
     final String name = getTestName(false);
 
     myFixture.configureByText(name + ".py", before);
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-      }
-    }, "", null);
+    pressButton(IdeActions.ACTION_EDITOR_ENTER);
     String s = myFixture.getFile().getText();
     myFixture.checkResult(after);
   }

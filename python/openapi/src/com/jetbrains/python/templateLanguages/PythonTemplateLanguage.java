@@ -14,10 +14,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PythonTemplateLanguage extends Language implements TemplateLanguage {
 
 
-  protected PythonTemplateLanguage(@Nullable final Language baseLanguage,
-                                @NotNull @NonNls final String ID,
+  protected PythonTemplateLanguage(@NotNull @NonNls final String ID,
                                 @NotNull @NonNls final String... mimeTypes) {
-    super(baseLanguage, ID, mimeTypes);
+    super(null, ID, mimeTypes);
   }
 
   /**
