@@ -194,7 +194,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return;
     }
 
-    if (myCurrentChange.getBeforeRevision() instanceof FakeRevision || myCurrentChange.getAfterRevision() instanceof FakeRevision) {
+    if (!ChangeDiffRequestProducer.isEquals(myCurrentChange, selectedChange)) {
       myCurrentChange = selectedChange;
       updateRequest();
     }
