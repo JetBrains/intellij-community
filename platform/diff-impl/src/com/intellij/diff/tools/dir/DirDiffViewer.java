@@ -46,14 +46,14 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
-class DifDiffViewer implements FrameDiffTool.DiffViewer {
+class DirDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull private final DiffContext myContext;
   @NotNull private final ContentDiffRequest myRequest;
 
   @NotNull private final DirDiffPanel myDirDiffPanel;
   @NotNull private final JPanel myPanel;
 
-  public DifDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
+  public DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myContext = context;
     myRequest = request;
 
@@ -70,7 +70,7 @@ class DifDiffViewer implements FrameDiffTool.DiffViewer {
 
       @Override
       public Disposable getDisposable() {
-        return DifDiffViewer.this;
+        return DirDiffViewer.this;
       }
 
       @Override
