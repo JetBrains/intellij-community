@@ -74,7 +74,8 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
         return Result.create(calcName(), 
                              getContainingFile(),
                              getContainingFile().getNavigationElement(),
-                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
+                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker(),
+                             DumbService.getInstance(getProject()));
       }
     });
   }
