@@ -178,5 +178,6 @@ while true ; do
     $REQUIRED_JVM_ARGS \
     $MAIN_CLASS_NAME \
     "$@"
-  test $? -ne 88 && break
+  EC=$?
+  test $EC -ne 88 && exit $EC
 done
