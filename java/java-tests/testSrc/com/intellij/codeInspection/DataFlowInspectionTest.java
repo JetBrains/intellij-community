@@ -255,6 +255,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testVariablesDiverge() { doTest(); }
   public void testMergeByNullability() { doTest(); }
+  public void testCheckComplementarityWhenMerge() { doTest(); }
   public void testDontForgetInstanceofInfoWhenMerging() { doTest(); }
   public void testDontForgetEqInfoWhenMergingByType() { doTest(); }
   public void testDontMakeNullableAfterInstanceof() { doTest(); }
