@@ -326,7 +326,8 @@ public class ExtractMethodProcessor implements MatchProvider {
           elements = ArrayUtil.append(myElements, ((PsiMethod)myCodeFragmentMember).getReturnTypeElement(), PsiElement.class);
         }
       }
-      myTypeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(((PsiMethod)container).getTypeParameterList(), elements);
+      myTypeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(((PsiMethod)container).getTypeParameterList(),
+                                                                                          elements);
     }
     List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
     myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
@@ -633,12 +634,17 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private Nullness initNullness() {
     if (!PsiUtil.isLanguageLevel5OrHigher(myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
-    final PsiMethod emptyMethod = (PsiMethod)myTargetClass.copy().add(generateEmptyMethod("name"));
-    prepareMethodBody(emptyMethod, false);
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
       .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());
     if (nullableAnnotationClass != null) {
+      final PsiElement elementInCopy = myTargetClass.getContainingFile().copy().findElementAt(myTargetClass.getTextOffset());
+      final PsiClass classCopy = PsiTreeUtil.getParentOfType(elementInCopy, PsiClass.class);
+      if (classCopy == null) {
+        return null;
+      }
+      final PsiMethod emptyMethod = (PsiMethod)classCopy.add(generateEmptyMethod("name"));
+      prepareMethodBody(emptyMethod, false);
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
       }
