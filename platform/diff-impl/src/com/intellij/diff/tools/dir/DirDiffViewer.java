@@ -30,7 +30,9 @@ import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.impl.dir.DirDiffFrame;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 class DirDiffViewer implements FrameDiffTool.DiffViewer {
@@ -96,7 +99,13 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
   public FrameDiffTool.ToolbarComponents init() {
     myDirDiffPanel.setupSplitter();
 
-    return new FrameDiffTool.ToolbarComponents();
+    FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
+    // we return ActionGroup to avoid registering of actions shortcuts
+    // * they are already registered inside DirDiffPanel
+    // * this fixes conflict between FilterPanel and SynchronizeDiff action for the 'Enter' shortcut
+    components.toolbarActions =  Collections.<AnAction>singletonList(new DefaultActionGroup(myDirDiffPanel.getActions()));
+    components.statusPanel = myDirDiffPanel.extractFilterPanel();
+    return components;
   }
 
   @Override

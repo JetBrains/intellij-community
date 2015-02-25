@@ -76,6 +76,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private JPanel myFilterPanel;
   private JBLabel myFilterLabel;
   private JPanel myFilesPanel;
+  private JPanel myHeaderPanel;
   private FilterComponent myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
@@ -346,6 +347,15 @@ public class DirDiffPanel implements Disposable, DataProvider {
       myTargetDirField.getButton().setVisible(false);
       myTargetDirField.setPreferredSize(preferredSize);
     }
+  }
+
+  public AnAction[] getActions() {
+    return new DirDiffToolbarActions(myModel, myDiffPanel).getChildren(null);
+  }
+
+  public JComponent extractFilterPanel() {
+    myHeaderPanel.setVisible(false);
+    return myFilterPanel;
   }
 
   private void changeOperationForSelection() {
