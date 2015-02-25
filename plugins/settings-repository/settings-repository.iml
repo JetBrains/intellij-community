@@ -17,11 +17,11 @@
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.5.2-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.7.0-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.5.2-SNAPSHOT-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.7.0-SNAPSHOT-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -47,5 +47,16 @@
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.7.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/slf4j-log4j12-1.7.10.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

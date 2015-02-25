@@ -9,39 +9,35 @@ import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
-import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
-import org.junit.*
-
-import javax.swing.*
-import java.io.File
-import java.util.Arrays
-import java.util.Comparator
-
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.empty
-import org.junit.Assert.assertThat
-import com.intellij.openapi.util.io.FileUtilRt
-import org.jetbrains.settingsRepository.git.computeIndexDiff
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
-import org.jetbrains.settingsRepository.git.resetHard
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.AddFile
-import org.jetbrains.settingsRepository.git.commit
-import org.eclipse.jgit.api.Git
 import org.jetbrains.jgit.dirCache.deletePath
+import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.writePath
-import kotlin.properties.Delegates
+import org.jetbrains.settingsRepository.git.GitRepositoryManager
+import org.jetbrains.settingsRepository.git.commit
+import org.jetbrains.settingsRepository.git.computeIndexDiff
+import org.jetbrains.settingsRepository.git.resetHard
+import org.junit.After
+import org.junit.Assert.assertThat
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import java.io.File
+import javax.swing.SwingUtilities
 
 class GitTest {
   private var fixture: IdeaProjectTestFixture? = null
@@ -86,7 +82,7 @@ class GitTest {
 
     private fun delete(data: ByteArray, directory: Boolean) {
       val addedFile = "\$APP_CONFIG$/remote.xml"
-      getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, true)
+      getProvider().saveContent(addedFile, data, data.size(), RoamingType.PER_USER, true)
       getProvider().delete(if (directory) "\$APP_CONFIG$" else addedFile, RoamingType.PER_USER)
 
       val diff = repository.computeIndexDiff()
@@ -107,7 +103,7 @@ class GitTest {
 
     private fun addAndCommit(path: String): FileInfo {
       val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-      getProvider().saveContent(path, data, data.size, RoamingType.PER_USER, false)
+      getProvider().saveContent(path, data, data.size(), RoamingType.PER_USER, false)
       repositoryManager.commit(EmptyProgressIndicator())
       return FileInfo(path, data)
     }
@@ -153,7 +149,7 @@ class GitTest {
   public Test fun add() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
-    getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, false)
+    getProvider().saveContent(addedFile, data, data.size(), RoamingType.PER_USER, false)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
@@ -170,8 +166,8 @@ class GitTest {
     val data2 = FileUtil.loadFileBytes(File(testDataPath, "local.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
     val addedFile2 = "\$APP_CONFIG$/local.xml"
-    getProvider().saveContent(addedFile, data, data.size, RoamingType.PER_USER, false)
-    getProvider().saveContent(addedFile2, data2, data2.size, RoamingType.PER_USER, false)
+    getProvider().saveContent(addedFile, data, data.size(), RoamingType.PER_USER, false)
+    getProvider().saveContent(addedFile2, data2, data2.size(), RoamingType.PER_USER, false)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
@@ -317,7 +313,7 @@ class GitTest {
     createLocalRepository(null)
 
     val data = AM.MARKER_ACCEPT_MY
-    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size, RoamingType.PER_USER, false)
+    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size(), RoamingType.PER_USER, false)
 
     sync(SyncType.MERGE)
 
@@ -331,7 +327,7 @@ class GitTest {
     sync(SyncType.MERGE)
 
     val data = AM.MARKER_ACCEPT_THEIRS
-    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size, RoamingType.PER_USER, false)
+    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size(), RoamingType.PER_USER, false)
     repositoryManager.commit(EmptyProgressIndicator())
 
     val remoteRepository = testHelper.repository!!
@@ -380,7 +376,7 @@ class GitTest {
 
     val path = "\$APP_CONFIG$/local.xml"
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-    getProvider().saveContent(path, data, data.size, RoamingType.PER_USER, false)
+    getProvider().saveContent(path, data, data.size(), RoamingType.PER_USER, false)
 
     sync(syncType)
 

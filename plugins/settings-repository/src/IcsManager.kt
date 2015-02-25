@@ -1,49 +1,41 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.ide.ApplicationLoadListener
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
+import com.intellij.notification.NotificationsAdapter
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.StorageUtil
-import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.util.AtomicNotNullLazyValue
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.util.SingleAlarm
-
+import com.intellij.util.SystemProperties
+import com.intellij.util.ui.UIUtil
+import gnu.trove.THashSet
+import org.jetbrains.settingsRepository.git.GitRepositoryManager
+import org.jetbrains.settingsRepository.git.GitRepositoryService
 import java.io.File
 import java.io.InputStream
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
-import com.intellij.openapi.util.AtomicNotNullLazyValue
-import org.jetbrains.settingsRepository.git.GitRepositoryService
-import com.intellij.openapi.progress.ProcessCanceledException
 import java.util.LinkedHashSet
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.FileBasedStorage
-import com.intellij.util.ui.UIUtil
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
-import gnu.trove.THashSet
-import com.intellij.util.SystemProperties
-import com.intellij.notification.Notifications
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationsAdapter
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.vcs.VcsNotifier
 import java.util.concurrent.Future
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.util.ShutDownTracker
+import kotlin.platform.platformStatic
 
 val PLUGIN_NAME: String = "Settings Repository"
 
@@ -51,6 +43,7 @@ val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 
 public class IcsManager : ApplicationLoadListener {
   class object {
+    platformStatic
     fun getInstance() = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
   }
 

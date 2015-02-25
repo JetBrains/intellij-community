@@ -2,10 +2,10 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.CommonBundle
 import org.jetbrains.annotations.PropertyKey
-
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 import java.util.ResourceBundle
+import kotlin.platform.platformStatic
 
 class IcsBundle {
   class object {
@@ -13,6 +13,7 @@ class IcsBundle {
 
     val BUNDLE: String = "messages.IcsBundle"
 
+    platformStatic
     fun message(PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
       return CommonBundle.message(getBundle(), key, *params)
     }

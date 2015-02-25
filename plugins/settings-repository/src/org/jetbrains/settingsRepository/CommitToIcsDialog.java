@@ -31,8 +31,8 @@ public class CommitToIcsDialog extends DialogWrapper {
     browser = new ChangesBrowser(project, Collections.<ChangeList>emptyList(), projectFileChanges, null, true, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     browser.setChangesToDisplay(projectFileChanges);
 
-    setTitle(IcsBundle.OBJECT$.message("action.CommitToIcs.text"));
-    setOKButtonText(IcsBundle.OBJECT$.message("action.CommitToIcs.text"));
+    setTitle(IcsBundle.message("action.CommitToIcs.text"));
+    setOKButtonText(IcsBundle.message("action.CommitToIcs.text"));
     init();
   }
 
@@ -50,7 +50,7 @@ public class CommitToIcsDialog extends DialogWrapper {
     StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     TrackingPathMacroSubstitutor macroSubstitutor = storageManager.getMacroSubstitutor();
     assert macroSubstitutor != null;
-    IcsManager icsManager = IcsManager.OBJECT$.getInstance();
+    IcsManager icsManager = IcsManager.getInstance();
 
     SmartList<String> addToIcs = new SmartList<String>();
     for (Change change : changes) {

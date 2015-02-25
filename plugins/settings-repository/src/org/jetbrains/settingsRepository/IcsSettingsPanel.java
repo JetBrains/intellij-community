@@ -21,7 +21,7 @@ public class IcsSettingsPanel {
   private final Action[] syncActions;
 
   public IcsSettingsPanel(@Nullable final Project project, @NotNull Container dialogParent, @NotNull Function0<Unit> okAction) {
-    urlTextField.setText(IcsManager.OBJECT$.getInstance().getRepositoryManager().getUpstream());
+    urlTextField.setText(IcsManager.getInstance().getRepositoryManager().getUpstream());
     urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
     syncActions = SettingsRepositoryPackage.createMergeActions(project, urlTextField, dialogParent, okAction);

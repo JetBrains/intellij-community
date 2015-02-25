@@ -2,17 +2,15 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.SmartList
 import com.intellij.util.Time
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.AbstractCollection
+import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
-
 import java.io.File
-import java.io.IOException
-import java.util.ArrayList
-import com.intellij.util.xmlb.annotations.Property
-import com.intellij.util.xmlb.annotations.AbstractCollection
 
 class IcsSettings {
   class object {
@@ -34,19 +32,16 @@ class IcsSettings {
   Tag
   Property(surroundWithTag = false)
   AbstractCollection(surroundWithTag = false)
-  var readOnlySources: List<ReadonlySource> = ArrayList<ReadonlySource>()
+  var readOnlySources: List<ReadonlySource> = SmartList()
 
   fun save() {
-    FileUtil.createParentDirs(settingsFile)
-
-    try {
-      val serialized = XmlSerializer.serializeIfNotDefault(this, DEFAULT_FILTER)
-      if (!JDOMUtil.isEmpty(serialized)) {
-        JDOMUtil.writeParent(serialized, settingsFile, "\n")
-      }
+    val serialized = XmlSerializer.serializeIfNotDefault(this, DEFAULT_FILTER)
+    if (serialized == null || JDOMUtil.isEmpty(serialized)) {
+      FileUtil.delete(settingsFile)
     }
-    catch (e: IOException) {
-      LOG.error(e)
+    else {
+      FileUtil.createParentDirs(settingsFile)
+      JDOMUtil.writeParent(serialized, settingsFile, "\n")
     }
   }
 
