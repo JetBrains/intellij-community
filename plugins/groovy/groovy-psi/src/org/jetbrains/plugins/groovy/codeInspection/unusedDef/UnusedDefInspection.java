@@ -85,7 +85,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
 
   @Override
-  protected void check(final GrControlFlowOwner owner, final ProblemsHolder problemsHolder) {
+  protected void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();

@@ -30,6 +30,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -669,7 +670,7 @@ public class PsiAdapter {
         return type instanceof PsiPrimitiveType;
     }
 
-  public static int getJavaVersion(PsiElement element) {
+  public static int getJavaVersion(@NotNull PsiElement element) {
     JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(element);
     if (sdkVersion == null) {
       sdkVersion = JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element));

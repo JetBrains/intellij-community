@@ -47,7 +47,7 @@ class Test {
     }
 
     void bug1(Parametrized<? super T> param) {
-      foo<error descr="'foo(Test.Parametrized<java.lang.Number>)' in 'Test.Bug2' cannot be applied to '(Test.Parametrized<capture<? super T>>)'">(param)</error>;
+      foo<error descr="'foo(Test.Parametrized<I>)' in 'Test.Bug2' cannot be applied to '(Test.Parametrized<capture<? super T>>)'">(param)</error>;
     }
 
 

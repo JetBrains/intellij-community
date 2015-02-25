@@ -102,8 +102,7 @@ public class ExternalDiffTool {
   @NotNull
   private static List<DiffRequest> collectRequests(@Nullable Project project,
                                                    @NotNull final DiffRequestChain chain,
-                                                   @NotNull ProgressIndicator indicator)
-    throws IOException, ExecutionException {
+                                                   @NotNull ProgressIndicator indicator) {
     List<DiffRequest> requests = new ArrayList<DiffRequest>();
 
     UserDataHolderBase context = new UserDataHolderBase();

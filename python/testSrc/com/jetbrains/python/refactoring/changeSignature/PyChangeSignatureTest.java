@@ -34,6 +34,7 @@ import java.util.List;
 /**
  * User : ktisha
  */
+@SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public class PyChangeSignatureTest extends PyTestCase {
 
@@ -77,6 +78,13 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testRemoveDefaultFromParam() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(1, "b", "2", false)));
+  }
+
+  // PY-15143
+  public void testRemoveDefaultFromParamWithoutReplacement() {
+    final PyParameterInfo first = new PyParameterInfo(0, "arg", null, false);
+    final PyParameterInfo second = new PyParameterInfo(-1, "vvv", "xxx", false);
+    doValidationTest(null, Arrays.asList(first, second), PyBundle.message("refactoring.change.signature.dialog.validation.default.missing"));
   }
 
   public void testAddDefaultParam1() {
@@ -193,11 +201,11 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testNonDefaultAfterDefault() {
-    doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "a", "2", false), new PyParameterInfo(1, "b", "2", false)), null);
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "a", "2", false), new PyParameterInfo(0, "b", "2", false)), null);
   }
 
   public void testNonDefaultAfterDefault1() {
-    doValidationTest(null, Arrays.asList(new PyParameterInfo(1, "b", "1", true), new PyParameterInfo(-1, "a", "2", false)),
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true), new PyParameterInfo(-1, "a", "2", false)),
                      PyBundle.message("ANN.non.default.param.after.default"));
   }
 

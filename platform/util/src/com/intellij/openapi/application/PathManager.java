@@ -315,6 +315,7 @@ public class PathManager {
     String[] propFiles = {
       System.getProperty(PROPERTIES_FILE),
       getUserPropertiesPath(),
+      getUserHome() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
       getHomePath() + "/community/bin/idea.properties"};
 
@@ -359,7 +360,7 @@ public class PathManager {
       return platformPath(PATHS_SELECTOR, "Library/Preferences", /*"APPDATA", "XDG_CONFIG_HOME", ".config",*/ "") + "/idea.properties";
     }
     else {
-      return getUserHome() + "/.idea.properties";
+      return null;
     }
   }
 

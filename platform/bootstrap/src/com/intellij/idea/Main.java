@@ -35,11 +35,14 @@ import java.util.Locale;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
 public class Main {
-  public static final int UPDATE_FAILED = 1;
-  public static final int STARTUP_EXCEPTION = 2;
-  public static final int STARTUP_IMPOSSIBLE = 3;
-  public static final int LICENSE_ERROR = 4;
-  public static final int PLUGIN_ERROR = 5;
+  public static final int NO_GRAPHICS = 1;
+  public static final int UPDATE_FAILED = 2;
+  public static final int STARTUP_EXCEPTION = 3;
+  public static final int JDK_CHECK_FAILED = 4;
+  public static final int DIR_CHECK_FAILED = 5;
+  public static final int INSTANCE_CHECK_FAILED = 6;
+  public static final int LICENSE_ERROR = 7;
+  public static final int PLUGIN_ERROR = 8;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -60,19 +63,17 @@ public class Main {
     if (isHeadless()) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    else {
-      if (GraphicsEnvironment.isHeadless()) {
-        throw new HeadlessException("Unable to detect graphics environment");
+    else if (GraphicsEnvironment.isHeadless()) {
+      showMessage("Startup Error", "Unable to detect graphics environment", true);
+      System.exit(NO_GRAPHICS);
+    }
+    else if (args.length == 0) {
+      try {
+        installPatch();
       }
-
-      if (args.length == 0) {
-        try {
-          installPatch();
-        }
-        catch (Throwable t) {
-          showMessage("Update Failed", t);
-          System.exit(UPDATE_FAILED);
-        }
+      catch (Throwable t) {
+        showMessage("Update Failed", t);
+        System.exit(UPDATE_FAILED);
       }
     }
 
@@ -216,7 +217,7 @@ public class Main {
 
   @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
   public static void showMessage(String title, String message, boolean error) {
-    if (isCommandLine()) {
+    if (isCommandLine() || GraphicsEnvironment.isHeadless()) {
       PrintStream stream = error ? System.err : System.out;
       stream.println("\n" + title + ": " + message);
     }
