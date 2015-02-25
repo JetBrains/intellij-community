@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -64,6 +67,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
 
+  @Override
   public String getID() {
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }

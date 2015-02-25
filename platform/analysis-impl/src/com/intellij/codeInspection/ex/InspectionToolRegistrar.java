@@ -133,7 +133,7 @@ public class InspectionToolRegistrar {
     }
     String message = null;
     try {
-      final String id = ((LocalInspectionToolWrapper)toolWrapper).getID();
+      final String id = toolWrapper.getID();
       if (id == null || !LocalInspectionTool.isValidID(id)) {
         message = InspectionsBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN);
       }
