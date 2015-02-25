@@ -27,10 +27,10 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#ifdef __amd64__
-__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
-#else
+#if defined __i386__
 __asm__(".symver memcpy,memcpy@GLIBC_2.0");
+#elif defined __amd64__
+__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
 #endif
 
 
