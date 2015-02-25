@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -395,6 +396,9 @@ public class TestPackage extends TestObject {
           }
         });
         myFoundTests = !myClasses.isEmpty();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (IOException e) {
         LOG.info(e);
