@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,16 +36,26 @@ public abstract class FileDocumentManager implements SavingRequestor {
   }
 
   /**
-   * Returns the document for the specified virtual file.
+   * Returns the document for the specified virtual file.<p/>
+   * 
+   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document for the given virtual file is not yet cached,
+   * the file's contents are read from VFS and loaded into heap memory. An appropriate encoding is used. All line separators are converted to <code>\n</code>.<p/>
+   * 
+   * Should be invoked in a read action.
+   * 
    * @param file the file for which the document is requested.
    * @return the document, or null if the file represents a directory, or is binary without an associated decompiler,
    * or is too large.
+   * @see VirtualFile#contentsToByteArray()
+   * @see Application#runReadAction(Computable)
    */
   @Nullable
   public abstract Document getDocument(@NotNull VirtualFile file);
 
   /**
-   * Returns the document for the specified file which has already been loaded into memory.
+   * Returns the document for the specified file which has already been loaded into memory.<p/>
+   * 
+   * Client code shouldn't normally use this method, because it's unpredictable and any garbage collection can result in it returning null.
    *
    * @param file the file for which the document is requested.
    * @return the document, or null if the specified virtual file hasn't been loaded into memory.
@@ -62,24 +74,34 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   /**
    * Saves all unsaved documents to disk. This operation can modify documents that will be saved
-   * (due to 'Strip trailing spaces on Save' functionality).
+   * (due to 'Strip trailing spaces on Save' functionality). When saving, <code>\n</code> line separators are converted into 
+   * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
+   * 
+   * Should be invoked in a write action.
    */
   public abstract void saveAllDocuments();
 
   /**
    * Saves the specified document to disk. This operation can modify the document (due to 'Strip
-   * trailing spaces on Save' functionality).
+   * trailing spaces on Save' functionality). When saving, <code>\n</code> line separators are converted into 
+   * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
+   * 
+   * Should be invoked in a write action.
+   * @param document the document to save.
    */
   public abstract void saveDocument(@NotNull Document document);
 
   /**
-   * Saves the document without stripping the trailing spaces or adding a blank line in the end of the file.
+   * Saves the document without stripping the trailing spaces or adding a blank line in the end of the file.<p/>
+   * 
+   * Should be invoked in a write action.
+   * 
    * @param document the document to save.
    */
   public abstract void saveDocumentAsIs(@NotNull Document document);
 
   /**
-   * Returns the ist of all documents that have unsaved changes.
+   * Returns all documents that have unsaved changes.
    * @return the documents that have unsaved changes.
    */
   @NotNull
