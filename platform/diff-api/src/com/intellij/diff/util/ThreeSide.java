@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +41,12 @@ public enum ThreeSide {
   //
 
   @Nullable
-  public <T> T select(@Nullable T left, @NotNull T base, @Nullable T right) {
+  @Contract("!null, !null, !null -> !null; null, null, null -> null")
+  public <T> T select(@Nullable T left, @Nullable T base, @Nullable T right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
     if (myIndex == 2) return right;
+    //noinspection Contract
     throw new IllegalStateException();
   }
 
@@ -60,7 +63,6 @@ public enum ThreeSide {
     return array[myIndex];
   }
 
-  @Nullable
   public <T> T select(@NotNull T[] array) {
     assert array.length == 3;
     return array[myIndex];
@@ -72,7 +74,6 @@ public enum ThreeSide {
     return array[myIndex];
   }
 
-  @Nullable
   public <T> T select(@NotNull List<T> list) {
     assert list.size() == 3;
     return list.get(myIndex);

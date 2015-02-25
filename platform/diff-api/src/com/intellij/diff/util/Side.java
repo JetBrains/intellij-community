@@ -18,6 +18,7 @@ package com.intellij.diff.util;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.openapi.util.Couple;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,7 @@ public enum Side {
   }
 
   @Nullable
+  @Contract("!null, !null -> !null; null, null -> null")
   public <T> T select(@Nullable T left, @Nullable T right) {
     return isLeft() ? left : right;
   }
@@ -79,7 +81,6 @@ public enum Side {
     return array[myIndex];
   }
 
-  @Nullable
   public <T> T select(@NotNull T[] array) {
     assert array.length == 2;
     return array[myIndex];
@@ -91,7 +92,6 @@ public enum Side {
     return array[myIndex];
   }
 
-  @Nullable
   public <T> T select(@NotNull List<T> list) {
     assert list.size() == 2;
     return list.get(myIndex);
@@ -103,7 +103,6 @@ public enum Side {
     return list.get(myIndex);
   }
 
-  @Nullable
   public <T> T select(@NotNull Couple<T> region) {
     return isLeft() ? region.first : region.second;
   }
