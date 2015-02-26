@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     new HashMap<Profile, SingleInspectionProfilePanel>();
   private final List<Profile> myDeletedProfiles = new ArrayList<Profile>();
   protected ProfilesConfigurableComboBox myProfiles;
-  private JPanel myPanel;
-  private JPanel myWholePanel;
+  private final JPanel myPanel;
+  private final JPanel myWholePanel;
   private Alarm mySelectionAlarm;
 
   public InspectionToolsConfigurable(@NotNull final InspectionProjectProfileManager projectProfileManager,
@@ -508,7 +508,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myPanels.put(profile, panel);
   }
 
-  protected void deleteProfile(Profile profile) {
+  private void deleteProfile(Profile profile) {
     final String name = profile.getName();
     if (profile.getProfileManager() == myProfileManager) {
       if (myProfileManager.getProfile(name, false) != null) {
@@ -534,7 +534,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   private void doReset() {
     myDeletedProfiles.clear();
-    myPanels.clear();
+    disposeUIResources();
     final Collection<Profile> profiles = getProfiles();
     final List<Profile> modifiableProfiles = new ArrayList<Profile>(profiles.size());
     for (Profile profile : profiles) {
@@ -646,7 +646,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return "configured profiles: " + StringUtil.join(myPanels.keySet(), ", ");
   }
 
-  private boolean hasName(final @NotNull String name, boolean shared) {
+  private boolean hasName(@NotNull final String name, boolean shared) {
     for (SingleInspectionProfilePanel p : myPanels.values()) {
       if (name.equals(p.getCurrentProfileName()) && shared == p.isProfileShared()) {
         return true;
