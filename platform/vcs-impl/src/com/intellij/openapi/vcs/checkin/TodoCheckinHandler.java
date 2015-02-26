@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,9 +82,9 @@ public class TodoCheckinHandler extends CheckinHandler {
       public JComponent getComponent() {
         JPanel panel = new JPanel(new BorderLayout(4, 0));
         panel.add(checkBox, BorderLayout.WEST);
-        setFilterText(myConfiguration.myTodoPanelSettings.getTodoFilterName());
-        if (myConfiguration.myTodoPanelSettings.getTodoFilterName() != null) {
-          myTodoFilter = TodoConfiguration.getInstance().getTodoFilter(myConfiguration.myTodoPanelSettings.getTodoFilterName());
+        setFilterText(myConfiguration.myTodoPanelSettings.todoFilterName);
+        if (myConfiguration.myTodoPanelSettings.todoFilterName != null) {
+          myTodoFilter = TodoConfiguration.getInstance().getTodoFilter(myConfiguration.myTodoPanelSettings.todoFilterName);
         }
 
         final Consumer<TodoFilter> consumer = new Consumer<TodoFilter>() {
@@ -92,7 +92,7 @@ public class TodoCheckinHandler extends CheckinHandler {
           public void consume(TodoFilter todoFilter) {
             myTodoFilter = todoFilter;
             final String name = todoFilter == null ? null : todoFilter.getName();
-            myConfiguration.myTodoPanelSettings.setTodoFilterName(name);
+            myConfiguration.myTodoPanelSettings.todoFilterName = name;
             setFilterText(name);
           }
         };
@@ -202,9 +202,8 @@ public class TodoCheckinHandler extends CheckinHandler {
   }
 
   private void showTodo(final TodoCheckinHandlerWorker worker) {
-    TodoView todoView = ServiceManager.getService(myProject, TodoView.class);
     final String title = "For commit (" + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ")";
-    todoView.addCustomTodoView(new TodoTreeBuilderFactory() {
+    ServiceManager.getService(myProject, TodoView.class).addCustomTodoView(new TodoTreeBuilderFactory() {
       @Override
       public TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
         return new CustomChangelistTodosTreeBuilder(tree, treeModel, myProject, title, worker.inOneList());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,14 +72,19 @@ class OptionTagBinding extends BasePrimitiveBinding {
     }
     else {
       assert myBinding != null;
-      Object node = myBinding.serialize(value, targetElement, filter);
-      if (node != null) {
-        if (node instanceof Text) {
-          Text text = (Text)node;
-          targetElement.setAttribute(myValueAttribute, text.getText());
-        }
-        else if (targetElement != node) {
-          JDOMUtil.addContent(targetElement, node);
+      if (myBinding instanceof BeanBinding && myValueAttribute.isEmpty()) {
+        ((BeanBinding)myBinding).serializeInto(value, targetElement, filter);
+      }
+      else {
+        Object node = myBinding.serialize(value, targetElement, filter);
+        if (node != null) {
+          if (node instanceof Text) {
+            Text text = (Text)node;
+            targetElement.setAttribute(myValueAttribute, text.getText());
+          }
+          else if (targetElement != node) {
+            JDOMUtil.addContent(targetElement, node);
+          }
         }
       }
     }
@@ -94,6 +99,11 @@ class OptionTagBinding extends BasePrimitiveBinding {
   private Object deserialize(Object context, Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
     if (valueAttribute == null) {
+      if (myValueAttribute.isEmpty()) {
+        assert myBinding != null;
+        myAccessor.write(context, myBinding.deserialize(context, element));
+      }
+
       List<Content> children = XmlSerializerImpl.getFilteredContent(element);
       if (children.isEmpty()) {
         myAccessor.write(context, null);
@@ -105,12 +115,12 @@ class OptionTagBinding extends BasePrimitiveBinding {
     }
     else {
       Object value;
-      if (myConverter != null) {
-        value = myConverter.fromString(valueAttribute.getValue());
-      }
-      else {
+      if (myConverter == null) {
         assert myBinding != null;
         value = myBinding.deserialize(context, valueAttribute);
+      }
+      else {
+        value = myConverter.fromString(valueAttribute.getValue());
       }
       myAccessor.write(context, value);
     }
@@ -119,14 +129,22 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
   @Override
   public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) return false;
+    if (!(node instanceof Element)) {
+      return false;
+    }
+
     Element e = (Element)node;
-    if (!e.getName().equals(myTagName)) return false;
+    if (!e.getName().equals(myTagName)) {
+      return false;
+    }
+
     String name = e.getAttributeValue(myNameAttribute);
     if (StringUtil.isEmpty(myNameAttribute)) {
       return name == null || name.equals(myName);
     }
-    return name != null && name.equals(myName);
+    else {
+      return name != null && name.equals(myName);
+    }
   }
 
   @NonNls
