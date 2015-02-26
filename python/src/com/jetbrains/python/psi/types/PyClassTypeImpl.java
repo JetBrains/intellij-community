@@ -252,9 +252,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     Ref<ResolveResultList> resultRef = null;
     Property property = myClass.findProperty(name, inherited);
     if (property != null) {
-      Maybe<Callable> accessor = property.getByDirection(direction);
+      Maybe<PyCallable> accessor = property.getByDirection(direction);
       if (accessor.isDefined()) {
-        Callable accessor_code = accessor.value();
+        PyCallable accessor_code = accessor.value();
         ResolveResultList ret = new ResolveResultList();
         if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
         PyTargetExpression site = property.getDefinitionSite();

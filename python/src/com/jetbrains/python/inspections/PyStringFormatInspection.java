@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -137,8 +136,8 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          final Callable callable = ((PyCallExpression)rightExpression).resolveCalleeFunction(resolveContext);
-          // TODO: Switch to Callable.getCallType()
+          final PyCallable callable = ((PyCallExpression)rightExpression).resolveCalleeFunction(resolveContext);
+          // TODO: Switch to PyCallable.getCallType()
           if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST(callable)) {
             PyStatementList statementList = ((PyFunction)callable).getStatementList();
             PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);

@@ -114,7 +114,7 @@ public class PyCallByClassInspection extends PyInspection {
                           if (first_arg_class != qual_class) {
                             // delegating to a parent is fine
                             if (markedCallee.getCallable() instanceof PyFunction) {
-                              Callable callable = PsiTreeUtil.getParentOfType(call, Callable.class);
+                              PyCallable callable = PsiTreeUtil.getParentOfType(call, PyCallable.class);
                               if (callable != null) {
                                 PyFunction method = callable.asMethod();
                                 if (method != null) {

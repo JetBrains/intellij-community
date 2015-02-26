@@ -52,7 +52,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
           final Property superProperty = superMethod.getProperty();
           if (property != null && superProperty != null) {
             final AccessDirection direction = PyUtil.getPropertyAccessDirection(func);
-            final Callable callable = superProperty.getByDirection(direction).valueOrNull();
+            final PyCallable callable = superProperty.getByDirection(direction).valueOrNull();
             superMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
           }
         }

@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.Callable;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,17 +51,17 @@ public class TypeEvalContext {
   private String myTraceIndent = "";
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
-  private final Map<Callable, PyType> myEvaluatedReturn = new HashMap<Callable, PyType>();
+  private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<PyCallable, PyType>();
   private final ThreadLocal<Set<PyTypedElement>> myEvaluating = new ThreadLocal<Set<PyTypedElement>>() {
     @Override
     protected Set<PyTypedElement> initialValue() {
       return new HashSet<PyTypedElement>();
     }
   };
-  private final ThreadLocal<Set<Callable>> myEvaluatingReturn = new ThreadLocal<Set<Callable>>() {
+  private final ThreadLocal<Set<PyCallable>> myEvaluatingReturn = new ThreadLocal<Set<PyCallable>>() {
     @Override
-    protected Set<Callable> initialValue() {
-      return new HashSet<Callable>();
+    protected Set<PyCallable> initialValue() {
+      return new HashSet<PyCallable>();
     }
   };
 
@@ -203,8 +203,8 @@ public class TypeEvalContext {
   }
 
   @Nullable
-  public PyType getReturnType(@NotNull final Callable callable) {
-    final Set<Callable> evaluating = myEvaluatingReturn.get();
+  public PyType getReturnType(@NotNull final PyCallable callable) {
+    final Set<PyCallable> evaluating = myEvaluatingReturn.get();
     if (evaluating.contains(callable)) {
       return null;
     }

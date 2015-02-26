@@ -62,7 +62,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     PyParameter parameter = getParameter(problemElement, resolved);
     String kind = parameter != null ? "type" : "rtype";
 
-    final Callable callable;
+    final PyCallable callable;
     if (parameter != null) {
       callable = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     }

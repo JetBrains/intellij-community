@@ -74,7 +74,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
         if (type instanceof PyNoneType && callee != null) {
           final PyTypeChecker.AnalyzeCallResults analyzeCallResults = PyTypeChecker.analyzeCall(((PyCallExpression)value), myTypeEvalContext);
           if (analyzeCallResults != null) {
-            final Callable callable = analyzeCallResults.getCallable();
+            final PyCallable callable = analyzeCallResults.getCallable();
             if (PySdkUtil.isElementInSkeletons(callable)) {
               return;
             }
