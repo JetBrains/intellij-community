@@ -42,6 +42,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -192,21 +193,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         @Override
         public void run() {
           if (component == null) return;
-          Presentation presentation = action.getTemplatePresentation().clone();
           DataContext context = DataManager.getInstance().getDataContext(component);
-          AnActionEvent event = new AnActionEvent(e == null ? null : e.getInputEvent(),
-                                                        context,
-                                                        ActionPlaces.ACTION_SEARCH,
-                                                        presentation,
-                                                        ActionManager.getInstance(),
-                                                        e == null ? 0 : e.getModifiers());
+          InputEvent inputEvent = e == null ? null : e.getInputEvent();
+          AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
 
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
-              ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(presentation.getText(),
-                                                                                    (ActionGroup)action, context,
-                                                                                    JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                                                    false);
+              ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+                event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
               if (component.isShowing()) {
                 popup.showInBestPositionFor(context);
               }

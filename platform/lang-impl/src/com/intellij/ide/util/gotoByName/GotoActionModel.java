@@ -269,9 +269,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
-    final AnActionEvent event = new AnActionEvent(null, dataContext,
-                                                  ActionPlaces.ACTION_SEARCH, new Presentation(), ActionManager.getInstance(),
-                                                  0);
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext);
     ActionUtil.performDumbAwareUpdate(anAction, event, false);
     ActionUtil.performDumbAwareUpdate(anAction, event, true);
     return event;
@@ -664,9 +662,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
         if (toggle) {
           final OnOffButton button = new OnOffButton();
-          AnActionEvent event = new AnActionEvent(null, ((ActionWrapper)value).myDataContext,
-                                                  ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
-                                                  0);
+          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((ActionWrapper)value).myDataContext);
           button.setSelected(((ToggleAction)anAction).isSelected(event));
           panel.add(button, BorderLayout.EAST);
           panel.setBorder(IdeBorderFactory.createEmptyBorder());

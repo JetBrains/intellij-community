@@ -915,9 +915,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (!mySettingsPanel.isVisible()) {
         return;
       }
-      AnActionEvent event = new AnActionEvent(
-        null, EMPTY_DATA_CONTEXT, ActionPlaces.JAVADOC_INPLACE_SETTINGS, myPresentation, ActionManager.getInstance(), 0
-      );
+      AnActionEvent event = AnActionEvent.createFromDataContext(myPlace, myPresentation, EMPTY_DATA_CONTEXT);
       myAction.actionPerformed(event);
     }
   }
