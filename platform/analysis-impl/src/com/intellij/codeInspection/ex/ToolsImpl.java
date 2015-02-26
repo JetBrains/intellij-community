@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,9 @@ import java.util.List;
 import java.util.Map;
 
 public class ToolsImpl implements Tools {
-  @NonNls public static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
-  @NonNls public static final String ENABLED_ATTRIBUTE = "enabled";
-  @NonNls public static final String LEVEL_ATTRIBUTE = "level";
+  @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
+  @NonNls static final String ENABLED_ATTRIBUTE = "enabled";
+  @NonNls static final String LEVEL_ATTRIBUTE = "level";
 
   private final String myShortName;
   private final ScopeToolState myDefaultState;
@@ -59,19 +59,15 @@ public class ToolsImpl implements Tools {
   private boolean myEnabled;
 
   public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled, boolean enabledByDefault) {
-    this(toolWrapper.getShortName(), new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level), null, enabled);
+    myShortName = toolWrapper.getShortName();
+    myDefaultState = new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level);
+    myTools = null;
+    myEnabled = enabled;
   }
 
   @TestOnly
   public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled) {
     this(toolWrapper, level, enabled, enabled);
-  }
-
-  private ToolsImpl(@NotNull String shortName, @NotNull ScopeToolState defaultState, @Nullable List<ScopeToolState> tools, boolean enabled) {
-    myShortName = shortName;
-    myDefaultState = defaultState;
-    myTools = tools;
-    myEnabled = enabled;
   }
 
   @NotNull
@@ -269,7 +265,7 @@ public class ToolsImpl implements Tools {
     }
   }
 
-  public void removeScope(final @NotNull String scopeName) {
+  public void removeScope(@NotNull final String scopeName) {
     if (myTools != null) {
       for (ScopeToolState tool : myTools) {
         if (scopeName.equals(tool.getScopeName())) {

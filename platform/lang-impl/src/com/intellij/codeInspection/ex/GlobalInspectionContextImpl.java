@@ -563,7 +563,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (batchInspection != null && !myTools.containsKey(batchShortName)) {
           // add to existing inspections to run
           InspectionProfileEntry batchTool = batchInspection.getTool();
-          Tools newTool = new ToolsImpl(batchInspection, batchInspection.getDefaultLevel(), true);
+          Tools newTool = new ToolsImpl(batchInspection, batchInspection.getDefaultLevel(), true, true);
           if (batchTool instanceof LocalInspectionTool) localTools.add(newTool);
           else if (batchTool instanceof GlobalSimpleInspectionTool) globalSimpleTools.add(newTool);
           else if (batchTool instanceof GlobalInspectionTool) globalTools.add(newTool);
