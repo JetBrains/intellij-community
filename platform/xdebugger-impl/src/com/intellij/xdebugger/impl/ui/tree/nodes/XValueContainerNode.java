@@ -15,10 +15,6 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -129,16 +125,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   private static boolean isUseGetChildrenHack(@NotNull XDebuggerTree tree) {
-    if (tree.isUnderRemoteDebug()) {
-      return false;
-    }
-
-    RunProfile runProfile = LangDataKeys.RUN_PROFILE.getData(DataManager.getInstance().getDataContext(tree));
-    if (runProfile instanceof RunConfiguration) {
-      String id = ((RunConfiguration)runProfile).getType().getId();
-      return !(id.startsWith("Javascript") || id.startsWith("Node") || id.equals("ChromiumRemoteDebugType") || id.equals("FirefoxRemoteDebugType"));
-    }
-    return true;
+    return !tree.isUnderRemoteDebug();
   }
 
   @Nullable
