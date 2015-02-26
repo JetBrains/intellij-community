@@ -190,10 +190,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   public Dimension getPreferredSize() {
     Icon icon = getIcon();
-    if (
-      icon.getIconWidth() < myMinimumButtonSize.width &&
-      icon.getIconHeight() < myMinimumButtonSize.height
-    ) {
+    if (icon.getIconWidth() < myMinimumButtonSize.width &&
+        icon.getIconHeight() < myMinimumButtonSize.height) {
       return myMinimumButtonSize;
     }
     else {
@@ -343,6 +341,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       String propertyName = e.getPropertyName();
       if (Presentation.PROP_TEXT.equals(propertyName)) {
         updateToolTipText();
+        revalidate(); // recalc preferred size & repaint instantly
       }
       else if (Presentation.PROP_ENABLED.equals(propertyName)) {
         updateIcon();
