@@ -17,7 +17,9 @@ package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +45,7 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Configure code style on selected fragment";
+    return "Configure code style";
   }
 
   @Nls

@@ -104,7 +104,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }, "Reformat", null);
   }
 
-  private void customizeSettingsForSelectedFragment(@NotNull CodeStyleSettingsCustomizable customizable, 
+  private void customizeSettingsForSelectedFragment(@NotNull CodeStyleSettingsCustomizable customizable,
                                                     @NotNull LanguageCodeStyleSettingsProvider.SettingsType type) 
   {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());

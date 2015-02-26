@@ -22,12 +22,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -52,12 +54,14 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
   }
-  
-  public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer, 
-                                               @NotNull SettingsType settingsType, 
-                                               @NotNull PsiFile file,
-                                               @NotNull TextRange range) {
-    customizeSettings(consumer, settingsType);
+
+  public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer,
+                                               @NotNull SettingsType settingsType,
+                                               @NotNull final PsiFile file,
+                                               @NotNull final TextRange range)
+  {
+    List<String> affectingFields = new CodeStyleSettingsCodeFragmentFilter(this, file, range).getFieldNamesAffectingCodeFragment();
+    consumer.showStandardOptions(ArrayUtil.toStringArray(affectingFields));
   }
 
   /**
@@ -283,5 +287,4 @@ public abstract class LanguageCodeStyleSettingsProvider {
       return myCollectedFields;
     }
   }
-
 }

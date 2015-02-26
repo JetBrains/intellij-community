@@ -22,7 +22,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -57,13 +56,13 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return super.getRightMargin(settingsType);
   }
 
-  @Override
-  public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer, 
-                                               @NotNull SettingsType settingsType, 
-                                               @NotNull PsiFile file, 
-                                               @NotNull TextRange range) {
-    customizeSettings(consumer, settingsType);
-  }
+  //@Override
+  //public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer, 
+  //                                             @NotNull SettingsType settingsType, 
+  //                                             @NotNull PsiFile file, 
+  //                                             @NotNull TextRange range) {
+  //  customizeSettings(consumer, settingsType);
+  //}
   
   
   @Override
