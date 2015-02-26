@@ -1,35 +1,35 @@
 package org.jetbrains.settingsRepository
 
-import java.awt.Component
-import com.intellij.util.ui.table.TableModelEditor
-import com.intellij.util.Function
-import com.intellij.openapi.ui.DialogBuilder
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import javax.swing.JTextField
-import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.ui.DocumentAdapter
-import javax.swing.event.DocumentEvent
+import com.intellij.openapi.ui.DialogBuilder
+import com.intellij.openapi.ui.TextBrowseFolderListener
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.DocumentAdapter
+import com.intellij.util.Function
 import com.intellij.util.ui.FormBuilder
+import com.intellij.util.ui.table.TableModelEditor
+import java.awt.Component
+import javax.swing.JTextField
+import javax.swing.event.DocumentEvent
 
 private val COLUMNS = array(
-    object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
-      override fun getColumnClass() = javaClass<Boolean>()
+        object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
+          override fun getColumnClass() = javaClass<Boolean>()
 
-      override fun valueOf(item: ReadonlySource) = item.active
+          override fun valueOf(item: ReadonlySource) = item.active
 
-      override fun setValue(item: ReadonlySource, value: Boolean) {
-        item.active = value
-      }
-    },
-    object : TableModelEditor.EditableColumnInfo<ReadonlySource, String>() {
-      override fun valueOf(item: ReadonlySource) = item.url
+          override fun setValue(item: ReadonlySource, value: Boolean) {
+            item.active = value
+          }
+        },
+        object : TableModelEditor.EditableColumnInfo<ReadonlySource, String>() {
+          override fun valueOf(item: ReadonlySource) = item.url
 
-      override fun setValue(item: ReadonlySource, value: String) {
-        item.url = value
-      }
-    })
+          override fun setValue(item: ReadonlySource, value: String) {
+            item.url = value
+          }
+        })
 
 private fun createReadOnlySourcesEditor(dialogParent:Component): Configurable {
   val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {
@@ -46,7 +46,7 @@ private fun createReadOnlySourcesEditor(dialogParent:Component): Configurable {
           val url = StringUtil.nullize(urlField.getText())
           val enabled: Boolean
           try {
-            enabled = url != null && url.length() > 1 && IcsManager.getInstance().repositoryService.checkUrl(url, null)
+            enabled = url != null && url.length() > 1 && icsManager.repositoryService.checkUrl(url, null)
           }
           catch (e: Exception) {
             enabled = false
@@ -70,16 +70,16 @@ private fun createReadOnlySourcesEditor(dialogParent:Component): Configurable {
   }
 
   val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
-  editor.reset(IcsManager.getInstance().settings.readOnlySources)
+  editor.reset(icsManager.settings.readOnlySources)
   return object : Configurable {
-    override fun isModified() = editor.isModified(IcsManager.getInstance().settings.readOnlySources)
+    override fun isModified() = editor.isModified(icsManager.settings.readOnlySources)
 
     override fun apply() {
-      IcsManager.getInstance().settings.readOnlySources = editor.apply()
+      icsManager.settings.readOnlySources = editor.apply()
     }
 
     override fun reset() {
-      editor.reset(IcsManager.getInstance().settings.readOnlySources)
+      editor.reset(icsManager.settings.readOnlySources)
     }
 
     override fun getComponent() = editor.createComponent()

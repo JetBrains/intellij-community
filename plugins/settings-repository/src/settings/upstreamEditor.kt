@@ -1,24 +1,23 @@
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import java.awt.Container
-import javax.swing.Action
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.ArrayUtil
-import javax.swing.AbstractAction
-import com.intellij.openapi.util.text.StringUtil
-import java.awt.event.ActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
-import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
 import com.intellij.notification.NotificationType
-import java.awt.Component
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ArrayUtil
+import org.jetbrains.settingsRepository.actions.NOTIFICATION_GROUP
+import java.awt.Container
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
 
 fun updateSyncButtonState(url: String?, syncActions: Array<Action>) {
   val enabled: Boolean
   try {
-    enabled = url != null && url.length() > 1 && IcsManager.getInstance().repositoryService.checkUrl(url, null);
+    enabled = url != null && url.length() > 1 && icsManager.repositoryService.checkUrl(url, null);
   }
   catch (e: Exception) {
     enabled = false;
@@ -35,7 +34,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
     syncTypes = ArrayUtil.reverseArray(syncTypes)
   }
 
-  val icsManager = IcsManager.getInstance()
+  val icsManager = icsManager
 
   return Array(3) {
     val syncType = syncTypes[it]

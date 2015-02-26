@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.CommitToIcsDialog
 import org.jetbrains.settingsRepository.IcsBundle
-import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.ProjectId
+import org.jetbrains.settingsRepository.icsManager
 import java.util.UUID
 
 class CommitToIcsAction : CommonCheckinFilesAction() {
@@ -105,11 +105,11 @@ private fun getProjectId(project: Project): String? {
   if (projectId.uid == null) {
     if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
       override fun setToBeShown(value: Boolean, exitCode: Int) {
-        IcsManager.getInstance().settings.doNoAskMapProject = !value
+        icsManager.settings.doNoAskMapProject = !value
       }
 
       override fun isToBeShown(): Boolean {
-        return !IcsManager.getInstance().settings.doNoAskMapProject
+        return !icsManager.settings.doNoAskMapProject
       }
 
       override fun canBeHidden(): Boolean {

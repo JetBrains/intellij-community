@@ -59,7 +59,7 @@ class GitTest {
     }
 
     private val repositoryManager: GitRepositoryManager
-      get() = IcsManager.getInstance().repositoryManager as GitRepositoryManager
+      get() = icsManager.repositoryManager as GitRepositoryManager
 
     private val repository: Repository
       get() = repositoryManager.repository
@@ -122,14 +122,13 @@ class GitTest {
       }
     })
 
-    val icsManager = IcsManager.getInstance()
     (icsManager.repositoryManager as GitRepositoryManager).createRepositoryIfNeed()
     icsManager.repositoryActive = true
   }
 
   After
   public fun tearDown() {
-    IcsManager.getInstance().repositoryActive = false
+    icsManager.repositoryActive = false
     try {
       if (fixture != null) {
         SwingUtilities.invokeAndWait(object : Runnable {
@@ -402,7 +401,7 @@ class GitTest {
 
   private fun sync(syncType: SyncType) {
     SwingUtilities.invokeAndWait {
-      IcsManager.getInstance().sync(syncType, fixture!!.getProject())
+      icsManager.sync(syncType, fixture!!.getProject())
     }
   }
 

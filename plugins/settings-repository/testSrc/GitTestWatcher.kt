@@ -1,22 +1,20 @@
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.util.io.FileUtil
-import org.eclipse.jgit.lib.Repository
-import org.junit.rules.TestName
-import org.junit.runner.Description
-
-import java.io.File
-import java.io.IOException
-import org.jetbrains.settingsRepository.git.createRepository
 import com.intellij.mock.MockVirtualFileSystem
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import org.eclipse.jgit.lib.Constants
-import java.util.Arrays
-import org.junit.Assert.assertThat
+import org.eclipse.jgit.lib.Repository
 import org.hamcrest.CoreMatchers.equalTo
+import org.jetbrains.settingsRepository.git.createRepository
+import org.junit.Assert.assertThat
+import org.junit.rules.TestName
+import org.junit.runner.Description
+import java.io.File
+import java.io.IOException
+import java.util.Arrays
 import java.util.Comparator
-import javax.swing.SwingUtilities
 
 class GitTestWatcher : TestName() {
   var repository: Repository? = null
@@ -29,7 +27,7 @@ class GitTestWatcher : TestName() {
     return repository!!
   }
 
-  override fun finished(description: Description?) {
+  override fun finished(description: Description) {
     super.finished(description)
 
     if (repository != null) {
@@ -94,7 +92,7 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile? = nul
     }
     else {
       expectedFile = expectedFiles[i]
-      assertThat(expectedFile!!.isDirectory(), equalTo(localFile.isDirectory()))
+      assertThat(expectedFile.isDirectory(), equalTo(localFile.isDirectory()))
     }
 
     if (localFile.isFile()) {

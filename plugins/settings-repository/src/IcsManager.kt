@@ -35,21 +35,27 @@ import java.io.File
 import java.io.InputStream
 import java.util.LinkedHashSet
 import java.util.concurrent.Future
-import kotlin.platform.platformStatic
 
 val PLUGIN_NAME: String = "Settings Repository"
 
 val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 
+val icsManager: IcsManager = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
+
 public class IcsManager : ApplicationLoadListener {
-  class object {
-    platformStatic
-    fun getInstance() = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
+  val settings: IcsSettings
+
+  {
+    try {
+      settings = loadSettings()
+    }
+    catch (e: Exception) {
+      settings = IcsSettings()
+      LOG.error(e)
+    }
   }
 
   public val repositoryService: RepositoryService = GitRepositoryService()
-
-  val settings = IcsSettings()
 
   val repositoryManager: RepositoryManager = GitRepositoryManager(object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
@@ -269,13 +275,6 @@ public class IcsManager : ApplicationLoadListener {
       }
     }
     catch (e: Throwable) {
-      LOG.error(e)
-    }
-
-    try {
-      settings.load()
-    }
-    catch (e: Exception) {
       LOG.error(e)
     }
 
