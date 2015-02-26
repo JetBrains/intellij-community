@@ -259,7 +259,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       List<String> remotes = getRemotes();
       if (remotes.isEmpty() || remotes.size() > 1) {
         myRemoteRenderer.setSelected(isSelected);
-        myRemoteRenderer.setTransparent(!isActive);
+        myRemoteRenderer.setTransparent(!remotes.isEmpty() && !isActive);
         myRemoteRenderer.render(renderer);
       }
       else {
