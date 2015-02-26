@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -28,19 +27,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.io.File;
 import java.util.List;
-import java.util.regex.Matcher;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/14/14
  */
-public class AllInPackageGradleConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
+public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
   private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
 
