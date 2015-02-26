@@ -130,11 +130,6 @@ public class DynamicToolWindowWrapper {
   private JPanel buildBigPanel() {
     myBigPanel = new SimpleToolWindowPanel(true);
 
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
-    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
-    myBigPanel.setToolbar(actionToolbar.getComponent());
-
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
     final JPanel panel = new JPanel(new BorderLayout());
@@ -145,6 +140,11 @@ public class DynamicToolWindowWrapper {
 
     panel.add(myTreeTablePanel);
     myBigPanel.setPreferredSize(new Dimension(200, myBigPanel.getHeight()));
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
+    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
+    myBigPanel.setToolbar(actionToolbar.getComponent());
 
     myBigPanel.revalidate();
     return myBigPanel;
