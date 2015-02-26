@@ -329,4 +329,19 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
+
+  public void testMethodIsSimple_IfCodeBlockHasNoLinefeeds() {
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    doClassTest(
+      "public ModelAndView handleRequestInternalEmptyMulti(\n" +
+      "        final HttpServletRequest httpServletRequest,\n" +
+      "      final HttpServletResponse response)\n" +
+      "      throws IOException {}",
+      "public ModelAndView handleRequestInternalEmptyMulti(\n" +
+      "        final HttpServletRequest httpServletRequest,\n" +
+      "        final HttpServletResponse response)\n" +
+      "        throws IOException {}"
+    );
+  }
+
 }
