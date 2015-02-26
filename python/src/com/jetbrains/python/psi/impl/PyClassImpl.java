@@ -21,6 +21,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -352,7 +353,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     List<PyClassLikeType> result = new LinkedList<PyClassLikeType>(); // need to insert to 0th position on linearize
     while (true) {
       // filter blank sequences
-      List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<List<PyClassLikeType>>(sequences.size());
+      final List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<List<PyClassLikeType>>(sequences.size());
       for (List<PyClassLikeType> item : sequences) {
         if (item.size() > 0) nonBlankSequences.add(item);
       }
@@ -367,14 +368,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
           found = true;
           break;
         }
-        boolean head_in_tails = false;
-        for (List<PyClassLikeType> tail_seq : nonBlankSequences) {
-          if (tail_seq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
-            head_in_tails = true;
+        boolean headInTails = false;
+        for (List<PyClassLikeType> tailSeq : nonBlankSequences) {
+          if (tailSeq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
+            headInTails = true;
             break;
           }
         }
-        if (!head_in_tails) {
+        if (!headInTails) {
           found = true;
           break;
         }
@@ -399,28 +400,42 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     } // we either return inside the loop or die by assertion
   }
 
+
   @NotNull
-  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, @NotNull Set<PyClassLikeType> seen, boolean addThisType,
-                                                    @NotNull TypeEvalContext context) throws MROException {
-    if (seen.contains(type)) {
-      throw new MROException("Circular class inheritance");
+  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type,
+                                                    boolean addThisType,
+                                                    @NotNull TypeEvalContext context,
+                                                    @NotNull Map<PyClassLikeType, Ref<List<PyClassLikeType>>> cache) throws MROException {
+    final Ref<List<PyClassLikeType>> computed = cache.get(type);
+    if (computed != null) {
+      if (computed.isNull()) {
+        throw new MROException("Circular class inheritance");
+      }
+      return computed.get();
     }
-    final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
-    List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
-    for (PyClassLikeType base : bases) {
-      if (base != null) {
-        final Set<PyClassLikeType> newSeen = new HashSet<PyClassLikeType>(seen);
-        newSeen.add(type);
-        List<PyClassLikeType> lin = mroLinearize(base, newSeen, true, context);
-        if (!lin.isEmpty()) lines.add(lin);
+    cache.put(type, Ref.<List<PyClassLikeType>>create());
+    List<PyClassLikeType> result = null;
+    try {
+      final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
+      final List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
+      for (PyClassLikeType base : bases) {
+        if (base != null) {
+          final List<PyClassLikeType> baseClassMRO = mroLinearize(base, true, context, cache);
+          if (!baseClassMRO.isEmpty()) {
+            lines.add(baseClassMRO);
+          }
+        }
+      }
+      if (!bases.isEmpty()) {
+        lines.add(bases);
+      }
+      result = mroMerge(lines);
+      if (addThisType) {
+        result.add(0, type);
       }
     }
-    if (!bases.isEmpty()) {
-      lines.add(bases);
-    }
-    List<PyClassLikeType> result = mroMerge(lines);
-    if (addThisType) {
-      result.add(0, type);
+    finally {
+      cache.put(type, Ref.create(result));
     }
     return result;
   }
@@ -1076,8 +1091,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       if (type instanceof PyClassType) {
         final PyClass pyClass = ((PyClassType)type).getPyClass();
-        if (pyClass == objClass) return true;
-        if (hasNewStyleMetaClass(pyClass)) {
+        if (pyClass == objClass || hasNewStyleMetaClass(pyClass)) {
           return true;
         }
       }
@@ -1332,7 +1346,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
       final PyClassLikeType thisClassLikeType = (PyClassLikeType)thisType;
-      final List<PyClassLikeType> ancestorTypes = mroLinearize(thisClassLikeType, new HashSet<PyClassLikeType>(), false, context);
+      final List<PyClassLikeType> ancestorTypes =
+        mroLinearize(thisClassLikeType, false, context, new HashMap<PyClassLikeType, Ref<List<PyClassLikeType>>>());
       if (isOverriddenMRO(ancestorTypes, context)) {
         ancestorTypes.add(null);
       }
@@ -1378,7 +1393,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   private List<PyClassLikeType> getOldStyleAncestorTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> results = new ArrayList<PyClassLikeType>();
-    final List<PyClassLikeType> toProcess = new ArrayList<PyClassLikeType>();
+    final Deque<PyClassLikeType> toProcess = new LinkedList<PyClassLikeType>();
     final Set<PyClassLikeType> seen = new HashSet<PyClassLikeType>();
     final Set<PyClassLikeType> visited = new HashSet<PyClassLikeType>();
     final PyType thisType = context.getType(this);
@@ -1386,15 +1401,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       toProcess.add((PyClassLikeType)thisType);
     }
     while (!toProcess.isEmpty()) {
-      final PyClassLikeType currentType = toProcess.remove(0);
-      visited.add(currentType);
+      final PyClassLikeType currentType = toProcess.pollFirst();
+      if (!visited.add(currentType)) {
+        continue;
+      }
       for (PyClassLikeType superType : currentType.getSuperClassTypes(context)) {
         if (superType == null || !seen.contains(superType)) {
           results.add(superType);
           seen.add(superType);
         }
         if (superType != null && !visited.contains(superType)) {
-          toProcess.add(superType);
+          toProcess.addLast(superType);
         }
       }
     }

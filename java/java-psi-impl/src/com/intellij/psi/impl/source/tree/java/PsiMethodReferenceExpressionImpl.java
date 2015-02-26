@@ -151,6 +151,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             result.add(signature.getMethod());
           }
         }
+
+        if (result.isEmpty()) {
+          return null;
+        }
         methods = result.toArray(new PsiMethod[result.size()]);
       }
       else if (isConstructor()) {

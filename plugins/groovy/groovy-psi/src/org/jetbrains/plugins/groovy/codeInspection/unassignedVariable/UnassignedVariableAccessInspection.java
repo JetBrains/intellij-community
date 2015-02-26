@@ -88,7 +88,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   }
 
   @Override
-  protected void check(GrControlFlowOwner owner, ProblemsHolder problemsHolder) {
+  protected void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder problemsHolder) {
     Instruction[] flow = owner.getControlFlow();
     ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);
     for (ReadWriteVariableInstruction read : reads) {

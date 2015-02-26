@@ -17,13 +17,12 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Calendar;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
@@ -178,6 +177,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA136759() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -194,7 +197,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 /*
   public static Test suite() {
     final TestSuite suite = new TestSuite();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       suite.addTestSuite(NewLambdaHighlightingTest.class);
     }
     return suite;

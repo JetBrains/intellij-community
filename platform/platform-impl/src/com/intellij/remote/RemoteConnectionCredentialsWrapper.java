@@ -139,6 +139,7 @@ public class RemoteConnectionCredentialsWrapper {
     });
   }
 
+  @NotNull
   public String getId() {
     final Ref<String> result = Ref.create();
     switchType(new RemoteSdkConnectionAcceptor() {
@@ -161,11 +162,13 @@ public class RemoteConnectionCredentialsWrapper {
     return result.get();
   }
 
+  @NotNull
   private static String constructSftpCredentialsFullPath(RemoteCredentials cred) {
     return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
   }
 
 
+  @NotNull
   public static String constructSshCredentialsFullPath(RemoteCredentials cred) {
     return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
   }

@@ -95,15 +95,15 @@ public abstract class ToolbarUpdater implements Activatable {
 
   private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
     final Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
+    final Application app = ApplicationManager.getApplication();
 
-    if (now) {
+    if (now || app.isUnitTestMode()) {
       updateRunnable.run();
     }
     else {
-      final Application app = ApplicationManager.getApplication();
       final IdeFocusManager fm = IdeFocusManager.getInstance(null);
 
-      if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+      if (!app.isHeadlessEnvironment()) {
         if (app.isDispatchThread()) {
           fm.doWhenFocusSettlesDown(updateRunnable);
         }

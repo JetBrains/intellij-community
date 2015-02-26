@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
@@ -36,14 +35,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * author: lesya
- */
 @State(
   name = "VcsManagerConfiguration",
-  storages = { @Storage(file = StoragePathMacros.WORKSPACE_FILE) })
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+)
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsConfiguration");
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
   @NonNls static final String VALUE_ATTR = "value";
@@ -169,10 +165,12 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
 
+  @Override
   public VcsConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(VcsConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }
@@ -231,26 +229,32 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   private class UpdateInBackgroundOption implements PerformInBackgroundOption {
+    @Override
     public boolean shouldStartInBackground() {
       return PERFORM_UPDATE_IN_BACKGROUND;
     }
 
+    @Override
     public void processSentToBackground() {}
   }
 
   private class CommitInBackgroundOption implements PerformInBackgroundOption {
+    @Override
     public boolean shouldStartInBackground() {
       return PERFORM_COMMIT_IN_BACKGROUND;
     }
 
+    @Override
     public void processSentToBackground() {}
   }
 
   private class EditInBackgroundOption implements PerformInBackgroundOption {
+    @Override
     public boolean shouldStartInBackground() {
       return PERFORM_EDIT_IN_BACKGROUND;
     }
 
+    @Override
     public void processSentToBackground() {
       PERFORM_EDIT_IN_BACKGROUND = true;
     }
@@ -258,10 +262,12 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   private class CheckoutInBackgroundOption implements PerformInBackgroundOption {
+    @Override
     public boolean shouldStartInBackground() {
       return PERFORM_CHECKOUT_IN_BACKGROUND;
     }
 
+    @Override
     public void processSentToBackground() {
       PERFORM_CHECKOUT_IN_BACKGROUND = true;
     }
@@ -269,10 +275,12 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   private class AddRemoveInBackgroundOption implements PerformInBackgroundOption {
+    @Override
     public boolean shouldStartInBackground() {
       return PERFORM_ADD_REMOVE_IN_BACKGROUND;
     }
 
+    @Override
     public void processSentToBackground() {
       PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
     }

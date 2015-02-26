@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,10 +80,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends ToArrayCal
       final String typeText = componentType.getCanonicalText();
       if (!(qualifier instanceof PsiMethodCallExpression)) {
         @NonNls final String replacementText = "new " + typeText + '[' + collectionText + ".size()]";
-        final String newExpressionText = getElementText(methodCallExpression, argument, replacementText);
-        if (newExpressionText == null) {
-          return;
-        }
+        final String newExpressionText = PsiReplacementUtil.getElementText(methodCallExpression, argument, replacementText);
         PsiReplacementUtil.replaceExpression(methodCallExpression, newExpressionText);
         return;
       }

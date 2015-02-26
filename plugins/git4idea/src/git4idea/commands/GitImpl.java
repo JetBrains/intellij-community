@@ -497,6 +497,28 @@ public class GitImpl implements Git {
     });
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("add", name, url);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult lsRemote(@NotNull final Project project, @NotNull final File workingDir, @NotNull final String url) {
+    return run(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        GitLineHandler h = new GitLineHandler(project, workingDir, GitCommand.LS_REMOTE);
+        h.addParameters(url);
+        h.setUrl(url);
+        return h;
+      }
+    });
+  }
+
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
     addListeners(handler, Arrays.asList(listeners));
   }

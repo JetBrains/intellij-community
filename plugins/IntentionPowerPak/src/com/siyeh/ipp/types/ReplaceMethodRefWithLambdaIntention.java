@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
@@ -49,13 +50,25 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
     final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
     LOG.assertTrue(referenceExpression != null);
     final PsiElement resolve = referenceExpression.resolve();
-    final boolean isReceiver = resolve instanceof PsiMethod && PsiMethodReferenceUtil.hasReceiver(referenceExpression, (PsiMethod)resolve);
-    final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
     final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     LOG.assertTrue(interfaceMethod != null);
     final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
+    final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
+    final boolean isReceiver;
+    if (resolve instanceof PsiMethod){
+      final PsiMethod method = (PsiMethod)resolve;
+      isReceiver = PsiMethodReferenceUtil.isResolvedBySecondSearch(referenceExpression, signature,
+                                                                   method.isVarArgs(),
+                                                                   method.hasModifierProperty(PsiModifier.STATIC),
+                                                                   method.getParameterList().getParametersCount());
+    }
+    else {
+      isReceiver = false;
+    }
+    final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
+
     final StringBuilder buf = new StringBuilder("(");
     LOG.assertTrue(functionalInterfaceType != null);
     buf.append(functionalInterfaceType.getCanonicalText()).append(")(");

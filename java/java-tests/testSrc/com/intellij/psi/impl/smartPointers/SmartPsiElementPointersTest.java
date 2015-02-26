@@ -161,7 +161,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testPsiChangesWithLazyPointers() throws Exception {
-    PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
+    PsiClass aClass = myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
     final SmartPsiElementPointer<PsiIdentifier> pointer =
@@ -512,6 +512,58 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(newSelect);
     assertEquals("select", newSelect.getName());
   }
+
+  public void testInXml2() {
+    final PsiFile file = configureByText(HtmlFileType.INSTANCE,
+                                         "<!DOCTYPE html>\n" +
+                                         "<html>\n" +
+                                         "<head>\n" +
+                                         "    <title></title>\n" +
+                                         "</head>\n" +
+                                         "<body>\n" +
+                                         "<div class=\"cls\">\n" +
+                                         "    <ul class=\"dropdown-menu\">\n" +
+                                         "        <li><a href=\"#\">Action</a></li>\n" +
+                                         "        <li><a href=\"#\">Another action</a></li>\n" +
+                                         "        <li><a href=\"#\">Something else here</a></li>\n" +
+                                         "        <li class=\"divider\"></li>\n" +
+                                         "        <li class=\"dropdown-header\">Nav header</li>\n" +
+                                         "        <li><a href=\"#\">Separated link</a></li>\n" +
+                                         "        <li><a href=\"#\">One more separated link</a></li>\n" +
+                                         "    </ul>\n" +
+                                         "<caret>\n" +
+                                         "</div>\n" +
+                                         "</body>\n" +
+                                         "</html>"
+    );
+
+    final XmlTag ul = PsiTreeUtil.getParentOfType(file.findElementAt(file.getText().indexOf("ul")), XmlTag.class);
+    assertNotNull(ul);
+    assertEquals("ul", ul.getName());
+    assertEquals("dropdown-menu", ul.getAttributeValue("class"));
+
+    final SmartPsiElementPointer<XmlTag> ulPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(
+      ul);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        getEditor().getDocument().insertString(getEditor().getCaretModel().getOffset(), "    <ul class=\"nav navbar-nav navbar-right\">\n" +
+                                                                                        "        <li><a href=\"../navbar/\">Default</a></li>\n" +
+                                                                                        "        <li class=\"active\"><a href=\"./\">Static top</a></li>\n" +
+                                                                                        "        <li><a href=\"../navbar-fixed-top/\">Fixed top</a></li>\n" +
+                                                                                        "    </ul>\n");
+      }
+    });
+
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    final XmlTag newUl = ulPointer.getElement();
+    assertNotNull(newUl);
+    assertEquals("ul", newUl.getName());
+    assertEquals("dropdown-menu", newUl.getAttributeValue("class"));
+  }
+
   public void testInsertImport() {
     final PsiFile file = configureByText(JavaFileType.INSTANCE,
                                          "class S {\n" +

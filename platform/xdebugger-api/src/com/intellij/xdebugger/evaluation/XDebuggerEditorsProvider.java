@@ -61,6 +61,7 @@ public abstract class XDebuggerEditorsProvider {
     return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null, mode);
   }
 
+  @NotNull
   public InlineDebuggerHelper getInlineDebuggerHelper() {
     return InlineDebuggerHelper.DEFAULT;
   }

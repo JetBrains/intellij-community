@@ -105,12 +105,7 @@ public class PyEditingTest extends PyTestCase {
   private void doTestBackspace(final String fileName, final LogicalPosition pos) {
     myFixture.configureByFile("/editing/" + fileName + ".before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(pos);
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-      }
-    }, "", null);
+    pressButton(IdeActions.ACTION_EDITOR_BACKSPACE);
     myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
   }
 

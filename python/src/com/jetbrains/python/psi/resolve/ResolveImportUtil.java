@@ -153,10 +153,11 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, QualifiedName qName) {
-    boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(from_import_statement);
-    PsiFile file = from_import_statement.getContainingFile();
-    return resolveModule(qName, file, absoluteImportEnabled, from_import_statement.getRelativeLevel());
+  public static List<PsiElement> resolveFromImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
+                                                                  @Nullable QualifiedName qName) {
+    final boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(fromImportStatement);
+    final PsiFile file = fromImportStatement.getContainingFile();
+    return resolveModule(qName, file, absoluteImportEnabled, fromImportStatement.getRelativeLevel());
   }
 
   /**
@@ -170,7 +171,7 @@ public class ResolveImportUtil {
    * @return list of possible candidates
    */
   @NotNull
-  public static List<PsiElement> resolveModule(@Nullable QualifiedName qualifiedName, PsiFile sourceFile,
+  public static List<PsiElement> resolveModule(@Nullable QualifiedName qualifiedName, @Nullable PsiFile sourceFile,
                                                boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();

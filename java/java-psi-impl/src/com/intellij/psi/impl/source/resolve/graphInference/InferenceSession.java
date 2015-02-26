@@ -284,7 +284,7 @@ public class InferenceSession {
         variable.setInstantiation(substitutor.substitute(variable.getParameter()));
       }
     } else {
-      return resolveSubset(myInferenceVariables, mySiteSubstitutor);
+      return prepareSubstitution();
     }
 
     return prepareSubstitution();
@@ -774,7 +774,17 @@ public class InferenceSession {
   }
 
   private PsiType substituteNonProperBound(PsiType bound, PsiSubstitutor substitutor) {
-    return isProperType(bound) ? bound : substitutor.substitute(bound);
+    final HashSet<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
+    if (!collectDependencies(bound, dependencies)) {
+      return bound;
+    }
+    for (InferenceVariable dependency : dependencies) {
+      PsiType instantiation = dependency.getInstantiation();
+      if (instantiation != PsiType.NULL) {
+        substitutor = substitutor.put(dependency.getParameter(), instantiation);
+      }
+    }
+    return substitutor.substitute(bound);
   }
 
   private static boolean hasBoundProblems(final List<InferenceVariable> typeParams,
@@ -796,10 +806,11 @@ public class InferenceSession {
   private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
                                        PsiSubstitutor substitutor) {
     final Collection<InferenceVariable> allVars = new ArrayList<InferenceVariable>(inferenceVariables);
+    final Map<InferenceVariable, PsiType> foreignMap = new LinkedHashMap<InferenceVariable, PsiType>();
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
       if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
-        PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
+        PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor, foreignMap);
         if (firstSubstitutor != null) {
           if (hasBoundProblems(vars, firstSubstitutor, myContext)) {
             firstSubstitutor = null;
@@ -808,6 +819,14 @@ public class InferenceSession {
         if (firstSubstitutor != null) {
           substitutor = firstSubstitutor;
           allVars.removeAll(vars);
+
+          for (InferenceVariable var : vars) {
+            PsiType type = foreignMap.get(var);
+            if (type != null) {
+              var.setInstantiation(type);
+            }
+          }
+
           continue;
         }
       }
@@ -875,15 +894,28 @@ public class InferenceSession {
   }
 
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
+    return resolveSubset(vars, substitutor, null);
+  }
+
+  private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars,
+                                       PsiSubstitutor substitutor,
+                                       Map<InferenceVariable, PsiType> foreignMap) {
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
       final PsiTypeParameter typeParameter = var.getParameter();
-      if (substitutor.putAll(mySiteSubstitutor).getSubstitutionMap().containsKey(typeParameter) && var.getCallContext() != myContext) {
-        continue;//todo
-      }
 
       final PsiType type = checkBoundsConsistency(substitutor, var);
       if (type != PsiType.NULL) {
+        if (foreignMap != null) {
+          //save all instantiations in a map where inference variables are not merged by type parameters 
+          //for same method called with different args resulting in different inferred types 
+          foreignMap.put(var, type);
+        }
+
+        if (substitutor.putAll(mySiteSubstitutor).getSubstitutionMap().containsKey(typeParameter) && var.getCallContext() != myContext) {
+          continue;
+        }
+
         substitutor = substitutor.put(typeParameter, type);
       }
     }
@@ -1223,8 +1255,7 @@ public class InferenceSession {
                                                       PsiImplUtil.normalizeWildcardTypeByPosition(pType, reference)));
       }
     }
-    else if (parameters.length + 1 == functionalMethodParameters.length && !varargs || 
-             !isStatic && varargs && functionalMethodParameters.length > 0 && PsiMethodReferenceUtil.hasReceiver(reference, method)) { //instance methods
+    else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
       initBounds(containingClass.getTypeParameters());
 
       final PsiType pType = signature.getParameterTypes()[0];

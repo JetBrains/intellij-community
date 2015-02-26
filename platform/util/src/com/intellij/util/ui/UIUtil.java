@@ -294,6 +294,8 @@ public class UIUtil {
      */
     private static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
 
+      if (SystemInfo.isAppleJvm) return false;
+
       Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
 
       if (isRetina != null){

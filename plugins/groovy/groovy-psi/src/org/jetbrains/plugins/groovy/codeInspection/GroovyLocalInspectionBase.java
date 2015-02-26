@@ -67,5 +67,5 @@ public abstract class GroovyLocalInspectionBase extends GroovySuppressableInspec
     });
   }
 
-  protected abstract void check(GrControlFlowOwner owner, ProblemsHolder problemsHolder);
+  protected abstract void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder problemsHolder);
 }

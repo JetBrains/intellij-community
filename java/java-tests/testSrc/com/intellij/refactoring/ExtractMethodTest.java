@@ -450,6 +450,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testNonPhysicalAssumptions() throws Exception {
+    doTest();
+  }
+
   public void testNullableCheck() throws Exception {
     doTest();
   }

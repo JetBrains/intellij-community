@@ -166,6 +166,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   @Nullable
   public Document getDocument(@NotNull final VirtualFile file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
       if (!file.isValid() || file.isDirectory() ||
@@ -174,7 +175,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         return null;
       }
 
-      ApplicationManager.getApplication().assertReadAccessAllowed();
       final CharSequence text = LoadTextUtil.loadText(file);
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);

@@ -16,10 +16,12 @@
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -128,6 +130,12 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @Override
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public FileType getFileType() {
+    return myBeforeFile.getFileType();
   }
 
   @Override

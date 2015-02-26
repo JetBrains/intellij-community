@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
@@ -108,6 +109,9 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       catch (CantRunException e) {
         logCantRunException(e);
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (IOException e) {
       LOG.info(e);

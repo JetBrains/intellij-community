@@ -568,23 +568,18 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
     assert myActualContent1 != null || myActualContent2 != null;
     if (myActualContent2 == null) {
-      OpenFileDescriptor descriptor = myActualContent1.getOpenFileDescriptor(offset);
-      if (descriptor != null) return descriptor;
+      return myActualContent1.getOpenFileDescriptor(offset);
     }
-    else if (myActualContent1 == null) {
-      OpenFileDescriptor descriptor = myActualContent2.getOpenFileDescriptor(offset);
-      if (descriptor != null) return descriptor;
-    }
-    else {
-      Pair<int[], Side> pair = transferLineFromOneside(myEditor.offsetToLogicalPosition(offset).line);
-      OpenFileDescriptor descriptor1 = myActualContent1.getOpenFileDescriptor(offset);
-      OpenFileDescriptor descriptor2 = myActualContent2.getOpenFileDescriptor(offset);
-      if (descriptor1 == null) return descriptor2;
-      if (descriptor2 == null) return descriptor1;
-      pair.second.select(descriptor1, descriptor2);
+    if (myActualContent1 == null) {
+      return myActualContent2.getOpenFileDescriptor(offset);
     }
 
-    return null;
+    Pair<int[], Side> pair = transferLineFromOneside(myEditor.offsetToLogicalPosition(offset).line);
+    OpenFileDescriptor descriptor1 = myActualContent1.getOpenFileDescriptor(offset);
+    OpenFileDescriptor descriptor2 = myActualContent2.getOpenFileDescriptor(offset);
+    if (descriptor1 == null) return descriptor2;
+    if (descriptor2 == null) return descriptor1;
+    return pair.second.select(descriptor1, descriptor2);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {

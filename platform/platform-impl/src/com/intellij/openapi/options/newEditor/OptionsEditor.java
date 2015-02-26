@@ -39,6 +39,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -320,7 +321,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
            : myTree.select(configurable);
   }
 
-  /** @see #select(com.intellij.openapi.options.Configurable) */
+  /** @see #select(Configurable) */
   @Deprecated
   public ActionCallback select(Class<? extends Configurable> configurableClass) {
     final Configurable configurable = findConfigurable(configurableClass);
@@ -1036,8 +1037,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     if (configurable instanceof ConfigurableWrapper) {
       ConfigurableWrapper wrapper = (ConfigurableWrapper) configurable;
       ConfigurableEP ep = wrapper.getExtensionPoint();
-      ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(ep.bundle, ep.getPluginDescriptor().getPluginClassLoader());
-      return CommonBundle.message(resourceBundle, key);
+      final String bundle = ep.bundle;
+      if (StringUtil.isNotEmpty(bundle)) {
+        ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, ep.getPluginDescriptor().getPluginClassLoader());
+        return CommonBundle.message(resourceBundle, key);
+      }
     }
     return OptionsBundle.message(key);
   }

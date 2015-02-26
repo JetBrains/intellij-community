@@ -1,6 +1,6 @@
 package com.jetbrains.edu;
 
-import com.intellij.ide.SaveAndSyncHandlerImpl;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -131,7 +131,7 @@ public class EduUtils {
 
   public static void synchronize() {
     FileDocumentManager.getInstance().saveAllDocuments();
-    SaveAndSyncHandlerImpl.refreshOpenFiles();
+    SaveAndSyncHandler.getInstance().refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 

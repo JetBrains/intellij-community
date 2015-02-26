@@ -43,7 +43,7 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils
  * @author Vladislav.Soroka
  * @since 2/14/14
  */
-public class TestMethodGradleConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
+public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
   private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
 

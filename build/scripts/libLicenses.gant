@@ -207,6 +207,7 @@ libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: 
 libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.11", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://logging.apache.org/license.html")
 libraryLicense(name: "markdownj", libraryName: "markdownj", version: "0.4.2", license: "New BSD", url: "https://code.google.com/p/markdownj/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
+libraryLicense(name: "markdown4j", libraryName: "markdown4j-2.2", version: "2.2", license: "New BSD", url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "Maven", version: "2.2.1", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "plexus-util", version: "2.0.6", license: "Apache 2.0", url: "http://maven.apache.org/", libraryNames:['plexus-utils-2.0.6.jar'], licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver-2.4.4.jar", version: "2.4.4", license: "Apache 2.0", url: "http://plexus.codehaus.org/plexus-components/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
