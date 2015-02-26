@@ -59,6 +59,10 @@ public class DataNode<T> implements Serializable {
     myParent = parent;
   }
 
+  private DataNode(@NotNull Key<T> key) {
+    myKey = key;
+  }
+
   @Nullable
   public DataNode<?> getParent() {
     return myParent;
@@ -308,7 +312,9 @@ public class DataNode<T> implements Serializable {
   }
 
   private static <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
-    DataNode<T> copy = new DataNode<T>(dataNode.myKey, dataNode.myData, newParent);
+    DataNode<T> copy = new DataNode<T>(dataNode.myKey);
+    copy.myParent = newParent;
+    copy.myData = dataNode.myData;
     copy.myRawData = dataNode.myRawData;
     for (DataNode<?> child : dataNode.myChildren) {
       copy.addChild(nodeCopy(child, copy));
