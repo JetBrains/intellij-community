@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -235,7 +236,18 @@ public class BreakpointsDialog extends DialogWrapper {
     final JTree tree = new BreakpointsCheckboxTree(myProject, myTreeController) {
       @Override
       protected void onDoubleClick(CheckedTreeNode node) {
-        navigate(false);
+        if (node instanceof BreakpointsGroupNode) {
+          TreePath path = TreeUtil.getPathFromRoot(node);
+          if (isExpanded(path)) {
+            collapsePath(path);
+          }
+          else {
+            expandPath(path);
+          }
+        }
+        else {
+          navigate(false);
+        }
       }
     };
 
