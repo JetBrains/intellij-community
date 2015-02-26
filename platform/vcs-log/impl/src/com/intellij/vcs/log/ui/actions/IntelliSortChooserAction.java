@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.frame;
+package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-class IntelliSortChooserAction extends DumbAwareAction {
+public class IntelliSortChooserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
