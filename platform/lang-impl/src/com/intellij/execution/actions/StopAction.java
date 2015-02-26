@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,10 +151,8 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       assert project != null;
       popup.showCenteredInCurrentWindow(project);
     }
-    else {
-      if (activeProcessHandler != null) {
-        stopProcess(activeProcessHandler);
-      }
+    else if (activeProcessHandler != null) {
+      stopProcess(activeProcessHandler);
     }
   }
 
@@ -211,7 +209,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     return Pair.create(items, selected);
   }
 
-  private static void stopProcess(ProcessHandler processHandler) {
+  private static void stopProcess(@NotNull ProcessHandler processHandler) {
     if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
       ((KillableProcess)processHandler).killProcess();
       return;
