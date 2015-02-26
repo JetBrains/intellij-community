@@ -69,6 +69,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLog = new VcsLogImpl(logDataHolder, this);
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
+    addHighlighter(new Highlighter(myLogDataHolder, myUiProperties));
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {
@@ -162,6 +163,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public boolean isShowRootNames() {
     return myUiProperties.isShowRootNames();
+  }
+
+  @Override
+  public boolean isHighlightMyCommits() {
+    return myUiProperties.isHighlightMyCommits();
+  }
+
+  @Override
+  public void setHighlightMyCommits(boolean state) {
+    myUiProperties.setHighlightMyCommits(state);
+    repaintUI();
   }
 
   @Override
