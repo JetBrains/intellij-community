@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,11 +142,12 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   @Override
   public XExpression getExpression() {
     if (myComboBox.isPopupVisible()) {
-      return (XExpression)myComboBox.getPopup().getList().getSelectedValue();
+      Object value = myComboBox.getPopup().getList().getSelectedValue();
+      if (value != null) {
+        return (XExpression)value;
+      }
     }
-    else {
-      return getEditorsProvider().createExpression(getProject(), (Document)myEditor.getItem(), myExpression.getLanguage(), EvaluationMode.EXPRESSION);
-    }
+    return getEditorsProvider().createExpression(getProject(), (Document)myEditor.getItem(), myExpression.getLanguage(), EvaluationMode.EXPRESSION);
   }
 
   @Override
