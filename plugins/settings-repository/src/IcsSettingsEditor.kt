@@ -39,7 +39,7 @@ class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
 
     val readOnlySourcesEditor = createReadOnlySourcesEditor(getContentPane())
 
-    tabs.addTab(TabInfo(wrap(upstreamEditor.panel, upstreamEditor.createActions())).setText("Upstream").setObject(upstreamEditor))
+    tabs.addTab(TabInfo(wrap(upstreamEditor.panel, upstreamEditor.createActions())).setText("Upstream"))
     tabs.addTab(TabInfo(wrap(readOnlySourcesEditor.getComponent(), actions)).setText("Read-only Sources").setObject(readOnlySourcesEditor))
 
     tabs.addListener(object : TabsListener.Adapter() {
