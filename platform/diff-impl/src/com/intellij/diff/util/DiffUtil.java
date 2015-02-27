@@ -70,6 +70,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -301,12 +302,17 @@ public class DiffUtil {
 
   @NotNull
   public static Pair<JPanel, JLabel> createMessagePanel() {
-    final JLabel label = new JLabel();
+    JLabel label = new JLabel();
     label.setForeground(UIUtil.getInactiveTextColor());
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(label,
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0));
+    JPanel wrapper = createMessagePanel(label);
     return Pair.create(wrapper, label);
+  }
+
+  @NotNull
+  public static JPanel createMessagePanel(@NotNull JComponent comp) {
+    JPanel wrapper = new JPanel(new GridBagLayout());
+    wrapper.add(comp, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(1), 0, 0));
+    return wrapper;
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {

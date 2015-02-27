@@ -16,16 +16,28 @@
 package com.intellij.diff.tools;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.FrameDiffTool;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class ErrorDiffTool implements FrameDiffTool {
   public static final ErrorDiffTool INSTANCE = new ErrorDiffTool();
@@ -48,27 +60,51 @@ public class ErrorDiffTool implements FrameDiffTool {
   }
 
   private static class MyViewer implements DiffViewer {
+    @NotNull private final DiffContext myContext;
+    @NotNull private final DiffRequest myRequest;
+
     @NotNull private final JPanel myPanel;
 
     public MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      myContext = context;
+      myRequest = request;
+
       myPanel = new JPanel(new BorderLayout());
-
-      JPanel centerPanel = DiffUtil.createMessagePanel(getMessage(request));
-
-      myPanel.add(centerPanel, BorderLayout.CENTER);
+      myPanel.add(createComponent(request), BorderLayout.CENTER);
     }
 
     @NotNull
-    private static String getMessage(@NotNull DiffRequest request) {
-      if (request instanceof ErrorDiffRequest) {
-        // TODO: explain some of exceptions ?
-        return ((ErrorDiffRequest)request).getMessage();
-      }
+    private JComponent createComponent(@NotNull DiffRequest request) {
       if (request instanceof MessageDiffRequest) {
-        return ((MessageDiffRequest)request).getMessage();
+        // TODO: explain some of ErrorDiffRequest exceptions ?
+        String message = ((MessageDiffRequest)request).getMessage();
+        return DiffUtil.createMessagePanel(message);
+      }
+      if (request instanceof ContentDiffRequest) {
+        List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+        for (DiffContent content : contents) {
+          if (content instanceof FileContent && FileTypes.UNKNOWN.equals(content.getContentType())) {
+            final VirtualFile file = ((FileContent)content).getFile();
+
+            final SimpleColoredComponent label = new SimpleColoredComponent();
+            label.append("Can't show diff for unknown file type. ",
+                         new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor()));
+            label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, new Runnable() {
+              @Override
+              public void run() {
+                FileType type = FileTypeChooser.associateFileType(file.getName());
+                if (type != null && myContext instanceof DiffContextEx) {
+                  ((DiffContextEx)myContext).reloadDiffRequest();
+                }
+              }
+            });
+            LinkMouseListenerBase.installSingleTagOn(label);
+            return DiffUtil.createMessagePanel(label);
+          }
+        }
       }
 
-      return "Can't show diff";
+      return DiffUtil.createMessagePanel("Can't show diff");
     }
 
     @NotNull

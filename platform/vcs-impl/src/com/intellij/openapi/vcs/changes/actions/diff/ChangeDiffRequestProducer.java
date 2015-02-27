@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.actions.diff;
 
-import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.DiffRequestFactoryImpl;
@@ -29,22 +28,19 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -64,7 +60,6 @@ import java.util.Map;
 public class ChangeDiffRequestProducer implements DiffRequestProducer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
 
-  private static Key<List<String>> CONTEXT_KEY = Key.create("Diff.ChangeDiffRequestPresentableContextKey");
   public static Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
 
   @Nullable private final Project myProject;
@@ -374,10 +369,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
       FilePath filePath = revision.getFile();
       if (revision instanceof BinaryContentRevision) {
-        if (FileTypes.UNKNOWN.equals(filePath.getFileType())) {
-          checkAssociate(project, filePath, context, indicator);
-        }
-
         byte[] content = ((BinaryContentRevision)revision).getBinaryContent();
         if (content == null) {
           throw new DiffRequestProducerException("Can't get binary revision content");
@@ -411,44 +402,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     if (rev.getFile().isDirectory()) {
       throw new DiffRequestProducerException("Can't show diff for directory");
     }
-  }
-
-  private static void checkAssociate(@Nullable final Project project,
-                                     @NotNull final FilePath file,
-                                     @NotNull final UserDataHolder context,
-                                     @NotNull ProgressIndicator indicator) {
-    final String pattern = FileUtilRt.getExtension(file.getName()).toLowerCase();
-    if (getSkippedExtensionsFromContext(context).contains(pattern)) return;
-
-    // TODO: this popup breaks focus. Why do we do it here anyway?
-    // We should move it into CacheDiffRequestChainProcessor, but it requires some changes in ContentRevision/BinaryContentRevision API.
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        int result = Messages.showOkCancelDialog(project,
-                                                 VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
-                                                 VcsBundle.message("diff.unknown.file.type.title"),
-                                                 VcsBundle.message("diff.unknown.file.type.associate"),
-                                                 CommonBundle.getCancelButtonText(),
-                                                 Messages.getQuestionIcon());
-        if (result == Messages.OK) {
-          FileTypeChooser.associateFileType(file.getName());
-        }
-        else {
-          getSkippedExtensionsFromContext(context).add(pattern);
-        }
-      }
-    }, indicator.getModalityState());
-  }
-
-  @NotNull
-  private static List<String> getSkippedExtensionsFromContext(@NotNull UserDataHolder context) {
-    List<String> strings = CONTEXT_KEY.get(context);
-    if (strings == null) {
-      strings = new ArrayList<String>();
-      context.putUserData(CONTEXT_KEY, strings);
-    }
-    return strings;
   }
 
   @Override

@@ -18,10 +18,7 @@ package com.intellij.diff.impl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffManagerEx;
-import com.intellij.diff.DiffTool;
-import com.intellij.diff.FrameDiffTool;
+import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -849,11 +846,16 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class MyDiffContext extends DiffContext {
+  private class MyDiffContext extends DiffContextEx {
     @NotNull private final UserDataHolder myContext;
 
     public MyDiffContext(@NotNull UserDataHolder context) {
       myContext = context;
+    }
+
+    @Override
+    public void reloadDiffRequest() {
+      updateRequest(true);
     }
 
     @Nullable
