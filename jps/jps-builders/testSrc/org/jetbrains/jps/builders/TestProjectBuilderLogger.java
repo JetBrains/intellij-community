@@ -55,6 +55,7 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
   public void clear() {
     myCompiledFiles.clear();
     myDeletedFiles.clear();
+    myLogLines.clear();
   }
 
   public void assertCompiled(String builderName, File[] baseDirs, String... paths) {
