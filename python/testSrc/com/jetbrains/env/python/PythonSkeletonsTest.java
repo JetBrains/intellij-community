@@ -167,7 +167,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         });
       }
 
-      private void assertIsNotNull(Maybe<Callable> accessor) {
+      private void assertIsNotNull(Maybe<PyCallable> accessor) {
         if (accessor.isDefined()) {
           assertNotNull(accessor.valueOrNull());
         }

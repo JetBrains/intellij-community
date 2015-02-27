@@ -47,8 +47,6 @@ public class ExternalSystemStartupActivity implements StartupActivity {
       @SuppressWarnings("unchecked")
       @Override
       public void run() {
-        ExternalProjectsManager.getInstance(project).init();
-
         for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
           if (manager instanceof StartupActivity) {
             ((StartupActivity)manager).runActivity(project);
@@ -76,6 +74,7 @@ public class ExternalSystemStartupActivity implements StartupActivity {
       }
     };
 
+    ExternalProjectsManager.getInstance(project).init();
     DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(task, project));
   }
 }

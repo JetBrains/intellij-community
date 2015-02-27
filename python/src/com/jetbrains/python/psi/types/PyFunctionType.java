@@ -36,14 +36,14 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
- * Type of a particular function that is represented as a {@link Callable} in the PSI tree.
+ * Type of a particular function that is represented as a {@link com.jetbrains.python.psi.PyCallable} in the PSI tree.
  *
  * @author vlan
  */
 public class PyFunctionType implements PyCallableType {
-  @NotNull private final Callable myCallable;
+  @NotNull private final PyCallable myCallable;
 
-  public PyFunctionType(@NotNull Callable callable) {
+  public PyFunctionType(@NotNull PyCallable callable) {
     myCallable = callable;
   }
 
@@ -173,7 +173,7 @@ public class PyFunctionType implements PyCallableType {
   }
 
   @NotNull
-  public Callable getCallable() {
+  public PyCallable getCallable() {
     return myCallable;
   }
 

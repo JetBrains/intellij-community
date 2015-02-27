@@ -28,21 +28,42 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
  */
 public interface GradleProjectSettingsControlBuilder {
 
+  /**
+   * Hides/shows components added by the current control}.
+   * @param show  flag which indicates if current control' components should be visible
+   */
+  void showUi(boolean show);
+
+  /**
+   * get initial settings
+   * @return
+   */
   GradleProjectSettings getInitialSettings();
 
+  /**
+   * Add Gradle home components to the panel
+   */
   IdeaGradleProjectSettingsControlBuilder addGradleHomeComponents(PaintAwarePanel content, int indentLevel);
 
+  /**
+   * Add Gradle JDK component to the panel
+   */
   IdeaGradleProjectSettingsControlBuilder addGradleJdkComponents(PaintAwarePanel content, int indentLevel);
 
+  /**
+   * Add Gradle distribution chooser component to the panel
+   */
   IdeaGradleProjectSettingsControlBuilder addGradleChooserComponents(PaintAwarePanel content, int indentLevel);
-
-  void disposeUIResources();
 
   boolean validate(GradleProjectSettings settings) throws ConfigurationException;
 
   void apply(GradleProjectSettings settings);
 
-  boolean isModified(GradleProjectSettings settings);
+  /**
+   * check if something was changed against initial settings
+   * @return
+   */
+  boolean isModified();
 
   void reset(Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation);
 
@@ -52,4 +73,6 @@ public interface GradleProjectSettingsControlBuilder {
 
   @Nullable
   ExternalSystemSettingsControlCustomizer getExternalSystemSettingsControlCustomizer();
+
+  void disposeUIResources();
 }

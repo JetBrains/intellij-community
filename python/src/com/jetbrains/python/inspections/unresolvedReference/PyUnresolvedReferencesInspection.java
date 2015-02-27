@@ -743,7 +743,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (hasUnresolvedDynamicMember((PyClassType)type, reference, name)) return true;
       }
       if (type instanceof PyFunctionType) {
-        final Callable callable = ((PyFunctionType)type).getCallable();
+        final PyCallable callable = ((PyFunctionType)type).getCallable();
         if (callable instanceof PyFunction && PyKnownDecoratorUtil.hasNonBuiltinDecorator((PyFunction)callable, myTypeEvalContext)) {
           return true;
         }
