@@ -53,9 +53,10 @@ public class BuilderProcessor extends AbstractClassProcessor {
     final PsiType psiBuilderType = builderHandler.getBuilderType(psiClass);
 
     final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
-    final PsiClass builderClass = PsiClassUtil.getInnerClassByName(psiClass, builderClassName);
-    if (null != builderClass) {
-      target.add(builderHandler.createBuilderMethod(psiClass, null, builderClass, psiAnnotation));
+    PsiClass builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
+    if (null == builderClass) {
+      builderClass = builderHandler.createBuilderClass(psiClass, psiAnnotation);
     }
+    target.add(builderHandler.createBuilderMethod(psiClass, null, builderClass, psiAnnotation));
   }
 }

@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
   static {
     // Init home of IDEAS Sources
-    System.setProperty("idea.home.path", "E:\\Projekte\\Idea\\ideaIC-139.872.1");
+    System.setProperty("idea.home.path", "E:\\Projekte\\Idea\\_ideaIC-140.2683.2");
   }
 
   private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";

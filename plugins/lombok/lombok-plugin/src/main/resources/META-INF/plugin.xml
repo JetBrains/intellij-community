@@ -31,7 +31,7 @@
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
-    <projectConfigurable implementation="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
+    <projectConfigurable instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
     <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="FIRST"/>
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
@@ -201,6 +201,7 @@
 				<ol>
 				    <li>Fixed #33: Builder annotation with partial implementation shows errors</li>
 				    <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>
+				    <li>Fixed #80: Some issues with "delomboked" @Builder on static method</li>
 				</ol>
 			</li>
 			<li>0.9.0

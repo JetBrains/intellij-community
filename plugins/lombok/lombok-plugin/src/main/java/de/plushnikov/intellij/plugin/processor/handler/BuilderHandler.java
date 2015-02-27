@@ -73,6 +73,7 @@ public class BuilderHandler {
       Data.class.getSimpleName(), Value.class.getSimpleName(), lombok.experimental.Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
 
   private final ToStringProcessor toStringProcessor = new ToStringProcessor();
+  private final NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
 
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
     boolean result = validateAnnotationOnRightType(psiClass, problemBuilder);
@@ -270,7 +271,14 @@ public class BuilderHandler {
 
   @NotNull
   public Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
+    final Collection<PsiMethod> methodsIntern = PsiClassUtil.collectClassConstructorIntern(psiClass);
+
+    final String constructorName = noArgsConstructorProcessor.getConstructorName(psiClass);
+    for (PsiMethod existedConstrcutor : methodsIntern) {
+      if (constructorName.equals(existedConstrcutor.getName()) && existedConstrcutor.getParameterList().getParametersCount() == 0) {
+        return Collections.emptySet();
+      }
+    }
     return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation);
   }
 
@@ -396,6 +404,8 @@ public class BuilderHandler {
     } else {
       if (PsiType.VOID.equals(psiBuilderType)) {
         codeBlockFormat = "%s(%s);";
+      } else if (psiMethod.isConstructor()) {
+        codeBlockFormat = "return new %s(%s);";
       } else {
         codeBlockFormat = "return %s(%s);";
       }

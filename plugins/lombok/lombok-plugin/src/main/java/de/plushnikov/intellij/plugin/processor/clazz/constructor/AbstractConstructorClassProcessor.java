@@ -83,7 +83,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
 
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-    final String constructorName = psiClass.getName();
+    final String constructorName = getConstructorName(psiClass);
 
     if (containsMethod(definedConstructors, constructorName, paramTypes)) {
       if (paramTypes.isEmpty()) {
@@ -108,6 +108,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
 
     return result;
+  }
+
+  @NotNull
+  public String getConstructorName(@NotNull PsiClass psiClass) {
+    return psiClass.getName();
   }
 
   private boolean containsMethod(final Collection<PsiMethod> definedMethods, final String methodName, final List<PsiType> paramTypes) {
@@ -184,7 +189,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
-    LombokLightMethodBuilder constructor = new LombokLightMethodBuilder(psiClass.getManager(), psiClass.getName())
+    LombokLightMethodBuilder constructor = new LombokLightMethodBuilder(psiClass.getManager(), getConstructorName(psiClass))
         .withConstructor(true)
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation)
@@ -238,7 +243,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   private String buildClassNameWithGenericTypeParameters(@NotNull final PsiClass psiClass) {
-    StringBuilder psiClassName = new StringBuilder(psiClass.getName());
+    StringBuilder psiClassName = new StringBuilder(getConstructorName(psiClass));
 
     final PsiTypeParameter[] psiClassTypeParameters = psiClass.getTypeParameters();
     if (psiClassTypeParameters.length > 0) {
