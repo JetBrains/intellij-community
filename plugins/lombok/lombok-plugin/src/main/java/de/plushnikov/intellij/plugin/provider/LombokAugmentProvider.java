@@ -74,10 +74,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
     initRegisteredAnnotations();
 
-//    if(type.isAssignableFrom(PsiMethod.class) && ((PsiClass) element).getName().equals("BuilderAtMethodSimple")) {
-//      System.out.println("called for method");
-//    }
-
     final AugmentCallData currentAugmentData = new AugmentCallData(element, type);
     if (recursionBreaker.get().contains(currentAugmentData)) {
       log.debug("Prevented recursion call");
@@ -88,7 +84,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     try {
       final PsiClass psiClass = (PsiClass) element;
 
-      final boolean isLombokPresent = true;//UserMapKeys.isLombokPossiblePresent(element);
+      final boolean isLombokPresent = UserMapKeys.isLombokPossiblePresent(element);
       if (isLombokPresent) {
         return process(type, project, psiClass);
       }
@@ -119,7 +115,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   private <Psi extends PsiElement> List<Psi> process(@NotNull Class<Psi> type, @NotNull Project project, @NotNull PsiClass psiClass) {
-    final boolean isLombokPossiblePresent = true;//verifyLombokPresent(psiClass);
+    final boolean isLombokPossiblePresent = verifyLombokPresent(psiClass);
 
     UserMapKeys.updateLombokPresent(psiClass, isLombokPossiblePresent);
 

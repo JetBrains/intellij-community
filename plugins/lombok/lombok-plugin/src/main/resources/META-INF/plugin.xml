@@ -201,6 +201,7 @@
 				<ol>
 				    <li>Fixed #33: Builder annotation with partial implementation shows errors</li>
 				    <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>
+				    <li>Fixed #79: Support for multiple @Builder in same java class</li>
 				    <li>Fixed #80: Some issues with "delomboked" @Builder on static method</li>
 				</ol>
 			</li>
