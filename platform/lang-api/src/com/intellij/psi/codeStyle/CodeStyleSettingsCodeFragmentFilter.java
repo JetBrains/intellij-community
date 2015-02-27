@@ -55,14 +55,14 @@ class CodeStyleSettingsCodeFragmentFilter {
   }
 
   @NotNull
-  public List<String> getFieldNamesAffectingCodeFragment() {
+  public List<String> getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType type) {
     CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(myProject);
     CodeStyleSettings clonedSettings = codeStyleSettingsManager.getCurrentSettings().clone();
     myCommonSettings = clonedSettings.getCommonSettings(myProvider.getLanguage());
 
     try {
       codeStyleSettingsManager.setTemporarySettings(clonedSettings);
-      Set<String> fields = myProvider.getSupportedFields();
+      Set<String> fields = myProvider.getSupportedFields(type);
       return filterAffectingFields(fields);
     }
     finally {

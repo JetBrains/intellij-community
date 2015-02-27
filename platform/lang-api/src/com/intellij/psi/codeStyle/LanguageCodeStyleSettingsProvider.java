@@ -60,7 +60,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
                                                @NotNull final PsiFile file,
                                                @NotNull final TextRange range)
   {
-    List<String> affectingFields = new CodeStyleSettingsCodeFragmentFilter(this, file, range).getFieldNamesAffectingCodeFragment();
+    List<String> affectingFields = new CodeStyleSettingsCodeFragmentFilter(this, file, range).getFieldNamesAffectingCodeFragment(settingsType);
     consumer.showStandardOptions(ArrayUtil.toStringArray(affectingFields));
   }
 
@@ -214,6 +214,12 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return fieldCollector.getCollectedFields();
   }
 
+  public Set<String> getSupportedFields(SettingsType type) {
+    SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
+    fieldCollector.collectFields(type);
+    return fieldCollector.getCollectedFields();
+  }
+
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
     private final Set<String> myCollectedFields = new HashSet<String>();
     private SettingsType myCurrSettingsType;
@@ -223,6 +229,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
         myCurrSettingsType = settingsType;
         LanguageCodeStyleSettingsProvider.this.customizeSettings(this, settingsType);
       }
+    }
+
+    public void collectFields(SettingsType type) {
+      myCurrSettingsType = type;
+      LanguageCodeStyleSettingsProvider.this.customizeSettings(this, type);
     }
 
     @Override
