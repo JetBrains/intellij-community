@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
@@ -43,7 +44,12 @@ class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvalu
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException {
     String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
-    return ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName);
+    if (DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
+      return null; // do not auto load icon for remote
+    }
+    else {
+      return ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName);
+    }
   }
 
   @Nullable

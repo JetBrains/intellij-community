@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
@@ -50,7 +50,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     else {
       Object deserializedValue = myBinding.deserialize(currentValue, node);
       if (currentValue != deserializedValue) {
-        myAccessor.write(context, deserializedValue);
+        myAccessor.set(context, deserializedValue);
       }
     }
     return context;
@@ -66,7 +66,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     else {
       Object deserializedValue = Binding.deserializeList(myBinding, currentValue, nodes);
       if (currentValue != deserializedValue) {
-        myAccessor.write(context, deserializedValue);
+        myAccessor.set(context, deserializedValue);
       }
     }
     return context;
@@ -82,6 +82,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     return myBinding.isBoundTo(node);
   }
 
+  @NotNull
   @Override
   public Class getBoundNodeType() {
     return myBinding.getBoundNodeType();

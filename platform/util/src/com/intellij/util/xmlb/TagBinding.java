@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
@@ -39,19 +38,23 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
     Object value = myAccessor.read(o);
-    Element v = new Element(myName);
+    Element serialized = new Element(myName);
     if (value == null) {
-      return v;
+      return serialized;
     }
 
-    assert myBinding != null;
-    Object node = myBinding.serialize(value, v, filter);
-    if (node != null && node != v) {
-      JDOMUtil.addContent(v, node);
+    if (myBinding == null) {
+      serialized.addContent(new Text(TextBinding.convertToString(value)));
     }
-    return v;
+    else {
+      Object node = myBinding.serialize(value, serialized, filter);
+      if (node != null && node != serialized) {
+        JDOMUtil.addContent(serialized, node);
+      }
+    }
+    return serialized;
   }
 
   @Nullable
@@ -89,17 +92,18 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   }
 
   private Object deserialize(Object o, List<? extends Content> children, boolean isBeanBinding) {
-    assert myBinding != null;
     if (isBeanBinding && myAccessor.isFinal()) {
+      assert myBinding != null;
       ((BeanBinding)myBinding).deserializeInto(o, (Element)children.get(0), null);
     }
+    else if (myTextIfEmpty != null && children.isEmpty()) {
+      XmlSerializerImpl.doSet(o, myTextIfEmpty, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+    }
+    else if (myBinding == null) {
+      XmlSerializerImpl.doSet(o, children.isEmpty() ? "" : children.get(0).getValue(), myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+    }
     else {
-      if (children.isEmpty() && myTextIfEmpty != null) {
-        children = Collections.<Content>singletonList(new Text(myTextIfEmpty));
-      }
-
-      Object v = Binding.deserializeList(myBinding, myAccessor.read(o), children);
-      myAccessor.write(o, XmlSerializerImpl.convert(v, myAccessor.getValueClass()));
+      myAccessor.set(o, Binding.deserializeList(myBinding, myAccessor.read(o), children));
     }
     return o;
   }

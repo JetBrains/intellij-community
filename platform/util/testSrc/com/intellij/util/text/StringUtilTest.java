@@ -219,6 +219,10 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testJoin() {
+    assertEquals("", StringUtil.join(Collections.<String>emptyList(), ","));
+    assertEquals("qqq", StringUtil.join(Collections.singletonList("qqq"), ","));
+    assertEquals("", StringUtil.join(Collections.<String>singletonList(null), ","));
+    assertEquals("a,b", StringUtil.join(Arrays.asList("a", "b"), ","));
     assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
     assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.util.xmlb;
 
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 abstract class Binding {
@@ -33,20 +35,20 @@ abstract class Binding {
   }
 
   @Nullable
-  public abstract Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter);
 
   @Nullable
   public abstract Object deserialize(Object context, @NotNull Object node);
 
-  public Object deserializeEmpty(Object context) {
-    return null;
-  }
-
   public abstract boolean isBoundTo(Object node);
 
-  public abstract Class getBoundNodeType();
+  void init(@NotNull Type originalType) {
+    // called (and make sense) only if MainBinding
+  }
 
-  public void init() {
+  @NotNull
+  public Class getBoundNodeType() {
+    return Element.class;
   }
 
   @SuppressWarnings("CastToIncompatibleInterface")
@@ -60,7 +62,7 @@ abstract class Binding {
         return binding.deserialize(context, nodes.get(0));
       }
       else if (nodes.isEmpty()) {
-        return binding.deserializeEmpty(context);
+        return null;
       }
       else {
         throw new AssertionError("Duplicate data for " + binding + " will be ignored");

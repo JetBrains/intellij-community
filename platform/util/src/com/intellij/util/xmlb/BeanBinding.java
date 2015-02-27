@@ -36,10 +36,11 @@ import java.beans.Introspector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.List;
 
-class BeanBinding extends Binding {
+class BeanBinding extends Binding implements MainBinding {
   static final Logger LOG = Logger.getInstance(BeanBinding.class);
 
   private static final Map<Class, List<Accessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
@@ -63,15 +64,13 @@ class BeanBinding extends Binding {
   }
 
   @Override
-  public synchronized void init() {
+  public synchronized void init(@NotNull Type originalType) {
     assert myBindings == null;
 
     List<Accessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i));
-      binding.init();
-      myBindings[i] = binding;
+      myBindings[i] = createBinding(accessors.get(i));
     }
   }
 
@@ -222,11 +221,6 @@ class BeanBinding extends Binding {
     return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
-  @Override
-  public Class getBoundNodeType() {
-    return Element.class;
-  }
-
   private static String getTagName(Class<?> aClass) {
     for (Class<?> c = aClass; c != null; c = c.getSuperclass()) {
       String name = getTagNameFromAnnotation(c);
@@ -344,7 +338,7 @@ class BeanBinding extends Binding {
 
   @NotNull
   private static Binding createBinding(@NotNull Accessor accessor) {
-    Binding binding = XmlSerializerImpl.getTypeBinding(accessor.getGenericType(), accessor);
+    Binding binding = XmlSerializerImpl.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
     }

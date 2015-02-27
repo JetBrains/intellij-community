@@ -1455,13 +1455,16 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String join(@NotNull Collection<? extends String> strings, @NotNull String separator) {
+  public static String join(@NotNull Collection<String> strings, @NotNull String separator) {
+    if (strings.size() <= 1) {
+      return notNullize(ContainerUtil.getFirstItem(strings));
+    }
     StringBuilder result = new StringBuilder();
     join(strings, separator, result);
     return result.toString();
   }
 
-  public static void join(@NotNull Collection<? extends String> strings, @NotNull String separator, @NotNull StringBuilder result) {
+  public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (String string : strings) {
       if (string != null) {

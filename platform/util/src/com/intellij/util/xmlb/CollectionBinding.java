@@ -16,21 +16,16 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
-  public CollectionBinding(ParameterizedType type, Accessor accessor) {
-    super(getComponentClass(type), Constants.COLLECTION, accessor);
+  public CollectionBinding(@NotNull ParameterizedType type, @Nullable Accessor accessor) {
+    super(XmlSerializerImpl.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
-
-  private static Class getComponentClass(@NotNull ParameterizedType type) {
-    Type arg = type.getActualTypeArguments()[0];
-    return arg instanceof ParameterizedType ? (Class)((ParameterizedType)arg).getRawType() : (Class)arg;
-  }
-
+  
   @Override
   Object processResult(Collection result, Object target) {
     if (myAccessor == null) {
@@ -55,14 +50,16 @@ class CollectionBinding extends AbstractCollectionBinding  {
   }
 
   @Override
-  protected String getCollectionTagName(Object target) {
+  protected String getCollectionTagName(@Nullable final Object target) {
     if (target instanceof Set) {
       return Constants.SET;
     }
     else if (target instanceof List) {
       return Constants.LIST;
     }
-    return super.getCollectionTagName(target);
+    else {
+      return "collection";
+    }
   }
 
   @Override
