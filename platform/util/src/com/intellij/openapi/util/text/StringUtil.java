@@ -1456,6 +1456,13 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String join(@NotNull Collection<? extends String> strings, @NotNull String separator) {
+    int size = strings.size();
+    if (size == 0) {
+      return "";
+    }
+    if (size == 1) {
+      return String.valueOf(strings.iterator().next());
+    }
     StringBuilder result = new StringBuilder();
     join(strings, separator, result);
     return result.toString();
