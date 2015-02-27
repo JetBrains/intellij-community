@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,43 @@
  */
 package com.intellij.util.xmlb;
 
-import org.jdom.Content;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TextBinding extends Binding {
-  private volatile Binding myBinding;
+import java.util.Date;
+
+class TextBinding extends Binding {
+  private final Class<?> valueClass;
 
   public TextBinding(@NotNull Accessor accessor) {
     super(accessor);
+
+    valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
   }
 
   @Nullable
   @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
-    Object v = myAccessor.read(o);
-    if (v == null) {
-      return null;
-    }
-    Object node = myBinding.serialize(v, context, filter);
-    if (node == null) {
-      return null;
-    }
-    else if (node instanceof Text) {
-      return node;
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+    Object value = myAccessor.read(o);
+    return value == null ? null : new Text(convertToString(value));
+  }
+
+  @NotNull
+  static String convertToString(@NotNull Object value) {
+    if (value instanceof Date) {
+      return Long.toString(((Date)value).getTime());
     }
     else {
-      return new Text(((Content)node).getValue());
+      return value.toString();
     }
   }
 
   @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object node) {
-    myAccessor.write(context, myBinding.deserialize(context, node));
+    String value = ((Text)node).getValue();
+    XmlSerializerImpl.doSet(context, value, myAccessor, valueClass);
     return context;
   }
 
@@ -58,16 +60,9 @@ public class TextBinding extends Binding {
     return node instanceof Text;
   }
 
+  @NotNull
   @Override
   public Class getBoundNodeType() {
     return Text.class;
-  }
-
-  @Override
-  public void init() {
-    myBinding = XmlSerializerImpl.getBinding(myAccessor);
-    if (!Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {
-      throw new XmlSerializationException("Can't use attribute binding for non-text content: " + myAccessor);
-    }
   }
 }

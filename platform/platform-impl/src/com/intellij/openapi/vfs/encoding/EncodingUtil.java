@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -114,9 +115,15 @@ public class EncodingUtil {
     }
 
     // first, save the file in the new charset and then mark the file as having the correct encoding
-    virtualFile.setCharset(charset);
     try {
-      LoadTextUtil.write(project, virtualFile, virtualFile, document.getText(), document.getModificationStamp());
+      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
+        @Override
+        public Object compute() throws IOException {
+          virtualFile.setCharset(charset);
+          LoadTextUtil.write(project, virtualFile, virtualFile, document.getText(), document.getModificationStamp());
+          return null;
+        }
+      });
     }
     catch (IOException io) {
       Messages.showErrorDialog(project, io.getMessage(), "Error Writing File");

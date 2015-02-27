@@ -79,6 +79,12 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                            " vs ");
   }
 
+  @Override
+  @NotNull
+  public String getTitle(@NotNull VirtualFile file) {
+    return getTitle(file, file);
+  }
+
   @NotNull
   public static String getContentTitle(@NotNull FilePath path) {
     if (path.isDirectory()) return path.getPath();

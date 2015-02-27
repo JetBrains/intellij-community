@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
@@ -101,7 +100,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        int sideInset = Registry.is("editor.use.compressible.tabs") ? 2 : 10;
+        int sideInset = !UISettings.getInstance().HIDE_TABS_IF_NEED ? 2 : 10;
         return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, sideInset, TabsUtil.TAB_VERTICAL_PADDING, sideInset));
       }
     }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
@@ -282,8 +281,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   public void setToolTipTextAt(final int index, final String text) {
     myTabs.getTabAt(index).setTooltipText(text);
   }
-
-  public boolean isTitleShortened(int index) { return myTabs.getTabAt(index).isTitleShortened(); }
 
   public void setBackgroundColorAt(final int index, final Color color) {
     myTabs.getTabAt(index).setTabColor(color);

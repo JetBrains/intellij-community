@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.ImageSerializer;
@@ -88,15 +89,15 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
   }
 
   private static Value getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
-    throws EvaluateException, ClassNotLoadedException, InvalidTypeException {
+    throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
-    ClassType cls = (ClassType)process.findClass(evaluationContext, ImageSerializer.class.getName(),
-                                                               evaluationContext.getClassLoader());
+    EvaluationContext copyContext = evaluationContext.createEvaluationContext(obj);
+    ClassType helperClass = ClassLoadingUtils.getHelperClass(ImageSerializer.class.getName(), copyContext, process);
 
-    if (cls != null) {
-      List<Method> methods = cls.methodsByName(methodName);
+    if (helperClass != null) {
+      List<Method> methods = helperClass.methodsByName(methodName);
       if (!methods.isEmpty()) {
-        return process.invokeMethod(evaluationContext, cls, methods.get(0), Collections.singletonList(obj));
+        return process.invokeMethod(copyContext, helperClass, methods.get(0), Collections.singletonList(obj));
       }
     }
     return null;

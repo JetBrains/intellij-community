@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,17 +91,24 @@ public class FileListeningTest extends IntegrationTestCase {
 
     // ignored folders should not be loaded in VFS
     assertEquals("dir\n" +
+                 " f.class\n" +
                  " f.txt\n" +
                  " subdir\n" +
                  "  subsubdir1\n" +
-                 "   f.txt\n" +
-                 " f.class\n",
+                 "   f.txt\n",
                  buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
     );
   }
 
   private static StringBuilder buildDBFileStructure(@NotNull VirtualFile from, int level, @NotNull StringBuilder builder) {
-    for (VirtualFile eachChild : ((NewVirtualFile)from).getCachedChildren()) {
+    List<VirtualFile> children = ContainerUtil.newArrayList(((NewVirtualFile)from).getCachedChildren());
+    Collections.sort(children, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile o1, VirtualFile o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    for (VirtualFile eachChild : children) {
       builder.append(StringUtil.repeat(" ", level)).append(eachChild.getName()).append("\n");
       buildDBFileStructure(eachChild, level + 1, builder);
     }

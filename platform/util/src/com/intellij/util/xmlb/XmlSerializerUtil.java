@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,19 +27,19 @@ public class XmlSerializerUtil {
     assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign " +
                                                              from.getClass() + " to " + to.getClass();
     for (Accessor accessor : BeanBinding.getAccessors(to.getClass())) {
-      accessor.write(to, accessor.read(from));
+      accessor.set(to, accessor.read(from));
     }
   }
 
   public static <T> T createCopy(@NotNull T from) {
     try {
-      final T to = (T)from.getClass().newInstance();
+      T to = (T)from.getClass().newInstance();
       copyBean(from, to);
       return to;
     }
     catch (Exception ignored) {
+      return null;
     }
-    return null;
   }
 
   public static List<Accessor> getAccessors(Class aClass) {

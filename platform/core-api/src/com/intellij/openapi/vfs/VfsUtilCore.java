@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ public class VfsUtilCore {
   private static final String PROTOCOL_DELIMITER = ":";
 
   /**
-   * Checks whether the <code>ancestor {@link com.intellij.openapi.vfs.VirtualFile}</code> is parent of <code>file
-   * {@link com.intellij.openapi.vfs.VirtualFile}</code>.
+   * Checks whether the <code>ancestor {@link VirtualFile}</code> is parent of <code>file
+   * {@link VirtualFile}</code>.
    *
    * @param ancestor the file
    * @param file     the file
@@ -185,11 +185,11 @@ public class VfsUtilCore {
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   *                  See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
+   *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file to make a copy of
    * @param toDir     directory to make a copy in
    * @return a copy of the file
-   * @throws java.io.IOException if file failed to be copied
+   * @throws IOException if file failed to be copied
    */
   @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
@@ -201,12 +201,12 @@ public class VfsUtilCore {
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   *                  See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
+   *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file to make a copy of
    * @param toDir     directory to make a copy in
    * @param newName   new name of the file
    * @return a copy of the file
-   * @throws java.io.IOException if file failed to be copied
+   * @throws IOException if file failed to be copied
    */
   @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName)
@@ -253,7 +253,7 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
-  @SuppressWarnings("UnsafeVfsRecursion")
+  @SuppressWarnings({"UnsafeVfsRecursion", "Duplicates"})
   @NotNull
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws VisitorException {
