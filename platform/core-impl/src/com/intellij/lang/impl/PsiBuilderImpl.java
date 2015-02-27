@@ -451,9 +451,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public CharSequence getText() {
+      boolean isDone = myDoneMarker != null;
+      CharSequence originalText = myBuilder.getOriginalText();
       int startOffset = getStartOffset();
-      int endOffset = getEndOffset();
-      return myBuilder.getOriginalText().subSequence(startOffset, endOffset);
+      int endOffset = isDone ? getEndOffset() : myBuilder.getCurrentOffset();
+      CharSequence text = originalText.subSequence(startOffset, endOffset);
+      return isDone ? text : text + "...";
     }
 
     @Override
