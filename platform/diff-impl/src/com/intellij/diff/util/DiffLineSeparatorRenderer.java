@@ -162,33 +162,33 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
       yPoints2[index] = yPos2;
     }
 
-    paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
+    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
+    try {
+      paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
+    }
+    finally {
+      config.restore();
+    }
   }
 
   private static void paintLine(@NotNull Graphics g,
                                 @NotNull int[] xPoints1, @NotNull int[] yPoints1,
                                 @NotNull int[] xPoints2, @NotNull int[] yPoints2) {
-    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
 
-    try {
-      Color innerColor = getInnerColor();
-      Color outerColor = getOuterColor();
+    Color innerColor = getInnerColor();
+    Color outerColor = getOuterColor();
 
-      if (innerColor != null) {
-        g.setColor(innerColor);
-        int[] xPoints = mergeReverse(xPoints1, xPoints2);
-        int[] yPoints = mergeReverse(yPoints1, yPoints2);
+    if (innerColor != null) {
+      g.setColor(innerColor);
+      int[] xPoints = mergeReverse(xPoints1, xPoints2);
+      int[] yPoints = mergeReverse(yPoints1, yPoints2);
 
-        g.fillPolygon(xPoints, yPoints, xPoints.length);
-      }
-      if (outerColor != null) {
-        g.setColor(outerColor);
-        g.drawPolyline(xPoints1, yPoints1, xPoints1.length);
-        g.drawPolyline(xPoints2, yPoints2, xPoints2.length);
-      }
+      g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
-    finally {
-      config.restore();
+    if (outerColor != null) {
+      g.setColor(outerColor);
+      g.drawPolyline(xPoints1, yPoints1, xPoints1.length);
+      g.drawPolyline(xPoints2, yPoints2, xPoints2.length);
     }
   }
 
