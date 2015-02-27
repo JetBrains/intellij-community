@@ -1,10 +1,5 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -54,18 +49,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   protected void doAddSearchWordInCode(final String refname) {
     final MatchOptions options = context.getOptions();
-    final FileType fileType = options.getFileType();
-    final Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;
-    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
-    if (!namesValidator.isKeyword(refname, context.getProject())) {
-      CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
-                                                                       (GlobalSearchScope)options.getScope(),
-                                                                       options.isCaseSensitiveMatch());
-    }
-    else {
-      CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_CODE,
-                                                                       (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
-    }
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_CODE,
+                                                                     (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
   }
 
   protected void doAddSearchWordInText(final String refname) {
