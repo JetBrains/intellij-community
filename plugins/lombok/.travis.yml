@@ -13,4 +13,4 @@ before_script:
  - chmod +x travis.sh
  - chmod +x fetchIdea.sh
 
-script: ./travis.sh
+script: "./travis.sh"

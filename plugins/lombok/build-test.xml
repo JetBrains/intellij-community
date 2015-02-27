@@ -1,13 +1,12 @@
 <project name="Lombok IntelliJIdea Plugin" default="test" basedir=".">
 
-  <property file="build.properties"/>
+  <!--<property file="build.properties"/>-->
 
   <!-- set global properties for this build -->
   <property name="build.compiler" value="modern"/>
 
   <property name="src" location="${basedir}/lombok-plugin/src/main/java"/>
   <property name="gen" location="${basedir}/lombok-plugin/gen"/>
-  <property name="jps" location="${basedir}/jps-plugin"/>
   <property name="utils" location="${basedir}/utils"/>
   <property name="test.src" location="${basedir}/tests"/>
   <property name="build" location="build"/>
@@ -57,7 +56,8 @@
         <include name="**/*.properties"/>
         <include name="**/*.xml"/>
         <include name="**/*.txt"/>
-        <include name="**/*.go"/>
+        <include name="**/*.html"/>
+        <include name="**/*.png"/>
       </patternset>
 
       <copy toDir="@{dest}">
@@ -69,12 +69,6 @@
         </fileset>
         <fileset dir="${gen}">
           <patternset refid="resources"/>
-        </fileset>
-        <fileset dir="${jps}">
-          <patternset refid="resources"/>
-        </fileset>
-        <fileset dir="${jps}/src">
-          <include name="META-INF/services/**"/>
         </fileset>
         <fileset dir="${test.src}">
           <patternset refid="resources"/>
@@ -93,7 +87,6 @@
         <src path="${src}"/>
         <src path="${gen}"/>
         <src path="${utils}/src"/>
-        <src path="${jps}/src"/>
         <src path="${test.src}"/>
       </javac2>
 
