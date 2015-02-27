@@ -16,6 +16,8 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -114,7 +117,8 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
     final PyFile pyFile = (PyFile)firstElement.getContainingFile();
     myModuleMemberModel = new ModuleMemberInfoModel(pyFile);
     myMemberSelectionTable = new TopLevelSymbolsSelectionTable(myModuleMemberModel.getTopLevelSymbolInfo(), myModuleMemberModel);
-    myTablePanel.add(myMemberSelectionTable, BorderLayout.CENTER);
+    // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
+    myTablePanel.add(ScrollPaneFactory.createScrollPane(myMemberSelectionTable), BorderLayout.CENTER);
 
     init();
   }
@@ -248,6 +252,18 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
     public TopLevelSymbolsSelectionTable(@NotNull Collection<TopLevelSymbolInfo> memberInfos,
                                          @Nullable MemberInfoModel<PyElement, TopLevelSymbolInfo> memberInfoModel) {
       super(memberInfos, memberInfoModel, null);
+      // TODO: It's better to make AbstractMemberSelectionTable more flexible than to patch model like that
+      myTableModel = new MyTableModel<PyElement, TopLevelSymbolInfo>(this) {
+        @Override
+        public String getColumnName(int column) {
+          return column == DISPLAY_NAME_COLUMN ? "Symbol" : super.getColumnName(column);
+        }
+      };
+      final TableCellRenderer oldRenderer = getColumnModel().getColumn(DISPLAY_NAME_COLUMN).getCellRenderer();
+
+      setModel(myTableModel);
+      getColumnModel().getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(oldRenderer);
+      TableUtil.setupCheckboxColumn(getColumnModel().getColumn(CHECKED_COLUMN));
     }
 
     @Nullable
