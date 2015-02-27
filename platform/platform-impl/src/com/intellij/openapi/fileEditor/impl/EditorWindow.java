@@ -488,10 +488,6 @@ public class EditorWindow {
     }
   }
 
-  private boolean isTitleShortenedAt(int index) {
-    return myTabbedPane != null && myTabbedPane.isTitleShortened(index);
-  }
-
   private void setBackgroundColorAt(final int index, final Color color) {
     if (myTabbedPane != null) {
       myTabbedPane.setBackgroundColorAt(index, color);
@@ -948,7 +944,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS || isTitleShortenedAt(index)
+      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS
                               ? getManager().getFileTooltipText(file)
                               : null);
     }
