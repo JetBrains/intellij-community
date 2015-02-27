@@ -64,7 +64,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   @Override
   protected boolean isExtraSettingModified() {
-    return myBuilder.isModified(getInitialSettings());
+    return myBuilder.isModified();
   }
 
   @Override
@@ -79,7 +79,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   @Override
   public void showUi(boolean show) {
     super.showUi(show);
-    ExternalSystemUiUtil.showUi(myBuilder, show);
+    myBuilder.showUi(show);
   }
 
   /**
