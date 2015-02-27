@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -126,7 +125,7 @@ public class TabLabel extends JPanel {
 
       @Override
       protected void doPaint(Graphics2D g) {
-        if (!Registry.is("editor.use.compressible.tabs") || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
+        if (UISettings.getInstance().HIDE_TABS_IF_NEED || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
           super.doPaint(g);
           return;
         }
@@ -156,7 +155,7 @@ public class TabLabel extends JPanel {
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (Registry.is("editor.use.compressible.tabs") ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(new Insets(0, 0, 0, 0));
 
@@ -167,7 +166,7 @@ public class TabLabel extends JPanel {
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs()) {
-      if (!Registry.is("editor.use.compressible.tabs")) {
+      if (UISettings.getInstance().HIDE_TABS_IF_NEED) {
         if (UISettings.getInstance().SHOW_CLOSE_BUTTON) insets.right = 3;
       }
       else {
