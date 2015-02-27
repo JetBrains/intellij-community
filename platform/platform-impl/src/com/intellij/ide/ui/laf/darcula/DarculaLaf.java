@@ -120,8 +120,9 @@ public class DarculaLaf extends BasicLookAndFeel {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isWindows) {
-        //JFrame.setDefaultLookAndFeelDecorated(true);
+      if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration")) {
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
       }
       if (SystemInfo.isLinux && JBUI.isHiDPI()) {
         applySystemFonts(defaults);
@@ -325,7 +326,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
       if (icon == null && value.endsWith(".png")) {
-        icon = IconLoader.findIcon(value, getClass(), true);
+        icon = IconLoader.findIcon(value, DarculaLaf.class, true);
       }
       if (color != null) {
         return  new ColorUIResource(color);

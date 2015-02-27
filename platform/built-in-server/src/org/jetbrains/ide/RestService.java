@@ -167,16 +167,16 @@ public abstract class RestService extends HttpRequestHandler {
   }
 
   protected static void sendOk(@NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) {
-    sendStatus(HttpResponseStatus.OK, HttpHeaders.isKeepAlive(request), context.channel());
+    sendStatus(HttpResponseStatus.OK, HttpHeaderUtil.isKeepAlive(request), context.channel());
   }
 
   protected static void sendStatus(@NotNull HttpResponseStatus status, boolean keepAlive, @NotNull Channel channel) {
     DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
-    HttpHeaders.setContentLength(response, 0);
+    HttpHeaderUtil.setContentLength(response, 0);
     Responses.addCommonHeaders(response);
     Responses.addNoCache(response);
     if (keepAlive) {
-      HttpHeaders.setKeepAlive(response, true);
+      HttpHeaderUtil.setKeepAlive(response, true);
     }
     Responses.send(response, channel, !keepAlive);
   }

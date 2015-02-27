@@ -39,10 +39,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.FileContentUtil;
 import gnu.trove.THashSet;
 import org.junit.Assert;
@@ -53,6 +50,7 @@ import java.util.Collections;
 import java.util.Set;
 
 @PlatformTestCase.WrapInCommand
+@SkipSlowTestLocally
 public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   private VirtualFile myRoot;
 

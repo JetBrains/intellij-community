@@ -90,6 +90,7 @@ public class DeclarationParser {
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
 
+    //noinspection Duplicates
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
       while (BEFORE_LBRACE_ELEMENTS_SET.contains(builder.getTokenType())) {
@@ -321,7 +322,12 @@ public class DeclarationParser {
           emptyElement(builder, JavaElementType.TYPE_PARAMETER_LIST);
         }
         parseAnnotations(builder);
-        builder.advanceLexer();
+
+        if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+          PsiBuilder.Marker primitive = builder.mark();
+          builder.advanceLexer();
+          primitive.error(JavaErrorMessages.message("expected.identifier"));
+        }
 
         if (builder.getTokenType() == JavaTokenType.LPARENTH) {
           return parseMethodFromLeftParenth(builder, declaration, false, true);

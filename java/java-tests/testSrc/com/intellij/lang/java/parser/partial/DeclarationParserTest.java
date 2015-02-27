@@ -105,6 +105,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testWildcardParsing() { doParserTest("{ List<? extends B> x(Collection<? super B> x); }"); }
   public void testParameterAnnotation() { doParserTest("{ void foo (@Annotation(value=77) int param) {} }"); }
   public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }"); }
+  public void testMethodNameOmitted() { doParserTest("{ void(); }"); }
 
   private void doParserTest(String text) {
     doParserTest(text, false, false);

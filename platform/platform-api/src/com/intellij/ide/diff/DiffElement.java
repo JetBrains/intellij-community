@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,11 @@ public abstract class DiffElement<T> /*implements Disposable */{
   public abstract boolean isContainer();
 
   public abstract DiffElement[] getChildren() throws IOException;
+
+  @Nullable
+  public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
+    return null;
+  }
 
   /**
    * Returns content data as byte array. Can be null, if element for example is a container

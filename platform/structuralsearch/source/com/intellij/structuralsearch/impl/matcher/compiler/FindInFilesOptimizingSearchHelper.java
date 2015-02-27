@@ -57,7 +57,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     final FileType fileType = options.getFileType();
     final Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
-    if (namesValidator.isKeyword(refname, context.getProject())) {
+    if (!namesValidator.isKeyword(refname, context.getProject())) {
       CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
                                                                        (GlobalSearchScope)options.getScope(),
                                                                        options.isCaseSensitiveMatch());
