@@ -40,7 +40,7 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
             final Property overridingProperty = overridingMethod.getProperty();
             if (baseProperty != null && overridingProperty != null) {
               final AccessDirection direction = PyUtil.getPropertyAccessDirection(baseMethod);
-              final Callable callable = overridingProperty.getByDirection(direction).valueOrNull();
+              final PyCallable callable = overridingProperty.getByDirection(direction).valueOrNull();
               overridingMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
             }
           }

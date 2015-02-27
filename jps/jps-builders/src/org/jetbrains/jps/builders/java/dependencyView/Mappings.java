@@ -388,7 +388,7 @@ public class Mappings {
     private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
       final MethodRepr.Predicate predicate = lessSpecific(m);
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
-      addOverridenMethods(c, predicate, result);
+      addOverridenMethods(c, predicate, result, null);
       addOverridingMethods(m, c, predicate, result);
       return result;
     }
@@ -398,13 +398,17 @@ public class Mappings {
         return Collections.emptySet(); // overriding is not defined for constructors
       }
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
-      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result);
+      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
       return result;
     }
 
-    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate) {
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int superName : fromClass.getSupers()) {
-        if (superName == myObjectClassName) {
+        if (!visitedClasses.add(superName) || superName == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(superName);
@@ -414,7 +418,7 @@ public class Mappings {
               return true;
             }
           }
-          if (hasOverriddenMethods(superClass, predicate)) {
+          if (hasOverriddenMethods(superClass, predicate, visitedClasses)) {
             return true;
           }
         }
@@ -422,21 +426,32 @@ public class Mappings {
       return false;
     }
 
-    private boolean extendsLibraryClass(final ClassRepr fromClass) {
+    private boolean extendsLibraryClass(final ClassRepr fromClass, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int superName : fromClass.getSupers()) {
-        if (superName == myObjectClassName) {
+        if (!visitedClasses.add(superName) || superName == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(superName);
-        if (superClass == null || extendsLibraryClass(superClass)) {
+        if (superClass == null || extendsLibraryClass(superClass, visitedClasses)) {
           return true;
         }
       }
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int superName : fromClass.getSupers()) {
+        if (!visitedClasses.add(superName)) {
+          continue;  // prevent SOE
+        }
         final ClassRepr superClass = reprByName(superName);
         if (superClass != null) {
           boolean cont = true;
@@ -448,7 +463,7 @@ public class Mappings {
             }
           }
           if (cont) {
-            addOverridenMethods(superClass, predicate, container);
+            addOverridenMethods(superClass, predicate, container, visitedClasses);
           }
         }
         else {
@@ -457,9 +472,13 @@ public class Mappings {
       }
     }
 
-    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
+    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int supername : fromClass.getSupers()) {
-        if (supername == myObjectClassName) {
+        if (!visitedClasses.add(supername) || supername == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(supername);
@@ -469,15 +488,19 @@ public class Mappings {
             container.add(Pair.create(ff, superClass));
           }
           else{
-            addOverriddenFields(f, superClass, container);
+            addOverriddenFields(f, superClass, container, visitedClasses);
           }
         }
       }
     }
 
-    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
+    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int supername : fromClass.getSupers()) {
-        if (supername == myObjectClassName) {
+        if (!visitedClasses.add(supername) || supername == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(supername);
@@ -486,7 +509,7 @@ public class Mappings {
           if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
             return true;
           }
-          final boolean found = hasOverriddenFields(f, superClass);
+          final boolean found = hasOverriddenFields(f, superClass, visitedClasses);
           if (found) {
             return true;
           }
@@ -560,7 +583,7 @@ public class Mappings {
     }
 
     boolean isMethodVisible(final ClassRepr classRepr, final MethodRepr m) {
-      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m));
+      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m), null);
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
@@ -568,7 +591,7 @@ public class Mappings {
       if (r == null || r.getFields().contains(field)) {
         return true;
       }
-      return hasOverriddenFields(field, r);
+      return hasOverriddenFields(field, r, null);
     }
 
     void collectSupersRecursively(@NotNull final int className, @NotNull final TIntHashSet container) {
@@ -1115,7 +1138,7 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
+          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m), null)) {
             if (m.myArgumentTypes.length > 0) {
               propagated = myFuture.propagateMethodAccess(m, it.name);
               debug("Conservative case on overriding methods, affecting method usages");
@@ -1202,7 +1225,7 @@ public class Mappings {
                 final int outerClass = r.getOuterClassName();
                 if (!isEmpty(outerClass)) {
                   final ClassRepr outerClassRepr = myFuture.reprByName(outerClass);
-                  if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr))) {
+                  if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr, null))) {
                     myAffectedFiles.addAll(sourceFileNames);
                     for (File sourceFileName : sourceFileNames) {
                       debug("Affecting file due to local overriding: ", sourceFileName);
@@ -1485,7 +1508,7 @@ public class Mappings {
         }
 
         final Collection<Pair<FieldRepr, ClassRepr>> overriddenFields = new HashSet<Pair<FieldRepr, ClassRepr>>();
-        myFuture.addOverriddenFields(f, classRepr, overriddenFields);
+        myFuture.addOverriddenFields(f, classRepr, overriddenFields, null);
 
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr ff = p.first;

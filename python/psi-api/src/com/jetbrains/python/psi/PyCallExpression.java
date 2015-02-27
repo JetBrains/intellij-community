@@ -104,7 +104,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext the reference resolve context
    */
   @Nullable
-  Callable resolveCalleeFunction(PyResolveContext resolveContext);
+  PyCallable resolveCalleeFunction(PyResolveContext resolveContext);
 
   /**
    *
@@ -135,7 +135,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * Couples function with a flag describing the way it is called.
    */
   class PyMarkedCallee {
-    @NotNull final Callable myCallable;
+    @NotNull final PyCallable myCallable;
     PyFunction.Modifier myModifier;
     int myImplicitOffset;
     boolean myImplicitlyResolved;
@@ -148,7 +148,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
      * @param offset             implicit argument offset; parameters up to this are implicitly filled in the call.
      * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
      */
-    public PyMarkedCallee(@NotNull Callable function, PyFunction.Modifier modifier, int offset, boolean implicitlyResolved) {
+    public PyMarkedCallee(@NotNull PyCallable function, PyFunction.Modifier modifier, int offset, boolean implicitlyResolved) {
       myCallable = function;
       myModifier = modifier;
       myImplicitOffset = offset;
@@ -156,7 +156,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     @NotNull
-    public Callable getCallable() {
+    public PyCallable getCallable() {
       return myCallable;
     }
 

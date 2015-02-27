@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -379,6 +380,9 @@ public class FindUsagesManager {
               }
               catch (IndexNotReadyException e) {
                 DumbService.getInstance(element.getProject()).showDumbModeNotification("Find usages is not available during indexing");
+              }
+              catch (ProcessCanceledException e) {
+                throw e;
               }
               catch (Exception e) {
                 LOG.error(e);

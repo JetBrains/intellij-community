@@ -221,10 +221,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     reload(virtualFileOrDir);
   }
 
-  private static void reload(@NotNull VirtualFile virtualFile) {
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    ((VirtualFileListener)documentManager)
-      .contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
+  private static void reload(@NotNull final VirtualFile virtualFile) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        ((VirtualFileListener)documentManager)
+          .contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
+      }
+    });
   }
 
   @Override

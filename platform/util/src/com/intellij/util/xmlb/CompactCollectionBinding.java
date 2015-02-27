@@ -36,7 +36,7 @@ class CompactCollectionBinding extends Binding {
 
   @Nullable
   @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
     Element result = new Element(name);
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)o;
@@ -107,10 +107,5 @@ class CompactCollectionBinding extends Binding {
     else {
       return false;
     }
-  }
-
-  @Override
-  public Class getBoundNodeType() {
-    return Element.class;
   }
 }

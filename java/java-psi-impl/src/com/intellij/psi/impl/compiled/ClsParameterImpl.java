@@ -75,7 +75,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
                              getContainingFile(),
                              getContainingFile().getNavigationElement(),
                              FileIndexFacade.getInstance(getProject()).getRootModificationTracker(),
-                             DumbService.getInstance(getProject()));
+                             DumbService.getInstance(getProject()).getModificationTracker());
       }
     });
   }

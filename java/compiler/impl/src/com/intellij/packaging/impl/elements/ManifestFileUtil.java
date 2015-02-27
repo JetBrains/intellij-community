@@ -170,7 +170,7 @@ public class ManifestFileUtil {
     }
   }
 
-  public static void updateManifest(@NotNull VirtualFile file, final @Nullable String mainClass, final @Nullable List<String> classpath, final boolean replaceValues) {
+  public static void updateManifest(@NotNull final VirtualFile file, final @Nullable String mainClass, final @Nullable List<String> classpath, final boolean replaceValues) {
     final Manifest manifest = readManifest(file);
     final Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -206,18 +206,23 @@ public class ManifestFileUtil {
 
     ManifestBuilder.setVersionAttribute(mainAttributes);
 
-    try {
-      final OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class);
-      try {
-        manifest.write(outputStream);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class);
+          try {
+            manifest.write(outputStream);
+          }
+          finally {
+            outputStream.close();
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
       }
-      finally {
-        outputStream.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
+    });
   }
 
   @NotNull

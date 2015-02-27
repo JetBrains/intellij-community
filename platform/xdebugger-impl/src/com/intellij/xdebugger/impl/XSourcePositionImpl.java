@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -64,12 +66,20 @@ public class XSourcePositionImpl implements XSourcePosition {
   @Nullable
   public static XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
     if (file == null) return null;
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
-      return null;
+
+    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+
+      if (document == null) {
+        return null;
+      }
+      int line = offset < document.getTextLength() ? document.getLineNumber(offset) : -1;
+      return new XSourcePositionImpl(file, line, offset);
     }
-    int line = offset < document.getTextLength() ? document.getLineNumber(offset) : -1;
-    return new XSourcePositionImpl(file, line, offset);
+    finally {
+      lock.finish();
+    }
   }
 
   @Nullable
@@ -92,22 +102,29 @@ public class XSourcePositionImpl implements XSourcePosition {
       return null;
     }
 
-    int offset;
-    if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
-      offset = -1;
-    }
-    else {
-      Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
-      if (document == null) {
-        return null;
+    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      int offset;
+      if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+        offset = -1;
       }
-      if (line < 0) {
-        line = 0;
-      }
+      else {
 
-      offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+        Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
+        if (document == null) {
+          return null;
+        }
+        if (line < 0) {
+          line = 0;
+        }
+
+        offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+      }
+      return new XSourcePositionImpl(file, line, offset);
     }
-    return new XSourcePositionImpl(file, line, offset);
+    finally {
+      lock.finish();
+    }
   }
 
   @Override

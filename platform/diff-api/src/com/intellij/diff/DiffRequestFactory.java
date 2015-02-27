@@ -43,4 +43,7 @@ public abstract class DiffRequestFactory {
 
   @NotNull
   public abstract String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2);
+
+  @NotNull
+  public abstract String getTitle(@NotNull VirtualFile file);
 }

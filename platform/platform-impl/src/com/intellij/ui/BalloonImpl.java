@@ -136,8 +136,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           }
         }
 
-        if (UIUtil.isCloseClick((MouseEvent)e)) {
-          hide();
+        if (UIUtil.isCloseClick(me)) {
+          if (isInsideBalloon(me)) {
+            hide();
+            me.consume();
+          }
           return;
         }
       }

@@ -45,8 +45,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JCheckBox myShowCloseButtonOnCheckBox;
   private JCheckBox myShowDirectoryInTabCheckBox;
   private JRadioButton myActivateRightNeighbouringTabRadioButton;
-  private JTextField myTabTitleLimitField;
-  private JLabel myTabTitleLimitLabel;
 
   public EditorTabsConfigurable() {
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
@@ -77,8 +75,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myShowTabsTooltipsCheckBox.setEnabled(!none);
     myShowCloseButtonOnCheckBox.setEnabled(!none);
     myShowDirectoryInTabCheckBox.setEnabled(!none);
-    myTabTitleLimitField.setEnabled(!none);
-    myTabTitleLimitLabel.setEnabled(!none);
 
     if (SwingConstants.TOP == i) {
       myScrollTabLayoutInEditorCheckBox.setEnabled(true);
@@ -115,7 +111,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
-    myTabTitleLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_TITLE_LIMIT));
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.SHOW_CLOSE_BUTTON);
 
     if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
@@ -179,19 +174,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       catch (NumberFormatException ignored) {
       }
     }
-    temp = myTabTitleLimitField.getText();
-    if (temp.trim().length() > 0) {
-      try {
-        int newTabTitleLimit = Integer.parseInt(temp);
-        newTabTitleLimit = Math.max(25, Math.min(100, newTabTitleLimit));
-        if (newTabTitleLimit != uiSettings.EDITOR_TAB_TITLE_LIMIT){
-          uiSettings.EDITOR_TAB_TITLE_LIMIT = newTabTitleLimit;
-          uiSettingsChanged = true;
-        }
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
     if(uiSettingsChanged){
       uiSettings.fireUISettingsChanged();
     }
@@ -203,7 +185,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     isModified |= isModified(myShowTabsTooltipsCheckBox, uiSettings.SHOW_TABS_TOOLTIPS);
     isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
-    isModified |= isModified(myTabTitleLimitField, uiSettings.EDITOR_TAB_TITLE_LIMIT);
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
     isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;

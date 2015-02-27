@@ -283,8 +283,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myTabs.getTabAt(index).setTooltipText(text);
   }
 
-  public boolean isTitleShortened(int index) { return myTabs.getTabAt(index).isTitleShortened(); }
-
   public void setBackgroundColorAt(final int index, final Color color) {
     myTabs.getTabAt(index).setTabColor(color);
   }

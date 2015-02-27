@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -101,7 +103,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
       LookAndFeel.uninstallBorder(root);
     }
     else {
-      LookAndFeel.installBorder(root, "RootPane.border");
+      root.setBorder(JBUI.Borders.customLine(Gray._73, 1, 1, 1, 1));
+      //LookAndFeel.installBorder(root, "RootPane.border");
     }
   }
 
@@ -349,7 +352,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   protected LayoutManager createLayoutManager() {
-    return new SubstanceRootLayout();
+    return new DarculaRootLayout();
   }
 
   private void setTitlePane(JRootPane root, JComponent titlePane) {
@@ -419,7 +422,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
   }
 
-  protected class SubstanceRootLayout implements LayoutManager2 {
+  protected class DarculaRootLayout implements LayoutManager2 {
     public Dimension preferredLayoutSize(Container parent) {
       Dimension cpd, mbd, tpd;
       int cpWidth = 0;

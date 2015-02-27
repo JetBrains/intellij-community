@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -359,16 +358,6 @@ public class TabLabel extends JPanel {
 
 
   public void setText(final SimpleColoredText text) {
-    myInfo.setTitleIsShortened(false);
-    if (text != null && text.getTexts().size() == 1 && Boolean.TRUE == getClientProperty(JBEditorTabs.TABS_SHORTEN_TITLE_IF_NEED)) {
-      String title = text.getTexts().get(0);
-      if (title.length() > UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT) {
-        SimpleTextAttributes attributes = text.getAttributes().get(0);
-        text.clear();
-        text.append(StringUtil.getShortened(title, UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT), attributes);
-        myInfo.setTitleIsShortened(true);
-      }
-    }
     myLabel.change(new Runnable() {
       public void run() {
         myLabel.clear();

@@ -235,7 +235,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           final PyCallExpression call = (PyCallExpression)value;
           final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
           if (callee != null) {
-            final Callable callable = callee.getCallable();
+            final PyCallable callable = callee.getCallable();
             if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
               return PyNamedTupleType.fromCall(call, 1);
             }
