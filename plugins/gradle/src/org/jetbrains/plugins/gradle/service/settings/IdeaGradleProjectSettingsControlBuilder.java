@@ -186,6 +186,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
+  @Override
+  public void showUi(boolean show) {
+    ExternalSystemUiUtil.showUi(this, show);
+  }
+
   @NotNull
   public GradleProjectSettings getInitialSettings() {
     return myInitialSettings;
@@ -352,8 +357,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   @Override
-  public boolean isModified(GradleProjectSettings settings) {
-    DistributionType distributionType = settings.getDistributionType();
+  public boolean isModified() {
+    DistributionType distributionType = myInitialSettings.getDistributionType();
     if (myUseBundledDistributionButton != null &&
         myUseBundledDistributionButton.isSelected() &&
         distributionType != DistributionType.BUNDLED) {
@@ -374,17 +379,17 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return true;
     }
 
-    if (myGradleJdkComboBox != null && !StringUtil.equals(myGradleJdkComboBox.getSelectedValue(), settings.getGradleJvm())) {
+    if (myGradleJdkComboBox != null && !StringUtil.equals(myGradleJdkComboBox.getSelectedValue(), myInitialSettings.getGradleJvm())) {
       return true;
     }
 
     if (myGradleHomePathField == null) return false;
     String gradleHome = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     if (StringUtil.isEmpty(gradleHome)) {
-      return !StringUtil.isEmpty(settings.getGradleHome());
+      return !StringUtil.isEmpty(myInitialSettings.getGradleHome());
     }
     else {
-      return !gradleHome.equals(settings.getGradleHome());
+      return !gradleHome.equals(myInitialSettings.getGradleHome());
     }
   }
 

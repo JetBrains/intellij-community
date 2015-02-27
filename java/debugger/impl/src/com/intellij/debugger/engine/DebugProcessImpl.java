@@ -61,6 +61,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -914,9 +915,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private abstract class InvokeCommand <E extends Value> {
+    private final Method myMethod;
     private final List myArgs;
 
-    protected InvokeCommand(List args) {
+    protected InvokeCommand(Method method, List args) {
+      myMethod = method;
       if (!args.isEmpty()) {
         myArgs = new ArrayList(args);
       }
@@ -1053,6 +1056,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 LOG.debug("Invoke in " + thread.name());
                 assertThreadSuspended(thread, context);
               }
+
+              if (myMethod.isVarArgs()) {
+                // See IDEA-63581
+                // if vararg parameter array is of interface type and Object[] is expected, JDI wrap it into another array,
+                // in this case we have to unroll the array manually and pass its elements to the method instead of array object
+                int lastIndex = myArgs.size() - 1;
+                if (lastIndex >= 0) {
+                  final Object lastArg = myArgs.get(lastIndex);
+                  if (lastArg instanceof ArrayReference) {
+                    final ArrayReference arrayRef = (ArrayReference)lastArg;
+                    if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
+                      List<String> argTypes = myMethod.argumentTypeNames();
+                      if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
+                        // unwrap array of interfaces for vararg param
+                        myArgs.remove(lastIndex);
+                        myArgs.addAll(arrayRef.getValues());
+                      }
+                    }
+                  }
+                }
+              }
+              
               if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
                 // ensure args are not collected
                 for (Object arg : myArgs) {
@@ -1125,7 +1150,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public Value invokeInstanceMethod(@NotNull EvaluationContext evaluationContext, @NotNull final ObjectReference objRef, final Method method,
                                     final List args, final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(args) {
+    return new InvokeCommand<Value>(method, args) {
       @Override
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
@@ -1157,7 +1182,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             final List args,
                             boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(args) {
+    return new InvokeCommand<Value>(method, args) {
       @Override
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                                              ClassNotLoadedException,
@@ -1188,7 +1213,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      final Method method,
                                      final List args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(args) {
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(method, args) {
       @Override
       protected ObjectReference invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                                                        ClassNotLoadedException,
