@@ -431,11 +431,6 @@ public class PyFormatterTest extends PyTestCase {
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
 
-  // PY-12861
-  public void testSpacesInsideParenthesisAreStripped() {
-    doTest();
-  }
-
   // PY-14838
   public void testNoAlignmentAfterDictHangingIndentInFunctionCall() {
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -463,12 +458,6 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-13004
   public void testAlignmentOfClosingParenthesisOfArgumentListWhenNoHangingIndent() {
-    doTest();
-  }
-
-  // PY-14408
-  public void testIndentsWithTabsInsideDictLiteral() {
-    getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = true;
     doTest();
   }
 

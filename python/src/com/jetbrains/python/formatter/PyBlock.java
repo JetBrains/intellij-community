@@ -339,7 +339,16 @@ public class PyBlock implements ASTBlock {
     else if (elem instanceof PyFunction) {
       return hasHangingIndent(((PyFunction)elem).getParameterList());
     }
-    else if (elem instanceof PySequenceExpression) {
+
+    final PsiElement firstChild = elem.getFirstChild();
+    if (firstChild == null) {
+      return false;
+    }
+    if (PyTokenTypes.OPEN_BRACES.contains(firstChild.getNode().getElementType()) && hasLineBreaksAfter(firstChild.getNode(), 1)) {
+      return true;
+    }
+
+    if (elem instanceof PySequenceExpression) {
       items = ((PySequenceExpression)elem).getElements();
     }
     else if (elem instanceof PyParameterList) {
@@ -348,14 +357,19 @@ public class PyBlock implements ASTBlock {
     else if (elem instanceof PyArgumentList) {
       items = ((PyArgumentList)elem).getArguments();
     }
+    else if (elem instanceof PyParenthesizedExpression) {
+      final PyParenthesizedExpression parenthesizedExpr = (PyParenthesizedExpression)elem;
+      if (parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression) {
+        items = (((PyTupleExpression)parenthesizedExpr.getContainedExpression()).getElements());
+      }
+      else {
+        items = new PsiElement[]{parenthesizedExpr.getContainedExpression()};
+      }
+    }
     else {
       return false;
     }
-    if (items.length == 0) {
-      return true;
-    }
-    final PsiElement firstItem = items[0];
-    return hasLineBreaksBefore(firstItem.getNode(), 1) || hasHangingIndent(firstItem);
+    return items.length == 0 || hasHangingIndent(items[0]);
   }
 
   private static boolean breaksAlignment(IElementType type) {
@@ -447,7 +461,7 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return false;
+      return !hasHangingIndent(_node.getPsi());
     }
     if (_node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
       if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(_node.getPsi())) {
@@ -485,10 +499,16 @@ public class PyBlock implements ASTBlock {
     return node;
   }
 
-  private static boolean hasLineBreaksBefore(ASTNode child, int minCount) {
+  private static boolean hasLineBreaksBefore(@NotNull ASTNode child, int minCount) {
     final ASTNode treePrev = child.getTreePrev();
     return (treePrev != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treePrev), minCount)) ||
            isWhitespaceWithLineBreaks(child.getFirstChildNode(), minCount);
+  }
+
+  private static boolean hasLineBreaksAfter(@NotNull ASTNode child, int minCount) {
+    final ASTNode treeNext = child.getTreeNext();
+    return (treeNext != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treeNext), minCount)) ||
+           isWhitespaceWithLineBreaks(child.getLastChildNode(), minCount);
   }
 
   private static boolean isWhitespaceWithLineBreaks(ASTNode node, int minCount) {
