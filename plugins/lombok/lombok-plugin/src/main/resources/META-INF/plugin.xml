@@ -50,6 +50,9 @@
 		<fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
 
 		<custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
+
+    <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokMethodFindUsagesHandlerFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
