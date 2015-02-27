@@ -27,7 +27,7 @@ import java.util.Map;
 
  * @author dcheryasov
  */
-public interface Callable extends PyTypedElement, PyQualifiedNameOwner {
+public interface PyCallable extends PyTypedElement, PyQualifiedNameOwner {
 
   /**
    * @return a list of parameters passed to this callable, possibly empty.

@@ -78,7 +78,7 @@ public class PyArgumentListInspection extends PyInspection {
         if (deco.hasArgumentList()) continue;
         final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(getResolveContext());
         if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
-          final Callable callable = markedCallee.getCallable();
+          final PyCallable callable = markedCallee.getCallable();
           int firstParamOffset =  markedCallee.getImplicitOffset();
           final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
           final PyNamedParameter allegedFirstParam = params.size() < firstParamOffset ?
@@ -111,7 +111,7 @@ public class PyArgumentListInspection extends PyInspection {
     CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context), implicitOffset);
     final PyCallExpression.PyMarkedCallee callee = result.getMarkedCallee();
     if (callee != null) {
-      final Callable callable = callee.getCallable();
+      final PyCallable callable = callee.getCallable();
       // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
       if (callable instanceof PyFunction && PyUtil.hasCustomDecorators((PyFunction)callable)) {
         return;

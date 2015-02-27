@@ -215,7 +215,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * @return the property, or null
    */
   @Nullable
-  Property findPropertyByCallable(Callable callable);
+  Property findPropertyByCallable(PyCallable callable);
 
   /**
    * @param parent

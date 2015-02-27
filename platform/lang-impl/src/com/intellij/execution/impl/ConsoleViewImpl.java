@@ -60,6 +60,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -330,6 +331,28 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     };
     consoleTooMuchTextBufferRatio = Registry.intValue("console.too.much.text.buffer.ratio");
+
+    project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      private long myLastStamp;
+
+      @Override
+      public void enteredDumbMode() {
+        if (myEditor == null) return;
+        myLastStamp = myEditor.getDocument().getModificationStamp();
+
+      }
+
+      @Override
+      public void exitDumbMode() {
+        if (myEditor == null) return;
+        DocumentEx document = myEditor.getDocument();
+        if (myLastStamp != document.getModificationStamp()) {
+          clearHyperlinkAndFoldings();
+          highlightHyperlinksAndFoldings(document.createRangeMarker(0, 0));
+        }
+      }
+    });
+
   }
 
   @Override
@@ -962,7 +985,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void highlightHyperlinksAndFoldings(RangeMarker lastProcessedOutput) {
-    boolean canHighlightHyperlinks = !myFilters.isEmpty() || !myFilters.isEmpty();
+    boolean canHighlightHyperlinks = !myFilters.isEmpty();
 
     if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;

@@ -275,7 +275,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (namedParameter.isSelf()) {
             continue;
           }
-          if (myIgnoreLambdaParameters && PsiTreeUtil.getParentOfType(element, Callable.class) instanceof PyLambdaExpression) {
+          if (myIgnoreLambdaParameters && PsiTreeUtil.getParentOfType(element, PyCallable.class) instanceof PyLambdaExpression) {
             continue;
           }
           boolean mayBeField = false;
@@ -341,7 +341,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     PyCallExpression expr = (PyCallExpression) source;
     if (expr.isCalleeText("range", "xrange")) {
-      final Callable callee = expr.resolveCalleeFunction(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
+      final PyCallable callee = expr.resolveCalleeFunction(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
       if (callee != null && PyBuiltinCache.getInstance(forStatement).isBuiltin(callee)) {
         return true;
       }

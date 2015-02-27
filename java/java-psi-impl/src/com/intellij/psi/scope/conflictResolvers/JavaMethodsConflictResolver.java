@@ -329,8 +329,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (ignoreIfStaticsProblem && !info.isStaticsScopeCorrect()) return true;
       if (!(info instanceof MethodCandidateInfo)) continue;
       PsiMethod method = ((MethodCandidateInfo)info).getElement();
-      if (method.isVarArgs()) return true;
-      if (method.getParameterList().getParametersCount() == argumentsCount) {
+      if (method.isVarArgs() || method.getParameterList().getParametersCount() == argumentsCount) {
         // remove all unmatched before
         if (unmatchedIndices != null) {
           for (int u=unmatchedIndices.size()-1; u>=0; u--) {

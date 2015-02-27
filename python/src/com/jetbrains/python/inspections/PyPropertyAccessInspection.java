@@ -106,7 +106,7 @@ public class PyPropertyAccessInspection extends PyInspection {
     }
 
     private void checkAccessor(PyExpression node, String name, AccessDirection dir, Property property) {
-      final Maybe<Callable> accessor = property.getByDirection(dir);
+      final Maybe<PyCallable> accessor = property.getByDirection(dir);
       if (accessor.isDefined() && accessor.value() == null) {
         final String message;
         if (dir == AccessDirection.WRITE) {

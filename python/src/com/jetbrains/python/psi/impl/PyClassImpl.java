@@ -553,8 +553,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return proc.getResult();
   }
 
-  private final static Maybe<Callable> UNKNOWN_CALL = new Maybe<Callable>(); // denotes _not_ a PyFunction, actually
-  private final static Maybe<Callable> NONE = new Maybe<Callable>(null); // denotes an explicit None
+  private final static Maybe<PyCallable> UNKNOWN_CALL = new Maybe<PyCallable>(); // denotes _not_ a PyFunction, actually
+  private final static Maybe<PyCallable> NONE = new Maybe<PyCallable>(null); // denotes an explicit None
 
   /**
    * @param name            name of the property
@@ -602,9 +602,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     for (Map.Entry<String, List<PyFunction>> entry : grouped.entrySet()) {
-      Maybe<Callable> getter = NONE;
-      Maybe<Callable> setter = NONE;
-      Maybe<Callable> deleter = NONE;
+      Maybe<PyCallable> getter = NONE;
+      Maybe<PyCallable> setter = NONE;
+      Maybe<PyCallable> deleter = NONE;
       String doc = null;
       final String decoratorName = entry.getKey();
       for (PyFunction method : entry.getValue()) {
@@ -621,16 +621,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                 }
               }
               if (PyNames.PROPERTY.equals(decoName)) {
-                getter = new Maybe<Callable>(method);
+                getter = new Maybe<PyCallable>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.GETTER)) {
-                getter = new Maybe<Callable>(method);
+                getter = new Maybe<PyCallable>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.SETTER)) {
-                setter = new Maybe<Callable>(method);
+                setter = new Maybe<PyCallable>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.DELETER)) {
-                deleter = new Maybe<Callable>(method);
+                deleter = new Maybe<PyCallable>(method);
               }
             }
           }
@@ -645,14 +645,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  private Maybe<Callable> fromPacked(Maybe<String> maybeName) {
+  private Maybe<PyCallable> fromPacked(Maybe<String> maybeName) {
     if (maybeName.isDefined()) {
       final String value = maybeName.value();
       if (value == null || PyNames.NONE.equals(value)) {
         return NONE;
       }
       PyFunction method = findMethodByName(value, true);
-      if (method != null) return new Maybe<Callable>(method);
+      if (method != null) return new Maybe<PyCallable>(method);
     }
     return UNKNOWN_CALL;
   }
@@ -666,9 +666,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
           if (prop != null && (name == null || name.equals(targetStub.getName()))) {
-            Maybe<Callable> getter = fromPacked(prop.getGetter());
-            Maybe<Callable> setter = fromPacked(prop.getSetter());
-            Maybe<Callable> deleter = fromPacked(prop.getDeleter());
+            Maybe<PyCallable> getter = fromPacked(prop.getGetter());
+            Maybe<PyCallable> setter = fromPacked(prop.getSetter());
+            Maybe<PyCallable> deleter = fromPacked(prop.getDeleter());
             String doc = prop.getDoc();
             if (getter != NONE || setter != NONE || deleter != NONE) {
               final PropertyImpl property = new PropertyImpl(targetStub.getName(), getter, setter, deleter, doc, targetStub.getPsi());
@@ -703,7 +703,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  public Property findPropertyByCallable(Callable callable) {
+  public Property findPropertyByCallable(PyCallable callable) {
     initProperties();
     for (Property property : myPropertyCache.values()) {
       if (property.getGetter().valueOrNull() == callable ||
@@ -774,13 +774,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  private static class PropertyImpl extends PropertyBunch<Callable> implements Property {
+  private static class PropertyImpl extends PropertyBunch<PyCallable> implements Property {
     private final String myName;
 
     private PropertyImpl(String name,
-                         Maybe<Callable> getter,
-                         Maybe<Callable> setter,
-                         Maybe<Callable> deleter,
+                         Maybe<PyCallable> getter,
+                         Maybe<PyCallable> setter,
+                         Maybe<PyCallable> deleter,
                          String doc,
                          PyTargetExpression site) {
       myName = name;
@@ -793,19 +793,19 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
     @NotNull
     @Override
-    public Maybe<Callable> getGetter() {
+    public Maybe<PyCallable> getGetter() {
       return filterNonStubExpression(myGetter);
     }
 
     @NotNull
     @Override
-    public Maybe<Callable> getSetter() {
+    public Maybe<PyCallable> getSetter() {
       return filterNonStubExpression(mySetter);
     }
 
     @NotNull
     @Override
-    public Maybe<Callable> getDeleter() {
+    public Maybe<PyCallable> getDeleter() {
       return filterNonStubExpression(myDeleter);
     }
 
@@ -819,7 +819,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
     @NotNull
     @Override
-    public Maybe<Callable> getByDirection(@NotNull AccessDirection direction) {
+    public Maybe<PyCallable> getByDirection(@NotNull AccessDirection direction) {
       switch (direction) {
         case READ:
           return getGetter();
@@ -840,7 +840,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
           return targetDocStringType;
         }
       }
-      final Callable callable = myGetter.valueOrNull();
+      final PyCallable callable = myGetter.valueOrNull();
       if (callable != null) {
         // Ignore return types of non stub-based elements if we are not allowed to use AST
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
@@ -853,27 +853,27 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
     @NotNull
     @Override
-    protected Maybe<Callable> translate(@Nullable PyExpression expr) {
+    protected Maybe<PyCallable> translate(@Nullable PyExpression expr) {
       if (expr == null) {
         return NONE;
       }
       if (PyNames.NONE.equals(expr.getName())) return NONE; // short-circuit a common case
-      if (expr instanceof Callable) {
-        return new Maybe<Callable>((Callable)expr);
+      if (expr instanceof PyCallable) {
+        return new Maybe<PyCallable>((PyCallable)expr);
       }
       final PsiReference ref = expr.getReference();
       if (ref != null) {
         PsiElement something = ref.resolve();
-        if (something instanceof Callable) {
-          return new Maybe<Callable>((Callable)something);
+        if (something instanceof PyCallable) {
+          return new Maybe<PyCallable>((PyCallable)something);
         }
       }
       return NONE;
     }
 
     @NotNull
-    private static Maybe<Callable> filterNonStubExpression(@NotNull Maybe<Callable> maybeCallable) {
-      final Callable callable = maybeCallable.valueOrNull();
+    private static Maybe<PyCallable> filterNonStubExpression(@NotNull Maybe<PyCallable> maybeCallable) {
+      final PyCallable callable = maybeCallable.valueOrNull();
       if (callable != null) {
         if (!(callable instanceof StubBasedPsiElement)) {
           return UNKNOWN_CALL;

@@ -99,7 +99,7 @@ class PyDocumentationBuilder {
               if (property != null) {
                 is_property = true;
                 final AccessDirection dir = AccessDirection.of((PyElement)outer);
-                Maybe<Callable> accessor = property.getByDirection(dir);
+                Maybe<PyCallable> accessor = property.getByDirection(dir);
                 myProlog
                   .addItem("property ").addWith(TagBold, $().addWith(TagCode, $(elementName)))
                   .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true))
@@ -108,7 +108,7 @@ class PyDocumentationBuilder {
                   myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
                 }
                 else {
-                  final Callable getter = property.getGetter().valueOrNull();
+                  final PyCallable getter = property.getGetter().valueOrNull();
                   if (getter != null && getter != myElement && getter instanceof PyFunction) {
                     // not in getter, getter's doc comment may be useful
                     PyStringLiteralExpression docstring = ((PyFunction)getter).getDocStringExpression();
