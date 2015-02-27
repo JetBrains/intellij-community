@@ -42,7 +42,7 @@ import java.util.regex.PatternSyntaxException;
  * @author max
  */
 public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
-  private static @NonNls final String HELP_ID = "editing.codeReformatting";
+  private static @NonNls final String HELP_ID = "Reformat Code on Directory Dialog";
 
   private final Project myProject;
   private final String  myText;
