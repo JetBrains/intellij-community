@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -73,6 +74,12 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   public void update(@Nullable String linkedProjectPath, boolean isDefaultModuleCreation) {
     myBuilder.update(linkedProjectPath, getInitialSettings(), isDefaultModuleCreation);
+  }
+
+  @Override
+  public void showUi(boolean show) {
+    super.showUi(show);
+    ExternalSystemUiUtil.showUi(myBuilder, show);
   }
 
   /**
