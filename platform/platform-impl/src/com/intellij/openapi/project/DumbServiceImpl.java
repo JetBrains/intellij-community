@@ -119,7 +119,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public ModificationTracker getModificationTracker() {
-    return null;
+    return this;
   }
 
   @Override
