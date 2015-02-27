@@ -39,7 +39,7 @@ public class ClassLoadingUtils {
 
   public static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process) throws EvaluateException {
     try {
-      // TODO: cache?
+      // TODO [egor]: cache?
       ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
       Method ctorMethod = loaderClass.concreteMethodByName("<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
       ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod, Arrays
@@ -74,8 +74,13 @@ public class ClassLoadingUtils {
     }
   }
 
+  /**
+   * Finds and if necessary defines helper class
+   * May modify class loader in evaluationContext
+   */
   @Nullable
   public static ClassType getHelperClass(String name, EvaluationContext evaluationContext, DebugProcess process) throws EvaluateException {
+    // TODO [egor]: cache and load in boostrap class loader
     try {
       ClassLoaderReference classLoader = evaluationContext.getClassLoader();
       return (ClassType)process.findClass(evaluationContext, name, classLoader);

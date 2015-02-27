@@ -91,12 +91,13 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
   private static Value getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
     throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
-    ClassType helperClass = ClassLoadingUtils.getHelperClass(ImageSerializer.class.getName(), evaluationContext, process);
+    EvaluationContext copyContext = evaluationContext.createEvaluationContext(obj);
+    ClassType helperClass = ClassLoadingUtils.getHelperClass(ImageSerializer.class.getName(), copyContext, process);
 
     if (helperClass != null) {
       List<Method> methods = helperClass.methodsByName(methodName);
       if (!methods.isEmpty()) {
-        return process.invokeMethod(evaluationContext, helperClass, methods.get(0), Collections.singletonList(obj));
+        return process.invokeMethod(copyContext, helperClass, methods.get(0), Collections.singletonList(obj));
       }
     }
     return null;
