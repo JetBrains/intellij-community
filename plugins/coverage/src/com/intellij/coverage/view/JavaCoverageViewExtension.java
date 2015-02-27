@@ -35,7 +35,7 @@ import java.util.*;
  * User: anna
  * Date: 1/5/12
  */
-public class JavaCoverageViewExtension extends CoverageViewExtension implements CoverageListNodeFactory {
+public class JavaCoverageViewExtension extends CoverageViewExtension {
   private final JavaCoverageAnnotator myAnnotator;
 
   public JavaCoverageViewExtension(JavaCoverageAnnotator annotator,
