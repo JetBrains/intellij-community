@@ -116,7 +116,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       return getApplicabilityLevel();
     }
     @ApplicabilityLevelConstant int level;
-    PsiSubstitutor substitutor = getSubstitutor(false);
+    final PsiSubstitutor substitutor = getSubstitutor(false);
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     if (map == null) {
       map = ContainerUtil.createConcurrentWeakMap();
@@ -143,7 +143,12 @@ public class MethodCandidateInfo extends CandidateInfo{
         map.put(getMarkerList(), alreadyThere);
       }
     }
-    if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(false)) {
+    if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(new Computable<PsiSubstitutor>() {
+      @Override
+      public PsiSubstitutor compute() {
+        return substitutor;
+      }
+    })) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
@@ -206,17 +211,21 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public boolean isTypeArgumentsApplicable() {
-    return isTypeArgumentsApplicable(false);
+    return isTypeArgumentsApplicable(new Computable<PsiSubstitutor>() {
+      @Override
+      public PsiSubstitutor compute() {
+        return getSubstitutor(false);
+      }
+    });
   }
 
-  public boolean isTypeArgumentsApplicable(boolean includeReturnConstraint) {
+  private boolean isTypeArgumentsApplicable(Computable<PsiSubstitutor> computable) {
     final PsiMethod psiMethod = getElement();
     PsiTypeParameter[] typeParams = psiMethod.getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length && !PsiUtil.isLanguageLevel7OrHigher(psiMethod)){
       return typeParams.length == 0 && JavaVersionService.getInstance().isAtLeast(psiMethod, JavaSdkVersion.JDK_1_7);
     }
-    PsiSubstitutor substitutor = getSubstitutor(includeReturnConstraint);
-    return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, getParent());
+    return GenericsUtil.isTypeArgumentsApplicable(typeParams, computable.compute(), getParent());
   }
 
   protected PsiElement getParent() {
