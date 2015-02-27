@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import org.jetbrains.annotations.Nullable;
 abstract class BasePrimitiveBinding extends Binding {
   protected final String myName;
 
-  protected final @Nullable Converter<Object> myConverter;
-  @Nullable protected Binding myBinding;
+  @Nullable
+  protected final Converter<Object> myConverter;
+
+  @Nullable
+  protected Binding myBinding;
 
   protected BasePrimitiveBinding(@NotNull Accessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
     super(accessor);
@@ -32,6 +35,9 @@ abstract class BasePrimitiveBinding extends Binding {
     myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
     if (converterClass == null || converterClass == Converter.class) {
       myConverter = null;
+      if (!(this instanceof AttributeBinding)) {
+        myBinding = XmlSerializerImpl.getBinding(myAccessor);
+      }
     }
     else {
       //noinspection unchecked
@@ -39,13 +45,7 @@ abstract class BasePrimitiveBinding extends Binding {
     }
   }
 
-  @Override
-  public void init() {
-    if (myConverter == null) {
-      myBinding = XmlSerializerImpl.getBinding(myAccessor);
-    }
-  }
-
+  @NotNull
   @Override
   public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());

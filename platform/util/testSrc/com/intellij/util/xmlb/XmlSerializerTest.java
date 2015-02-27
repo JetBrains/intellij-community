@@ -21,6 +21,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.THashMap;
 import junit.framework.AssertionFailedError;
@@ -609,9 +610,10 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithoutTagName {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
     public String[] V = new String[]{"a"};
   }
+
   public void testArrayAnnotationWithoutTagNAmeGivesError() {
     final BeanWithArrayWithoutTagName bean = new BeanWithArrayWithoutTagName();
 
@@ -626,7 +628,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithElementTagName {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v")
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v")
     public String[] V = new String[]{"a", "b"};
   }
   public void testArrayAnnotationWithElementTag() {
@@ -658,7 +660,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithoutTag {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
     public int INT_V = 1;
   }
@@ -739,10 +741,12 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithArrayWithoutAllsTag {
     @Property(surroundWithTag = false)
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
+
     public int INT_V = 1;
   }
+
   public void testArrayWithoutAllTags() {
     final BeanWithArrayWithoutAllsTag bean = new BeanWithArrayWithoutAllsTag();
 
@@ -767,7 +771,7 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithArrayWithoutAllsTag2 {
     @Property(surroundWithTag = false)
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
     public int INT_V = 1;
   }
@@ -794,12 +798,14 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public void testDeserializeFromFormattedXML() throws Exception {
-    String xml = "<BeanWithArrayWithoutAllsTag>\n" + "  <option name=\"INT_V\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" +
-                 "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</BeanWithArrayWithoutAllsTag>";
+    String xml = "<BeanWithArrayWithoutAllsTag>\n" +
+                 "  <option name=\"INT_V\" value=\"2\"/>\n" +
+                 "  <vvalue v=\"1\"/>\n" +
+                 "  <vvalue v=\"2\"/>\n" +
+                 "  <vvalue v=\"3\"/>\n" +
+                 "</BeanWithArrayWithoutAllsTag>";
 
-    final BeanWithArrayWithoutAllsTag bean =
-      XmlSerializer.deserialize(JDOMUtil.loadDocument(xml).getRootElement(), BeanWithArrayWithoutAllsTag.class);
-
+    BeanWithArrayWithoutAllsTag bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(xml).getRootElement(), BeanWithArrayWithoutAllsTag.class);
 
     assertEquals(2, bean.INT_V);
     assertEquals("[1, 2, 3]", Arrays.asList(bean.V).toString());
@@ -807,7 +813,7 @@ public class XmlSerializerTest extends TestCase {
 
 
   public static class BeanWithPolymorphicArray {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTypes = {BeanWithPublicFields.class, BeanWithPublicFieldsDescendant.class})
+    @AbstractCollection(elementTypes = {BeanWithPublicFields.class, BeanWithPublicFieldsDescendant.class})
     public BeanWithPublicFields[] V = new BeanWithPublicFields[] {};
   }
 

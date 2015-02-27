@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
@@ -29,7 +30,7 @@ class PropertyAccessor implements Accessor {
   private final String myName;
   private final Class<?> myType;
   private final Method myReadMethod;
-  private final Method myWriteMethod;
+  private final Method setter;
   private final Type myGenericType;
 
   public PropertyAccessor(PropertyDescriptor descriptor) {
@@ -40,12 +41,12 @@ class PropertyAccessor implements Accessor {
     myName = name;
     myType = type;
     myReadMethod = readMethod;
-    myWriteMethod = writeMethod;
+    setter = writeMethod;
     myGenericType = myReadMethod.getGenericReturnType();
 
     try {
       myReadMethod.setAccessible(true);
-      myWriteMethod.setAccessible(true);
+      setter.setAccessible(true);
     }
     catch (SecurityException ignored) {
     }
@@ -65,9 +66,9 @@ class PropertyAccessor implements Accessor {
   }
 
   @Override
-  public void write(Object o, Object value) {
+  public void set(@NotNull Object host, @Nullable Object value) {
     try {
-      myWriteMethod.invoke(o, XmlSerializerImpl.convert(value, myType));
+      setter.invoke(host, value);
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException(e);
@@ -78,9 +79,39 @@ class PropertyAccessor implements Accessor {
   }
 
   @Override
+  public void setBoolean(@NotNull Object host, boolean value) {
+    set(host, value);
+  }
+
+  @Override
+  public void setInt(@NotNull Object host, int value) {
+    set(host, value);
+  }
+
+  @Override
+  public void setShort(@NotNull Object host, short value) {
+    set(host, value);
+  }
+
+  @Override
+  public void setLong(@NotNull Object host, long value) {
+    set(host, value);
+  }
+
+  @Override
+  public void setDouble(@NotNull Object host, double value) {
+    set(host, value);
+  }
+
+  @Override
+  public void setFloat(@NotNull Object host, float value) {
+    set(host, value);
+  }
+
+  @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
     T annotation = myReadMethod.getAnnotation(annotationClass);
-    return annotation == null ? myWriteMethod.getAnnotation(annotationClass) : annotation;
+    return annotation == null ? setter.getAnnotation(annotationClass) : annotation;
   }
 
   @Override

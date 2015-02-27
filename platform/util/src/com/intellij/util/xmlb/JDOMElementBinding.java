@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, Object context, @NotNull SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return null;
@@ -68,10 +68,10 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
   public Object deserializeList(Object context, @NotNull List<?> nodes) {
     if (myAccessor.getValueClass().isArray()) {
       //noinspection SuspiciousToArrayCall
-      myAccessor.write(context, nodes.toArray(new Element[nodes.size()]));
+      myAccessor.set(context, nodes.toArray(new Element[nodes.size()]));
     }
     else {
-      myAccessor.write(context, nodes.get(0));
+      myAccessor.set(context, nodes.get(0));
     }
     return context;
   }
@@ -84,7 +84,7 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
   @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object node) {
-    myAccessor.write(context, node);
+    myAccessor.set(context, node);
     return context;
   }
 
@@ -93,6 +93,7 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
     return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
+  @NotNull
   @Override
   public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());

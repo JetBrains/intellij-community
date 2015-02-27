@@ -37,8 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
 class XmlSerializerImpl {
   private static final Filter<Content> CONTENT_FILTER = new Filter<Content>() {
     @Override
-    public boolean matches(Object obj) {
-      return !isIgnoredNode(obj);
+    public boolean matches(Object object) {
+      return !isIgnoredNode(object);
     }
   };
 
@@ -62,7 +62,7 @@ class XmlSerializerImpl {
   static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {
     try {
       Class<?> aClass = object.getClass();
-      Binding binding = _getClassBinding(aClass, aClass, null);
+      Binding binding = getClassBinding(aClass, aClass, null);
       if (binding instanceof BeanBinding) {
         // top level expects not null (null indicates error, empty element will be omitted)
         return ((BeanBinding)binding).serialize(object, true, filter);
@@ -83,42 +83,58 @@ class XmlSerializerImpl {
   @Nullable
   static Element serializeIfNotDefault(@NotNull Object object, @NotNull SerializationFilter filter) {
     Class<?> aClass = object.getClass();
-    return (Element)_getClassBinding(aClass, aClass, null).serialize(object, null, filter);
+    Binding binding = getClassBinding(aClass, aClass, null);
+    assert binding != null;
+    return (Element)binding.serialize(object, null, filter);
   }
 
+  @Nullable
   static Binding getBinding(@NotNull Type type) {
-    return getTypeBinding(type, null);
+    return getClassBinding(typeToClass(type), type, null);
   }
 
+  @Nullable
   static Binding getBinding(@NotNull Accessor accessor) {
-    return getTypeBinding(accessor.getGenericType(), accessor);
-  }
-
-  static Binding getTypeBinding(@NotNull Type type, @Nullable Accessor accessor) {
-    Class<?> aClass;
-    if (type instanceof Class) {
-      aClass = (Class<?>)type;
-    }
-    else if (type instanceof TypeVariable) {
-      Type bound = ((TypeVariable)type).getBounds()[0];
-      aClass = bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
-    }
-    else {
-      aClass = (Class<?>)((ParameterizedType)type).getRawType();
-    }
-    return _getClassBinding(aClass, type, accessor);
+    Type type = accessor.getGenericType();
+    return getClassBinding(typeToClass(type), type, accessor);
   }
 
   @NotNull
-  private static synchronized Binding _getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable Accessor accessor) {
+  static Class<?> typeToClass(@NotNull Type type) {
+    if (type instanceof Class) {
+      return (Class<?>)type;
+    }
+    else if (type instanceof TypeVariable) {
+      Type bound = ((TypeVariable)type).getBounds()[0];
+      return bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
+    }
+    else {
+      return (Class<?>)((ParameterizedType)type).getRawType();
+    }
+  }
+
+  @Nullable
+  static synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable Accessor accessor) {
+    if (aClass.isPrimitive() ||
+        aClass == String.class ||
+        aClass == Integer.class ||
+        aClass == Long.class ||
+        aClass == Boolean.class ||
+        aClass == Double.class ||
+        aClass == Float.class ||
+        aClass.isEnum() ||
+        Date.class.isAssignableFrom(aClass)) {
+      return null;
+    }
+
     Pair<Type, Accessor> key = Pair.create(originalType, accessor);
     Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
     Binding binding = map.get(key);
     if (binding == null) {
-      binding = _getNonCachedClassBinding(aClass, accessor, originalType);
+      binding = getNonCachedClassBinding(aClass, accessor, originalType);
       map.put(key, binding);
       try {
-        binding.init();
+        binding.init(originalType);
       }
       catch (XmlSerializationException e) {
         map.remove(key);
@@ -139,22 +155,15 @@ class XmlSerializerImpl {
   }
 
   @NotNull
-  private static Binding _getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable Accessor accessor, @NotNull Type originalType) {
-    if (aClass.isPrimitive()) {
-      return new PrimitiveValueBinding(aClass, accessor);
-    }
+  private static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable Accessor accessor, @NotNull Type originalType) {
     if (aClass.isArray()) {
-      return Element.class.isAssignableFrom(aClass.getComponentType())
-             ? new JDOMElementBinding(accessor) : new ArrayBinding(aClass, accessor);
-    }
-    if (Number.class.isAssignableFrom(aClass)) {
-      return new PrimitiveValueBinding(aClass, accessor);
-    }
-    if (Boolean.class.isAssignableFrom(aClass)) {
-      return new PrimitiveValueBinding(aClass, accessor);
-    }
-    if (String.class.isAssignableFrom(aClass)) {
-      return new PrimitiveValueBinding(aClass, accessor);
+      if (Element.class.isAssignableFrom(aClass.getComponentType())) {
+        assert accessor != null;
+        return new JDOMElementBinding(accessor);
+      }
+      else {
+        return new ArrayBinding(aClass, accessor);
+      }
     }
     if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
       if (accessor != null) {
@@ -167,7 +176,7 @@ class XmlSerializerImpl {
     }
     if (accessor != null) {
       if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-        return new MapBinding((ParameterizedType)originalType, accessor);
+        return new MapBinding(accessor);
       }
       if (Element.class.isAssignableFrom(aClass)) {
         return new JDOMElementBinding(accessor);
@@ -177,54 +186,51 @@ class XmlSerializerImpl {
         return new CompactCollectionBinding(accessor);
       }
     }
-    if (Date.class.isAssignableFrom(aClass)) {
-      return new DateBinding(accessor);
-    }
-    if (aClass.isEnum()) {
-      return new PrimitiveValueBinding(aClass, accessor);
-    }
     return new BeanBinding(aClass, accessor);
   }
 
   @Nullable
-  @SuppressWarnings({"unchecked"})
-  static <T> T convert(Object value, Class<T> type) {
+  static Object convert(@Nullable String value, @NotNull Class<?> valueClass) {
     if (value == null) {
       return null;
     }
-    if (type.isInstance(value)) {
-      return (T)value;
+    else if (valueClass == String.class) {
+      return value;
     }
-    if (String.class.isAssignableFrom(type)) {
-      return (T)String.valueOf(value);
+    else if (valueClass == int.class || valueClass == Integer.class) {
+      return Integer.parseInt(value);
     }
-    if (int.class.isAssignableFrom(type) || Integer.class.isAssignableFrom(type)) {
-      return (T)Integer.valueOf(String.valueOf(value));
+    else if (valueClass == boolean.class || valueClass == Boolean.class) {
+      return Boolean.parseBoolean(value);
     }
-    if (double.class.isAssignableFrom(type) || Double.class.isAssignableFrom(type)) {
-      return (T)Double.valueOf(String.valueOf(value));
+    else if (valueClass == double.class || valueClass == Double.class) {
+      return Double.parseDouble(value);
     }
-    if (float.class.isAssignableFrom(type) || Float.class.isAssignableFrom(type)) {
-      return (T)Float.valueOf(String.valueOf(value));
+    else if (valueClass == float.class || valueClass == Float.class) {
+      return Float.parseFloat(value);
     }
-    if (long.class.isAssignableFrom(type) || Long.class.isAssignableFrom(type)) {
-      return (T)Long.valueOf(String.valueOf(value));
+    else if (valueClass == long.class || valueClass == Long.class) {
+      return Long.parseLong(value);
     }
-    if (boolean.class.isAssignableFrom(type) || Boolean.class.isAssignableFrom(type)) {
-      return (T)Boolean.valueOf(String.valueOf(value));
-    }
-    if (char.class.isAssignableFrom(type) || Character.class.isAssignableFrom(type)) {
-      return (T)value;
-    }
-    if (type.isEnum()) {
-      final T[] enumConstants = type.getEnumConstants();
-      for (T enumConstant : enumConstants) {
-        if (enumConstant.toString().equals(value.toString())) return enumConstant;
+    else if (valueClass.isEnum()) {
+      for (Object enumConstant : valueClass.getEnumConstants()) {
+        if (enumConstant.toString().equals(value)) {
+          return enumConstant;
+        }
       }
       return null;
     }
-
-    throw new XmlSerializationException("Can't covert " + value.getClass() + " into " + type);
+    else if (Date.class.isAssignableFrom(valueClass)) {
+      try {
+        return new Date(Long.parseLong(value));
+      }
+      catch (NumberFormatException e) {
+        return new Date(0);
+      }
+    }
+    else {
+      return value;
+    }
   }
 
   public static boolean isIgnoredNode(final Object child) {
@@ -240,5 +246,71 @@ class XmlSerializerImpl {
       }
     }
     return false;
+  }
+
+  static void doSet(@NotNull Object host, @Nullable String value, @NotNull Accessor accessor, @NotNull Class<?> valueClass) {
+    if (value == null) {
+      accessor.set(host, null);
+    }
+    else if (valueClass == String.class) {
+      accessor.set(host, value);
+    }
+    else if (valueClass == int.class) {
+      accessor.setInt(host, Integer.parseInt(value));
+    }
+    else if (valueClass == boolean.class) {
+      accessor.setBoolean(host, Boolean.parseBoolean(value));
+    }
+    else if (valueClass == double.class) {
+      accessor.setDouble(host, Double.parseDouble(value));
+    }
+    else if (valueClass == float.class) {
+      accessor.setFloat(host, Float.parseFloat(value));
+    }
+    else if (valueClass == long.class) {
+      accessor.setLong(host, Long.parseLong(value));
+    }
+    else if (valueClass == short.class) {
+      accessor.setShort(host, Short.parseShort(value));
+    }
+    else if (valueClass.isEnum()) {
+      Object deserializedValue = null;
+      for (Object enumConstant : valueClass.getEnumConstants()) {
+        if (enumConstant.toString().equals(value)) {
+          deserializedValue = enumConstant;
+        }
+      }
+      accessor.set(host, deserializedValue);
+    }
+    else if (Date.class.isAssignableFrom(valueClass)) {
+      try {
+        accessor.set(host, new Date(Long.parseLong(value)));
+      }
+      catch (NumberFormatException e) {
+        accessor.set(host, new Date(0));
+      }
+    }
+    else {
+      Object deserializedValue = value;
+      if (valueClass == Boolean.class) {
+        deserializedValue = Boolean.parseBoolean(value);
+      }
+      else if (valueClass == Integer.class) {
+        deserializedValue = Integer.parseInt(value);
+      }
+      else if (valueClass == Short.class) {
+        deserializedValue = Short.parseShort(value);
+      }
+      else if (valueClass == Long.class) {
+        deserializedValue = Long.parseLong(value);
+      }
+      else if (valueClass == Double.class) {
+        deserializedValue = Double.parseDouble(value);
+      }
+      else if (valueClass == Float.class) {
+        deserializedValue = Float.parseFloat(value);
+      }
+      accessor.set(host, deserializedValue);
+    }
   }
 }
