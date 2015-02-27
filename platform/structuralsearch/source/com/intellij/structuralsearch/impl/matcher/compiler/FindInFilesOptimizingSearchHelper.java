@@ -7,7 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.util.Processor;
-import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 
 import java.util.Set;
 
@@ -16,8 +16,8 @@ import java.util.Set;
 */
 class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private final MyFileProcessor myFileProcessor;
-  private THashMap<PsiFile,PsiFile> filesToScan;
-  private THashMap<PsiFile,PsiFile> filesToScan2;
+  private THashSet<PsiFile> filesToScan;
+  private THashSet<PsiFile> filesToScan2;
 
   private final boolean myFindMatchingFiles;
   private final Project myProject;
@@ -28,8 +28,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     myProject = project;
 
     if (myFindMatchingFiles && filesToScan == null) {
-      filesToScan = new THashMap<PsiFile, PsiFile>();
-      filesToScan2 = new THashMap<PsiFile, PsiFile>();
+      filesToScan = new THashSet<PsiFile>();
+      filesToScan2 = new THashSet<PsiFile>();
     }
     myFileProcessor = new MyFileProcessor();
   }
@@ -73,23 +73,22 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   public void endTransaction() {
     super.endTransaction();
-    THashMap<PsiFile,PsiFile> map = filesToScan;
+    final THashSet<PsiFile> map = filesToScan;
     if (map.size() > 0) map.clear();
     filesToScan = filesToScan2;
     filesToScan2 = map;
   }
 
   public Set<PsiFile> getFilesSetToScan() {
-    return filesToScan.keySet();
+    return filesToScan;
   }
 
   private class MyFileProcessor implements Processor<PsiFile> {
     public boolean process(PsiFile file) {
-      if (scanRequest == 0 || filesToScan.get(file) != null) {
-        filesToScan2.put(file,file);
+      if (scanRequest == 0 || filesToScan.contains(file)) {
+        filesToScan2.add(file);
       }
       return true;
     }
   }
-
 }
