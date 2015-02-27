@@ -29,11 +29,11 @@ package com.intellij.json;/*
  * limitations under the License.
  */
 
-import com.intellij.embedding.EmbeddingElementType;
 import com.intellij.javascript.JSScriptContentProvider;
 import com.intellij.lang.HtmlScriptContentProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -60,7 +60,7 @@ public final class JsonScriptContentProvider implements HtmlScriptContentProvide
     return new JSScriptContentProvider().getHighlightingLexer();
   }
 
-  private static final class JsonEmbedded extends IElementType implements EmbeddingElementType {
+  private static final class JsonEmbedded extends ILazyParseableElementType {
     private JsonEmbedded() {
       super("JSON_EMBEDDED", JsonLanguage.INSTANCE);
     }
