@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TerminalColor;
@@ -198,6 +199,17 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
   }
 
+  @Override
+  public int bufferMaxLinesCount() {
+    final int linesCount = Registry.get("terminal.buffer.max.lines.count").asInteger();
+    if (linesCount > 0) {
+      return linesCount;
+    }
+    else {
+      return super.bufferMaxLinesCount();
+    }
+  }
+
   public EditorColorsScheme getColorScheme() {
     return myColorScheme;
   }
@@ -310,7 +322,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @Override
     public Color getDefaultForeground() {
       Color foregroundColor = getGlobal().getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).getForegroundColor();
-      return foregroundColor != null ? foregroundColor: getGlobal().getDefaultForeground();
+      return foregroundColor != null ? foregroundColor : getGlobal().getDefaultForeground();
     }
 
     @Override
