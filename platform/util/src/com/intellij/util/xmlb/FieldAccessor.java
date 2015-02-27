@@ -44,11 +44,6 @@ class FieldAccessor implements Accessor {
   }
 
   @Override
-  public void write(Object o, Object value) {
-    set(o, value);
-  }
-
-  @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
       myField.set(host, value);
