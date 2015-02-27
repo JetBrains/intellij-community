@@ -17,12 +17,16 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder.SvnDiffSettings;
@@ -77,8 +81,7 @@ public class SvnDiffViewer implements DiffViewer {
 
     mySettings = initSettings(context);
 
-    mySplitter = new Splitter(true);
-    mySplitter.setDividerWidth(5);
+    mySplitter = new MySplitter("Property Changes");
     mySplitter.setProportion(mySettings.getSplitterProportion());
     mySplitter.setFirstComponent(myContentViewer.getComponent());
 
@@ -334,6 +337,46 @@ public class SvnDiffViewer implements DiffViewer {
     @Override
     public void focusGained(FocusEvent e) {
       myPropertiesViewerFocused = myValue;
+    }
+  }
+
+  private static class MySplitter extends Splitter {
+    @NotNull private final String myLabelText;
+
+    public MySplitter(@NotNull String text) {
+      super(true);
+      myLabelText = text;
+      setOrientation(true);
+    }
+
+    @Override
+    protected Divider createDivider() {
+      return new DividerImpl() {
+        @Override
+        public void setOrientation(boolean isVerticalSplit) {
+          if (!isVertical()) LOG.warn("unsupported state: splitter should be vertical");
+
+          removeAll();
+
+          setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+
+          JLabel label = new JLabel(myLabelText);
+          label.setFont(UIUtil.getOptionPaneMessageFont());
+          label.setForeground(UIUtil.getLabelForeground());
+          add(label, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(2), 0, 0));
+          setDividerWidth(label.getPreferredSize().height + JBUI.scale(4));
+
+          revalidate();
+          repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          g.setColor(JBColor.border());
+          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
+        }
+      };
     }
   }
 }
