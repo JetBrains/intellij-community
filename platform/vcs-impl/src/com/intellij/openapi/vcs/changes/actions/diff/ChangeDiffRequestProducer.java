@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
@@ -275,7 +276,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         String beforeRevisionTitle = getRevisionTitle(bRev, "Your version");
         String afterRevisionTitle = getRevisionTitle(aRev, "Server version");
 
-        String title = FileUtil.toSystemDependentName(file.getPresentableUrl());
+        String title = DiffRequestFactory.getInstance().getTitle(file);
         List<String> titles = ContainerUtil.list(beforeRevisionTitle, "Base Version", afterRevisionTitle);
 
         // Yep, we hope that it's a text file. And that charset wasn't changed.
