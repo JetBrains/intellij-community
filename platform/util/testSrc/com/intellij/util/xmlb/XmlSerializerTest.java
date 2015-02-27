@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.*;
+import gnu.trove.THashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
@@ -346,8 +347,8 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithMapWithBeanValue {
     public Map<String, BeanWithProperty> VALUES = new LinkedHashMap<String, BeanWithProperty>();
-
   }
+
   public void testMapWithBeanValue() {
     BeanWithMapWithBeanValue bean = new BeanWithMapWithBeanValue();
 
@@ -384,6 +385,20 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithMapWithBeanValue>",
       bean);
+  }
+
+
+  public static class BeanWithMapWithBeanValue2 {
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    public Map<String, BeanWithProperty> values = new THashMap<String, BeanWithProperty>();
+  }
+
+
+  public void testMapWithBeanValueUsingSkipDefaultsFilter() {
+    BeanWithMapWithBeanValue2 bean = new BeanWithMapWithBeanValue2();
+    doSerializerTest(
+      "<BeanWithMapWithBeanValue2 />",
+      bean, new SkipDefaultsSerializationFilter());
   }
 
   public static class BeanWithOption {
@@ -1201,7 +1216,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithConverter>", bean);
   }
 
-  public void testConverterUsingSkipDefaultsFilters() {
+  public void testConverterUsingSkipDefaultsFilter() {
     BeanWithConverter bean = new BeanWithConverter();
     doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultsSerializationFilter());
 

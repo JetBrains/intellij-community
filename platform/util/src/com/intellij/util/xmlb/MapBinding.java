@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,11 +56,8 @@ class MapBinding extends Binding implements MultiNodeBinding {
     super(accessor);
 
     Type[] arguments = type.getActualTypeArguments();
-    Type keyType = arguments[0];
-    Type valueType = arguments[1];
-
-    myKeyBinding = XmlSerializerImpl.getBinding(keyType);
-    myValueBinding = XmlSerializerImpl.getBinding(valueType);
+    myKeyBinding = XmlSerializerImpl.getBinding(arguments[0]);
+    myValueBinding = XmlSerializerImpl.getBinding(arguments[1]);
     myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
   }
 
@@ -77,7 +74,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
     assert m != null;
 
     final Object[] keys = ArrayUtil.toObjectArray(map.keySet());
-    if (myMapAnnotation == null || myMapAnnotation.sortBeforeSave()) {
+    if (!(map instanceof TreeMap) && (myMapAnnotation == null || myMapAnnotation.sortBeforeSave())) {
       Arrays.sort(keys, KEY_COMPARATOR);
     }
 
