@@ -5,15 +5,14 @@
   <!-- set global properties for this build -->
   <property name="build.compiler" value="modern"/>
 
-  <property name="src" location="${basedir}/src"/>
-  <property name="gen" location="${basedir}/gen"/>
+  <property name="src" location="${basedir}/lombok-plugin/src/main/java"/>
+  <property name="gen" location="${basedir}/lombok-plugin/gen"/>
   <property name="jps" location="${basedir}/jps-plugin"/>
   <property name="utils" location="${basedir}/utils"/>
   <property name="test.src" location="${basedir}/tests"/>
   <property name="build" location="build"/>
   <property name="test.build" location="build_test"/>
-  <property name="resources" value="${basedir}/resources"/>
-  <property name="go.plugin.name" value="com.goide"/>
+  <property name="resources" value="${basedir}/lombok-plugin/src/main/resources"/>
   <property name="idea.community.build" location="${basedir}/idea-IC/"/>
 
   <path id="idea.classpath">
