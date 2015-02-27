@@ -6,5 +6,11 @@ cache:
   directories:
   - $HOME/.m2
   - idea-IC
+
 install: mvn install
-script: "./travis.sh"
+
+before_script:
+ - chmod +x travis.sh
+ - chmod +x fetchIdea.sh
+
+script: ./travis.sh
