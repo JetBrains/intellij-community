@@ -515,7 +515,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   public void setCopyJavadocVisible(boolean state) {
-    myCopyJavadocCheckbox.setVisible(state);
+    if (myCopyJavadocCheckbox != null) {
+      myCopyJavadocCheckbox.setVisible(state);
+    }
   }
 
   public boolean isCopyJavadoc() {
