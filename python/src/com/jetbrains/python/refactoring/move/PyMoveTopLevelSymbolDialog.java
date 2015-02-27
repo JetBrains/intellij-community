@@ -61,7 +61,7 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
    * @return dialog
    */
   public static PyMoveTopLevelSymbolDialog getInstance(@NotNull final Project project,
-                                                       @NotNull final PsiNamedElement[] elements,
+                                                       @NotNull final List<PsiNamedElement> elements,
                                                        @Nullable final String destination) {
     return ourInstanceToReplace != null ? ourInstanceToReplace : new PyMoveTopLevelSymbolDialog(project, elements, destination);
   }
@@ -81,14 +81,14 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
    * @param elements elements to move
    * @param destination destination where elements have to be moved
    */
-  protected PyMoveTopLevelSymbolDialog(@NotNull Project project, @NotNull PsiNamedElement[] elements, @Nullable String destination) {
+  protected PyMoveTopLevelSymbolDialog(@NotNull Project project, @NotNull List<PsiNamedElement> elements, @Nullable String destination) {
     super(project, true);
 
-    assert elements.length > 0;
+    assert !elements.isEmpty();
     final String moveText;
 
-    final PsiNamedElement firstElement = elements[0];
-    if (elements.length == 1) {
+    final PsiNamedElement firstElement = elements.get(0);
+    if (elements.size() == 1) {
       if (firstElement instanceof PyClass) {
         moveText = PyBundle.message("refactoring.move.class.$0", ((PyClass)firstElement).getQualifiedName());
       }
@@ -116,7 +116,12 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
 
     final PyFile pyFile = (PyFile)firstElement.getContainingFile();
     myModuleMemberModel = new ModuleMemberInfoModel(pyFile);
-    myMemberSelectionTable = new TopLevelSymbolsSelectionTable(myModuleMemberModel.getTopLevelSymbolInfo(), myModuleMemberModel);
+
+    final List<TopLevelSymbolInfo> symbolsInfo = myModuleMemberModel.getTopLevelSymbolInfo();
+    for (TopLevelSymbolInfo info : symbolsInfo) {
+      info.setChecked(elements.contains(info.getMember()));
+    }
+    myMemberSelectionTable = new TopLevelSymbolsSelectionTable(symbolsInfo, myModuleMemberModel);
     // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
     myTablePanel.add(ScrollPaneFactory.createScrollPane(myMemberSelectionTable), BorderLayout.CENTER);
 
@@ -150,8 +155,13 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
   }
 
   @NotNull
-  public Collection<TopLevelSymbolInfo> getSelectedMembers() {
-    return myMemberSelectionTable.getSelectedMemberInfos();
+  public List<PyElement> getSelectedTopLevelSymbols() {
+    return ContainerUtil.map(myMemberSelectionTable.getSelectedMemberInfos(), new Function<TopLevelSymbolInfo, PyElement>() {
+      @Override
+      public PyElement fun(TopLevelSymbolInfo info) {
+        return info.getMember();
+      }
+    });
   }
 
   @NotNull
