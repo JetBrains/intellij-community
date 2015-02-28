@@ -73,28 +73,7 @@ class InProcessGroovyc implements GroovycFlavor {
                                        final GroovycOutputParser parser)
     throws MalformedURLException {
 
-    ClassLoader parent = obtainParentLoader(compilationClassPath);
-
-    UrlClassLoader loader = UrlClassLoader.build().
-      urls(toUrls(compilationClassPath)).parent(parent).
-      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-        @Override
-        public boolean shouldCacheData(@NotNull URL url) {
-          try {
-            String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
-            for (String output : myOutputs) {
-              if (FileUtil.startsWith(output, file)) {
-                return false;
-              }
-            }
-            return true;
-          }
-          catch (URISyntaxException e) {
-            LOG.info(e);
-            return false;
-          }
-        }
-      }).get();
+    UrlClassLoader loader = createCompilationClassLoader(compilationClassPath);
 
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
@@ -115,11 +94,36 @@ class InProcessGroovyc implements GroovycFlavor {
     finally {
       System.out.flush();
       System.err.flush();
-      
+
       System.setOut(oldOut);
       System.setErr(oldErr);
       Thread.currentThread().setContextClassLoader(oldLoader);
     }
+  }
+
+  @NotNull
+  private UrlClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+    ClassLoader parent = obtainParentLoader(compilationClassPath);
+    return UrlClassLoader.build().
+      urls(toUrls(compilationClassPath)).parent(parent).allowLock().
+      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+        @Override
+        public boolean shouldCacheData(@NotNull URL url) {
+          try {
+            String file = FileUtil.toCanonicalPath(new File(url.toURI()).getPath());
+            for (String output : myOutputs) {
+              if (FileUtil.startsWith(output, file)) {
+                return false;
+              }
+            }
+            return true;
+          }
+          catch (URISyntaxException e) {
+            LOG.info(e);
+            return false;
+          }
+        }
+      }).get();
   }
 
   @Nullable
@@ -144,7 +148,7 @@ class InProcessGroovyc implements GroovycFlavor {
     }
 
     UrlClassLoader groovyAllLoader = UrlClassLoader.build().
-      urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).
+      urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).allowLock().
       useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
         @Override
         public boolean shouldCacheData(
@@ -188,7 +192,7 @@ class InProcessGroovyc implements GroovycFlavor {
     return new PrintStream(new OutputStream() {
       ByteArrayOutputStream line = new ByteArrayOutputStream();
       boolean hasLineSeparator = false;
-      
+
       @Override
       public void write(int b) throws IOException {
         if (Thread.currentThread() != thread) {
@@ -211,6 +215,11 @@ class InProcessGroovyc implements GroovycFlavor {
 
       @Override
       public void flush() throws IOException {
+        if (Thread.currentThread() != thread) {
+          overridden.flush();
+          return;
+        }
+
         if (line.size() > 0) {
           parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString()), type);
           line = new ByteArrayOutputStream();
