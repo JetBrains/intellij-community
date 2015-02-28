@@ -99,13 +99,13 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   }
 
   protected void setCurrentCard(@NotNull String card, boolean keepFocus) {
-    boolean focused = isFocused();
+    boolean restoreFocus = keepFocus && isFocused();
 
     myCardLayout.show(myContentPanel, card);
     myCurrentCard = card;
     myContentPanel.revalidate();
 
-    if (keepFocus && focused) requestFocus();
+    if (restoreFocus) requestFocus();
   }
 
   @Nullable

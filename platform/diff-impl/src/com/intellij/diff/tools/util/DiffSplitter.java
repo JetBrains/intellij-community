@@ -22,6 +22,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 
@@ -52,6 +53,6 @@ public class DiffSplitter extends Splitter {
   }
 
   public interface Painter {
-    void paint(@NotNull Graphics g, @NotNull Component divider);
+    void paint(@NotNull Graphics g, @NotNull JComponent divider);
   }
 }
