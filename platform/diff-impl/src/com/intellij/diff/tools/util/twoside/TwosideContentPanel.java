@@ -60,6 +60,11 @@ public class TwosideContentPanel extends JPanel {
     if (mySplitter != null) mySplitter.repaintDivider();
   }
 
+  @Nullable
+  public DiffSplitter getSplitter() {
+    return mySplitter;
+  }
+
   private static class MyPanel extends JPanel {
     public MyPanel(@NotNull JComponent editor, @Nullable JComponent title) {
       super(new BorderLayout());

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -249,17 +250,7 @@ public class DiffDrawUtil {
   public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                   @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
     TextAttributes attributes = getStripeTextAttributes(type, editor);
-
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
-    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
-                                                                          HighlighterTargetArea.LINES_IN_RANGE);
-    marker.setThinErrorStripeMark(true);
-
-    // We won't use addLineHighlighter as it will fail to add marker into empty document.
-    //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
-
-    marker.setLineSeparatorPlacement(placement);
-    marker.setLineSeparatorRenderer(new LineSeparatorRenderer() {
+    LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
         // TODO: change LineSeparatorRenderer interface ?
@@ -272,7 +263,39 @@ public class DiffDrawUtil {
           drawShadowedLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
         }
       }
-    });
+    };
+    return createLineMarker(editor, line, placement, attributes, renderer);
+  }
+
+  @NotNull
+  public static RangeHighlighter createBorderLineMarker(@NotNull final Editor editor, int line,
+                                                        @NotNull final SeparatorPlacement placement) {
+    LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        // TODO: change LineSeparatorRenderer interface ?
+        Rectangle clip = g.getClipBounds();
+        x2 = clip.x + clip.width;
+        g.setColor(JBColor.border());
+        g.drawLine(x1, y, x2, y);
+      }
+    };
+    return createLineMarker(editor, line, placement, null, renderer);
+  }
+
+  @NotNull
+  public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
+                                                  @Nullable TextAttributes attributes, @NotNull LineSeparatorRenderer renderer) {
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
+    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
+                                                                          HighlighterTargetArea.LINES_IN_RANGE);
+    marker.setThinErrorStripeMark(true);
+
+    // We won't use addLineHighlighter as it will fail to add marker into empty document.
+    //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
+
+    marker.setLineSeparatorPlacement(placement);
+    marker.setLineSeparatorRenderer(renderer);
 
     return marker;
   }
