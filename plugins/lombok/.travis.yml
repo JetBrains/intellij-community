@@ -9,4 +9,5 @@ cache:
 
 install:
   - mvn install
+  - ant -f build-init.xml
   - ant -f build-test.xml -DIDEA_HOME=./idea-IC
