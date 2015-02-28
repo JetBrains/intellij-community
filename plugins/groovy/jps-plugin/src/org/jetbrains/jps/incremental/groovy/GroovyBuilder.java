@@ -87,7 +87,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                            OutputConsumer outputConsumer) throws ProjectBuildException {
     if (GreclipseBuilder.useGreclipse(context)) return ExitCode.NOTHING_DONE;
-    
+
     long start = 0;
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
@@ -106,42 +106,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       start = System.currentTimeMillis();
-      final Set<String> toCompilePaths = getPathsToCompile(toCompile);
-
-      JpsSdk<JpsDummyElement> jdk = getJdk(chunk);
-      String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
-      boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
-      boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
-      boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
-
-      Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
-
-      final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
-      List<String> patchers = new ArrayList<String>();
-
-      for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
-        patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
-      }
 
       Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
 
-      Collection<String> classpath = generateClasspath(context, chunk);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Optimized class loading: " + optimizeClassLoading);
-        LOG.debug("Groovyc classpath: " + classpath);
-      }
-
-      final File tempFile = GroovycOutputParser.fillFileWithGroovycParameters(
-        compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
-        optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
-      );
-      GroovycFlavor groovyc =
-        inProcess ? new InProcessGroovyc(finalOutputs.values()) : new ForkedGroovyc(optimizeClassLoading, chunk);
-
-      GroovycOutputParser parser = new GroovycOutputParser(chunk, context);
-
-      groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
+      GroovycOutputParser parser = runGroovyc(context, chunk, settings, finalOutputs, compilerOutput, toCompile);
 
       Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
@@ -175,6 +144,49 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, null);
       }
     }
+  }
+
+  @NotNull
+  private GroovycOutputParser runGroovyc(CompileContext context,
+                                         ModuleChunk chunk,
+                                         JpsGroovySettings settings,
+                                         Map<ModuleBuildTarget, String> finalOutputs,
+                                         String compilerOutput, List<File> toCompile) throws Exception {
+    final Set<String> toCompilePaths = getPathsToCompile(toCompile);
+
+    JpsSdk<JpsDummyElement> jdk = getJdk(chunk);
+    String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
+    boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
+    boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
+    boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
+
+    Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
+
+    final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
+    List<String> patchers = new ArrayList<String>();
+
+    for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
+      patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
+    }
+
+
+    Collection<String> classpath = generateClasspath(context, chunk);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Optimized class loading: " + optimizeClassLoading);
+      LOG.debug("Groovyc classpath: " + classpath);
+    }
+
+    final File tempFile = GroovycOutputParser.fillFileWithGroovycParameters(
+      compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
+      optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
+    );
+    GroovycFlavor groovyc =
+      inProcess ? new InProcessGroovyc(finalOutputs.values()) : new ForkedGroovyc(optimizeClassLoading, chunk);
+
+    GroovycOutputParser parser = new GroovycOutputParser(chunk, context);
+
+    groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
+    return parser;
   }
 
   private Boolean hasFilesToCompileForNextRound(CompileContext context) {
