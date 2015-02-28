@@ -10,7 +10,10 @@ import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -19,6 +22,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyData;
@@ -67,6 +71,8 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
 
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
+
+    DataManager.registerDataProvider(myPanel, new MyDataProvider());
   }
 
   @NotNull
@@ -264,6 +270,17 @@ public class SvnPropertiesDiffViewer implements DiffViewer {
     @NotNull
     public List<? extends LineFragment> getFragments() {
       return myFragments;
+    }
+  }
+
+  private class MyDataProvider implements DataProvider {
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return "topicId758145";
+      }
+      return null;
     }
   }
 }
