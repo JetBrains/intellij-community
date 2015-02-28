@@ -64,6 +64,8 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
+  @NotNull private final Builder myBuilder;
+
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
     private ClassLoader myParent = null;
@@ -115,7 +117,9 @@ public class UrlClassLoader extends ClassLoader {
     }
     
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
     public Builder noPreload() { myPreload = false; return this; }
+    public Builder preload(boolean preload) { myPreload = preload; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
@@ -126,7 +130,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private final List<URL> myURLs;
-  private final ClassPath myClassPath;
+  private ClassPath myClassPath;
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
@@ -152,27 +156,19 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated use {@link #build()} (to remove in IDEA 15) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
-    super(parent);
-    myURLs = ContainerUtil.map(urls, new Function<URL, URL>() {
-      @Override
-      public URL fun(URL url) {
-        return internProtocol(url);
-      }
-    });
-    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, false, null, null);
-    myAllowBootstrapResources = false;
+    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache).allowUnescaped(allowUnescaped).preload(preload));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
+    myBuilder = builder;
     myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
+    resetCache();
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
   }
 
@@ -199,6 +195,15 @@ public class UrlClassLoader extends ClassLoader {
 
   public List<URL> getUrls() {
     return Collections.unmodifiableList(myURLs);
+  }
+
+  /**
+   * Reset the internal cache. This can be useful after the loader has already tried to find some classes and remembered that they don't exist,
+   * and then new class files appear under some of its directory URLs.
+   */
+  public void resetCache() {
+    myClassPath = new ClassPath(myURLs, myBuilder.myLockJars, myBuilder.myUseCache, myBuilder.myAcceptUnescaped, myBuilder.myPreload,
+                                myBuilder.myUsePersistentClasspathIndex, myBuilder.myCachePool, myBuilder.myCachingCondition);
   }
 
   @Override
