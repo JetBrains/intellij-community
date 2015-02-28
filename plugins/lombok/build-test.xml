@@ -1,6 +1,7 @@
 <project name="Lombok IntelliJIdea Plugin" default="test" basedir=".">
 
   <!--<property file="build.properties"/>-->
+  <property name="ideaVersion" value="139.1038.6"/>
 
   <!-- set global properties for this build -->
   <property name="build.compiler" value="modern"/>
@@ -98,6 +99,14 @@
     <tstamp/>
     <mkdir dir="${build}"/>
     <mkdir dir="${test.build}"/>
+    <mkdir dir="${basedir}/Tools"/>
+
+    <get src="http://download.jetbrains.com/idea/ideaIC-${ideaVersion}.tar.gz"
+         dest="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz"
+         verbose="false" skipexisting="true" usetimestamp="true"/>
+    <untar src="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz" dest="${basedir}/Tools"/>
+    <move file="${basedir}/Tools/idea-IC-${ideaVersion}" tofile="${idea.community.build}"/>
+
     <echo message="Using IDEA build from: ${idea.community.build}"/>
     <echo message="Using JAVA_HOME: ${java.home}"/>
   </target>

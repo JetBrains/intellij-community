@@ -1,7 +1,5 @@
 #!/bin/bash
 
-./fetchIdea.sh
-
 # Run the tests
 if [ "$1" = "-d" ]; then
     ant -d -f build-test.xml -DIDEA_HOME=./idea-IC
