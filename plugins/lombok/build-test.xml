@@ -8,12 +8,17 @@
 
   <property name="src" location="${basedir}/lombok-plugin/src/main/java"/>
   <property name="gen" location="${basedir}/lombok-plugin/gen"/>
-  <property name="utils" location="${basedir}/utils"/>
-  <property name="test.src" location="${basedir}/tests"/>
+  <property name="resources" value="${basedir}/lombok-plugin/src/main/resources"/>
+
+  <property name="lombok.api" location="${basedir}/lombok-api/target/lombok-api-1.0.jar"/>
+
+  <property name="test.src" location="${basedir}/lombok-plugin/src/test/java"/>
+  <property name="test.res" location="${basedir}/lombok-plugin/src/test/resources"/>
+
+  <property name="idea.community.build" location="${basedir}/idea-IC/"/>
+
   <property name="build" location="build"/>
   <property name="test.build" location="build_test"/>
-  <property name="resources" value="${basedir}/lombok-plugin/src/main/resources"/>
-  <property name="idea.community.build" location="${basedir}/idea-IC/"/>
 
   <path id="idea.classpath">
     <fileset dir="${idea.community.build}/lib">
@@ -23,6 +28,7 @@
 
   <path id="my.classpath">
     <pathelement location="${build}"/>
+    <pathelement location="${lombok.api}"/>
   </path>
 
   <path id="classpath">
@@ -33,6 +39,7 @@
   <path id="classpath.test">
     <pathelement location="${build}"/>
     <pathelement location="${test.build}"/>
+    <pathelement location="${lombok.api}"/>
     <fileset dir="${idea.community.build}/lib">
       <include name="**/*.jar"/>
       <exclude name="ant/lib/**/*.jar"/>
@@ -74,6 +81,9 @@
         <fileset dir="${test.src}">
           <patternset refid="resources"/>
         </fileset>
+        <fileset dir="${test.res}">
+          <patternset refid="resources"/>
+        </fileset>
       </copy>
     </sequential>
   </macrodef>
@@ -87,8 +97,8 @@
       <javac2 destdir="@{dest}" classpathref="classpath" verbose="false" debug="true" source="1.6" target="1.6" includeantruntime="false">
         <src path="${src}"/>
         <src path="${gen}"/>
-        <src path="${utils}/src"/>
         <src path="${test.src}"/>
+        <src path="${test.res}"/>
       </javac2>
 
       <copy_resources dest="@{dest}"/>
@@ -141,7 +151,7 @@
     <junit printsummary="yes"
            haltonfailure="false" showoutput="yes"
            failureProperty="failure_found"
-           fork="yes" forkmode="once" reloading="no">
+           fork="no" forkmode="once" reloading="no">
 
       <jvmarg value="-Didea.home.path=${idea.community.build}"/>
       <jvmarg value="-Xbootclasspath/a:${idea.community.build}/lib/boot.jar"/>
@@ -149,6 +159,7 @@
       <jvmarg value="-ea"/>
       <jvmarg line="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=${suspend},address=43251"/>
       <jvmarg value="-Didea.launcher.bin.path=${idea.community.build}/bin"/>
+      <jvmarg value="-DIDEA_HOME=./idea-IC"/>
       <classpath refid="classpath.test"/>
 
       <formatter type="brief" usefile="false"/>
