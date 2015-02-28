@@ -7,9 +7,6 @@ cache:
   - $HOME/.m2
   - idea-IC
 
-install: mvn install
-
-before_script:
- - chmod +x travis.sh
-
-script: "./travis.sh"
+install:
+  - mvn install
+  - ant -f build-test.xml -DIDEA_HOME=./idea-IC
