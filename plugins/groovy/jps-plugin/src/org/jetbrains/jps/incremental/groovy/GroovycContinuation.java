@@ -15,19 +15,14 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public interface GroovycFlavor {
-  @Nullable
-  GroovycContinuation runGroovyc(Collection<String> compilationClassPath,
-                                 boolean stubs,
-                                 JpsGroovySettings settings,
-                                 File tempFile,
-                                 GroovycOutputParser parser) throws Exception;
+public interface GroovycContinuation {
+  @NotNull
+  GroovycOutputParser continueCompilation() throws Exception;
+
+  void buildAborted();
 }

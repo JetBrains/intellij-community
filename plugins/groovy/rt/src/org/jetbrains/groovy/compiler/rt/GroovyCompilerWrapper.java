@@ -42,17 +42,20 @@ public class GroovyCompilerWrapper {
     "A groovyc error occurred while trying to load one of the classes in project dependencies, please ensure it's present. " +
     "See the message and the stack trace below for reference\n\n";
   private final List<CompilerMessage> collector;
-  private final boolean forStubs;
+  private boolean forStubs;
 
   public GroovyCompilerWrapper(List<CompilerMessage> collector, boolean forStubs) {
     this.collector = collector;
     this.forStubs = forStubs;
   }
 
-  public List<OutputItem> compile(final CompilationUnit unit) {
-    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+  public void onContinuation() {
+    this.forStubs = false;
+  }
+
+  public List<OutputItem> compile(final CompilationUnit unit, int throughPhase) {
     try {
-      unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
+      unit.compile(throughPhase);
       return getCompiledFiles(unit);
     }
     catch (CompilationFailedException e) {

@@ -52,11 +52,11 @@ class ForkedGroovyc implements GroovycFlavor {
   }
 
   @Override
-  public void runGroovyc(Collection<String> compilationClassPath,
-                         boolean forStubs,
-                         JpsGroovySettings settings,
-                         File tempFile,
-                         final GroovycOutputParser parser)
+  public GroovycContinuation runGroovyc(Collection<String> compilationClassPath,
+                                        boolean forStubs,
+                                        JpsGroovySettings settings,
+                                        File tempFile,
+                                        final GroovycOutputParser parser)
     throws Exception {
     List<String> classpath = new ArrayList<String>();
     if (myOptimizeClassLoading) {
@@ -101,6 +101,7 @@ class ForkedGroovyc implements GroovycFlavor {
     handler.startNotify();
     handler.waitFor();
     parser.notifyFinished(process.exitValue());
+    return null;
   }
 
   private List<String> getProgramParams(File tempFile, JpsGroovySettings settings, boolean forStubs) {
