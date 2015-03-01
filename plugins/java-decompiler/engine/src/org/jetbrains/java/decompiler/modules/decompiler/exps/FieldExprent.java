@@ -26,6 +26,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
+import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
@@ -181,4 +185,31 @@ public class FieldExprent extends Exprent {
   public String getName() {
     return name;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+    
+    RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_FIELD_NAME);
+    if(rule != null) {
+      if(rule.isVariable()) {
+        if(!engine.checkAndSetVariableValue((String)rule.value, this.name)) {
+          return false;
+        }
+      } else { 
+        if(!rule.value.equals(this.name)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+  
 }

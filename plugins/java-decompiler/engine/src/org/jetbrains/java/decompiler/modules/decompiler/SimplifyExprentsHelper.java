@@ -15,24 +15,41 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 public class SimplifyExprentsHelper {
 
+  static MatchEngine class14Builder = new MatchEngine();
+  
   private boolean firstInvocation;
 
   public SimplifyExprentsHelper(boolean firstInvocation) {
@@ -44,6 +61,8 @@ public class SimplifyExprentsHelper {
     boolean res = false;
 
     if (stat.getExprents() == null) {
+
+      boolean processClass14 = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4);
 
       while (true) {
 
@@ -59,6 +78,11 @@ public class SimplifyExprentsHelper {
 
           // collapse iff ?: statement
           if (changed = buildIff(st, ssa)) {
+            break;
+          }
+
+          // collapse inlined .class property in version 1.4 and before
+          if (processClass14 && (changed = collapseInlinedClass14(st))) {
             break;
           }
         }
@@ -852,4 +876,53 @@ public class SimplifyExprentsHelper {
 
     return false;
   }
+
+  static {
+    class14Builder.parse(
+          "statement type:if iftype:if exprsize:-1\n" +
+          " exprent position:head type:if\n" +
+          "  exprent type:function functype:eq\n" +
+          "   exprent type:field name:$field$\n" +
+          "   exprent type:constant consttype:null\n" +
+          " statement type:basicblock\n" +
+          "  exprent position:-1 type:assignment ret:$assignfield$\n" +
+          "   exprent type:var index:$var$\n" +
+          "   exprent type:field name:$field$\n" +
+          " statement type:sequence statsize:2\n" +
+          "  statement type:trycatch\n" +  
+          "   statement type:basicblock exprsize:1\n" +
+          "    exprent type:assignment\n" +
+          "     exprent type:var index:$var$\n" +
+          "     exprent type:invocation invclass:java/lang/Class signature:forName(Ljava/lang/String;)Ljava/lang/Class;\n" +
+          "      exprent position:0 type:constant consttype:string constvalue:$classname$\n" +
+          "   statement type:basicblock exprsize:1\n" +
+          "    exprent type:exit exittype:throw\n" + 
+          "  statement type:basicblock exprsize:1\n" + 
+          "   exprent type:assignment\n" + 
+          "    exprent type:field name:$field$\n" +
+          "    exprent type:var index:$var$"
+        );
+  }
+  
+  private static boolean collapseInlinedClass14(Statement stat) {
+
+    boolean ret = class14Builder.match(stat);
+    if(ret) {
+      
+      String class_name = (String)class14Builder.getVariableValue("$classname$");
+      AssignmentExprent assfirst = (AssignmentExprent)class14Builder.getVariableValue("$assignfield$");
+
+      assfirst.replaceExprent(assfirst.getRight(), new ConstExprent(VarType.VARTYPE_CLASS, class_name, null));
+      
+      List<Exprent> data = new ArrayList<Exprent>();
+      data.addAll(stat.getFirst().getExprents());
+
+      stat.setExprents(data);
+
+      SequenceHelper.destroyAndFlattenStatement(stat);
+    }
+    
+    return ret;
+  }
+  
 }
