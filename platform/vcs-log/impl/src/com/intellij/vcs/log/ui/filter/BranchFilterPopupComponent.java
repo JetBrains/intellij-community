@@ -90,6 +90,11 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   }
 
   @Override
+  protected boolean supportsNegativeValues() {
+    return true;
+  }
+
+  @Override
   protected ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 

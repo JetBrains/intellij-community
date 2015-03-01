@@ -51,9 +51,12 @@ class MultilinePopupBuilder {
 
   @NotNull private final EditorTextField myTextField;
 
-  MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> values, @NotNull String initialValue) {
+  MultilinePopupBuilder(@NotNull Project project,
+                        @NotNull final Collection<String> values,
+                        @NotNull String initialValue,
+                        boolean supportsNegativeValues) {
     myTextField = createTextField(project);
-    new MyCompletionProvider(values).apply(myTextField);
+    new MyCompletionProvider(values, supportsNegativeValues).apply(myTextField);
     myTextField.setText(initialValue);
   }
 
@@ -106,17 +109,20 @@ class MultilinePopupBuilder {
   private static class MyCompletionProvider extends TextFieldCompletionProviderDumbAware {
 
     @NotNull private final Collection<String> myValues;
+    private final boolean mySupportsNegativeValues;
 
-    MyCompletionProvider(@NotNull Collection<String> values) {
+    MyCompletionProvider(@NotNull Collection<String> values, boolean supportsNegativeValues) {
       super(true);
       myValues = values;
+      mySupportsNegativeValues = supportsNegativeValues;
     }
 
     @NotNull
     @Override
     protected String getPrefix(@NotNull String currentTextPrefix) {
       final int separatorPosition = lastSeparatorPosition(currentTextPrefix);
-      return separatorPosition == -1 ? currentTextPrefix : currentTextPrefix.substring(separatorPosition + 1).trim();
+      String prefix = separatorPosition == -1 ? currentTextPrefix : currentTextPrefix.substring(separatorPosition + 1).trim();
+      return mySupportsNegativeValues && prefix.startsWith("-") ? prefix.substring(1) : prefix;
     }
 
     private static int lastSeparatorPosition(@NotNull String text) {
