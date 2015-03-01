@@ -207,9 +207,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @Override
   protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    if (values.size() > 1) { // all branches are in the popup => no need to save single one, only in case of multiple selection
-      myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
-    }
+    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
   }
 
   @NotNull
