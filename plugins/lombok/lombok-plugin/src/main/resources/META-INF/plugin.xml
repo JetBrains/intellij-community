@@ -197,7 +197,7 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
-		<li>0.9.1
+		  <li>0.9.1
 				<ol>
 				    <li>Fixed #33: Builder annotation with partial implementation shows errors</li>
 				    <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>
