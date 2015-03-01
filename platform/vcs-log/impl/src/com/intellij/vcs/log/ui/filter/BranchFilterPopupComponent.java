@@ -42,25 +42,51 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogBranchFilter filter) {
-    return displayableText(filter.getBranchNames());
+    boolean positiveMatch = !filter.getBranchNames().isEmpty();
+    Collection<String> names = positiveMatch ? filter.getBranchNames() : addMinusPrefix(filter.getExcludedBranchNames());
+    return displayableText(names);
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogBranchFilter filter) {
-    return tooltip(filter.getBranchNames());
+    boolean positiveMatch = !filter.getBranchNames().isEmpty();
+    Collection<String> names = positiveMatch ? filter.getBranchNames() : filter.getExcludedBranchNames();
+    String tooltip = tooltip(names);
+    return positiveMatch ? tooltip : "not in " + tooltip;
   }
 
   @NotNull
   @Override
   protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
-    return new VcsLogBranchFilterImpl(values);
+    Collection<String> acceptedBranches = ContainerUtil.newArrayList();
+    Collection<String> excludedBranches = ContainerUtil.newArrayList();
+    for (String value : values) {
+      if (value.startsWith("-")) {
+        excludedBranches.add(value.substring(1));
+      }
+      else {
+        acceptedBranches.add(value);
+      }
+    }
+    return new VcsLogBranchFilterImpl(acceptedBranches, excludedBranches);
   }
 
   @Override
   @NotNull
-  protected Collection<String> getValues(@Nullable VcsLogBranchFilter filter) {
-    return filter == null ? Collections.<String>emptySet() : filter.getBranchNames();
+  protected Collection<String> getTextValues(@Nullable VcsLogBranchFilter filter) {
+    if (filter == null) return Collections.emptySet();
+    return ContainerUtil.newArrayList(ContainerUtil.concat(filter.getBranchNames(), addMinusPrefix(filter.getExcludedBranchNames())));
+  }
+
+  @NotNull
+  private static List<String> addMinusPrefix(@NotNull Collection<String> branchNames) {
+    return ContainerUtil.map(branchNames, new Function<String, String>() {
+      @Override
+      public String fun(String branchName) {
+        return "-" + branchName;
+      }
+    });
   }
 
   @Override

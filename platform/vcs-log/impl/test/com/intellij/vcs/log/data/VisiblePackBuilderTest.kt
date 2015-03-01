@@ -42,6 +42,7 @@ import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
 import kotlin.test.assertTrue
 import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.VcsLogBranchFilter
 
 class VisiblePackBuilderTest {
 
@@ -52,7 +53,7 @@ class VisiblePackBuilderTest {
       3(4)
       4()
     }
-    val visiblePack = graph.build(filters())
+    val visiblePack = graph.build(noFilters())
     assertEquals(4, visiblePack.getVisibleGraph().getVisibleCommitCount())
   }
 
@@ -64,7 +65,9 @@ class VisiblePackBuilderTest {
       4()
     }
     val visiblePack = graph.build(filters(branch = listOf("master")))
-    assertEquals(3, visiblePack.getVisibleGraph().getVisibleCommitCount())
+    val visibleGraph = visiblePack.getVisibleGraph()
+    assertEquals(3, visibleGraph.getVisibleCommitCount())
+    assertDoesNotContain(visibleGraph, 2)
   }
 
   Test fun `filter by user in memory`() {
@@ -81,6 +84,19 @@ class VisiblePackBuilderTest {
     val visibleGraph = visiblePack.getVisibleGraph()
     assertEquals(6, visibleGraph.getVisibleCommitCount())
     assertDoesNotContain(visibleGraph, 3)
+  }
+
+  Test fun `filter by branch deny`() {
+    val graph = graph {
+      1(3) *"master"
+      2(3) *"feature"
+      3(4)
+      4()
+    }
+    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl(setOf(), setOf("master"))))
+    val visibleGraph = visiblePack.getVisibleGraph()
+    assertEquals(3, visibleGraph.getVisibleCommitCount())
+    assertDoesNotContain(visibleGraph, 1)
   }
 
   fun assertDoesNotContain(graph : VisibleGraph<Int>, id : Int) {
@@ -124,17 +140,23 @@ class VisiblePackBuilderTest {
       }
       return ConstantVcsLogHashMap(map)
     }
+
   }
+
+  fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
+
+  fun filters(branch: VcsLogBranchFilter? = null, user: VcsLogUserFilter? = null)
+      = VcsLogFilterCollectionImpl(branch, user, null, null, null, null, null)
 
   fun filters(branch: List<String>? = null, user: VcsUser? = null)
       = VcsLogFilterCollectionImpl(branchFilter(branch), userFilter(user), null, null, null, null, null)
 
   fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
-    return if (branch != null) VcsLogBranchFilterImpl(branch) else null
+    return if (branch != null) VcsLogBranchFilterImpl(branch, setOf()) else null
   }
 
   fun userFilter(user: VcsUser?): VcsLogUserFilter? {
-    return if (user != null) VcsLogUserFilterImpl(listOf(user.getName()), mapOf()) else null
+    return if (user != null) VcsLogUserFilterImpl(listOf(user.getName()), emptyMap(), emptySet()) else null
   }
 
   fun graph(f: GraphBuilder.() -> Unit) : Graph {

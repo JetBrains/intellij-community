@@ -52,13 +52,13 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogUserFilter filter) {
-    return displayableText(getValues(filter));
+    return displayableText(getTextValues(filter));
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogUserFilter filter) {
-    return tooltip(getValues(filter));
+    return tooltip(getTextValues(filter));
   }
 
   @Override
@@ -75,7 +75,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
 
   @NotNull
   @Override
-  protected Collection<String> getValues(@Nullable VcsLogUserFilter filter) {
+  protected Collection<String> getTextValues(@Nullable VcsLogUserFilter filter) {
     if (filter == null) {
       return Collections.emptySet();
     }

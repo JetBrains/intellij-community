@@ -47,7 +47,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  protected abstract Collection<String> getValues(@Nullable Filter filter);
+  protected abstract Collection<String> getTextValues(@Nullable Filter filter);
 
   @NotNull
   protected abstract List<List<String>> getRecentValuesFromSettings();
@@ -130,7 +130,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       }
 
       Filter filter = myFilterModel.getFilter();
-      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(getValues(filter)));
+      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(getTextValues(filter)));
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override
