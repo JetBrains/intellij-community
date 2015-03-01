@@ -66,6 +66,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
                                          SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
       }
     };
+  private Function<VcsLogFilterCollection, List<TimedVcsCommit>> myFilteredCommitsProvider;
 
   public TestVcsLogProvider(@NotNull VirtualFile root) {
     myRoot = root;
@@ -146,12 +147,17 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
+  public void setFilteredCommitsProvider(@NotNull Function<VcsLogFilterCollection, List<TimedVcsCommit>> provider) {
+    myFilteredCommitsProvider = provider;
+  }
+
   @NotNull
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) throws VcsException {
-    throw new UnsupportedOperationException();
+    if (myFilteredCommitsProvider == null) throw new UnsupportedOperationException();
+    return myFilteredCommitsProvider.fun(filterCollection);
   }
 
   @Nullable

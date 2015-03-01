@@ -43,6 +43,9 @@ import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
 import kotlin.test.assertTrue
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.VcsLogBranchFilter
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.util.Function
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl
 
 class VisiblePackBuilderTest {
 
@@ -99,22 +102,50 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 1)
   }
 
+  Test fun `filter by branch deny works with extra results from vcs provider`() {
+    val graph = graph {
+      1(3) * "master"  +null
+      2(3) * "feature" +null
+      3(4)             +null
+      4()              +null
+    }
+
+    val func = object : Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
+      override fun `fun`(param: VcsLogFilterCollection?): MutableList<TimedVcsCommit>? {
+        return ArrayList(listOf(2, 3, 4).map {
+          val id = it
+          val commit = graph.commits.firstOrNull {
+            it.getId() == id
+          }
+          commit!!.toVcsCommit(graph.hashMap)
+        })
+      }
+    }
+
+    graph.providers.entrySet().iterator().next().getValue().setFilteredCommitsProvider(func)
+    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl(setOf(), setOf("master")), userFilter(DEFAULT_USER)))
+    val visibleGraph = visiblePack.getVisibleGraph()
+    assertEquals(3, visibleGraph.getVisibleCommitCount())
+    assertDoesNotContain(visibleGraph, 1)
+  }
+
+  private fun GraphCommit<Int>.toVcsCommit(map : VcsLogHashMap) = TimedVcsCommitImpl(map.getHash(this.getId()), map.getHashes(this.getParents()), 1)
+
   fun assertDoesNotContain(graph : VisibleGraph<Int>, id : Int) {
     assertTrue(null == (1..graph.getVisibleCommitCount()).firstOrNull{ graph.getRowInfo(it - 1).getCommit() == id })
   }
 
   data class Ref(val name : String, val commit : Int)
-  data class Data(val user: VcsUser = DEFAULT_USER, val subject: String = "default commit message")
+  data class Data(val user: VcsUser? = DEFAULT_USER, val subject: String = "default commit message")
 
   class Graph(val commits: List<GraphCommit<Int>>,
               val refs: Set<VisiblePackBuilderTest.Ref>,
               val data: HashMap<GraphCommit<Int>, Data>) {
     val root = MockVirtualFile("root") : VirtualFile
     val providers: Map<VirtualFile, TestVcsLogProvider> = mapOf(root to TestVcsLogProvider(root))
+    val hashMap = generateHashMap(commits.maxBy { it.getId() }!!.getId())
 
     fun build(filters : VcsLogFilterCollection) : VisiblePack {
-      val hashMap = generateHashMap(commits.maxBy { it.getId() }!!.getId())
-
       val refs = refs.mapTo(HashSet<VcsRef>(), {
         VcsRefImpl(hashMap.getHash(it.commit), it.name, BRANCH_TYPE, root)
       })
@@ -122,16 +153,16 @@ class VisiblePackBuilderTest {
       val dataPack = DataPack.build(commits, mapOf(root to refs), providers, hashMap, true)
       val detailsCache = data.entrySet().map {
         val hash = hashMap.getHash(it.key.getId())
-        val metadata = VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.getParents()), 1L, root, it.value.subject,
-                                             it.value.user, it.value.subject, it.value.user, 1L)
+        val metadata = if (it.value.user == null)
+          null
+          else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.getParents()), 1L, root, it.value.subject,
+                                     it.value.user, it.value.subject, it.value.user, 1L)
         Pair(it.key.getId(), metadata)
       }.toMap()
       val builder = VisiblePackBuilder(providers, hashMap, detailsCache, CommitDetailsGetter(hashMap, providers, TRIVIAL_DISPOSABLE))
 
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
-
-    fun VcsLogHashMap.getHashes(ids: List<Int>) = ids.map { getHash(it) }
 
     fun generateHashMap(num: Int): VcsLogHashMap {
       val map = HashMap<Hash, Int>()
@@ -142,6 +173,8 @@ class VisiblePackBuilderTest {
     }
 
   }
+
+  fun VcsLogHashMap.getHashes(ids: List<Int>) = ids.map { getHash(it) }
 
   fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
 
@@ -187,7 +220,7 @@ class VisiblePackBuilderTest {
       return this;
     }
 
-    fun GraphCommit<Int>.plus(user : VcsUser) : GraphCommit<Int> {
+    fun GraphCommit<Int>.plus(user : VcsUser?) : GraphCommit<Int> {
       data[this] = Data(user)
       return this;
     }
