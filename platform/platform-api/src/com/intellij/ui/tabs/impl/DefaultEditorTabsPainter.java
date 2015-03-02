@@ -16,7 +16,8 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -42,26 +43,12 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     g2d.fillRect(x, y, w, h);
     g2d.setColor(getInactiveMaskColor());
     g2d.fillRect(x, y, w, h);
-
-    if (!vertical) {
-      drawShadowLines(g2d, x, y, w);
-    }
   }
 
   @Override
   public void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle) {
     g.setColor(getBackgroundColor());
     g.fill(clip);
-    if (!vertical) {
-      drawShadowLines(g, rectangle.x, rectangle.y, rectangle.width);
-    }
-  }
-
-  private void drawShadowLines(Graphics g, int x, int y, int width) {
-    g.setColor(ColorUtil.withAlpha(getShadowBaseColor(), .5));
-    g.drawLine(x, y, x + width, y);
-    g.setColor(ColorUtil.withAlpha(getShadowBaseColor(), .2));
-    g.drawLine(x, y+1, x + width, y+1);
   }
 
   public void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height) {
@@ -72,7 +59,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return Gray._177;
+    return UIUtil.CONTRAST_BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {
@@ -83,7 +70,9 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     return ColorUtil.withAlpha(new Color(0x262626), .2);
   }
 
-  protected Color getShadowBaseColor() {
-    return new Color(0xbababa);
+
+  @Override
+  public Color getEmptySpaceColor() {
+    return new JBColor(new Color(0xbfbfbf), UIUtil.getPanelBackground());
   }
 }

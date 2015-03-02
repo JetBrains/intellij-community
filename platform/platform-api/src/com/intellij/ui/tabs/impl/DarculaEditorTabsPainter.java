@@ -31,17 +31,13 @@ class DarculaEditorTabsPainter extends DefaultEditorTabsPainter {
   }
 
   @Override
-  public Color getBackgroundColor() {
-    return new Color(0x353536);
-  }
-
-  @Override
   protected Color getInactiveMaskColor() {
     return ColorUtil.withAlpha(new Color(0x262626), .5);
   }
 
+
   @Override
-  protected Color getShadowBaseColor() {
-    return new Color(0x242627);
+  public Color getEmptySpaceColor() {
+    return new Color(0x353536);
   }
 }

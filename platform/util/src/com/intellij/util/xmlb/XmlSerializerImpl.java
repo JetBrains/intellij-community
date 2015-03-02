@@ -17,10 +17,8 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.CollectionBean;
-import org.jdom.*;
-import org.jdom.filter.Filter;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,35 +26,13 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author mike
- */
 class XmlSerializerImpl {
-  private static final Filter<Content> CONTENT_FILTER = new Filter<Content>() {
-    @Override
-    public boolean matches(Object object) {
-      return !isIgnoredNode(object);
-    }
-  };
-
-  private static SoftReference<Map<Pair<Type, Accessor>, Binding>> ourBindings;
-
-  @NotNull
-  static List<Content> getFilteredContent(@NotNull Element element) {
-    List<Content> content = element.getContent();
-    if (content.isEmpty()) {
-      return content;
-    }
-    else if (content.size() == 1) {
-      return isIgnoredNode(content.get(0)) ? Collections.<Content>emptyList() : content;
-    }
-    else {
-      return element.getContent(CONTENT_FILTER);
-    }
-  }
+  private static SoftReference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
 
   @NotNull
   static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {
@@ -94,7 +70,7 @@ class XmlSerializerImpl {
   }
 
   @Nullable
-  static Binding getBinding(@NotNull Accessor accessor) {
+  static Binding getBinding(@NotNull MutableAccessor accessor) {
     Type type = accessor.getGenericType();
     return getClassBinding(typeToClass(type), type, accessor);
   }
@@ -114,7 +90,7 @@ class XmlSerializerImpl {
   }
 
   @Nullable
-  static synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable Accessor accessor) {
+  static synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
     if (aClass.isPrimitive() ||
         aClass == String.class ||
         aClass == Integer.class ||
@@ -127,8 +103,8 @@ class XmlSerializerImpl {
       return null;
     }
 
-    Pair<Type, Accessor> key = Pair.create(originalType, accessor);
-    Map<Pair<Type, Accessor>, Binding> map = getBindingCacheMap();
+    Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
+    Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
     Binding binding = map.get(key);
     if (binding == null) {
       binding = getNonCachedClassBinding(aClass, accessor, originalType);
@@ -145,17 +121,17 @@ class XmlSerializerImpl {
   }
 
   @NotNull
-  private static Map<Pair<Type, Accessor>, Binding> getBindingCacheMap() {
-    Map<Pair<Type, Accessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
+  private static Map<Pair<Type, MutableAccessor>, Binding> getBindingCacheMap() {
+    Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
     if (map == null) {
-      map = new ConcurrentHashMap<Pair<Type, Accessor>, Binding>();
-      ourBindings = new SoftReference<Map<Pair<Type, Accessor>, Binding>>(map);
+      map = new ConcurrentHashMap<Pair<Type, MutableAccessor>, Binding>();
+      ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
     }
     return map;
   }
 
   @NotNull
-  private static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable Accessor accessor, @NotNull Type originalType) {
+  private static Binding getNonCachedClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
     if (aClass.isArray()) {
       if (Element.class.isAssignableFrom(aClass.getComponentType())) {
         assert accessor != null;
@@ -233,22 +209,7 @@ class XmlSerializerImpl {
     }
   }
 
-  public static boolean isIgnoredNode(final Object child) {
-    if (child instanceof Text && StringUtil.isEmptyOrSpaces(((Text)child).getValue())) {
-      return true;
-    }
-    if (child instanceof Comment) {
-      return true;
-    }
-    if (child instanceof Attribute) {
-      if (!StringUtil.isEmpty(((Attribute)child).getNamespaceURI())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static void doSet(@NotNull Object host, @Nullable String value, @NotNull Accessor accessor, @NotNull Class<?> valueClass) {
+  static void doSet(@NotNull Object host, @Nullable String value, @NotNull MutableAccessor accessor, @NotNull Class<?> valueClass) {
     if (value == null) {
       accessor.set(host, null);
     }
@@ -311,6 +272,16 @@ class XmlSerializerImpl {
         deserializedValue = Float.parseFloat(value);
       }
       accessor.set(host, deserializedValue);
+    }
+  }
+
+  @NotNull
+  static String convertToString(@NotNull Object value) {
+    if (value instanceof Date) {
+      return Long.toString(((Date)value).getTime());
+    }
+    else {
+      return value.toString();
     }
   }
 }

@@ -25,11 +25,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Map.Entry;
 
 public class ExitExprent extends Exprent {
 
@@ -151,4 +155,25 @@ public class ExitExprent extends Exprent {
   public VarType getRetType() {
     return retType;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+    
+    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_EXITTYPE);
+    if(type != null) {
+      if(this.exitType != type.intValue()) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
 }

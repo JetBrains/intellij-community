@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockContainer;
@@ -61,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -89,6 +91,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
+    myTabs.setBorder(new MyShadowBorder(myTabs));
     myTabs.setTransferHandler(new MyTransferHandler());
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       @Override
@@ -736,6 +739,49 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     @Override
     public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
       return myFileDropHandler.canHandleDrop(transferFlavors);
+    }
+  }
+
+  private static class MyShadowBorder implements Border {
+    private final JBEditorTabs myTabs;
+
+    public MyShadowBorder(JBEditorTabs tabs) {
+      myTabs = tabs;
+    }
+
+    @Override
+    public void paintBorder(Component component, Graphics g, int x, int y, int w, int h) {
+      Rectangle selectedBounds = myTabs.getSelectedBounds();
+      Rectangle bounds = new Rectangle(x, y, w, h);
+      g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+      drawLine(bounds, selectedBounds, g, 0);
+      g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .5));
+      drawLine(bounds, selectedBounds, g, 1);
+      g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .2));
+      drawLine(bounds, selectedBounds, g, 2);
+    }
+
+    private static void drawLine(Rectangle bounds, Rectangle selectedBounds, Graphics g, int yShift) {
+      if (selectedBounds != null) {
+        if (selectedBounds.x > 0) {
+          g.drawLine(bounds.x, bounds.y + yShift, selectedBounds.x - 2, bounds.y + yShift);
+        }
+        g.drawLine(selectedBounds.x + selectedBounds.width + 1, bounds.y + yShift, bounds.x + bounds.width, bounds.y + yShift);
+      }
+      else {
+        g.drawLine(bounds.x, bounds.y + yShift, bounds.x + bounds.width, bounds.y + yShift);
+      }
+    }
+
+
+    @Override
+    public Insets getBorderInsets(Component component) {
+      return new Insets(0, 0, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 }

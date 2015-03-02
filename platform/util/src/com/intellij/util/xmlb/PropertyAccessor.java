@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-class PropertyAccessor implements Accessor {
+class PropertyAccessor implements MutableAccessor {
   private final String myName;
   private final Class<?> myType;
   private final Method myReadMethod;

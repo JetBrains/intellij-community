@@ -15,6 +15,13 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -31,11 +38,12 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextUtil;
-
-import java.util.*;
 
 public class InvocationExprent extends Exprent {
 
@@ -87,6 +95,7 @@ public class InvocationExprent extends Exprent {
         break;
       case CodeConstants.opc_invokedynamic:
         invocationTyp = INVOKE_DYNAMIC;
+
         classname = "java/lang/Class"; // dummy class name
         invokeDynamicClassSuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
     }
@@ -482,4 +491,47 @@ public class InvocationExprent extends Exprent {
   public String getInvokeDynamicClassSuffix() {
     return invokeDynamicClassSuffix;
   }
+
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+    
+    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+      RuleValue value = rule.getValue();
+      
+      switch(rule.getKey()) {
+      case EXPRENT_INVOCATION_PARAMETER:
+        if(value.isVariable()) {
+          if(value.parameter < lstParameters.size()) {
+            if(!engine.checkAndSetVariableValue(value.value.toString(), lstParameters.get(value.parameter))) {
+              return false;
+            }
+          } else {
+            return false;
+          }
+        }
+        break;
+      case EXPRENT_INVOCATION_CLASS:
+        if(!value.value.equals(this.classname)) {
+          return false;
+        }
+        break;
+      case EXPRENT_INVOCATION_SIGNATURE:
+        if(!value.value.equals(this.name + this.stringDescriptor)) {
+          return false;
+        }
+        break;
+      }
+      
+    }
+    
+    return true;
+  }
+
 }
