@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +40,8 @@ import java.util.Set;
 
 public class CachedXmlDocumentSet implements FileSet {
   protected final Map<String, String> nameToDir = new THashMap<String, String>();
-  protected final Map<String, Document> savedContent = new THashMap<String, Document>();
-  protected final Map<String, Document> modifiedContent = new THashMap<String, Document>();
+  protected final Map<String, Element> savedContent = new THashMap<String, Element>();
+  protected final Map<String, Element> modifiedContent = new THashMap<String, Element>();
   protected final Set<String> deletedContent = new THashSet<String>();
   private final Project project;
 
@@ -49,16 +49,18 @@ public class CachedXmlDocumentSet implements FileSet {
     this.project = project;
   }
 
-  public Document read(@NotNull String name) throws IOException, JDOMException {
+  @NotNull
+  public Element read(@NotNull String name) throws IOException, JDOMException {
     return read(name, true);
   }
 
-  public Document read(@NotNull String name, final boolean refresh) throws IOException, JDOMException {
+  @NotNull
+  public Element read(@NotNull String name, final boolean refresh) throws IOException, JDOMException {
     return load(name, refresh).clone();
   }
 
-  public void write(Document document, String name) throws IOException {
-    update(document.clone(), name);
+  public void write(Element element, String name) throws IOException {
+    update(element.clone(), name);
   }
 
   public String getParent(@NotNull String name) {
@@ -101,15 +103,15 @@ public class CachedXmlDocumentSet implements FileSet {
   }
 
   @Nullable
-  protected Document load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
+  protected Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
     assertKnownName(name);
 
-    Document logical = modifiedContent.get(name);
+    Element logical = modifiedContent.get(name);
     if (logical != null) {
       return logical;
     }
 
-    Document physical = savedContent.get(name);
+    Element physical = savedContent.get(name);
     if (physical == null) {
       VirtualFile file = deletedContent.contains(name) ? null : getFile(name, refresh);
       if (file == null) {
@@ -118,7 +120,7 @@ public class CachedXmlDocumentSet implements FileSet {
 
       InputStream inputStream = file.getInputStream();
       try {
-        physical = JDOMUtil.loadDocument(inputStream);
+        physical = JDOMUtil.load(inputStream);
       }
       finally {
         inputStream.close();
@@ -128,7 +130,7 @@ public class CachedXmlDocumentSet implements FileSet {
     return physical;
   }
 
-  public void update(Document content, final String name) {
+  public void update(Element content, final String name) {
     assertKnownName(name);
     modifiedContent.put(name, content);
     deletedContent.remove(name);
@@ -160,12 +162,12 @@ public class CachedXmlDocumentSet implements FileSet {
     return !deletedContent.isEmpty();
   }
 
-  private boolean hasChanged(final String key) {
-    final Document content = modifiedContent.get(key);
-    final Document physical1 = content == null ? null : content;
-    final Document physical2 = savedContent.get(key);
+  private boolean hasChanged(@NotNull String key) {
+    Element content = modifiedContent.get(key);
+    Element physical1 = content == null ? null : content;
+    Element physical2 = savedContent.get(key);
     if (physical1 != null && physical2 != null) {
-      return !JDOMUtil.areDocumentsEqual(physical1, physical2);
+      return !JDOMUtil.areElementsEqual(physical1, physical2);
     }
     return physical1 != physical2;
   }
@@ -173,7 +175,7 @@ public class CachedXmlDocumentSet implements FileSet {
   public void commit() throws IOException {
     for (String key : modifiedContent.keySet()) {
       if (hasChanged(key)) {
-        Document content = modifiedContent.get(key);
+        Element content = modifiedContent.get(key);
         if (content != null) {
           Writer writer = new OutputStreamWriter(getOrCreateVFile(key).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
           try {

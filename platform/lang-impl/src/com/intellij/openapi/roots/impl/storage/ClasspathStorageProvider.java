@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -59,7 +58,7 @@ public interface ClasspathStorageProvider {
   interface ClasspathConverter {
     FileSet getFileSet();
 
-    void getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException;
+    void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException;
 
     void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException;
   }
