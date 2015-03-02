@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -80,11 +80,18 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
     if (other instanceof AnchorElementInfo) {
       AnchorElementInfo otherAnchor = (AnchorElementInfo)other;
-      if (stubId != -1 && otherAnchor.stubId != -1 && stubId != otherAnchor.stubId) return false;
-      if (myStubElementType != null && otherAnchor.myStubElementType != null && myStubElementType != otherAnchor.myStubElementType) return false;
+      if ((stubId == -1) != (otherAnchor.stubId == -1)) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return Comparing.equal(restoreElement(), other.restoreElement());
+          }
+        });
+      }
+      if (stubId != otherAnchor.stubId || myStubElementType != otherAnchor.myStubElementType) return false;
     }
     return super.pointsToTheSameElementAs(other);
   }
@@ -92,15 +99,27 @@ class AnchorElementInfo extends SelfElementInfo {
   @Override
   public void fastenBelt(int offset, RangeMarker[] cachedRangeMarker) {
     if (stubId != -1) {
-      PsiElement element = restoreElement();
-      if (element != null) {
-        // switch to tree
-        stubId = -1;
-        myStubElementType = null;
-        PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-        setRange((anchor == null ? element : anchor).getTextRange());
-      }
+      switchToTree();
     }
     super.fastenBelt(offset, cachedRangeMarker);
+  }
+
+  private void switchToTree() {
+    PsiElement element = restoreElement();
+    if (element != null) {
+      // switch to tree
+      stubId = -1;
+      myStubElementType = null;
+      PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
+      setRange((anchor == null ? element : anchor).getTextRange());
+    }
+  }
+
+  @Override
+  public Segment getRange() {
+    if (stubId != -1) {
+      switchToTree();
+    }
+    return super.getRange();
   }
 }
