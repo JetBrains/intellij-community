@@ -27,7 +27,7 @@ import java.util.List;
 class JDOMElementBinding extends Binding implements MultiNodeBinding {
   private final String myTagName;
 
-  public JDOMElementBinding(@NotNull Accessor accessor) {
+  public JDOMElementBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     Tag tag = myAccessor.getAnnotation(Tag.class);
@@ -65,13 +65,12 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+  public Object deserializeList(Object context, @NotNull List<Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
-      //noinspection SuspiciousToArrayCall
-      myAccessor.set(context, nodes.toArray(new Element[nodes.size()]));
+      myAccessor.set(context, elements.toArray(new Element[elements.size()]));
     }
     else {
-      myAccessor.set(context, nodes.get(0));
+      myAccessor.set(context, elements.get(0));
     }
     return context;
   }
@@ -83,19 +82,13 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
 
   @Override
   @Nullable
-  public Object deserialize(Object context, @NotNull Object node) {
-    myAccessor.set(context, node);
+  public Object deserialize(Object context, @NotNull Element element) {
+    myAccessor.set(context, element);
     return context;
   }
 
   @Override
-  public boolean isBoundTo(Object node) {
-    return node instanceof Element && ((Element)node).getName().equals(myTagName);
-  }
-
-  @NotNull
-  @Override
-  public Class getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+  public boolean isBoundTo(@NotNull Element element) {
+    return element.getName().equals(myTagName);
   }
 }

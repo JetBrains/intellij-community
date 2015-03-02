@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ import java.util.List;
 class BeanBinding extends Binding implements MainBinding {
   static final Logger LOG = Logger.getInstance(BeanBinding.class);
 
-  private static final Map<Class, List<Accessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
+  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -53,7 +54,7 @@ class BeanBinding extends Binding implements MainBinding {
 
   ThreeState hasEqualMethod = ThreeState.UNSURE;
 
-  public BeanBinding(@NotNull Class<?> beanClass, @Nullable Accessor accessor) {
+  public BeanBinding(@NotNull Class<?> beanClass, @Nullable MutableAccessor accessor) {
     super(accessor);
 
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
@@ -67,7 +68,7 @@ class BeanBinding extends Binding implements MainBinding {
   public synchronized void init(@NotNull Type originalType) {
     assert myBindings == null;
 
-    List<Accessor> accessors = getAccessors(myBeanClass);
+    List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
       myBindings[i] = createBinding(accessors.get(i));
@@ -123,9 +124,9 @@ class BeanBinding extends Binding implements MainBinding {
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Object node) {
+  public Object deserialize(Object context, @NotNull Element element) {
     Object instance = ReflectionUtil.newInstance(myBeanClass);
-    deserializeInto(instance, (Element)node, null);
+    deserializeInto(instance, element, null);
     return instance;
   }
 
@@ -175,14 +176,33 @@ class BeanBinding extends Binding implements MainBinding {
   }
 
   public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
-    MultiMap<Binding, Object> data = null;
-    nextNode:
-    for (Object child : ContainerUtil.concat(element.getContent(), element.getAttributes())) {
-      if (XmlSerializerImpl.isIgnoredNode(child)) {
-        continue;
+    nextAttribute:
+    for (org.jdom.Attribute attribute : element.getAttributes()) {
+      if (StringUtil.isEmpty(attribute.getNamespaceURI())) {
+        for (Binding binding : myBindings) {
+          if (binding instanceof AttributeBinding && ((AttributeBinding)binding).myName.equals(attribute.getName())) {
+            if (accessorNameTracker != null) {
+              accessorNameTracker.add(binding.getAccessor().getName());
+            }
+            ((AttributeBinding)binding).set(result, attribute.getValue());
+            continue nextAttribute;
+          }
+        }
       }
+    }
 
+    MultiMap<Binding, Element> data = null;
+    nextNode:
+    for (Content content : element.getContent()) {
       for (Binding binding : myBindings) {
+        if (content instanceof org.jdom.Text) {
+          if (binding instanceof TextBinding) {
+            ((TextBinding)binding).set(result, content.getValue());
+          }
+          continue;
+        }
+
+        Element child = (Element)content;
         if (binding.isBoundTo(child)) {
           if (binding instanceof MultiNodeBinding && ((MultiNodeBinding)binding).isMulti()) {
             if (data == null) {
@@ -199,11 +219,6 @@ class BeanBinding extends Binding implements MainBinding {
           continue nextNode;
         }
       }
-
-      final String message = "Format error: no binding for " + child + " inside " + this;
-      LOG.debug(message);
-      Logger.getInstance(myBeanClass.getName()).debug(message);
-      Logger.getInstance("#" + myBeanClass.getName()).debug(message);
     }
 
     if (data != null) {
@@ -211,14 +226,14 @@ class BeanBinding extends Binding implements MainBinding {
         if (accessorNameTracker != null) {
           accessorNameTracker.add(binding.getAccessor().getName());
         }
-        ((MultiNodeBinding)binding).deserializeList(result, (List<?>)data.get(binding));
+        ((MultiNodeBinding)binding).deserializeList(result, (List<Element>)data.get(binding));
       }
     }
   }
 
   @Override
-  public boolean isBoundTo(Object node) {
-    return node instanceof Element && ((Element)node).getName().equals(myTagName);
+  public boolean isBoundTo(@NotNull Element element) {
+    return element.getName().equals(myTagName);
   }
 
   private static String getTagName(Class<?> aClass) {
@@ -238,8 +253,8 @@ class BeanBinding extends Binding implements MainBinding {
   }
 
   @NotNull
-  static List<Accessor> getAccessors(Class<?> aClass) {
-    List<Accessor> accessors = ourAccessorCache.get(aClass);
+  static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+    List<MutableAccessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;
     }
@@ -256,7 +271,7 @@ class BeanBinding extends Binding implements MainBinding {
     return accessors;
   }
 
-  private static void collectPropertyAccessors(Class<?> aClass, List<Accessor> accessors) {
+  private static void collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
     final Map<String, Couple<Method>> candidates = ContainerUtilRt.newTreeMap(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
@@ -290,7 +305,7 @@ class BeanBinding extends Binding implements MainBinding {
     }
   }
 
-  private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<Accessor> accessors) {
+  private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
     Class<?> currentClass = aClass;
     do {
       for (Field field : currentClass.getDeclaredFields()) {
@@ -337,7 +352,7 @@ class BeanBinding extends Binding implements MainBinding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull Accessor accessor) {
+  private static Binding createBinding(@NotNull MutableAccessor accessor) {
     Binding binding = XmlSerializerImpl.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
@@ -369,7 +384,7 @@ class BeanBinding extends Binding implements MainBinding {
     }
 
     if (!surroundWithTag) {
-      if (!Element.class.isAssignableFrom(binding.getBoundNodeType())) {
+      if (binding == null || binding instanceof TextBinding) {
         throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
       return new AccessorBindingWrapper(accessor, binding);

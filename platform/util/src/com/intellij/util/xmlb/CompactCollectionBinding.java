@@ -28,7 +28,7 @@ import java.util.List;
 class CompactCollectionBinding extends Binding {
   private final String name;
 
-  protected CompactCollectionBinding(@NotNull Accessor accessor) {
+  protected CompactCollectionBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     name = myAccessor.getName();
@@ -40,7 +40,7 @@ class CompactCollectionBinding extends Binding {
     Element result = new Element(name);
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)o;
-    if (list == null || list.isEmpty()) {
+    if (list.isEmpty()) {
       return result;
     }
 
@@ -52,11 +52,10 @@ class CompactCollectionBinding extends Binding {
 
   @Nullable
   @Override
-  public Object deserialize(Object context, @NotNull Object node) {
+  public Object deserialize(Object context, @NotNull Element element) {
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)context;
     list.clear();
-    Element element = (Element)node;
     if (element.getName().equals(name)) {
       for (Element item : element.getChildren("item")) {
         ContainerUtil.addIfNotNull(list, item.getAttributeValue("value"));
@@ -79,17 +78,14 @@ class CompactCollectionBinding extends Binding {
   }
 
   @Override
-  public boolean isBoundTo(Object node) {
-    if (node instanceof Element) {
-      Element element = (Element)node;
-      String elementName = element.getName();
-      if (isNameEqual(elementName)) {
-        return true;
-      }
-      else if (elementName.equals(Constants.OPTION)) {
-        // JDOMExternalizableStringList format
-        return isNameEqual(element.getAttributeValue(Constants.NAME));
-      }
+  public boolean isBoundTo(@NotNull Element element) {
+    String elementName = element.getName();
+    if (isNameEqual(elementName)) {
+      return true;
+    }
+    else if (elementName.equals(Constants.OPTION)) {
+      // JDOMExternalizableStringList format
+      return isNameEqual(element.getAttributeValue(Constants.NAME));
     }
     return false;
   }

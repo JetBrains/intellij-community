@@ -24,7 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
-class FieldAccessor implements Accessor {
+class FieldAccessor implements MutableAccessor {
   private final Field myField;
 
   public FieldAccessor(@NotNull Field field) {
