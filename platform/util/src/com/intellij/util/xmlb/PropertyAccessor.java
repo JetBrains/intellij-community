@@ -138,4 +138,8 @@ class PropertyAccessor implements Accessor {
   public String toString() {
     return "PropertyAccessor[" + myReadMethod.getDeclaringClass().getName() + "." + getName() +"]";
   }
+
+  @Override
+  public void write(Object o, Object value) {
+  }
 }
