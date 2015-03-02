@@ -22,12 +22,14 @@ import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import com.jetbrains.python.refactoring.move.PyDependentModuleMembersCollector;
 
 /**
  * @author Dennis.Ushakov
  */
-public class PyClassMembersRefactoringSupport implements ClassMembersRefactoringSupport {  
+public class PyMembersRefactoringSupport implements ClassMembersRefactoringSupport {
 
   public static PyMemberInfoStorage getSelectedMemberInfos(PyClass clazz, PsiElement element1, PsiElement element2) {
     final PyMemberInfoStorage infoStorage = new PyMemberInfoStorage(clazz);
@@ -40,7 +42,13 @@ public class PyClassMembersRefactoringSupport implements ClassMembersRefactoring
   }
 
   public DependentMembersCollectorBase createDependentMembersCollector(Object clazz, Object superClass) {
-    return new PyDependentMembersCollector((PyClass)clazz, (PyClass)superClass);
+    if (clazz instanceof PyClass) {
+      return new PyDependentClassMembersCollector((PyClass)clazz, (PyClass)superClass);
+    }
+    else if (clazz instanceof PyFile) {
+      return new PyDependentModuleMembersCollector(((PyFile)clazz));
+    }
+    return null;
   }
 
   public boolean isProperMember(MemberInfoBase member) {
