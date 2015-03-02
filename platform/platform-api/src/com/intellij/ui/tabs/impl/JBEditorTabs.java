@@ -70,8 +70,10 @@ public class JBEditorTabs extends JBTabsImpl {
     return true;
   }
 
+  @Nullable
   public Rectangle getSelectedBounds() {
-    return getSelectedLabel().getBounds();
+    TabLabel label = getSelectedLabel();
+    return label != null ? label.getBounds() : null;
   }
 
   @Override

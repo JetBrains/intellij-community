@@ -761,7 +761,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       drawLine(bounds, selectedBounds, g, 2);
     }
 
-    private static void drawLine(Rectangle bounds, Rectangle selectedBounds, Graphics g, int yShift) {
+    private static void drawLine(Rectangle bounds, @Nullable Rectangle selectedBounds, Graphics g, int yShift) {
       if (selectedBounds != null) {
         if (selectedBounds.x > 0) {
           g.drawLine(bounds.x, bounds.y + yShift, selectedBounds.x - 2, bounds.y + yShift);
