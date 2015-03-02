@@ -174,10 +174,10 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       Element serializedItem = new Element(annotation == null ? Constants.OPTION : annotation.elementTag());
       String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
       if (attributeName.isEmpty()) {
-        serializedItem.addContent(new Text(TextBinding.convertToString(value)));
+        serializedItem.addContent(new Text(XmlSerializerImpl.convertToString(value)));
       }
       else {
-        serializedItem.setAttribute(attributeName, TextBinding.convertToString(value));
+        serializedItem.setAttribute(attributeName, XmlSerializerImpl.convertToString(value));
       }
       return serializedItem;
     }

@@ -38,7 +38,7 @@ class AttributeBinding extends BasePrimitiveBinding {
 
     String stringValue;
     if (myConverter == null) {
-      stringValue = TextBinding.convertToString(value);
+      stringValue = XmlSerializerImpl.convertToString(value);
     }
     else {
       stringValue = myConverter.toString(value);
