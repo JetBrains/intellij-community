@@ -149,6 +149,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
           });
           boolean ok = ShowSettingsUtil.getInstance().editConfigurable(myPanel, configurable);
           if (ok) {
+            FileTemplateManager.getInstance(myProject).saveAllTemplates();
             somethingChanged();
             if (myShowJavaCodeInfo) {
               suggestAvailableResourceBundleExpressions();
