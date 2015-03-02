@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
@@ -105,10 +106,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void detach(Module module) {
+  public void detach(@NotNull Module module) {
     EclipseModuleManagerImpl.getInstance(module).setDocumentSet(null);
   }
 
+  @Nullable
   @Override
   public ClasspathConverter createConverter(Module module) {
     return new EclipseClasspathConverter(module);
@@ -129,27 +131,21 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  public static void registerFiles(final CachedXmlDocumentSet fileCache,
-                                   final Module module,
-                                   final String moduleRoot,
-                                   final String storageRoot) {
-    fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
-    fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
-    fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
-    fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
-  }
-
   @NotNull
   static CachedXmlDocumentSet getFileCache(@NotNull Module module) {
-    final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
+    EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
       fileCache = new CachedXmlDocumentSet(module.getProject());
       if (moduleManager != null) {
         moduleManager.setDocumentSet(fileCache);
       }
-      registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
-      fileCache.preload();
+
+      String storageRoot = ClasspathStorage.getStorageRootFromOptions(module);
+      fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
+      fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
+      fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
+      fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
     }
     return fileCache;
   }
@@ -158,15 +154,15 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   public void moduleRenamed(final Module module, String newName) {
     if (ClassPathStorageUtil.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       try {
-        final String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        final String root = getFileCache(module).getParent(oldEmlName);
-        final File source = new File(root, oldEmlName);
+        String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+        String root = getFileCache(module).getParent(oldEmlName);
+        File source = new File(root, oldEmlName);
         if (source.exists()) {
-          final File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
+          File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
           FileUtil.rename(source, target);
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
         }
-        final CachedXmlDocumentSet fileCache = getFileCache(module);
+        CachedXmlDocumentSet fileCache = getFileCache(module);
         DotProjectFileHelper.saveDotProjectFile(module, fileCache.getParent(EclipseXml.PROJECT_FILE));
         fileCache.delete(oldEmlName);
         fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
