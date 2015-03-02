@@ -23,6 +23,11 @@ import java.lang.reflect.Type;
 public interface Accessor {
   Object read(@NotNull Object o);
 
+  /**
+   * @deprecated use {@link MutableAccessor#set(Object, Object)} instead
+   */
+  void write(Object o, Object value);
+
   <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass);
 
   String getName();

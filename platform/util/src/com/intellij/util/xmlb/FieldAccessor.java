@@ -44,6 +44,11 @@ class FieldAccessor implements MutableAccessor {
   }
 
   @Override
+  public void write(Object o, Object value) {
+    set(o, value);
+  }
+
+  @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
       myField.set(host, value);
