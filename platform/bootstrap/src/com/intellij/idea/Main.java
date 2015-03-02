@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,11 +35,14 @@ import java.util.Locale;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
 public class Main {
-  public static final int UPDATE_FAILED = 1;
-  public static final int STARTUP_EXCEPTION = 2;
-  public static final int STARTUP_IMPOSSIBLE = 3;
-  public static final int LICENSE_ERROR = 4;
-  public static final int PLUGIN_ERROR = 5;
+  public static final int NO_GRAPHICS = 1;
+  public static final int UPDATE_FAILED = 2;
+  public static final int STARTUP_EXCEPTION = 3;
+  public static final int JDK_CHECK_FAILED = 4;
+  public static final int DIR_CHECK_FAILED = 5;
+  public static final int INSTANCE_CHECK_FAILED = 6;
+  public static final int LICENSE_ERROR = 7;
+  public static final int PLUGIN_ERROR = 8;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -56,22 +60,23 @@ public class Main {
 
     setFlags(args);
 
+    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+    showMessage("Startup Error", "vmOptionsFile: " + vmOptionsFile, true);
+
     if (isHeadless()) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    else {
-      if (GraphicsEnvironment.isHeadless()) {
-        throw new HeadlessException("Unable to detect graphics environment");
+    else if (GraphicsEnvironment.isHeadless()) {
+      showMessage("Startup Error", "Unable to detect graphics environment", true);
+      System.exit(NO_GRAPHICS);
+    }
+    else if (args.length == 0) {
+      try {
+        installPatch();
       }
-
-      if (args.length == 0) {
-        try {
-          installPatch();
-        }
-        catch (Throwable t) {
-          showMessage("Update Failed", t);
-          System.exit(UPDATE_FAILED);
-        }
+      catch (Throwable t) {
+        showMessage("Update Failed", t);
+        System.exit(UPDATE_FAILED);
       }
     }
 
@@ -122,18 +127,11 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
-  private static boolean copyLib(String fileName, File fileCopy, boolean move ) throws IOException {
-    File file = new File(fileName);
-    if (!file.exists()) return false;
-    copyFile(file, fileCopy, move);
-    return true;
-  }
-
   private static void installPatch() throws IOException {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
 
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
     File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
@@ -143,28 +141,40 @@ public class Main {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
-    if (! copyLib(tempDir + "/" + patchFileName, patchCopy, true)) return;
-    if (! copyLib(PathManager.getLibPath() + "/log4j.jar", log4jCopy, false)) throw new IOException("Log4J is missing: " + "log4j.jar");;
-    if (! copyLib(PathManager.getLibPath() + "/jna-utils.jar", jnaUtilsCopy, false)) throw new IOException("jna-utils.jar is missing: " + "jna-utils.jar");
-    if (! copyLib(PathManager.getLibPath() + "/jna.jar", jnaCopy, false)) throw new IOException("jna is missing: " + "jna.jar");
+    File patch = new File(tempDir, patchFileName);
+    if (!patch.exists()) return;
+
+    File log4j = new File(PathManager.getLibPath(), "log4j.jar");
+    if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
+
+    File jnaUtils = new File(PathManager.getLibPath(), "jna-utils.jar");
+    if (!jnaUtils.exists()) throw new IOException("jna-utils.jar is missing: " + jnaUtils);
+
+    File jna = new File(PathManager.getLibPath(), "jna.jar");
+    if (!jna.exists()) throw new IOException("jna is missing: " + jna);
+
+    copyFile(patch, patchCopy, true);
+    copyFile(log4j, log4jCopy, false);
+    copyFile(jna, jnaCopy, false);
+    copyFile(jnaUtils, jnaUtilsCopy, false);
 
     int status = 0;
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
 
-      String java;
       if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
-        java = Restarter.createTempExecutable(new File(System.getProperty("java.home") + "/bin/java.exe")).getPath();
-      }else{
-        java = System.getProperty("java.home") + "/bin/java";
       }
 
       //noinspection SpellCheckingInspection
       Collections.addAll(args,
-                         java,
-                         "-Xmx800m",
+                         System.getProperty("java.home") + "/bin/java",
+                         "-Xmx500m",
+                         "-Djna.nosys=true",
+                         "-Djna.boot.library.path=",
+                         "-Djna.debug_load=true",
+                         "-Djna.debug_load.jna=true",
                          "-classpath",
                          patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
@@ -210,7 +220,7 @@ public class Main {
 
   @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
   public static void showMessage(String title, String message, boolean error) {
-    if (isCommandLine()) {
+    if (isCommandLine() || GraphicsEnvironment.isHeadless()) {
       PrintStream stream = error ? System.err : System.out;
       stream.println("\n" + title + ": " + message);
     }
@@ -221,12 +231,13 @@ public class Main {
       JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(Color.white);
+      textPane.setBackground(UIUtil.getPanelBackground());
       textPane.setCaretPosition(0);
       JScrollPane scrollPane = new JScrollPane(
         textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setBorder(null);
 
-      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
       Dimension component = scrollPane.getPreferredSize();
       if (component.height >= maxHeight) {
         Object setting = UIManager.get("ScrollBar.width");
