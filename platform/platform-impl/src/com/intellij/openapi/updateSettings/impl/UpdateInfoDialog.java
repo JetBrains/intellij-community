@@ -145,6 +145,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private void downloadPatch() {
     try {
       UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
+      if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
+        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
+      }
+      restart();
     }
     catch (IOException e) {
       Logger.getInstance(UpdateChecker.class).warn(e);
@@ -154,11 +158,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                                       Messages.getErrorIcon()) == Messages.OK) {
         openDownloadPage();
       }
-      return;
-    }
-
-    if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
-      new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
     }
   }
 
