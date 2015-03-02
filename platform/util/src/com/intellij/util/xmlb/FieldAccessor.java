@@ -138,6 +138,10 @@ class FieldAccessor implements MutableAccessor {
     return Modifier.isFinal(myField.getModifiers());
   }
 
+  @Override
+  public void write(Object o, Object value) {
+  }
+
   @NonNls
   public String toString() {
     return "FieldAccessor[" + myField.getDeclaringClass() + "." + myField.getName() + "]";

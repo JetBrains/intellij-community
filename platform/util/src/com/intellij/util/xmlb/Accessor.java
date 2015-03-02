@@ -32,4 +32,7 @@ public interface Accessor {
   Type getGenericType();
 
   boolean isFinal();
+
+  @Deprecated
+  void write(Object o, Object value);
 }
