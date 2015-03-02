@@ -515,7 +515,7 @@ public abstract class PsiAnchor {
              ", myProject=" + myProject +
              ", myIndex=" + myIndex +
              ", myLanguage=" + myLanguage +
-             ", itemType=" + myElementType +
+             ", myElementType=" + myElementType +
              '}';
     }
 
