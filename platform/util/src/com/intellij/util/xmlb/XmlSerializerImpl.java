@@ -323,4 +323,17 @@ class XmlSerializerImpl {
       return value.toString();
     }
   }
+
+  @NotNull
+  static String getTextValue(@NotNull Element element, @NotNull String defaultText) {
+    List<Content> content = element.getContent();
+    String value = defaultText;
+    if (!content.isEmpty()) {
+      Content child = content.get(0);
+      if (child instanceof Text) {
+        value = child.getValue();
+      }
+    }
+    return value;
+  }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -42,9 +41,7 @@ import java.util.*;
 import java.util.List;
 
 class BeanBinding extends Binding implements MainBinding {
-  static final Logger LOG = Logger.getInstance(BeanBinding.class);
-
-  private static final Map<Class, List<Accessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
+  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
