@@ -21,7 +21,7 @@
   <actions>
     <action id="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
             class="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
-            text="Sphinx quickstart" description="Allows to run sphinx quick-start action">
+            text="Sphinx Quickstart" description="Allows to run sphinx quick-start action">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
