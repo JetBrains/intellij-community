@@ -705,7 +705,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     private InspectionResult(@NotNull LocalInspectionToolWrapper tool, @NotNull List<ProblemDescriptor> foundProblems) {
       this.tool = tool;
-      this.foundProblems = foundProblems;
+      this.foundProblems = new ArrayList<ProblemDescriptor>(foundProblems);
     }
   }
 
