@@ -164,18 +164,22 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   @Nullable
   private Object serializeItem(@Nullable Object value, Object context, @NotNull SerializationFilter filter) {
     if (value == null) {
-      throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");
+      LOG.warn("Collection " + myAccessor + " contains 'null' object");
+      return null;
     }
 
     Binding binding = XmlSerializerImpl.getBinding(value.getClass());
     if (binding == null) {
       Element serializedItem = new Element(annotation == null ? Constants.OPTION : annotation.elementTag());
       String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
+      String serialized = XmlSerializerImpl.convertToString(value);
       if (attributeName.isEmpty()) {
-        serializedItem.addContent(new Text(XmlSerializerImpl.convertToString(value)));
+        if (!serialized.isEmpty()) {
+          serializedItem.addContent(new Text(serialized));
+        }
       }
       else {
-        serializedItem.setAttribute(attributeName, XmlSerializerImpl.convertToString(value));
+        serializedItem.setAttribute(attributeName, serialized);
       }
       return serializedItem;
     }
@@ -190,14 +194,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
       String value;
       if (attributeName.isEmpty()) {
-        List<Content> children = node.getContent();
-        if (children.isEmpty()) {
-          value = null;
-        }
-        else {
-          Content content = children.get(0);
-          value = content instanceof Text ? content.getValue() : null;
-        }
+        value = XmlSerializerImpl.getTextValue(node, "");
       }
       else {
         value = node.getAttributeValue(attributeName);

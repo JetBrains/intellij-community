@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Attribute;
@@ -31,8 +30,6 @@ import java.util.*;
 import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
-  private static final Logger LOG = Logger.getInstance(MapBinding.class);
-
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
     @SuppressWarnings({"unchecked", "NullableProblems"})
     @Override

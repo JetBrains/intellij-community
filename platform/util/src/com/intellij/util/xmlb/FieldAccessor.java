@@ -140,6 +140,7 @@ class FieldAccessor implements MutableAccessor {
 
   @Override
   public void write(Object o, Object value) {
+    set(o, value);
   }
 
   @NonNls
