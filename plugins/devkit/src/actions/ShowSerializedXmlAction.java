@@ -41,7 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.MutableAccessor;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -196,7 +196,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     @NotNull
     public Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
       Object o = ReflectionUtil.newInstance(aClass);
-      for (Accessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
+      for (MutableAccessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         Object value = createValue(accessor.getGenericType(), processedTypes);
         if (value != null) {
           accessor.set(o, value);
