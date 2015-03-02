@@ -273,15 +273,15 @@ public class ResolveImportUtil {
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
                                         @Nullable final PsiFile containingFile, boolean fileOnly, boolean checkForPackage) {
     PsiDirectory dir = null;
-    PsiElement ret = null;
-    PsiElement possible_ret = null;
+    PsiElement resultElement = null;
+    PsiElement possibleResult = null;
     final PyResolveContext resolveContext = PyResolveContext.defaultContext();
     if (parent instanceof PyFileImpl) {
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        possible_ret = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
+        possibleResult = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
       }
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
@@ -291,14 +291,14 @@ public class ResolveImportUtil {
                                                                                   resolveContext);
       final PsiElement moduleMember = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
       if (!fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
-        ret = moduleMember;
+        resultElement = moduleMember;
       }
-      if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
-          PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
-        return ret;
+      if (resultElement != null && !PyUtil.instanceOf(resultElement, PsiFile.class, PsiDirectory.class) &&
+          PsiTreeUtil.getStubOrPsiParentOfType(resultElement, PyExceptPart.class) == null) {
+        return resultElement;
       }
 
-      if (possible_ret != null) return possible_ret;
+      if (possibleResult != null) return possibleResult;
     }
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
@@ -319,14 +319,13 @@ public class ResolveImportUtil {
         return result;
       }
       if (parent instanceof PsiFile) {
-        final List<PsiElement> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
-                                                                       QualifiedName.fromComponents(referencedName));
-        if (!items.isEmpty()) {
-          return items.get(0);
+        final PsiElement element = new QualifiedNameResolverImpl(referencedName).fromElement(parent).withoutRoots().firstResult();
+        if (element != null) {
+          return element;
         }
       }
     }
-    return ret;
+    return resultElement;
   }
 
   @Nullable
