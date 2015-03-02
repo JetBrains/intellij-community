@@ -33,6 +33,8 @@ public interface Accessor {
 
   boolean isFinal();
 
-  @Deprecated
+  /**
+   * @deprecated use {@link MutableAccessor#set(Object, Object)} instead
+   */
   void write(Object o, Object value);
 }
