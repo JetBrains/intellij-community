@@ -101,7 +101,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          downloadPatch();
+          downloadPatchAndRestart();
         }
       });
     }
@@ -142,7 +142,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
-  private void downloadPatch() {
+  private void downloadPatchAndRestart() {
     try {
       UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
       if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
