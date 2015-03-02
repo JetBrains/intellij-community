@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.eclipse;
 
-public class ConversionException extends Exception {
+public class ConversionException extends RuntimeException {
   public ConversionException(String message) {
     super(message);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -121,7 +120,7 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   }
 
   @Override
-  protected void readLanguageLevel(Element root, JpsModule model) throws InvalidDataException {
+  protected void readLanguageLevel(Element root, JpsModule model) {
     final String languageLevel = root.getAttributeValue("LANGUAGE_LEVEL");
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(model);
     if (languageLevel != null) {

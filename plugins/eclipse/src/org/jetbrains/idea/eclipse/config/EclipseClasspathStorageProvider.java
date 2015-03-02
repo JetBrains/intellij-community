@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -49,6 +47,7 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -186,7 +185,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
 
     @Override
-    public void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException, InvalidDataException {
+    public void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException {
       try {
         CachedXmlDocumentSet documentSet = getFileSet();
         String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
@@ -202,14 +201,14 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
           classpathReader.readClasspath(model, new SmartList<String>(), new SmartList<String>(), new THashSet<String>(), null,
-                                        documentSet.read(EclipseXml.CLASSPATH_FILE, false).getRootElement());
+                                        documentSet.read(EclipseXml.CLASSPATH_FILE, false));
         }
         else {
           EclipseClasspathReader.setOutputUrl(model, path + "/bin");
         }
         String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(eml)) {
-          IdeaSpecificSettings.readIDEASpecific(model, documentSet, eml);
+          new IdeaSpecificSettings().readIdeaSpecific(documentSet.read(eml, false), model, null, new HashMap<String, String>());
         }
         else {
           model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
@@ -217,14 +216,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
         ((RootModelImpl)model).writeExternal(element);
       }
-      catch (ConversionException e) {
-        throw new InvalidDataException(e);
-      }
       catch (WriteExternalException e) {
-        throw new InvalidDataException(e);
+        throw new IOException(e);
       }
       catch (JDOMException e) {
-        throw new InvalidDataException(e);
+        throw new IOException(e);
       }
     }
 
@@ -237,7 +233,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
         Element element;
         try {
-          element = fileSet.read(EclipseXml.CLASSPATH_FILE).getRootElement();
+          element = fileSet.read(EclipseXml.CLASSPATH_FILE);
         }
         catch (Exception ignored) {
           element = null;
@@ -245,7 +241,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
         if (element != null || model.getSourceRoots().length > 0 || model.getOrderEntries().length > 2) {
           classpathWriter.writeClasspath(classpathElement, element);
-          fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
+          fileSet.write(classpathElement, EclipseXml.CLASSPATH_FILE);
         }
 
         try {
@@ -255,10 +251,10 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
           DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
         }
 
-        final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
-        final String emlFilename = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+        Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
+        String emlFilename = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (IdeaSpecificSettings.writeIDEASpecificClasspath(ideaSpecific, model)) {
-          fileSet.write(new Document(ideaSpecific), emlFilename);
+          fileSet.write(ideaSpecific, emlFilename);
         }
         else {
           fileSet.delete(emlFilename);
