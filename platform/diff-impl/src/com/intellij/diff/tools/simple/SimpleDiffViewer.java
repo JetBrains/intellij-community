@@ -108,6 +108,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new HighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
+    group.add(new ReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;
