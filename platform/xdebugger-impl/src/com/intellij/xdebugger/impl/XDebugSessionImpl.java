@@ -713,7 +713,8 @@ public class XDebugSessionImpl implements XDebugSession {
       }
     }
 
-    myActiveNonLineBreakpoint = !(breakpoint instanceof XLineBreakpoint<?>) ? breakpoint : null;
+    myActiveNonLineBreakpoint =
+      (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) ? breakpoint : null;
     positionReached(suspendContext);
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {

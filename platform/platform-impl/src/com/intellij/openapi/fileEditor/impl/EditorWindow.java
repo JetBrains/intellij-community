@@ -72,7 +72,7 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = Registry.is("editor.use.compressible.tabs") ? new Icon() {
+  private static final Icon MODIFIED_ICON = !UISettings.getInstance().HIDE_TABS_IF_NEED ? new Icon() {
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
@@ -486,10 +486,6 @@ public class EditorWindow {
     if (myTabbedPane != null) {
       myTabbedPane.setTitleAt(index, text);
     }
-  }
-
-  private boolean isTitleShortenedAt(int index) {
-    return myTabbedPane != null && myTabbedPane.isTitleShortened(index);
   }
 
   private void setBackgroundColorAt(final int index, final Color color) {
@@ -948,7 +944,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS || isTitleShortenedAt(index)
+      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS
                               ? getManager().getFileTooltipText(file)
                               : null);
     }
@@ -979,7 +975,7 @@ public class EditorWindow {
     }
 
     final Icon modifiedIcon;
-    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || Registry.is("editor.use.compressible.tabs")) {
+    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || !UISettings.getInstance().HIDE_TABS_IF_NEED) {
       modifiedIcon =
         UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
@@ -992,7 +988,7 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    int xShift = Registry.is("editor.use.compressible.tabs") ? 4 : 0;
+    int xShift = !UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 0;
     result.setIcon(baseIcon, i++, xShift, 0);
     if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);

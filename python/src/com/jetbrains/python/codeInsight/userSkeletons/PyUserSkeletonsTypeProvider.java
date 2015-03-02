@@ -16,7 +16,10 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -44,8 +47,8 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
-    final Callable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
+  public PyType getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
     if (callableSkeleton != null) {
       return context.getReturnType(callableSkeleton);
     }
@@ -65,8 +68,8 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallableType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
-    final Callable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
+  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
     if (callableSkeleton != null) {
       return context.getType(callableSkeleton);
     }

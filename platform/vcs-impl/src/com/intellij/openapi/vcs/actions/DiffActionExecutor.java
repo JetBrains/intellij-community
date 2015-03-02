@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
@@ -106,7 +107,7 @@ public abstract class DiffActionExecutor {
           if (content1 == null) return;
           DiffContent content2 = DiffContentFactory.getInstance().create(myProject, mySelectedFile);
 
-          String title = mySelectedFile.getPresentableUrl();
+          String title = DiffRequestFactory.getInstance().getTitle(mySelectedFile);
 
           boolean inverted = false;
           String title1;

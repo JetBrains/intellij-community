@@ -414,10 +414,10 @@ public class Splitter extends JPanel {
    * @param verticalSplit <code>true</code> means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
-    if (myVerticalSplit == verticalSplit) return;
+    boolean changed = myVerticalSplit != verticalSplit;
     myVerticalSplit = verticalSplit;
     myDivider.setOrientation(verticalSplit);
-    firePropertyChange(PROP_ORIENTATION, !myVerticalSplit, myVerticalSplit);
+    if (changed) firePropertyChange(PROP_ORIENTATION, !myVerticalSplit, myVerticalSplit);
     revalidate();
     repaint();
   }

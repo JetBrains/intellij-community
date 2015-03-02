@@ -459,7 +459,7 @@ public class PyTypeChecker {
       final Map<PyExpression, PyNamedParameter> arguments = mapping.getPlainMappedParams();
       final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
       if (markedCallee != null) {
-        final Callable callable = markedCallee.getCallable();
+        final PyCallable callable = markedCallee.getCallable();
         if (callable instanceof PyFunction) {
           final PyFunction function = (PyFunction)callable;
           final PyExpression receiver;
@@ -493,7 +493,7 @@ public class PyTypeChecker {
         if (!(type instanceof PyFunctionType)) {
           return null;
         }
-        final Callable callable = ((PyFunctionType)type).getCallable();
+        final PyCallable callable = ((PyFunctionType)type).getCallable();
         final String operatorName = typedElement.getName();
         final boolean isRight = PyNames.isRightOperatorName(operatorName);
         final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
@@ -529,7 +529,7 @@ public class PyTypeChecker {
     if (resolved instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)resolved);
       if (type instanceof PyFunctionType) {
-        final Callable callable = ((PyFunctionType)type).getCallable();
+        final PyCallable callable = ((PyFunctionType)type).getCallable();
         final PyParameter[] parameters = callable.getParameterList().getParameters();
         if (parameters.length == 2) {
           final PyNamedParameter param = parameters[1].getAsNamed();
@@ -614,11 +614,11 @@ public class PyTypeChecker {
   }
 
   public static class AnalyzeCallResults {
-    @NotNull private final Callable myCallable;
+    @NotNull private final PyCallable myCallable;
     @Nullable private final PyExpression myReceiver;
     @NotNull private final Map<PyExpression, PyNamedParameter> myArguments;
 
-    public AnalyzeCallResults(@NotNull Callable callable, @Nullable PyExpression receiver,
+    public AnalyzeCallResults(@NotNull PyCallable callable, @Nullable PyExpression receiver,
                               @NotNull Map<PyExpression, PyNamedParameter> arguments) {
       myCallable = callable;
       myReceiver = receiver;
@@ -626,7 +626,7 @@ public class PyTypeChecker {
     }
 
     @NotNull
-    public Callable getCallable() {
+    public PyCallable getCallable() {
       return myCallable;
     }
 

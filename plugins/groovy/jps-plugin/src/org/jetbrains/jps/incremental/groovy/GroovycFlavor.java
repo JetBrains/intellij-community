@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.Collection;
 
@@ -22,9 +24,10 @@ import java.util.Collection;
  * @author peter
  */
 public interface GroovycFlavor {
-  void runGroovyc(Collection<String> compilationClassPath,
-                  boolean stubs,
-                  JpsGroovySettings settings,
-                  File tempFile,
-                  GroovycOutputParser parser) throws Exception;
+  @Nullable
+  GroovycContinuation runGroovyc(Collection<String> compilationClassPath,
+                                 boolean stubs,
+                                 JpsGroovySettings settings,
+                                 File tempFile,
+                                 GroovycOutputParser parser) throws Exception;
 }

@@ -110,7 +110,7 @@ public class PatternCompiler {
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
-          if (element instanceof PsiComment) {
+          if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
             return;
           }
           super.visitElement(element);

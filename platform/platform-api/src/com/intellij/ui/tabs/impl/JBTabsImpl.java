@@ -32,6 +32,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
@@ -103,7 +104,7 @@ public class JBTabsImpl extends JComponent
 
   private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
 
-  private final SingleRowLayout mySingleRowLayout;
+  private SingleRowLayout mySingleRowLayout;
   private final TableLayout myTableLayout = new TableLayout(this);
 
 
@@ -253,6 +254,22 @@ public class JBTabsImpl extends JComponent
           entry.getKey().revalidate();
           entry.getValue().setInactiveStateImage(null);
         }
+        boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+        boolean newHideTabsIfNeed = UISettings.getInstance().HIDE_TABS_IF_NEED;
+        boolean wasSingleRow = isSingleRow();
+        if (oldHideTabsIfNeed != newHideTabsIfNeed) {
+          if (mySingleRowLayout != null) {
+            remove(mySingleRowLayout.myLeftGhost);
+            remove(mySingleRowLayout.myRightGhost);
+          }
+          mySingleRowLayout = createSingleRowLayout();
+          if (wasSingleRow) {
+            myLayout = mySingleRowLayout;
+          }
+          add(mySingleRowLayout.myLeftGhost);
+          add(mySingleRowLayout.myRightGhost);
+          relayout(true, true);
+        }
       }
     }, this);
 
@@ -351,6 +368,10 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isEditorTabs() {
+    return false;
+  }
+
+  public boolean supportsCompression() {
     return false;
   }
 
@@ -2295,10 +2316,13 @@ public class JBTabsImpl extends JComponent
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    final GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-    paintSelectionAndBorder((Graphics2D)g);
-    config.restore();
+    //final GraphicsConfig config = new GraphicsConfig(g);
+    //try {
+    //  config.setAntialiasing(true);
+      paintSelectionAndBorder((Graphics2D)g);
+    //} finally {
+    //  config.restore();
+    //}
 
     final TabLabel selected = getSelectedLabel();
     if (selected != null) {
@@ -2521,7 +2545,7 @@ public class JBTabsImpl extends JComponent
     }
 
     revalidateAndRepaint(true);
-    
+
     fireTabRemoved(info);
 
     return result;

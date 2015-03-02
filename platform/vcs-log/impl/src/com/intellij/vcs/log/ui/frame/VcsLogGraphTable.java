@@ -84,6 +84,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private final VcsLogDataHolder myLogDataHolder;
   private final GraphCommitCellRender myGraphCommitCellRender;
   private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
+  @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
 
   private boolean myColumnsSizeInitialized = false;
 
@@ -299,19 +300,34 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myHighlighters.clear();
   }
 
-  public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
-    RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
-    boolean fgUpdated = false;
-    for (VcsLogHighlighter highlighter : myHighlighters) {
-      Color color = highlighter.getForeground(rowInfo.getCommit(), selected);
-      if (color != null) {
-        rendererComponent.setForeground(color);
-        fgUpdated = true;
-      }
-    }
-    if (!fgUpdated) { // reset highlighting if no-one wants to change it
-      rendererComponent.setForeground(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : UIUtil.getTableForeground(selected));
-    }
+  public void applyHighlighters(@NotNull Component rendererComponent,
+                                int row,
+                                int column,
+                                String text,
+                                boolean hasFocus,
+                                final boolean selected) {
+    VcsLogHighlighter.VcsCommitStyle style = getStyle(row, column, text, hasFocus, selected);
+
+    assert style.getBackground() != null && style.getForeground() != null;
+
+    rendererComponent.setBackground(style.getBackground());
+    rendererComponent.setForeground(style.getForeground());
+  }
+
+  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
+    final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
+    Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+    VcsLogHighlighter.VcsCommitStyle defaultStyle = new VcsLogHighlighter.VcsCommitStyle(
+      rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
+      dummyRendererComponent.getBackground());
+    List<VcsLogHighlighter.VcsCommitStyle> styles =
+      ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
+        @Override
+        public VcsLogHighlighter.VcsCommitStyle fun(VcsLogHighlighter highlighter) {
+          return highlighter.getStyle(rowInfo.getCommit(), selected);
+        }
+      });
+    return VcsLogHighlighter.VcsCommitStyle.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
   public void viewportSet(JViewport viewport) {
@@ -565,7 +581,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
-    @NotNull private TableCellRenderer myRenderer = new DefaultTableCellRenderer();
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -616,7 +631,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
 
       myColor = color;
-      myBorderColor = myRenderer.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column).getBackground();
+      Color background = ((VcsLogGraphTable)table).getStyle(row, column, text, hasFocus, isSelected).getBackground();
+      assert background != null;
+      myBorderColor = background;
       setForeground(UIUtil.getTableForeground(false));
 
       if (myUi.isShowRootNames()) {
@@ -629,6 +646,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
 
       return this;
+    }
+
+    @Override
+    public void setBackground(Color bg) {
+      myBorderColor = bg;
     }
   }
 
@@ -645,8 +667,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       if (value == null) {
         return;
       }
-      append(value.toString());
-      applyHighlighters(this, row, selected);
+      String text = value.toString();
+      append(text);
+      applyHighlighters(this, row, column, text, hasFocus, selected);
       setBorder(null);
     }
 

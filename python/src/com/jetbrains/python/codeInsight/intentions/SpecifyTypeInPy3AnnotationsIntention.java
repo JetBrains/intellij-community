@@ -102,7 +102,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   private void annotateReturnType(Project project, PsiElement resolved) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    Callable callable = getCallable(resolved);
+    PyCallable callable = getCallable(resolved);
 
     if (callable instanceof PyFunction) {
       final String functionSignature = "def " + callable.getName() + callable.getParameterList().getText();

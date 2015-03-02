@@ -54,7 +54,7 @@ public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSeri
               compareByFields = ThreeState.YES;
             }
             catch (Exception e) {
-              BeanBinding.LOG.warn(e);
+              Binding.LOG.warn(e);
             }
 
             classBinding.hasEqualMethod = compareByFields;

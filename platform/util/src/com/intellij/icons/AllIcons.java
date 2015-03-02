@@ -1204,6 +1204,14 @@ public class AllIcons {
 
   }
   
+  public static class Windows {
+    public static final Icon Close = IconLoader.getIcon("/windows/close.png"); // 16x16
+    public static final Icon Iconify = IconLoader.getIcon("/windows/iconify.png"); // 16x16
+    public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16
+    public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.png"); // 16x16
+
+  }
+  
   public static class Xml {
     
     public static class Browsers {

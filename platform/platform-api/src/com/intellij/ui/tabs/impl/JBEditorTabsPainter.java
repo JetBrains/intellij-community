@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -89,4 +90,8 @@ abstract class JBEditorTabsPainter {
   }
 
   public abstract Color getBackgroundColor();
+
+  public Color getEmptySpaceColor() {
+    return UIUtil.getPanelBackground();
+  }
 }

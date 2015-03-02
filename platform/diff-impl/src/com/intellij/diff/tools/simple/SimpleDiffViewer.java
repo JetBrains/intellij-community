@@ -830,7 +830,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
     @Override
-    public void paint(@NotNull Graphics g, @NotNull Component divider) {
+    public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       if (myEditor1 == null || myEditor2 == null) return;
       Graphics2D gg = getDividerGraphics(g, divider);
 

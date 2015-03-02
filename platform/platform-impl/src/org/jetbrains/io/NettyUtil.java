@@ -45,6 +45,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
   public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
@@ -179,13 +180,13 @@ public final class NettyUtil {
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
   public static void closeAndReleaseFactory(@NotNull Channel channel) {
-    EventLoop channelFactory = channel.eventLoop();
+    EventLoop eventLoop = channel.eventLoop();
     try {
       channel.close().awaitUninterruptibly();
     }
     finally {
       // in our case it does nothing, we don't use ExecutorService, but we are aware of future changes
-      channelFactory.shutdownGracefully();
+      eventLoop.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
     }
   }
 

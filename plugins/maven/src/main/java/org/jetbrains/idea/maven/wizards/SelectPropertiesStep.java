@@ -119,4 +119,9 @@ public class SelectPropertiesStep extends ModuleWizardStep {
     myBuilder.setEnvironmentForm(myEnvironmentForm);
     myBuilder.setPropertiesToCreateByArtifact(myMavenPropertiesPanel.getDataAsMap());
   }
+
+  @Override
+  public String getHelpId() {
+    return "New_Projects_from_Scratch_Maven_Settings_Page";
+  }
 }

@@ -568,7 +568,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
 
     @Override
-    public void paint(@NotNull Graphics g, @NotNull Component divider) {
+    public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       Graphics2D gg = getDividerGraphics(g, divider);
 
       Editor editor1 = mySide.select(myEditors.get(0), myEditors.get(1));

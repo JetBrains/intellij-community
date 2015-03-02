@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,76 +16,46 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jdom.Content;
-import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AttributeBinding extends BasePrimitiveBinding {
-  public AttributeBinding(@NotNull Accessor accessor, @NotNull Attribute attribute) {
+class AttributeBinding extends BasePrimitiveBinding {
+  private final Class<?> valueClass;
+
+  public AttributeBinding(@NotNull MutableAccessor accessor, @NotNull Attribute attribute) {
     super(accessor, attribute.value(), attribute.converter());
+
+    valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
   }
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @Nullable Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return null;
     }
 
     String stringValue;
-    if (myConverter != null) {
-      stringValue = myConverter.toString(value);
+    if (myConverter == null) {
+      stringValue = XmlSerializerImpl.convertToString(value);
     }
     else {
-      assert myBinding != null;
-      Content content = (Content)myBinding.serialize(value, context, filter);
-      if (content == null) {
-        return null;
-      }
-
-      stringValue = content.getValue();
+      stringValue = myConverter.toString(value);
     }
     return new org.jdom.Attribute(myName, stringValue);
   }
 
-  @Override
-  @Nullable
-  public Object deserialize(Object context, @NotNull Object node) {
-    org.jdom.Attribute attribute = (org.jdom.Attribute)node;
-    assert isBoundTo(attribute);
-    Object value;
-    if (myConverter != null) {
-      value = myConverter.fromString(attribute.getValue());
+  void set(@NotNull Object host, @NotNull String value) {
+    if (myConverter == null) {
+      XmlSerializerImpl.doSet(host, value, myAccessor, valueClass);
     }
     else {
-      assert myBinding != null;
-      value = myBinding.deserialize(context, new Text(attribute.getValue()));
-    }
-    myAccessor.write(context, value);
-    return context;
-  }
-
-  @Override
-  public boolean isBoundTo(Object node) {
-    return node instanceof org.jdom.Attribute && ((org.jdom.Attribute)node).getName().equals(myName);
-  }
-
-  @Override
-  public Class getBoundNodeType() {
-    return org.jdom.Attribute.class;
-  }
-
-  @Override
-  public void init() {
-    super.init();
-    if (myBinding != null && !Text.class.isAssignableFrom(myBinding.getBoundNodeType())) {
-      throw new XmlSerializationException("Can't use attribute binding for non-text content: " + myAccessor);
+      myAccessor.set(host, myConverter.fromString(value));
     }
   }
 
   public String toString() {
-    return "AttributeBinding[" + myName + ", binding=" + myBinding + "]";
+    return "AttributeBinding[" + myName + "]";
   }
 }

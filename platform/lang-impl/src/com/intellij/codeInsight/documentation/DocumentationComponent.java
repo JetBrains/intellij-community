@@ -82,13 +82,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
 
-  private static final DataContext EMPTY_DATA_CONTEXT = new DataContext() {
-    @Override
-    public Object getData(@NonNls String dataId) {
-      return null;
-    }
-  };
-
   private static final int PREFERRED_WIDTH_EM = 37;
   private static final int PREFERRED_HEIGHT_MIN_EM = 7;
   private static final int PREFERRED_HEIGHT_MAX_EM = 20;
@@ -915,9 +908,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (!mySettingsPanel.isVisible()) {
         return;
       }
-      AnActionEvent event = new AnActionEvent(
-        null, EMPTY_DATA_CONTEXT, ActionPlaces.JAVADOC_INPLACE_SETTINGS, myPresentation, ActionManager.getInstance(), 0
-      );
+      AnActionEvent event = AnActionEvent.createFromDataContext(myPlace, myPresentation, DataContext.EMPTY_CONTEXT);
       myAction.actionPerformed(event);
     }
   }

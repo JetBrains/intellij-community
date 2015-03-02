@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -65,5 +66,17 @@ public class ContentUtilEx extends ContentsUtil {
     if (childDisposable != null) {
       Disposer.register(tabbedContent, childDisposable);
     }
+  }
+
+  public static int getSelectedTab(@NotNull TabbedContent content) {
+    final JComponent current = content.getComponent();
+    int index = 0;
+    for (Pair<String,JComponent> tab : content.getTabs()) {
+      if (tab.second == current) {
+        return index;
+      }
+      index++;
+    }
+    return -1;
   }
 }

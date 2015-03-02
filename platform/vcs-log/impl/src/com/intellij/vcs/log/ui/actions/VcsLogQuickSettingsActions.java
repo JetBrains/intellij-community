@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui;
+package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -71,7 +71,7 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new ShowBranchesPanelAction(), new ShowRootsColumnAction()};
+      return new AnAction[]{new ShowBranchesPanelAction(), new ShowRootsColumnAction(), new HighlightMyCommitsAction()};
     }
 
     private class ShowBranchesPanelAction extends ToggleAction implements DumbAware {
@@ -112,6 +112,23 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myUi.setShowRootNames(state);
+      }
+    }
+
+    private class HighlightMyCommitsAction extends ToggleAction implements DumbAware {
+
+      public HighlightMyCommitsAction() {
+        super("Highlight My Commits");
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myUi.isHighlightMyCommits();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myUi.setHighlightMyCommits(state);
       }
     }
   }

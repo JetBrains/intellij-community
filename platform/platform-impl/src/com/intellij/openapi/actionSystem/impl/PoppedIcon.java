@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.ui.Gray;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +45,7 @@ public class PoppedIcon implements Icon {
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     final Dimension size = new Dimension(getIconWidth() + 2*x, getIconHeight() + 2*x);
-    myLook.paintBackground(g, size, ActionButtonComponent.POPPED);
+    myLook.paintBackground(g, size, Gray._235, ActionButtonComponent.POPPED);
     myLook.paintBorder(g, size, ActionButtonComponent.POPPED);
     myIcon.paintIcon(c, g, x + (getIconWidth() - myIcon.getIconWidth())/2, y + (getIconHeight() - myIcon.getIconHeight())/2);
   }

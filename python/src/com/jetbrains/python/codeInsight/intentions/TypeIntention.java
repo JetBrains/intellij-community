@@ -169,11 +169,11 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected Callable getCallable(PsiElement elementAt) {
+  protected PyCallable getCallable(PsiElement elementAt) {
     PyCallExpression callExpression = getCallExpression(elementAt);
 
     if (callExpression != null && elementAt != null) {
-      final Callable callable = callExpression.resolveCalleeFunction(getResolveContext(elementAt));
+      final PyCallable callable = callExpression.resolveCalleeFunction(getResolveContext(elementAt));
       return callable == null ? PsiTreeUtil.getParentOfType(elementAt, PyFunction.class) : callable;
     }
     return PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);

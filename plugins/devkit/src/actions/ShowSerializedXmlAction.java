@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.MutableAccessor;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -79,7 +81,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     final String className = ClassUtil.getJVMClassName(psiClass);
 
     final Project project = getEventProject(e);
-    CompilerManager.getInstance(project).make(new FileSetCompileScope(Arrays.asList(virtualFile), new Module[]{module}), new CompileStatusNotification() {
+    CompilerManager.getInstance(project).make(new FileSetCompileScope(Collections.singletonList(virtualFile), new Module[]{module}), new CompileStatusNotification() {
       @Override
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         if (aborted || errors > 0) return;
@@ -191,13 +193,13 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       }
     }
 
-    public Object createObject(Class<?> aClass, FList<Type> processedTypes) throws Exception {
-      final Object o = aClass.getDeclaredConstructor().newInstance();
-      for (Accessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
-        final Type type = accessor.getGenericType();
-        Object value = createValue(type, processedTypes);
+    @NotNull
+    public Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
+      Object o = ReflectionUtil.newInstance(aClass);
+      for (MutableAccessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
+        Object value = createValue(accessor.getGenericType(), processedTypes);
         if (value != null) {
-          accessor.write(o, value);
+          accessor.set(o, value);
         }
       }
       return o;

@@ -17,13 +17,14 @@ package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
-class FieldAccessor implements Accessor {
+class FieldAccessor implements MutableAccessor {
   private final Field myField;
 
   public FieldAccessor(@NotNull Field field) {
@@ -32,7 +33,7 @@ class FieldAccessor implements Accessor {
   }
 
   @Override
-  public Object read(Object o) {
+  public Object read(@NotNull Object o) {
     assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + "; should be: " + myField.getDeclaringClass();
     try {
       return myField.get(o);
@@ -43,12 +44,69 @@ class FieldAccessor implements Accessor {
   }
 
   @Override
-  public void write(Object o, Object value) {
-    Class<?> declaringClass = myField.getDeclaringClass();
-    assert declaringClass.isInstance(o) : "Wrong class: " + o.getClass() + "; should be: " + declaringClass;
+  public void set(@NotNull Object host, @Nullable Object value) {
     try {
-      Class<?> type = myField.getType();
-      myField.set(o, XmlSerializerImpl.convert(value, type));
+      myField.set(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new XmlSerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setBoolean(@NotNull Object host, boolean value) {
+    try {
+      myField.setBoolean(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new XmlSerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setInt(@NotNull Object host, int value) {
+    try {
+      myField.setInt(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new XmlSerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setShort(@NotNull Object host, short value) {
+    try {
+      myField.setShort(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new XmlSerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setLong(@NotNull Object host, long value) {
+    try {
+      myField.setLong(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new XmlSerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setFloat(@NotNull Object host, float value) {
+    try {
+      myField.setFloat(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new XmlSerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setDouble(@NotNull Object host, double value) {
+    try {
+      myField.setDouble(host, value);
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException("Writing " + myField, e);
@@ -78,6 +136,11 @@ class FieldAccessor implements Accessor {
   @Override
   public boolean isFinal() {
     return Modifier.isFinal(myField.getModifiers());
+  }
+
+  @Override
+  public void write(Object o, Object value) {
+    set(o, value);
   }
 
   @NonNls

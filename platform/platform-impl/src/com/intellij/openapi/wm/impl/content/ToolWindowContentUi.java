@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -37,6 +39,8 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
+import com.intellij.util.Alarm;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NonNls;
@@ -465,12 +469,16 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       myShouldNotShowPopup = false;
       return;
     }
-
+    final Ref<AnAction> selected = Ref.create();
+    final Ref<AnAction> selectedTab = Ref.create();
     final Content[] contents = myManager.getContents();
+    final Content selectedContent = myManager.getSelectedContent();
     final AnAction[] actions = new AnAction[contents.length];
     for (int i = 0; i < actions.length; i++) {
       final Content content = contents[i];
       if (content instanceof TabbedContent) {
+        final TabbedContent tabbedContent = (TabbedContent)content;
+
         final List<Pair<String, JComponent>> tabs = ((TabbedContent)content).getTabs();
         final AnAction[] tabActions = new AnAction[tabs.size()];
         for (int j = 0; j < tabActions.length; j++) {
@@ -478,8 +486,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           tabActions[j] = new DumbAwareAction(tabs.get(index).first) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-              myManager.setSelectedContent(content);
-              ((TabbedContent)content).selectContent(index);
+              myManager.setSelectedContent(tabbedContent);
+              tabbedContent.selectContent(index);
             }
           };
         }
@@ -487,6 +495,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         group.getTemplatePresentation().setText(((TabbedContent)content).getTitlePrefix());
         group.setPopup(true);
         actions[i] = group;
+        if (content == selectedContent) {
+          selected.set(group);
+          final int selectedIndex = ContentUtilEx.getSelectedTab(tabbedContent);
+          if (selectedIndex != -1) {
+            selectedTab.set(tabActions[selectedIndex]);
+          }
+        }
       } else {
         actions[i] = new DumbAwareAction(content.getTabName()) {
           @Override
@@ -494,13 +509,31 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             myManager.setSelectedContent(content, true, true);
           }
         };
+        if (content == selectedContent) {
+          selected.set(actions[i]);
+        }
       }
     }
 
     final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions),
-                                                                  DataManager.getInstance().getDataContext(myManager.getComponent()),
-                                                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+                                                                                DataManager.getInstance()
+                                                                                  .getDataContext(myManager.getComponent()), false, true,
+                                                                                true, null, -1, new Condition<AnAction>() {
+        @Override
+        public boolean value(AnAction action) {
+          return action == selected.get() || action == selectedTab.get();
+        }
+      });
+
     getCurrentLayout().showContentPopup(popup);
+
+    if (selectedContent instanceof TabbedContent) {
+      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(new Runnable() {
+        public void run() {
+          popup.handleSelect(true);
+        }
+      }, 30);
+    }
   }
 
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {

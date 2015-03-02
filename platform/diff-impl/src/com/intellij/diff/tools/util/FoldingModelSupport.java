@@ -330,10 +330,12 @@ public class FoldingModelSupport {
     @Override
     public void process(@NotNull Handler handler) {
       for (FoldedBlock folding : myFoldings) {
-        if (folding.myRegions[myLeft] == null || folding.myRegions[myRight] == null) continue;
-        if (folding.myRegions[myLeft].isExpanded() || folding.myRegions[myRight].isExpanded()) continue;
-        int line1 = myEditors[myLeft].getDocument().getLineNumber(folding.myRegions[myLeft].getStartOffset());
-        int line2 = myEditors[myRight].getDocument().getLineNumber(folding.myRegions[myRight].getStartOffset());
+        FoldRegion region1 = folding.myRegions[myLeft];
+        FoldRegion region2 = folding.myRegions[myRight];
+        if (region1 == null || !region1.isValid() || region1.isExpanded()) continue;
+        if (region2 == null || !region2.isValid() || region2.isExpanded()) continue;
+        int line1 = myEditors[myLeft].getDocument().getLineNumber(region1.getStartOffset());
+        int line2 = myEditors[myRight].getDocument().getLineNumber(region2.getStartOffset());
         if (!handler.process(line1, line2)) return;
       }
     }

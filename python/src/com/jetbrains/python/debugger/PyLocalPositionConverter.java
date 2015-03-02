@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,7 +34,7 @@ import java.io.File;
 
 
 public class PyLocalPositionConverter implements PyPositionConverter {
-  private final static String[] EGG_EXTENSIONS = new String[] {".egg", ".zip"};
+  private final static String[] EGG_EXTENSIONS = new String[]{".egg", ".zip"};
 
   protected static class PyLocalSourcePosition extends PySourcePosition {
     public PyLocalSourcePosition(final String file, final int line) {
@@ -92,13 +93,19 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   protected static int convertLocalLineToRemote(VirtualFile file, int line) {
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      while (PyDebugSupportUtils.isContinuationLine(document, line)) {
-        line++;
+    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        while (PyDebugSupportUtils.isContinuationLine(document, line)) {
+          line++;
+        }
       }
+      return line + 1;
     }
-    return line + 1;
+    finally {
+      lock.finish();
+    }
   }
 
   @Nullable
@@ -126,7 +133,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
 
   private VirtualFile findEggEntry(String file) {
     int ind = -1;
-    for (String ext: EGG_EXTENSIONS) {
+    for (String ext : EGG_EXTENSIONS) {
       ind = file.indexOf(ext);
       if (ind != -1) break;
     }
@@ -146,7 +153,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
 
   private static String convertFilePath(String file) {
     int ind = -1;
-    for (String ext: EGG_EXTENSIONS) {
+    for (String ext : EGG_EXTENSIONS) {
       ind = file.indexOf(ext + "!");
       if (ind != -1) break;
     }

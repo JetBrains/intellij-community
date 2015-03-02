@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,5 +107,13 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    */
   public int getPriority() {
     return 0;
+  }
+
+  /**
+   * Return true if this breakpoint could be hit on lines other than the one specified,
+   * an example is method breakpoint in java - it could be hit on any method overriding the one specified
+   */
+  public boolean canBeHitInOtherPlaces() {
+    return false;
   }
 }

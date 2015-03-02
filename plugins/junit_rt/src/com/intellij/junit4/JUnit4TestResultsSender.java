@@ -33,6 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JUnit4TestResultsSender extends RunListener {
+  private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
   private static final String ASSERTION_CLASS_NAME = AssertionError.class.getName();
@@ -119,7 +120,7 @@ public class JUnit4TestResultsSender extends RunListener {
     }
 
     final String message = assertion.getMessage();
-    if (message != null) {
+    if (message != null && acceptedByThreshold(message.length())) {
       PacketFactory notification = createExceptionNotification(assertion, message, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
       if (notification == null) {
         notification = createExceptionNotification(assertion, message, "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"");
@@ -144,6 +145,18 @@ public class JUnit4TestResultsSender extends RunListener {
       }
     }
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
+  }
+  
+  private static boolean acceptedByThreshold(int messageLength) {
+    int threshold = 10000;
+    final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
+    if (property != null) {
+      try {
+        threshold = Integer.parseInt(property);
+      }
+      catch (NumberFormatException ignore) {}
+    }
+    return messageLength < threshold;
   }
 
   private static PacketFactory createExceptionNotification(Throwable assertion, String message, final String regex) {

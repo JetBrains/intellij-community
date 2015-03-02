@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DiffType;
+import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -40,10 +43,12 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBLoadingPanelListener;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -54,6 +59,8 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -76,6 +83,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private JPanel myFilterPanel;
   private JBLabel myFilterLabel;
   private JPanel myFilesPanel;
+  private JPanel myHeaderPanel;
   private FilterComponent myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
@@ -348,6 +356,15 @@ public class DirDiffPanel implements Disposable, DataProvider {
     }
   }
 
+  public AnAction[] getActions() {
+    return new DirDiffToolbarActions(myModel, myDiffPanel).getChildren(null);
+  }
+
+  public JComponent extractFilterPanel() {
+    myHeaderPanel.setVisible(false);
+    return myFilterPanel;
+  }
+
   private void changeOperationForSelection() {
     for (int row : myTable.getSelectedRows()) {
       if (row != -1) {
@@ -516,12 +533,50 @@ public class DirDiffPanel implements Disposable, DataProvider {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myModel.getProject();
     }
-    if (DIR_DIFF_MODEL.is(dataId)) {
+    else if (DIR_DIFF_MODEL.is(dataId)) {
       return myModel;
     }
-    if (DIR_DIFF_TABLE.is(dataId)) {
+    else if (DIR_DIFF_TABLE.is(dataId)) {
       return myTable;
     }
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return getOpenFileDescriptorsArray();
+    }
+    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return getOpenFileDescriptor();
+    }
+    else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
+      return getOpenFileDescriptor();
+    }
     return null;
+  }
+
+  @Nullable
+  private OpenFileDescriptor getOpenFileDescriptor() {
+    Project project = myModel.getProject();
+    List<DirDiffElementImpl> elements = myModel.getSelectedElements();
+    if (elements.isEmpty()) return null;
+    DirDiffElement element = elements.get(0);
+    DiffElement source = element.getSource();
+    DiffElement target = element.getTarget();
+    OpenFileDescriptor descriptor1 = source != null ? source.getOpenFileDescriptor(project) : null;
+    OpenFileDescriptor descriptor2 = target != null ? target.getOpenFileDescriptor(project) : null;
+    return descriptor2 != null ? descriptor2 : descriptor1;
+  }
+
+  @Nullable
+  private OpenFileDescriptor[] getOpenFileDescriptorsArray() {
+    Project project = myModel.getProject();
+    List<DirDiffElementImpl> elements = myModel.getSelectedElements();
+    List<OpenFileDescriptor> descriptors = new ArrayList<OpenFileDescriptor>();
+    for (DirDiffElementImpl element : elements) {
+      DiffElement source = element.getSource();
+      DiffElement target = element.getTarget();
+      OpenFileDescriptor descriptor1 = source != null ? source.getOpenFileDescriptor(project) : null;
+      OpenFileDescriptor descriptor2 = target != null ? target.getOpenFileDescriptor(project) : null;
+      if (descriptor1 != null) descriptors.add(descriptor1);
+      if (descriptor2 != null) descriptors.add(descriptor2);
+    }
+    return ContainerUtil.toArray(descriptors, new OpenFileDescriptor[descriptors.size()]);
   }
 }

@@ -21,9 +21,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 public interface Accessor {
-  Object read(Object o);
-
-  void write(Object o, Object value);
+  Object read(@NotNull Object o);
 
   <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass);
 
@@ -34,4 +32,9 @@ public interface Accessor {
   Type getGenericType();
 
   boolean isFinal();
+
+  /**
+   * @deprecated use {@link MutableAccessor#set(Object, Object)} instead
+   */
+  void write(Object o, Object value);
 }

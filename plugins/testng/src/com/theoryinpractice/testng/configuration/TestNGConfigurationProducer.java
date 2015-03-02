@@ -44,6 +44,9 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
 
   @Override
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
+    if (TestNGPatternConfigurationProducer.isMultipleElementsSelected(context)) {
+      return false;
+    }
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
     Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
     final PsiElement element = location.getPsiElement();

@@ -279,7 +279,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       return;
     }
 
-    MatchVariableConstraint varInfo = getOrAddVariableConstraint(varName, configuration);
+    MatchVariableConstraint varInfo = UIUtil.getOrAddVariableConstraint(varName, configuration);
 
     varInfo.setInvertReadAccess(notRead.isSelected());
     varInfo.setReadAccess(read.isSelected());
@@ -322,17 +322,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final String withinConstraint = (String)withinCombo.getComboBox().getEditor().getItem();
     varInfo.setWithinConstraint(withinConstraint.length() > 0 ? "\"" + withinConstraint +"\"":"");
     varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
-  }
-
-  private static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
-    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
-
-    if (varInfo == null) {
-      varInfo = new MatchVariableConstraint();
-      varInfo.setName(varName);
-      configuration.getMatchOptions().addVariableConstraint(varInfo);
-    }
-    return varInfo;
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
@@ -383,7 +372,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       maxoccurs.setText("1");
       maxoccursUnlimited.setSelected(false);
       applyWithinTypeHierarchy.setSelected(false);
-      partOfSearchResults.setSelected(isTarget(varName, matchOptions));
+      partOfSearchResults.setSelected(UIUtil.isTarget(varName, matchOptions));
 
       regexprForExprType.getDocument().setText("");
       notExprType.setSelected(false);
@@ -418,7 +407,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
         maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
       }
 
-      partOfSearchResults.setSelected(isTarget(varName, matchOptions));
+      partOfSearchResults.setSelected(UIUtil.isTarget(varName, matchOptions));
 
       exprTypeWithinHierarchy.setSelected(varInfo.isExprTypeWithinHierarchy());
       regexprForExprType.getDocument().setText(varInfo.getNameOfExprType());
@@ -441,25 +430,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     expressionConstraints.setVisible(!contextVar);
     partOfSearchResults.setEnabled(!contextVar);
     occurencePanel.setVisible(!contextVar);
-  }
-
-  private static boolean isTarget(String varName, MatchOptions matchOptions) {
-    if (Configuration.CONTEXT_VAR_NAME.equals(varName)) {
-      // Complete Match is default target
-      for (String name : matchOptions.getVariableConstraintNames()) {
-        if (!name.equals(Configuration.CONTEXT_VAR_NAME)) {
-          if (matchOptions.getVariableConstraint(name).isPartOfSearchResults()) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(varName);
-    if (constraint == null) {
-      return false;
-    }
-    return constraint.isPartOfSearchResults();
   }
 
   private void setSearchConstraintsVisible(boolean b) {

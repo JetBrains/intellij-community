@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,47 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 abstract class Binding {
-  protected final Accessor myAccessor;
+  static final Logger LOG = Logger.getInstance(Binding.class);
 
-  protected Binding(Accessor accessor) {
+  protected final MutableAccessor myAccessor;
+
+  protected Binding(MutableAccessor accessor) {
     myAccessor = accessor;
   }
 
   @NotNull
-  public Accessor getAccessor() {
+  public MutableAccessor getAccessor() {
     return myAccessor;
   }
 
   @Nullable
-  public abstract Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter);
 
   @Nullable
-  public abstract Object deserialize(Object context, @NotNull Object node);
-
-  public Object deserializeEmpty(Object context) {
-    return null;
+  public Object deserialize(Object context, @NotNull Element element) {
+    return context;
   }
 
-  public abstract boolean isBoundTo(Object node);
+  public boolean isBoundTo(@NotNull Element element) {
+    return false;
+  }
 
-  public abstract Class getBoundNodeType();
-
-  public void init() {
+  void init(@NotNull Type originalType) {
+    // called (and make sense) only if MainBinding
   }
 
   @SuppressWarnings("CastToIncompatibleInterface")
   @Nullable
-  public static Object deserializeList(@NotNull Binding binding, Object context, @NotNull List<?> nodes) {
+  public static Object deserializeList(@NotNull Binding binding, Object context, @NotNull List<Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
@@ -60,7 +64,7 @@ abstract class Binding {
         return binding.deserialize(context, nodes.get(0));
       }
       else if (nodes.isEmpty()) {
-        return binding.deserializeEmpty(context);
+        return null;
       }
       else {
         throw new AssertionError("Duplicate data for " + binding + " will be ignored");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,21 @@
  */
 package com.intellij.util.xmlb;
 
-import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
+public interface MutableAccessor extends Accessor {
+  void set(@NotNull Object host, @Nullable Object value);
 
-/**
- * @author Dmitry Avdeev
- */
-public class DateBinding extends PrimitiveValueBinding {
-  public DateBinding(@Nullable Accessor accessor) {
-    super(Date.class, accessor);
-  }
+  void setBoolean(@NotNull Object host, boolean value);
 
-  @Nullable
-  @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
-    return new Text(Long.toString(((Date)o).getTime()));
-  }
+  void setInt(@NotNull Object host, int value);
 
-  @Override
-  protected Object convertString(String value) {
-    try {
-      return new Date(Long.parseLong(value));
-    }
-    catch (NumberFormatException e) {
-      return new Date(0);
-    }
-  }
+  void setShort(@NotNull Object host, short value);
+
+  void setLong(@NotNull Object host, long value);
+
+  void setDouble(@NotNull Object host, double value);
+
+  void setFloat(@NotNull Object host, float value);
 }

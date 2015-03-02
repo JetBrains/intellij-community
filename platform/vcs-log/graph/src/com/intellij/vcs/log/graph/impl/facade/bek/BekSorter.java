@@ -37,6 +37,10 @@ public class BekSorter {
     return isBekEnabled || isInternal;
   }
 
+  public static boolean isLinearBekEnabled() {
+    return isBekEnabled() && Registry.is("vcs.log.linear.bek.sort");
+  }
+
   @NotNull
   public static BekIntMap createBekMap(@NotNull LinearGraph permanentGraph,
                                        @NotNull GraphLayoutImpl graphLayout,

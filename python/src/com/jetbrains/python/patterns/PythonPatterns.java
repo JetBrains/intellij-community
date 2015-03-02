@@ -70,7 +70,7 @@ public class PythonPatterns extends PlatformPatterns {
   public static PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(final String functionName, final int index, final String moduleName) {
     return new PyElementPattern.Capture<PyExpression>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        Callable function = resolveCalledFunction(o, functionName, index);
+        PyCallable function = resolveCalledFunction(o, functionName, index);
         if (!(function instanceof PyFunction)) {
           return false;
         }
@@ -86,7 +86,7 @@ public class PythonPatterns extends PlatformPatterns {
   public static PyElementPattern.Capture<PyExpression> pyMethodArgument(final String functionName, final int index, final String classQualifiedName) {
     return new PyElementPattern.Capture<PyExpression>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        Callable function = resolveCalledFunction(o, functionName, index);
+        PyCallable function = resolveCalledFunction(o, functionName, index);
         if (!(function instanceof PyFunction)) {
           return false;
         }
@@ -99,7 +99,7 @@ public class PythonPatterns extends PlatformPatterns {
     });
   }
 
-  private static Callable resolveCalledFunction(Object o, String functionName, int index) {
+  private static PyCallable resolveCalledFunction(Object o, String functionName, int index) {
     if (!isCallArgument(o, functionName, index)) {
       return null;
     }

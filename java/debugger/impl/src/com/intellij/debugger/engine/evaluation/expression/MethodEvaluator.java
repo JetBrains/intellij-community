@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -180,11 +181,13 @@ public class MethodEvaluator implements Evaluator {
       }
       // fix for default methods in interfaces, see IDEA-124066
       if (myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
-        return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
+        try {
+          return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
+        } catch (EvaluateException e) {
+          LOG.info(e);
+        }
       }
-      else {
-        return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
-      }
+      return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
     }
     catch (Exception e) {
       if (LOG.isDebugEnabled()) {
@@ -197,10 +200,8 @@ public class MethodEvaluator implements Evaluator {
   // only methods without arguments for now
   private static Value invokeDefaultMethod(DebugProcess debugProcess, EvaluationContext evaluationContext,
                                            Value obj, String name)
-    throws EvaluateException, ClassNotLoadedException, InvalidTypeException {
-    ClassType invokerClass = (ClassType)debugProcess.findClass(
-      evaluationContext, DefaultMethodInvoker.class.getName(),
-      evaluationContext.getClassLoader());
+    throws EvaluateException {
+    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class.getName(), evaluationContext, debugProcess);
 
     if (invokerClass != null) {
       List<Method> methods = invokerClass.methodsByName("invoke");

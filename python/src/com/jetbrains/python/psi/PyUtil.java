@@ -1081,7 +1081,7 @@ public class PyUtil {
     PsiElement parent = PsiTreeUtil.getStubOrPsiParent(elt);
     boolean jump_over = false;
     while (parent != null) {
-      if (parent instanceof PyClass || parent instanceof Callable) {
+      if (parent instanceof PyClass || parent instanceof PyCallable) {
         if (jump_over) {
           jump_over = false;
         }
@@ -1599,7 +1599,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<PyParameter> getParameters(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     PyType type = context.getType(callable);
     if (type instanceof PyUnionType) {
       type = ((PyUnionType)type).excludeNull(context);
@@ -1626,7 +1626,7 @@ public class PyUtil {
     return Arrays.asList(callable.getParameterList().getParameters());
   }
 
-  public static boolean isSignatureCompatibleTo(@NotNull Callable callable, @NotNull Callable otherCallable,
+  public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
                                                 @NotNull TypeEvalContext context) {
     final List<PyParameter> parameters = getParameters(callable, context);
     final List<PyParameter> otherParameters = getParameters(otherCallable, context);
@@ -1655,11 +1655,11 @@ public class PyUtil {
     return n;
   }
 
-  private static int requiredParametersCount(@NotNull Callable callable, @NotNull List<PyParameter> parameters) {
+  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
     return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
   }
 
-  private static int specialParametersCount(@NotNull Callable callable, @NotNull List<PyParameter> parameters) {
+  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
     int n = 0;
     if (hasPositionalContainer(parameters)) {
       n++;
