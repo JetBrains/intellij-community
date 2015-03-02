@@ -2011,8 +2011,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         @Override
         public void run() {
           myListModel.update();
-          myList.revalidate();
-          myList.repaint();
+          //myList.revalidate();
+          //myList.repaint();
 
           myRenderer.recalculateWidth();
           if (myBalloon == null || myBalloon.isDisposed()) {
@@ -2020,7 +2020,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
-            JBScrollPane content = new JBScrollPane(myList);
+            JScrollPane content = ScrollPaneFactory.createScrollPane(myList, true);
             content.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
               .createComponentPopupBuilder(content, null);
@@ -2064,7 +2064,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
-                myPopup.cancel();
+                if (myPopup!=null) myPopup.cancel();
               }
             }, myPopup);
           }
@@ -2259,7 +2259,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
     if (popupRect != null) {
-      myPopup.setLocation(new Point(r.x-1, r.y));
+      myPopup.setLocation(new Point(r.x, r.y));
     }
     else {
       if (r.y + d.height > screen.y + screen.height) {
