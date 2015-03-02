@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,6 +180,13 @@ class BeanBinding extends Binding implements MainBinding {
     nextNode:
     for (Object child : ContainerUtil.concat(element.getContent(), element.getAttributes())) {
       if (XmlSerializerImpl.isIgnoredNode(child)) {
+        continue;
+      }
+
+    MultiMap<Binding, Element> data = null;
+    nextNode:
+    for (Content content : element.getContent()) {
+      if (content instanceof Comment) {
         continue;
       }
 
