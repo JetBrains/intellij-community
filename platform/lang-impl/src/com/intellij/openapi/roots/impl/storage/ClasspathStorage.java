@@ -77,7 +77,7 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   @Nullable
-  public <T> T getState(final Object component, @NotNull final String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) {
+  public <T> T getState(final Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto) {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
     assert stateClass == ModuleRootManagerImpl.ModuleRootManagerState.class;
@@ -123,7 +123,8 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
+    componentNames.add("NewModuleRootManager");
   }
 
   @Nullable

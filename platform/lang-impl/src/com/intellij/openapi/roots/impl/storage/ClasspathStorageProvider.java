@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -58,10 +57,9 @@ public interface ClasspathStorageProvider {
   void modulePathChanged(Module module, String path);
 
   interface ClasspathConverter {
-
     FileSet getFileSet();
 
-    Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException;
+    void getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException;
 
     void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException;
   }

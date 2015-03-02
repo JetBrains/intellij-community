@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,18 +67,21 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   }
 
   public static void collectVariables(Set<String> usedVariables, Element classpathElement, final String rootPath) {
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-      final Element element = (Element)o;
+    for (Element element : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
-      if (path == null) continue;
-      final String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
+      if (path == null) {
+        continue;
+      }
+
+      String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
       if (Comparing.strEqual(kind, EclipseXml.VAR_KIND)) {
-        createEPathVariable(usedVariables, path, 0);
-        final String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
+        createEPathVariable(path, 0);
+        String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
         if (srcPath != null) {
-          createEPathVariable(usedVariables, srcPath, srcVarStart(srcPath));
+          createEPathVariable(srcPath, srcVarStart(srcPath));
         }
-      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
+      }
+      else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
         final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
         if (linkedResource != null && linkedResource.containsPathVariable()) {
           usedVariables.add(linkedResource.getVariableName());
@@ -90,7 +93,6 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   public void readClasspath(ModifiableRootModel model,
                             final Collection<String> unknownLibraries,
                             Collection<String> unknownJdks,
-                            final Set<String> usedVariables,
                             Set<String> refsToModules,
                             final String testPattern,
                             Element classpathElement) throws IOException, ConversionException {
@@ -104,7 +106,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     final HashSet<String> libs = new HashSet<String>();
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o, idx++,
+        readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, (Element)o, idx++,
                            eclipseModuleManager,
                            ((BasePathMacroManager)PathMacroManager.getInstance(model.getModule())).getExpandMacroMap(), libs);
       }

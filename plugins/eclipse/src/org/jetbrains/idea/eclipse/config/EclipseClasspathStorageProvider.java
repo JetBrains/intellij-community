@@ -49,8 +49,6 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -188,31 +186,28 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
 
     @Override
-    public Set<String> getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException, InvalidDataException {
+    public void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException, InvalidDataException {
       try {
         CachedXmlDocumentSet documentSet = getFileSet();
         String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
         if (!documentSet.exists(EclipseXml.PROJECT_FILE)) {
           if (!documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-            return Collections.emptySet();
+            return;
           }
 
           path = documentSet.getParent(EclipseXml.CLASSPATH_FILE);
         }
 
-        Set<String> usedVariables;
         EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-          usedVariables = new THashSet<String>();
-          classpathReader.readClasspath(model, new SmartList<String>(), new SmartList<String>(), usedVariables, new THashSet<String>(), null,
+          classpathReader.readClasspath(model, new SmartList<String>(), new SmartList<String>(), new THashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE, false).getRootElement());
         }
         else {
           EclipseClasspathReader.setOutputUrl(model, path + "/bin");
-          usedVariables = Collections.emptySet();
         }
-        final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+        String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(eml)) {
           IdeaSpecificSettings.readIDEASpecific(model, documentSet, eml);
         }
@@ -221,7 +216,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         }
 
         ((RootModelImpl)model).writeExternal(element);
-        return usedVariables;
       }
       catch (ConversionException e) {
         throw new InvalidDataException(e);
