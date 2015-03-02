@@ -61,7 +61,7 @@ public class Main {
     setFlags(args);
 
     String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
-    showMessage("Startup Error", "vmOptionsFile: " + vmOptionsFile, true);
+    showMessage("vmOptionsFile", "vmOptionsFile: " + vmOptionsFile, false);
 
     if (isHeadless()) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
