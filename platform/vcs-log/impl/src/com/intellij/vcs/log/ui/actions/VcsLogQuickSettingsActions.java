@@ -71,7 +71,8 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new ShowBranchesPanelAction(), new ShowRootsColumnAction(), new HighlightMyCommitsAction()};
+      return new AnAction[]{new ShowBranchesPanelAction(), new ShowRootsColumnAction(), new HighlightMyCommitsAction(),
+        new HighlightCurrentBranchAction()};
     }
 
     private class ShowBranchesPanelAction extends ToggleAction implements DumbAware {
@@ -129,6 +130,23 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myUi.setHighlightMyCommits(state);
+      }
+    }
+
+    private class HighlightCurrentBranchAction extends ToggleAction implements DumbAware {
+
+      public HighlightCurrentBranchAction() {
+        super("Highlight Current Branch");
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myUi.isHighlightCurrentBranch();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myUi.setHighlightCurrentBranch(state);
       }
     }
   }

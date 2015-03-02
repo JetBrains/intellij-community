@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,9 @@ public interface PermanentGraph<CommitId> {
 
   @NotNull
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
+
+  @NotNull
+  Condition<CommitId> getBranchChecker(@NotNull CommitId currentBranchHead);
 
   enum SortType {
     Normal("Off", "Sort commits topologically and by date"),

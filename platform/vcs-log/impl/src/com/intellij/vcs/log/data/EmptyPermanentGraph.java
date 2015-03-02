@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
@@ -57,6 +59,12 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   @Override
   public Set<Integer> getContainingBranches(@NotNull Integer commit) {
     return Collections.emptySet();
+  }
+
+  @NotNull
+  @Override
+  public Condition<Integer> getBranchChecker(@NotNull Integer currentBranchHead) {
+    return Conditions.alwaysFalse();
   }
 
 }

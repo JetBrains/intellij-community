@@ -156,6 +156,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       @Override
       public void run() {
         myDetailsPanel.valueChanged(null);
+        myGraphTable.repaint(); // we may need to repaint highlighters
       }
     });
   }

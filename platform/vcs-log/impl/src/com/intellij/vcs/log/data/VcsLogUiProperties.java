@@ -48,6 +48,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
     public boolean HIGHLIGHT_MY_COMMITS = true;
+    public boolean HIGHLIGHT_CURRENT_BRANCH = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
   }
@@ -145,6 +146,14 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void setHighlightMyCommits(boolean isHighlightMyCommits) {
     myState.HIGHLIGHT_MY_COMMITS = isHighlightMyCommits;
+  }
+
+  public boolean isHighlightCurrentBranch() {
+    return myState.HIGHLIGHT_CURRENT_BRANCH;
+  }
+
+  public void setHighlightCurrentBranch(boolean isHighlightCurrentBranch) {
+    myState.HIGHLIGHT_CURRENT_BRANCH = isHighlightCurrentBranch;
   }
 
   public static class UserGroup {

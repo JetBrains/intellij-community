@@ -17,6 +17,8 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
@@ -28,6 +30,7 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,6 +164,41 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public Set<CommitId> getContainingBranches(@NotNull CommitId commit) {
     int commitIndex = myPermanentCommitsInfo.getNodeId(commit);
     return myPermanentCommitsInfo.convertToCommitIdSet(myBranchesGetter.getBranchNodeIndexes(commitIndex));
+  }
+
+  @NotNull
+  @Override
+  public Condition<CommitId> getBranchChecker(@NotNull final CommitId head) {
+    if (head instanceof Integer) {
+      final TIntHashSet branchNodes = new TIntHashSet();
+      myBranchesGetter.walkBranch(myPermanentCommitsInfo.getNodeId(head), new Consumer<Integer>() {
+        @Override
+        public void consume(Integer node) {
+          branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node));
+        }
+      });
+      return new Condition<CommitId>() {
+        @Override
+        public boolean value(CommitId commitId) {
+          return branchNodes.contains((Integer)commitId);
+        }
+      };
+    }
+    else {
+      final TIntHashSet branchNodes = new TIntHashSet();
+      myBranchesGetter.walkBranch(myPermanentCommitsInfo.getNodeId(head), new Consumer<Integer>() {
+        @Override
+        public void consume(Integer node) {
+          branchNodes.add(node);
+        }
+      });
+      return new Condition<CommitId>() {
+        @Override
+        public boolean value(CommitId commitId) {
+          return branchNodes.contains(myPermanentCommitsInfo.getNodeId(commitId));
+        }
+      };
+    }
   }
 
   @NotNull

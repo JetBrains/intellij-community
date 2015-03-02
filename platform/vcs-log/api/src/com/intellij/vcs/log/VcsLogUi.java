@@ -47,4 +47,7 @@ public interface VcsLogUi {
   boolean isHighlightMyCommits();
 
   void setHighlightMyCommits(boolean state);
+
+  void setHighlightCurrentBranch(boolean state);
+  boolean isHighlightCurrentBranch();
 }

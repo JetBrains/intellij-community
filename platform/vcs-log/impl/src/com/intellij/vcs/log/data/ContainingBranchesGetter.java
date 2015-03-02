@@ -18,6 +18,9 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
@@ -47,6 +50,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private int myCurrentBranchesChecksum;
   @Nullable private VcsLogRefs myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
+  @NotNull private volatile Map<Pair<VirtualFile, String>, BranchChecker> myCheckers = ContainerUtil.newHashMap();
 
   ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
     myDataHolder = dataHolder;
@@ -84,6 +88,11 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private void clearCache() {
     myCache = createCache();
     myTaskExecutor.clear();
+    Map<Pair<VirtualFile, String>, BranchChecker> checkers = myCheckers;
+    myCheckers = ContainerUtil.newHashMap();
+    for (BranchChecker c : checkers.values()) {
+      c.dispose();
+    }
     // re-request containing branches information for the commit user (possibly) currently stays on
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -114,11 +123,34 @@ public class ContainingBranchesGetter implements VcsLogListener {
    */
   @Nullable
   public List<String> requestContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
-    List<String> refs = myCache.get(hash);
+    List<String> refs = getContainingBranchesIfAvailable(hash);
     if (refs == null) {
       myTaskExecutor.queue(new Task(root, hash, myCache, myGraph, myRefs));
     }
     return refs;
+  }
+
+  @Nullable
+  public List<String> getContainingBranchesIfAvailable(@NotNull Hash hash) {
+    return myCache.get(hash);
+  }
+
+  @NotNull
+  public Condition<Hash> getBranchChecker(@NotNull final String branchName, @NotNull final VirtualFile root) {
+    if (myRefs == null || myGraph == null) return Conditions.alwaysFalse();
+    VcsRef branchRef = ContainerUtil.find(myRefs.getBranches(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef vcsRef) {
+        return vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName);
+      }
+    });
+    if (branchRef == null) return Conditions.alwaysFalse();
+    BranchChecker checker = myCheckers.get(Pair.create(root, branchName));
+    if (checker == null) {
+      checker = new BranchChecker(myGraph.getBranchChecker(myDataHolder.getCommitIndex(branchRef.getCommitHash())));
+      myCheckers.put(Pair.create(root, branchName), checker);
+    }
+    return checker;
   }
 
   @NotNull
@@ -179,4 +211,22 @@ public class ContainingBranchesGetter implements VcsLogListener {
     }
   }
 
+  private class BranchChecker implements Condition<Hash> {
+    @NotNull private final Condition<Integer> myChecker;
+    private volatile boolean isDisposed = false;
+
+    public BranchChecker(@NotNull Condition<Integer> checker) {
+      myChecker = checker;
+    }
+
+    @Override
+    public boolean value(Hash hash) {
+      if (isDisposed) return false;
+      return myChecker.value(myDataHolder.getCommitIndex(hash));
+    }
+
+    public void dispose() {
+      isDisposed = true;
+    }
+  }
 }

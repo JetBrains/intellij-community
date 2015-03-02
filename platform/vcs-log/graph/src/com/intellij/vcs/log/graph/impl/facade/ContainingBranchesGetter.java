@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.Flags;
@@ -66,5 +67,26 @@ public class ContainingBranchesGetter {
 
   private void checkAndAdd(int nodeIndex, Set<Integer> result) {
     if (myBranchNodeIndexes.contains(nodeIndex)) result.add(nodeIndex);
+  }
+
+  public void walkBranch(int branchHead, @NotNull final Consumer<Integer> consumer) {
+    myTempFlags.setAll(false);
+    myTempFlags.set(branchHead, true);
+    consumer.consume(branchHead);
+
+    myDfsUtil.nodeDfsIterator(branchHead, new DfsUtil.NextNode() {
+      @Override
+      public int fun(int currentNode) {
+        for (int downNode : myGraph.getNodes(currentNode, LiteLinearGraph.NodeFilter.DOWN)) {
+          if (!myTempFlags.get(downNode)) {
+            myTempFlags.set(downNode, true);
+            consumer.consume(downNode);
+            return downNode;
+          }
+        }
+
+        return NODE_NOT_FOUND;
+      }
+    });
   }
 }

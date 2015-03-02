@@ -13,43 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui;
+package com.intellij.dvcs.ui;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.ui.VcsLogHighlighterCreator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Map;
 
-public class MyCommitsHighlighter implements VcsLogHighlighter {
-  private static final JBColor ME_BG = new JBColor(new Color(255, 255, 228), new Color(73, 71, 63));
+public class CurrentBranchHighlighter implements VcsLogHighlighter {
+  private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsRepositoryManager myRepositoryManager;
 
-  public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+  public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
+    myRepositoryManager = myDataHolder.getProject().getComponent(VcsRepositoryManager.class);
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlightMyCommits()) return VcsCommitStyle.DEFAULT;
-    Map<VirtualFile, VcsUser> users = myDataHolder.getCurrentUser();
+    if (isSelected || !myUiProperties.isHighlightCurrentBranch()) return VcsCommitStyle.DEFAULT;
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
-      VcsUser currentUser = users.get(details.getRoot());
-      if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
-        return VcsCommitStyleFactory.background(ME_BG);
+      Repository repo = myRepositoryManager.getRepositoryForRoot(details.getRoot());
+      if (repo != null) {
+        String currentBranch = repo.getCurrentBranchName();
+        if (currentBranch == null) {
+          if (repo.getCurrentRevision() != null) currentBranch = "HEAD"; // does this work for hg?
+        }
+        if (currentBranch != null) {
+          Condition<Hash> checker = myDataHolder.getContainingBranchesGetter().getBranchChecker(currentBranch, details.getRoot());
+          if (checker.value(details.getId())) {
+            return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
+          }
+        }
       }
     }
     return VcsCommitStyle.DEFAULT;
@@ -59,7 +70,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
-      return new MyCommitsHighlighter(logDataHolder, uiProperties);
+      return new CurrentBranchHighlighter(logDataHolder, uiProperties);
     }
   }
 }
