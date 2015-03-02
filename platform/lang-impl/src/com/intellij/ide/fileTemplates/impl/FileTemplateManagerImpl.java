@@ -421,6 +421,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     }
   }
 
+  @Override
+  public void saveAllTemplates() {
+    for (FTManager manager : myAllManagers) {
+      manager.saveTemplates();
+    }
+  }
+
   public URL getDefaultTemplateDescription() {
     return myDefaultTemplateDescription;
   }
