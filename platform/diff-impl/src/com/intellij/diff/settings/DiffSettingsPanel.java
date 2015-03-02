@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.settings;
 
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.util.ui.UIUtil;
@@ -27,8 +28,10 @@ import java.util.Hashtable;
 public class DiffSettingsPanel {
   private JPanel myPane;
   private ContextRangePanel myContextRangeComponent;
+  private JCheckBox myGoToNextFileOnNextDifferenceCheckbox;
 
   @NotNull private TextDiffSettings myTextSettings = TextDiffSettings.getSettings();
+  @NotNull private DiffSettings myDiffSettings = DiffSettings.getSettings();
 
   @NotNull
   public JComponent getPanel() {
@@ -37,15 +40,18 @@ public class DiffSettingsPanel {
 
   public boolean isModified() {
     if (myContextRangeComponent.isModified()) return true;
+    if (myGoToNextFileOnNextDifferenceCheckbox.isSelected() != myDiffSettings.isGoToNextFileOnNextDifference()) return true;
     return false;
   }
 
   public void apply() {
     myContextRangeComponent.apply();
+    myDiffSettings.setGoToNextFileOnNextDifference(myGoToNextFileOnNextDifferenceCheckbox.isSelected());
   }
 
   public void reset() {
     myContextRangeComponent.reset();
+    myGoToNextFileOnNextDifferenceCheckbox.setSelected(myDiffSettings.isGoToNextFileOnNextDifference());
   }
 
   private void createUIComponents() {
