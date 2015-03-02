@@ -28,6 +28,7 @@ import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
@@ -834,6 +835,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       if (myEditor1 == null || myEditor2 == null) return;
       Graphics2D gg = getDividerGraphics(g, divider);
+
+      gg.setColor(DiffDrawUtil.getDividerColor(myEditor1));
+      gg.fill(gg.getClipBounds());
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);

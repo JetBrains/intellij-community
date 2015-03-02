@@ -29,11 +29,8 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.threeside.ThreesideTextDiffViewer;
-import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
@@ -571,6 +568,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       Graphics2D gg = getDividerGraphics(g, divider);
+
+      gg.setColor(DiffDrawUtil.getDividerColor(myEditors.get(0)));
+      gg.fill(gg.getClipBounds());
 
       Editor editor1 = mySide.select(myEditors.get(0), myEditors.get(1));
       Editor editor2 = mySide.select(myEditors.get(1), myEditors.get(2));

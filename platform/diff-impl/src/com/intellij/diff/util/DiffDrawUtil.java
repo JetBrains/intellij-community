@@ -16,6 +16,9 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.util.DocumentUtil;
@@ -29,6 +32,21 @@ import java.awt.geom.Path2D;
 
 public class DiffDrawUtil {
   private DiffDrawUtil() {
+  }
+
+  @NotNull
+  public static Color getDividerColor() {
+    return getDividerColor(null);
+  }
+
+  @NotNull
+  public static Color getDividerColor(@Nullable Editor editor) {
+    EditorColorsScheme scheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    Color gutterBackground = scheme.getColor(EditorColors.GUTTER_BACKGROUND);
+    if (gutterBackground == null) {
+      gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
+    }
+    return gutterBackground;
   }
 
   public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
