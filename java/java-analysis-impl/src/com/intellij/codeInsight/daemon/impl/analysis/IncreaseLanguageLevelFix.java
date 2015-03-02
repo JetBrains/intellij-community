@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -86,20 +85,15 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     LOG.assertTrue(virtualFile != null);
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     final LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
-          rootModel.commit();
-        }
-        else {
-          LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
-          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
-        }
-      }
-    });
+    if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
+      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
+      rootModel.commit();
+    }
+    else {
+      LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+    }
   }
 
   @Nullable
@@ -111,6 +105,6 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 }
