@@ -16,18 +16,29 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePreprocessor {
-  private final PsiModificationTrackerImpl myModificationTracker;
+  @NotNull private final Project myProject;
+  @Nullable private final PsiManagerImpl myPsiManager;
 
-  public PsiTreeChangePreprocessorBase(PsiManagerImpl psiManager) {
-    myModificationTracker = (PsiModificationTrackerImpl) psiManager.getModificationTracker();
+  public PsiTreeChangePreprocessorBase(@NotNull Project project) {
+    myProject = project;
+    myPsiManager = null;
+  }
+  
+  public PsiTreeChangePreprocessorBase(@NotNull PsiManagerImpl psiManager) {
+    myPsiManager = psiManager;
+    myProject = psiManager.getProject();
     psiManager.addTreeChangePreprocessor(this);
   }
 
@@ -73,8 +84,13 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     }
 
     if (!changedInsideCodeBlock) {
-      myModificationTracker.incOutOfCodeBlockModificationCounter();
+      getModificationTracker().incOutOfCodeBlockModificationCounter();
     }
+  }
+
+  @NotNull
+  private PsiModificationTrackerImpl getModificationTracker() {
+    return (PsiModificationTrackerImpl)ObjectUtils.notNull(myPsiManager, PsiManager.getInstance(myProject)).getModificationTracker();
   }
 
   protected abstract boolean isInsideCodeBlock(PsiElement element);
