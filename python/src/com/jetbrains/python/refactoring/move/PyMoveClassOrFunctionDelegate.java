@@ -46,10 +46,22 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if ((element instanceof PyClass || element instanceof PyFunction) && PyUtil.isTopLevel(element)) continue;
-      return false;
+      if (!canMoveElement(element)) {
+        return false;
+      }
     }
     return super.canMove(elements, targetContainer);
+  }
+
+  /**
+   * Checks that given element is suitable for "Move ..." refactoring. Currently it means that it's top-level function, class or
+   * target expression.
+   *
+   * @param element PSI element to check
+   * @return whether this element is acceptable for "Move ..." refactoring
+   */
+  public static boolean canMoveElement(@NotNull PsiElement element) {
+    return (element instanceof PyClass || element instanceof PyFunction) && PyUtil.isTopLevel(element);
   }
 
   @Override

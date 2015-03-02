@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -46,7 +44,7 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
   private static PyMoveTopLevelSymbolDialog ourInstanceToReplace = null;
 
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
-  private final ModuleMemberInfoModel myModuleMemberModel;
+  private final PyModuleMemberInfoModel myModuleMemberModel;
   private JPanel myCenterPanel;
   private JPanel myTablePanel;
   private TextFieldWithBrowseButton myBrowseFieldWithButton;
@@ -115,13 +113,15 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
                                                     TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     final PyFile pyFile = (PyFile)firstElement.getContainingFile();
-    myModuleMemberModel = new ModuleMemberInfoModel(pyFile);
+    myModuleMemberModel = new PyModuleMemberInfoModel(pyFile);
 
-    final List<TopLevelSymbolInfo> symbolsInfo = myModuleMemberModel.getTopLevelSymbolInfo();
-    for (TopLevelSymbolInfo info : symbolsInfo) {
+    final List<PyModuleMemberInfo> symbolsInfos = myModuleMemberModel.collectTopLevelSymbolsInfo();
+    for (PyModuleMemberInfo info : symbolsInfos) {
       info.setChecked(elements.contains(info.getMember()));
     }
-    myMemberSelectionTable = new TopLevelSymbolsSelectionTable(symbolsInfo, myModuleMemberModel);
+    myModuleMemberModel.memberInfoChanged(new MemberInfoChange<PyElement, PyModuleMemberInfo>(symbolsInfos));
+    myMemberSelectionTable = new TopLevelSymbolsSelectionTable(symbolsInfos, myModuleMemberModel);
+    myMemberSelectionTable.addMemberInfoChangeListener(myModuleMemberModel);
     // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
     myTablePanel.add(ScrollPaneFactory.createScrollPane(myMemberSelectionTable), BorderLayout.CENTER);
 
@@ -156,9 +156,9 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
 
   @NotNull
   public List<PyElement> getSelectedTopLevelSymbols() {
-    return ContainerUtil.map(myMemberSelectionTable.getSelectedMemberInfos(), new Function<TopLevelSymbolInfo, PyElement>() {
+    return ContainerUtil.map(myMemberSelectionTable.getSelectedMemberInfos(), new Function<PyModuleMemberInfo, PyElement>() {
       @Override
-      public PyElement fun(TopLevelSymbolInfo info) {
+      public PyElement fun(PyModuleMemberInfo info) {
         return info.getMember();
       }
     });
@@ -175,95 +175,12 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
     }
   }
 
-  static class ModuleMemberInfoModel implements MemberInfoModel<PyElement, TopLevelSymbolInfo> {
-    final PyFile myPyFile;
-
-    public ModuleMemberInfoModel(@NotNull PyFile pyFile) {
-      myPyFile = pyFile;
-    }
-
-    @NotNull
-    public List<PyElement> getTopLevelSymbols() {
-      final List<PyElement> result = new ArrayList<PyElement>();
-      result.addAll(myPyFile.getTopLevelAttributes());
-      result.addAll(myPyFile.getTopLevelClasses());
-      result.addAll(myPyFile.getTopLevelFunctions());
-      return result;
-    }
-
-    @NotNull
-    public List<TopLevelSymbolInfo> getTopLevelSymbolInfo() {
-      return ContainerUtil.mapNotNull(getTopLevelSymbols(), new Function<PyElement, TopLevelSymbolInfo>() {
-        @Override
-        public TopLevelSymbolInfo fun(PyElement element) {
-          return new TopLevelSymbolInfo(element);
-        }
-      });
-    }
-
-    @Override
-    public boolean isMemberEnabled(TopLevelSymbolInfo member) {
-      return true;
-    }
-
-    @Override
-    public boolean isCheckedWhenDisabled(TopLevelSymbolInfo member) {
-      return false;
-    }
-
-    @Override
-    public boolean isAbstractEnabled(TopLevelSymbolInfo member) {
-      return false;
-    }
-
-    @Override
-    public boolean isAbstractWhenDisabled(TopLevelSymbolInfo member) {
-      return false;
-    }
-
-    @Override
-    public Boolean isFixedAbstract(TopLevelSymbolInfo member) {
-      return null;
-    }
-
-    @Override
-    public int checkForProblems(@NotNull TopLevelSymbolInfo member) {
-      return 0;
-    }
-
-    @Override
-    public String getTooltipText(TopLevelSymbolInfo member) {
-      return "";
-    }
-
-    @Override
-    public void memberInfoChanged(MemberInfoChange<PyElement, TopLevelSymbolInfo> event) {
-
-    }
-  }
-
-  static class TopLevelSymbolInfo extends MemberInfoBase<PyElement> {
-    public TopLevelSymbolInfo(PyElement member) {
-      super(member);
-    }
-
-    @Override
-    public boolean isStatic() {
-      return true;
-    }
-
-    @Override
-    public String getDisplayName() {
-      return getMember().getName();
-    }
-  }
-
-  static class TopLevelSymbolsSelectionTable extends AbstractMemberSelectionTable<PyElement, TopLevelSymbolInfo> {
-    public TopLevelSymbolsSelectionTable(@NotNull Collection<TopLevelSymbolInfo> memberInfos,
-                                         @Nullable MemberInfoModel<PyElement, TopLevelSymbolInfo> memberInfoModel) {
+  static class TopLevelSymbolsSelectionTable extends AbstractMemberSelectionTable<PyElement, PyModuleMemberInfo> {
+    public TopLevelSymbolsSelectionTable(@NotNull Collection<PyModuleMemberInfo> memberInfos,
+                                         @Nullable MemberInfoModel<PyElement, PyModuleMemberInfo> memberInfoModel) {
       super(memberInfos, memberInfoModel, null);
       // TODO: It's better to make AbstractMemberSelectionTable more flexible than to patch model like that
-      myTableModel = new MyTableModel<PyElement, TopLevelSymbolInfo>(this) {
+      myTableModel = new MyTableModel<PyElement, PyModuleMemberInfo>(this) {
         @Override
         public String getColumnName(int column) {
           return column == DISPLAY_NAME_COLUMN ? "Symbol" : super.getColumnName(column);
@@ -278,7 +195,7 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
 
     @Nullable
     @Override
-    protected Object getAbstractColumnValue(TopLevelSymbolInfo memberInfo) {
+    protected Object getAbstractColumnValue(PyModuleMemberInfo memberInfo) {
       return null;
     }
 
@@ -288,12 +205,12 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
     }
 
     @Override
-    protected void setVisibilityIcon(TopLevelSymbolInfo memberInfo, RowIcon icon) {
+    protected void setVisibilityIcon(PyModuleMemberInfo memberInfo, RowIcon icon) {
 
     }
 
     @Override
-    protected Icon getOverrideIcon(TopLevelSymbolInfo memberInfo) {
+    protected Icon getOverrideIcon(PyModuleMemberInfo memberInfo) {
       return null;
     }
   }

@@ -356,7 +356,7 @@
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="Python"
-                                                            implementationClass="com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport"/>
+                                                            implementationClass="com.jetbrains.python.refactoring.classes.PyMembersRefactoringSupport"/>
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineLocalHandler"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
