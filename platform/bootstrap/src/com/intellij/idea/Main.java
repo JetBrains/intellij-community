@@ -60,9 +60,6 @@ public class Main {
 
     setFlags(args);
 
-    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
-    showMessage("vmOptionsFile", "vmOptionsFile: " + vmOptionsFile, false);
-
     if (isHeadless()) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
@@ -82,6 +79,8 @@ public class Main {
 
     try {
       Bootstrap.main(args, Main.class.getName() + "Impl", "start");
+      String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+      showMessage("vmOptionsFile", "vmOptionsFile: " + vmOptionsFile, false);
     }
     catch (Throwable t) {
       showMessage("Start Failed", t);
