@@ -65,6 +65,11 @@ public interface EditorEx extends Editor {
 
   JComponent getPermanentHeaderComponent();
 
+  /**
+   * shouldn't be called during Document update
+   */
+  void setViewer(boolean isViewer);
+
   void setPermanentHeaderComponent(JComponent component);
 
   void setHighlighter(@NotNull EditorHighlighter highlighter);
