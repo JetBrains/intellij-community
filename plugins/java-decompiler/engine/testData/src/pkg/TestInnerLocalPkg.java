@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-public class TestInnerLocal {
+package pkg;
+
+public class TestInnerLocalPkg {
   public static void testStaticMethod() {
     class Inner {
       final String x;
