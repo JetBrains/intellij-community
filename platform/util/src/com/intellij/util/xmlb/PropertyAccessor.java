@@ -66,6 +66,11 @@ class PropertyAccessor implements Accessor {
   }
 
   @Override
+  public void write(Object o, Object value) {
+    set(o, value);
+  }
+
+  @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
       setter.invoke(host, value);
