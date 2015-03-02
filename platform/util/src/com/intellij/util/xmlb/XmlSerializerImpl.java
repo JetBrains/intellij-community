@@ -18,7 +18,9 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.xmlb.annotations.CollectionBean;
+import org.jdom.Content;
 import org.jdom.Element;
+import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -283,5 +286,18 @@ class XmlSerializerImpl {
     else {
       return value.toString();
     }
+  }
+
+  @NotNull
+  static String getTextValue(@NotNull Element element, @NotNull String defaultText) {
+    List<Content> content = element.getContent();
+    String value = defaultText;
+    if (!content.isEmpty()) {
+      Content child = content.get(0);
+      if (child instanceof Text) {
+        value = child.getValue();
+      }
+    }
+    return value;
   }
 }

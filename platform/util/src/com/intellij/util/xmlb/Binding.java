@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 abstract class Binding {
+  static final Logger LOG = Logger.getInstance(Binding.class);
+
   protected final MutableAccessor myAccessor;
 
   protected Binding(MutableAccessor accessor) {
