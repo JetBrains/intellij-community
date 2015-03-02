@@ -55,7 +55,7 @@ public class ProcessBackedConsoleExecuteActionHandler extends BaseConsoleExecute
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     assert outputStream != null : "output stream is null";
     try {
-      byte[] bytes = charset != null ? (line + "\n").getBytes(charset) : line.getBytes();
+      byte[] bytes = charset != null ? line.getBytes(charset) : line.getBytes();
       outputStream.write(bytes);
       outputStream.flush();
     }
