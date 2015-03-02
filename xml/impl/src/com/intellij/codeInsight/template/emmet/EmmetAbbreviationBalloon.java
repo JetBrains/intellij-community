@@ -61,7 +61,7 @@ public class EmmetAbbreviationBalloon {
       myCallback.onEnter(ourTestingAbbreviation);
       return;
     }
-    
+
     final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(myAbbreviationsHistoryKey);
     final Dimension fieldPreferredSize = field.getPreferredSize();
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
@@ -75,16 +75,27 @@ public class EmmetAbbreviationBalloon {
       .setHideOnClickOutside(true)
       .createBalloon();
 
-    field.addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter documentListener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        if (!isValid(customTemplateCallback)) {
+          balloon.hide();
+          return;
+        }
         validateTemplateKey(field, balloon, field.getText(), customTemplateCallback);
       }
-    });
-    field.addKeyboardListener(new KeyAdapter() {
+    };
+    field.addDocumentListener(documentListener);
+
+    final KeyAdapter keyListener = new KeyAdapter() {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (!field.isPopupVisible()) {
+          if (!isValid(customTemplateCallback)) {
+            balloon.hide();
+            return;
+          }
+
           switch (e.getKeyCode()) {
             case KeyEvent.VK_ENTER:
               final String abbreviation = field.getText();
@@ -101,12 +112,20 @@ public class EmmetAbbreviationBalloon {
           }
         }
       }
-    });
+    };
+    field.addKeyboardListener(keyListener);
 
     balloon.addListener(new JBPopupListener.Adapter() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
         field.setText(PropertiesComponent.getInstance().getValue(myLastAbbreviationKey, ""));
+      }
+
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        field.removeKeyListener(keyListener);
+        field.removeDocumentListener(documentListener);
+        super.onClosed(event);
       }
     });
     balloon.show(popupFactory.guessBestPopupLocation(customTemplateCallback.getEditor()), Balloon.Position.below);
@@ -133,6 +152,9 @@ public class EmmetAbbreviationBalloon {
     return correct;
   }
 
+  private static boolean isValid(CustomTemplateCallback callback) {
+    return !callback.getEditor().isDisposed();
+  }
 
   public interface Callback {
     void onEnter(@NotNull String abbreviation);
