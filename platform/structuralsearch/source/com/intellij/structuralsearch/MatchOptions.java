@@ -27,7 +27,6 @@ public class MatchOptions implements JDOMExternalizable {
   private Language myDialect = null;
 
   private SearchScope scope;
-  private SearchScope downUpMatchScope;
   private String searchCriteria = "";
   @Nullable private Map<String,MatchVariableConstraint> variableConstraints;
 
@@ -138,14 +137,6 @@ public class MatchOptions implements JDOMExternalizable {
 
   public void setScope(SearchScope scope) {
     this.scope = scope;
-  }
-
-  public SearchScope getDownUpMatchScope() {
-    return downUpMatchScope;
-  }
-
-  public void setDownUpMatchScope(final SearchScope downUpMatchScope) {
-    this.downUpMatchScope = downUpMatchScope;
   }
 
   public void writeExternal(Element element) {
