@@ -229,7 +229,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myMode = mode;
 
     if (mode == EvaluationMode.EXPRESSION) {
-      text = new XExpressionImpl(StringUtil.replace(text.getExpression(), "\n", " "), text.getLanguage(), text.getCustomInfo());
+      text = new XExpressionImpl(StringUtil.convertLineSeparators(text.getExpression(), " "), text.getLanguage(), text.getCustomInfo());
     }
 
     myInputComponent = createInputComponent(mode, text);
