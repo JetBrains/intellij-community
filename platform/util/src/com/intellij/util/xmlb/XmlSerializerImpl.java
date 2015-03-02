@@ -274,4 +274,14 @@ class XmlSerializerImpl {
       accessor.set(host, deserializedValue);
     }
   }
+
+  @NotNull
+  static String convertToString(@NotNull Object value) {
+    if (value instanceof Date) {
+      return Long.toString(((Date)value).getTime());
+    }
+    else {
+      return value.toString();
+    }
+  }
 }

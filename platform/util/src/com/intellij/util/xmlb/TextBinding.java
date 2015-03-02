@@ -19,8 +19,6 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
-
 class TextBinding extends Binding {
   private final Class<?> valueClass;
 
@@ -34,17 +32,7 @@ class TextBinding extends Binding {
   @Override
   public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
     Object value = myAccessor.read(o);
-    return value == null ? null : new Text(convertToString(value));
-  }
-
-  @NotNull
-  static String convertToString(@NotNull Object value) {
-    if (value instanceof Date) {
-      return Long.toString(((Date)value).getTime());
-    }
-    else {
-      return value.toString();
-    }
+    return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
   }
 
   void set(@NotNull Object context, @NotNull String value) {

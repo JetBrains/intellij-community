@@ -159,7 +159,7 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
     }
 
     if (binding == null) {
-      entry.setAttribute(attributeName, TextBinding.convertToString(value));
+      entry.setAttribute(attributeName, XmlSerializerImpl.convertToString(value));
     }
     else {
       Object serialized = binding.serialize(value, entry, filter);

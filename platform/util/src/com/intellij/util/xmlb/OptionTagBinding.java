@@ -67,7 +67,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
     if (myConverter == null) {
       if (myBinding == null) {
-        targetElement.setAttribute(myValueAttribute, TextBinding.convertToString(value));
+        targetElement.setAttribute(myValueAttribute, XmlSerializerImpl.convertToString(value));
       }
       else if (myBinding instanceof BeanBinding && myValueAttribute.isEmpty()) {
         ((BeanBinding)myBinding).serializeInto(value, targetElement, filter);

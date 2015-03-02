@@ -45,7 +45,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     }
 
     if (myBinding == null) {
-      serialized.addContent(new Text(TextBinding.convertToString(value)));
+      serialized.addContent(new Text(XmlSerializerImpl.convertToString(value)));
     }
     else {
       Object node = myBinding.serialize(value, serialized, filter);
