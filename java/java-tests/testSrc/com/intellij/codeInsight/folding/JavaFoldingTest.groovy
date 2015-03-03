@@ -41,6 +41,7 @@ import org.intellij.lang.annotations.RegExp
 
 import static com.intellij.codeInsight.folding.impl.ConstantExpressionFoldingManager.CONSTANT_EXPRESSION_GROUP_NAME
 import static com.intellij.codeInsight.folding.impl.StringEscapeFoldingManager.STRING_ESCAPE_GROUP_NAME
+import static com.intellij.codeInsight.folding.impl.StringFormatFoldingManager.STRING_FORMAT_GROUP_NAME
 
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   def JavaCodeFoldingSettingsImpl myFoldingSettings
@@ -1162,5 +1163,51 @@ class Test {
     configure text
 
     assertSize text.count("/**"), getFoldRegions(STRING_ESCAPE_GROUP_NAME)
+  }
+
+  public void "test whether string formats are folded"() {
+    myFoldingSettings.COLLAPSE_STRINGS = true
+
+    @Language("JAVA") def text = '''
+      import java.util.Locale;
+      import static java.lang.String.*;
+
+      @SuppressWarnings("All") abstract class Foo {
+        private static final String PATTERN = "'%s'";
+        private static Object x = 0;
+        static {
+          String.format("");              /** empty */
+          String.format("test");          /** simple folding */
+          String.format("%s", "test");    /** simple format */
+          String.format("%s←", "test");  /** first */
+          String.format("→%s", "test");  /** last */
+          String.format("→%s←", "test"); /** middle */
+          String.format(":%s)", "");      /** replace with empty */
+
+          java.lang.String.format("%s=%s", x, "y"); /** fully qualified with non-constant */
+          format(" [%d : %d] ", 1
+                              , 2);                 /** static import and extensive spacing */
+
+          String.format("%n%d%%", 100);     /** constant pattern at beginning and end */
+          String.format("-%n%d%%%n-", 100); /** constant pattern in the middle */
+
+          String.format("x = %d, y = %f", ("".length() >= 0) ? 1 : 0, Math.PI); /** complex expression */
+
+          final int num = 3;
+          String.format(Locale.getDefault(), "%d + %d = %d",1,2,num); /** with locale, constant and no spacing */
+
+          final String constant = "0";
+          String.format(PATTERN, constant); /** constant, non-literal pattern and value */
+
+          String.format("%d");                   /* error: fewer args */
+          String.format("%d, %d, %d", "NaN", 1); /* error: fewer args */
+          String.format("%d, %d", 1, 2, 3);      /* error: more args */
+          String.format("none", 1);              /* error: more args */
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(STRING_FORMAT_GROUP_NAME)
   }
 }

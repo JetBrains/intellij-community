@@ -22,16 +22,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static com.intellij.codeInsight.folding.impl.StringFormatFoldingManager.STRING_FORMAT_PATTERN;
 
 @SuppressWarnings({"CollectionDeclaredAsConcreteClass", "ObjectEquality", "HardCodedStringLiteral"})
 class FormatDecode {
-
-  private static final String FORMAT_SPECIFIER =
-    "%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])";
-
-  private static final Pattern fsPattern = Pattern.compile(FORMAT_SPECIFIER);
-
   private FormatDecode() {}
 
   private static final Validator ALL_VALIDATOR = new AllValidator();
@@ -47,7 +42,7 @@ class FormatDecode {
   public static Validator[] decode(String formatString, int argumentCount) {
     final ArrayList<Validator> parameters = new ArrayList<Validator>();
 
-    final Matcher matcher = fsPattern.matcher(formatString);
+    final Matcher matcher = STRING_FORMAT_PATTERN.matcher(formatString);
     int implicit = 0;
     int pos = 0;
     for (int i = 0; matcher.find(i); i = matcher.end()) {
