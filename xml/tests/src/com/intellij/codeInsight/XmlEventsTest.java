@@ -156,7 +156,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
         ((DocumentEx)document).setInBulkUpdate(false);
       }
     }.execute();
-    assertEquals("(Xml document changed)\n", listener.getEventString());
+    assertEquals("(Xml document changed)", listener.getEventString().trim());
   }
 
   public void testDocumentChange1() throws Exception{
