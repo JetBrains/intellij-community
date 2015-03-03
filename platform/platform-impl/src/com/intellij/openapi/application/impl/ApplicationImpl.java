@@ -979,11 +979,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      LOG.error(
+      throw new RuntimeException(
         "Read access is allowed from event dispatch thread or inside read-action only" +
-        " (see com.intellij.openapi.application.Application.runReadAction())",
-        "Current thread: " + describe(Thread.currentThread()), "; dispatch thread: " + EventQueue.isDispatchThread() +"; isDispatchThread(): "+isDispatchThread(),
-        "SystemEventQueueThread: " + describe(getEventQueueThread()));
+        " (see com.intellij.openapi.application.Application.runReadAction())" +
+        " Current thread: " + describe(Thread.currentThread()) +
+        "; dispatch thread: " + EventQueue.isDispatchThread() +"; isDispatchThread(): "+isDispatchThread() +
+        " SystemEventQueueThread: " + describe(getEventQueueThread()));
     }
   }
 
@@ -1033,12 +1034,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static void assertIsDispatchThread(Status status, @NotNull String message) {
     if (isDispatchThread(status)) return;
-    LOG.error(message,
-              "EventQueue.isDispatchThread()="+EventQueue.isDispatchThread(),
-              "isDispatchThread()="+isDispatchThread(getStatus()),
-              "Toolkit.getEventQueue()="+Toolkit.getDefaultToolkit().getSystemEventQueue(),
-              "Current thread: " + describe(Thread.currentThread()),
-              "SystemEventQueueThread: " + describe(getEventQueueThread()) +"\n"+ ThreadDumper.dumpThreadsToString()+"\n-----------");
+    throw new RuntimeException(message +
+              " EventQueue.isDispatchThread()="+EventQueue.isDispatchThread()+
+              " isDispatchThread()="+isDispatchThread(getStatus())+
+              " Toolkit.getEventQueue()="+Toolkit.getDefaultToolkit().getSystemEventQueue()+
+              " Current thread: " + describe(Thread.currentThread())+
+              " SystemEventQueueThread: " + describe(getEventQueueThread()) +"\n"+ ThreadDumper.dumpThreadsToString()+"\n-----------");
   }
 
   @Override
@@ -1163,6 +1164,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private void startWrite(Class clazz) {
+    assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
 
@@ -1174,11 +1176,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         if (!isWriteAccessAllowed()) {
           assertNoPsiLock();
         }
-        if (!myLock.writeLock().tryLock()) {
-          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
-          myLock.writeLock().lockInterruptibly();
-          lockAcquired.set(true);
-        }
+        myLock.writeLock().lockInterruptibly();
       }
       catch (InterruptedException e) {
         throw new RuntimeInterruptedException(e);
@@ -1205,7 +1203,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public AccessToken acquireWriteActionLock(Class clazz) {
-    assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     return new WriteAccessToken(clazz);
   }
 
