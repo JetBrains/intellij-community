@@ -410,11 +410,16 @@ public class MinusculeMatcher implements Matcher {
     if (!charEquals(patternChar, patternIndex, name.charAt(nameIndex), ignoreCase)) return false;
 
     if (myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER &&
-        (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) && 
+        (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
+        hasCase(patternChar) &&
         Character.isUpperCase(patternChar) != Character.isUpperCase(name.charAt(0))) {
       return false;
     }
     return true;
+  }
+
+  private static boolean hasCase(char patternChar) {
+    return Character.isUpperCase(patternChar) || Character.isLowerCase(patternChar);
   }
 
   private boolean isWildcard(int patternIndex) {
