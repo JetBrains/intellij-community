@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,15 +41,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.CachedXmlDocumentSet;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSame;
@@ -69,13 +65,6 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
-
-  private IdeaSpecificSettings() {
-  }
-
-  public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
-    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml, false).getRootElement(), model, null, new HashMap<String, String>());
-  }
 
   @Override
   protected void readLibraryLevels(Element root, Map<String, String> levels) {
@@ -151,7 +140,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   @Override
-  protected void readLanguageLevel(Element root, ModifiableRootModel model) throws InvalidDataException {
+  protected void readLanguageLevel(Element root, ModifiableRootModel model) {
     model.getModuleExtension(LanguageLevelModuleExtensionImpl.class).readExternal(root);
   }
 

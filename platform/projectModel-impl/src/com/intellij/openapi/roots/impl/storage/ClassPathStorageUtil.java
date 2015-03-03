@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,12 @@ public class ClassPathStorageUtil {
   @NonNls public static final String CLASSPATH_OPTION = JpsProjectLoader.CLASSPATH_ATTRIBUTE;
 
   public static boolean isDefaultStorage(@NotNull Module module) {
-    final String storageType = getStorageType(module);
-    return storageType.equals(DEFAULT_STORAGE);
+    return getStorageType(module).equals(DEFAULT_STORAGE);
   }
 
   @NotNull
   public static String getStorageType(@NotNull Module module) {
-    final String id = module.getOptionValue(CLASSPATH_OPTION);
+    String id = module.getOptionValue(CLASSPATH_OPTION);
     return id == null ? DEFAULT_STORAGE : id;
   }
 }

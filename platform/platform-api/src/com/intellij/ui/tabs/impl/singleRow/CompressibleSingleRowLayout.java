@@ -18,34 +18,16 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.GraphicsUtil;
 
-import java.awt.*;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 public class CompressibleSingleRowLayout extends SingleRowLayout {
   public CompressibleSingleRowLayout(JBTabsImpl tabs) {
     super(tabs);
-  }
-
-  @Override
-  public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos) {
-    SingleRowPassInfo data = (SingleRowPassInfo)super.layoutSingleRow(visibleInfos);
-    if (data.toLayout.size() > 0) {
-      final TabLabel firstLabel = myTabs.myInfo2Label.get(data.toLayout.get(0));
-      final TabLabel lastLabel = findLastVisibleLabel(data);
-      if (firstLabel != null && lastLabel != null) {
-        data.tabRectangle.x = firstLabel.getBounds().x;
-        data.tabRectangle.y = firstLabel.getBounds().y;
-        data.tabRectangle.width = data.requiredLength;
-        data.tabRectangle.height = (int)lastLabel.getBounds().getMaxY() - data.tabRectangle.y;
-      }
-    }
-
-    return data;
   }
 
   @Override
@@ -63,48 +45,54 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       return;
     }
 
-    int tabWidth = 0;
-    boolean layoutStopped = false;
-    int lengthEstimation = 0;
-    for (TabInfo eachInfo : data.toLayout) {
-      final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
-      if (tabWidth == 0) {
-        tabWidth = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * 20;
-      }
-      lengthEstimation += tabWidth;
-    }
-    double compressionFactor = (double)lengthEstimation / data.toFitLength;
-
+    int maxGridSize = 0;
     int spentLength = 0;
-    for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
-      TabInfo eachInfo = iterator.next();
-      final TabLabel label = myTabs.myInfo2Label.get(eachInfo);
-      if (layoutStopped) {
-        label.setActionPanelVisible(false);
-        final Rectangle rec = getStrategy().getLayoutRect(data, 0, 0);
-        myTabs.layout(label, rec);
-        continue;
-      }
+    int lengthEstimation = 0;
 
+    int[] lengths = new int[data.toLayout.size()];
+
+    List<TabInfo> layout = data.toLayout;
+    for (int i = 0; i < layout.size(); i++) {
+      final TabLabel label = myTabs.myInfo2Label.get(layout.get(i));
+      if (maxGridSize == 0) {
+        maxGridSize = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * 20;
+      }
+      int lengthIncrement = label.getPreferredSize().width;
+      lengths[i] = lengthIncrement;
+      lengthEstimation += lengthIncrement;
+    }
+
+    final int extraWidth = data.toFitLength - lengthEstimation;
+
+    Arrays.sort(lengths);
+    double acc = 0;
+    int actualGridSize = 0;
+    for (int i = 0; i < lengths.length; i++) {
+      int length = lengths[i];
+      acc += length;
+      actualGridSize = (int)Math.min(maxGridSize, (acc + extraWidth) / (i+1));
+      if (i < lengths.length - 1 && actualGridSize < lengths[i+1]) break;
+    }
+
+
+    for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
+      final TabLabel label = myTabs.myInfo2Label.get(iterator.next());
       label.setActionPanelVisible(true);
 
       int length;
-      if (compressionFactor > 1) {
-        length = iterator.hasNext() ? (int)(tabWidth * (float)data.toFitLength / lengthEstimation)
-                                    : data.toFitLength - spentLength - data.toLayout.size() / 2;
-        spentLength += length;
+      int lengthIncrement = label.getPreferredSize().width;
+      if (!iterator.hasNext()) {
+        length = Math.min(data.toFitLength - spentLength, Math.max(actualGridSize, lengthIncrement));
+      }
+      else if (extraWidth <= 0 ) {//need compress
+        length = (int)(lengthIncrement * (float)data.toFitLength / lengthEstimation);
       }
       else {
-        length = tabWidth;
+        length = Math.max(lengthIncrement, actualGridSize);
       }
-      boolean continueLayout = applyTabLayout(data, label, length, 0);
-
-      data.position = getStrategy().getMaxPosition(label.getBounds());
-      data.position += myTabs.getInterTabSpaceLength();
-
-      if (!continueLayout) {
-        layoutStopped = true;
-      }
+      spentLength += length + myTabs.getInterTabSpaceLength();
+      applyTabLayout(data, label, length, 0);
+      data.position = (int)label.getBounds().getMaxX() + myTabs.getInterTabSpaceLength();
     }
 
     for (TabInfo eachInfo : data.toDrop) {

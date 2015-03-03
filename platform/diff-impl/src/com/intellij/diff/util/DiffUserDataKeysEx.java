@@ -39,4 +39,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
 
   Key<String> PLACE = Key.create("Diff.Place");
   Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
+
+  Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
 }

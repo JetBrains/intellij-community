@@ -957,9 +957,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
           return new DiffNavigatable(currentSide);
         }
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return "reference.dialogs.diff.file";
-      }
 
       return super.getData(dataId);
     }

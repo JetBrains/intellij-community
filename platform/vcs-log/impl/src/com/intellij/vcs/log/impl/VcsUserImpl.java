@@ -18,10 +18,15 @@ package com.intellij.vcs.log.impl;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Note: users are considered equal if they have the same name, even if the e-mail is different.
  */
 public class VcsUserImpl implements VcsUser {
+  @NotNull private static final Pattern NAME_WITH_DOT = Pattern.compile("(\\w*)\\.(\\w*)");
+  @NotNull private static final Pattern NAME_WITH_SPACE = Pattern.compile("(\\w*) (\\w*)");
 
   @NotNull private final String myName;
   @NotNull private final String myEmail;
@@ -65,4 +70,20 @@ public class VcsUserImpl implements VcsUser {
     return myName + "<" + myEmail + ">";
   }
 
+  public static boolean isSamePerson(@NotNull VcsUser user1, @NotNull VcsUser user2) {
+    return getNameInStandardForm(user1.getName()).equals(getNameInStandardForm(user2.getName()));
+  }
+
+  @NotNull
+  private static String getNameInStandardForm(@NotNull String name) {
+    Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
+    if (nameWithDotMatcher.matches()) {
+      return nameWithDotMatcher.group(1).toLowerCase() + " " + nameWithDotMatcher.group(2).toLowerCase();
+    }
+    Matcher nameWithSpaceMatcher = NAME_WITH_SPACE.matcher(name);
+    if (nameWithSpaceMatcher.matches()) {
+      return nameWithSpaceMatcher.group(1).toLowerCase() + " " + nameWithSpaceMatcher.group(2).toLowerCase();
+    }
+    return name.toLowerCase();
+  }
 }

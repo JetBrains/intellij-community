@@ -52,7 +52,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<K, V> map) {
+  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newHashMap(map);
   }
 
@@ -2358,7 +2358,20 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap() {
+    return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <K, V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
     //noinspection deprecation
     return new ConcurrentSoftValueHashMap<K, V>();
   }

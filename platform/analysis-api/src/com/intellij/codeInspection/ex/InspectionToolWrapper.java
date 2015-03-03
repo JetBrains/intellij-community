@@ -115,6 +115,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
+  public String getID() {
+    return getShortName();
+  }
+
   @NotNull
   public String getDisplayName() {
     if (myEP == null) {

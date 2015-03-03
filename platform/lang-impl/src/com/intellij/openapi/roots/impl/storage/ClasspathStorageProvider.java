@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,14 +20,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -45,10 +44,11 @@ public interface ClasspathStorageProvider {
 
   void assertCompatible(final ModuleRootModel model) throws ConfigurationException;
 
-  void detach(Module module);
+  void detach(@NotNull Module module);
 
   void moduleRenamed(Module module, String newName);
 
+  @Nullable
   ClasspathConverter createConverter(Module module);
 
   String getContentRoot(ModuleRootModel model);
@@ -56,10 +56,9 @@ public interface ClasspathStorageProvider {
   void modulePathChanged(Module module, String path);
 
   interface ClasspathConverter {
-
     FileSet getFileSet();
 
-    Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException;
+    void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException;
 
     void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException;
   }

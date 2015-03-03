@@ -38,11 +38,13 @@ import java.util.*;
 /**
  * @author peter
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class DependentGroovycRunner {
   public static final String TEMP_RESOURCE_SUFFIX = "___" + new Random().nextInt() + "_neverHappen";
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
+  private static final String STUB_DIR = "stubDir";
 
-  public static boolean runGroovyc(boolean forStubs, String argsPath) {
+  public static boolean runGroovyc(boolean forStubs, String argsPath, Queue mailbox) {
     File argsFile = new File(argsPath);
     final CompilerConfiguration config = new CompilerConfiguration();
     config.setClasspath("");
@@ -58,21 +60,26 @@ public class DependentGroovycRunner {
     fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutputRef);
     if (srcFiles.isEmpty()) return true;
 
+    String[] finalOutputs = finalOutputRef[0].split(File.pathSeparator);
+
     if (forStubs) {
       Map<String, Object> options = new HashMap<String, Object>();
-      options.put("stubDir", config.getTargetDirectory());
+      options.put(STUB_DIR, config.getTargetDirectory());
       options.put("keepStubs", Boolean.TRUE);
       config.setJointCompilationOptions(options);
+      if (mailbox != null) {
+        config.setTargetDirectory(finalOutputs[0]);
+      }
     }
 
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
-    String[] finalOutputs = finalOutputRef[0].split(File.pathSeparator);
     renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
 
     final List<GroovyCompilerWrapper.OutputItem> compiledFiles;
     try {
       final AstAwareResourceLoader resourceLoader = new AstAwareResourceLoader(class2File);
-      final CompilationUnit unit = createCompilationUnit(forStubs, config, buildClassLoaderFor(config, resourceLoader));
+      final GroovyCompilerWrapper wrapper = new GroovyCompilerWrapper(compilerMessages, forStubs);
+      final CompilationUnit unit = createCompilationUnit(forStubs, config, buildClassLoaderFor(config, resourceLoader), mailbox, wrapper);
       unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
         public void call(SourceUnit source) throws CompilationFailedException {
           File file = new File(source.getName());
@@ -86,7 +93,7 @@ public class DependentGroovycRunner {
       runPatchers(patchers, compilerMessages, unit, resourceLoader, srcFiles);
 
       System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: compiling...");
-      compiledFiles = new GroovyCompilerWrapper(compilerMessages, forStubs).compile(unit);
+      compiledFiles = wrapper.compile(unit, forStubs && mailbox == null ? Phases.CONVERSION : Phases.ALL);
     }
     finally {
       renameResources(finalOutputs, TEMP_RESOURCE_SUFFIX, "");
@@ -265,13 +272,14 @@ public class DependentGroovycRunner {
 
   private static CompilationUnit createCompilationUnit(final boolean forStubs,
                                                        final CompilerConfiguration config,
-                                                       final GroovyClassLoader classLoader) {
+                                                       final GroovyClassLoader classLoader,
+                                                       Queue mailbox, GroovyCompilerWrapper wrapper) {
 
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader);
 
     try {
       if (forStubs) {
-        return createStubGenerator(config, classLoader, transformLoader);
+        return createStubGenerator(config, classLoader, transformLoader, mailbox, wrapper);
       }
     }
     catch (NoClassDefFoundError ignore) { // older groovy distributions just don't have stub generation capability
@@ -304,17 +312,13 @@ public class DependentGroovycRunner {
     return unit;
   }
 
-  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader) {
-    JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
+  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader, final Queue mailbox, final GroovyCompilerWrapper wrapper) {
+    final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader, transformLoader) {
       private boolean annoRemovedAdded;
-
-      public GroovyClassLoader getTransformLoader() {
-        return transformLoader;
-      }
 
       @Override
       public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {
-        if (!annoRemovedAdded && phase == Phases.CONVERSION && op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
+        if (!annoRemovedAdded && mailbox == null && phase == Phases.CONVERSION && op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
           annoRemovedAdded = true;
           super.addPhaseOperation(new PrimaryClassNodeOperation() {
             @Override
@@ -363,8 +367,11 @@ public class DependentGroovycRunner {
       }
 
       public void gotoPhase(int phase) throws CompilationFailedException {
-        if (phase <= Phases.ALL) {
+        if (phase < Phases.SEMANTIC_ANALYSIS) {
           System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
+        }
+        else if (phase <= Phases.ALL) {
+          System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: " + getPhaseDescription());
         }
 
         super.gotoPhase(phase);
@@ -372,16 +379,47 @@ public class DependentGroovycRunner {
 
     };
     unit.setCompilerFactory(new JavaCompilerFactory() {
-      public JavaCompiler createCompiler(CompilerConfiguration config) {
+      public JavaCompiler createCompiler(final CompilerConfiguration config) {
         return new JavaCompiler() {
           public void compile(List<String> files, CompilationUnit cu) {
-            //do nothing
+            if (mailbox != null) {
+              reportCompiledItems(GroovyCompilerWrapper.getStubOutputItems(unit, (File)config.getJointCompilationOptions().get(STUB_DIR)));
+              System.out.flush();
+              System.err.flush();
+
+              pauseAndWaitForJavac(mailbox);
+              wrapper.onContinuation();
+            }
           }
         };
       }
     });
     unit.addSources(new String[]{"SomeClass.java"});
     return unit;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void pauseAndWaitForJavac(Queue mailbox) {
+    mailbox.offer(GroovyRtConstants.STUBS_GENERATED);
+    while (true) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(10);
+        Object response = mailbox.poll();
+        if (GroovyRtConstants.STUBS_GENERATED.equals(response)) {
+          mailbox.offer(response); // another thread hasn't received it => resend
+        } else if (GroovyRtConstants.BUILD_ABORTED.equals(response)) {
+          throw new RuntimeException(GroovyRtConstants.BUILD_ABORTED);
+        } else if (GroovyRtConstants.JAVAC_COMPLETED.equals(response)) {
+          break; // stop waiting and continue compiling
+        } else if (response != null) {
+          throw new RuntimeException("Unknown response: " + response);
+        }
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration, final AstAwareResourceLoader resourceLoader) {

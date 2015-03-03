@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   @NotNull
   public StateStorage getStateStorage(@NotNull Storage storageSpec) {
-    String key = getStorageSpecId(storageSpec);
+    String key = storageSpec.storageClass().equals(StateStorage.class) ? storageSpec.file() : storageSpec.storageClass().getName();
 
     myStorageLock.lock();
     try {
@@ -182,15 +182,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
     else {
       return createFileStateStorage(storageSpec.file(), storageSpec.roamingType());
-    }
-  }
-
-  private static String getStorageSpecId(Storage storageSpec) {
-    if (!storageSpec.storageClass().equals(StateStorage.class)) {
-      return storageSpec.storageClass().getName();
-    }
-    else {
-      return storageSpec.file();
     }
   }
 

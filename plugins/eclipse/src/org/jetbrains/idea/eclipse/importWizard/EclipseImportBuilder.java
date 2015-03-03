@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,10 +182,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       public void run() {
         try {
           for (String path : projectsToConvert) {
-            final File classpathfile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-            if (classpathfile.exists()) {
-              final Element classpathElement = JDOMUtil.loadDocument(classpathfile).getRootElement();
-              EclipseClasspathReader.collectVariables(variables, classpathElement, path);
+            File classPathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+            if (classPathFile.exists()) {
+              EclipseClasspathReader.collectVariables(variables, JDOMUtil.load(classPathFile), path);
             }
             collectUnknownNatures(path, naturesNames, separator);
           }
@@ -299,7 +298,6 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
       }
       int idx = 0;
-      final Set<String> usedVariables = new HashSet<String>();
       for (String path : getParameters().projectsToConvert) {
         String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
         if (modulesDirectory == null) {
@@ -321,13 +319,14 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         classpathReader.init(rootModel);
         if (classpathFile.exists()) {
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
-          classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
-                                                                  getParameters().converterOptions.testPattern, classpathElement);
-        } else {
+          classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, refsToModules,
+                                        getParameters().converterOptions.testPattern, classpathElement);
+        }
+        else {
           EclipseClasspathReader.setOutputUrl(rootModel, path + "/bin");
         }
         ClasspathStorage.setStorageType(rootModel,
-                                      getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClassPathStorageUtil.DEFAULT_STORAGE);
+                                        getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClassPathStorageUtil.DEFAULT_STORAGE);
         if (model != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -338,9 +337,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
       if (model == null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run(){
-              ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
-            }
+          public void run() {
+            ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
+          }
         });
       }
     }
@@ -350,7 +349,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     scheduleNaturesImporting(project, module2NatureNames);
     createEclipseLibrary(project, unknownLibraries, IdeaXml.ECLIPSE_LIBRARY);
 
-    StringBuffer message = new StringBuffer();
+    StringBuilder message = new StringBuilder();
     refsToModules.removeAll(getParameters().existingModuleNames);
     for (String path : getParameters().projectsToConvert) {
       final String projectName = EclipseProjectFinder.findProjectName(path);
@@ -377,7 +376,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
     }
     if (!unknownLibraries.isEmpty()) {
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       buf.append("<html><body>");
       buf.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
       for (String name : unknownLibraries) {
@@ -488,12 +487,13 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     }
   }
 
+  @NotNull
   public Parameters getParameters() {
     if (parameters == null) {
       parameters = new Parameters();
-      parameters.existingModuleNames = new HashSet<String>();
+      parameters.existingModuleNames = new THashSet<String>();
       if (isUpdate()) {
-        final Project project = getCurrentProject();
+        Project project = getCurrentProject();
         if (project != null) {
           for (Module module : ModuleManager.getInstance(project).getModules()) {
             parameters.existingModuleNames.add(module.getName());
@@ -505,7 +505,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   }
 
   public static void collectUnknownNatures(String path, Map<String, String> naturesNames, String separator) {
-    final Set<String> natures = collectNatures(path);
+    Set<String> natures = collectNatures(path);
     natures.removeAll(EclipseNatureImporter.getDefaultNatures());
 
     for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
@@ -519,14 +519,12 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   @NotNull
   public static Set<String> collectNatures(@NotNull String path) {
-    final Set<String> naturesNames = new HashSet<String>();
-    final File projectfile = new File(path, EclipseXml.DOT_PROJECT_EXT);
+    Set<String> naturesNames = new THashSet<String>();
     try {
-      final Element natures = JDOMUtil.loadDocument(projectfile).getRootElement().getChild("natures");
+      Element natures = JDOMUtil.load(new File(path, EclipseXml.DOT_PROJECT_EXT)).getChild("natures");
       if (natures != null) {
-        final List naturesList = natures.getChildren("nature");
-        for (Object nature : naturesList) {
-          final String natureName = ((Element)nature).getText();
+        for (Element nature : natures.getChildren("nature")) {
+          String natureName = nature.getText();
           if (!StringUtil.isEmptyOrSpaces(natureName)) {
             naturesNames.add(natureName);
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 public class EclipseImlTest extends IdeaTestCase {
   @NonNls private static final String JUNIT = "JUNIT";
@@ -88,9 +88,7 @@ public class EclipseImlTest extends IdeaTestCase {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
-    classpathReader
-      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
-                     classpathElement);
+    classpathReader.readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new THashSet<String>(), null, classpathElement);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();

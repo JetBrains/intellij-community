@@ -15,11 +15,16 @@
  */
 package com.intellij.diff.requests;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DiffRequest extends UserDataHolderBase {
+public abstract class DiffRequest implements UserDataHolder {
+  protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+
   @Nullable
   public abstract String getTitle();
 
@@ -34,5 +39,16 @@ public abstract class DiffRequest extends UserDataHolderBase {
    */
   @CalledInAwt
   public void onAssigned(boolean isAssigned) {
+  }
+
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
   }
 }

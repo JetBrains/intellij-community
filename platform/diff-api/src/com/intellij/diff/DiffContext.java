@@ -16,10 +16,15 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DiffContext extends UserDataHolderBase {
+public abstract class DiffContext implements UserDataHolder {
+  protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+
   @Nullable
   public abstract Project getProject();
 
@@ -28,4 +33,15 @@ public abstract class DiffContext extends UserDataHolderBase {
   public abstract boolean isFocused();
 
   public abstract void requestFocus();
+
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
+  }
 }

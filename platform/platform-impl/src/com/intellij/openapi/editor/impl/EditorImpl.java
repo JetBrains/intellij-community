@@ -191,7 +191,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   private EditorColorsScheme myScheme;
   private ArrowPainter myTabPainter;
-  private final boolean myIsViewer;
+  private boolean myIsViewer;
   @NotNull private final SelectionModelImpl mySelectionModel;
   @NotNull private final EditorMarkupModelImpl myMarkupModel;
   @NotNull private final FoldingModelImpl myFoldingModel;
@@ -631,6 +631,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
     myVerticalScrollBar.registerRepaintCallback(callback);
+  }
+
+  @Override
+  public void setViewer(boolean isViewer) {
+    myIsViewer = isViewer;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -69,9 +68,9 @@ import com.intellij.util.Function;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -94,6 +93,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
+
+import com.intellij.util.containers.Queue;
 
 /**
  * User: anna
@@ -673,7 +674,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void treeCollapsed(TreeExpansionEvent event) {
         InspectionProfileImpl selected = mySelectedProfile;
-        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
         final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
         if (parentProfile != null) {
           getExpandedNodes(parentProfile).saveVisibleState(myTreeTable.getTree());
@@ -831,7 +831,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       myOptionsPanel.removeAll();
       final Project project = myProjectProfileManager.getProject();
       final JPanel severityPanel = new JPanel(new GridBagLayout());
-      final double severityPanelWeightY;
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
       final Set<String> scopesNames = new THashSet<String>();
@@ -842,6 +841,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
 
+      final double severityPanelWeightY;
       if (scopesNames.isEmpty()) {
 
         final LevelChooserAction severityLevelChooser =
@@ -1028,7 +1028,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  public boolean setSelectedProfileModified(boolean modified) {
+  private boolean setSelectedProfileModified(boolean modified) {
     mySelectedProfile.setModified(modified);
     return modified;
   }
@@ -1119,10 +1119,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myShareProfile != (mySelectedProfile.getProfileManager() == myProjectProfileManager)) return true;
     if (!Comparing.strEqual(myCurrentProfileName, mySelectedProfile.getName())) return true;
     if (!Comparing.equal(myInitialScopesOrder, mySelectedProfile.getScopesOrder())) return true;
-    if (descriptorsAreChanged()) {
-      return true;
-    }
-    return false;
+    return descriptorsAreChanged();
   }
 
   public void reset() {
@@ -1293,7 +1290,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private class MyFilterComponent extends FilterComponent {
     private MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
-      setHistory(Arrays.asList("\"New in 13\""));
+      setHistory(Collections.singletonList("\"New in 14\""));
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -301,5 +302,22 @@ public class ApplicationImplTest extends PlatformTestCase {
       });
     future.get();
     if (exception != null) throw exception;
+  }
+
+  public void testWriteActionIsAllowedFromEDTOnly() throws InterruptedException {
+    Thread thread = new Thread("test") {
+      @Override
+      public void run() {
+        try {
+          ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+        }
+        catch (Throwable e) {
+          exception = e;
+        }
+      }
+    };
+    thread.start();
+    thread.join();
+    assertNotNull(exception);
   }
 }

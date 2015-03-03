@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,10 +92,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
       @Override
       public void consume(ModifiableRootModel model) {
         try {
-          final Set<String> sink = ContainerUtil.newHashSet();
-          final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
+          Set<String> sink = ContainerUtil.newHashSet();
+          EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
           classpathReader.init(model);
-          classpathReader.readClasspath(model, sink, sink, sink, sink, null, classpathElement);
+          classpathReader.readClasspath(model, sink, sink, sink, null, classpathElement);
           new EclipseClasspathStorageProvider().assertCompatible(model);
         }
         catch (Exception e) {

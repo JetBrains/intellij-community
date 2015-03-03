@@ -179,7 +179,7 @@ public class ExistingTemplatesComponent {
     tree.setShowsRootHandles(true);
     tree.setDragEnabled(false);
     tree.setEditable(false);
-    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(

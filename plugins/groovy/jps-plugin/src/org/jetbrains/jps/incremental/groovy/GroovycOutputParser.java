@@ -34,7 +34,10 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -289,6 +292,13 @@ public class GroovycOutputParser {
 
   void notifyFinished(int exitCode) {
     myExitCode = exitCode;
+  }
+
+  public void onContinuation() {
+    myCompiledItems.clear();
+    compilerMessages.clear();
+    stdErr.setLength(0);
+    outputBuffer.setLength(0);
   }
 
   static class OutputItem {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.util.containers;
 
-import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ObjectUtils.NULL;
@@ -25,21 +24,19 @@ import static com.intellij.util.ObjectUtils.NULL;
  * @author peter
  */
 public abstract class SoftFactoryMap<T,V> {
-  private final ConcurrentMap<T, SoftReference<V>> myMap = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<T, V> myMap = ContainerUtil.createConcurrentWeakKeySoftValueMap();
 
   protected abstract V create(T key);
 
   public final V get(T key) {
-    final SoftReference<V> reference = myMap.get(key);
-    final V v = com.intellij.reference.SoftReference.dereference(reference);
+    final V v = myMap.get(key);
     if (v != null) {
       return v == NULL ? null : v;
     }
 
     final V value = create(key);
-    SoftReference<V> valueRef = new SoftReference<V>(value == null ? (V)NULL : value);
-    SoftReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
-    V prev = com.intellij.reference.SoftReference.dereference(prevRef);
+    V toPut = value == null ? (V)NULL : value;
+    V prev = myMap.putIfAbsent(key, toPut);
     return prev == null || prev == NULL ? value : prev;
   }
 

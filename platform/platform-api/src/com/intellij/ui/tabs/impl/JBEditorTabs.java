@@ -24,6 +24,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
@@ -44,7 +46,6 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  static final String TABS_SHORTEN_TITLE_IF_NEED = "tabs.shorten.title.if.need";
   private JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
   private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
@@ -55,7 +56,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().HIDE_TABS_IF_NEED) {
+    if (!UISettings.getInstance().HIDE_TABS_IF_NEED && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
@@ -65,10 +66,14 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  protected TabLabel createTabLabel(TabInfo info) {
-    TabLabel label = super.createTabLabel(info);
-    label.putClientProperty(TABS_SHORTEN_TITLE_IF_NEED, Boolean.TRUE);
-    return label;
+  public boolean supportsCompression() {
+    return true;
+  }
+
+  @Nullable
+  public Rectangle getSelectedBounds() {
+    TabLabel label = getSelectedLabel();
+    return label != null ? label.getBounds() : null;
   }
 
   @Override
@@ -212,6 +217,22 @@ public class JBEditorTabs extends JBTabsImpl {
     }
 
     getPainter().doPaintBackground(g2d, clip, vertical, rectangle);
+    if (getTabsPosition() == JBTabsPosition.top && isSingleRow()) {
+      g2d.setPaint(getEmptySpaceColor());
+      if (getFirstTabOffset() > 0) {
+        g2d.fillRect(clip.x, clip.y, clip.x + getFirstTabOffset() - 1, clip.y + maxLength - getActiveTabUnderlineHeight());
+      }
+      g2d.fillRect(clip.x + maxOffset, clip.y, clip.width - maxOffset, clip.y + maxLength - getActiveTabUnderlineHeight());
+      g2d.setPaint(new JBColor(Gray._181, UIUtil.getPanelBackground()));
+      g2d.setPaint(getPainter().getBackgroundColor());
+      g2d.drawLine(clip.x + maxOffset, clip.y + maxLength - getActiveTabUnderlineHeight(), clip.x + clip.width, clip.y + maxLength - getActiveTabUnderlineHeight());
+      g2d.setPaint(getEmptySpaceColor());
+      g2d.drawLine(clip.x, clip.y + maxLength, clip.width, clip.y + maxLength);
+    }
+  }
+
+  protected Color getEmptySpaceColor() {
+    return getPainter().getEmptySpaceColor();
   }
 
   protected void paintSelectionAndBorder(Graphics2D g2d) {

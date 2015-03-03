@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +23,7 @@ public class InspectionToolsRegistrarCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsRegistrarCore");
   static Object instantiateTool(@NotNull Class<?> toolClass) {
     try {
-      return ReflectionUtil.newInstance(toolClass, ArrayUtil.EMPTY_CLASS_ARRAY);
+      return ReflectionUtil.newInstance(toolClass);
     }
     catch (RuntimeException e) {
       LOG.error(e.getCause());

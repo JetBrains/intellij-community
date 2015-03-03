@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,15 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -24,11 +33,13 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.*;
-
-public class Statement {
+public class Statement implements IMatchable {
 
   public static final int STATEDGE_ALL = 1 << 31;
   public static final int STATEDGE_DIRECT_ALL = 1 << 30;
@@ -859,4 +870,78 @@ public class Statement {
   public String toString() {
     return id.toString();
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public IMatchable findObject(MatchNode matchNode, int index) {
+    
+    int node_type = matchNode.getType();
+    
+    if (node_type == MatchNode.MATCHNODE_STATEMENT && !this.stats.isEmpty()) {
+      String position = (String)matchNode.getRuleValue(MatchProperties.STATEMENT_POSITION);
+      if(position != null) {
+        if(position.matches("-?\\d+")) {
+          return this.stats.get((this.stats.size() + Integer.parseInt(position)) % this.stats.size()); // care for negative positions
+        }
+      } else if(index < this.stats.size()) { // use 'index' parameter
+        return this.stats.get(index);
+      }
+    } else if(node_type == MatchNode.MATCHNODE_EXPRENT && this.exprents != null && !this.exprents.isEmpty()) {
+      String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+      if(position != null) {
+        if(position.matches("-?\\d+")) {
+          return this.exprents.get((this.exprents.size() + Integer.parseInt(position)) % this.exprents.size()); // care for negative positions
+        }
+      } else if(index < this.exprents.size()) { // use 'index' parameter
+        return this.exprents.get(index);
+      }
+    }
+
+    return null;
+  }
+
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    
+    if(matchNode.getType() != MatchNode.MATCHNODE_STATEMENT) {
+      return false;
+    }
+    
+    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+      switch(rule.getKey()) {
+      case STATEMENT_TYPE:
+        if(this.type != ((Integer)rule.getValue().value).intValue()) {
+          return false;
+        }
+        break;
+      case STATEMENT_STATSIZE:
+        if(this.stats.size() != ((Integer)rule.getValue().value).intValue()) {
+          return false;
+        }
+        break;
+      case STATEMENT_EXPRSIZE:
+        int exprsize = ((Integer)rule.getValue().value).intValue();
+        if(exprsize == -1) {
+          if(this.exprents != null) {
+            return false;
+          }
+        } else {
+          if(this.exprents == null || this.exprents.size() != exprsize) {
+            return false;
+          }
+        }
+        break;
+      case STATEMENT_RET:
+        if(!engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {
+          return false;
+        }
+        break;
+      }
+      
+    }
+    
+    return true;
+  }
+  
 }

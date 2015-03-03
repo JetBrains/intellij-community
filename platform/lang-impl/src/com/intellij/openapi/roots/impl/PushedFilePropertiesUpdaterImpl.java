@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -237,7 +237,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
   @Override
   public void pushAll(final FilePropertyPusher... pushers) {
-    queueTasks(Arrays.asList(new Runnable() {
+    queueTasks(Collections.singletonList(new Runnable() {
       @Override
       public void run() {
         doPushAll(pushers);
@@ -301,9 +301,10 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
         //noinspection unchecked
         pusher = pushers[i];
-        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-        else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
-        findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
+        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir)) || isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) {
+          continue;
+        }
+        findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i] : null);
       }
     }
     catch (AbstractMethodError ame) { // acceptsDirectory is missed

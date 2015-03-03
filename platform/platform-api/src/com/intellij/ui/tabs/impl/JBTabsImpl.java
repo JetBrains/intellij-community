@@ -371,6 +371,10 @@ public class JBTabsImpl extends JComponent
     return false;
   }
 
+  public boolean supportsCompression() {
+    return false;
+  }
+
   @Override
   public JBTabs setNavigationActionsEnabled(boolean enabled) {
     myNavigationActionsEnabled = enabled;
@@ -2312,10 +2316,13 @@ public class JBTabsImpl extends JComponent
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    final GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-    paintSelectionAndBorder((Graphics2D)g);
-    config.restore();
+    //final GraphicsConfig config = new GraphicsConfig(g);
+    //try {
+    //  config.setAntialiasing(true);
+      paintSelectionAndBorder((Graphics2D)g);
+    //} finally {
+    //  config.restore();
+    //}
 
     final TabLabel selected = getSelectedLabel();
     if (selected != null) {

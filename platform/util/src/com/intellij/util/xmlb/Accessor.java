@@ -16,27 +16,12 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 public interface Accessor {
   Object read(@NotNull Object o);
-
-  void set(@NotNull Object host, @Nullable Object value);
-
-  void setBoolean(@NotNull Object host, boolean value);
-
-  void setInt(@NotNull Object host, int value);
-
-  void setShort(@NotNull Object host, short value);
-
-  void setLong(@NotNull Object host, long value);
-
-  void setDouble(@NotNull Object host, double value);
-
-  void setFloat(@NotNull Object host, float value);
 
   <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass);
 
@@ -47,4 +32,9 @@ public interface Accessor {
   Type getGenericType();
 
   boolean isFinal();
+
+  /**
+   * @deprecated use {@link MutableAccessor#set(Object, Object)} instead
+   */
+  void write(Object o, Object value);
 }

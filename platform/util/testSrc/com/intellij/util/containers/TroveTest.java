@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.intellij.util.containers;
 
 
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.Map;
+import java.util.Set;
 
 public class TroveTest extends TestCase {
   public void testObjectInt() {
@@ -35,10 +36,10 @@ public class TroveTest extends TestCase {
     }
     for (int i = 0; i < 100; i++) {
       String key = String.valueOf(i);
-      Assert.assertEquals(i, map.get(key));
-      Assert.assertEquals(i, map.get(key+"a"));
+      assertEquals(i, map.get(key));
+      assertEquals(i, map.get(key + "a"));
     }
-    Assert.assertEquals(200, map.size());
+    assertEquals(200, map.size());
   }
 
   public void testTHashMap_Entry() {
@@ -57,5 +58,43 @@ public class TroveTest extends TestCase {
     Map.Entry<Object, Object> refreshed = map.entrySet().iterator().next();
     assertEquals("1", refreshed.getKey());
     assertEquals("3", refreshed.getValue());
+  }
+
+  public void testKObjectMapCloneDoesNotDependOnTheSource() {
+    TIntObjectHashMap<int[]> map = new TIntObjectHashMap<int[]>();
+    map.put(0, new int[2]);
+    map.put(1, new int[2]);
+
+    TIntObjectHashMap<int[]> clone = map.clone();
+    assertEquals(clone.size(), 2);
+    int[] keys = clone.keys();
+    assertEquals(keys.length, 2);
+    assertEquals(ContainerUtil.newHashSet(0,1), ContainerUtil.newHashSet(keys[0],keys[1]));
+
+    map.clear();
+
+    assertEquals(clone.size(), 2);
+    keys = clone.keys();
+    assertEquals(keys.length, 2);
+    assertEquals(ContainerUtil.newHashSet(0,1), ContainerUtil.newHashSet(keys[0],keys[1]));
+  }
+
+  public void testHashMapCloneDoesNotDependOnTheSource() {
+    THashMap<Integer, int[]> map = new THashMap<Integer, int[]>();
+    map.put(0, new int[2]);
+    map.put(1, new int[2]);
+
+    THashMap<Integer, int[]> clone = map.clone();
+    assertEquals(clone.size(), 2);
+    Set<Integer> keys = clone.keySet();
+    assertEquals(keys.size(), 2);
+    assertEquals(ContainerUtil.newHashSet(0,1), keys);
+
+    map.clear();
+
+    assertEquals(clone.size(), 2);
+    keys = clone.keySet();
+    assertEquals(keys.size(), 2);
+    assertEquals(ContainerUtil.newHashSet(0,1), keys);
   }
 }
