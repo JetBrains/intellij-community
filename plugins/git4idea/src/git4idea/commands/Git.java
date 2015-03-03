@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
@@ -150,4 +151,10 @@ public interface Git {
 
   @NotNull
   GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url);
+
+  @NotNull
+  GitCommandResult lsRemote(@NotNull Project project,
+                            @NotNull VirtualFile workingDir,
+                            @NotNull GitRemote remote,
+                            String... additionalParameters);
 }
