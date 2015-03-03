@@ -262,8 +262,8 @@ class JavaPredefinedConfigurations {
                                                                                         "  private 'Class('_ParameterType* '_ParameterDcl*) {\n" +
                                                                                         "   '_ConstructorStatement*;\n" +
                                                                                         "  }\n"+
-                                                                                        "  private static '_Class:* '_Instance;\n" +
-                                                                                        "  static '_Class:* '_GetInstance() {\n" +
+                                                                                        "  private static '_Class '_Instance;\n" +
+                                                                                        "  static '_Class '_GetInstance() {\n" +
                                                                                         "    '_SomeStatement*;\n" +
                                                                                         "    return '_Instance;\n" +
                                                                                         "  }\n"+
