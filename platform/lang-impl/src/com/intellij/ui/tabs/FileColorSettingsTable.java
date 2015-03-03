@@ -83,6 +83,7 @@ public abstract class FileColorSettingsTable extends JBTable {
   public boolean editCellAt(int row, int column, EventObject e) {
     if (e == null || (e instanceof MouseEvent && ((MouseEvent)e).getClickCount() == 1)) return false;
     final Object at = getModel().getValueAt(row, column);
+    if (!(at instanceof FileColorConfiguration)) return false;
     final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(myManager, ((FileColorConfiguration)at));
     dialog.getScopeComboBox().setEnabled(false);
     dialog.show();
@@ -190,7 +191,9 @@ public abstract class FileColorSettingsTable extends JBTable {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      return myConfigurations.get(rowIndex);
+      return 0 <= rowIndex && rowIndex < myConfigurations.size()
+             ? myConfigurations.get(rowIndex)
+             : null;
     }
 
     @NotNull
