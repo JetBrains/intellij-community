@@ -314,7 +314,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
     public int execute(int lineNumber) {
-      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1)) + 5;
+      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1));
     }
   };
 
