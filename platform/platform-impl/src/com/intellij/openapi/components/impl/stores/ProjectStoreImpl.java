@@ -503,6 +503,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
+    @NotNull
     @Override
     public Storage[] selectStorages(@NotNull Storage[] storages, @NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
@@ -561,12 +562,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> component,
                                                    @NotNull State stateSpec,
                                                    @NotNull StateStorageOperation operation) {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, stateSpec, operation);
+    Storage[] result = super.getComponentStorageSpecs(component, stateSpec, operation);
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
     for (Storage storage : result) {
       if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {
