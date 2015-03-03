@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -472,8 +473,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       else {
         List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
         readonlyFiles.clear();
+        List<Throwable> errors = null;
         for (Pair<SaveSession, VirtualFile> entry : oldList) {
-          executeSave(entry.first, readonlyFiles);
+          errors = executeSave(entry.first, readonlyFiles, errors);
+        }
+
+        if (errors != null) {
+          throw new CompoundRuntimeException(errors);
         }
 
         if (!readonlyFiles.isEmpty()) {
@@ -497,6 +503,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
+    @NotNull
     @Override
     public Storage[] selectStorages(@NotNull Storage[] storages, @NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
@@ -555,12 +562,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> component,
                                                    @NotNull State stateSpec,
                                                    @NotNull StateStorageOperation operation) {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, stateSpec, operation);
+    Storage[] result = super.getComponentStorageSpecs(component, stateSpec, operation);
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
     for (Storage storage : result) {
       if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {

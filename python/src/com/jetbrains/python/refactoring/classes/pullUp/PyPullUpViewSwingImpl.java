@@ -43,16 +43,15 @@ class PyPullUpViewSwingImpl extends MembersBasedViewSwingImpl<PyPullUpPresenter,
   private final PyPullUpNothingToRefactorMessage myNothingToRefactorMessage;
 
   /**
-   * @param project   project where refactoring takes place
-   * @param presenter presenter for this view
-   * @param clazz     class to refactor
+   * @param project                  project where refactoring takes place
+   * @param presenter                presenter for this view
+   * @param clazz                    class to refactor
    * @param nothingToRefactorMessage class that displays message "nothing to refactor" when presenter calls {@link #showNothingToRefactor()}
    */
-  PyPullUpViewSwingImpl(
-    @NotNull final Project project,
-    @NotNull final PyPullUpPresenter presenter,
-    @NotNull final PyClass clazz,
-    @NotNull final PyPullUpNothingToRefactorMessage nothingToRefactorMessage) {
+  PyPullUpViewSwingImpl(@NotNull final Project project,
+                        @NotNull final PyPullUpPresenter presenter,
+                        @NotNull final PyClass clazz,
+                        @NotNull final PyPullUpNothingToRefactorMessage nothingToRefactorMessage) {
     super(project, presenter, RefactoringBundle.message("members.to.be.pulled.up"), true);
     setTitle(PyPullUpHandler.REFACTORING_NAME);
     myNothingToRefactorMessage = nothingToRefactorMessage;

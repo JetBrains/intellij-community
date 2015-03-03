@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.impl.storage;
+package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.List;
+public interface StateStorageChooserEx {
+  enum Resolution {
+    DO, SKIP, CLEAR
+  }
 
-public interface FileSet {
   @NotNull
-  List<String> getFileUrls();
-
-  boolean hasChanged();
-
-  void commit() throws IOException;
+  Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation);
 }

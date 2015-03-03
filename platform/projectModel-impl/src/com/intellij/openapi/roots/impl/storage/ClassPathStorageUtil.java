@@ -22,7 +22,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 public class ClassPathStorageUtil {
   @NonNls public static final String DEFAULT_STORAGE = "default";
-  @NonNls public static final String CLASSPATH_OPTION = JpsProjectLoader.CLASSPATH_ATTRIBUTE;
 
   public static boolean isDefaultStorage(@NotNull Module module) {
     return getStorageType(module).equals(DEFAULT_STORAGE);
@@ -30,7 +29,7 @@ public class ClassPathStorageUtil {
 
   @NotNull
   public static String getStorageType(@NotNull Module module) {
-    String id = module.getOptionValue(CLASSPATH_OPTION);
+    String id = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
     return id == null ? DEFAULT_STORAGE : id;
   }
 }

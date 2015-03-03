@@ -22,7 +22,6 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -78,7 +77,7 @@ public class LanguageLevelModuleExtensionImpl  extends ModuleExtension<LanguageL
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) {
     if (myLanguageLevel != null) {
       element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
     }

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
+import com.intellij.openapi.components.StateStorageChooserEx.Resolution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
@@ -290,12 +291,18 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     @Override
     public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {
+      StateStorageChooserEx stateStorageChooser = component instanceof StateStorageChooserEx ? (StateStorageChooserEx)component : null;
       for (Storage storageSpec : storageSpecs) {
+        Resolution resolution = stateStorageChooser == null ? Resolution.DO : stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE);
+        if (resolution == Resolution.SKIP) {
+          continue;
+        }
+
         StateStorage stateStorage = getStateStorage(storageSpec);
         StateStorage.ExternalizationSession session = getExternalizationSession(stateStorage);
         if (session != null) {
           // empty element as null state, so, will be deleted
-          session.setState(component, componentName, storageSpec.deprecated() ? new Element("empty") : state, storageSpec);
+          session.setState(component, componentName, storageSpec.deprecated() || resolution == Resolution.CLEAR ? new Element("empty") : state, storageSpec);
         }
       }
     }

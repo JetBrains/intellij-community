@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.move;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,12 +29,15 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author vlan
@@ -42,10 +46,22 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if ((element instanceof PyClass || element instanceof PyFunction) && PyUtil.isTopLevel(element)) continue;
-      return false;
+      if (!canMoveElement(element)) {
+        return false;
+      }
     }
     return super.canMove(elements, targetContainer);
+  }
+
+  /**
+   * Checks that given element is suitable for "Move ..." refactoring. Currently it means that it's top-level function, class or
+   * target expression.
+   *
+   * @param element PSI element to check
+   * @return whether this element is acceptable for "Move ..." refactoring
+   */
+  public static boolean canMoveElement(@NotNull PsiElement element) {
+    return (element instanceof PyClass || element instanceof PyFunction) && PyUtil.isTopLevel(element);
   }
 
   @Override
@@ -53,13 +69,13 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
                      PsiElement[] elements,
                      @Nullable PsiElement targetContainer,
                      @Nullable MoveCallback callback) {
-    PsiNamedElement[] elementsToMove = new PsiNamedElement[elements.length];
-    for (int i = 0; i < elements.length; i++) {
-      final PsiNamedElement e = getElementToMove(elements[i]);
+    final List<PsiNamedElement> initialElements = Lists.newArrayList();
+    for (PsiElement element : elements) {
+      final PsiNamedElement e = getElementToMove(element);
       if (e == null) {
         return;
       }
-      elementsToMove[i] = e;
+      initialElements.add(e);
     }
     String initialDestination = null;
     if (targetContainer instanceof PsiFile) {
@@ -68,19 +84,19 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
         initialDestination = FileUtil.toSystemDependentName(virtualFile.getPath());
       }
     }
-    final PyMoveClassOrFunctionDialog dialog = PyMoveClassOrFunctionDialog.getInstance(project, elementsToMove, initialDestination);
+    final PyMoveTopLevelSymbolDialog dialog = PyMoveTopLevelSymbolDialog.getInstance(project, initialElements, initialDestination);
     if (!dialog.showAndGet()) {
       return;
     }
     final String destination = dialog.getTargetPath();
     final boolean previewUsages = dialog.isPreviewUsages();
     try {
-      final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, elementsToMove, destination, previewUsages);
+      final PsiNamedElement[] selectedElements = ContainerUtil.findAllAsArray(dialog.getSelectedTopLevelSymbols(), PsiNamedElement.class);
+      final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, selectedElements, destination, previewUsages);
       processor.run();
     }
     catch (IncorrectOperationException e) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
-                                             null, project);
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), null, project);
     }
   }
 

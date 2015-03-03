@@ -49,13 +49,12 @@ import java.util.Set;
 public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
   private final File myDir;
   private volatile VirtualFile myVirtualFile;
+  @SuppressWarnings("deprecation")
   private final StateSplitter mySplitter;
-
-  private DirectoryStorageData myStorageData;
 
   public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                @NotNull String dir,
-                               @NotNull StateSplitter splitter,
+                               @SuppressWarnings("deprecation") @NotNull StateSplitter splitter,
                                @NotNull Disposable parentDisposable,
                                @Nullable final Listener listener) {
     super(pathMacroSubstitutor);
@@ -98,7 +97,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
     // todo reload only changed file, compute diff
     DirectoryStorageData oldData = myStorageData;
-    DirectoryStorageData newData = loadState();
+    DirectoryStorageData newData = loadData();
     myStorageData = newData;
     if (oldData == null) {
       componentNames.addAll(newData.getComponentNames());
@@ -111,12 +110,13 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
 
   @Nullable
   @Override
-  protected Element getStateAndArchive(@NotNull DirectoryStorageData storageData, @NotNull String componentName) {
+  protected Element getStateAndArchive(@NotNull DirectoryStorageData storageData, Object component, @NotNull String componentName) {
     return storageData.getCompositeStateAndArchive(componentName, mySplitter);
   }
 
   @NotNull
-  private DirectoryStorageData loadState() {
+  @Override
+  protected DirectoryStorageData loadData() {
     DirectoryStorageData storageData = new DirectoryStorageData();
     storageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
     return storageData;
@@ -129,17 +129,6 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       myVirtualFile = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myDir);
     }
     return virtualFile;
-  }
-
-  @Override
-  @NotNull
-  protected DirectoryStorageData getStorageData(boolean reloadData) {
-    if (myStorageData != null && !reloadData) {
-      return myStorageData;
-    }
-
-    myStorageData = loadState();
-    return myStorageData;
   }
 
   @Override
@@ -231,16 +220,11 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     @Override
-    public void save() {
+    public void save() throws IOException {
       VirtualFile dir = storage.getVirtualFile();
       if (copiedStorageData.isEmpty()) {
         if (dir != null && dir.exists()) {
-          try {
-            StorageUtil.deleteFile(this, dir);
-          }
-          catch (IOException e) {
-            throw new StateStorageException(e);
-          }
+          StorageUtil.deleteFile(this, dir);
         }
         storage.myStorageData = copiedStorageData;
         return;

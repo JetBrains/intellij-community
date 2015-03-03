@@ -39,13 +39,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
-import java.util.ArrayList;
 
 public class EclipseImlTest extends IdeaTestCase {
   @NonNls private static final String JUNIT = "JUNIT";
@@ -86,9 +84,9 @@ public class EclipseImlTest extends IdeaTestCase {
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
+    EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
-    classpathReader.readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new THashSet<String>(), null, classpathElement);
+    classpathReader.readClasspath(rootModel, classpathElement);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();

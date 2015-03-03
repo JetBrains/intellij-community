@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 package com.intellij.core;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
@@ -58,10 +56,7 @@ public class CoreModuleManager extends ModuleManagerImpl {
       ((ModuleRootManagerImpl) ModuleRootManager.getInstance(module)).loadState(state);
     }
     catch (JDOMException e) {
-      throw new StateStorageException(e);
-    }
-    catch (InvalidDataException e) {
-      throw new StateStorageException(e);
+      throw new IOException(e);
     }
     return module;
   }

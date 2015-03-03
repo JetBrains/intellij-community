@@ -249,6 +249,16 @@ public class DiffUtil {
     return carets;
   }
 
+  public static boolean wasScrolled(@NotNull List<? extends Editor> editors) {
+    for (Editor editor : editors) {
+      if (editor == null) continue;
+      if (editor.getCaretModel().getOffset() != 0) return true;
+      if (editor.getScrollingModel().getVerticalScrollOffset() != 0) return true;
+      if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) return true;
+    }
+    return false;
+  }
+
   public static class EditorsVisiblePositions {
     public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
 

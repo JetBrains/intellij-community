@@ -495,6 +495,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     }
 
     public void onRediff() {
+      if (DiffUtil.wasScrolled(getEditors())) myShouldScroll = false;
       if (myShouldScroll && myScrollToChange != null) {
         myShouldScroll = !doScrollToChange(myScrollToChange);
       }
@@ -540,7 +541,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (myScrollToLine == null) return false;
       Side side = myScrollToLine.first;
       Integer line = myScrollToLine.second;
-      if (side.select(getEditors()) == null) return false;
+      if (side.select(myEditor1, myEditor2) == null) return false;
 
       myCurrentSide = side;
       DiffUtil.scrollEditor(getCurrentEditor(), line);

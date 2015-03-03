@@ -62,13 +62,7 @@ public class DiffDividerDrawUtil {
                                    @NotNull Editor editor1,
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
-    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
-
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-    for (DividerPolygon polygon : polygons) {
-      polygon.paint(gg, width);
-    }
-    config.restore();
+    paintPolygons(gg, width, true, true, editor1, editor2, paintable);
   }
 
   public static void paintSimplePolygons(@NotNull Graphics2D gg,
@@ -76,11 +70,21 @@ public class DiffDividerDrawUtil {
                                          @NotNull Editor editor1,
                                          @NotNull Editor editor2,
                                          @NotNull DividerPaintable paintable) {
+    paintPolygons(gg, width, true, false, editor1, editor2, paintable);
+  }
+
+  public static void paintPolygons(@NotNull Graphics2D gg,
+                                   int width,
+                                   boolean paintBorder,
+                                   boolean curved,
+                                   @NotNull Editor editor1,
+                                   @NotNull Editor editor2,
+                                   @NotNull DividerPaintable paintable) {
     List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
 
     GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
     for (DividerPolygon polygon : polygons) {
-      polygon.paintSimple(gg, width);
+      polygon.paint(gg, width, paintBorder, curved);
     }
     config.restore();
   }
@@ -228,13 +232,15 @@ public class DiffDividerDrawUtil {
       myColor = color;
     }
 
-    private void paint(Graphics2D g, int width) {
+    private void paint(Graphics2D g, int width, boolean paintBorder, boolean curve) {
+      Color borderColor = paintBorder ? DiffDrawUtil.getFramingColor(myColor) : myColor;
       // we need this shift, because editor background highlight is painted in range "Y(line) - 1 .. Y(line + 1) - 1"
-      DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor);
-    }
-
-    private void paintSimple(Graphics2D g, int width) {
-      DiffDrawUtil.drawTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor);
+      if (curve) {
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor, borderColor);
+      }
+      else {
+        DiffDrawUtil.drawTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor, borderColor);
+      }
     }
 
     private void paintOnScrollbar(Graphics2D g, int width) {
