@@ -39,6 +39,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.intellij.lang.annotations.RegExp
 
+import static com.intellij.codeInsight.folding.impl.ComparisonFoldingManager.COMPARISON_GROUP_NAME
 import static com.intellij.codeInsight.folding.impl.ConstantExpressionFoldingManager.CONSTANT_EXPRESSION_GROUP_NAME
 import static com.intellij.codeInsight.folding.impl.StringEscapeFoldingManager.STRING_ESCAPE_GROUP_NAME
 import static com.intellij.codeInsight.folding.impl.StringFormatFoldingManager.STRING_FORMAT_GROUP_NAME
@@ -1209,5 +1210,53 @@ class Test {
     configure text
 
     assertSize text.count("/**"), getFoldRegions(STRING_FORMAT_GROUP_NAME)
+  }
+
+  public void "test whether comparable expressions are folded"() {
+    myFoldingSettings.COLLAPSE_COMPARABLES = true
+
+    @Language("JAVA") def text = '''
+      import java.io.File;
+      import java.math.*;
+      import java.util.Date;
+
+      @SuppressWarnings("All") class Foo {
+        static int nonConstantValue;
+        static {
+          boolean x = BigDecimal.ZERO.compareTo(BigDecimal.valueOf(Math.PI)) <  0;  /** BigDecimal */
+          x = new Date().compareTo(new Date())                               <  1;  /** Date with non-zero RHS */
+          x = "ab".compareTo("bc")                                           <= 0;  /** String */                   /** ≤ */
+          x = new File(".").compareTo(new File("."))                         == 0;  /** File */                     /** ≡ */
+          x = Integer.valueOf(0).compareTo(1)                                != -1; /** Integer */                  /** ≥ */
+          x = Character.valueOf('b').compareTo('a')                          != 0;  /** Character */                /** ≢ */
+          x = Float.valueOf(0).compareTo(1f)                                 != 1;  /** Float */                    /** ≤ */
+          x = Boolean.TRUE.compareTo(false)                                  >= 0;  /** Boolean */                  /** ≥ */
+          x = ((Double)Double.POSITIVE_INFINITY).compareTo(Math.E)           > -1;  /** Double with non-zero RHS */
+          x = BigInteger.ONE.compareTo(BigInteger.ZERO)                      >  0;  /** BigInteger */
+
+          x = BigInteger.ONE.compareTo(BigInteger.ZERO) > nonConstantValue; /* Cannot determine RHS */
+          BigInteger.ONE.compareTo(BigInteger.ZERO);                        /* Missing RHS */
+
+          final int IS_ZERO_OR_NEGATIVE = 1;
+          final Comparable l = "left", r = "right";
+          x = (l.compareTo(r) < IS_ZERO_OR_NEGATIVE); /** Comparison for non-literal with constant non-literal right side */
+
+          x = BigDecimal.ONE.signum() == -1; /** ≡ */ /** signum */
+
+          x = "a".equals("a");  /** ≡ */
+          x = !"a".equals("b"); /** ≢ */
+
+          x = (0 <  1);
+          x = (0 <= 1);  /** ≤ */
+          x = (1 == 1);  /** ≡ */
+          x = (1 != 0);  /** ≢ */
+          x = (1 >= 0);  /** ≥ */
+          x = (1 >  0);
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(COMPARISON_GROUP_NAME)
   }
 }

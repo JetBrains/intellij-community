@@ -724,6 +724,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                  || element.getParent().getParent() instanceof PsiAnonymousClass)) {
       return settings.isInlineParameterNamesForLiteralCallArguments();
     }
+    else if (element instanceof PsiBinaryExpression) {
+      return settings.isCollapseComparables();
+    }
     else if (element instanceof PsiPolyadicExpression) {
       return settings.isCollapseConstantExpressions();
     }
@@ -758,6 +761,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
           if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseStrings()) {
             foldElements.addAll(StringFormatFoldingManager.fold(expression));
           }
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseComparables()) {
+            foldElements.addAll(ComparisonFoldingManager.fold(expression));
+          }
         }
 
         super.visitMethodCallExpression(expression);
@@ -783,6 +789,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         }
 
         super.visitLiteralExpression(expression);
+      }
+
+      @Override
+      public void visitBinaryExpression(PsiBinaryExpression expression) {
+        if (!dumb) {
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseComparables()) {
+            foldElements.addAll(ComparisonFoldingManager.fold(expression));
+          }
+        }
+
+        super.visitBinaryExpression(expression);
       }
 
       @Override

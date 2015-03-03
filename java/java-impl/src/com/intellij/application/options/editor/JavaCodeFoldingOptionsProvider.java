@@ -38,6 +38,7 @@ public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFol
     checkBox("COLLAPSE_I18N_MESSAGES", ApplicationBundle.message("checkbox.collapse.i18n.messages"));
     checkBox("COLLAPSE_CONSTANT_EXPRESSIONS", ApplicationBundle.message("checkbox.collapse.i18n.constantExpressions"));
     checkBox("COLLAPSE_STRINGS", ApplicationBundle.message("checkbox.collapse.i18n.strings"));
+    checkBox("COLLAPSE_COMPARABLES", ApplicationBundle.message("checkbox.collapse.i18n.comparables"));
     checkBox("COLLAPSE_SUPPRESS_WARNINGS", ApplicationBundle.message("checkbox.collapse.suppress.warnings"));
     checkBox("COLLAPSE_END_OF_LINE_COMMENTS", ApplicationBundle.message("checkbox.collapse.end.of.line.comments"));
   }
