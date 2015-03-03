@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,14 @@ public class PsiElementRenameHandler implements RenameHandler {
     PsiElement element = getElement(dataContext);
     if (element == null) {
       element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final String newName = DEFAULT_NAME.getData(dataContext);
+      if (newName != null) {
+        rename(element, project, element, editor, newName);
+        return;
+      }
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
