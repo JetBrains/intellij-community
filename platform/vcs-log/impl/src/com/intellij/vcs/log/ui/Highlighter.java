@@ -30,7 +30,7 @@ import java.awt.*;
 import java.util.Map;
 
 public class Highlighter implements VcsLogHighlighter {
-  private static final JBColor ME_BG = new JBColor(new Color(255, 255, 204), new Color(73, 71, 63));
+  private static final JBColor ME_BG = new JBColor(new Color(255, 255, 228), new Color(73, 71, 63));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
