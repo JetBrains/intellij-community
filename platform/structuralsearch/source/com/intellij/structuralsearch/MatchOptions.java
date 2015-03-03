@@ -27,7 +27,6 @@ public class MatchOptions implements JDOMExternalizable {
   private Language myDialect = null;
 
   private SearchScope scope;
-  private SearchScope downUpMatchScope;
   private String searchCriteria = "";
   @Nullable private Map<String,MatchVariableConstraint> variableConstraints;
 
@@ -140,14 +139,6 @@ public class MatchOptions implements JDOMExternalizable {
     this.scope = scope;
   }
 
-  public SearchScope getDownUpMatchScope() {
-    return downUpMatchScope;
-  }
-
-  public void setDownUpMatchScope(final SearchScope downUpMatchScope) {
-    this.downUpMatchScope = downUpMatchScope;
-  }
-
   public void writeExternal(Element element) {
     element.setAttribute(TEXT_ATTRIBUTE_NAME, searchCriteria);
     if (!looseMatching) {
@@ -158,7 +149,9 @@ public class MatchOptions implements JDOMExternalizable {
 
     //@TODO serialize scope!
 
-    element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
+    if (myFileType != null) {
+      element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
+    }
 
     if (myDialect != null) {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());

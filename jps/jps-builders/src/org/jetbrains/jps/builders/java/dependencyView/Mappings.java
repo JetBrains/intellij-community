@@ -889,18 +889,6 @@ public class Mappings {
   }
 
   public interface DependentFilesFilter {
-    DependentFilesFilter ALL_FILES = new DependentFilesFilter() {
-      @Override
-      public boolean accept(File file) {
-        return true;
-      }
-
-      @Override
-      public boolean belongsToCurrentTargetChunk(File file) {
-        return true;
-      }
-    };
-
     boolean accept(File file);
     
     boolean belongsToCurrentTargetChunk(File file);

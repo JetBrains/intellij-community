@@ -52,9 +52,13 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
     myCompiledFiles.putValues(builderName, files);
   }
 
-  public void clear() {
+  public void clearFilesData() {
     myCompiledFiles.clear();
     myDeletedFiles.clear();
+  }
+
+  public void clearLog() {
+    myLogLines.clear();
   }
 
   public void assertCompiled(String builderName, File[] baseDirs, String... paths) {

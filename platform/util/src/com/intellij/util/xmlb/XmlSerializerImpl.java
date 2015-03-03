@@ -24,6 +24,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -35,7 +36,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 class XmlSerializerImpl {
-  private static SoftReference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
+  private static Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
 
   @NotNull
   static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {

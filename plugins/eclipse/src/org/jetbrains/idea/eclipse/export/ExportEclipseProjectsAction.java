@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,10 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID.equals(ClassPathStorageUtil.getStorageType(module))) {
         try {
-          ClasspathStorage.getProvider(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID).assertCompatible(ModuleRootManager.getInstance(module));
+          ClasspathStorageProvider provider = ClasspathStorage.getProvider(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID);
+          if (provider != null) {
+            provider.assertCompatible(ModuleRootManager.getInstance(module));
+          }
           modules.add(module);
         }
         catch (ConfigurationException ignored) {
@@ -118,24 +121,27 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
     }
     else {
       for (Module module : dialog.getSelectedModules()) {
-        final ModuleRootModel model = ModuleRootManager.getInstance(module);
-        final VirtualFile[] contentRoots = model.getContentRoots();         //todo
-        final String storageRoot =
-          contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
+        ModuleRootModel model = ModuleRootManager.getInstance(module);
+        VirtualFile[] contentRoots = model.getContentRoots();
+        String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
         try {
           Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
 
-          final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
+          EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
           classpathWriter.writeClasspath(classpathElement, null);
-          final File classpathFile = new File(storageRoot, EclipseXml.CLASSPATH_FILE);
-          if (!FileUtil.createIfDoesntExist(classpathFile)) continue;
-          EclipseJDOMUtil.output(new Document(classpathElement), classpathFile, project);
+          File classpathFile = new File(storageRoot, EclipseXml.CLASSPATH_FILE);
+          if (!FileUtil.createIfDoesntExist(classpathFile)) {
+            continue;
+          }
+          EclipseJDOMUtil.output(classpathElement, classpathFile, project);
 
           final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
           if (IdeaSpecificSettings.writeIDEASpecificClasspath(ideaSpecific, model)) {
-            final File emlFile = new File(storageRoot, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
-            if (!FileUtil.createIfDoesntExist(emlFile)) continue;
-            EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile, project);
+            File emlFile = new File(storageRoot, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
+            if (!FileUtil.createIfDoesntExist(emlFile)) {
+              continue;
+            }
+            EclipseJDOMUtil.output(ideaSpecific, emlFile, project);
           }
 
           DotProjectFileHelper.saveDotProjectFile(module, storageRoot);

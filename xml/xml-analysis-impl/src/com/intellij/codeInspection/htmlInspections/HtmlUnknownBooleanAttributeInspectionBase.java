@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.Nls;
@@ -88,7 +89,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
         }
 
         XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
-        if (attributeDescriptor != null) {
+        if (attributeDescriptor != null && !(attributeDescriptor instanceof AnyXmlAttributeDescriptor)) {
           String name = attribute.getName();
           if (!HtmlUtil.isBooleanAttribute(attributeDescriptor, null) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
             LocalQuickFix[] quickFixes = new LocalQuickFix[]{

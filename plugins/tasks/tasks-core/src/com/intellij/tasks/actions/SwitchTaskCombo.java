@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -23,6 +24,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
@@ -44,8 +46,13 @@ public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
     button.showPopup();
   }
 
-  public JComponent createCustomComponent(Presentation presentation) {
-    ComboBoxButton button = new ComboBoxButton(presentation);
+  public JComponent createCustomComponent(final Presentation presentation) {
+    ComboBoxButton button = new ComboBoxButton(presentation) {
+      @Override
+      protected JBPopup createPopup(Runnable onDispose) {
+        return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
+      }
+    };
     button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     return button;
   }

@@ -23,8 +23,8 @@ public class TestInnerLocal {
       }
     }
     new Inner("test");
-    //new Inner1Static("test");
-    //new Inner1Static.Inner2Static("test");
+    new Inner1Static("test");
+    new Inner1Static.Inner2Static("test");
   }
 
   public void testMethod() {
@@ -35,9 +35,9 @@ public class TestInnerLocal {
       }
     }
     new Inner("test");
-    //new Inner1Static("test");
-    //new Inner1("test");
-    //new Inner1Static.Inner2Static("test");
+    new Inner1Static("test");
+    new Inner1("test");
+    new Inner1Static.Inner2Static("test");
   }
 
   class Inner1 {

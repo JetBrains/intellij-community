@@ -208,7 +208,14 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     if (psiClass != null) {
-      final PsiElement element = psiClass.getNavigationElement();
+      PsiElement element = psiClass.getNavigationElement();
+      // see IDEA-137167, prefer not compiled elements
+      if (element instanceof PsiCompiledElement) {
+        PsiElement fileElement = psiClass.getContainingFile().getNavigationElement();
+        if (!(fileElement instanceof PsiCompiledElement)) {
+          element = fileElement;
+        }
+      }
       return element.getContainingFile();
     }
     else {

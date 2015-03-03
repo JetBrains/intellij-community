@@ -18,7 +18,6 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.GraphicsUtil;
 
@@ -29,23 +28,6 @@ import java.util.List;
 public class CompressibleSingleRowLayout extends SingleRowLayout {
   public CompressibleSingleRowLayout(JBTabsImpl tabs) {
     super(tabs);
-  }
-
-  @Override
-  public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos) {
-    SingleRowPassInfo data = (SingleRowPassInfo)super.layoutSingleRow(visibleInfos);
-    if (data.toLayout.size() > 0) {
-      final TabLabel firstLabel = myTabs.myInfo2Label.get(data.toLayout.get(0));
-      final TabLabel lastLabel = findLastVisibleLabel(data);
-      if (firstLabel != null && lastLabel != null) {
-        data.tabRectangle.x = firstLabel.getBounds().x;
-        data.tabRectangle.y = firstLabel.getBounds().y;
-        data.tabRectangle.width = data.requiredLength;
-        data.tabRectangle.height = (int)lastLabel.getBounds().getMaxY() - data.tabRectangle.y;
-      }
-    }
-
-    return data;
   }
 
   @Override

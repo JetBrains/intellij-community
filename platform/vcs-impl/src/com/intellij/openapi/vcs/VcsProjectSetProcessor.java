@@ -52,7 +52,7 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
                              @NotNull final Runnable runNext) {
 
     if (!getDirectory(context)) return;
-    if (!getDirectoryName(context, entries)) return;
+    if (!getDirectoryName(context)) return;
 
     ProgressManager.getInstance().run(new Task.Backgroundable(null, "Hey", true) {
       @Override
@@ -83,7 +83,7 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
     });
   }
 
-  private static boolean getDirectoryName(@NotNull Context context, List<Pair<String, String>> entries) {
+  private static boolean getDirectoryName(@NotNull Context context) {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       context.directoryName = "test";
@@ -107,9 +107,4 @@ public class VcsProjectSetProcessor extends ProjectSetProcessor {
   }
 
   private static final Logger LOG = Logger.getInstance(VcsProjectSetProcessor.class);
-
-  public static String[] splitUrl(String url) {
-    String[] split = url.split(" ");
-    return split.length == 2 ? split : new String[]{url, ""};
-  }
 }

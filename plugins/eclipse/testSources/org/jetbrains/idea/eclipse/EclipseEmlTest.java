@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,13 +79,10 @@ public class EclipseEmlTest extends IdeaTestCase {
     replaceRoot(path, EclipseXml.DOT_CLASSPATH_EXT, project);
 
 
-    final EclipseClasspathStorageProvider.EclipseClasspathConverter converter =
-      new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
+    EclipseClasspathStorageProvider.EclipseClasspathConverter converter = new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
 
-    final Element classpathElement =
-      JDOMUtil.loadDocument(FileUtil.loadFile(new File(path, EclipseXml.DOT_CLASSPATH_EXT))).getRootElement();
-    converter.getClasspath(rootModel, classpathElement);
+    converter.getClasspath(rootModel, JDOMUtil.load(new File(path, EclipseXml.DOT_CLASSPATH_EXT)));
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();

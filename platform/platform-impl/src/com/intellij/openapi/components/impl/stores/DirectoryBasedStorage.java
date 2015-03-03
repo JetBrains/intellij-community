@@ -95,17 +95,17 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
     // todo reload only changed file, compute diff
     DirectoryStorageData oldData = myStorageData;
     DirectoryStorageData newData = loadState();
     myStorageData = newData;
     if (oldData == null) {
-      result.addAll(newData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames());
     }
     else {
-      result.addAll(oldData.getComponentNames());
-      result.addAll(newData.getComponentNames());
+      componentNames.addAll(oldData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames());
     }
   }
 

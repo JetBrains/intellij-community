@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.List;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
+  private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
 
   private final Project myProject;
   private final MessageBusConnection myConnection;

@@ -189,7 +189,7 @@ public class StorageUtil {
   }
 
   @NotNull
-  private static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
+  public static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (virtualFile == null) {
       File parentFile = ioFile.getParentFile();

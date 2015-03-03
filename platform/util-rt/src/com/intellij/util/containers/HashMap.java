@@ -29,7 +29,7 @@ public class HashMap<K, V> extends java.util.HashMap<K, V> {
     super(initialCapacity);
   }
 
-  public <K1 extends K, V1 extends V> HashMap(Map<K1, V1> map) {
+  public <K1 extends K, V1 extends V> HashMap(Map<? extends K1, ? extends V1> map) {
     super(map);
   }
 
