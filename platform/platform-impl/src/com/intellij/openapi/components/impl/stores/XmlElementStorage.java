@@ -36,7 +36,6 @@ import java.util.Set;
 
 public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   @NotNull protected final String myRootElementName;
-  protected StorageData myLoadedData;
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   protected boolean myBlockSavingTheContent = false;
@@ -59,48 +58,36 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   @Nullable
   protected abstract Element loadLocalData();
 
-
   @Nullable
   @Override
-  protected Element getStateAndArchive(@NotNull StorageData storageData, @NotNull String componentName) {
+  protected Element getStateAndArchive(@NotNull StorageData storageData, Object component, @NotNull String componentName) {
     return storageData.getStateAndArchive(componentName);
   }
 
-  @Override
   @NotNull
-  protected StorageData getStorageData(boolean reloadData) {
-    if (myLoadedData != null && !reloadData) {
-      return myLoadedData;
-    }
-
-    myLoadedData = loadData(true);
-    return myLoadedData;
-  }
-
-  @NotNull
-  protected StorageData loadData(boolean useProvidersData) {
+  protected StorageData loadData() {
     StorageData result = createStorageData();
-
-    if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
+    Element element;
+    // we don't use local data if has stream provider
+    if (myStreamProvider != null && myStreamProvider.isEnabled()) {
       try {
-        Element element = loadDataFromStreamProvider();
+        element = loadDataFromStreamProvider();
         if (element != null) {
           loadState(result, element);
         }
-
-        // we don't use local data if has stream provider
-        return result;
       }
       catch (Exception e) {
-        LOG.warn(e);
+        LOG.error(e);
+        element = null;
       }
     }
+    else {
+      element = loadLocalData();
+    }
 
-    Element element = loadLocalData();
     if (element != null) {
       loadState(result, element);
     }
-
     return result;
   }
 
@@ -120,8 +107,8 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   }
 
   public void setDefaultState(@NotNull Element element) {
-    myLoadedData = createStorageData();
-    loadState(myLoadedData, element);
+    myStorageData = createStorageData();
+    loadState(myStorageData, element);
   }
 
   @Override
@@ -154,7 +141,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
   @Override
   public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
-    StorageData oldData = myLoadedData;
+    StorageData oldData = myStorageData;
     StorageData newData = getStorageData(true);
     if (oldData == null) {
       if (LOG.isDebugEnabled()) {
@@ -215,18 +202,13 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
 
     @Override
-    public final void save() {
+    public final void save() throws IOException {
       if (myBlockSavingTheContent) {
         return;
       }
 
-      try {
-        doSave(getElement(myCopiedStorageData, isCollapsePathsOnSave(), myNewLiveStates));
-        myLoadedData = myCopiedStorageData;
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
+      doSave(getElement(myCopiedStorageData, isCollapsePathsOnSave(), myNewLiveStates));
+      myStorageData = myCopiedStorageData;
     }
 
     // only because default project store hack

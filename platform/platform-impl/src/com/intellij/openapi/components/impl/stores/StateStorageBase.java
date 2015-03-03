@@ -28,6 +28,8 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
   private boolean mySavingDisabled = false;
   protected final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 
+  protected T myStorageData;
+
   protected StateStorageBase(@Nullable TrackingPathMacroSubstitutor trackingPathMacroSubstitutor) {
     myPathMacroSubstitutor = trackingPathMacroSubstitutor;
   }
@@ -35,11 +37,16 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
   @Override
   @Nullable
   public final <S> S getState(Object component, @NotNull String componentName, @NotNull Class<S> stateClass, @Nullable S mergeInto) {
-    return DefaultStateSerializer.deserializeState(getStateAndArchive(getStorageData(), componentName), stateClass, mergeInto);
+    return deserializeState(getStateAndArchive(getStorageData(), component, componentName), stateClass, mergeInto);
   }
 
   @Nullable
-  protected abstract Element getStateAndArchive(@NotNull T storageData, @NotNull String componentName);
+  protected <S> S deserializeState(@Nullable Element serializedState, @NotNull Class <S> stateClass, @Nullable S mergeInto) {
+    return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto);
+  }
+
+  @Nullable
+  protected abstract Element getStateAndArchive(@NotNull T storageData, Object component, @NotNull String componentName);
 
   @Override
   public final boolean hasState(@Nullable Object component, @NotNull String componentName, Class<?> aClass, boolean reloadData) {
@@ -51,7 +58,17 @@ public abstract class StateStorageBase<T extends StorageDataBase> implements Sta
     return getStorageData(false);
   }
 
-  protected abstract T getStorageData(boolean reloadData);
+  @NotNull
+  protected final T getStorageData(boolean reload) {
+    if (myStorageData != null && !reload) {
+      return myStorageData;
+    }
+
+    myStorageData = loadData();
+    return myStorageData;
+  }
+
+  protected abstract T loadData();
 
   public final void disableSaving() {
     if (LOG.isDebugEnabled()) {

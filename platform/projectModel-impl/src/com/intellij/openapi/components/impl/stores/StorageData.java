@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.XmlConfigurationMerger;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -29,7 +26,6 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.StringInterner;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,12 +35,16 @@ import static com.intellij.openapi.components.impl.stores.StateMap.getNewByteIfD
 
 public class StorageData extends StorageDataBase {
   private static final Logger LOG = Logger.getInstance(StorageData.class);
-  @NonNls public static final String COMPONENT = "component";
-  @NonNls public static final String NAME = "name";
+  public static final String COMPONENT = "component";
+  public static final String NAME = "name";
 
   private final StateMap myStates;
 
   protected final String myRootElementName;
+
+  public StorageData() {
+    this(COMPONENT);
+  }
 
   public StorageData(@NotNull String rootElementName) {
     myStates = new StateMap();
@@ -80,11 +80,6 @@ public class StorageData extends StorageDataBase {
         JDOMUtil.internElement(element, interner);
       }
 
-      Object serverElement = myStates.get(name);
-      if (serverElement != null) {
-        element = mergeElements(name, element, (Element)serverElement);
-      }
-
       myStates.put(name, element);
 
       if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
@@ -104,17 +99,6 @@ public class StorageData extends StorageDataBase {
       return null;
     }
     return name;
-  }
-
-  @NotNull
-  private static Element mergeElements(@NotNull String name, @NotNull Element localElement, @NotNull Element serverElement) {
-    ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
-    for (XmlConfigurationMerger merger : point.getExtensions()) {
-      if (merger.getComponentName().equals(name)) {
-        return merger.merge(serverElement, localElement);
-      }
-    }
-    return serverElement;
   }
 
   @Nullable

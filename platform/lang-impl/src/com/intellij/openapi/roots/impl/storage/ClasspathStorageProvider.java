@@ -15,19 +15,19 @@
  */
 package com.intellij.openapi.roots.impl.storage;
 
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -46,20 +46,22 @@ public interface ClasspathStorageProvider {
 
   void detach(@NotNull Module module);
 
-  void moduleRenamed(Module module, String newName);
+  void moduleRenamed(@NotNull Module module, @NotNull String newName);
 
   @Nullable
   ClasspathConverter createConverter(Module module);
 
-  String getContentRoot(ModuleRootModel model);
+  String getContentRoot(@NotNull ModuleRootModel model);
 
   void modulePathChanged(Module module, String path);
 
   interface ClasspathConverter {
-    FileSet getFileSet();
+    @NotNull
+    List<String> getFileUrls();
 
-    void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException;
+    @NotNull
+    StateStorage.ExternalizationSession startExternalization();
 
-    void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException;
+    void readClasspath(@NotNull ModifiableRootModel model) throws IOException;
   }
 }

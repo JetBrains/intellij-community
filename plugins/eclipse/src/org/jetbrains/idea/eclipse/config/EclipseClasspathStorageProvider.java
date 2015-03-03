@@ -15,39 +15,32 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.RootModelImpl;
-import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.ConversionException;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
-import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.conversion.*;
+import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
+import org.jetbrains.idea.eclipse.conversion.EPathUtil;
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -114,10 +107,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public String getContentRoot(ModuleRootModel model) {
-    final VirtualFile contentRoot = EPathUtil.getContentRoot(model);
-    if (contentRoot != null) return contentRoot.getPath();
-    return model.getContentRoots()[0].getPath();
+  public String getContentRoot(@NotNull ModuleRootModel model) {
+    VirtualFile contentRoot = EPathUtil.getContentRoot(model);
+    return contentRoot == null ? model.getContentRoots()[0].getPath() : contentRoot.getPath();
   }
 
   @Override
@@ -133,7 +125,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
-      fileCache = new CachedXmlDocumentSet(module.getProject());
+      fileCache = new CachedXmlDocumentSet();
       if (moduleManager != null) {
         moduleManager.setDocumentSet(fileCache);
       }
@@ -148,121 +140,26 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void moduleRenamed(final Module module, String newName) {
-    if (ClassPathStorageUtil.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
-      try {
-        String oldEmlName = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        String root = getFileCache(module).getParent(oldEmlName);
-        File source = new File(root, oldEmlName);
-        if (source.exists()) {
-          File target = new File(root, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
-          FileUtil.rename(source, target);
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
-        }
-        CachedXmlDocumentSet fileCache = getFileCache(module);
-        DotProjectFileHelper.saveDotProjectFile(module, fileCache.getParent(EclipseXml.PROJECT_FILE));
-        fileCache.delete(oldEmlName);
-        fileCache.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
-        fileCache.load(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, true);
-      }
-      catch (IOException ignore) {
-      }
-      catch (JDOMException ignored) {
-      }
-    }
-  }
-
-  public static class EclipseClasspathConverter implements ClasspathConverter {
-    private final Module module;
-
-    public EclipseClasspathConverter(@NotNull Module module) {
-      this.module = module;
-    }
-
-    @Override
-    public CachedXmlDocumentSet getFileSet() {
-      return getFileCache(module);
-    }
-
-    @Override
-    public void getClasspath(@NotNull ModifiableRootModel model, @NotNull Element element) throws IOException {
-      try {
-        CachedXmlDocumentSet documentSet = getFileSet();
-        String path = documentSet.getParent(EclipseXml.PROJECT_FILE);
-        if (!documentSet.exists(EclipseXml.PROJECT_FILE)) {
-          if (!documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-            return;
-          }
-
-          path = documentSet.getParent(EclipseXml.CLASSPATH_FILE);
-        }
-
-        EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
-        classpathReader.init(model);
-        if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-          classpathReader.readClasspath(model, new SmartList<String>(), new SmartList<String>(), new THashSet<String>(), null,
-                                        documentSet.read(EclipseXml.CLASSPATH_FILE, false));
-        }
-        else {
-          EclipseClasspathReader.setOutputUrl(model, path + "/bin");
-        }
-        String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        if (documentSet.exists(eml)) {
-          new IdeaSpecificSettings().readIdeaSpecific(documentSet.read(eml, false), model, null, new HashMap<String, String>());
-        }
-        else {
-          model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
-        }
-
-        ((RootModelImpl)model).writeExternal(element);
-      }
-      catch (WriteExternalException e) {
-        throw new IOException(e);
-      }
-      catch (JDOMException e) {
-        throw new IOException(e);
-      }
-    }
-
-    @Override
-    public void setClasspath(final ModuleRootModel model) throws IOException, WriteExternalException {
-      try {
-        final Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
-        final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);
-        final CachedXmlDocumentSet fileSet = getFileSet();
-
-        Element element;
+  public void moduleRenamed(@NotNull Module module, @NotNull String newName) {
+    try {
+      CachedXmlDocumentSet fileSet = getFileCache(module);
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ClasspathStorage.getModuleDir(module));
+      VirtualFile source = root == null ? null : root.findChild(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
+      if (source != null && source.isValid()) {
+        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
         try {
-          element = fileSet.read(EclipseXml.CLASSPATH_FILE);
+          source.rename(this, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
         }
-        catch (Exception ignored) {
-          element = null;
-        }
-
-        if (element != null || model.getSourceRoots().length > 0 || model.getOrderEntries().length > 2) {
-          classpathWriter.writeClasspath(classpathElement, element);
-          fileSet.write(classpathElement, EclipseXml.CLASSPATH_FILE);
-        }
-
-        try {
-          fileSet.read(EclipseXml.PROJECT_FILE);
-        }
-        catch (Exception ignored) {
-          DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
-        }
-
-        Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
-        String emlFilename = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        if (IdeaSpecificSettings.writeIDEASpecificClasspath(ideaSpecific, model)) {
-          fileSet.write(ideaSpecific, emlFilename);
-        }
-        else {
-          fileSet.delete(emlFilename);
+        finally {
+          token.finish();
         }
       }
-      catch (ConversionException e) {
-        throw new WriteExternalException(e.getMessage());
-      }
+
+      DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
+      fileSet.register(newName + EclipseXml.IDEA_SETTINGS_POSTFIX, ClasspathStorage.getModuleDir(module));
+    }
+    catch (IOException e) {
+      EclipseClasspathWriter.LOG.warn(e);
     }
   }
 }

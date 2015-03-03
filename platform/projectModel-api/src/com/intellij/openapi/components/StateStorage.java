@@ -21,6 +21,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -55,7 +56,7 @@ public interface StateStorage {
   }
 
   interface SaveSession {
-    void save();
+    void save() throws IOException;
   }
 
   interface Listener {
