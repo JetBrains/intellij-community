@@ -310,6 +310,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (myBranches == null) {
         return "<i>In branches: loading...</i>";
       }
+      if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
       if (myExpanded) {
         int rowCount = (int) Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
         HtmlTableBuilder builder = new HtmlTableBuilder();
