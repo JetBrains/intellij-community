@@ -69,7 +69,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLog = new VcsLogImpl(logDataHolder, this);
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
-    addHighlighter(new Highlighter(myLogDataHolder, myUiProperties));
+    addHighlighter(new MyCommitsHighlighter(myLogDataHolder, myUiProperties));
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {

@@ -29,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Map;
 
-public class Highlighter implements VcsLogHighlighter {
+public class MyCommitsHighlighter implements VcsLogHighlighter {
   private static final JBColor ME_BG = new JBColor(new Color(255, 255, 228), new Color(73, 71, 63));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
-  public Highlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+  public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
   }
@@ -47,7 +47,7 @@ public class Highlighter implements VcsLogHighlighter {
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       if (VcsUserImpl.isSamePerson(users.get(details.getRoot()), details.getAuthor())) {
-        return VcsCommitStyle.background(ME_BG);
+        return VcsCommitStyleImpl.background(ME_BG);
       }
     }
     return VcsCommitStyle.DEFAULT;
