@@ -65,6 +65,7 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   public void setCollapseAccessors(boolean value) {
     COLLAPSE_ACCESSORS = value;
   }
+
   @Override
   public boolean isCollapseOneLineMethods() {
     return COLLAPSE_ONE_LINE_METHODS;
