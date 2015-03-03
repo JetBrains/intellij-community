@@ -881,6 +881,7 @@ public class ListUtils {
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.type('\n')
     checkResult()
   }
 
