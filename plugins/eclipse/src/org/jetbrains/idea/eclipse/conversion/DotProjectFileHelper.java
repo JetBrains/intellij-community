@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.io.File;
@@ -42,7 +43,7 @@ public class DotProjectFileHelper {
   private DotProjectFileHelper() {
   }
 
-  public static void saveDotProjectFile(Module module, String storageRoot) throws IOException {
+  public static void saveDotProjectFile(@NotNull Module module, @NotNull String storageRoot) throws IOException {
     try {
       Document doc;
       if (ModuleType.get(module) instanceof JavaModuleType) {

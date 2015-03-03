@@ -15,31 +15,29 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"deprecation"})
 public class DefaultStateSerializer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DefaultStateSerializer");
+  private static final Logger LOG = Logger.getInstance(DefaultStateSerializer.class);
 
   private DefaultStateSerializer() {
   }
 
   @SuppressWarnings({"unchecked"})
   @Nullable
-  public static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws XmlSerializationException {
-    if (stateElement == null) return mergeInto;
-
-    if (stateClass.equals(Element.class)) {
-      //assert mergeInto == null;
+  public static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) {
+    if (stateElement == null) {
+      return mergeInto;
+    }
+    else if (stateClass == Element.class) {
       return (T)stateElement;
     }
     else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {
@@ -47,13 +45,14 @@ public class DefaultStateSerializer {
         String elementText = JDOMUtil.writeElement(stateElement, "\n");
         LOG.error("State is " + stateClass.getName() + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText);
       }
-      final T t = ReflectionUtil.newInstance(stateClass);
+
+      T t = ReflectionUtil.newInstance(stateClass);
       try {
         ((JDOMExternalizable)t).readExternal(stateElement);
         return t;
       }
       catch (InvalidDataException e) {
-        throw new StateStorageException(e);
+        throw new RuntimeException(e);
       }
     }
     else if (mergeInto == null) {

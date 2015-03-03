@@ -57,6 +57,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import icons.EclipseIcons;
 import org.jdom.Element;
@@ -173,8 +174,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   public boolean validate(final Project currentProject, final Project dstProject) {
     final Ref<Exception> refEx = new Ref<Exception>();
-    final HashSet<String> variables = new HashSet<String>();
-    final Map<String, String> naturesNames = new HashMap<String, String>();
+    final Set<String> variables = new THashSet<String>();
+    final Map<String, String> naturesNames = new THashMap<String, String>();
     final List<String> projectsToConvert = getParameters().projectsToConvert;
     final boolean oneProjectToConvert = projectsToConvert.size() == 1;
     final String separator = oneProjectToConvert ? "<br>" : ", ";
@@ -272,7 +273,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
                                                                   return file.getPath();
                                                                 }
                                                               }, "\n") +
-                                                              ".\n Would you like to reuse them?", "Module files found",
+                                                              ".\n Would you like to reuse them?", "Module Files Found",
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
           if (resultCode == Messages.NO) {
@@ -318,7 +319,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, getParameters().projectsToConvert, moduleNames);
         classpathReader.init(rootModel);
         if (classpathFile.exists()) {
-          final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
+          Element classpathElement = JDOMUtil.load(classpathFile);
           classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, refsToModules,
                                         getParameters().converterOptions.testPattern, classpathElement);
         }

@@ -214,7 +214,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(),
-                           testPattern, (Element)o, 0, EclipseModuleManager.EMPTY, expander.getExpandMacroMap(), libs);
+                           testPattern, (Element)o, 0, null, expander.getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         throw new IOException(e);

@@ -37,7 +37,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -48,7 +47,6 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 
 public class EclipseClasspathTest extends IdeaTestCase {
   @Override
@@ -92,10 +90,9 @@ public class EclipseClasspathTest extends IdeaTestCase {
       @Override
       public void consume(ModifiableRootModel model) {
         try {
-          Set<String> sink = ContainerUtil.newHashSet();
           EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
           classpathReader.init(model);
-          classpathReader.readClasspath(model, sink, sink, sink, null, classpathElement);
+          classpathReader.readClasspath(model, classpathElement);
           new EclipseClasspathStorageProvider().assertCompatible(model);
         }
         catch (Exception e) {
@@ -113,10 +110,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
     if (!SystemInfo.isWindows) {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
-    final Element classpathElement1 = JDOMUtil.loadDocument(fileText1).getRootElement();
-    final ModuleRootModel model = ModuleRootManager.getInstance(module);
-    final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);
-    new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement1);
+
+    Element classpathElement1 = JDOMUtil.loadDocument(fileText1).getRootElement();
+    ModuleRootModel model = ModuleRootManager.getInstance(module);
+    Element resultClasspathElement = new EclipseClasspathWriter().writeClasspath(classpathElement1, model);
 
     String resulted = new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n"));
     assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),

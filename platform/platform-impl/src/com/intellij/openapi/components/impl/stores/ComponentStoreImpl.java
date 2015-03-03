@@ -32,9 +32,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import gnu.trove.THashMap;
@@ -172,13 +174,18 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
   protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
     if (saveSessions != null) {
+      List<Throwable> errors = null;
       for (SaveSession session : saveSessions) {
-        executeSave(session, readonlyFiles);
+        errors = executeSave(session, readonlyFiles, errors);
+      }
+      if (errors != null) {
+        throw new CompoundRuntimeException(errors);
       }
     }
   }
 
-  protected static void executeSave(@NotNull SaveSession session, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  @Nullable
+  protected static List<Throwable> executeSave(@NotNull SaveSession session, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles, @Nullable List<Throwable> errors) {
     try {
       session.save();
     }
@@ -186,6 +193,13 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       LOG.warn(e);
       readonlyFiles.add(Pair.create(session, e.getFile()));
     }
+    catch (Exception e) {
+      if (errors == null) {
+        errors = new SmartList<Throwable>();
+      }
+      errors.add(e);
+    }
+    return errors;
   }
 
   private <T> void commitPersistentComponent(@NotNull PersistentStateComponent<T> component, @NotNull ExternalizationSession session, @Nullable String componentName) {

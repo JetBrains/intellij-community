@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
@@ -33,7 +34,6 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,13 +48,12 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   }
 
   @Override
-  protected void readLibraryLevels(Element root, Map<String, String> levels) {
+  protected void readLibraryLevels(Element root, @NotNull Map<String, String> levels) {
     final Element levelsElement = root.getChild("levels");
     if (levelsElement != null) {
-      for (Object child : levelsElement.getChildren("level")) {
-        final Element element = (Element)child;
-        final String libName = element.getAttributeValue("name");
-        final String libLevel = element.getAttributeValue("value");
+      for (Element element : levelsElement.getChildren("level")) {
+        String libName = element.getAttributeValue("name");
+        String libLevel = element.getAttributeValue("value");
         if (libName != null && libLevel != null) {
           levels.put(libName, libLevel);
         }
@@ -64,8 +63,7 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
 
   @Override
   protected String[] getEntries(JpsModule model) {
-    final List<String> urls = model.getContentRootsList().getUrls();
-    return ArrayUtil.toStringArray(urls);
+    return ArrayUtil.toStringArray(model.getContentRootsList().getUrls());
   }
 
   @Override

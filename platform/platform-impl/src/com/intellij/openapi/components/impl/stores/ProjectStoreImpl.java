@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -472,8 +473,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       else {
         List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
         readonlyFiles.clear();
+        List<Throwable> errors = null;
         for (Pair<SaveSession, VirtualFile> entry : oldList) {
-          executeSave(entry.first, readonlyFiles);
+          errors = executeSave(entry.first, readonlyFiles, errors);
+        }
+
+        if (errors != null) {
+          throw new CompoundRuntimeException(errors);
         }
 
         if (!readonlyFiles.isEmpty()) {

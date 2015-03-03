@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,17 +368,17 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
-    private Element myRootModelElement = null;
+    private Element myRootModelElement;
 
     public ModuleRootManagerState() {
     }
 
-    public ModuleRootManagerState(final RootModelImpl rootModel) {
+    public ModuleRootManagerState(RootModelImpl rootModel) {
       myRootModel = rootModel;
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
       myRootModelElement = element;
     }
 

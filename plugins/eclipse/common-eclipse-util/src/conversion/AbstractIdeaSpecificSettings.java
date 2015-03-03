@@ -29,7 +29,7 @@ import java.util.Map;
  * Date: 11/8/12
  */
 public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
-  public void readIdeaSpecific(@NotNull Element root, T model, @Nullable SdkType projectSdkType, Map<String, String> levels) {
+  public void readIdeaSpecific(@NotNull Element root, T model, @Nullable SdkType projectSdkType, @Nullable Map<String, String> levels) {
     expandElement(root, model);
 
     readLanguageLevel(root, model);
@@ -40,7 +40,9 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
     setupJdk(root, model, projectSdkType);
     setupLibraryRoots(root, model);
     overrideModulesScopes(root, model);
-    readLibraryLevels(root, levels);
+    if (levels != null) {
+      readLibraryLevels(root, levels);
+    }
   }
 
   public void initLevels(final Element root, T model, Map<String, String> levels) throws InvalidDataException {
@@ -71,7 +73,8 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
     }
   }
 
-  protected abstract void readLibraryLevels(Element root, Map<String, String> levels);
+  protected void readLibraryLevels(Element root, @NotNull Map<String, String> levels) {
+  }
 
   protected abstract C[] getEntries(T model);
 
