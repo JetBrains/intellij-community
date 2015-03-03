@@ -94,7 +94,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
         int lineNumber;
         if (document == null) {
           // element over light virtual file
-          offset = element.getTextOffset();
+          offset = element == null ? 0 : element.getTextOffset();
           lineNumber = -1;
         }
         else {
