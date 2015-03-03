@@ -463,6 +463,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     }
 
     public void onRediff() {
+      if (DiffUtil.wasScrolled(getEditors())) myShouldScroll = false;
       if (myShouldScroll && myScrollToChange != null) {
         myShouldScroll = !doScrollToChange(myScrollToChange);
       }
