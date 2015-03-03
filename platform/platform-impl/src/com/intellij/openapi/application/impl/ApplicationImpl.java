@@ -979,12 +979,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      throw new RuntimeException(
+      LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only" +
-        " (see com.intellij.openapi.application.Application.runReadAction())" +
-        " Current thread: " + describe(Thread.currentThread()) +
-        "; dispatch thread: " + EventQueue.isDispatchThread() +"; isDispatchThread(): "+isDispatchThread() +
-        " SystemEventQueueThread: " + describe(getEventQueueThread()));
+        " (see com.intellij.openapi.application.Application.runReadAction())",
+        "Current thread: " + describe(Thread.currentThread()), "; dispatch thread: " + EventQueue.isDispatchThread() +"; isDispatchThread(): "+isDispatchThread(),
+        "SystemEventQueueThread: " + describe(getEventQueueThread()));
     }
   }
 
