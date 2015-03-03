@@ -326,7 +326,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, AllIcons.Diff.Arrow, new Runnable() {
+    return createIconRenderer(side, "Replace", AllIcons.Diff.Arrow, new Runnable() {
       @Override
       public void run() {
         replaceChange(side);
@@ -336,7 +336,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, AllIcons.Diff.ArrowLeftDown, new Runnable() {
+    return createIconRenderer(side, "Insert", AllIcons.Diff.ArrowLeftDown, new Runnable() {
       @Override
       public void run() {
         appendChange(side);
@@ -346,7 +346,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createRevertRenderer(@NotNull final Side side) {
-    return createIconRenderer(side.other(), AllIcons.Diff.Remove, new Runnable() {
+    return createIconRenderer(side.other(), "Revert", AllIcons.Diff.Remove, new Runnable() {
       @Override
       public void run() {
         replaceChange(side.other());
@@ -355,7 +355,10 @@ public class SimpleDiffChange {
   }
 
   @Nullable
-  private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide, @NotNull final Icon icon, @NotNull final Runnable perform) {
+  private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
+                                                @NotNull final String tooltipText,
+                                                @NotNull final Icon icon,
+                                                @NotNull final Runnable perform) {
     assert myEditor1 != null && myEditor2 != null;
     if (!DiffUtil.isEditable(sourceSide.other().select(myEditor1, myEditor2))) return null;
     return new GutterIconRenderer() {
@@ -399,6 +402,12 @@ public class SimpleDiffChange {
       @Override
       public int hashCode() {
         return System.identityHashCode(this);
+      }
+
+      @Nullable
+      @Override
+      public String getTooltipText() {
+        return tooltipText;
       }
     };
   }
