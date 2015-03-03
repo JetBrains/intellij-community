@@ -19,6 +19,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
+import com.intellij.openapi.components.StateStorageChooserEx.Resolution;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
@@ -301,7 +302,13 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
 
     T state = stateSpec.defaultStateAsResource() ? getDefaultState(component, name, stateClass) : null;
     Storage[] storageSpecs = getComponentStorageSpecs(component, stateSpec, StateStorageOperation.READ);
+    StateStorageChooserEx stateStorageChooser = component instanceof StateStorageChooserEx ? (StateStorageChooserEx)component : null;
     for (Storage storageSpec : storageSpecs) {
+      Resolution resolution = stateStorageChooser == null ? Resolution.DO : stateStorageChooser.getResolution(storageSpec, StateStorageOperation.READ);
+      if (resolution == Resolution.SKIP) {
+        continue;
+      }
+
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
       if (stateStorage != null && (stateStorage.hasState(component, name, stateClass, reloadData) ||
                                    (changedStorages != null && changedStorages.contains(stateStorage)))) {
@@ -353,64 +360,67 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  protected  <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
-                                                    @NotNull State stateSpec,
-                                                    @NotNull StateStorageOperation operation) {
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> component,
+                                                   @NotNull State stateSpec,
+                                                   @NotNull StateStorageOperation operation) {
     Storage[] storages = stateSpec.storages();
     if (storages.length == 1) {
       return storages;
     }
     assert storages.length > 0;
 
+    StateStorageChooser<PersistentStateComponent<T>> storageChooser;
     Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
-    if (storageChooserClass == StateStorageChooser.class) {
-      StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
-      if (defaultStateStorageChooser == null) {
-        int actualStorageCount = 0;
-        for (Storage storage : storages) {
-          if (!storage.deprecated()) {
-            actualStorageCount++;
-          }
-        }
+    if (storageChooserClass != StateStorageChooser.class) {
+      //noinspection unchecked
+      storageChooser = ReflectionUtil.newInstance(storageChooserClass);
+      return storageChooser.selectStorages(storages, component, operation);
+    }
 
-        if (actualStorageCount > 1) {
-          LOG.error("State chooser not specified for: " + persistentStateComponent.getClass());
-        }
+    StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
+    if (defaultStateStorageChooser != null) {
+      return defaultStateStorageChooser.selectStorages(storages, component, operation);
+    }
 
-        if (!storages[0].deprecated()) {
-          boolean othersAreDeprecated = true;
-          for (int i = 1; i < storages.length; i++) {
-            if (!storages[i].deprecated()) {
-              othersAreDeprecated = false;
-              break;
-            }
-          }
+    if (component instanceof StateStorageChooserEx) {
+      return storages;
+    }
 
-          if (othersAreDeprecated) {
-            return storages;
-          }
-        }
-
-        Storage[] sorted = Arrays.copyOf(storages, storages.length);
-        Arrays.sort(sorted, new Comparator<Storage>() {
-          @Override
-          public int compare(Storage o1, Storage o2) {
-            int w1 = o1.deprecated() ? 1 : 0;
-            int w2 = o2.deprecated() ? 1 : 0;
-            return w1 - w2;
-          }
-        });
-        return sorted;
-      }
-      else {
-        return defaultStateStorageChooser.selectStorages(storages, persistentStateComponent, operation);
+    int actualStorageCount = 0;
+    for (Storage storage : storages) {
+      if (!storage.deprecated()) {
+        actualStorageCount++;
       }
     }
-    else {
-      @SuppressWarnings("unchecked")
-      StateStorageChooser<PersistentStateComponent<T>> storageChooser = ReflectionUtil.newInstance(storageChooserClass);
-      return storageChooser.selectStorages(storages, persistentStateComponent, operation);
+
+    if (actualStorageCount > 1) {
+      LOG.error("State chooser not specified for: " + component.getClass());
     }
+
+    if (!storages[0].deprecated()) {
+      boolean othersAreDeprecated = true;
+      for (int i = 1; i < storages.length; i++) {
+        if (!storages[i].deprecated()) {
+          othersAreDeprecated = false;
+          break;
+        }
+      }
+
+      if (othersAreDeprecated) {
+        return storages;
+      }
+    }
+
+    Storage[] sorted = Arrays.copyOf(storages, storages.length);
+    Arrays.sort(sorted, new Comparator<Storage>() {
+      @Override
+      public int compare(Storage o1, Storage o2) {
+        int w1 = o1.deprecated() ? 1 : 0;
+        int w2 = o2.deprecated() ? 1 : 0;
+        return w1 - w2;
+      }
+    });
+    return sorted;
   }
 
   protected boolean optimizeTestLoading() {

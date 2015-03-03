@@ -17,7 +17,11 @@ package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface StateStorageChooser<T> {
+public interface StateStorageChooserEx {
+  enum Resolution {
+    DO, SKIP, CLEAR
+  }
+
   @NotNull
-  Storage[] selectStorages(Storage[] storages, T component, @NotNull StateStorageOperation operation);
+  Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation);
 }
