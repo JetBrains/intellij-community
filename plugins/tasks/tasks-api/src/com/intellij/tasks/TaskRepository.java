@@ -223,6 +223,19 @@ public abstract class TaskRepository {
   @NotNull
   public abstract TaskRepository clone();
 
+  /**
+   * Attempts to extract server ID of the issue from the ID of local task (probably restored from project settings).
+   * It's perfectly legal to return the argument unchanged, e.g. YouTrack repository does so for ID of form <tt>IDEA-123</tt>.
+   * <p/>
+   * Basically this method works as filter that tells what repository local task belongs to. If it returns not {@code null},
+   * this repository is attached to that local task and is used then to refresh it via {@link #findTask(String)},
+   * update its state via {@link #setTaskState(Task, CustomTaskState)}, etc. Because the decision is based only on syntactic
+   * structure of ID, this approach works poorly in case of several repositories with similar issue IDs, e.g. JIRA and YouTrack,
+   * and so it's a subject of change in future.
+   *
+   * @param taskName ID of the task to check
+   * @return extracted ID of the issue or {@code null} if it doesn't look as issue ID of this tracker
+   */
   @Nullable
   public abstract String extractId(@NotNull String taskName);
 
