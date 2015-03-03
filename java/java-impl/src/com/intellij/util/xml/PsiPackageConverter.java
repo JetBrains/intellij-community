@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PackageReferenceSet;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,7 @@ public class PsiPackageConverter extends Converter<PsiPackage> implements Custom
     if (s == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    return new PackageReferenceSet(s, element, ElementManipulators.getOffsetInElement(element)).getPsiReferences();
+    GlobalSearchScope scope = context.getSearchScope();
+    return new PackageReferenceSet(s, element, ElementManipulators.getOffsetInElement(element), scope != null? scope : GlobalSearchScope.allScope(element.getProject())).getPsiReferences();
   }
 }
