@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -68,6 +69,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @NotNull private final VcsEditableTextComponent myTargetRenderer;
   @NotNull private final PushTargetTextField myTargetEditor;
   @NotNull private final VcsLinkedTextComponent myRemoteRenderer;
+  @NotNull private final Project myProject;
 
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
@@ -78,6 +80,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myPushSupport = support;
     myRepository = repository;
     myGit = ServiceManager.getService(Git.class);
+    myProject = myRepository.getProject();
 
     myTargetRenderer = new VcsEditableTextComponent("", null);
     myTargetEditor = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), "");
@@ -145,7 +148,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         String error = validateRemoteUnderModal(name, url);
         if (error != null) {
           LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
-          Messages.showErrorDialog(this, error, "Invalid Remote URL");
+          Messages.showErrorDialog(myProject, error, "Invalid Remote URL");
         }
         else {
           addRemoteUnderModal(name, url);
@@ -211,7 +214,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         else {
           String message = "Couldn't add remote: " + myResult.getErrorOutputAsHtmlString();
           LOG.warn(message);
-          Messages.showErrorDialog(GitPushTargetPanel.this, message, "Add Remote");
+          Messages.showErrorDialog(myProject, message, "Add Remote");
         }
       }
     });
