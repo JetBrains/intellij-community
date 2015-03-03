@@ -109,7 +109,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new HighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
-    group.add(new ReadOnlyLockAction());
+    group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -558,6 +558,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
+  private class MyReadOnlyLockAction extends ReadOnlyLockAction {
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
+      for (SimpleDiffChange change : myDiffChanges) {
+        change.updateGutterActions(true);
+      }
+    }
+  }
+
   //
   // Modification operations
   //
@@ -940,7 +950,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public void updateActions() {
       for (SimpleDiffChange change : myDiffChanges) {
-        change.update();
+        change.updateGutterActions(false);
       }
     }
   }

@@ -157,9 +157,9 @@ public class SimpleDiffChange {
     myHighlighters.add(highlighter);
   }
 
-  public void update() {
+  public void updateGutterActions(boolean force) {
     for (MyGutterOperation operation : myOperations) {
-      operation.update();
+      operation.update(force);
     }
   }
 
@@ -291,8 +291,8 @@ public class SimpleDiffChange {
       myHighlighter.dispose();
     }
 
-    public void update() {
-      if (!areModifiersChanged()) {
+    public void update(boolean force) {
+      if (!force && !areModifiersChanged()) {
         return;
       }
       myHighlighter.setGutterIconRenderer(createRenderer());
