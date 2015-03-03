@@ -39,6 +39,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.intellij.lang.annotations.RegExp
 
+import static com.intellij.codeInsight.folding.impl.ConstantExpressionFoldingManager.CONSTANT_EXPRESSION_GROUP_NAME
+
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   def JavaCodeFoldingSettingsImpl myFoldingSettings
   def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
@@ -1116,5 +1118,29 @@ class Test {
 \t\t});
 \t}
 }''')
+  }
+
+  public void "test whether constant expressions are folded"() {
+    myFoldingSettings.COLLAPSE_CONSTANT_EXPRESSIONS = true
+
+    @Language("JAVA") def text = '''
+      @SuppressWarnings("All") abstract class Foo {
+        private static final int x = 0;
+        private static int y = 0;
+        static {
+          String format = 2 + "^" + x + '=' + "1";  /** simple primitive concatenations as assignment */
+          ("A" + '+' + "B").length();               /** parenthesized expression */
+          String.format('"' + "%d" + '"', 0);       /** method parameter */
+
+          boolean b = (1 == 1); /** boolean constant */
+          int i = 1 + 2;        /** numeric constant */
+
+          int v = x + y; /* non-constant */
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(CONSTANT_EXPRESSION_GROUP_NAME)
   }
 }
