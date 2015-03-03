@@ -145,5 +145,6 @@ public abstract class FileTemplateManager{
   public abstract FileTemplate getDefaultTemplate(@NotNull @NonNls String name);
 
   public abstract void setTemplates(@NotNull String templatesCategory, @NotNull Collection<FileTemplate> templates);
-  
+
+  public abstract void saveAllTemplates();
 }

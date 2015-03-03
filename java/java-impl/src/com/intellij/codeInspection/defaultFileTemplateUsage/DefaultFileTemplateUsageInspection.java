@@ -17,6 +17,7 @@ package com.intellij.codeInspection.defaultFileTemplateUsage;
 
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -107,6 +108,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
             WriteCommandAction.runWriteCommandAction(project, new Runnable() {
               @Override
               public void run() {
+                FileTemplateManager.getInstance(project).saveAllTemplates();
                 myReplaceTemplateFix.applyFix(project, descriptor);
               }
             });

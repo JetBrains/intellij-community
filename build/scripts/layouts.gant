@@ -706,6 +706,9 @@ def layoutAndroid(String androidHome) {
       jar("sdklib.jar") {
         module("sdklib")
       }
+      jar("sdk-common.jar") {
+        module("sdk-common")
+      }
       jar("layoutlib-api.jar") {
         module("layoutlib-api")
       }
@@ -720,7 +723,6 @@ def layoutAndroid(String androidHome) {
         module("lint-api")
         module("lint-checks")
         module("ninepatch")
-        module("sdk-common")
         module("perflib")
       }
       jar("androidAnnotations.jar") {
