@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
         catch (WriteExternalException e) {
           LOG.error(e);
         }
-        boolean hasSmthToSave = sortedProfiles.length > 1 || isDefaultProfileUsed();
+        boolean hasSmthToSave = sortedProfiles.length > 1 || isCustomProfileUsed();
         if (!hasSmthToSave) {
           for (Element child : profileElement.getChildren()) {
             if (!child.getName().equals("option")) {
@@ -121,15 +121,13 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
             }
           }
         }
-        if (!hasSmthToSave) {
-          continue;
+        if (hasSmthToSave) {
+          state.addContent(profileElement);
         }
-
-        state.addContent(profileElement);
       }
     }
 
-    if (!state.getChildren().isEmpty() || isDefaultProfileUsed()) {
+    if (!state.getChildren().isEmpty() || isCustomProfileUsed()) {
       XmlSerializer.serializeInto(this, state);
       state.addContent(new Element("version").setAttribute("value", VERSION));
     }
@@ -169,7 +167,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   protected void convert(Element element) {
   }
 
-  private boolean isDefaultProfileUsed() {
+  private boolean isCustomProfileUsed() {
     return myProjectProfile != null && !Comparing.strEqual(myProjectProfile, PROJECT_DEFAULT_PROFILE_NAME);
   }
 

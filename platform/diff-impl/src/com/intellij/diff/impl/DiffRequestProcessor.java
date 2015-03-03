@@ -24,6 +24,7 @@ import com.intellij.diff.DiffTool;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
@@ -78,6 +79,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final List<DiffTool> myAvailableTools;
   @NotNull private final LinkedList<DiffTool> myToolOrder;
 
+  @NotNull private final DiffSettings myDiffSettings;
+
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @Nullable private DefaultActionGroup myPopupActionGroup;
 
@@ -103,6 +106,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myContext = new MyDiffContext(context);
     myActiveRequest = new NoDiffRequest();
+
+    myDiffSettings = DiffSettingsHolder.getInstance().getSettings(getContextUserData(DiffUserDataKeysEx.PLACE));
 
     // UI
 
@@ -316,10 +321,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<DiffTool> getToolOrderFromSettings(@NotNull List<DiffTool> availableTools) {
-    DiffSettingsHolder.DiffSettings settings = DiffSettingsHolder.getInstance().getSettings(getContextUserData(DiffUserDataKeysEx.PLACE));
-
     List<DiffTool> result = new ArrayList<DiffTool>();
-    List<String> savedOrder = settings.getDiffToolsOrder();
+    List<String> savedOrder = myDiffSettings.getDiffToolsOrder();
 
     for (final String clazz : savedOrder) {
       DiffTool tool = ContainerUtil.find(availableTools, new Condition<DiffTool>() {
@@ -339,13 +342,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected void updateToolOrderSettings(@NotNull List<DiffTool> toolOrder) {
-    DiffSettingsHolder.DiffSettings settings = DiffSettingsHolder.getInstance().getSettings(getContextUserData(DiffUserDataKeysEx.PLACE));
-
     List<String> savedOrder = new ArrayList<String>();
     for (DiffTool tool : toolOrder) {
       savedOrder.add(tool.getClass().getCanonicalName());
     }
-    settings.setDiffToolsOrder(savedOrder);
+    myDiffSettings.setDiffToolsOrder(savedOrder);
   }
 
   @Override
@@ -617,7 +618,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (isNavigationEnabled() && hasNextChange()) {
+      if (isNavigationEnabled() && hasNextChange() && myDiffSettings.isGoToNextFileOnNextDifference()) {
         e.getPresentation().setEnabled(true);
         return;
       }
@@ -634,7 +635,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (!isNavigationEnabled() || !hasNextChange()) return;
+      if (!isNavigationEnabled() || !hasNextChange() || !myDiffSettings.isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.NEXT) {
         // TODO: provide "change" word in chain UserData - for tests/etc
@@ -667,7 +668,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (isNavigationEnabled() && hasPrevChange()) {
+      if (isNavigationEnabled() && hasPrevChange() && myDiffSettings.isGoToNextFileOnNextDifference()) {
         e.getPresentation().setEnabled(true);
         return;
       }
@@ -684,7 +685,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (!isNavigationEnabled() || !hasPrevChange()) return;
+      if (!isNavigationEnabled() || !hasPrevChange() || !myDiffSettings.isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.PREV) {
         notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the previous file", false);

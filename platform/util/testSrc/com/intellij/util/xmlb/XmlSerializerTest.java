@@ -571,8 +571,9 @@ public class XmlSerializerTest extends TestCase {
   public static class BeanWithArray {
     public String[] ARRAY_V = new String[] {"a", "b"};
   }
+
   public void testArray() {
-    final BeanWithArray bean = new BeanWithArray();
+    BeanWithArray bean = new BeanWithArray();
     doSerializerTest(
       "<BeanWithArray>\n" +
       "  <option name=\"ARRAY_V\">\n" +
@@ -583,7 +584,7 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithArray>", bean);
 
-    bean.ARRAY_V = new String[] {"1", "2", "3"};
+    bean.ARRAY_V = new String[] {"1", "2", "3", ""};
     doSerializerTest(
       "<BeanWithArray>\n" +
       "  <option name=\"ARRAY_V\">\n" +
@@ -591,6 +592,7 @@ public class XmlSerializerTest extends TestCase {
       "      <option value=\"1\" />\n" +
       "      <option value=\"2\" />\n" +
       "      <option value=\"3\" />\n" +
+      "      <option value=\"\" />\n" +
       "    </array>\n" + "  </option>\n" +
       "</BeanWithArray>", bean);
   }

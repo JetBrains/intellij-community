@@ -136,7 +136,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private void showConsole(@NotNull Runnable runnable) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(getProject());
-    if (toolWindow != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (toolWindow != null && toolWindow.getToolWindow() != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       toolWindow.getToolWindow().activate(runnable);
     }
     else {

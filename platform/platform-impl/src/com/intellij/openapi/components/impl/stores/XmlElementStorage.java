@@ -153,14 +153,14 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
     StorageData oldData = myLoadedData;
     StorageData newData = getStorageData(true);
     if (oldData == null) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: old data null, load new for " + toString());
       }
-      result.addAll(newData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames());
     }
     else {
       Set<String> changedComponentNames = oldData.getChangedComponentNames(newData, myPathMacroSubstitutor);
@@ -168,7 +168,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
         LOG.debug("analyzeExternalChangesAndUpdateIfNeed: changedComponentNames + " + changedComponentNames + " for " + toString());
       }
       if (!ContainerUtil.isEmpty(changedComponentNames)) {
-        result.addAll(changedComponentNames);
+        componentNames.addAll(changedComponentNames);
       }
     }
   }

@@ -201,6 +201,11 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   @Override
+  public void setViewer(boolean isViewer) {
+    myDelegate.setViewer(isViewer);
+  }
+
+  @Override
   public boolean isViewer() {
     return myDelegate.isViewer();
   }

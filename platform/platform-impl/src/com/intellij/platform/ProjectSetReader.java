@@ -42,6 +42,9 @@ public class ProjectSetReader {
       context = new ProjectSetProcessor.Context();
     }
     context.directoryName = "";
+    if (descriptor.get(ProjectSetProcessor.PROJECT) == null) {
+      descriptor.add(ProjectSetProcessor.PROJECT, new JsonObject()); // open directory by default
+    }
     runProcessor(processors, context, descriptor.entrySet().iterator());
   }
 

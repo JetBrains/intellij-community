@@ -39,6 +39,7 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
   public static final Key<DiffSettings> KEY = Key.create("DiffSettings");
 
   private static class SharedSettings {
+    public boolean GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE = true;
   }
 
   private static class PlaceSettings {
@@ -65,6 +66,14 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
 
     public void setDiffToolsOrder(@NotNull List<String> order) {
       PLACE_SETTINGS.DIFF_TOOLS_ORDER = order;
+    }
+
+    public boolean isGoToNextFileOnNextDifference() {
+      return SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE;
+    }
+
+    public void setGoToNextFileOnNextDifference(boolean value) {
+      SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE = value;
     }
 
     //

@@ -35,8 +35,8 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    return !logUI.getBekType().equals(PermanentGraph.SortType.Normal);
+    VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    return logUI != null && !logUI.getBekType().equals(PermanentGraph.SortType.Normal);
   }
 
   @Override
@@ -51,7 +51,7 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     e.getPresentation().setVisible(BekSorter.isBekEnabled());
-    e.getPresentation().setVisible(BekSorter.isBekEnabled() && logUI != null);
+    e.getPresentation().setEnabled(BekSorter.isBekEnabled() && logUI != null);
 
     if (logUI != null) {
       e.getPresentation().setDescription("Turn IntelliSort " + (logUI.getBekType() == PermanentGraph.SortType.Normal ? "On" : "Off" + ""));

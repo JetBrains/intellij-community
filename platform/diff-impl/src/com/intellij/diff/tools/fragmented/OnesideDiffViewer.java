@@ -154,6 +154,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
+    group.add(new ReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;

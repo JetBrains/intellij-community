@@ -283,6 +283,7 @@ logon
 logout
 longblob
 longtext
+lookahead
 lookup
 lucene
 lvalue

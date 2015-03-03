@@ -17,7 +17,6 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
@@ -85,14 +84,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   @Nullable
   public Object deserialize(Object context, @NotNull Element element) {
     if (myBinding == null) {
-      List<Content> content = element.getContent();
-      String value = myTextIfEmpty;
-      if (!content.isEmpty()) {
-        Content child = content.get(0);
-        if (child instanceof Text) {
-          value = child.getValue();
-        }
-      }
+      String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
       XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
     }
     else {

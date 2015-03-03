@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,18 +40,18 @@ public class InspectionProfilesConverterTest extends LightIdeaTestCase {
   }
 
   private static void doTest(final String dirName) throws Exception {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
     try {
       final String relativePath = "/inspection/converter/";
       final File projectFile = new File(JavaTestUtil.getJavaTestDataPath() + relativePath + dirName + "/options.ipr");
       for (Element element : JDOMUtil.loadDocument(projectFile).getRootElement().getChildren("component")) {
         if (Comparing.strEqual(element.getAttributeValue("name"), "InspectionProjectProfileManager")) {
           final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
-          InspectionProfileImpl.INIT_INSPECTIONS = true;
           profileManager.loadState(element);
 
           Element configElement = profileManager.getState();
           final File file = new File(JavaTestUtil.getJavaTestDataPath() + relativePath + dirName + "/options.after.xml");
-          PlatformTestUtil.assertElementsEqual(configElement, JDOMUtil.loadDocument(file).getRootElement());
+          PlatformTestUtil.assertElementsEqual(JDOMUtil.loadDocument(file).getRootElement(), configElement);
           break;
         }
       }

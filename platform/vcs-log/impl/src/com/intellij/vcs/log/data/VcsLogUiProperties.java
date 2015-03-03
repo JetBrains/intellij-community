@@ -47,7 +47,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
-    public boolean HIGHLIGHT_MY_COMMITS = false;
+    public boolean HIGHLIGHT_MY_COMMITS = true;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
   }
