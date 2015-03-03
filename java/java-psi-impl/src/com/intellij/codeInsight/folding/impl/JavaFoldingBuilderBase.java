@@ -727,6 +727,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     else if (element instanceof PsiPolyadicExpression) {
       return settings.isCollapseConstantExpressions();
     }
+    else if (element instanceof PsiLiteralExpression) {
+      return settings.isCollapseStrings();
+    }
     else {
       LOG.error("Unknown element:" + element);
       return false;
@@ -764,6 +767,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         }
 
         super.visitPolyadicExpression(expression);
+      }
+
+      @Override
+      public void visitLiteralExpression(PsiLiteralExpression expression) {
+        if (!dumb) {
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseStrings()) {
+            foldElements.addAll(StringEscapeFoldingManager.fold(expression));
+          }
+        }
+
+        super.visitLiteralExpression(expression);
       }
 
       @Override

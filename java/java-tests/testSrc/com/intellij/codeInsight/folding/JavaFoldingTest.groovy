@@ -40,6 +40,7 @@ import org.intellij.lang.annotations.Language
 import org.intellij.lang.annotations.RegExp
 
 import static com.intellij.codeInsight.folding.impl.ConstantExpressionFoldingManager.CONSTANT_EXPRESSION_GROUP_NAME
+import static com.intellij.codeInsight.folding.impl.StringEscapeFoldingManager.STRING_ESCAPE_GROUP_NAME
 
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   def JavaCodeFoldingSettingsImpl myFoldingSettings
@@ -1142,5 +1143,24 @@ class Test {
     configure text
 
     assertSize text.count("/**"), getFoldRegions(CONSTANT_EXPRESSION_GROUP_NAME)
+  }
+
+  public void "test whether string escapes are folded"() {
+    myFoldingSettings.COLLAPSE_STRINGS = true
+
+    @Language("JAVA") def text = '''
+      import java.util.regex.Pattern;
+      @SuppressWarnings("All") abstract class Foo {
+        static {
+          String str = "\\\\";                                                                  /** a single backslash character (escaped here twice) */
+          str = "\\\\\\\\";                                                                     /** two backslashes */
+          str = "c:\\\\Program Files (x86)\\\\JetBrains\\\\IntelliJ IDEA\\\\bin\\\\idea64.exe"; /** path */
+          Pattern.compile("\\\\d+\\\\.\\\\d");                                                  /** regexp as method parameter */
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(STRING_ESCAPE_GROUP_NAME)
   }
 }

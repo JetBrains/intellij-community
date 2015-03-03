@@ -62,6 +62,9 @@ public abstract class JavaCodeFoldingSettings {
   public abstract boolean isCollapseConstantExpressions();
   public abstract void setCollapseConstantExpression(boolean value);
 
+  public abstract boolean isCollapseStrings();
+  public abstract void setCollapseStrings(boolean value);
+
   public abstract boolean isCollapseSuppressWarnings();
   public abstract void setCollapseSuppressWarnings(boolean value);
 

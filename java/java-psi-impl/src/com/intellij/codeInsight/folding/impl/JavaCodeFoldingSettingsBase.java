@@ -13,6 +13,7 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CONSTANT_EXPRESSIONS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_STRINGS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_END_OF_LINE_COMMENTS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = false;
@@ -140,6 +141,16 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @Override
   public void setCollapseConstantExpression(boolean value) {
     COLLAPSE_CONSTANT_EXPRESSIONS = value;
+  }
+
+  @Override
+  public boolean isCollapseStrings() {
+    return COLLAPSE_STRINGS;
+  }
+
+  @Override
+  public void setCollapseStrings(boolean value) {
+    COLLAPSE_STRINGS = value;
   }
 
   @Override
