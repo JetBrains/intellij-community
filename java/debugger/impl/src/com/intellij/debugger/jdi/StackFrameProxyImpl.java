@@ -224,8 +224,11 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
     catch (InternalException e) {
       // suppress some internal errors caused by bugs in specific JDI implementations
-      if(e.errorCode() != 23) {
+      if (e.errorCode() != 23 && e.errorCode() != 35) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+      else {
+        LOG.info("Exception while getting this object", e);
       }
     }
     return myThisReference;
