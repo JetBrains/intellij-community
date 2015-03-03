@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,8 @@ public class ExternalDiffToolUtil {
   public static String getFileName(@NotNull String title, @Nullable String windowTitle, @Nullable FileType fileType) {
     // TODO: keep file name in DiffContent ?
     String ext = fileType != null ? fileType.getDefaultExtension() : ".tmp";
-    return title + "." + ext;
+    if (title.length() > 50) title = title.substring(0, 50);
+    return PathUtil.suggestFileName(title + "." + ext, true, false);
   }
 
   @NotNull
