@@ -214,22 +214,37 @@ public class EditorHyperlinkSupport {
   }
 
   @NotNull
-  public RangeHighlighter createHyperlink(final int highlightStartOffset,
-                                          final int highlightEndOffset,
-                                          @Nullable final TextAttributes highlightAttributes,
-                                          @NotNull final HyperlinkInfo hyperlinkInfo) {
+  public RangeHighlighter createHyperlink(int highlightStartOffset,
+                                          int highlightEndOffset,
+                                          @Nullable TextAttributes highlightAttributes,
+                                          @NotNull HyperlinkInfo hyperlinkInfo) {
+    return createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, null);
+  }
+
+  @NotNull
+  private RangeHighlighter createHyperlink(final int highlightStartOffset,
+                                           final int highlightEndOffset,
+                                           @Nullable final TextAttributes highlightAttributes,
+                                           @NotNull final HyperlinkInfo hyperlinkInfo,
+                                           @Nullable TextAttributes followedHyperlinkAttributes) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
                                                                                        HYPERLINK_LAYER,
                                                                                        textAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
-    associateHyperlink(highlighter, hyperlinkInfo);
+    associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
 
   public static void associateHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
-    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo));
+    associateHyperlink(highlighter, hyperlinkInfo, null);
+  }
+
+  private static void associateHyperlink(@NotNull RangeHighlighter highlighter,
+                                        @NotNull HyperlinkInfo hyperlinkInfo,
+                                        @Nullable TextAttributes followedHyperlinkAttributes) {
+    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes));
   }
 
   @Nullable
@@ -277,7 +292,7 @@ public class EditorHyperlinkSupport {
 
           TextAttributes attributes = resultItem.getHighlightAttributes();
           if (resultItem.getHyperlinkInfo() != null) {
-            createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo());
+            createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes());
           }
           else if (attributes != null) {
             addHighlighter(start, end, attributes);
@@ -296,8 +311,14 @@ public class EditorHyperlinkSupport {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
   }
 
-  private static TextAttributes getFollowedHyperlinkAttributes() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
+  @NotNull
+  private static TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
+    HyperlinkInfoTextAttributes attrs = HYPERLINK.get(range);
+    TextAttributes result = attrs != null ? attrs.getFollowedHyperlinkAttributes() : null;
+    if (result == null) {
+      result = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
+    }
+    return result;
   }
 
   @Nullable
@@ -346,7 +367,7 @@ public class EditorHyperlinkSupport {
       }
       if (range == link) {
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes());
-        markupModel.setRangeHighlighterAttributes(range, getFollowedHyperlinkAttributes());
+        markupModel.setRangeHighlighterAttributes(range, getFollowedHyperlinkAttributes(range));
       }
     }
     //refresh highlighter text attributes
@@ -363,15 +384,22 @@ public class EditorHyperlinkSupport {
   }
 
   private static class HyperlinkInfoTextAttributes extends TextAttributes {
-    private HyperlinkInfo myHyperlinkInfo;
+    private final HyperlinkInfo myHyperlinkInfo;
+    private final TextAttributes myFollowedHyperlinkAttributes;
 
-    public HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo) {
+    public HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
       myHyperlinkInfo = hyperlinkInfo;
+      myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
     }
 
     @NotNull
     public HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
+    }
+
+    @Nullable
+    public TextAttributes getFollowedHyperlinkAttributes() {
+      return myFollowedHyperlinkAttributes;
     }
   }
 }
