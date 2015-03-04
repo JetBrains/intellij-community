@@ -117,4 +117,8 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     myFixture.performEditorAction(IdeActions.ACTION_UNDO);
     myFixture.checkResult("<div></div>");
   }
+
+  public void testDeletingIncorrectTag() {
+    doTest("<div>text</span><caret></div>", "\b\b\b\b\b\b\b", "<div>text</div>");
+  }
 }

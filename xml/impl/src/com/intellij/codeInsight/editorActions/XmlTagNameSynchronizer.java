@@ -45,6 +45,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -66,7 +67,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
   private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
                                                                            XMLLanguage.INSTANCE.getID(),
                                                                            XHTMLLanguage.INSTANCE.getID(),
-                                                                           "JavaScript");
+                                                                           "JavaScript",
+                                                                           "ECMA Script Level 4");
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
@@ -346,7 +348,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       if (element == null) return null;
       PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(element, false);
       support = support == null || element == support ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
-      return support;
+      return support != null && StringUtil.equals(element.getText(), support.getText()) ? support : null;
     }
   }
 }
