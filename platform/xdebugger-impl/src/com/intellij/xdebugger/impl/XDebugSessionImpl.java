@@ -620,7 +620,15 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public XBreakpoint<?> getActiveNonLineBreakpoint() {
-    return myActiveNonLineBreakpoint;
+    if (myActiveNonLineBreakpoint != null) {
+      XSourcePosition breakpointPosition = myActiveNonLineBreakpoint.getSourcePosition();
+      XSourcePosition position = getTopFramePosition();
+      if (breakpointPosition == null ||
+          (position != null && !(breakpointPosition.getFile().equals(position.getFile()) && breakpointPosition.getLine() == position.getLine()))) {
+        return myActiveNonLineBreakpoint;
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -628,8 +636,9 @@ public class XDebugSessionImpl implements XDebugSession {
     if (!isTopFrame) {
       return null;
     }
-    if (myActiveNonLineBreakpoint != null) {
-      return ((XBreakpointBase<?, ?, ?>)myActiveNonLineBreakpoint).createGutterIconRenderer();
+    XBreakpoint<?> activeNonLineBreakpoint = getActiveNonLineBreakpoint();
+    if (activeNonLineBreakpoint != null) {
+      return ((XBreakpointBase<?, ?, ?>)activeNonLineBreakpoint).createGutterIconRenderer();
     }
     if (myCurrentExecutionStack != null) {
       return myCurrentExecutionStack.getExecutionLineIconRenderer();
