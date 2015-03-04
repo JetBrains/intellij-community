@@ -57,7 +57,6 @@ each command has a format:
     * JAVA - remote debugger, the java end
     * PYDB - pydevd, the python end
 '''
-import sys
 
 from pydevd_constants import * #@UnusedWildImport
 from _pydev_imps import _pydev_time as time, _pydev_thread
@@ -245,6 +244,8 @@ def SetGlobalDebugger(dbg):
 # PyDBDaemonThread
 #=======================================================================================================================
 class PyDBDaemonThread(threading.Thread):
+    created_pydb_daemon_threads = {}
+
     def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(True)
@@ -253,13 +254,22 @@ class PyDBDaemonThread(threading.Thread):
         self.is_pydev_daemon_thread = True
 
     def run(self):
-        if sys.platform.startswith("java"):
-            import org.python.core as PyCore #@UnresolvedImport
-            ss = PyCore.PySystemState()
-            # Note: Py.setSystemState() affects only the current thread.
-            PyCore.Py.setSystemState(ss)
+        created_pydb_daemon = self.created_pydb_daemon_threads
+        created_pydb_daemon[self] = 1
+        try:
+            try:
+                if IS_JYTHON:
+                    import org.python.core as PyCore #@UnresolvedImport
+                    ss = PyCore.PySystemState()
+                    # Note: Py.setSystemState() affects only the current thread.
+                    PyCore.Py.setSystemState(ss)
 
-        self.OnRun()
+                self.OnRun()
+            except:
+                if sys is not None and traceback is not None:
+                    traceback.print_exc()
+        finally:
+            del created_pydb_daemon[self]
 
     def OnRun(self):
         raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
@@ -270,7 +280,18 @@ class PyDBDaemonThread(threading.Thread):
 
     def stopTrace(self):
         if self.dontTraceMe:
-            pydevd_tracing.SetTrace(None) # no debugging on this thread
+
+            disable_tracing = True
+
+            if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
+                # don't run untraced threads if we're in jython 2.2.1 or lower
+                # jython bug: if we start a thread and another thread changes the tracing facility
+                # it affects other threads (it's not set only for the thread but globally)
+                # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
+                disable_tracing = False
+
+            if disable_tracing:
+                pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
 
 #=======================================================================================================================
