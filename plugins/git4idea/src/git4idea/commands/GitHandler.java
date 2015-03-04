@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IdeaWideProxySelector;
@@ -52,10 +54,13 @@ import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static java.util.Collections.singletonList;
 
 /**
  * A handler for git commands
@@ -81,7 +86,8 @@ public abstract class GitHandler {
   private final File myWorkingDirectory;
 
   private boolean myEnvironmentCleanedUp = true; // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
-  private int myHandlerNo;
+  private int mySshHandler;
+  private int myHttpHandler;
   private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
@@ -110,7 +116,7 @@ public abstract class GitHandler {
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
-  @Nullable private String myUrl;
+  @Nullable private Collection<String> myUrls;
   private boolean myHttpAuthFailed;
 
 
@@ -234,13 +240,16 @@ public abstract class GitHandler {
     return file;
   }
 
-  @SuppressWarnings("NullableProblems")
   public void setUrl(@NotNull String url) {
-    myUrl = url;
+    setUrls(singletonList(url));
+  }
+
+  public void setUrls(@NotNull Collection<String> urls) {
+    myUrls = urls;
   }
 
   protected boolean isRemote() {
-    return myUrl != null;
+    return myUrls != null;
   }
 
   /**
@@ -435,45 +444,11 @@ public abstract class GitHandler {
       }
 
       // setup environment
-      GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
-      if (remoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
-        GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
-        myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-        myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
-        myEnvironmentCleanedUp = false;
-        myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
-        int port = ssh.getXmlRcpPort();
-        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
-        LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
-
-        final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, myUrl);
-        myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
-
-        if (useHttpProxy) {
-          myEnv.put(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
-          myEnv.put(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
-          boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
-          myEnv.put(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
-
-          if (proxyAuthentication) {
-            myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.PROXY_LOGIN));
-            myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
-          }
+      if (isRemote()) {
+        setupHttpAuthenticator();
+        if (myProjectSettings.isIdeaSsh()) {
+          setupSshAuthenticator();
         }
-      }
-      else if (remoteProtocol == GitRemoteProtocol.HTTP) {
-        GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
-        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-        assert myUrl != null : "myUrl can't be null here";
-        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, myUrl);
-        myHandlerNo = service.registerHandler(httpAuthenticator);
-        myEnvironmentCleanedUp = false;
-        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
-        int port = service.getXmlRcpPort();
-        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
-        LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
-        addAuthListener(httpAuthenticator);
       }
       myCommandLine.getEnvironment().clear();
       myCommandLine.getEnvironment().putAll(myEnv);
@@ -493,9 +468,54 @@ public abstract class GitHandler {
     }
   }
 
-  protected static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull String url) {
-    String host = URLUtil.parseHostFromSshUrl(url);
-    return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+  private void setupHttpAuthenticator() throws IOException {
+    GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
+    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
+    GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, ObjectUtils.assertNotNull(myUrls));
+    myHttpHandler = service.registerHandler(httpAuthenticator);
+    myEnvironmentCleanedUp = false;
+    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHttpHandler));
+    int port = service.getXmlRcpPort();
+    myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
+    LOG.debug(String.format("handler=%s, port=%s", myHttpHandler, port));
+    addAuthListener(httpAuthenticator);
+  }
+
+  private void setupSshAuthenticator() throws IOException {
+    GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
+    myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
+    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject));
+    myEnvironmentCleanedUp = false;
+    myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(mySshHandler));
+    int port = ssh.getXmlRcpPort();
+    myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
+    LOG.debug(String.format("handler=%s, port=%s", mySshHandler, port));
+
+    final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+    boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY && !isSshUrlExcluded(httpConfigurable, ObjectUtils.assertNotNull(myUrls));
+    myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
+
+    if (useHttpProxy) {
+      myEnv.put(GitSSHHandler.SSH_PROXY_HOST_ENV, StringUtil.notNullize(httpConfigurable.PROXY_HOST));
+      myEnv.put(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
+      boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
+      myEnv.put(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
+
+      if (proxyAuthentication) {
+        myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.PROXY_LOGIN));
+        myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
+      }
+    }
+  }
+
+  protected static boolean isSshUrlExcluded(@NotNull final HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
+    return ContainerUtil.exists(urls, new Condition<String>() {
+      @Override
+      public boolean value(String url) {
+        String host = URLUtil.parseHostFromSshUrl(url);
+        return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+      }
+    });
   }
 
   private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
@@ -586,17 +606,11 @@ public abstract class GitHandler {
     if (myEnvironmentCleanedUp) {
       return;
     }
-    GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
-    if (remoteProtocol == GitRemoteProtocol.SSH) {
-      GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
-      myEnvironmentCleanedUp = true;
-      ssh.unregisterHandler(myHandlerNo);
+    if (isRemote()) {
+      ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
+      ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
     }
-    else if (remoteProtocol == GitRemoteProtocol.HTTP) {
-      GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
-      myEnvironmentCleanedUp = true;
-      service.unregisterHandler(myHandlerNo);
-    }
+    myEnvironmentCleanedUp = true;
   }
 
   /**

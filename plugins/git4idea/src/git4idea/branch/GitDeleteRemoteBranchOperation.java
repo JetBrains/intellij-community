@@ -157,18 +157,12 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       return GitCommandResult.error(error);
     }
 
-    String remoteUrl = remote.getFirstUrl();
-    if (remoteUrl == null) {
-      LOG.warn("No urls are defined for remote: " + remote);
-      return GitCommandResult.error("There is no urls defined for remote " + remote.getName());
-    }
-    return pushDeletionNatively(repository, remoteName, remoteUrl, branchName);
+    return pushDeletionNatively(repository, remote, branchName);
   }
 
   @NotNull
-  private GitCommandResult pushDeletionNatively(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String url,
-                                                @NotNull String branchName) {
-    return myGit.push(repository, remoteName, url,":" + branchName);
+  private GitCommandResult pushDeletionNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String branchName) {
+    return myGit.push(repository, remote, ":" + branchName, false, false, null);
   }
 
   @Nullable

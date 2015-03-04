@@ -27,6 +27,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class GitPull extends GitMergeAction {
@@ -49,17 +50,16 @@ public class GitPull extends GitMergeAction {
     GitRepository repository = repositoryManager.getRepositoryForRoot(dialog.gitRoot());
     assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
     String remoteOrUrl = dialog.getRemote();
-
-    GitRemote remote = GitUtil.findRemoteByName(repository, remoteOrUrl);
-    final String url = (remote == null) ? remoteOrUrl : remote.getFirstUrl();
-    if (url == null) {
+    if (remoteOrUrl == null) {
       return null;
     }
 
+    GitRemote remote = GitUtil.findRemoteByName(repository, remoteOrUrl);
+    final List<String> urls = remote == null ? Collections.singletonList(remoteOrUrl) : remote.getUrls();
     Computable<GitLineHandler> handlerProvider = new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
-        return dialog.makeHandler(url);
+        return dialog.makeHandler(urls);
       }
     };
     return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote()), handlerProvider);
