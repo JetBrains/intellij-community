@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -169,9 +170,10 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     public void beforeDocumentChange(DocumentEvent event) {
       if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
 
-      if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress()) return;
-
       final Document document = event.getDocument();
+      if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress() ||
+          ((DocumentEx)document).isInBulkUpdate()) return;
+
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();
       final CharSequence fragment = event.getNewFragment();
