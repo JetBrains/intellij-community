@@ -64,6 +64,30 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
            "</divv>");
   }
 
+  public void testAfterUndo() {
+    doTest("<div class=\"container\">\n" +
+           "    <div class=\"row\">\n" +
+           "        <div class=\"col-xs-2\"></div>\n" +
+           "        <<selection>div</selection> class=\"col-xs-10\"></div>\n" +
+           "    </div>\n" +
+           "</div>",
+           "a",
+           "<div class=\"container\">\n" +
+           "    <div class=\"row\">\n" +
+           "        <div class=\"col-xs-2\"></div>\n" +
+           "        <a class=\"col-xs-10\"></a>\n" +
+           "    </div>\n" +
+           "</div>");
+    myFixture.performEditorAction(IdeActions.ACTION_UNDO);
+    type("a");
+    myFixture.checkResult("<div class=\"container\">\n" +
+                          "    <div class=\"row\">\n" +
+                          "        <div class=\"col-xs-2\"></div>\n" +
+                          "        <a class=\"col-xs-10\"></a>\n" +
+                          "    </div>\n" +
+                          "</div>");
+  }
+
   public void testSpace() {
     doTest("<div<caret>></div>", " ", "<div ></div>");
   }

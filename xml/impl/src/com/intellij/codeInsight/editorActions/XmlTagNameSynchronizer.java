@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -168,7 +169,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     public void beforeDocumentChange(DocumentEvent event) {
       if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
 
-      if (myState == State.APPLYING) return;
+      if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress()) return;
 
       final Document document = event.getDocument();
       final int offset = event.getOffset();
