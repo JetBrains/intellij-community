@@ -57,6 +57,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public abstract Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos);
   public abstract Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos);
 
+  public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<MergeableLineMarkerInfo> infos) {
+    return GutterIconRenderer.Alignment.LEFT;
+  }
+
+  public int getCommonUpdatePass(@NotNull List<MergeableLineMarkerInfo> infos) {
+    return updatePass;
+  }
+
   public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,
                                            @NotNull JBList list,
                                            @NotNull List<MergeableLineMarkerInfo> markers) {
@@ -89,14 +97,18 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     public MyLineMarkerInfo(@NotNull List<MergeableLineMarkerInfo> markers) {
+      this(markers, markers.get(0));
+    }
+
+    private MyLineMarkerInfo(@NotNull List<MergeableLineMarkerInfo> markers, @NotNull MergeableLineMarkerInfo template) {
       //noinspection ConstantConditions
-      super(markers.get(0).getElement(),
+      super(template.getElement(),
             getCommonTextRange(markers),
-            markers.get(0).getCommonIcon(markers),
-            4, //TODO move Pass to lang-api and make it enum
-            markers.get(0).getCommonTooltip(markers),
+            template.getCommonIcon(markers),
+            template.getCommonUpdatePass(markers),
+            template.getCommonTooltip(markers),
             getCommonNavigationHandler(markers),
-            GutterIconRenderer.Alignment.LEFT);
+            template.getCommonIconAlignment(markers));
     }
 
     private static TextRange getCommonTextRange(List<MergeableLineMarkerInfo> markers) {
