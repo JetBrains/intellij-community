@@ -130,6 +130,7 @@ class StringToConstraintsTransformer {
             }
 
             // Check the number of occurrences for typed variable
+            final int savedIndex = index;
             if (index < length) {
               char possibleQuantifier = pattern.charAt(index);
 
@@ -189,9 +190,12 @@ class StringToConstraintsTransformer {
               constraint.setGreedy(greedy);
               constraint.setPartOfSearchResults(!anonymous);
               if (targetFound && !anonymous) {
-                throw new MalformedPatternException("Pattern may have only one target");
+                throw new MalformedPatternException("Only one target allowed");
               }
               targetFound = !anonymous;
+            }
+            else if (savedIndex != index) {
+              throw new MalformedPatternException("Constraints only allowed on first of variable");
             }
 
             if (index < length && pattern.charAt(index) == ':') {
@@ -203,6 +207,9 @@ class StringToConstraintsTransformer {
                 buf.append(ch);
               }
               else {
+                if (!constraintCreated) {
+                  throw new MalformedPatternException("Constraints only allowed on first of variable");
+                }
                 index = eatTypedVarCondition(index, pattern, miscBuffer, constraint);
               }
             }

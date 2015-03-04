@@ -116,6 +116,16 @@ public class StringToConstraintsTransformerTest {
     test("'a:x!(");
   }
 
+  @Test(expected = MalformedPatternException.class)
+  public void testRepeatingConstraints() {
+    test("'a*:foo 'a+:[regex( bla )]");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testRepeatingConstraints2() {
+    test("'a:foo 'a*");
+  }
+
   @Test
   public void testMethodReference() {
     test("'_a::'_b");

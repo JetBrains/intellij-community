@@ -99,7 +99,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s20_2 = "'_T1 '_T2 = ('_T1)'_T3;";
   private static final String s21_1 = "'_T1:Aa* 'T2 = ('_T1)'_T3;";
   private static final String s21_2 = "'_T1:A* 'T2 = ( '_T1:A+ )'_T3;";
-  private static final String s21_3 = "'_T1:Aa* 'T2 = ( '_T1:Aa* )'_T3;";
+  private static final String s21_3 = "'_T1:Aa* 'T2 = ( '_T1 )'_T3;";
 
   private static final String s22 = "Aaa a = (Aaa)b; Bbb c = (Bbb)d;";
 
@@ -1803,7 +1803,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "   '_*;\n" +
                         "  }\n" +
                         "  private static '_Class2:* '_Instance;\n" +
-                        "  static '_Class2:* '_GetInstance() {\n" +
+                        "  static '_Class2 '_GetInstance() {\n" +
                         "    '_*;\n" +
                         "    return '_Instance;\n" +
                         "  }\n" +
