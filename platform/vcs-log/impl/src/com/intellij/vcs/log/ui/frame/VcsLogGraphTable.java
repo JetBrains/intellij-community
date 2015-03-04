@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -318,7 +319,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
 
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
-    VcsLogHighlighter.VcsCommitStyle defaultStyle = new VcsLogHighlighter.VcsCommitStyleImpl(
+    VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory.createStyle(
       rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
       dummyRendererComponent.getBackground());
 
@@ -330,7 +331,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         }
       });
 
-    return VcsLogHighlighter.VcsCommitStyleImpl.combine(ContainerUtil.append(styles, defaultStyle));
+    return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
   public void viewportSet(JViewport viewport) {
