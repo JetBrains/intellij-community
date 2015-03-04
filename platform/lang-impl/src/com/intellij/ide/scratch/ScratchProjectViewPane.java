@@ -17,16 +17,17 @@ package com.intellij.ide.scratch;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
+import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +84,25 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Override
   public int getWeight() {
     return 11;
+  }
+
+  @NotNull
+  @Override
+  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
+    return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
+      @Override
+      protected ProjectViewPsiTreeChangeListener createPsiTreeChangeListener(Project project) {
+        return new ProjectTreeBuilderPsiListener(project) {
+          @Override
+          protected void childrenChanged(PsiElement parent, boolean stopProcessingForThisModificationCount) {
+            VirtualFile virtualFile = parent instanceof PsiFileSystemItem ? ((PsiFileSystemItem)parent).getVirtualFile() : null;
+            if (virtualFile != null && virtualFile.isValid() && ScratchFileService.getInstance().getRootType(virtualFile) != null) {
+              queueUpdateFrom(parent, true);
+            }
+          }
+        };
+      }
+    };
   }
 
   @Override
@@ -218,18 +239,22 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     protected Collection<AbstractTreeNode> getChildrenImpl() {
       if (isAlwaysLeaf()) return Collections.emptyList();
-      final List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-      PsiFileSystemItem value = getValue();
-      if (value != null) {
-        value.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-          @Override
-          public boolean execute(@NotNull PsiFileSystemItem element) {
-            list.add(new MyPsiNode(getProject(), myRootType, element));
-            return true;
-          }
-        });
-      }
-      return list;
+      return ApplicationManager.getApplication().runReadAction(new Computable<Collection<AbstractTreeNode>>() {
+        @Override
+        public Collection<AbstractTreeNode> compute() {
+          final PsiFileSystemItem value = getValue();
+          if (value == null || !value.isValid()) return Collections.emptyList();
+          final List<AbstractTreeNode> list = ContainerUtil.newArrayList();
+          value.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
+            @Override
+            public boolean execute(@NotNull PsiFileSystemItem element) {
+              list.add(new MyPsiNode(value.getProject(), myRootType, element));
+              return true;
+            }
+          });
+          return list;
+        }
+      });
     }
 
     @Override
@@ -238,7 +263,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       VirtualFile virtualFile = value == null ? null : value.getVirtualFile();
       if (virtualFile != null && virtualFile.isValid()) {
         data.setIcon(value.getIcon(0));
-        data.setPresentableText(ObjectUtils.chooseNotNull(myRootType.substituteName(getProject(), virtualFile), virtualFile.getName()));
+        data.setPresentableText(ObjectUtils.chooseNotNull(myRootType.substituteName(value.getProject(), virtualFile), virtualFile.getName()));
       }
     }
 
