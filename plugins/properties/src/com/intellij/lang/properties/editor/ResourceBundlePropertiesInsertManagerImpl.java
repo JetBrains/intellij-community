@@ -141,7 +141,7 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
 
       @Override
       public Iterator<String> getIn(String n) {
-        final Collection<String> siblings = new HashSet<String>();
+        final Collection<String> siblings = new TreeSet<String>(Collections.reverseOrder());
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.findPropertiesByKey(n)) {
             PsiElement sibling = property.getPsiElement().getNextSibling();
