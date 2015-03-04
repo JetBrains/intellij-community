@@ -79,6 +79,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -132,7 +133,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
-  private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.createEmptyCOWList();
+  private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
 
   public CompletionProgressIndicator(final Editor editor,
@@ -399,7 +400,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (item.isStartMatch() || allowMiddleMatches) {
       addItemToLookup(item);
     } else {
-      myDelayedMiddleMatches.add(item);
+      synchronized (myDelayedMiddleMatches) {
+        myDelayedMiddleMatches.add(item);
+      }
     }
   }
 
@@ -421,11 +424,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void addDelayedMiddleMatches() {
-    for (CompletionResult item : myDelayedMiddleMatches) {
+    ArrayList<CompletionResult> delayed;
+    synchronized (myDelayedMiddleMatches) {
+      if (myDelayedMiddleMatches.isEmpty()) return;
+      delayed = ContainerUtil.newArrayList(myDelayedMiddleMatches);
+      myDelayedMiddleMatches.clear();
+    }
+    for (CompletionResult item : delayed) {
       ProgressManager.checkCanceled();
       addItemToLookup(item);
     }
-    myDelayedMiddleMatches.clear();
   }
 
   public void closeAndFinish(boolean hideLookup) {
