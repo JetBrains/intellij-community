@@ -29,8 +29,8 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
                                                                                     new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
-    myFixture.enableInspections(myInspection);
     myFixture.setUp();
+    myFixture.enableInspections(myInspection);
     myFixture.setTestDataPath(getTestDataPath());
   }
 

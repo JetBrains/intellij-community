@@ -61,7 +61,7 @@ public class CompletionLookupArranger extends LookupArranger {
       return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
     }
   };
-  private static final int MAX_PREFERRED_COUNT = 5;
+  static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");

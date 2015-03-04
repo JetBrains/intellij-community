@@ -233,14 +233,14 @@ bool LocateJVM()
     }
   }
 
-  if (FindJVMInRegistry())
-  {
-    return true;
-  }
-
   if (FindJVMInEnvVar("JAVA_HOME", result))
   {
     return result;
+  }
+
+  if (FindJVMInRegistry())
+  {
+    return true;
   }
 
   std::string jvmError;

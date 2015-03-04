@@ -132,6 +132,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
+  private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.createEmptyCOWList();
   private final int myStartCaret;
 
   public CompletionProgressIndicator(final Editor editor,
@@ -375,7 +376,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
-  public synchronized void addItem(final CompletionResult item) {
+  void addItem(final CompletionResult item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
@@ -384,14 +385,26 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
-    LOG.assertTrue(myParameters.getPosition().isValid());
-
     LookupElement lookupElement = item.getLookupElement();
     if (!myHasPsiElements && lookupElement.getPsiElement() != null) {
       myHasPsiElements = true;
     }
+
+    boolean allowMiddleMatches = myCount > CompletionLookupArranger.MAX_PREFERRED_COUNT * 2;
+    if (allowMiddleMatches) {
+      addDelayedMiddleMatches();
+    }
+
     myItemSorters.put(lookupElement, (CompletionSorterImpl)item.getSorter());
-    if (!myLookup.addItem(lookupElement, item.getPrefixMatcher())) {
+    if (item.isStartMatch() || allowMiddleMatches) {
+      addItemToLookup(item);
+    } else {
+      myDelayedMiddleMatches.add(item);
+    }
+  }
+
+  private void addItemToLookup(CompletionResult item) {
+    if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
     myCount++;
@@ -405,6 +418,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }, 300);
     }
     myQueue.queue(myUpdate);
+  }
+
+  void addDelayedMiddleMatches() {
+    for (CompletionResult item : myDelayedMiddleMatches) {
+      ProgressManager.checkCanceled();
+      addItemToLookup(item);
+    }
+    myDelayedMiddleMatches.clear();
   }
 
   public void closeAndFinish(boolean hideLookup) {
