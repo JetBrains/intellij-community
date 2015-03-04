@@ -44,6 +44,6 @@ public class PyDependentModuleMembersCollector extends DependentMembersCollector
   }
 
   private boolean isValidSameModuleDependency(@NotNull PsiElement element) {
-    return PyMoveClassOrFunctionDelegate.canMoveElement(element) && element.getContainingFile() == myModule;
+    return PyMoveModuleMembersDelegate.canMoveElement(element) && element.getContainingFile() == myModule;
   }
 }

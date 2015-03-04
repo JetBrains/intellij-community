@@ -31,7 +31,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.refactoring.move.PyMoveClassOrFunctionProcessor;
+import com.jetbrains.python.refactoring.move.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -302,7 +302,7 @@ public class PyMoveTest extends PyTestCase {
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
     String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
-    new PyMoveClassOrFunctionProcessor(myFixture.getProject(),
+    new PyMoveModuleMembersProcessor(myFixture.getProject(),
                                        new PsiNamedElement[] {element},
                                        path,
                                        false).run();

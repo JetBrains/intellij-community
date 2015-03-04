@@ -49,13 +49,13 @@ import static com.jetbrains.python.psi.impl.PyImportStatementNavigator.getImport
 /**
  * @author vlan
  */
-public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
-  public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.class.or.function");
+public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
+  public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
 
   private PsiNamedElement[] myElements;
   private String myDestination;
 
-  public PyMoveClassOrFunctionProcessor(Project project, PsiNamedElement[] elements, String destination, boolean previewUsages) {
+  public PyMoveModuleMembersProcessor(Project project, PsiNamedElement[] elements, String destination, boolean previewUsages) {
     super(project);
     assert elements.length > 0;
     myElements = elements;
