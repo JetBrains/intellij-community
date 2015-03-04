@@ -93,6 +93,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     }
 
     final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return false;
     final Ref<Class<? extends JavaLineBreakpointTypeBase>> result = Ref.create();
     XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
       @Override
