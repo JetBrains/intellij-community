@@ -995,11 +995,6 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
     }
 
-    final String isFSCaseSensitive = System.getProperty("idea.case.sensitive.fs", null);
-    if (isFSCaseSensitive != null) {
-      cmdLine.addParameter("-Didea.case.sensitive.fs=" + isFSCaseSensitive);
-    }
-
     // this will make netty initialization faster on some systems
     cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
 
@@ -1035,7 +1030,8 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.setCharset(mySystemCharset);
     cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
     cmdLine.addParameter("-D" + JpsGlobalLoader.FILE_TYPES_COMPONENT_NAME_KEY + "=" + FileTypeManagerImpl.getFileTypeComponentName());
-    for (String name : new String[]{"user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR}) {
+    String[] propertiesToPass = {"user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs"};
+    for (String name : propertiesToPass) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);
