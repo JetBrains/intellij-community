@@ -237,14 +237,20 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           }
           PsiFile containingFile = pointer.getContainingFile();
           if (containingFile == null) return false;
-          Set<PointerReference> pointers = getPointers(containingFile.getViewProvider().getVirtualFile());
+
+          VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
+          Set<PointerReference> pointers = getPointers(vFile);
           if (pointers == null) return false;
+
           SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
           info.cleanup();
 
           for (Iterator<PointerReference> iterator = pointers.iterator(); iterator.hasNext(); ) {
             if (pointer == iterator.next().get()) {
               iterator.remove();
+              if (pointers.isEmpty()) {
+                vFile.putUserData(POINTERS_KEY, null);
+              }
               return true;
             }
           }
