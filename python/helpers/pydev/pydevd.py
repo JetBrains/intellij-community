@@ -522,12 +522,11 @@ class PyDB:
                 for t in all_threads:
                     thread_id = GetThreadId(t)
 
-                    if isinstance(t, PyDBDaemonThread):
-                        pydev_log.error_once('Found PyDBDaemonThread in threading.enumerate.')
-                        
-                    elif getattr(t, 'is_pydev_daemon_thread', False):
+                    if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
-                        
+                    elif isinstance(t, PyDBDaemonThread):
+                        pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+
                     elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
