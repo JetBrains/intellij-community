@@ -58,7 +58,11 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntFunction;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +74,7 @@ import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
 
-class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
+class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final int START_ICON_AREA_WIDTH = 15;
   private static final int FREE_PAINTERS_AREA_WIDTH = 5;
@@ -470,6 +474,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private int endLineNumber() {
     return Math.max(0, myEditor.getDocument().getLineCount() - 1);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    return EditorGutter.KEY.is(dataId) ? this : null;
   }
 
   private interface RangeHighlighterProcessor {
