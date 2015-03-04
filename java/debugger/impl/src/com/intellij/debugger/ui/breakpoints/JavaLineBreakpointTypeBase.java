@@ -98,7 +98,8 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
       @Override
       public boolean process(PsiElement element) {
         // avoid comments
-        if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
+        if ((element instanceof PsiWhiteSpace)
+            || (PsiTreeUtil.getParentOfType(element, PsiComment.class, PsiImportStatementBase.class, PsiPackageStatement.class) != null)) {
           return true;
         }
         PsiElement parent = element;
