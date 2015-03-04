@@ -632,6 +632,13 @@ public class CommonCodeStyleSettings {
    */
   public boolean SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
 
+  /**
+   * "int X[] { }"
+   * or
+   * "int X[] {}"
+   */
+  public boolean SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
+
   public boolean SPACE_AFTER_TYPE_CAST = true;
 
   /**
