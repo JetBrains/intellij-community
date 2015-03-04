@@ -1589,12 +1589,21 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void visitArrayInitializer() {
     if (myRole1 == ChildRole.LBRACE) {
       if (mySettings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE) {
-        int spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        int spaces;
+        if (myRole2 != ChildRole.RBRACE) {
+          spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        }
+        else {
+          spaces = mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        }
         myResult = Spacing.createDependentLFSpacing(spaces, spaces, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
                                     mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
-        createSpaceProperty(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        boolean addSpace = (myRole2 != ChildRole.RBRACE)
+                           ? mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES
+                           : mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES;
+        createSpaceProperty(addSpace, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
 
     }
