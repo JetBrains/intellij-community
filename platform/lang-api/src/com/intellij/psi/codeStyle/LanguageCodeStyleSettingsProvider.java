@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -53,15 +54,6 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
-  }
-
-  public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer,
-                                               @NotNull SettingsType settingsType,
-                                               @NotNull final PsiFile file,
-                                               @NotNull final TextRange range)
-  {
-    List<String> affectingFields = new CodeStyleSettingsCodeFragmentFilter(this, file, range).getFieldNamesAffectingCodeFragment(settingsType);
-    consumer.showStandardOptions(ArrayUtil.toStringArray(affectingFields));
   }
 
   /**

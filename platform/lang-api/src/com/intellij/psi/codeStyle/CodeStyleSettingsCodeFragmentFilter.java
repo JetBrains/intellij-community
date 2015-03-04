@@ -32,7 +32,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 
-class CodeStyleSettingsCodeFragmentFilter {
+public class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 
   private final Project myProject;
@@ -43,10 +43,8 @@ class CodeStyleSettingsCodeFragmentFilter {
 
   private CommonCodeStyleSettings myCommonSettings;
 
-  public CodeStyleSettingsCodeFragmentFilter(@NotNull LanguageCodeStyleSettingsProvider provider,
-                                             @NotNull PsiFile file,
-                                             @NotNull TextRange range) {
-    myProvider = provider;
+  public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile file, @NotNull TextRange range) {
+    myProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
     myProject = file.getProject();
     myFile = PsiFileFactory.getInstance(myProject).createFileFromText("copy" + file.getName(), file.getLanguage(), file.getText(), true, false);
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);

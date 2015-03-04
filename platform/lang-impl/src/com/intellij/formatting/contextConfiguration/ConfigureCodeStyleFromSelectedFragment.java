@@ -17,26 +17,30 @@ package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleFromSelectedFragment.class); 
@@ -63,10 +67,19 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    new FragmentCodeStyleSettingsDialog(project, editor, file, settings).show();
+    new FragmentCodeStyleSettingsDialog(project, editor, file, settings, settingsToShow).show();
   }
-  
+
+  private CodeStyleSettingsToShow calculateAffectingSettings(@NotNull Editor editor, @NotNull PsiFile file) {
+    SelectionModel model = editor.getSelectionModel();
+    int start = model.getSelectionStart();
+    int end = model.getSelectionEnd();
+    CodeStyleSettingsCodeFragmentFilter settingsProvider = new CodeStyleSettingsCodeFragmentFilter(file, new TextRange(start, end));
+    return CodeFragmentCodeStyleSettingsPanel.calcSettingNamesToShow(settingsProvider);
+  }
+
   @Override
   public boolean startInWriteAction() {
     return false;
@@ -82,7 +95,11 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
     private final int mySelectionEnd;
     private final Project myProject;
 
-    public FragmentCodeStyleSettingsDialog(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, CodeStyleSettings settings) {
+    public FragmentCodeStyleSettingsDialog(@NotNull Project project,
+                                           @NotNull Editor editor,
+                                           @NotNull PsiFile file,
+                                           CodeStyleSettings settings,
+                                           CodeStyleSettingsToShow settingsToShow) {
       super(project, true);
       myProject = project;
       myEditor = editor;
@@ -92,7 +109,7 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
       mySelectionStart = myEditor.getSelectionModel().getSelectionStart();
       mySelectionEnd = myEditor.getSelectionModel().getSelectionEnd();
       
-      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, project, editor, file);
+      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, project, editor, file);
       
       setTitle("Configure Code Style Settings: " + file.getLanguage().getDisplayName());
       setOKButtonText("Save");
@@ -144,5 +161,9 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
       
       myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
     }
+  }
+
+  interface CodeStyleSettingsToShow {
+    List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type);
   }
 }

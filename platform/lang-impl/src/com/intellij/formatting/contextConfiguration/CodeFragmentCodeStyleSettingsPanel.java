@@ -27,24 +27,35 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+import static com.intellij.formatting.contextConfiguration.ConfigureCodeStyleFromSelectedFragment.*;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.*;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
 
 class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
+
+  private final CodeStyleSettingsToShow mySettingsToShow;
 
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
 
-  public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings, 
+  public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
+                                            @NotNull CodeStyleSettingsToShow settingsToShow,
                                             @NotNull Project project, 
                                             @NotNull Editor editor, 
                                             @NotNull PsiFile file) 
   {
     super(file.getLanguage(), settings, settings.clone());
+    mySettingsToShow = settingsToShow;
     myProject = project;
     myEditor = editor;
     myFile = file;
@@ -66,7 +77,19 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     addTab(new WrappingAndBracesPanelWithoutPreview(settings));
     reset(getSettings());
   }
-  
+
+  public static CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
+    final HashMap<SettingsType, List<String>> typeToNames = ContainerUtil.newHashMap();
+    typeToNames.put(SPACING_SETTINGS, filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS));
+    typeToNames.put(WRAPPING_AND_BRACES_SETTINGS, filter.getFieldNamesAffectingCodeFragment(WRAPPING_AND_BRACES_SETTINGS));
+    return new CodeStyleSettingsToShow() {
+      @Override
+      public List<String> getSettings(SettingsType type) {
+        return typeToNames.get(type);
+      }
+    };
+  }
+
   private void reformatSelectedTextWithNewSettings() {
     final SelectionModel model = myEditor.getSelectionModel();
     if (model.hasSelection()) {
@@ -104,15 +127,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }, "Reformat", null);
   }
 
-  private void customizeSettingsForSelectedFragment(@NotNull CodeStyleSettingsCustomizable customizable,
-                                                    @NotNull LanguageCodeStyleSettingsProvider.SettingsType type) 
-  {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-    if (provider != null) {
-      provider.customizeSettingsForCodeFragment(customizable, type, myFile, getSelectedRange());
-    }
-  }
-  
   @NotNull
   private TextRange getSelectedRange() {
     SelectionModel model = myEditor.getSelectionModel();
@@ -135,7 +149,9 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void init() {
-      customizeSettingsForSelectedFragment(this, getSettingsType());
+      List<String> settingNames = mySettingsToShow.getSettings(getSettingsType());
+      String[] names = ContainerUtil.toArray(settingNames, new String[settingNames.size()]);
+      showStandardOptions(names);
       initTables();
 
       myOptionsTree = createOptionsTree();
@@ -174,7 +190,9 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void init() {
-      customizeSettingsForSelectedFragment(this, getSettingsType());
+      List<String> settingNames = mySettingsToShow.getSettings(getSettingsType());
+      String[] names = ContainerUtil.toArray(settingNames, new String[settingNames.size()]);
+      showStandardOptions(names);
       initTables();
 
       myTreeTable = createOptionsTree(getSettings());
@@ -190,7 +208,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
       //todo why without it options are disabled ?
       //todo why on combo value change - nothing happens?
-      customizeSettingsForSelectedFragment(this, getSettingsType());
+      showStandardOptions(names);
 
       isFirstUpdate = false;
     }
