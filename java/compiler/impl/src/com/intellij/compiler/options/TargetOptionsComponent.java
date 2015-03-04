@@ -326,8 +326,14 @@ public class TargetOptionsComponent extends JPanel {
       }
       finally {
         final Module module = (Module)value;
-        setText(module.getName());
-        setIcon(ModuleType.get(module).getIcon());
+        if (module != null) {
+          setText(module.getName());
+          setIcon(ModuleType.get(module).getIcon());
+        }
+        else {
+          setText("");
+          setIcon(null);
+        }
       }
     }
   }
