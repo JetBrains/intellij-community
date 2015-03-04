@@ -64,6 +64,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     });
   }
 
+  @Override
   public void prepare() throws VcsException {
     Depth depth = Depth.allOrEmpty(myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge());
     File file = myMergeContext.getWcInfo().getRootInfo().getIoFile();
@@ -73,8 +74,8 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   }
 
   @Nullable
-  public Collection<String> getNotMergedPaths(long number) {
-    return myPartiallyMerged.get(number);
+  public Collection<String> getNotMergedPaths(@NotNull SvnChangeList changeList) {
+    return myPartiallyMerged.get(changeList.getNumber());
   }
 
   @NotNull

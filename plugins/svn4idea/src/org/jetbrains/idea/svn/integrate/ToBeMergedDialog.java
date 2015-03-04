@@ -265,7 +265,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
           final List<SvnChangeList> svnChangeLists = ContainerUtil.findAll(changeLists, SvnChangeList.class);
 
           for (SvnChangeList svnChangeList : svnChangeLists) {
-            final Collection<String> notMerged = myMergeChecker.getNotMergedPaths(svnChangeList.getNumber());
+            final Collection<String> notMerged = myMergeChecker.getNotMergedPaths(svnChangeList);
 
             if (!ContainerUtil.isEmpty(notMerged)) {
               for (String path : svnChangeList.getAffectedPaths()) {
