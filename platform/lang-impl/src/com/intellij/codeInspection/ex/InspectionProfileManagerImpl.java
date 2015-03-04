@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.profile.codeInspection;
+package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
@@ -23,8 +23,6 @@ import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -43,6 +41,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
+import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -141,8 +143,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   @NotNull
-  private static InspectionProfileImpl createSampleProfile() {
-    return new InspectionProfileImpl("Default");
+  private InspectionProfileImpl createSampleProfile(@NotNull String name, InspectionProfileImpl baseProfile) {
+    return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile);
   }
 
   public static void registerProvidedSeverities() {
@@ -194,8 +196,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   private void createDefaultProfile() {
-    final InspectionProfileImpl defaultProfile = (InspectionProfileImpl)createProfile();
-    defaultProfile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
+    final InspectionProfileImpl defaultProfile = createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getDefaultProfile());
     addProfile(defaultProfile);
   }
 
@@ -278,8 +279,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   @Override
-  public Profile createProfile() {
-    return createSampleProfile();
+  public InspectionProfileImpl createProfile() {
+    return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getDefaultProfile());
   }
 
   @Override
@@ -308,7 +309,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     Profile current = mySchemesManager.getCurrentScheme();
     if (current != null) return current;
     Collection<Profile> profiles = getProfiles();
-    if (profiles.isEmpty()) return createSampleProfile();
+    if (profiles.isEmpty()) return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
     return profiles.iterator().next();
   }
 

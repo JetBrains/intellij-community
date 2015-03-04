@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,9 +174,15 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   public void rebuildTree(Collection<BreakpointItem> items) {
+    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
     TreePath path = myTreeView.getSelectionPath();
     buildTree(items);
-    selectBreakpointItem(null, path);
+    if (myTreeView.getRowForPath(path) == -1 && !selectedBreakpoints.isEmpty()) {
+      selectBreakpointItem(selectedBreakpoints.get(0), path);
+    }
+    else {
+      selectBreakpointItem(null, path);
+    }
   }
 
   public List<BreakpointItem> getSelectedBreakpoints() {
