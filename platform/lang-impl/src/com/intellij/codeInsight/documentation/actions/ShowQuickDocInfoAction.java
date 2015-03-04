@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -92,6 +93,10 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     }
     else {
       if (editor != null) {
+        if (EditorGutter.KEY.getData(event.getDataContext()) != null) {
+          presentation.setEnabled(false);
+          return;
+        }
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         if (file == null) {
           presentation.setEnabled(false);
