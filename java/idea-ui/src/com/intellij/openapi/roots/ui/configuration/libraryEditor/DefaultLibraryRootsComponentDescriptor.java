@@ -145,15 +145,17 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     @NotNull
     @Override
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
-      if (rootCandidate.isDirectory()) {
-        for (VirtualFile file : rootCandidate.getChildren()) {
-          if (isNativeLibrary(file)) {
-            return Collections.singleton(rootCandidate);
+      if (rootCandidate.isInLocalFileSystem()) {
+        if (rootCandidate.isDirectory()) {
+          for (VirtualFile file : rootCandidate.getChildren()) {
+            if (isNativeLibrary(file)) {
+              return Collections.singleton(rootCandidate);
+            }
           }
         }
-      }
-      else if (isNativeLibrary(rootCandidate)) {
-        return Collections.singleton(rootCandidate.getParent());
+        else if (isNativeLibrary(rootCandidate)) {
+          return Collections.singleton(rootCandidate.getParent());
+        }
       }
       return Collections.emptyList();
     }

@@ -89,8 +89,9 @@ public class FastExtendedPostdominanceHelper {
       stackPath.add(factory.spawnEmptySet());
 
       Set<Statement> setVisited = new HashSet<Statement>();
-      Set<Statement> setStack = new HashSet<Statement>();
 
+      setVisited.add(stack.getFirst());
+      
       while (!stack.isEmpty()) {
 
         Statement stat = stack.removeFirst();
@@ -104,34 +105,21 @@ public class FastExtendedPostdominanceHelper {
           continue;
         }
 
-        setVisited.add(stat);
-
-        int domflag = 0;
-
-        for (Iterator<Integer> it = setPostdoms.iterator(); it.hasNext(); ) {
-          Integer post = it.next();
-
-          if (!path.contains(post)) {
-            if (domflag == 0) {
-              domflag = engine.isDominator(stat.id, head) ? 2 : 1;
-            }
-
-            if (domflag == 1) { // not a dominator
-              it.remove();
-            }
-          }
+        if(!engine.isDominator(stat.id, head)) {
+          setPostdoms.complement(path);
+          continue;
         }
-
+        
         for (StatEdge edge : stat.getSuccessorEdges(StatEdge.TYPE_REGULAR)) {
           
           Statement edge_destination = edge.getDestination();
           
-          if(!setVisited.contains(edge_destination) && !setStack.contains(edge_destination)) {
+          if(!setVisited.contains(edge_destination) /*&& !setStack.contains(edge_destination)*/) {
             
             stack.add(edge_destination);
             stackPath.add(path.getCopy());
             
-			setStack.add(edge_destination); 
+            setVisited.add(edge_destination); 
           }
         }
       }

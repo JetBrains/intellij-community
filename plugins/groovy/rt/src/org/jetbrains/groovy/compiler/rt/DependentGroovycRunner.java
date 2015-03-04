@@ -313,8 +313,13 @@ public class DependentGroovycRunner {
   }
 
   private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader, final Queue mailbox, final GroovyCompilerWrapper wrapper) {
-    final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader, transformLoader) {
+    final JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
       private boolean annoRemovedAdded;
+
+      @Override
+      public GroovyClassLoader getTransformLoader() {
+        return transformLoader;
+      }
 
       @Override
       public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {

@@ -301,6 +301,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "@SuppressWarnings({\"ALL\"})\n" +
     "public class Foo<T extends Bar & Abba, U> {\n" +
     "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
+    "  int[] empty = new int[]{};" +
     "\n" +
     "  public void foo(int x, int y) {\n" +
     "    Runnable r = () -> {};\n" +
@@ -357,6 +358,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    int\n" +
     "i = 0;\n" +
     "    int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};\n" +
+    "    int[] empty = new int[] {};\n" +
     "    int var1 = 1; int var2 = 2;\n" +
     "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057);\n" +
     "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);\n" +
