@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
@@ -81,6 +82,8 @@ public class XValueHint extends AbstractValueHint {
   private final ExpressionInfo myExpressionInfo;
   private Disposable myDisposable;
 
+  private static final Key<XValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
+
   public XValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
                     @NotNull ExpressionInfo expressionInfo, @NotNull XDebuggerEvaluator evaluator,
                     @NotNull XDebugSession session) {
@@ -125,12 +128,24 @@ public class XValueHint extends AbstractValueHint {
         }
       }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
     }
+    if (result) {
+      XValueHint prev = getEditor().getUserData(HINT_KEY);
+      if (prev != null) {
+        prev.hideHint();
+      }
+      HINT_KEY.set(getEditor(), this);
+      getEditor().putUserData(HINT_KEY, this);
+    }
     return result;
   }
 
   @Override
   protected void onHintHidden() {
     super.onHintHidden();
+    XValueHint prev = getEditor().getUserData(HINT_KEY);
+    if (prev == this) {
+      getEditor().putUserData(HINT_KEY, null);
+    }
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;
