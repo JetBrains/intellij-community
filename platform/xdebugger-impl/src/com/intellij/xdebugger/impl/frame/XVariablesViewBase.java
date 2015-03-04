@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -40,7 +38,6 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -48,7 +45,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
@@ -108,33 +104,17 @@ public abstract class XVariablesViewBase extends XDebugView {
             return;
           }
           final String text = editor.getDocument().getText(e.getNewRange());
-          final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-          if (evaluator != null && !StringUtil.isEmpty(text)
-              && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
-            evaluator.evaluate(text, new XEvaluationCallbackBase() {
-              @Override
-              public void evaluated(@NotNull XValue result) {
-                final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-                try {
-                  final XDebugSession session = getSession(getTree());
-                  if (session == null) return;
-                  final TextRange range = e.getNewRange();
-                  final ExpressionInfo info = new ExpressionInfo(range);
-                  final int offset = range.getStartOffset();
-                  final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
-                  final Point point = editor.logicalPositionToXY(pos);
-
-                  new XValueHint(project, editor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session).invokeHint();
-                }
-                finally {
-                  token.finish();
-                }
-              }
-
-              @Override
-              public void errorOccurred(@NotNull String errorMessage) {
-              }
-            }, position);
+          if (!StringUtil.isEmpty(text) && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
+            final XDebugSession session = getSession(getTree());
+            if (session == null) return;
+            XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
+            if (evaluator == null) return;
+            TextRange range = e.getNewRange();
+            ExpressionInfo info = new ExpressionInfo(range);
+            int offset = range.getStartOffset();
+            LogicalPosition pos = editor.offsetToLogicalPosition(offset);
+            Point point = editor.logicalPositionToXY(pos);
+            new XValueHint(project, editor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session).invokeHint();
           }
         }
       };
