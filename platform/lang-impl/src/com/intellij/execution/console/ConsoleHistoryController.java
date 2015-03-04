@@ -616,12 +616,12 @@ public class ConsoleHistoryController {
   @NotNull
   private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {
     return rootType.getConsoleTypeId() + "/" +
-           PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
+           PathUtil.makeFileName(rootType.getHistoryPathName(id), rootType.getDefaultFileExtension());
   }
 
   @Nullable
   public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType, @NotNull String id, ScratchFileService.Option option) {
-    final String pathName = PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
+    final String pathName = PathUtil.makeFileName(rootType.getContentPathName(id), rootType.getDefaultFileExtension());
     try {
       return rootType.findFile(null, pathName, option);
     }
