@@ -28,7 +28,10 @@ target(compile: "Compile project") {
 
   loadProject()
   projectBuilder.targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
-  if(isDefined("skip.compile")) return
+  if(System.getProperty("idea.skip.build")!=null) {
+    info("skipping actual cleanup & build")
+    return
+  }
   projectBuilder.cleanOutput()
   projectBuilder.buildAll()
 }
