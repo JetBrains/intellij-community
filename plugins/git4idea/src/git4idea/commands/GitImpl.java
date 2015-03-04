@@ -521,6 +521,22 @@ public class GitImpl implements Git {
   }
 
   @NotNull
+  @Override
+  public GitCommandResult remotePrune(@NotNull final GitRepository repository, @NotNull final GitRemote remote) {
+    return run(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE.writeLockingCommand());
+        h.setStdoutSuppressed(false);
+        h.addParameters("prune");
+        h.addParameters(remote.getName());
+        h.setUrls(remote.getUrls());
+        return h;
+      }
+    });
+  }
+
+  @NotNull
   private static GitCommandResult doLsRemote(@NotNull final Project project,
                                              @NotNull final File workingDir,
                                              @NotNull final String remoteId,

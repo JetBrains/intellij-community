@@ -153,4 +153,7 @@ public interface Git {
                             @NotNull VirtualFile workingDir,
                             @NotNull GitRemote remote,
                             String... additionalParameters);
+
+  @NotNull
+  GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);
 }

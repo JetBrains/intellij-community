@@ -107,6 +107,11 @@ public class GitCommand {
   }
 
   @NotNull
+  public GitCommand writeLockingCommand() {
+    return new GitCommand(this, LockingPolicy.WRITE);
+  }
+
+  @NotNull
   private static GitCommand read(@NotNull String name) {
     return new GitCommand(name, LockingPolicy.READ);
   }
