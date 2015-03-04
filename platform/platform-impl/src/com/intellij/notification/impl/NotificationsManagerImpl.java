@@ -280,10 +280,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (text.getCaret() != null) {
       text.setCaretPosition(0);
     }
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(text,
-                                                          ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    pane.setBorder(null);
+    JScrollPane pane = new JScrollPane(text); // do not add 1px border for viewport on UI update
+    pane.setBorder(BorderFactory.createEmptyBorder());
     pane.setOpaque(false);
     pane.getViewport().setOpaque(false);
     content.add(pane, BorderLayout.CENTER);
