@@ -282,8 +282,8 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       if (virtualFile == null || !virtualFile.isValid()) return null;
       RootType rootType = ScratchFileService.getInstance().getRootType(virtualFile);
       if (rootType == null) return null;
-      if (virtualFile.isDirectory()) {
-        return additionalRoots(project).contains(virtualFile) ? rootType.getDisplayName() : null;
+      if (virtualFile.isDirectory() && additionalRoots(project).contains(virtualFile)) {
+        return rootType.getDisplayName();
       }
       return rootType.substituteName(project, virtualFile);
     }
