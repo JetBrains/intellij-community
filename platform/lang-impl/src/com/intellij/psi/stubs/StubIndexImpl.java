@@ -52,6 +52,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,6 +226,57 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                            IdFilter filter) {
     final List<Psi> result = new SmartList<Psi>();
     process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
+    return result;
+  }
+
+  @NotNull
+  public <Key, Psi extends PsiElement> Collection<Integer> getContainingIds(@NotNull final StubIndexKey<Key, Psi> indexKey,
+                                                                            @NotNull Key dataKey,
+                                                                            @NotNull Project project,
+                                                                            @NotNull final GlobalSearchScope scope) {
+
+    final Set<Integer> result = new THashSet<Integer>();
+    final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+
+    final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
+
+    try {
+      try {
+        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
+        FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
+        index.getReadLock().lock();
+        final ValueContainer<StubIdList> container = index.getData(dataKey);
+
+        for (final ValueContainer.ValueIterator<StubIdList> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+          valueIt.next();
+          for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
+            final int id = inputIdsIterator.next();
+            result.add(id);
+          }
+        }
+      }
+      finally {
+        index.getReadLock().unlock();
+        FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
+      }
+    }
+    catch (StorageException e) {
+      forceRebuild(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
+      if (cause != null) {
+        forceRebuild(cause);
+      }
+      else {
+        throw e;
+      }
+    }
+    catch (AssertionError ae) {
+      forceRebuild(ae);
+    }
+
     return result;
   }
 
