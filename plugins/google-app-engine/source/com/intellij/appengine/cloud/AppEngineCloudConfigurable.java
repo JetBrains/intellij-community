@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -48,8 +49,10 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
   private JBRadioButton myOAuthLoginButton;
   private JPanel myMainPanel;
   private JCheckBox myRememberPasswordCheckBox;
+  private final boolean myAlwaysRememberPassword;
 
-  public AppEngineCloudConfigurable(@NotNull AppEngineServerConfiguration configuration, @Nullable Project project) {
+  public AppEngineCloudConfigurable(@NotNull AppEngineServerConfiguration configuration,
+                                    @Nullable Project project, boolean alwaysRememberPassword) {
     myConfiguration = configuration;
     myProject = project;
     ActionListener actionListener = new ActionListener() {
@@ -60,12 +63,15 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
     };
     myPasswordLoginButton.addActionListener(actionListener);
     myOAuthLoginButton.addActionListener(actionListener);
-    myEmailField.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         updateControls();
       }
-    });
+    };
+    myEmailField.getDocument().addDocumentListener(documentListener);
+    myPasswordField.getDocument().addDocumentListener(documentListener);
+    myAlwaysRememberPassword = alwaysRememberPassword;
     updateControls();
   }
 
@@ -74,6 +80,10 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
     myEmailField.setEnabled(passwordLogin);
     myPasswordField.setEnabled(passwordLogin);
     myRememberPasswordCheckBox.setEnabled(passwordLogin);
+    if (passwordLogin && myAlwaysRememberPassword && !getPassword().isEmpty()) {
+      myRememberPasswordCheckBox.setSelected(true);
+      myRememberPasswordCheckBox.setEnabled(false);
+    }
   }
 
   public String getEmail() {

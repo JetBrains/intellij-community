@@ -41,14 +41,14 @@ public class AppEngineAccountDialog {
     }
 
     String email = configuration.getEmail();
-    if (!StringUtil.isEmpty(email)) {
+    if (!StringUtil.isEmpty(email) && configuration.isPasswordStored()) {
       String password = getStoredPassword(project, email);
       if (!StringUtil.isEmpty(password)) {
         return AppEngineAuthData.login(email, password);
       }
     }
 
-    AppEngineCloudConfigurable configurable = new AppEngineCloudConfigurable(configuration, project);
+    AppEngineCloudConfigurable configurable = new AppEngineCloudConfigurable(configuration, project, false);
     boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
     if (!ok) {
       return null;
