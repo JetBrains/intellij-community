@@ -862,7 +862,12 @@ public class XDebugSessionImpl implements XDebugSession {
           mySessionTab.detachFromSession();
         }
         else if (myConsoleView != null) {
-          Disposer.dispose(myConsoleView);
+          AppUIUtil.invokeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+              Disposer.dispose(myConsoleView);
+            }
+          });
         }
 
         myTopFramePosition = null;
