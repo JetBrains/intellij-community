@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,8 @@ public class OverriderUsageInfo extends UsageInfo {
   @Nullable
   @Override
   public PsiMethod getElement() {
-    return (PsiMethod)super.getElement();
+    PsiElement element = super.getElement();
+    return element instanceof PsiMethod ? (PsiMethod)element : myOverridingMethod;
   }
 
   public boolean isOriginalOverrider() {
