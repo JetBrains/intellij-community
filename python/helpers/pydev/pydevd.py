@@ -1,6 +1,5 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from __future__ import nested_scopes # Jython 2.1 support
-from pydevd_constants import * # @UnusedWildImport
 
 import pydev_monkey_qt
 from pydevd_utils import save_main_module
@@ -28,8 +27,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_STEP_INTO, \
                          CMD_STEP_OVER, \
                          CMD_STEP_RETURN, \
-                         CMD_THREAD_CREATE, \
-                         CMD_THREAD_KILL, \
+    CMD_THREAD_KILL, \
                          CMD_THREAD_RUN, \
                          CMD_THREAD_SUSPEND, \
                          CMD_RUN_TO_LINE, \
@@ -52,8 +50,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalTerminateThread, \
                          InternalRunThread, \
                          InternalStepThread, \
-                         NetCommand, \
-                         NetCommandFactory, \
+    NetCommandFactory, \
                          PyDBDaemonThread, \
                          _queue, \
                          ReaderThread, \
@@ -65,8 +62,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          StartServer, \
                          InternalSetNextStatementThread, \
                          ReloadCodeCommand, \
-                         ID_TO_MEANING,\
-                         CMD_SET_PY_EXCEPTION, \
+    CMD_SET_PY_EXCEPTION, \
                          CMD_IGNORE_THROWN_EXCEPTION_AT,\
                          InternalGetBreakpointException, \
                          InternalSendCurrExceptionTrace,\
@@ -382,16 +378,16 @@ class PyDB:
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if isinstance(t, PyDBDaemonThread):
-                pydev_log.error_once(
-                    'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
-                
             if getattr(t, 'is_pydev_daemon_thread', False):
                 #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
                 #set as a daemon thread, so, we also have to check for the 'is_pydev_daemon_thread' flag.
                 #See: https://github.com/fabioz/PyDev.Debugger/issues/11
                 continue
-            
+
+            if isinstance(t, PyDBDaemonThread):
+                pydev_log.error_once(
+                    'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+
             if isThreadAlive(t) and not t.isDaemon():
                 return True
 
@@ -495,7 +491,7 @@ class PyDB:
             _DebugConsoleHelper._return_control_osc = not _DebugConsoleHelper._return_control_osc
             return _DebugConsoleHelper._return_control_osc
 
-        from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+        from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(return_control)
 
         from pydev_import_hook import import_hook_manager
