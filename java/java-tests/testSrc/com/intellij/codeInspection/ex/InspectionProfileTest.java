@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.testFramework.LightIdeaTestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -70,9 +74,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile() {
-    InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
-    profile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
-    return profile;
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile());
+  }
+  private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), base);
   }
 
   public void testConvertOldProfile() throws Exception {
@@ -182,8 +187,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
                                                   "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
                                                   "</inspections>").getRootElement();
-    InspectionProfileImpl profile = createProfile();
-    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(element);
     ModifiableModel model = profile.getModifiableModel();
     model.commit();
@@ -232,8 +236,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                  "</profile>", serialize(profile));
 
     //make them default
-    profile = createProfile();
-    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(unusedProfile);
     model = profile.getModifiableModel();
     InspectionToolWrapper toolWrapper = ((InspectionProfileImpl)model).getInspectionTool("unused", getProject());
@@ -264,8 +267,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     //check merged
     Element mergedElement = JDOMUtil.loadDocument(mergedText).getRootElement();
-    profile = createProfile();
-    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(mergedElement);
     model = profile.getModifiableModel();
     model.commit();
@@ -342,10 +344,9 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
-  protected void checkMergedNoChanges(String initialText) throws Exception {
+  private void checkMergedNoChanges(String initialText) throws Exception {
     final Element element = JDOMUtil.loadDocument(initialText).getRootElement();
-    InspectionProfileImpl profile = createProfile();
-    profile.setBaseProfile(new InspectionProfileImpl("foo"));
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(element);
     ModifiableModel model = profile.getModifiableModel();
     model.commit();
@@ -416,11 +417,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile(InspectionToolRegistrar registrar) {
-    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance());
-    base.setBaseProfile(null);
-    InspectionProfileImpl profile = new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance());
-    profile.setBaseProfile(base);
-    return profile;
+    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance(), null);
+    return new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance(), base);
   }
 
   public void testGlobalInspectionContext() throws Exception {
@@ -459,8 +457,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDoNotInstantiateOnSave() throws Exception {
-    InspectionProfileImpl profile = new InspectionProfileImpl("profile");
-    profile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile());
     assertEquals(0, countInitializedTools(profile));
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     assertTrue(toolWrappers.length > 0);
@@ -499,7 +496,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testPreserveCompatibility() throws Exception {
-    InspectionProfileImpl foo = new InspectionProfileImpl("foo");
+    InspectionProfileImpl foo = new InspectionProfileImpl("foo", InspectionToolRegistrar.getInstance(), InspectionProjectProfileManager.getInstance(getProject()));
     String test = "<profile version=\"1.0\" is_locked=\"false\">\n" +
                  "  <option name=\"myName\" value=\"idea.default\" />\n" +
                  "  <option name=\"myLocal\" value=\"false\" />\n" +
