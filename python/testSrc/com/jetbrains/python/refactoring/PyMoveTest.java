@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
@@ -283,6 +284,18 @@ public class PyMoveTest extends PyTestCase {
 
   public void testRelativeImportOfNameFromInitPy() {
     doMoveFileTest("pkg/subpkg2", "");
+  }
+
+  // PY-15218
+  public void testImportForMovedElementWithPreferredQualifiedImportStyle() {
+    final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    try {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = false;
+      doMoveSymbolTest("bar", "b.py");
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;
+    }
   }
 
   private void doMoveFileTest(String fileName, String toDirName)  {

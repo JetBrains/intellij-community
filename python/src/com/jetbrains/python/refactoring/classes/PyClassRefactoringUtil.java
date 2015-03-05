@@ -311,7 +311,8 @@ public final class PyClassRefactoringUtil {
     }
     final QualifiedName containingQName;
     final String importedName;
-    if (element instanceof PyFile || element instanceof PsiDirectory) {
+    final boolean importingModuleOrPackage = element instanceof PyFile || element instanceof PsiDirectory;
+    if (importingModuleOrPackage) {
       containingQName = qname.removeLastComponent();
       importedName = qname.getLastComponent();
     }
@@ -320,7 +321,7 @@ public final class PyClassRefactoringUtil {
       importedName = getOriginalName(element);
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, elementSource);
-    if (preferFromImport && !containingQName.getComponents().isEmpty()) {
+    if (preferFromImport && !containingQName.getComponents().isEmpty() || !importingModuleOrPackage) {
       return AddImportHelper.addOrUpdateFromImportStatement(file, containingQName.toString(), importedName, asName, priority, anchor);
     }
     else {
