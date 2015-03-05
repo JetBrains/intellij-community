@@ -64,7 +64,7 @@ public class IgnoredPatternSet {
     return fileName.endsWith(FileUtil.ASYNC_DELETE_EXTENSION);
   }
 
-  private void clearPatterns() {
+  public void clearPatterns() {
     myMasks.clear();
     myIgnorePatterns.removeAllAssociations(Boolean.TRUE);
   }

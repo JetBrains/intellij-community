@@ -79,7 +79,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 12;
+  private static final int VERSION = 13;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
@@ -88,7 +88,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @NonNls
   private static final String DEFAULT_IGNORED =
-    "*.hprof;*.lib;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
@@ -846,7 +846,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void loadState(Element state) {
     int savedVersion = StringUtilRt.parseInt(state.getAttributeValue(ATTRIBUTE_VERSION), 0);
 
-    String previousIgnores = getIgnoredFilesList();
     for (Element element : state.getChildren()) {
       if (element.getName().equals(ELEMENT_IGNORE_FILES)) {
         myIgnoredPatterns.setIgnoreMasks(element.getAttributeValue(ATTRIBUTE_LIST));
@@ -856,53 +855,57 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
+    if (savedVersion < 4) {
+      if (savedVersion == 0) {
+        addIgnore(".svn");
+      }
+
+      if (savedVersion < 2) {
+        restoreStandardFileExtensions();
+      }
+
+      addIgnore("*.pyc");
+      addIgnore("*.pyo");
+      addIgnore(".git");
+    }
+
+    if (savedVersion < 5) {
+      addIgnore("*.hprof");
+    }
+
+    if (savedVersion < 6) {
+      addIgnore("_svn");
+    }
+
+    if (savedVersion < 7) {
+      addIgnore(".hg");
+    }
+
+    if (savedVersion < 8) {
+      addIgnore("*~");
+    }
+
+    if (savedVersion < 9) {
+      addIgnore("__pycache__");
+    }
+
+    if (savedVersion < 10) {
+      addIgnore(".bundle");
+    }
+
     if (savedVersion < 11) {
-      if (savedVersion < 4) {
-        if (savedVersion == 0) {
-          addIgnore(".svn");
-        }
-
-        if (savedVersion < 2) {
-          restoreStandardFileExtensions();
-        }
-
-        addIgnore("*.pyc");
-        addIgnore("*.pyo");
-        addIgnore(".git");
-      }
-
-      if (savedVersion < 5) {
-        addIgnore("*.hprof");
-      }
-
-      if (savedVersion < 6) {
-        addIgnore("_svn");
-      }
-
-      if (savedVersion < 7) {
-        addIgnore(".hg");
-      }
-
-      if (savedVersion < 8) {
-        addIgnore("*.lib");
-        addIgnore("*~");
-      }
-
-      if (savedVersion < 9) {
-        addIgnore("__pycache__");
-      }
-
-      if (savedVersion < 10) {
-        addIgnore(".bundle");
-      }
-
       addIgnore("*.rbc");
     }
-    else if (savedVersion == 11 && PlatformUtils.isCLion()) {
-      // TODO During EAP CLion missed FileTypesManager.xml and users got empty excludes list
-      // TODO this code is only necessary until CLion 1.0 is released, then can be safely deleted
-      // previousIgnores come now from FileTypesManager.xml and merged with anything user may have added manually
-      myIgnoredPatterns.setIgnoreMasks(StringUtil.join(Arrays.asList(previousIgnores, getIgnoredFilesList()), ";"));
+
+    if (savedVersion < 13) {
+      // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.  
+      Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
+      masks.remove("*.lib");
+      
+      myIgnoredPatterns.clearPatterns();
+      for (String each : masks) {
+        myIgnoredPatterns.addIgnoreMask(each);
+      }
     }
 
     myIgnoredFileCache.clearCache();
