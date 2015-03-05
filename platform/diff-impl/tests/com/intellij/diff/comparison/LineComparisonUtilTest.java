@@ -162,10 +162,6 @@ public class LineComparisonUtilTest extends ComparisonUtilTestBase {
       ._Def_(mod(0, 0, 3, 3))
       ._Trim_(del(0, 0, 1), mod(2, 1, 1, 2))
       .all();
-
-    TestData.lines("{_}", "{_ {_ }_}_x")
-      ._Def_(ins(1, 1, 2), ins(2, 4, 1))
-      .def();
   }
 
   public void testNonDeterministicCases() {
@@ -176,5 +172,11 @@ public class LineComparisonUtilTest extends ComparisonUtilTestBase {
     TestData.lines("__", "")
       ._Def_(del(1, 1, 2))
       .all();
+  }
+
+  public void testBigBlockShiftRegression() {
+    TestData.lines(" X_  X", "  X_   X")
+      ._Def_(mod(0, 0, 2, 2))
+      .def();
   }
 }
