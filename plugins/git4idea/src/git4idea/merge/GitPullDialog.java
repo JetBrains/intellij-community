@@ -140,20 +140,33 @@ public class GitPullDialog extends DialogWrapper {
     });
 
     if (!result.isNull() && result.get().success()) {
-      return ContainerUtil.mapNotNull(result.get().getOutput(), new Function<String, String>() {
-        @Override
-        public String fun(@NotNull String line) {
-          if (StringUtil.isEmptyOrSpaces(line)) return null;
-          String shortRemoteName = line.trim().substring(line.indexOf(GitBranch.REFS_HEADS_PREFIX) + GitBranch.REFS_HEADS_PREFIX.length());
-          return remote.getName() + "/" + shortRemoteName;
-        }
-      });
+      try {
+        return parseRemoteBranches(remote, result.get().getOutput());
+      }
+      catch (Exception e) {
+        LOG.error("Couldn't parse ls-remote output: [" + result.get().getOutput() + "]", e);
+        Messages.showErrorDialog(this.getRootPane(), "Couldn't parse ls-remote output",
+                                 "Couldn't get the remote branches list from " + remote.getName());
+        return null;
+      }
     }
     else {
       String message = result.isNull() ? "" : result.get().getErrorOutputAsJoinedString();
       Messages.showErrorDialog(this.getRootPane(), message, "Couldn't get the remote branches list from " + remote.getName());
       return null;
     }
+  }
+
+  @NotNull
+  private static List<String> parseRemoteBranches(@NotNull final GitRemote remote, @NotNull List<String> lsRemoteOutputLines) {
+    return ContainerUtil.mapNotNull(lsRemoteOutputLines, new Function<String, String>() {
+      @Override
+      public String fun(@NotNull String line) {
+        if (StringUtil.isEmptyOrSpaces(line)) return null;
+        String shortRemoteName = line.trim().substring(line.indexOf(GitBranch.REFS_HEADS_PREFIX) + GitBranch.REFS_HEADS_PREFIX.length());
+        return remote.getName() + "/" + shortRemoteName;
+      }
+    });
   }
 
   private void validateDialog() {
