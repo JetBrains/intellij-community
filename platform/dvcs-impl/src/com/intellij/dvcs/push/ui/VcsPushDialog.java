@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,16 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,14 +66,43 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JComponent rootPanel = new JPanel(new BorderLayout(0, 15));
+    JComponent rootPanel = new JPanel(new BorderLayout(0, 0));
     rootPanel.add(myListPanel, BorderLayout.CENTER);
     JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
-    rootPanel.add(optionsPanel, BorderLayout.SOUTH);
+    JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(4)));
+    panel.add(optionsPanel);
+    if (!myController.isForcePushEnabled()) {
+      panel.add(createForcePushInfoLabel(), BorderLayout.NORTH);
+    }
+    rootPanel.add(panel, BorderLayout.SOUTH);
     return rootPanel;
+  }
+
+  @NotNull
+  private JComponent createForcePushInfoLabel() {
+    JPanel text = new JPanel();
+    text.setLayout(new BoxLayout(text, BoxLayout.X_AXIS));
+    JLabel label = new JLabel("You can enable and configure Force Push in " + ShowSettingsUtil.getSettingsMenuName() + ".");
+    label.setEnabled(false);
+    label.setFont(JBUI.Fonts.smallFont());
+    text.add(label);
+    ActionLink here = new ActionLink("Configure", new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Project project = myController.getProject();
+        VcsPushDialog.this.doCancelAction(e.getInputEvent());
+        ShowSettingsUtilImpl.showSettingsDialog(project, "", "force push");
+      }
+    });
+    here.setFont(JBUI.Fonts.smallFont());
+    text.add(here);
+    JPanel wrap = new JPanel(new BorderLayout());
+    wrap.add(text, BorderLayout.EAST);
+    wrap.setBorder(JBUI.Borders.empty(0,0,4,0));
+    return wrap;
   }
 
   @Override
@@ -88,14 +123,24 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   @Override
+  protected void doOKAction() {
+    myController.push(false);
+    close(OK_EXIT_CODE);
+  }
+
+  @Override
   @NotNull
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<Action>();
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
-    myPushAction = new ComplexPushAction(myForcePushAction);
-    myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    myForcePushAction.putValue(Action.NAME, "&Force Push");
+    myPushAction = new OkAction(){};//new ComplexPushAction(myForcePushAction);
+    myPushAction.putValue(Action.NAME, "&Push");
     actions.add(myPushAction);
+    if (myController.isForcePushEnabled()) {
+      actions.add(myForcePushAction);
+    }
     actions.add(getCancelAction());
     actions.add(getHelpAction());
     return actions.toArray(new Action[actions.size()]);
