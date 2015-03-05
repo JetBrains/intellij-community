@@ -11,13 +11,12 @@ public class TemplateBuilderTest extends LightCodeInsightFixtureTestCase {
                                         "  public String tes<caret>t() {\n" +
                                         "  }\n" +
                                         "}");
-    new WriteCommandAction.Simple<Void>(myFixture.getProject(), myFixture.getFile()) {
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
       @Override
-      protected void run() throws Throwable {
-        TemplateBuilderFactory.getInstance().createTemplateBuilder(myFixture.getElementAtCaret())
-          .run(myFixture.getEditor(), true);
+      public void run() {
+        TemplateBuilderFactory.getInstance().createTemplateBuilder(myFixture.getElementAtCaret()).run(myFixture.getEditor(), true);
       }
-    }.execute();
+    });
     myFixture.checkResult("class A {\n" +
                           "  <caret>public String test() {\n" +
                           "  }\n" +
