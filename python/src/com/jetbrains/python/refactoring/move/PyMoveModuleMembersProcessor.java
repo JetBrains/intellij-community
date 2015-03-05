@@ -110,14 +110,21 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
             for (final PsiNamedElement e : myElements) {
               // TODO: Check for resulting circular imports
               CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
-              assert e instanceof PyClass || e instanceof PyFunction;
+              assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
               if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
-                throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.class.$0",
-                                                                        e.getName()));
+                throw new IncorrectOperationException(
+                  PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.class.$0",
+                                   e.getName()));
               }
               if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
-                throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0",
-                                                                        e.getName()));
+                throw new IncorrectOperationException(
+                  PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0",
+                                   e.getName()));
+              }
+              if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(e.getName()) != null) {
+                throw new IncorrectOperationException(
+                  PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.global.variable.$0",
+                                   e.getName()));
               }
               final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
               final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
@@ -146,24 +153,30 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
   private static void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
     final PsiFile file = element.getContainingFile();
-    PyClassRefactoringUtil.rememberNamedReferences(element);
-    final PsiNamedElement newElement = addToFile(element, destination, usages);
-    for (UsageInfo usage : usages) {
-      final PsiElement usageElement = usage.getElement();
-      if (usageElement != null) {
-        updateUsage(usageElement, element, newElement);
+    final PsiElement oldElementBody = PyMoveModuleMemberUtil.expandNamedElementBody(element);
+    if (oldElementBody != null) {
+      PyClassRefactoringUtil.rememberNamedReferences(oldElementBody);
+      final PsiElement newElementBody = addToFile(oldElementBody, destination, usages);
+      final PsiNamedElement newElement = PyMoveModuleMemberUtil.extractNamedElement(newElementBody);
+      assert newElement != null;
+      for (UsageInfo usage : usages) {
+        final PsiElement usageElement = usage.getElement();
+        if (usageElement != null) {
+          updateUsage(usageElement, element, newElement);
+        }
       }
-    }
-    PyClassRefactoringUtil.restoreNamedReferences(newElement, element);
-    // TODO: Remove extra empty lines after the removed element
-    element.delete();
-    if (file != null) {
-      PyClassRefactoringUtil.optimizeImports(file);
+      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, element);
+      // TODO: Remove extra empty lines after the removed element
+      oldElementBody.delete();
+      if (file != null) {
+        PyClassRefactoringUtil.optimizeImports(file);
+      }
     }
   }
 
-  private static PsiNamedElement addToFile(@NotNull PsiNamedElement element, @NotNull final PyFile destination,
-                                           @NotNull Collection<UsageInfo> usages) {
+  @NotNull
+  private static PsiElement addToFile(@NotNull PsiElement element, @NotNull final PyFile destination,
+                                      @NotNull Collection<UsageInfo> usages) {
     List<PsiElement> topLevelAtDestination = new ArrayList<PsiElement>();
     for (UsageInfo usage : usages) {
       final PsiElement e = usage.getElement();
@@ -180,7 +193,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       }
     }
     if (topLevelAtDestination.isEmpty()) {
-      return (PsiNamedElement)(destination.add(element));
+      return destination.add(element);
     }
     else {
       Collections.sort(topLevelAtDestination, new Comparator<PsiElement>() {
@@ -190,7 +203,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         };
       });
       final PsiElement firstUsage = topLevelAtDestination.get(0);
-      return (PsiNamedElement)destination.addBefore(element, firstUsage);
+      return destination.addBefore(element, firstUsage);
     }
   }
 
