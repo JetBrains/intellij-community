@@ -25,7 +25,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -172,59 +174,76 @@ public class SimpleThreesideDiffChange {
   private static ConflictType calcType(@NotNull MergeLineFragment fragment,
                                        @NotNull List<EditorEx> editors,
                                        @NotNull ComparisonPolicy policy) {
-    if (compareSubstring(fragment, editors, ThreeSide.LEFT, ThreeSide.RIGHT, policy)) {
-      return new ConflictType(getDiffType(fragment, ThreeSide.LEFT));
-    }
-    else if (compareSubstring(fragment, editors, ThreeSide.BASE, ThreeSide.LEFT)) {
-      return new ConflictType(getDiffType(fragment, ThreeSide.RIGHT), false, true);
-    }
-    else if (compareSubstring(fragment, editors, ThreeSide.BASE, ThreeSide.RIGHT)) {
-      return new ConflictType(getDiffType(fragment, ThreeSide.LEFT), true, false);
+    boolean isLeftEmpty = isIntervalEmpty(fragment, ThreeSide.LEFT);
+    boolean isBaseEmpty = isIntervalEmpty(fragment, ThreeSide.BASE);
+    boolean isRightEmpty = isIntervalEmpty(fragment, ThreeSide.RIGHT);
+    assert !isLeftEmpty || !isBaseEmpty || !isRightEmpty;
+
+    if (isBaseEmpty) {
+      if (isLeftEmpty) { // --=
+        return new ConflictType(TextDiffType.INSERTED, false, true);
+      }
+      else if (isRightEmpty) { // =--
+        return new ConflictType(TextDiffType.INSERTED, true, false);
+      }
+      else { // =-=
+        boolean equalModifications = compareLeftAndRight(fragment, editors, policy);
+        return new ConflictType(equalModifications ? TextDiffType.INSERTED : TextDiffType.CONFLICT);
+      }
     }
     else {
-      return new ConflictType(TextDiffType.CONFLICT);
+      if (isLeftEmpty && isRightEmpty) { // -=-
+        return new ConflictType(TextDiffType.DELETED);
+      }
+      else { // -==, ==-, ===
+        boolean unchangedLeft = compareWithBase(fragment, editors, ThreeSide.LEFT);
+        boolean unchangedRight = compareWithBase(fragment, editors, ThreeSide.RIGHT);
+        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft) return new ConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
+        if (unchangedRight) return new ConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
+
+        boolean equalModifications = compareLeftAndRight(fragment, editors, policy);
+        return new ConflictType(equalModifications ? TextDiffType.MODIFIED : TextDiffType.CONFLICT);
+      }
     }
   }
 
-  private static boolean compareSubstring(@NotNull MergeLineFragment fragment,
-                                          @NotNull List<EditorEx> editors,
-                                          @NotNull ThreeSide side1,
-                                          @NotNull ThreeSide side2) {
-    return compareSubstring(fragment, editors, side1, side2, ComparisonPolicy.DEFAULT);
-  }
+  private static boolean compareLeftAndRight(@NotNull MergeLineFragment fragment,
+                                             @NotNull List<EditorEx> editors,
+                                             @NotNull ComparisonPolicy policy) {
+    CharSequence content1 = getRangeContent(fragment, editors, ThreeSide.LEFT);
+    CharSequence content2 = getRangeContent(fragment, editors, ThreeSide.RIGHT);
 
-  private static boolean compareSubstring(@NotNull MergeLineFragment fragment,
-                                          @NotNull List<EditorEx> editors,
-                                          @NotNull ThreeSide side1,
-                                          @NotNull ThreeSide side2,
-                                          @NotNull ComparisonPolicy policy) {
-    CharSequence content1 = getRangeContent(fragment, editors, side1);
-    CharSequence content2 = getRangeContent(fragment, editors, side2);
+    if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
+      if (content1 == null) content1 = "";
+      if (content2 == null) content2 = "";
+    }
+
+    if (content1 == null && content2 == null) return true;
+    if (content1 == null ^ content2 == null) return false;
 
     return ComparisonManager.getInstance().isEquals(content1, content2, policy);
   }
 
-  @NotNull
+  private static boolean compareWithBase(@NotNull MergeLineFragment fragment,
+                                         @NotNull List<EditorEx> editors,
+                                         @NotNull ThreeSide side) {
+    CharSequence content1 = getRangeContent(fragment, editors, ThreeSide.BASE);
+    CharSequence content2 = getRangeContent(fragment, editors, side);
+
+    return StringUtil.equals(content1, content2);
+  }
+
+  @Nullable
   private static CharSequence getRangeContent(@NotNull MergeLineFragment fragment,
                                               @NotNull List<EditorEx> editors,
                                               @NotNull ThreeSide side) {
     DocumentEx document = side.select(editors).getDocument();
     int line1 = fragment.getStartLine(side);
     int line2 = fragment.getEndLine(side);
+    if (line1 == line2) return null;
     return DiffUtil.getLinesContent(document, line1, line2);
-  }
-
-  @NotNull
-  private static TextDiffType getDiffType(@NotNull MergeLineFragment fragment, @NotNull ThreeSide side) {
-    assert side != ThreeSide.BASE;
-
-    boolean isBaseEmpty = isIntervalEmpty(fragment, ThreeSide.BASE);
-    boolean isVersionEmpty = isIntervalEmpty(fragment, side);
-
-    if (!isBaseEmpty && !isVersionEmpty) return TextDiffType.MODIFIED;
-    if (!isBaseEmpty) return TextDiffType.DELETED;
-    if (!isVersionEmpty) return TextDiffType.INSERTED;
-    throw new IllegalArgumentException();
   }
 
   private static boolean isIntervalEmpty(@NotNull MergeLineFragment fragment, @NotNull ThreeSide side) {
