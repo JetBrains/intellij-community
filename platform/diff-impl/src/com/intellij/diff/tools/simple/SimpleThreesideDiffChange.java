@@ -37,9 +37,7 @@ public class SimpleThreesideDiffChange {
   @NotNull private ConflictType myType;
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
-  @NotNull private final List<RangeHighlighter> myActionHighlighters = new ArrayList<RangeHighlighter>();
 
-  private boolean myIsValid = true;
   private int[] myLineStartShifts = new int[3];
   private int[] myLineEndShifts = new int[3];
 
@@ -60,8 +58,6 @@ public class SimpleThreesideDiffChange {
     createHighlighter(ThreeSide.BASE);
     if (myType.isLeftChange()) createHighlighter(ThreeSide.LEFT);
     if (myType.isRightChange()) createHighlighter(ThreeSide.RIGHT);
-
-    doInstallActionHighlighters();
   }
 
   public void destroyHighlighter() {
@@ -69,11 +65,6 @@ public class SimpleThreesideDiffChange {
       highlighter.dispose();
     }
     myHighlighters.clear();
-
-    for (RangeHighlighter highlighter : myActionHighlighters) {
-      highlighter.dispose();
-    }
-    myActionHighlighters.clear();
   }
 
   //
@@ -108,10 +99,6 @@ public class SimpleThreesideDiffChange {
       myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
       myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
     }
-  }
-
-  private void doInstallActionHighlighters() {
-    // TODO
   }
 
   //
@@ -156,11 +143,6 @@ public class SimpleThreesideDiffChange {
       return false;
     }
 
-    for (RangeHighlighter highlighter : myActionHighlighters) {
-      highlighter.dispose();
-    }
-    myActionHighlighters.clear();
-    myIsValid = false;
     return true;
   }
 
