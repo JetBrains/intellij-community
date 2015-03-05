@@ -22,11 +22,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +47,6 @@ class AnchorElementInfo extends SelfElementInfo {
                     @NotNull IStubElementType stubElementType) {
     super(containingFile.getProject(), new ProperTextRange(0, 0), anchor.getClass(), containingFile, containingFile.getLanguage());
     myStubElementTypeAndId = pack(stubId, stubElementType);
-    IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
-    assert contentElementType instanceof IStubFileElementType : contentElementType;
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
 
