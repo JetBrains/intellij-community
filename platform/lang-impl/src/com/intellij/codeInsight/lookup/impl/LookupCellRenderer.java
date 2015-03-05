@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -143,6 +144,11 @@ public class LookupCellRenderer implements ListCellRenderer {
       if (item.isValid()) {
         try {
           item.renderElement(presentation);
+        }
+        catch (ProcessCanceledException e) {
+          LOG.info(e);
+          presentation.setItemTextForeground(JBColor.RED);
+          presentation.setItemText("Error occurred, see the log in Help | Show Log");
         }
         catch (Exception e) {
           LOG.error(e);

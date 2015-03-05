@@ -37,6 +37,7 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -73,7 +74,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private MasterController myMasterController = new MasterController() {
     @Override
     public ItemWrapper[] getSelectedItems() {
-      final List<BreakpointItem> res = myTreeController.getSelectedBreakpoints();
+      final List<BreakpointItem> res = myTreeController.getSelectedBreakpoints(false);
       return res.toArray(new ItemWrapper[res.size()]);
     }
 
@@ -144,6 +145,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private JComponent createDetailView() {
     DetailViewImpl detailView = new DetailViewImpl(myProject);
+    detailView.setEmptyLabel(XDebuggerBundle.message("xbreakpoint.label.empty"));
     myDetailController.setDetailView(detailView);
 
     return detailView;
@@ -163,9 +165,13 @@ public class BreakpointsDialog extends DialogWrapper {
     XBreakpointsDialogState settings = (getBreakpointManager()).getBreakpointsDialogSettings();
     if (settings != null && settings.getTreeState() != null) {
       settings.getTreeState().applyTo(myTreeController.getTreeView());
+      if (myTreeController.getTreeView().getSelectionCount() == 0) {
+        myTreeController.selectFirstBreakpointItem();
+      }
     }
     else {
       TreeUtil.expandAll(myTreeController.getTreeView());
+      myTreeController.selectFirstBreakpointItem();
     }
     selectBreakpoint(myInitialBreakpoint);
   }
@@ -327,14 +333,12 @@ public class BreakpointsDialog extends DialogWrapper {
       setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          boolean enabled = false;
-          final ItemWrapper[] items = myMasterController.getSelectedItems();
-          for (ItemWrapper item : items) {
+          for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
             if (item.allowedToRemove()) {
-              enabled = true;
+              return true;
             }
           }
-          return enabled;
+          return false;
         }
       }).
       setToolbarPosition(ActionToolbarPosition.TOP).
@@ -370,7 +374,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private void navigate(final boolean requestFocus) {
-    List<BreakpointItem> breakpoints = myTreeController.getSelectedBreakpoints();
+    List<BreakpointItem> breakpoints = myTreeController.getSelectedBreakpoints(false);
     if (!breakpoints.isEmpty()) {
       breakpoints.get(0).navigate(requestFocus);
     }
@@ -512,7 +516,7 @@ public class BreakpointsDialog extends DialogWrapper {
           return;
         }
       }
-      for (BreakpointItem item : myTreeController.getSelectedBreakpoints()) {
+      for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
         Object breakpoint = item.getBreakpoint();
         if (breakpoint instanceof XBreakpointBase) {
           ((XBreakpointBase)breakpoint).setGroup(groupName);
