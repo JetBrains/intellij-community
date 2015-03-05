@@ -27,17 +27,21 @@ import java.util.List;
 public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineRepository> {
   private ComboBox myProjectCombo;
   private JTextField myAPIKey;
+  private JCheckBox assignedMe;
   private JBLabel myProjectLabel;
   private JBLabel myAPIKeyLabel;
+  private JBLabel assignedMeLabel;
 
   public RedmineRepositoryEditor(final Project project, final RedmineRepository repository, Consumer<RedmineRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setEnabled(myRepository.isConfigured());
     myAPIKey.setText(repository.getAPIKey());
+    assignedMe.setSelected(repository.isAssignedMe());
 
     installListener(myProjectCombo);
     installListener(myAPIKey);
+    installListener(assignedMe);
 
     toggleCredentialsVisibility();
 
@@ -75,6 +79,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     RedmineProjectItem selected = (RedmineProjectItem)myProjectCombo.getSelectedItem();
     myRepository.setCurrentProject(selected != null ? selected.myProject : null);
     myRepository.setAPIKey(myAPIKey.getText().trim());
+    myRepository.setAssignedMe(assignedMe.isSelected());
     myTestButton.setEnabled(myRepository.isConfigured());
     toggleCredentialsVisibility();
   }
@@ -119,9 +124,13 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
 
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myAPIKey = new JPasswordField();
+
+    assignedMeLabel = new JBLabel("Assigned me:", SwingConstants.RIGHT);
+    assignedMe = new JCheckBox();
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myAPIKeyLabel, myAPIKey)
       .addLabeledComponent(myProjectLabel, myProjectCombo)
+      .addLabeledComponent(assignedMeLabel, assignedMe)
       .getPanel();
   }
 
@@ -130,6 +139,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     super.setAnchor(anchor);
     myProjectLabel.setAnchor(anchor);
     myAPIKeyLabel.setAnchor(anchor);
+    assignedMeLabel.setAnchor(anchor);
   }
 
   private static class RedmineProjectItem {
