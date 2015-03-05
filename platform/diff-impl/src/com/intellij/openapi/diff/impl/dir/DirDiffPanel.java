@@ -548,7 +548,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     else if (DiffDataKeys.OPEN_FILE_DESCRIPTOR.is(dataId)) {
       return getOpenFileDescriptor();
     }
-    return null;
+    DataProvider provider = DataManager.getDataProvider(myDiffPanel);
+    return provider != null ? provider.getData(dataId) : null;
   }
 
   @Nullable
