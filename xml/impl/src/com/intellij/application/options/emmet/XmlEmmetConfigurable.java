@@ -54,6 +54,9 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
         myEnablePreviewJBCheckBox.setEnabled(selected);
         myFiltersListPanel.setEnabled(selected);
         myEnableHrefAutodetectJBCheckBox.setEnabled(selected);
+        for (JBCheckBox checkBox : myFilterCheckboxes.values()) {
+          checkBox.setEnabled(selected);
+        }
       }
     });
     myFiltersListPanel.setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("emmet.filters.enabled.by.default")));
@@ -121,6 +124,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
       final String filterSuffix = filter.getSuffix();
       final JBCheckBox checkBox = myFilterCheckboxes.get(filterSuffix);
       if (checkBox != null) {
+        checkBox.setEnabled(emmetOptions.isEmmetEnabled());
         checkBox.setSelected(enabledByDefault.contains(filterSuffix));
       }
     }
