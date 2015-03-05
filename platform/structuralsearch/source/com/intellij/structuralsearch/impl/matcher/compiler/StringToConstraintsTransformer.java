@@ -35,6 +35,7 @@ class StringToConstraintsTransformer {
   @NonNls private static final String CONTAINS = "contains";
   @NonNls private static final String WITHIN = "within";
 
+  @SuppressWarnings("AssignmentToForLoopParameter")
   static void transformOldPattern(MatchOptions options) {
       final String pattern = options.getSearchPattern();
 
@@ -44,12 +45,22 @@ class StringToConstraintsTransformer {
       int anonymousTypedVarsCount = 0;
       boolean targetFound = false;
 
-      for(int index=0;index < pattern.length();++index) {
+      final int length = pattern.length();
+      for(int index=0; index < length; ++index) {
         char ch = pattern.charAt(index);
 
+        if (index == 0 && ch == '[') {
+          if (miscBuffer == null) miscBuffer = new StringBuilder();
+          else miscBuffer.setLength(0);
+          final MatchVariableConstraint constraint = new MatchVariableConstraint();
+          constraint.setName(Configuration.CONTEXT_VAR_NAME);
+          index = eatTypedVarCondition(0, pattern, miscBuffer, constraint);
+          options.addVariableConstraint(constraint);
+          if (index == length) break;
+          ch = pattern.charAt(index);
+        }
         if (ch=='\'') {
           // doubling '
-          final int length = pattern.length();
           if (index + 1 < length &&
               pattern.charAt(index + 1)=='\''
              ) {
@@ -97,9 +108,8 @@ class StringToConstraintsTransformer {
               buf.append(ch);
             }
 
-            boolean anonymous = false;
-
             if (miscBuffer.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.character"));
+            boolean anonymous = false;
             if (miscBuffer.charAt(0)=='_')  {
               anonymous = true;
 
@@ -130,6 +140,7 @@ class StringToConstraintsTransformer {
             }
 
             // Check the number of occurrences for typed variable
+            final int savedIndex = index;
             if (index < length) {
               char possibleQuantifier = pattern.charAt(index);
 
@@ -189,9 +200,12 @@ class StringToConstraintsTransformer {
               constraint.setGreedy(greedy);
               constraint.setPartOfSearchResults(!anonymous);
               if (targetFound && !anonymous) {
-                throw new MalformedPatternException("Pattern may have only one target");
+                throw new MalformedPatternException("Only one target allowed");
               }
               targetFound = !anonymous;
+            }
+            else if (savedIndex != index) {
+              throw new MalformedPatternException("Constraints only allowed on first of variable");
             }
 
             if (index < length && pattern.charAt(index) == ':') {
@@ -203,14 +217,14 @@ class StringToConstraintsTransformer {
                 buf.append(ch);
               }
               else {
+                if (!constraintCreated) {
+                  throw new MalformedPatternException("Constraints only allowed on first of variable");
+                }
                 index = eatTypedVarCondition(index, pattern, miscBuffer, constraint);
               }
             }
 
             if (constraintCreated) {
-              if (constraint.getWithinConstraint().length() > 0) {
-                constraint.setName(Configuration.CONTEXT_VAR_NAME);
-              }
               options.addVariableConstraint(constraint);
             }
 
@@ -423,6 +437,9 @@ class StringToConstraintsTransformer {
                 constraint.setContainsConstraint(script );
                 consumed = true;
               } else if (option.equalsIgnoreCase(WITHIN)) {
+                if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
+                  throw new MalformedPatternException("Within constraint is only applicable to Complete Match");
+                }
                 if (hasNot) constraint.setInvertWithinConstraint(true);
                 String script = getSingleParameter(m, SSRBundle.message("script.should.be.delimited.with.spaces.error.message"));
 

@@ -34,6 +34,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +42,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -119,38 +121,70 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static VirtualFile writeFile(@Nullable File file, @NotNull Object requestor, @Nullable VirtualFile virtualFile, @NotNull BufferExposingByteArrayOutputStream content, @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
-    // mark this action as modifying the file which daemon analyzer should ignore
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
-    try {
-      if (file != null && (virtualFile == null || !virtualFile.isValid())) {
-        virtualFile = getOrCreateVirtualFile(requestor, file);
-      }
-      assert virtualFile != null;
-      OutputStream out = virtualFile.getOutputStream(requestor);
-      try {
-        if (lineSeparatorIfPrependXmlProlog != null) {
-          out.write(XML_PROLOG);
-          out.write(lineSeparatorIfPrependXmlProlog.getSeparatorBytes());
+  public static VirtualFile writeFile(@Nullable final File file,
+                                      @NotNull final Object requestor,
+                                      @Nullable final VirtualFile virtualFile,
+                                      @NotNull final BufferExposingByteArrayOutputStream content,
+                                      @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+    final VirtualFile result;
+    if (file != null && (virtualFile == null || !virtualFile.isValid())) {
+      result = getOrCreateVirtualFile(requestor, file);
+    }
+    else {
+      result = virtualFile;
+    }
+    assert result != null;
+    boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
+    if (equals) return result;
+    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
+      public VirtualFile compute() throws IOException {
+        try {
+          OutputStream out = result.getOutputStream(requestor);
+          try {
+            if (lineSeparatorIfPrependXmlProlog != null) {
+              out.write(XML_PROLOG);
+              out.write(lineSeparatorIfPrependXmlProlog.getSeparatorBytes());
+            }
+            content.writeTo(out);
+          }
+          finally {
+            out.close();
+          }
+          return result;
         }
-        content.writeTo(out);
+        catch (FileNotFoundException e) {
+          if (virtualFile == null) {
+            throw e;
+          }
+          throw new ReadOnlyModificationException(virtualFile, e);
+        }
       }
-      finally {
-        out.close();
-      }
-      return virtualFile;
+    });
+  }
+
+  private static boolean isEqualContent(VirtualFile result,
+                                        @Nullable LineSeparator lineSeparatorIfPrependXmlProlog,
+                                        @NotNull BufferExposingByteArrayOutputStream content) throws IOException {
+    boolean equals = true;
+    int headerLength = lineSeparatorIfPrependXmlProlog == null ? 0 : XML_PROLOG.length + lineSeparatorIfPrependXmlProlog.getSeparatorBytes().length;
+    int toWriteLength = headerLength + content.size();
+
+    if (result.getLength() != toWriteLength) {
+      equals = false;
     }
-    catch (FileNotFoundException e) {
-      if (virtualFile == null) {
-        throw e;
+    else {
+      byte[] bytes = result.contentsToByteArray();
+      if (lineSeparatorIfPrependXmlProlog != null) {
+        if (!ArrayUtil.startsWith(bytes, XML_PROLOG) || !ArrayUtil.startsWith(bytes, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes())) {
+          equals = false;
+        }
       }
-      else {
-        throw new ReadOnlyModificationException(virtualFile, e);
+      if (!ArrayUtil.startsWith(bytes, headerLength, content.toByteArray())) {
+        equals = false;
       }
     }
-    finally {
-      token.finish();
-    }
+    return equals;
   }
 
   public static void deleteFile(@NotNull File file, @NotNull Object requestor, @Nullable VirtualFile virtualFile) throws IOException {
@@ -189,16 +223,23 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
+  public static VirtualFile getOrCreateVirtualFile(@Nullable final Object requestor, @NotNull final File ioFile) throws IOException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (virtualFile == null) {
       File parentFile = ioFile.getParentFile();
       // need refresh if the directory has just been created
-      VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
+      final VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
       if (parentVirtualFile == null) {
         throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile == null ? "" : parentFile.getPath()));
       }
-      virtualFile = parentVirtualFile.createChildData(requestor, ioFile.getName());
+      boolean underWriteAction = ApplicationManager.getApplication().isWriteAccessAllowed();
+      virtualFile = underWriteAction ? parentVirtualFile.createChildData(requestor, ioFile.getName()) :
+                    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+                      @Override
+                      public VirtualFile compute() throws IOException {
+                        return parentVirtualFile.createChildData(requestor, ioFile.getName());
+                      }
+                    });
     }
     return virtualFile;
   }

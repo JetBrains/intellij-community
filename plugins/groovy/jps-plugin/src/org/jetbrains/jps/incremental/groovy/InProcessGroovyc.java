@@ -68,7 +68,7 @@ class InProcessGroovyc implements GroovycFlavor {
     final LinkedBlockingQueue<String> mailbox = forStubs && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
                                                 ? new LinkedBlockingQueue<String>() : null;
 
-    final UrlClassLoader loader = createCompilationClassLoader(compilationClassPath);
+    final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
 
     final Future<Void> future = ourExecutor.submit(new Callable<Void>() {
       @Override
@@ -89,7 +89,7 @@ class InProcessGroovyc implements GroovycFlavor {
   private static GroovycContinuation waitForStubGeneration(final Future<Void> future,
                                                            final LinkedBlockingQueue<String> mailbox,
                                                            final GroovycOutputParser parser,
-                                                           UrlClassLoader loader) throws InterruptedException {
+                                                           JointCompilationClassLoader loader) throws InterruptedException {
     while (true) {
       if (future.isDone()) {
         return null;
@@ -161,9 +161,9 @@ class InProcessGroovyc implements GroovycFlavor {
   }
 
   @NotNull
-  private UrlClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws MalformedURLException {
     ClassLoader parent = obtainParentLoader(compilationClassPath);
-    return UrlClassLoader.build().
+    return new JointCompilationClassLoader(UrlClassLoader.build().
       urls(toUrls(compilationClassPath)).parent(parent).allowLock().
       useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
         @Override
@@ -182,7 +182,7 @@ class InProcessGroovyc implements GroovycFlavor {
             return false;
           }
         }
-      }).get();
+      }));
   }
 
   @Nullable

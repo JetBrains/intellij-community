@@ -64,7 +64,10 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  @NotNull private final Builder myBuilder;
+  @NotNull
+  protected ClassPath getClassPath() {
+    return myClassPath;
+  }
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
@@ -130,7 +133,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private final List<URL> myURLs;
-  private ClassPath myClassPath;
+  private final ClassPath myClassPath;
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
@@ -161,15 +164,20 @@ public class UrlClassLoader extends ClassLoader {
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
-    myBuilder = builder;
     myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
         return internProtocol(url);
       }
     });
-    resetCache();
+    myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
+  }
+
+  @NotNull
+  protected final ClassPath createClassPath(@NotNull Builder builder) {
+    return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -189,7 +197,7 @@ public class UrlClassLoader extends ClassLoader {
   /** @deprecated to be removed in IDEA 15 */
   @SuppressWarnings({"unused", "deprecation"})
   public void addURL(URL url) {
-    myClassPath.addURL(url);
+    getClassPath().addURL(url);
     myURLs.add(url);
   }
 
@@ -197,18 +205,9 @@ public class UrlClassLoader extends ClassLoader {
     return Collections.unmodifiableList(myURLs);
   }
 
-  /**
-   * Reset the internal cache. This can be useful after the loader has already tried to find some classes and remembered that they don't exist,
-   * and then new class files appear under some of its directory URLs.
-   */
-  public void resetCache() {
-    myClassPath = new ClassPath(myURLs, myBuilder.myLockJars, myBuilder.myUseCache, myBuilder.myAcceptUnescaped, myBuilder.myPreload,
-                                myBuilder.myUsePersistentClasspathIndex, myBuilder.myCachePool, myBuilder.myCachingCondition);
-  }
-
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
       throw new ClassNotFoundException(name);
     }
@@ -223,7 +222,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected Class _findClass(@NotNull String name) {
-    Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
       return null;
     }
@@ -275,7 +274,7 @@ public class UrlClassLoader extends ClassLoader {
   private Resource _getResource(final String name) {
     String n = name;
     if (n.startsWith("/")) n = n.substring(1);
-    return myClassPath.getResource(n, true);
+    return getClassPath().getResource(n, true);
   }
 
   @Nullable
@@ -295,7 +294,7 @@ public class UrlClassLoader extends ClassLoader {
   // Accessed from PluginClassLoader via reflection // TODO do we need it?
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    return myClassPath.getResources(name, true);
+    return getClassPath().getResources(name, true);
   }
 
   public static void loadPlatformLibrary(@NotNull String libName) {
@@ -356,7 +355,6 @@ public class UrlClassLoader extends ClassLoader {
   public interface CachingCondition {
 
     /**
-     * @param url
      * @return whether the internal information should be cached for files in a specific classpath component URL: inside the directory or
      * a jar.
      */

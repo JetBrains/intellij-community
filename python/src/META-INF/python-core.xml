@@ -419,7 +419,7 @@
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyParametersRenameFactory"/>
 
     <moveFileHandler implementation="com.jetbrains.python.refactoring.move.PyMoveFileHandler"/>
-    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveClassOrFunctionDelegate"/>
+    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveModuleMembersDelegate"/>
 
     <refactoring.changeSignatureUsageProcessor implementation="com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureUsageProcessor" id="Python"/>
 

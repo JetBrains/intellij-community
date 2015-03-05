@@ -16,6 +16,8 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.diagnostic.LogEventException;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -42,12 +44,14 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     final TextRange originalRange = e.getTextRange();
     if (originalRange.getEndOffset() > editorText.length()) {
-      throw new AssertionError("Invalid element range in " + getClass() +
-                               "; element=" + e +
-                               "; range=" + originalRange +
-                               "; length=" + editorText +
-                               "; editor=" + editor +
-                               "; committed=" + PsiDocumentManager.getInstance(e.getProject()).isCommitted(editor.getDocument()));
+      throw new LogEventException("Invalid element range in " + getClass(),
+                                  "element=" + e +
+                                  "; range=" + originalRange +
+                                  "; text length=" + editorText.length() +
+                                  "; editor=" + editor +
+                                  "; committed=" + PsiDocumentManager.getInstance(e.getProject()).isCommitted(editor.getDocument()),
+                                  new Attachment("editor_text.txt", editorText.toString()),
+                                  new Attachment("psi_text.txt", e.getText()));
     }
 
     List<TextRange> ranges = expandToWholeLine(editorText, originalRange, true);

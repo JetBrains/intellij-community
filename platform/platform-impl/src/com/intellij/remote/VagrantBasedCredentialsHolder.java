@@ -98,4 +98,12 @@ public class VagrantBasedCredentialsHolder {
     result = 31 * result + (myMachineName != null ? myMachineName.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "VagrantBasedCredentialsHolder{" +
+           "myVagrantFolder='" + myVagrantFolder + '\'' +
+           ", myMachineName='" + myMachineName + '\'' +
+           '}';
+  }
 }

@@ -62,7 +62,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   public int getCommonUpdatePass(@NotNull List<MergeableLineMarkerInfo> infos) {
-    return 4; //TODO move Pass to lang-api and make it enum
+    return updatePass;
   }
 
   public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,

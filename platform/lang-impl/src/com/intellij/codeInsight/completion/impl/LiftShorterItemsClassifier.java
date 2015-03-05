@@ -55,20 +55,25 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     myCount++;
 
     final Set<String> strings = added.getAllLookupStrings();
-    for (String string : strings) {
-      if (string.length() == 0) continue;
-
-      myElements.putValue(string, added);
-      mySortedStrings.add(string);
-      final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
-      for (String s : after) {
-        if (!s.startsWith(string)) {
-          break;
-        }
-        for (LookupElement longer : myElements.get(s)) {
-          updateLongerItem(added, longer);
+    try {
+      for (String string : strings) {
+        if (string.length() == 0) continue;
+  
+        myElements.putValue(string, added);
+        mySortedStrings.add(string);
+        final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
+        for (String s : after) {
+          if (!s.startsWith(string)) {
+            break;
+          }
+          for (LookupElement longer : myElements.get(s)) {
+            updateLongerItem(added, longer);
+          }
         }
       }
+    }
+    catch (ConcurrentModificationException e) {
+      throw new RuntimeException("Error while traversing lookup strings of " + added + " of " + added.getClass(), e);
     }
     myNext.addElement(added, context);
 

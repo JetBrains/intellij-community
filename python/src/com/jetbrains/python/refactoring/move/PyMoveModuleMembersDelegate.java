@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
+public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
@@ -84,7 +84,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
         initialDestination = FileUtil.toSystemDependentName(virtualFile.getPath());
       }
     }
-    final PyMoveTopLevelSymbolDialog dialog = PyMoveTopLevelSymbolDialog.getInstance(project, initialElements, initialDestination);
+    final PyMoveModuleMembersDialog dialog = PyMoveModuleMembersDialog.getInstance(project, initialElements, initialDestination);
     if (!dialog.showAndGet()) {
       return;
     }
@@ -92,7 +92,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
     final boolean previewUsages = dialog.isPreviewUsages();
     try {
       final PsiNamedElement[] selectedElements = ContainerUtil.findAllAsArray(dialog.getSelectedTopLevelSymbols(), PsiNamedElement.class);
-      final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, selectedElements, destination, previewUsages);
+      final BaseRefactoringProcessor processor = new PyMoveModuleMembersProcessor(project, selectedElements, destination, previewUsages);
       processor.run();
     }
     catch (IncorrectOperationException e) {

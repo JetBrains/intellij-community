@@ -42,7 +42,12 @@ public abstract class ConsoleRootType extends RootType {
   }
 
   @NotNull
-  public String getDefaultPathName(String id) {
+  public String getContentPathName(@NotNull String id) {
+    return Long.toHexString(StringHash.calc(id));
+  }
+
+  @NotNull
+  public String getHistoryPathName(@NotNull String id) {
     return Long.toHexString(StringHash.calc(id));
   }
 
