@@ -415,6 +415,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void scheduleResultsUpdate() {
+    if (mySearchRescheduleOnCancellationsAlarm == null) return;
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
     mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
       @Override
