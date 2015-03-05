@@ -65,12 +65,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
@@ -93,8 +90,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   private ConsoleViewContentType myPromptAttributes = ConsoleViewContentType.USER_INPUT;
 
   private Editor myCurrentEditor;
-
-  private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
 
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
@@ -173,20 +168,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myPanel.add(myConsoleEditor.getComponent());
 
     DataManager.registerDataProvider(myPanel, this);
-
-    myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (myForceScrollToEnd.compareAndSet(true, false)) {
-          scrollToEnd();
-        }
-      }
-
-      @Override
-      public void componentShown(ComponentEvent e) {
-        componentResized(e);
-      }
-    });
     setPromptInner(myPrompt);
   }
 
@@ -382,12 +363,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     // always scroll to end on user input
     scrollToEnd();
     return result;
-  }
-
-  public boolean shouldScrollHistoryToEnd() {
-    final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
-    final Dimension contentSize = myHistoryViewer.getContentSize();
-    return contentSize.getHeight() - visibleArea.getMaxY() < (getMinHistoryLineCount() * myHistoryViewer.getLineHeight());
   }
 
   public static String printWithHighlighting(@NotNull LanguageConsoleView console, @NotNull Editor inputEditor, @NotNull TextRange textRange) {
@@ -641,7 +616,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       int newHistoryHeight = panelSize.height - newInputHeight;
       // apply
       input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
-      myForceScrollToEnd.compareAndSet(false, shouldScrollHistoryToEnd());
       history.getComponent().setBounds(0, 0, panelSize.width, newHistoryHeight);
     }
   }
