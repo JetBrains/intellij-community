@@ -754,7 +754,7 @@ public class BuildManager implements ApplicationComponent{
                 myBuildsInProgress.remove(projectPath);
                 notifySessionTerminationIfNeeded(sessionId, execFailure);
 
-                if (isProcessPreloadingEnabled() && !project.isDisposed()) {
+                if (isProcessPreloadingEnabled(project)) {
                   runCommand(new Runnable() {
                     public void run() {
                       if (!myPreloadedBuilds.containsKey(projectPath)) {
@@ -783,9 +783,20 @@ public class BuildManager implements ApplicationComponent{
     return _future;
   }
 
-  private static boolean isProcessPreloadingEnabled() {
+  private static boolean isProcessPreloadingEnabled(Project project) {
     // automatically disable process preloading when debugging or testing
-    return !IS_UNIT_TEST_MODE && Registry.is("compiler.process.preload") && Registry.intValue("compiler.process.debug.port") <= 0;
+    if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || Registry.intValue("compiler.process.debug.port") > 0) {
+      return false;
+    }
+    if (project.isDisposed()) {
+      return true;
+    }
+    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+      if (!provider.isProcessPreloadingEnabled()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {
