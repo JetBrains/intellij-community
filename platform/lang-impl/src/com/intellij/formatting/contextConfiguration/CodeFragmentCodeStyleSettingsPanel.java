@@ -42,14 +42,14 @@ import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.Setti
 class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
-  private final CodeStyleSettingsToShow mySettingsToShow;
+  private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
 
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
 
   public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
-                                            @NotNull CodeStyleSettingsToShow settingsToShow,
+                                            @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
                                             @NotNull Project project, 
                                             @NotNull Editor editor, 
                                             @NotNull PsiFile file) 
@@ -78,16 +78,9 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     reset(getSettings());
   }
 
-  public static CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
+  public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
     final HashMap<SettingsType, List<String>> typeToNames = ContainerUtil.newHashMap();
-    typeToNames.put(SPACING_SETTINGS, filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS));
-    typeToNames.put(WRAPPING_AND_BRACES_SETTINGS, filter.getFieldNamesAffectingCodeFragment(WRAPPING_AND_BRACES_SETTINGS));
-    return new CodeStyleSettingsToShow() {
-      @Override
-      public List<String> getSettings(SettingsType type) {
-        return typeToNames.get(type);
-      }
-    };
+    return filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
   }
 
   private void reformatSelectedTextWithNewSettings() {

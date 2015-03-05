@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.*;
+
 public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleFromSelectedFragment.class); 
   
@@ -161,9 +163,5 @@ public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
       
       myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
     }
-  }
-
-  interface CodeStyleSettingsToShow {
-    List<String> getSettings(LanguageCodeStyleSettingsProvider.SettingsType type);
   }
 }
