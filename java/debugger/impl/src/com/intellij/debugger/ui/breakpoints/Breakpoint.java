@@ -416,6 +416,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private void handleTemporaryBreakpointHit(final DebugProcessImpl debugProcess) {
+    // need to delete the request immediately, see IDEA-133978
+    debugProcess.getRequestsManager().deleteRequest(this);
+
     debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
       @Override
       public void resumed(SuspendContext suspendContext) {
