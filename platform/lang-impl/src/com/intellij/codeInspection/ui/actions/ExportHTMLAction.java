@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,30 +111,35 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         final Runnable exportRunnable = new Runnable() {
           @Override
           public void run() {
-            if (!exportToHTML) {
-              dupm2XML(outputDirectoryName);
-            }
-            else {
-              final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
-              maker.start();
-              try {
-                final InspectionTreeNode root = myView.getTree().getRoot();
-                TreeUtil.traverse(root, new TreeUtil.Traverse() {
-                  @Override
-                  public boolean accept(final Object node) {
-                    if (node instanceof InspectionNode) {
-                      exportHTML(maker, (InspectionNode)node);
-                    }
-                    return true;
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                if (!exportToHTML) {
+                  dupm2XML(outputDirectoryName);
+                }
+                else {
+                  final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
+                  maker.start();
+                  try {
+                    final InspectionTreeNode root = myView.getTree().getRoot();
+                    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+                      @Override
+                      public boolean accept(final Object node) {
+                        if (node instanceof InspectionNode) {
+                          exportHTML(maker, (InspectionNode)node);
+                        }
+                        return true;
+                      }
+                    });
                   }
-                });
-              }
-              catch (ProcessCanceledException e) {
-                // Do nothing here.
-              }
+                  catch (ProcessCanceledException e) {
+                    // Do nothing here.
+                  }
 
-              maker.done();
-            }
+                  maker.done();
+                }
+              }
+            });
           }
         };
 
