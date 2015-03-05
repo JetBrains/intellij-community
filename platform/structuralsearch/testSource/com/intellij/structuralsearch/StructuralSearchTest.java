@@ -2807,8 +2807,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "while(true) {\n" +
                 "  int c = 2;\n" +
                 "}";
-    String s2 = "'_type 'a:[within( \"if ('_a) { '_st*; }\" )] = '_b;";
-    String s2_2 = "'_type 'a:[!within( \"if ('_a) { '_st*; }\" )] = '_b;";
+    String s2 = "[within( \"if ('_a) { '_st*; }\" )]'_type 'a = '_b;";
+    String s2_2 = "[!within( \"if ('_a) { '_st*; }\" )]'_type 'a = '_b;";
 
     assertEquals(2,findMatchesCount(s1, s2));
     assertEquals(1,findMatchesCount(s1, s2_2));
@@ -2847,7 +2847,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "        }" +
                 "    }" +
                 "}";
-    String s4 = "LOG.debug('_params*:[!within( \"if('_a) { 'st*; }\" )]);";
+    String s4 = "[!within( \"if('_a) { 'st*; }\" )]LOG.debug('_params*);";
 
     assertEquals(7,findMatchesCount(s3, s4));
   }
