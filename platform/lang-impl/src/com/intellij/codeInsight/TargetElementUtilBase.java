@@ -192,9 +192,6 @@ public class TargetElementUtilBase {
 
     offset = adjustOffset(file, document, offset);
 
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile) file).getDecompiledPsiFile();
-    }
     PsiElement element = file.findElementAt(offset);
     if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);

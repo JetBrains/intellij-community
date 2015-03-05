@@ -174,7 +174,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   public void rebuildTree(Collection<BreakpointItem> items) {
-    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
+    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints(false);
     TreePath path = myTreeView.getSelectionPath();
     buildTree(items);
     if (myTreeView.getRowForPath(path) == -1 && !selectedBreakpoints.isEmpty()) {
@@ -185,20 +185,28 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     }
   }
 
-  public List<BreakpointItem> getSelectedBreakpoints() {
+  public List<BreakpointItem> getSelectedBreakpoints(boolean traverse) {
     TreePath[] selectionPaths = myTreeView.getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) return Collections.emptyList();
 
     final ArrayList<BreakpointItem> list = new ArrayList<BreakpointItem>();
     for (TreePath selectionPath : selectionPaths) {
-      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
-        public boolean accept(final Object node) {
-          if (node instanceof BreakpointItemNode) {
-            list.add(((BreakpointItemNode)node).getBreakpointItem());
+      TreeNode startNode = (TreeNode)selectionPath.getLastPathComponent();
+      if (traverse) {
+        TreeUtil.traverseDepth(startNode, new TreeUtil.Traverse() {
+          public boolean accept(final Object node) {
+            if (node instanceof BreakpointItemNode) {
+              list.add(((BreakpointItemNode)node).getBreakpointItem());
+            }
+            return true;
           }
-          return true;
+        });
+      }
+      else {
+        if (startNode instanceof BreakpointItemNode) {
+          list.add(((BreakpointItemNode)startNode).getBreakpointItem());
         }
-      });
+      }
     }
 
     return list;
@@ -220,13 +228,12 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
 
   public void selectFirstBreakpointItem() {
     TreeUtil.selectPath(myTreeView, TreeUtil.getFirstLeafNodePath(myTreeView));
-
   }
 
   public void removeSelectedBreakpoints(Project project) {
     final TreePath[] paths = myTreeView.getSelectionPaths();
     if (paths == null) return;
-    final List<BreakpointItem> breakpoints = getSelectedBreakpoints();
+    final List<BreakpointItem> breakpoints = getSelectedBreakpoints(true);
     for (TreePath path : paths) {
       final Object node = path.getLastPathComponent();
       if (node instanceof BreakpointItemNode) {

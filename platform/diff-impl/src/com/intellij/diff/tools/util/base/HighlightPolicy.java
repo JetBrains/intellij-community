@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 public enum HighlightPolicy {
   DO_NOT_HIGHLIGHT("Do not highlight"),
-  BY_LINE("Highlight words"),
-  BY_WORD("Highlight lines"),
+  BY_LINE("Highlight lines"),
+  BY_WORD("Highlight words"),
   BY_WORD_SPLIT("Highlight split changes");
 
   @NotNull private final String myText;

@@ -18,11 +18,15 @@ package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1252,8 +1256,6 @@ public class FindDialog extends DialogWrapper {
     }
   }
 
-
-
   private void applyTo(@NotNull FindModel model, boolean findAll) {
     model.setCaseSensitive(myCbCaseSensitive.isSelected());
 
@@ -1504,13 +1506,45 @@ public class FindDialog extends DialogWrapper {
     protected boolean onDoubleClick(MouseEvent event) {
       Object source = event.getSource();
       if (!(source instanceof JBTable)) return false;
-      int row = ((JBTable)source).getSelectedRow();
-      Object valueAt = ((JBTable)source).getModel().getValueAt(row, 0);
+      navigateToSelectedUsage((JBTable)source);
+      return true;
+    }
+
+    private void navigateToSelectedUsage(JBTable source) {
+      int row = source.getSelectedRow();
+      Object valueAt = source.getModel().getValueAt(row, 0);
       if (valueAt instanceof Usage) {
-        doOKAction();
+        applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
+        doCancelAction();
         ((Usage)valueAt).navigate(true);
       }
-      return true;
+    }
+
+    @Override
+    public void installOn(@NotNull final Component c) {
+      super.installOn(c);
+
+      if (c instanceof JBTable) {
+        AnAction anAction = new AnAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            navigateToSelectedUsage((JBTable)c);
+          }
+        };
+
+        String key = "navigate.to.usage";
+        JComponent component = (JComponent)c;
+        component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                                                                                       key);
+        component.getActionMap().put(key, new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            navigateToSelectedUsage((JBTable)c);
+          }
+        });
+        //anAction.registerCustomShortcutSet(CommonShortcuts.ENTER, component);
+        anAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), component);
+      }
     }
   }
 }
