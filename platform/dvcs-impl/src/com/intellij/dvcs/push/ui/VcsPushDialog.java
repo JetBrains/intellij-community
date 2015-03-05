@@ -66,13 +66,14 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JComponent rootPanel = new JPanel(new BorderLayout(0, 0));
+    JComponent rootPanel = new JPanel(new BorderLayout(0, JBUI.scale(2)));
     rootPanel.add(myListPanel, BorderLayout.CENTER);
     JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
-    JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(4)));
+    optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
+    JPanel panel = new JPanel(new BorderLayout());
     panel.add(optionsPanel);
     if (!myController.isForcePushEnabled()) {
       panel.add(createForcePushInfoLabel(), BorderLayout.NORTH);
@@ -101,7 +102,7 @@ public class VcsPushDialog extends DialogWrapper {
     text.add(here);
     JPanel wrap = new JPanel(new BorderLayout());
     wrap.add(text, BorderLayout.EAST);
-    wrap.setBorder(JBUI.Borders.empty(0,0,4,0));
+    wrap.setBorder(JBUI.Borders.emptyBottom(4));
     return wrap;
   }
 
@@ -135,12 +136,14 @@ public class VcsPushDialog extends DialogWrapper {
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
     myForcePushAction.putValue(Action.NAME, "&Force Push");
-    myPushAction = new OkAction(){};//new ComplexPushAction(myForcePushAction);
-    myPushAction.putValue(Action.NAME, "&Push");
-    actions.add(myPushAction);
     if (myController.isForcePushEnabled()) {
-      actions.add(myForcePushAction);
+      myPushAction = new ComplexPushAction(myForcePushAction);
+    } else {
+      myPushAction = new OkAction() {};
+      myPushAction.putValue(Action.NAME, "&Push");
     }
+    myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    actions.add(myPushAction);
     actions.add(getCancelAction());
     actions.add(getHelpAction());
     return actions.toArray(new Action[actions.size()]);
