@@ -1,14 +1,18 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +43,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
   private PydevConsoleExecuteActionHandler myExecuteHandler;
+
+  private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
     setWorkingFolder(getTestDataPath());
@@ -100,6 +106,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     disposeConsoleProcess();
 
+    if (!myContentDescriptorRef.isNull()) {
+      Disposer.dispose(myContentDescriptorRef.get());
+    }
+
     if (myConsoleView != null) {
       new WriteAction() {
         @Override
@@ -119,7 +129,15 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner = PydevConsoleRunner.create(project, sdk, PyConsoleType.PYTHON, getWorkingFolder());
+    PydevConsoleRunner consoleRunner =
+      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap(), new String[]{}) {
+        @Override
+        protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
+          myContentDescriptorRef.set(contentDescriptor);
+          super.showConsole(defaultExecutor, contentDescriptor);
+        }
+      };
+
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);
