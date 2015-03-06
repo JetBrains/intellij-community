@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -67,11 +68,11 @@ public class CodeStyleSettingsCodeFragmentFilter {
     try {
       codeStyleSettingsManager.setTemporarySettings(clonedSettings);
 
-      SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, "Configure Code Style");
-      progressTask.setCancelText("Skip");
+      SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title"));
+      progressTask.setCancelText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.cancel"));
       CompositeSequentialTask compositeTask = new CompositeSequentialTask(progressTask);
-      compositeTask.setProgressText("Filtering settings affecting selected code fragment...");
-      compositeTask.setProgressText2("Press 'Skip' to show all settings");
+      compositeTask.setProgressText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text"));
+      compositeTask.setProgressText2(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text.under"));
 
       final Map<LanguageCodeStyleSettingsProvider.SettingsType, FilterFieldsTask> typeToTask = ContainerUtil.newHashMap();
       for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
