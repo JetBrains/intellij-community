@@ -21,6 +21,7 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
@@ -52,7 +53,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator((JTable)myRendererChooser.getComponent());
     decorator.setToolbarPosition(ActionToolbarPosition.TOP);
-    decorator.setPreferredSize(myRendererChooser.getPreferredSize());
     decorator.setAddAction(new AddAction());
     decorator.setRemoveAction(new RemoveAction());
     decorator.setMoveUpAction(new MoveAction(true));
@@ -79,8 +79,11 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       }
     });
 
-    add(decorator.createPanel(), BorderLayout.WEST);
-    add(center, BorderLayout.CENTER);
+    Splitter splitter = new Splitter(false);
+    splitter.setProportion(0.3f);
+    splitter.setFirstComponent(decorator.createPanel());
+    splitter.setSecondComponent(center);
+    add(splitter, BorderLayout.CENTER);
   }
 
   @Override
