@@ -56,15 +56,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return super.getRightMargin(settingsType);
   }
 
-  //@Override
-  //public void customizeSettingsForCodeFragment(@NotNull CodeStyleSettingsCustomizable consumer, 
-  //                                             @NotNull SettingsType settingsType, 
-  //                                             @NotNull PsiFile file, 
-  //                                             @NotNull TextRange range) {
-  //  customizeSettings(consumer, settingsType);
-  //}
-  
-  
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.SPACING_SETTINGS) {

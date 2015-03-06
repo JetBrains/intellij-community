@@ -195,8 +195,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       myPanel = new JPanel(new BorderLayout());
       myPanel.add(scrollPane);
 
-      //todo why without it options are disabled ?
-      //todo why on combo value change - nothing happens?
       showStandardOptions(names);
 
       isFirstUpdate = false;
