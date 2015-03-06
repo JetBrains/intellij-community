@@ -99,10 +99,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     if (!myCondition.get()) return;
 
     int y = r.y;
-    final int gutterWidth = ((EditorEx)editor).getGutterComponentEx().getWidth();
     int lineHeight = myEditor.getLineHeight();
 
-    draw(g, 0, gutterWidth, 0, y, lineHeight);
+    draw(g, 0, y, lineHeight);
   }
 
   /*
@@ -114,29 +113,25 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
 
     y++; // we want y to be line's top position
 
-    Rectangle clip = g.getClipBounds();
-    x2 = clip.x + clip.width;
-
     final int gutterWidth = ((EditorEx)myEditor).getGutterComponentEx().getWidth();
     int lineHeight = myEditor.getLineHeight();
 
-    draw(g, x1, x2, -gutterWidth, y, lineHeight);
+    draw(g, -gutterWidth, y, lineHeight);
   }
 
   private static void draw(@NotNull Graphics g,
-                           int x1,
-                           int x2,
                            int shiftX,
                            int shiftY,
                            int lineHeight) {
     int halfHeight = lineHeight / 2;
 
-    int count = ((x2 - x1) / X_STEP + 3);
+    Rectangle clip = g.getClipBounds();
+    int count = (clip.width / X_STEP + 3);
+    int shift = (clip.x - shiftX) / X_STEP;
 
     int[] xPoints = new int[2 * count];
     int[] yPoints = new int[2 * count];
 
-    int shift = Math.max(x1 - shiftX / X_STEP, 0);
     for (int index = 0; index < count; index++) {
       int absIndex = index + shift;
 
