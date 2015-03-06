@@ -125,7 +125,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
         }
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Failed to parse the file patch: [" + PATH + "]", e);
       }
     }
     return myChanges;
