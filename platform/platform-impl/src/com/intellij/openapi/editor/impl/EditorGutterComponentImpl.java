@@ -1486,6 +1486,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
       JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
       menu.show(this, e.getX(), e.getY());
+      e.consume();
     }
     else {
       GutterIconRenderer renderer = getGutterRenderer(e);
