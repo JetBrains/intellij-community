@@ -57,7 +57,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "CodeStyle";
+    return "ConfigureCodeStyleOnSelectedFragment";
   }
 
   @Override
@@ -73,7 +73,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     new FragmentCodeStyleSettingsDialog(project, editor, file, settings, settingsToShow).show();
   }
 
-  private CodeStyleSettingsToShow calculateAffectingSettings(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static CodeStyleSettingsToShow calculateAffectingSettings(@NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel model = editor.getSelectionModel();
     int start = model.getSelectionStart();
     int end = model.getSelectionEnd();
