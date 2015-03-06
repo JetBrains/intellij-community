@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -755,6 +755,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       Rectangle bounds = new Rectangle(x, y, w, h);
       g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
       drawLine(bounds, selectedBounds, g, 0);
+      if (UIUtil.isUnderDarcula()) {
+        return;
+      }
       g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .5));
       drawLine(bounds, selectedBounds, g, 1);
       g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .2));
