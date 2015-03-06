@@ -129,7 +129,9 @@ public class DaemonListeners implements Disposable {
                          @NotNull TodoConfiguration todoConfiguration,
                          @NotNull ActionManagerEx actionManagerEx,
                          @NotNull VirtualFileManager virtualFileManager,
+                         @SuppressWarnings("UnusedParameters") // for dependency order
                          @NotNull final NamedScopeManager namedScopeManager,
+                         @SuppressWarnings("UnusedParameters") // for dependency order
                          @NotNull final DependencyValidationManager dependencyValidationManager,
                          @NotNull final FileDocumentManager fileDocumentManager,
                          @NotNull final PsiManager psiManager,
@@ -260,19 +262,19 @@ public class DaemonListeners implements Disposable {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Project roots changed");
       }
     });
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Dumb mode started");
       }
 
       @Override
       public void exitDumbMode() {
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Dumb mode finished");
       }
     });
 
@@ -286,7 +288,7 @@ public class DaemonListeners implements Disposable {
     colorsManager.addEditorColorsListener(new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Global color scheme changed");
       }
     }, this);
 
@@ -303,7 +305,7 @@ public class DaemonListeners implements Disposable {
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         String propertyName = event.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
-          stopDaemonAndRestartAllFiles();
+          stopDaemonAndRestartAllFiles("Virtual file name changed");
           VirtualFile virtualFile = event.getFile();
           PsiFile psiFile = !virtualFile.isValid() ? null : ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
           if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
@@ -346,7 +348,7 @@ public class DaemonListeners implements Disposable {
     messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, new Runnable() {
       @Override
       public void run() {
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Severities changed");
       }
     });
 
@@ -377,7 +379,7 @@ public class DaemonListeners implements Disposable {
 
   @Override
   public void dispose() {
-    stopDaemonAndRestartAllFiles();
+    stopDaemonAndRestartAllFiles("Project closed");
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE);
     LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
@@ -496,7 +498,7 @@ public class DaemonListeners implements Disposable {
     @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
       TodoConfiguration.getInstance().colorSettingsChanged();
-      stopDaemonAndRestartAllFiles();
+      stopDaemonAndRestartAllFiles("Editor color scheme changed");
     }
   }
 
@@ -504,7 +506,7 @@ public class DaemonListeners implements Disposable {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Todo patterns changed");
       }
     }
   }
@@ -512,12 +514,12 @@ public class DaemonListeners implements Disposable {
   private class MyProfileChangeListener extends ProfileChangeAdapter {
     @Override
     public void profileChanged(Profile profile) {
-      stopDaemonAndRestartAllFiles();
+      stopDaemonAndRestartAllFiles("Profile changed");
     }
 
     @Override
     public void profileActivated(Profile oldProfile, Profile profile) {
-      stopDaemonAndRestartAllFiles();
+      stopDaemonAndRestartAllFiles("Profile activated");
     }
 
     @Override
@@ -537,7 +539,7 @@ public class DaemonListeners implements Disposable {
         statusBar.addWidget(myTogglePopupHintsPanel, myProject);
         updateStatusBar();
 
-        stopDaemonAndRestartAllFiles();
+        stopDaemonAndRestartAllFiles("Inspection profiles activated");
       }
     });
   }
@@ -620,13 +622,13 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private void stopDaemon(boolean toRestartAlarm, @NonNls String reason) {
-    myDaemonEventPublisher.daemonCancelEventOccurred();
+  private void stopDaemon(boolean toRestartAlarm, @NonNls @NotNull String reason) {
+    myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason);
   }
 
-  private void stopDaemonAndRestartAllFiles() {
-    myDaemonEventPublisher.daemonCancelEventOccurred();
+  private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
+    myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     myDaemonCodeAnalyzer.restart();
   }
 
