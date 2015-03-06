@@ -8,6 +8,7 @@ import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.redmine.model.RedmineProject;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Stack;
@@ -27,21 +28,20 @@ import java.util.List;
 public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineRepository> {
   private ComboBox myProjectCombo;
   private JTextField myAPIKey;
-  private JCheckBox assignedMe;
+  private JCheckBox myAllAssigneesCheckBox;
   private JBLabel myProjectLabel;
   private JBLabel myAPIKeyLabel;
-  private JBLabel assignedMeLabel;
 
   public RedmineRepositoryEditor(final Project project, final RedmineRepository repository, Consumer<RedmineRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setEnabled(myRepository.isConfigured());
     myAPIKey.setText(repository.getAPIKey());
-    assignedMe.setSelected(repository.isAssignedMe());
+    myAllAssigneesCheckBox.setSelected(!repository.isAssignedToMe());
 
     installListener(myProjectCombo);
     installListener(myAPIKey);
-    installListener(assignedMe);
+    installListener(myAllAssigneesCheckBox);
 
     toggleCredentialsVisibility();
 
@@ -79,7 +79,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     RedmineProjectItem selected = (RedmineProjectItem)myProjectCombo.getSelectedItem();
     myRepository.setCurrentProject(selected != null ? selected.myProject : null);
     myRepository.setAPIKey(myAPIKey.getText().trim());
-    myRepository.setAssignedMe(assignedMe.isSelected());
+    myRepository.setAssignedToMe(!myAllAssigneesCheckBox.isSelected());
     myTestButton.setEnabled(myRepository.isConfigured());
     toggleCredentialsVisibility();
   }
@@ -125,12 +125,11 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myAPIKey = new JPasswordField();
 
-    assignedMeLabel = new JBLabel("Assigned me:", SwingConstants.RIGHT);
-    assignedMe = new JCheckBox();
+    myAllAssigneesCheckBox = new JBCheckBox("Include issues not assigned to me");
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myAPIKeyLabel, myAPIKey)
       .addLabeledComponent(myProjectLabel, myProjectCombo)
-      .addLabeledComponent(assignedMeLabel, assignedMe)
+      .addComponentToRightColumn(myAllAssigneesCheckBox)
       .getPanel();
   }
 
@@ -139,7 +138,6 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     super.setAnchor(anchor);
     myProjectLabel.setAnchor(anchor);
     myAPIKeyLabel.setAnchor(anchor);
-    assignedMeLabel.setAnchor(anchor);
   }
 
   private static class RedmineProjectItem {
