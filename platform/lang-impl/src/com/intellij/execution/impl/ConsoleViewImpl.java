@@ -128,7 +128,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private JPanel myMainPanel;
   private final Runnable myFinishProgress;
   private boolean myAllowHeavyFilters = false;
-  private static final int myFlushDelay = DEFAULT_FLUSH_DELAY;
+  private boolean myLastPreserveVisualArea;
 
   private boolean myTooMuchOfOutput;
   private boolean myInDocumentUpdate;
@@ -414,8 +414,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           return;
         }
 
-        myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        scrollToEnd();
       }
     });
   }
@@ -510,15 +509,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
         // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
         // are soft wrapped. We want to update viewport position then when the console becomes visible.
-        final Rectangle oldRectangle = e.getOldRectangle();
-        if (oldRectangle == null) {
-          return;
-        }
+        Rectangle oldR = e.getOldRectangle();
 
-        Editor myEditor = e.getEditor();
-        if (oldRectangle.height <= 0 && e.getNewRectangle().height > 0 && myEditor.getSoftWrapModel().isSoftWrappingEnabled()
-            && myEditor.getCaretModel().getOffset() == myEditor.getDocument().getTextLength()) {
-          EditorUtil.scrollToTheEnd(myEditor);
+        if (!shouldPreserveCurrentVisualArea() &&
+            oldR != null && oldR.height <= 0 &&
+            e.getNewRectangle().height > 0) {
+          scrollToEnd();
         }
       }
     });
@@ -595,7 +591,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       if (myEditor != null && !myFlushAlarm.isDisposed()) {
         final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
-        addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : myFlushDelay);
+        addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY);
       }
     }
   }
@@ -640,6 +636,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       //already disposed
       return;
     }
+    final boolean preserveCurrentVisualArea = !clear && shouldPreserveCurrentVisualArea();
     if (clear) {
       final DocumentEx document = editor.getDocument();
       synchronized (LOCK) {
@@ -688,13 +685,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     final Document document = myEditor.getDocument();
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    final boolean isAtLastLine = isCaretAtLastLine();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        boolean preserveCurrentVisualArea = caretOffset < document.getTextLength();
         if (preserveCurrentVisualArea) {
           myEditor.getScrollingModel().accumulateViewportChanges();
         }
@@ -776,9 +770,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
 
-    if (isAtLastLine) {
+    if (!preserveCurrentVisualArea) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
+  }
+
+  private boolean shouldPreserveCurrentVisualArea() {
+    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
+    if (scrollBar.getVisibleAmount() == 0) return myLastPreserveVisualArea;
+    myLastPreserveVisualArea = scrollBar.getValue() + scrollBar.getVisibleAmount() != scrollBar.getMaximum();
+    return myLastPreserveVisualArea;
   }
 
   private boolean isTheAmountOfTextTooBig(final int textLength) {
@@ -1118,12 +1119,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     else {
       myFoldingAlarm.addRequest(runnable, 50);
     }
-  }
-
-  private boolean isCaretAtLastLine() {
-    final Document document = myEditor.getDocument();
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
   }
 
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd, boolean flushOnly) {

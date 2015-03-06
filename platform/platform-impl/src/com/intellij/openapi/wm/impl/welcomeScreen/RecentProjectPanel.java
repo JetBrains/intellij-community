@@ -338,7 +338,7 @@ public class RecentProjectPanel extends JPanel {
 
       setBackground(back);
 
-      myName.setText(item.getProjectName());
+      myName.setText(item.getTemplatePresentation().getText());
       myPath.setText(getTitle2Text(item, myPath));
 
       return this;
