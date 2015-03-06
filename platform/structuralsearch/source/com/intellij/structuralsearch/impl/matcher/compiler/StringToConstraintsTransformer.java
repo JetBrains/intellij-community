@@ -59,7 +59,10 @@ class StringToConstraintsTransformer {
           if (index == length) break;
           ch = pattern.charAt(index);
         }
-        if (ch=='\'') {
+        if (ch == '\\' && index + 1 < length) {
+          ch = pattern.charAt(++index);
+        }
+        else if (ch=='\'') {
           // doubling '
           if (index + 1 < length &&
               pattern.charAt(index + 1)=='\''
@@ -124,7 +127,6 @@ class StringToConstraintsTransformer {
               }
             }
 
-
             buf.append("$");
             String typedVar = miscBuffer.toString();
             int minOccurs = 1;
@@ -142,19 +144,17 @@ class StringToConstraintsTransformer {
             // Check the number of occurrences for typed variable
             final int savedIndex = index;
             if (index < length) {
-              char possibleQuantifier = pattern.charAt(index);
-
-              if (possibleQuantifier=='+') {
+              if (ch == '+') {
                 maxOccurs = Integer.MAX_VALUE;
                 ++index;
-              } else if (possibleQuantifier=='?') {
+              } else if (ch == '?') {
                 minOccurs = 0;
                 ++index;
-              } else if (possibleQuantifier=='*') {
+              } else if (ch == '*') {
                 minOccurs = 0;
                 maxOccurs = Integer.MAX_VALUE;
                 ++index;
-              } else if (possibleQuantifier=='{') {
+              } else if (ch == '{') {
                 ++index;
                 minOccurs = 0;
                 while (index < length && (ch = pattern.charAt(index)) >= '0' && ch <= '9') {
@@ -229,8 +229,9 @@ class StringToConstraintsTransformer {
             }
 
             if (index == length) break;
-            // fall through to append white space
-            ch = pattern.charAt(index);
+            // rewind to process white space or unrelated symbol
+            index--;
+            continue;
           }
         }
 
