@@ -64,7 +64,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   private String myAPIKey = "";
   private RedmineProject myCurrentProject;
-  private boolean assignedMe = true;
+  private boolean myAssignedToMe = true;
   private List<RedmineProject> myProjects = null;
 
   /**
@@ -91,7 +91,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     super(other);
     setAPIKey(other.myAPIKey);
     setCurrentProject(other.getCurrentProject());
-    setAssignedMe(other.isAssignedMe());
+    setAssignedToMe(other.isAssignedToMe());
   }
 
   @Override
@@ -101,7 +101,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     RedmineRepository that = (RedmineRepository)o;
     if (!Comparing.equal(getAPIKey(), that.getAPIKey())) return false;
     if (!Comparing.equal(getCurrentProject(), that.getCurrentProject())) return false;
-    if (isAssignedMe() != that.isAssignedMe()) return false;
+    if (isAssignedToMe() != that.isAssignedToMe()) return false;
     return true;
   }
 
@@ -172,7 +172,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
       .addParameter("limit", String.valueOf(limit))
       .addParameter("sort", "updated_on:desc")
       .addParameter("status_id", withClosed ? "*" : "open");
-    if (assignedMe) {
+    if (myAssignedToMe) {
       builder.addParameter("assigned_to_id", "me");
     }
     // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
@@ -230,12 +230,12 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     myAPIKey = APIKey;
   }
 
-  public boolean isAssignedMe() {
-    return assignedMe;
+  public boolean isAssignedToMe() {
+    return myAssignedToMe;
   }
 
-  public void setAssignedMe(boolean assignedMe) {
-    this.assignedMe = assignedMe;
+  public void setAssignedToMe(boolean assignedToMe) {
+    this.myAssignedToMe = assignedToMe;
   }
 
   private boolean isUseApiKeyAuthentication() {

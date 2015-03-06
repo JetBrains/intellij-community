@@ -21,7 +21,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
 
   private RedmineRepository myRepository;
 
-  public void testIssueFiltering() throws Exception {
+  public void testIssueFilteringByStatus() throws Exception {
     // TODO: so far supplied query is unused, investigate
 
     // with closed issues
@@ -35,6 +35,17 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     // unique summary
     //found = myRepository.getIssues("baz", 0, 25, true);
     //assertEquals(1, found.length);
+  }
+
+  // IDEA-132015
+  public void testIssueFilteringByAssignee() throws Exception {
+    myRepository.setAssignedToMe(true);
+    Task[] found = myRepository.getIssues(null, 0, 25, false);
+    assertEquals(5, found.length);
+
+    myRepository.setAssignedToMe(false);
+    found = myRepository.getIssues(null, 0, 25, false);
+    assertTrue(found.length > 5);
   }
 
   public void testIssueSearch() throws Exception {
@@ -86,7 +97,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     assertEquals(issue.getSummary(), "Artificial issue with no description created via REST API. Do not update it!");
   }
 
-  public void testProjectFiltering() throws Exception {
+  public void testIssueFilteringByProject() throws Exception {
     final List<RedmineProject> allProjects = myRepository.fetchProjects();
     final RedmineProject project = ContainerUtil.find(allProjects, new Condition<RedmineProject>() {
       @Override
