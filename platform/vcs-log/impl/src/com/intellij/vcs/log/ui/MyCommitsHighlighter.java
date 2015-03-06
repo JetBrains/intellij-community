@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -27,11 +26,9 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Map;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
-  private static final JBColor ME_BG = new JBColor(new Color(255, 255, 228), new Color(73, 71, 63));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
@@ -49,7 +46,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     if (details != null && !(details instanceof LoadingDetails)) {
       VcsUser currentUser = users.get(details.getRoot());
       if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
-        return VcsCommitStyleFactory.background(ME_BG);
+        return VcsCommitStyleFactory.bold();
       }
     }
     return VcsCommitStyle.DEFAULT;

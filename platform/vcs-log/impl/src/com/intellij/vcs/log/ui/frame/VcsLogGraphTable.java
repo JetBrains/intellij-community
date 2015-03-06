@@ -321,18 +321,27 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myHighlighters.clear();
   }
 
-  public void applyHighlighters(@NotNull Component rendererComponent,
-                                int row,
-                                int column,
-                                String text,
-                                boolean hasFocus,
-                                final boolean selected) {
+  public SimpleTextAttributes applyHighlighters(@NotNull Component rendererComponent,
+                                                int row,
+                                                int column,
+                                                String text,
+                                                boolean hasFocus,
+                                                final boolean selected) {
     VcsLogHighlighter.VcsCommitStyle style = getStyle(row, column, text, hasFocus, selected);
 
-    assert style.getBackground() != null && style.getForeground() != null;
+    assert style.getBackground() != null && style.getForeground() != null && style.getTextStyle() != null;
 
     rendererComponent.setBackground(style.getBackground());
     rendererComponent.setForeground(style.getForeground());
+
+    switch (style.getTextStyle()) {
+      case BOLD:
+        return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+      case ITALIC:
+        return SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
+      default:
+    }
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
@@ -341,14 +350,15 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
     if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
       LOG.error("Visible graph has " + visibleGraph.getVisibleCommitCount() + " commits, yet we want row " + row);
-      return VcsCommitStyleFactory.createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground());
+      return VcsCommitStyleFactory
+        .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
     }
 
     final RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
 
     VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
       .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
-                   dummyRendererComponent.getBackground());
+                   dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
       ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
@@ -753,9 +763,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       if (value == null) {
         return;
       }
-      String text = value.toString();
-      append(text);
-      applyHighlighters(this, row, column, text, hasFocus, selected);
+      append(value.toString(), applyHighlighters(this, row, column, value.toString(), hasFocus, selected));
       setBorder(null);
     }
 

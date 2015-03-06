@@ -23,7 +23,7 @@ import java.util.Collection;
 
 /**
  * Factory for creating instances of default implementation VcsCommitStyle.
- * */
+ */
 public class VcsCommitStyleFactory {
   /**
    * Creates VcsCommitStyle with specified text color and background color.
@@ -32,8 +32,10 @@ public class VcsCommitStyleFactory {
    * @param background background color or null if unspecified.
    * @return new instance of VcsCommitStyle with specified text and background color.
    */
-  public static VcsLogHighlighter.VcsCommitStyle createStyle(@Nullable Color foreground, @Nullable Color background) {
-    return new VcsCommitStyleImpl(foreground, background);
+  public static VcsLogHighlighter.VcsCommitStyle createStyle(@Nullable Color foreground,
+                                                             @Nullable Color background,
+                                                             @Nullable VcsLogHighlighter.TextStyle textStyle) {
+    return new VcsCommitStyleImpl(foreground, background, textStyle);
   }
 
   /**
@@ -43,7 +45,7 @@ public class VcsCommitStyleFactory {
    */
   @NotNull
   public static VcsLogHighlighter.VcsCommitStyle foreground(@Nullable Color foreground) {
-    return createStyle(foreground, null);
+    return createStyle(foreground, null, null);
   }
 
   /**
@@ -53,7 +55,15 @@ public class VcsCommitStyleFactory {
    */
   @NotNull
   public static VcsLogHighlighter.VcsCommitStyle background(@Nullable Color background) {
-    return createStyle(null, background);
+    return createStyle(null, background, null);
+  }
+
+  /**
+   * Creates VcsCommitStyleImpl with bold text.
+   */
+  @NotNull
+  public static VcsLogHighlighter.VcsCommitStyle bold() {
+    return createStyle(null, null, VcsLogHighlighter.TextStyle.BOLD);
   }
 
   /**
@@ -69,18 +79,22 @@ public class VcsCommitStyleFactory {
   public static VcsLogHighlighter.VcsCommitStyle combine(@NotNull Collection<VcsLogHighlighter.VcsCommitStyle> styles) {
     Color foreground = null;
     Color background = null;
+    VcsLogHighlighter.TextStyle textStyle = null;
 
     for (VcsLogHighlighter.VcsCommitStyle style : styles) {
-      if (foreground == null && style.getForeground() != null) {
+      if (foreground == null) {
         foreground = style.getForeground();
       }
-      if (background == null && style.getBackground() != null) {
+      if (background == null) {
         background = style.getBackground();
       }
-      if (background != null && foreground != null) break;
+      if (textStyle == null) {
+        textStyle = style.getTextStyle();
+      }
+      if (background != null && foreground != null && textStyle != null) break;
     }
 
-    return createStyle(foreground, background);
+    return createStyle(foreground, background, textStyle);
   }
 
   /**
@@ -89,16 +103,19 @@ public class VcsCommitStyleFactory {
   private static class VcsCommitStyleImpl implements VcsLogHighlighter.VcsCommitStyle {
     @Nullable private final Color myForeground;
     @Nullable private final Color myBackground;
+    @Nullable private final VcsLogHighlighter.TextStyle myTextStyle;
 
     /**
-     * Creates VcsCommitStyleImpl with specified text color and background color.
+     * Creates VcsCommitStyleImpl with specified text and background color, and text style.
      *
      * @param foreground text color or null if unspecified.
      * @param background background color or null if unspecified.
+     * @param textStyle  text style or null if unspecified
      */
-    public VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background) {
+    public VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background, @Nullable VcsLogHighlighter.TextStyle textStyle) {
       myForeground = foreground;
       myBackground = background;
+      myTextStyle = textStyle;
     }
 
     @Nullable
@@ -113,5 +130,10 @@ public class VcsCommitStyleFactory {
       return myBackground;
     }
 
+    @Override
+    @Nullable
+    public VcsLogHighlighter.TextStyle getTextStyle() {
+      return myTextStyle;
+    }
   }
 }
