@@ -159,8 +159,22 @@ public class CodeStyleSettingsCodeFragmentFilter {
       String field = myIterator.next();
       try {
         Field classField = CommonCodeStyleSettings.class.getField(field);
-        boolean value = classField.getBoolean(myCommonSettings);
-        classField.set(myCommonSettings, !value);
+
+        if (classField.getType() == Integer.TYPE) {
+          int oldValue = classField.getInt(myCommonSettings);
+          int newValue = getNewIntValue(classField, oldValue);
+          if (newValue == oldValue) {
+            return true;
+          }
+          classField.set(myCommonSettings, newValue);
+        }
+        else if (classField.getType() == Boolean.TYPE) {
+          boolean value = classField.getBoolean(myCommonSettings);
+          classField.set(myCommonSettings, !value);
+        }
+        else {
+          return true;
+        }
 
         if (formattingChangedFragment()) {
           myAffectingFields.add(field);
@@ -170,6 +184,24 @@ public class CodeStyleSettingsCodeFragmentFilter {
       }
 
       return true;
+    }
+
+    private int getNewIntValue(Field classField, int oldValue) throws IllegalAccessException {
+      int newValue = oldValue;
+
+      String fieldName = classField.getName();
+      if (fieldName.contains("WRAP")) {
+        newValue = oldValue == CommonCodeStyleSettings.WRAP_ALWAYS
+                   ? CommonCodeStyleSettings.DO_NOT_WRAP
+                   : CommonCodeStyleSettings.WRAP_ALWAYS;
+      }
+      else if (fieldName.contains("BRACE")) {
+        newValue = oldValue == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+                   ? CommonCodeStyleSettings.DO_NOT_FORCE
+                   : CommonCodeStyleSettings.WRAP_ALWAYS;
+      }
+
+      return newValue;
     }
 
     @Override
