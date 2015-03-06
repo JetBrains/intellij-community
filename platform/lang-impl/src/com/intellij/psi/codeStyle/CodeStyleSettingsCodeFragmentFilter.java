@@ -123,10 +123,12 @@ public class CodeStyleSettingsCodeFragmentFilter {
   private class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
     private final Iterator<String> myIterator;
     private final int myTotalFieldsNumber;
+    private final Collection<String> myAllFields;
 
     private List<String> myAffectingFields = ContainerUtil.newArrayList();
 
     public FilterFieldsTask(@NotNull Collection<String> fields) {
+      myAllFields = fields;
       myIterator = fields.iterator();
       myTotalFieldsNumber = fields.size();
     }
@@ -142,6 +144,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
     @Override
     public void stop() {
+      if (!isDone()) myAffectingFields = ContainerUtil.newArrayList(myAllFields);
     }
 
     @Override
@@ -252,6 +255,10 @@ class CompositeSequentialTask implements SequentialTask {
 
   @Override
   public void stop() {
+    if (myCurrentTask != null) myCurrentTask.stop();
+    for (SequentialTaskWithFixedIterationsNumber task : myUnfinishedTasks) {
+      task.stop();
+    }
   }
 
   public void setProgressText2(String progressText2) {
