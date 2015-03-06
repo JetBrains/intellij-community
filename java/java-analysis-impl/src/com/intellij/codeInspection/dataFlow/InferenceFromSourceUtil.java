@@ -65,7 +65,7 @@ public class InferenceFromSourceUtil {
              returnValue == MethodContract.ValueConstraint.FALSE_VALUE;
     }
 
-    if (returnType instanceof PsiClassType) {
+    if (!(returnType instanceof PsiPrimitiveType)) {
       return returnValue == MethodContract.ValueConstraint.NULL_VALUE ||
              returnValue == MethodContract.ValueConstraint.NOT_NULL_VALUE;
     }
