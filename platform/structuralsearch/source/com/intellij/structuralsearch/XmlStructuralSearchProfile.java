@@ -208,8 +208,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       return new Configuration[]{
         createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute", "<'_tag 'attribute />", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
+        createSearchTemplateInfo("li not contained in ul/ol", "[!within( \"<'_tag:[regex( \"ul|ol\" )] />\" )]<li />", HTML_XML, StdFileTypes.HTML)
       };
     }
   }

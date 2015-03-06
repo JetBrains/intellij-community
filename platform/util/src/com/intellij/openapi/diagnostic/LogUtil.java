@@ -52,4 +52,17 @@ public class LogUtil {
       return ExceptionUtil.getThrowableText(e);
     }
   }
+
+  public static String getSystemMemoryInfo() {
+    try {
+      @SuppressWarnings("SpellCheckingInspection") Process process = new ProcessBuilder()
+        .command(new String[]{SystemInfo.isWindows ? "systeminfo" : SystemInfo.isMac ? "vm_stat" : "free"})
+        .redirectErrorStream(true)
+        .start();
+      return FileUtil.loadTextAndClose(process.getInputStream());
+    }
+    catch (IOException e) {
+      return ExceptionUtil.getThrowableText(e);
+    }
+  }
 }

@@ -8,6 +8,8 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -116,6 +118,16 @@ public class StringToConstraintsTransformerTest {
     test("'a:x!(");
   }
 
+  @Test(expected = MalformedPatternException.class)
+  public void testRepeatingConstraints() {
+    test("'a*:foo 'a+:[regex( bla )]");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testRepeatingConstraints2() {
+    test("'a:foo 'a*");
+  }
+
   @Test
   public void testMethodReference() {
     test("'_a::'_b");
@@ -123,8 +135,21 @@ public class StringToConstraintsTransformerTest {
   }
 
   @Test
+  public void testCompleteMatchConditions() {
+    test("[within( \"if('_a) { 'st*; }\" )]1+1");
+    assertEquals("1+1", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    assertEquals("\"if('_a) { 'st*; }\"", constraint.getWithinConstraint());
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testBadWithin() {
+    test("'_type 'a:[within( \"if ('_a) { '_st*; }\" )] = '_b;");
+  }
+
+  @Test
   public void testScriptEscaping() {
-    test("'_type 'a:[within( \"if ('_a:[regex( .*e.* )\\]) { '_st*; }\" )] = '_b;");
+    test("[within( \"if ('_a:[regex( .*e.* )\\]) { '_st*; }\" )]'_type 'a = '_b;");
     assertEquals("$type$ $a$ = $b$;", myOptions.getSearchPattern());
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     assertEquals("\"if ('_a:[regex( .*e.* )]) { '_st*; }\"", constraint.getWithinConstraint());

@@ -1212,6 +1212,8 @@
     <option name="separators" hit="Warn if CRLF line separators are about to be committed" />
     <option name="to" hit="Warn if CRLF line separators are about to be committed" />
     <option name="warn" hit="Warn if CRLF line separators are about to be committed" />
+    <option name="force" hit="Allow force push" />
+    <option name="push" hit="Allow force push" />
   </configurable>
   <configurable id="usage.statistics" configurable_name="Usage Statistics">
     <option name="" hit=" Were asking your permission to send information about your plugins configuration (what is enabled  and what is not) and feature usage statistics (e.g. how frequently youre using code completion).     This data is anonymous, does not contain any personal information, collected for use only by JetBrains s.r.o.  and will never be transmitted to any third party. " />

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.awt.AWTUtilities;
@@ -206,7 +207,7 @@ public interface PopupComponent {
 
     private static void fixFlickering(Window wnd, boolean opaque) {
       try {
-        if (UIUtil.isUnderDarcula() && !SystemInfo.isLinux && wnd != null) {
+        if (UIUtil.isUnderDarcula() && SystemInfo.isMac && Registry.is("darcula.fix.native.flickering") && wnd != null) {
           AWTUtilities.setWindowOpaque(wnd, opaque);
         }
       } catch (Exception ignore) {}

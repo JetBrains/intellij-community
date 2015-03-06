@@ -41,7 +41,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.ifs"),"if ('_Condition) {\n  '_ThenStatement*;\n} else {\n  '_ElseStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"),"switch('_Condition) {\n  '_Statement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}", OPERATOR_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"LOG.debug('_params*:[!within( \"if('_a) { '_st*; }\" )]);",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"[!within( \"if('_a) { 'st*; }\" )]LOG.debug('_params*);",OPERATOR_TYPE),
 
       // Class based
       createSearchTemplateInfo(
@@ -76,7 +76,7 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.constructors.of.the.class"),
-        "class 'Class {\n  'Class+('_ParameterType* '_ParameterName*) {\n    '_Statement*;\n  }\n}",
+        "class 'Class {\n  'Class('_ParameterType* '_ParameterName*) {\n    '_Statement*;\n  }\n}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
@@ -262,8 +262,8 @@ class JavaPredefinedConfigurations {
                                                                                         "  private 'Class('_ParameterType* '_ParameterDcl*) {\n" +
                                                                                         "   '_ConstructorStatement*;\n" +
                                                                                         "  }\n"+
-                                                                                        "  private static '_Class:* '_Instance;\n" +
-                                                                                        "  static '_Class:* '_GetInstance() {\n" +
+                                                                                        "  private static '_Class '_Instance;\n" +
+                                                                                        "  static '_Class '_GetInstance() {\n" +
                                                                                         "    '_SomeStatement*;\n" +
                                                                                         "    return '_Instance;\n" +
                                                                                         "  }\n"+

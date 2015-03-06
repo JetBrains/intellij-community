@@ -94,13 +94,7 @@ abstract class CodeStyleManagerRunnable<T> {
       mySettings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
 
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
-
-      if (builder instanceof FormattingModelBuilderEx) {
-        myIndentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, new FormatTextRanges(mySignificantRange, true), mySettings);
-      }
-      if (myIndentOptions == null) {
-        myIndentOptions = mySettings.getIndentOptionsByFile(file);
-      }
+      myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);
 
       myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
 

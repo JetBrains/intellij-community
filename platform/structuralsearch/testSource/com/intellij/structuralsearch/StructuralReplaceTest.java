@@ -786,7 +786,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "                'l{2,2};\n" +
                  "            }\n" +
                  "            public void run2() {\n" +
-                 "                'l{2,2};\n" +
+                 "                'l;\n" +
                  "            }\n" +
                  "\n" +
                  "        };";

@@ -31,8 +31,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,26 +40,15 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
+public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if (!canMoveElement(element)) {
+      if (!PyMoveModuleMemberUtil.isMovableModuleMember(element)) {
         return false;
       }
     }
     return super.canMove(elements, targetContainer);
-  }
-
-  /**
-   * Checks that given element is suitable for "Move ..." refactoring. Currently it means that it's top-level function, class or
-   * target expression.
-   *
-   * @param element PSI element to check
-   * @return whether this element is acceptable for "Move ..." refactoring
-   */
-  public static boolean canMoveElement(@NotNull PsiElement element) {
-    return (element instanceof PyClass || element instanceof PyFunction) && PyUtil.isTopLevel(element);
   }
 
   @Override
@@ -84,7 +71,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
         initialDestination = FileUtil.toSystemDependentName(virtualFile.getPath());
       }
     }
-    final PyMoveTopLevelSymbolDialog dialog = PyMoveTopLevelSymbolDialog.getInstance(project, initialElements, initialDestination);
+    final PyMoveModuleMembersDialog dialog = PyMoveModuleMembersDialog.getInstance(project, initialElements, initialDestination);
     if (!dialog.showAndGet()) {
       return;
     }
@@ -92,7 +79,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
     final boolean previewUsages = dialog.isPreviewUsages();
     try {
       final PsiNamedElement[] selectedElements = ContainerUtil.findAllAsArray(dialog.getSelectedTopLevelSymbols(), PsiNamedElement.class);
-      final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, selectedElements, destination, previewUsages);
+      final BaseRefactoringProcessor processor = new PyMoveModuleMembersProcessor(project, selectedElements, destination, previewUsages);
       processor.run();
     }
     catch (IncorrectOperationException e) {
@@ -107,7 +94,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
                            @Nullable PsiReference reference,
                            @Nullable Editor editor) {
     final PsiNamedElement e = getElementToMove(element);
-    if (e instanceof PyClass || e instanceof PyFunction) {
+    if (e != null && PyMoveModuleMemberUtil.isMovableElement(e)) {
       if (PyUtil.isTopLevel(e)) {
         PsiElement targetContainer = null;
         if (editor != null) {

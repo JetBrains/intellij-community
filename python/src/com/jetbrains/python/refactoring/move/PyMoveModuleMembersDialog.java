@@ -16,11 +16,9 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
@@ -36,12 +33,12 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
+public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   /**
    * Instance to be injected to mimic this class in tests
    */
-  private static PyMoveTopLevelSymbolDialog ourInstanceToReplace = null;
+  private static PyMoveModuleMembersDialog ourInstanceToReplace = null;
 
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
   private final PyModuleMemberInfoModel myModuleMemberModel;
@@ -58,10 +55,10 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
    * @param destination destination where elements have to be moved
    * @return dialog
    */
-  public static PyMoveTopLevelSymbolDialog getInstance(@NotNull final Project project,
+  public static PyMoveModuleMembersDialog getInstance(@NotNull final Project project,
                                                        @NotNull final List<PsiNamedElement> elements,
                                                        @Nullable final String destination) {
-    return ourInstanceToReplace != null ? ourInstanceToReplace : new PyMoveTopLevelSymbolDialog(project, elements, destination);
+    return ourInstanceToReplace != null ? ourInstanceToReplace : new PyMoveModuleMembersDialog(project, elements, destination);
   }
 
   /**
@@ -70,7 +67,7 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
    * @param instanceToReplace instance to be used in tests
    */
   @TestOnly
-  public static void setInstanceToReplace(@NotNull final PyMoveTopLevelSymbolDialog instanceToReplace) {
+  public static void setInstanceToReplace(@NotNull final PyMoveModuleMembersDialog instanceToReplace) {
     ourInstanceToReplace = instanceToReplace;
   }
 
@@ -79,25 +76,12 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
    * @param elements elements to move
    * @param destination destination where elements have to be moved
    */
-  protected PyMoveTopLevelSymbolDialog(@NotNull Project project, @NotNull List<PsiNamedElement> elements, @Nullable String destination) {
+  protected PyMoveModuleMembersDialog(@NotNull Project project, @NotNull List<PsiNamedElement> elements, @Nullable String destination) {
     super(project, true);
 
     assert !elements.isEmpty();
-    final String moveText;
-
     final PsiNamedElement firstElement = elements.get(0);
-    if (elements.size() == 1) {
-      if (firstElement instanceof PyClass) {
-        moveText = PyBundle.message("refactoring.move.class.$0", ((PyClass)firstElement).getQualifiedName());
-      }
-      else {
-        moveText = PyBundle.message("refactoring.move.function.$0", firstElement.getName());
-      }
-    }
-    else {
-      moveText = PyBundle.message("refactoring.move.selected.elements");
-    }
-    setTitle(moveText);
+    setTitle(PyBundle.message("refactoring.move.module.members.dialog.title"));
 
     if (destination == null) {
       destination = getContainingFileName(firstElement);
@@ -176,21 +160,9 @@ public class PyMoveTopLevelSymbolDialog extends RefactoringDialog {
   }
 
   static class TopLevelSymbolsSelectionTable extends AbstractMemberSelectionTable<PyElement, PyModuleMemberInfo> {
-    public TopLevelSymbolsSelectionTable(@NotNull Collection<PyModuleMemberInfo> memberInfos,
+    public TopLevelSymbolsSelectionTable(Collection<PyModuleMemberInfo> memberInfos,
                                          @Nullable MemberInfoModel<PyElement, PyModuleMemberInfo> memberInfoModel) {
       super(memberInfos, memberInfoModel, null);
-      // TODO: It's better to make AbstractMemberSelectionTable more flexible than to patch model like that
-      myTableModel = new MyTableModel<PyElement, PyModuleMemberInfo>(this) {
-        @Override
-        public String getColumnName(int column) {
-          return column == DISPLAY_NAME_COLUMN ? "Symbol" : super.getColumnName(column);
-        }
-      };
-      final TableCellRenderer oldRenderer = getColumnModel().getColumn(DISPLAY_NAME_COLUMN).getCellRenderer();
-
-      setModel(myTableModel);
-      getColumnModel().getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(oldRenderer);
-      TableUtil.setupCheckboxColumn(getColumnModel().getColumn(CHECKED_COLUMN));
     }
 
     @Nullable

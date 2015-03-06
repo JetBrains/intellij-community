@@ -832,14 +832,14 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T getFirstElement(@NotNull T[] array) {
-    return array.length > 0 ? array[0] : null;
+  public static <T> T getFirstElement(@Nullable T[] array) {
+    return array != null && array.length > 0 ? array[0] : null;
   }
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T getLastElement(@NotNull T[] array) {
-    return array.length > 0 ? array[array.length - 1] : null;
+  public static <T> T getLastElement(@Nullable T[] array) {
+    return array != null && array.length > 0 ? array[array.length - 1] : null;
   }
 
   @NotNull
@@ -856,14 +856,14 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
-  public static <T> T[] stripTrailingNulls(T[] array) {
+  public static <T> T[] stripTrailingNulls(@NotNull T[] array) {
     return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
   }
 
-  private static <T> int trailingNullsIndex(T[] array) {
-    for (int i=array.length-1; i>=0; i--) {
+  private static <T> int trailingNullsIndex(@NotNull T[] array) {
+    for (int i = array.length - 1; i >= 0; i--) {
       if (array[i] != null) {
-        return i+1;
+        return i + 1;
       }
     }
     return 0;

@@ -64,7 +64,7 @@ public class ByLine {
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
 
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
-    FairDiffIterable changes = correctChanges(lines1, lines2, iwChanges, indicator);
+    FairDiffIterable changes = correctChanges(lines1, lines2, iwChanges);
     return convertIntoFragments(lines1, lines2, changes);
   }
 
@@ -82,7 +82,7 @@ public class ByLine {
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
 
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
-    return correctChanges(lines1, lines2, iwChanges, indicator);
+    return correctChanges(lines1, lines2, iwChanges);
   }
 
   //
@@ -90,53 +90,21 @@ public class ByLine {
   //
 
   @NotNull
-  private static FairDiffIterable correctChanges(@NotNull final List<Line> lines1,
-                                                 @NotNull final List<Line> lines2,
-                                                 @NotNull final FairDiffIterable changes,
-                                                 @NotNull final ProgressIndicator indicator) {
-    return new Object() {
-      private final ChangeBuilder myBuilder = new ChangeBuilder(lines1.size(), lines2.size());
+  private static FairDiffIterable correctChanges(@NotNull List<Line> lines1,
+                                                 @NotNull List<Line> lines2,
+                                                 @NotNull FairDiffIterable changes) {
+    ChangeBuilder builder = new ChangeBuilder(lines1.size(), lines2.size());
 
-      @NotNull
-      public FairDiffIterable run() {
-        for (Range ch : changes.iterateUnchanged()) {
-          int count = ch.end1 - ch.start1;
-          for (int i = 0; i < count; i++) {
-            Line line1 = lines1.get(ch.start1 + i);
-            Line line2 = lines2.get(ch.start2 + i);
-            if (line1.equals(line2)) markEqual(ch.start1 + i, ch.start2 + i);
-          }
-        }
-
-        matchGap(last1 + 1, lines1.size(), last2 + 1, lines2.size());
-
-        return fair(myBuilder.finish());
+    for (Range ch : changes.iterateUnchanged()) {
+      int count = ch.end1 - ch.start1;
+      for (int i = 0; i < count; i++) {
+        Line line1 = lines1.get(ch.start1 + i);
+        Line line2 = lines2.get(ch.start2 + i);
+        if (line1.equals(line2)) builder.markEqual(ch.start1 + i, ch.start2 + i);
       }
+    }
 
-      private int last1 = -1;
-      private int last2 = -1;
-
-      private void markEqual(int index1, int index2) {
-        matchGap(last1 + 1, index1, last2 + 1, index2);
-
-        myBuilder.markEqual(index1, index2);
-
-        last1 = index1;
-        last2 = index2;
-      }
-
-      private void matchGap(int start1, int end1, int start2, int end2) {
-        if (start1 >= end1 || start2 >= end2) return;
-
-        List<Line> inner1 = lines1.subList(start1, end1);
-        List<Line> inner2 = lines2.subList(start2, end2);
-        FairDiffIterable innerChanges = diff(inner1, inner2, indicator);
-
-        for (Range chunk : innerChanges.iterateUnchanged()) {
-          myBuilder.markEqual(start1 + chunk.start1, start2 + chunk.start2, chunk.end1 - chunk.start1);
-        }
-      }
-    }.run();
+    return fair(builder.finish());
   }
 
   @NotNull

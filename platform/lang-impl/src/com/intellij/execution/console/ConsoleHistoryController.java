@@ -38,6 +38,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -133,7 +134,7 @@ public class ConsoleHistoryController {
   }
 
   public boolean hasHistory() {
-    return getModel().getHistory().isEmpty();
+    return !getModel().getEntries().isEmpty();
   }
 
   private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
@@ -236,7 +237,9 @@ public class ConsoleHistoryController {
       @Override
       public void run() {
         if (storeUserText) {
-          myHelper.setContent(document.getText());
+          String text = document.getText();
+          if (Comparing.equal(command, text) && myHelper.getContent() != null) return;
+          myHelper.setContent(text);
         }
         String text = StringUtil.notNullize(command);
         int offset;
@@ -290,22 +293,23 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final String command;
+      String command;
       if (myNext) {
         command = getModel().getHistoryNext();
         if (!myMultiline && command == null) return;
       }
       else {
-        if (!myMultiline && getModel().getHistoryCursor() < 0) return;
         command = ObjectUtils.chooseNotNull(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
       }
-      setConsoleText(command, myNext && getModel().getHistoryCursor() == 0, true);
+      setConsoleText(command, myNext && !getModel().hasHistory(false), true);
     }
 
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext));
+      boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
+      //enabled &= getModel().hasHistory(myNext);
+      e.getPresentation().setEnabled(enabled);
     }
 
     private boolean isUpDownKey(AnActionEvent e) {
@@ -340,12 +344,13 @@ public class ConsoleHistoryController {
   private class MyBrowseAction extends AnAction {
 
     @Override
-    public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(getModel().getHistorySize() > 0);
+    public void update(AnActionEvent e) {
+      boolean enabled = hasHistory();
+      e.getPresentation().setEnabled(enabled);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(AnActionEvent e) {
       String s1 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryNext);
       String s2 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryPrev);
       String title = myConsole.getTitle() + " History" +
@@ -364,7 +369,9 @@ public class ConsoleHistoryController {
 
         @Override
         protected List<String> getContents() {
-          return getModel().getHistory();
+          List<String> entries = getModel().getEntries();
+          Collections.reverse(entries);
+          return entries;
         }
 
         @Override
@@ -394,7 +401,7 @@ public class ConsoleHistoryController {
       };
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
-      chooser.setSelectedIndex(Math.max(getModel().getHistoryCursor(), 0));
+      chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - getModel().getCurrentIndex() - 1));
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(chooser.getSelectedText(), false, true);
       }
@@ -455,11 +462,8 @@ public class ConsoleHistoryController {
           }
           return false;
         }
-        List<String> entries = Arrays.asList(VfsUtilCore.loadText(file).split(myRootType.getEntrySeparator()));
-        for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
-          String entry = iterator.previous();
-          getModel().addToHistory(entry);
-        }
+        String[] split = VfsUtilCore.loadText(file).split(myRootType.getEntrySeparator());
+        getModel().resetEntries(Arrays.asList(split));
         return true;
       }
       catch (Exception ignored) {
@@ -537,7 +541,7 @@ public class ConsoleHistoryController {
 
     private void saveHistory() {
       try {
-        if (getModel().getHistory().isEmpty()) return;
+        if (getModel().getEntries().isEmpty()) return;
         if (myRootType.isHidden()) {
           saveHistoryOld();
           return;
@@ -545,7 +549,7 @@ public class ConsoleHistoryController {
         AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
         try {
           VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
-          VfsUtil.saveText(file, StringUtil.join(getModel().getHistory(), myRootType.getEntrySeparator()));
+          VfsUtil.saveText(file, StringUtil.join(getModel().getEntries(), myRootType.getEntrySeparator()));
         }
         finally {
           token.finish();
@@ -573,10 +577,7 @@ public class ConsoleHistoryController {
         }
         in.moveUp();
       }
-      for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
-        String entry = iterator.previous();
-        getModel().addToHistory(entry);
-      }
+      getModel().resetEntries(entries);
       return consoleContent;
     }
 
@@ -586,7 +587,7 @@ public class ConsoleHistoryController {
       out.attribute(null, "version", "1");
       out.attribute(null, "id", myId);
       try {
-        for (String s : getModel().getHistory()) {
+        for (String s : getModel().getEntries()) {
           textTag(out, "history-entry", s);
         }
         String current = myContent;
@@ -615,12 +616,12 @@ public class ConsoleHistoryController {
   @NotNull
   private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {
     return rootType.getConsoleTypeId() + "/" +
-           PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
+           PathUtil.makeFileName(rootType.getHistoryPathName(id), rootType.getDefaultFileExtension());
   }
 
   @Nullable
   public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType, @NotNull String id, ScratchFileService.Option option) {
-    final String pathName = PathUtil.makeFileName(rootType.getDefaultPathName(id), rootType.getDefaultFileExtension());
+    final String pathName = PathUtil.makeFileName(rootType.getContentPathName(id), rootType.getDefaultFileExtension());
     try {
       return rootType.findFile(null, pathName, option);
     }

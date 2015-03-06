@@ -93,12 +93,14 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     }
 
     final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return false;
     final Ref<Class<? extends JavaLineBreakpointTypeBase>> result = Ref.create();
     XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
       @Override
       public boolean process(PsiElement element) {
         // avoid comments
-        if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
+        if ((element instanceof PsiWhiteSpace)
+            || (PsiTreeUtil.getParentOfType(element, PsiComment.class, PsiImportStatementBase.class, PsiPackageStatement.class) != null)) {
           return true;
         }
         PsiElement parent = element;

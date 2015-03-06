@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -52,6 +55,16 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
         final EditorEx editor = super.createEditor();
         editor.setVerticalScrollbarVisible(true);
         return editor;
+      }
+
+      @Override
+      public Object getData(String dataId) {
+        if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
+          return new Language[]{myExpression.getLanguage()};
+        } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+          return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
+        }
+        return super.getData(dataId);
       }
 
       @Override
