@@ -66,6 +66,9 @@ public interface LanguageConsoleView extends ConsoleView, Disposable {
   @Nullable
   String getPrompt();
 
+  @Nullable
+  ConsoleViewContentType getPromptAttributes();
+
   void setPrompt(@Nullable String prompt);
 
   void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes);

@@ -257,6 +257,11 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     return myPrompt;
   }
 
+  @Nullable
+  public ConsoleViewContentType getPromptAttributes() {
+    return myPromptAttributes;
+  }
+
   public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
     myPromptAttributes = textAttributes;
   }
