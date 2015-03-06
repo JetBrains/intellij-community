@@ -53,7 +53,7 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
-    assertEquals(Arrays.asList("web-app"), builder.getTags());
+    assertEquals(Collections.singletonList("web-app"), builder.getTags());
   }
 
   public void testTagNameIndex() {
@@ -97,14 +97,17 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     XsdNamespaceBuilder builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("3.0", builder.getVersion());
-    assertEquals(Arrays.asList("web-app"), builder.getTags());
+    assertEquals(Collections.singletonList("web-app"), builder.getTags());
 
     resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", null, myModule, getProject());
     assertNotNull(resource);
     builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
-    assertEquals(Arrays.asList("web-app"), builder.getTags());
+    assertEquals(Collections.singletonList("web-app"), builder.getTags());
+
+    resource = XmlNamespaceIndex.guessSchema(NS, "foo-bar", "2.5", null, myModule, getProject());
+    assertNull(resource);
   }
 
   public void testGuessDTD() throws Exception {
