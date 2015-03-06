@@ -401,6 +401,10 @@ public class ScreenUtil {
     if (prevLocation == null || prevLocation.equals(location)) {
       return true;
     }
+    // consider any movement inside a rectangle as a valid movement towards
+    if (bounds.contains(location)) {
+      return true;
+    }
 
     int dx = prevLocation.x - location.x;
     int dy = prevLocation.y - location.y;
