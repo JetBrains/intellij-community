@@ -175,7 +175,9 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
           return o1.getValue().getRating(tagName, version) - o2.getValue().getRating(tagName, version);
         }
       });
-    if (tagName != null && !resource.getValue().hasTag(tagName)) return null;
+    if (tagName != null && !resource.getValue().hasTag(tagName)) {
+      return null;
+    }
     return resource;
   }
 
