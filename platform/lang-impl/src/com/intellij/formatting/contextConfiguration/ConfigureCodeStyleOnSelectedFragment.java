@@ -40,12 +40,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.*;
 
-public class ConfigureCodeStyleFromSelectedFragment implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleFromSelectedFragment.class); 
+public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
   
   @Nls
   @NotNull

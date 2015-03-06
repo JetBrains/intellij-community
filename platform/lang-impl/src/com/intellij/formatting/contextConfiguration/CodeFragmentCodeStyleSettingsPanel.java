@@ -32,11 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
-import static com.intellij.formatting.contextConfiguration.ConfigureCodeStyleFromSelectedFragment.*;
-import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.*;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
 
 class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
@@ -79,7 +76,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   }
 
   public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
-    final HashMap<SettingsType, List<String>> typeToNames = ContainerUtil.newHashMap();
     return filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
   }
 
