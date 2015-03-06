@@ -115,8 +115,19 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
 
     final int gutterWidth = ((EditorEx)myEditor).getGutterComponentEx().getWidth();
     int lineHeight = myEditor.getLineHeight();
+    int interval = 8;
 
-    draw(g, -gutterWidth, y, lineHeight);
+    int shiftX = -interval; // skip zero index painting
+    if (((EditorEx)myEditor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT) {
+      int contentWidth = ((EditorEx)myEditor).getScrollPane().getViewport().getWidth();
+      shiftX += contentWidth % interval - interval;
+      shiftX += gutterWidth % interval - interval;
+    }
+    else {
+      shiftX += -gutterWidth % interval - interval;
+    }
+
+    draw(g, shiftX, y, lineHeight);
   }
 
   private static void draw(@NotNull Graphics g,
