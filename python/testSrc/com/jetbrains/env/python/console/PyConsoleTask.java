@@ -107,7 +107,12 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     disposeConsoleProcess();
 
     if (!myContentDescriptorRef.isNull()) {
-      Disposer.dispose(myContentDescriptorRef.get());
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(myContentDescriptorRef.get());
+        }
+      });
     }
 
     if (myConsoleView != null) {
@@ -330,7 +335,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PyDebugValue val = getValue(varName);
     myCommunication.changeVariable(val, value);
   }
-  
+
   protected PyDebugValue getValue(String varName) throws PyDebuggerException {
     XValueChildrenList l = myCommunication.loadFrame();
 
@@ -343,14 +348,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         return (PyDebugValue)l.getValue(i);
       }
     }
-    
+
     return null;
   }
-  
+
   protected List<String> getCompoundValueChildren(PyDebugValue value) throws PyDebuggerException {
     XValueChildrenList list = myCommunication.loadVariable(value);
     List<String> result = Lists.newArrayList();
-    for (int i = 0; i<list.size(); i++) {
+    for (int i = 0; i < list.size(); i++) {
       result.add(((PyDebugValue)list.getValue(i)).getValue());
     }
     return result;
@@ -380,12 +385,12 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   public void addTextToEditor(final String text) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        getConsoleView().setInputText(text);
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
-    }
+                                   @Override
+                                   public void run() {
+                                     getConsoleView().setInputText(text);
+                                     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+                                   }
+                                 }
     );
   }
 }
