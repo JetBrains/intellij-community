@@ -184,12 +184,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
-    return runWriteCommandAction(project, "Undefined", null, computable);
-  }
-
-  private static <T> T runWriteCommandAction(@Nullable final Project project, @Nullable final String commandName,
-                                             @Nullable final String groupID, @NotNull final Computable<T> computable, PsiFile... files) {
-    return new WriteCommandAction<T>(project, commandName, groupID, files) {
+    return new WriteCommandAction<T>(project) {
       @Override
       protected void run(@NotNull Result<T> result) throws Throwable {
         result.setResult(computable.compute());
@@ -198,14 +193,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable) throws E {
-    return runWriteCommandAction(project, "", null, computable);
-  }
-
-  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @Nullable final String commandName,
-                                                                 @Nullable final String groupID,
-                                                                 @NotNull final ThrowableComputable<T, E> computable,
-                                                                 PsiFile... files) throws E {
-    RunResult<T> result = new WriteCommandAction<T>(project, commandName, groupID, files) {
+    RunResult<T> result = new WriteCommandAction<T>(project,"") {
       @Override
       protected void run(@NotNull Result<T> result) throws Throwable {
         result.setResult(computable.compute());
