@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -302,7 +304,7 @@ public class JobUtilTest extends PlatformLangTestCase {
   public void testSaturation() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(1);
     for (int i=0; i<100; i++) {
-      JobLauncher.getInstance().submitToJobThread(0, new Runnable() {
+      JobLauncher.getInstance().submitToJobThread(new Runnable() {
         @Override
         public void run() {
           try {
@@ -312,14 +314,14 @@ public class JobUtilTest extends PlatformLangTestCase {
             throw new RuntimeException(e);
           }
         }
-      });
+      }, null);
     }
-    JobLauncher.getInstance().submitToJobThread(0, new Runnable() {
+    JobLauncher.getInstance().submitToJobThread(new Runnable() {
       @Override
       public void run() {
         latch.countDown();
       }
-    });
+    }, null);
 
     try {
       boolean scheduled = latch.await(3, TimeUnit.SECONDS);
@@ -351,6 +353,35 @@ public class JobUtilTest extends PlatformLangTestCase {
         .invokeConcurrentlyUnderProgress(Collections.nCopies(10000, ""), indicator, false, false, processor);
       assertFalse(indicator.isCanceled());
       assertFalse(result);
+    }
+  }
+
+  public void testTasksRunEvenWhenReadActionIsHardToGet() throws ExecutionException, InterruptedException {
+    final Processor<String> processor = new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        busySleep(1);
+        return true;
+      }
+    };
+    for (int i=0; i<1/*00*/; i++) {
+      final ProgressIndicator indicator = new EmptyProgressIndicator();
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(10000, ""), indicator, true, false, processor);
+          assertFalse(indicator.isCanceled());
+        }
+      });
+      for (int k=0; k<10000; k++) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            busySleep(1);
+          }
+        });
+      }
+      future.get();
     }
   }
 }

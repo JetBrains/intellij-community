@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -49,31 +50,27 @@ public abstract class JobLauncher {
    *         or we were unable to start read action in at least one thread
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
-  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                              ProgressIndicator progress,
-                                                              boolean failFastOnAcquireReadAction,
-                                                              @NotNull Processor<T> thingProcessor) throws ProcessCanceledException;
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+                                                     ProgressIndicator progress,
+                                                     boolean failFastOnAcquireReadAction,
+                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
+                                           failFastOnAcquireReadAction, thingProcessor);
+  }
 
-  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
+
+  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
                                                               ProgressIndicator progress,
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
-                                                              @NotNull Processor<T> thingProcessor) throws ProcessCanceledException;
+                                                              @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException;
 
   @NotNull
-  public abstract <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
+  @Deprecated // use invokeConcurrentlyUnderProgress() instead
+  public abstract <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
                                                                                 ProgressIndicator progress,
                                                                                 boolean failFastOnAcquireReadAction,
-                                                                                @NotNull Processor<T> thingProcessor);
-
-
-  /**
-   * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
-   * This will cause deadlock since this thread pool is an easily exhaustible resource.
-   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
-   */
-  @NotNull
-  public abstract Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback);
+                                                                                @NotNull Processor<? super T> thingProcessor);
 
   /**
    * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
@@ -81,7 +78,5 @@ public abstract class JobLauncher {
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
    */
   @NotNull
-  public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
-    return submitToJobThread(priority, action, null);
-  }
+  public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback);
 }

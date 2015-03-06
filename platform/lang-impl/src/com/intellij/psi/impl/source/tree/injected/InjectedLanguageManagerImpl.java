@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
@@ -180,12 +179,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
     else {
-      JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+      JobLauncher.getInstance().submitToJobThread(new Runnable() {
         @Override
         public void run() {
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable);
         }
-      });
+      }, null);
     }
   }
 
