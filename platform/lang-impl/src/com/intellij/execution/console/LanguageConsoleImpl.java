@@ -30,8 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.VisibleAreaEvent;
-import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -52,6 +50,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.ObjectUtils;
@@ -64,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -176,20 +176,33 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       return;
     }
 
+    myPanel.removeAll();
+
     if (consoleEditorEnabled) {
       FileEditorManager.getInstance(getProject()).closeFile(myVirtualFile);
-      myPanel.removeAll();
+
+      setHistoryScrollBarVisible(false);
       myPanel.add(myHistoryViewer.getComponent());
       myPanel.add(myConsoleEditor.getComponent());
 
-      myHistoryViewer.setHorizontalScrollbarVisible(false);
       myCurrentEditor = myConsoleEditor;
     }
     else {
-      myPanel.removeAll();
+      setHistoryScrollBarVisible(true);
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
-      myHistoryViewer.setHorizontalScrollbarVisible(true);
     }
+  }
+
+  private void setHistoryScrollBarVisible(boolean visible) {
+    JScrollBar prev = myHistoryViewer.getScrollPane().getHorizontalScrollBar();
+    JScrollBar next;
+    if (visible) {
+      next = ((EmptyScrollBar)prev).original;
+    }
+    else {
+      next = new EmptyScrollBar(prev);
+    }
+    myHistoryViewer.getScrollPane().setHorizontalScrollBar(next);
   }
 
   private void setupComponents() {
@@ -200,27 +213,14 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myHistoryViewer.getComponent().setPreferredSize(JBUI.emptySize());
     myHistoryViewer.setCaretEnabled(false);
 
-    myConsoleEditor.setHorizontalScrollbarVisible(true);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
-    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
+    myConsoleEditor.setHighlighter(
+      EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
 
-    myConsoleEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        final int offset = myConsoleEditor.getScrollingModel().getHorizontalScrollOffset();
-        final ScrollingModel model = myHistoryViewer.getScrollingModel();
-        final int historyOffset = model.getHorizontalScrollOffset();
-        if (historyOffset != offset) {
-          try {
-            model.disableAnimation();
-            model.scrollHorizontally(offset);
-          }
-          finally {
-            model.enableAnimation();
-          }
-        }
-      }
-    });
+    myConsoleEditor.getScrollPane().getHorizontalScrollBar().setModel(
+      myHistoryViewer.getScrollPane().getHorizontalScrollBar().getModel());
+    setHistoryScrollBarVisible(false);
+
     myHistoryViewer.getContentComponent().addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent event) {
@@ -241,7 +241,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   protected void setupEditorDefault(@NotNull EditorEx editor) {
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     editor.getContentComponent().setFocusCycleRoot(false);
-    editor.setHorizontalScrollbarVisible(false);
+    editor.setHorizontalScrollbarVisible(true);
     editor.setVerticalScrollbarVisible(true);
     editor.setBorder(null);
 
@@ -617,6 +617,40 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       // apply
       input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
       history.getComponent().setBounds(0, 0, panelSize.width, newHistoryHeight);
+    }
+  }
+
+  private static class EmptyScrollBar extends JBScrollBar {
+
+    final JScrollBar original;
+
+    public EmptyScrollBar(JScrollBar original) {
+      this.original = original;
+      setModel(original.getModel());
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return JBUI.emptySize();
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return JBUI.emptySize();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return JBUI.emptySize();
+    }
+
+    @Override
+    public Border getBorder() {
+      return null;
+    }
+
+    @Override
+    public void paint(Graphics g) {
     }
   }
 }
