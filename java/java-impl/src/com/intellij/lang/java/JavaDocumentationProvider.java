@@ -488,7 +488,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
 
     // Try hard for documentation of incomplete new Class instantiation
-    PsiElement elt = originalElement != null ? PsiTreeUtil.prevLeaf(originalElement): element;
+    PsiElement elt = originalElement != null && !(originalElement instanceof PsiPackage) ? PsiTreeUtil.prevLeaf(originalElement): element;
     if (elt instanceof PsiErrorElement) elt = elt.getPrevSibling();
     else if (elt != null && !(elt instanceof PsiNewExpression)) {
       elt = elt.getParent();
