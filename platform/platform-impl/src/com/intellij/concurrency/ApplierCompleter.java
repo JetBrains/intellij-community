@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,32 +41,32 @@ import java.util.List;
  * reaches the top, in which case it invokes {@link jsr166e.ForkJoinTask#quietlyComplete()} which causes the top level task to wake up and join successfully.
  * The exceptions from the sub tasks bubble up to the top and saved in {@link #throwable}.
  */
-public class ApplierCompleter extends CountedCompleter<Void> {
+class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final ProgressIndicator progressIndicator;
   @NotNull
-  private final List array;
+  private final List<T> array;
   @NotNull
-  private final Processor processor;
+  private final Processor<? super T> processor;
   private final int lo;
   private final int hi;
-  private final ApplierCompleter next; // keeps track of right-hand-side tasks
+  private final ApplierCompleter<T> next; // keeps track of right-hand-side tasks
   volatile Throwable throwable;
   private static final AtomicFieldUpdater<ApplierCompleter, Throwable> throwableUpdater = AtomicFieldUpdater.forFieldOfType(ApplierCompleter.class, Throwable.class);
 
   // if not null, the read action has failed and this list contains unfinished subtasks
-  private List<ApplierCompleter> failedSubTasks;
+  private List<ApplierCompleter<T>> failedSubTasks;
 
   //private final List<ApplierCompleter> children = new ArrayList<ApplierCompleter>();
 
-  ApplierCompleter(ApplierCompleter parent,
+  ApplierCompleter(ApplierCompleter<T> parent,
                    boolean runInReadAction,
                    @NotNull ProgressIndicator progressIndicator,
-                   @NotNull List array,
-                   @NotNull Processor processor,
+                   @NotNull List<T> array,
+                   @NotNull Processor<? super T> processor,
                    int lo,
                    int hi,
-                   ApplierCompleter next) {
+                   ApplierCompleter<T> next) {
     super(parent);
     this.runInReadAction = runInReadAction;
     this.progressIndicator = progressIndicator;
@@ -92,7 +92,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
       @Override
       public void run() {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(process)) {
-          failedSubTasks = new ArrayList<ApplierCompleter>();
+          failedSubTasks = new ArrayList<ApplierCompleter<T>>();
           failedSubTasks.add(ApplierCompleter.this);
           doComplete(throwable);
         }
@@ -111,10 +111,10 @@ public class ApplierCompleter extends CountedCompleter<Void> {
   // executes tasks one by one and forks right halves if it takes too much time
   // returns the linked list of forked halves - they all need to be joined; null means all tasks have been executed, nothing was forked
   @Nullable
-  private ApplierCompleter execAndForkSubTasks() {
+  private ApplierCompleter<T> execAndForkSubTasks() {
     int hi = this.hi;
     long start = System.currentTimeMillis();
-    ApplierCompleter right = null;
+    ApplierCompleter<T> right = null;
     Throwable throwable = null;
     try {
       for (int i = lo; i < hi; ++i) {
@@ -126,7 +126,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
         long elapsed = finish - start;
         if (elapsed > 5 && hi - i >= 2 && getSurplusQueuedTaskCount() <= JobSchedulerImpl.CORES_COUNT) {
           int mid = i + hi >>> 1;
-          right = new ApplierCompleter(this, runInReadAction, progressIndicator, array, processor, mid, hi, right);
+          right = new ApplierCompleter<T>(this, runInReadAction, progressIndicator, array, processor, mid, hi, right);
           //children.add(right);
           addToPendingCount(1);
           right.fork();
@@ -166,8 +166,8 @@ public class ApplierCompleter extends CountedCompleter<Void> {
   }
 
   private void doComplete(Throwable throwable) {
-    ApplierCompleter a = this;
-    ApplierCompleter child = a;
+    ApplierCompleter<T> a = this;
+    ApplierCompleter<T> child = a;
     while (true) {
       // update parent.throwable in a thread safe way
       Throwable oldThrowable;
@@ -182,6 +182,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
         a.onCompletion(child);
         //a.onExceptionalCompletion(throwable, child);
         child = a;
+        //noinspection unchecked
         a = (ApplierCompleter)a.getCompleter();
         if (a == null) {
           // currently avoid using completeExceptionally since it leaks exceptions via jsr166e.ForkJoinTask.exceptionTable
@@ -203,7 +204,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
 
   // tries to unfork, execute and re-link subtasks
   private Throwable tryToExecAllList() {
-    ApplierCompleter right = this;
+    ApplierCompleter<T> right = this;
     Throwable result = throwable;
     while (right != null) {
       if (right.tryUnfork()) {
@@ -221,7 +222,7 @@ public class ApplierCompleter extends CountedCompleter<Void> {
     }
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
-    for (final ApplierCompleter task : failedSubTasks) {
+    for (final ApplierCompleter<T> task : failedSubTasks) {
       task.failedSubTasks = null;
       task.wrapInReadActionAndIndicator(new Runnable() {
         @Override
@@ -234,7 +235,10 @@ public class ApplierCompleter extends CountedCompleter<Void> {
           }
         }
       });
-      assert task.failedSubTasks == null : task.failedSubTasks;
+      if (task.failedSubTasks != null) {
+        result[0] = false;
+        break;
+      }
     }
     return result[0];
   }
