@@ -19,7 +19,6 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -353,13 +352,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         });
       }
     });
-  }
-
-  public static PydevConsoleRunner create(Project project,
-                                          Sdk sdk,
-                                          PyConsoleType consoleType,
-                                          String workingDirectory) {
-    return new PydevConsoleRunner(project, sdk, consoleType, workingDirectory, Maps.<String, String>newHashMap(), new String[]{});
   }
 
   private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
