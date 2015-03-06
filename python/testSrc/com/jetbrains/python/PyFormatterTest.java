@@ -39,7 +39,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testBlankLineAroundClasses() {
-    CodeStyleSettingsManager.getSettings(myFixture.getProject()).BLANK_LINES_AROUND_CLASS = 2;
+    getCommonSettings().BLANK_LINES_AROUND_CLASS = 2;
     doTest();
   }
 
@@ -150,12 +150,12 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceInMethodDeclaration() {  // PY-4241
-    settings().SPACE_BEFORE_METHOD_PARENTHESES = true;
+    getCommonSettings().SPACE_BEFORE_METHOD_PARENTHESES = true;
     doTest();
   }
 
   public void testOptionalAlignForMethodParameters() {  // PY-3995
-    settings().ALIGN_MULTILINE_PARAMETERS = false;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS = false;
     doTest();
   }
 
@@ -185,7 +185,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSetLiteralInArgList() {  // PY-6672
-    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -194,7 +194,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testTupleInArgList() {
-    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -235,7 +235,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceWithinBraces() {  // PY-8069
-    settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_WITHIN_BRACES = true;
+    getCustomSettings().SPACE_WITHIN_BRACES = true;
     doTest();
   }
 
@@ -277,24 +277,24 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testWrapDefinitionWithLongLine() { // IDEA-92081
     settings().setRightMargin(PythonLanguage.getInstance(), 30);
-    settings().WRAP_LONG_LINES = true;
+    getCommonSettings().WRAP_LONG_LINES = true;
     doTest();
   }
 
   public void testWrapAssignment() {  // PY-8572
     settings().setRightMargin(PythonLanguage.getInstance(), 120);
-    settings().WRAP_LONG_LINES = false;
+    getCommonSettings().WRAP_LONG_LINES = false;
     doTest();
   }
 
   public void testIndentInSlice() {  // PY-8572
     settings().setRightMargin(PythonLanguage.getInstance(), 120);
-    settings().WRAP_LONG_LINES = false;
+    getCommonSettings().WRAP_LONG_LINES = false;
     doTest();
   }
 
   public void testIndentInComprehensions() {  // PY-8516
-    settings().getCustomSettings(PyCodeStyleSettings.class).ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    getCustomSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
     doTest();
   }
 
@@ -327,12 +327,12 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceBeforeBackslash() {
-    settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_BEFORE_BACKSLASH = false;
+    getCustomSettings().SPACE_BEFORE_BACKSLASH = false;
     doTest();
   }
 
   public void testNewLineAfterColon() {
-    settings().getCustomSettings(PyCodeStyleSettings.class).NEW_LINE_AFTER_COLON = true;
+    getCustomSettings().NEW_LINE_AFTER_COLON = true;
     doTest();
   }
 
@@ -360,7 +360,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceWithinDeclarationParentheses() {  // PY-8818
-    settings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    getCommonSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
     doTest();
   }
 
@@ -538,6 +538,10 @@ public class PyFormatterTest extends PyTestCase {
 
   private CommonCodeStyleSettings getCommonSettings() {
     return settings().getCommonSettings(PythonLanguage.getInstance());
+  }
+
+  private PyCodeStyleSettings getCustomSettings() {
+    return settings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
   private CodeStyleSettings settings() {
