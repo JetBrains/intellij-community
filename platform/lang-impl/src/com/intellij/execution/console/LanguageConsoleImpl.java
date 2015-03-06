@@ -89,12 +89,12 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   private String myPrompt = "> ";
   private ConsoleViewContentType myPromptAttributes = ConsoleViewContentType.USER_INPUT;
 
-  private Editor myCurrentEditor;
+  private EditorEx myCurrentEditor;
 
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
     public void focusGained(Editor editor) {
-      myCurrentEditor = editor;
+      myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
         FileDocumentManager.getInstance().saveAllDocuments(); // PY-12487
       }
@@ -335,7 +335,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   @NotNull
   public String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
-    EditorEx editor = (EditorEx)getCurrentEditor();
+    EditorEx editor = getCurrentEditor();
     Document document = editor.getDocument();
     String text = document.getText();
     TextRange range = new TextRange(0, document.getTextLength());
@@ -518,7 +518,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @NotNull
-  public Editor getCurrentEditor() {
+  public EditorEx getCurrentEditor() {
     return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
