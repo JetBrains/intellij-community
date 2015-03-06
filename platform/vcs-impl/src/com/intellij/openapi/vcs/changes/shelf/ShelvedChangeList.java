@@ -108,8 +108,8 @@ public class ShelvedChangeList implements JDOMExternalizable {
   public List<ShelvedChange> getChanges(Project project) {
     if (myChanges == null) {
       try {
-        final List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, PATH, null);
         myChanges = new ArrayList<ShelvedChange>();
+        final List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, PATH, null);
         for (FilePatch patch : list) {
           FileStatus status;
           if (patch.isNewFile()) {
