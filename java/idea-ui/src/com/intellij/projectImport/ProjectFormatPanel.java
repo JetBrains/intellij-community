@@ -31,14 +31,12 @@ public class ProjectFormatPanel {
 
   private static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
   public static final String DIR_BASED = Project.DIRECTORY_STORE_FOLDER + " (directory based)";
-  private static final String FILE_BASED = ".ipr (file based)";
 
   private JComboBox myStorageFormatCombo;
   private JPanel myWholePanel;
 
   public ProjectFormatPanel() {
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
-    myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
     myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getOrInit(STORAGE_FORMAT_PROPERTY, DIR_BASED));
   }
 
@@ -51,14 +49,13 @@ public class ProjectFormatPanel {
   }
 
   public void updateData(WizardContext context) {
-    StorageScheme format =
-      FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
+    StorageScheme format = StorageScheme.DIRECTORY_BASED;
     context.setProjectStorageFormat(format);
     setDefaultFormat(isDefault());
   }
 
   public static void setDefaultFormat(boolean aDefault) {
-    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, aDefault ? FILE_BASED : DIR_BASED);
+    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, DIR_BASED);
   }
 
   public void setVisible(boolean visible) {
@@ -66,6 +63,6 @@ public class ProjectFormatPanel {
   }
 
   public boolean isDefault() {
-    return FILE_BASED.equals(myStorageFormatCombo.getSelectedItem());
+    return DIR_BASED.equals(myStorageFormatCombo.getSelectedItem());
   }
 }
