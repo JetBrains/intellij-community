@@ -61,7 +61,8 @@ public class ExternalSystemShortcutsManager implements Disposable {
 
     if (projectPath != null) {
       String portablePath = FileUtil.toSystemIndependentName(projectPath);
-      result.append(new File(portablePath).getParentFile().getName());
+      File file = new File(portablePath);
+      result.append(file.isFile() && file.getParentFile() != null ? file.getParentFile().getName() : file.getName());
       result.append(Integer.toHexString(portablePath.hashCode()));
 
       if (taskName != null) result.append(taskName);
