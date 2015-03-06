@@ -905,7 +905,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     icon.paintIcon(this, g, offset, (getHeight() - icon.getIconHeight()) / 2);
   }
 
-  protected void applyAdditionalHints(@NotNull Graphics g) {
+  protected void applyAdditionalHints(@NotNull Graphics2D g) {
   }
 
   @Override
