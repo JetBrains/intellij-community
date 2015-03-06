@@ -216,8 +216,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       if (myPrevMousePoint == null) return true;
       if (myPrevMousePoint.getComponent() != target.getComponent()) return false;
       Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
-      Point point = target.getScreenPoint();
-      return rectangleOnScreen.contains(point) || ScreenUtil.isMovementTowards(myPrevMousePoint.getScreenPoint(), point, rectangleOnScreen);
+      return ScreenUtil.isMovementTowards(myPrevMousePoint.getScreenPoint(), target.getScreenPoint(), rectangleOnScreen);
     }
     finally {
       myPrevMousePoint = target;

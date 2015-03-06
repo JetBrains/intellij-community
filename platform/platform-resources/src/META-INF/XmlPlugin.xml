@@ -105,13 +105,10 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.xml.XmlPsiManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.treeChangePreprocessor implementation="com.intellij.xml.XmlPsiTreeChangePreprocessor"/>
     <tipAndTrick file="TagNameCompletion.html"/>
 
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
