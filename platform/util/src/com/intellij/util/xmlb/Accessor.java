@@ -47,4 +47,9 @@ public interface Accessor {
   Type getGenericType();
 
   boolean isFinal();
+
+  /**
+   * @deprecated use {@link MutableAccessor#set(Object, Object)} instead
+   */
+  void write(Object o, Object value);
 }

@@ -207,7 +207,7 @@ public interface PopupComponent {
 
     private static void fixFlickering(Window wnd, boolean opaque) {
       try {
-        if (UIUtil.isUnderDarcula() && !SystemInfo.isLinux && wnd != null) {
+        if (UIUtil.isUnderDarcula() && SystemInfo.isMac && Registry.is("darcula.fix.native.flickering") && wnd != null) {
           AWTUtilities.setWindowOpaque(wnd, opaque);
         }
       } catch (Exception ignore) {}

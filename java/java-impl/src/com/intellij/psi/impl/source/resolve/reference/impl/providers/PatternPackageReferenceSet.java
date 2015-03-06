@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -29,8 +31,8 @@ import java.util.regex.Pattern;
 
 public class PatternPackageReferenceSet extends PackageReferenceSet {
 
-  public PatternPackageReferenceSet(String packageName, PsiElement element, int startInElement) {
-    super(packageName, element, startInElement);
+  public PatternPackageReferenceSet(String packageName, PsiElement element, int startInElement, @NotNull GlobalSearchScope scope ) {
+    super(packageName, element, startInElement, scope);
   }
 
   @Override
@@ -38,19 +40,21 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
     if (context == null) return Collections.emptySet();
 
     if (packageName.contains("*")) {
-      final Pattern pattern = PatternUtil.fromMask(packageName);
       final Set<PsiPackage> packages = new LinkedHashSet<PsiPackage>();
-
-      processSubPackages(context, new Processor<PsiPackage>() {
-        @Override
-        public boolean process(PsiPackage psiPackage) {
-          String name = psiPackage.getName();
-          if (name != null && pattern.matcher(name).matches()) {
-            packages.add(psiPackage);
-          }
-          return true;
+      int indexOf = packageName.indexOf("*");
+      if (indexOf == 0 || context.getQualifiedName().startsWith(packageName.substring(0, indexOf))) {
+          final Pattern pattern = PatternUtil.fromMask(packageName);
+          processSubPackages(context, new Processor<PsiPackage>() {
+            @Override
+            public boolean process(PsiPackage psiPackage) {
+              String name = psiPackage.getName();
+              if (name != null && pattern.matcher(name).matches()) {
+                packages.add(psiPackage);
+              }
+              return true;
+            }
+          });
         }
-      });
 
       return packages;
     }
@@ -58,10 +62,10 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
     return super.resolvePackageName(context, packageName);
   }
 
-  protected static boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
+  protected boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
     if (!processor.process(pkg)) return false;
 
-    for (final PsiPackage aPackage : pkg.getSubPackages()) {
+    for (final PsiPackage aPackage : pkg.getSubPackages(getResolveScope())) {
       if (!processSubPackages(aPackage, processor)) return false;
     }
     return true;
