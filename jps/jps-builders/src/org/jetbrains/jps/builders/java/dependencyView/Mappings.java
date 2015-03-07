@@ -532,7 +532,7 @@ public class Mappings {
     }
 
     @Nullable
-    private Boolean isInheritorOf(final int who, final int whom) {
+    private Boolean isInheritorOf(final int who, final int whom, TIntHashSet visitedClasses) {
       if (who == whom) {
         return Boolean.TRUE;
       }
@@ -540,8 +540,15 @@ public class Mappings {
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
+        if (visitedClasses == null) {
+          visitedClasses = new TIntHashSet();
+          visitedClasses.add(who);
+        }
         for (int s : repr.getSupers()) {
-          final Boolean inheritorOf = isInheritorOf(s, whom);
+          if (!visitedClasses.add(s)) {
+            continue;
+          }
+          final Boolean inheritorOf = isInheritorOf(s, whom, visitedClasses);
           if (inheritorOf != null && inheritorOf) {
             return inheritorOf;
           }
@@ -576,7 +583,7 @@ public class Mappings {
       }
 
       if (whom instanceof TypeRepr.ClassType) {
-        return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className);
+        return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className, null);
       }
 
       return Boolean.FALSE;
@@ -594,18 +601,19 @@ public class Mappings {
       return hasOverriddenFields(field, r, null);
     }
 
-    void collectSupersRecursively(@NotNull final int className, @NotNull final TIntHashSet container) {
+    void collectSupersRecursively(final int className, @NotNull final TIntHashSet container) {
       final ClassRepr classRepr = reprByName(className);
       if (classRepr != null) {
         final int[] supers = classRepr.getSupers();
-        container.addAll(supers);
-        for (int aSuper : supers) {
-          collectSupersRecursively(aSuper, container);
+        if (container.addAll(supers)) {
+          for (int aSuper : supers) {
+            collectSupersRecursively(aSuper, container);
+          }
         }
       }
     }
 
-    void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages, final Collection<File> alreadyCompiledFiles) {
+    void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages, final Collection<File> alreadyCompiledFiles, TIntHashSet visitedClasses) {
       debug("Affecting subclasses of class: ", className);
 
       final Collection<File> allSources = myClassToSourceFile.get(className);
@@ -639,10 +647,17 @@ public class Mappings {
 
       final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
       if (directSubclasses != null) {
+        if (visitedClasses == null) {
+          visitedClasses = new TIntHashSet();
+          visitedClasses.add(className);
+        }
+        final TIntHashSet _visitedClasses = visitedClasses;
         directSubclasses.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int subClass) {
-            affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages, alreadyCompiledFiles);
+            if (_visitedClasses.add(subClass)) {
+              affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages, alreadyCompiledFiles, _visitedClasses);
+            }
             return true;
           }
         });
@@ -715,7 +730,7 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(final int residence) {
-        final Boolean inheritorOf = isInheritorOf(residence, rootClass);
+        final Boolean inheritorOf = isInheritorOf(residence, rootClass, null);
         return inheritorOf == null || !inheritorOf || super.checkResidence(residence);
       }
     }
@@ -1112,7 +1127,7 @@ public class Mappings {
         debug("Method: ", m.name);
         if (it.isInterface() || it.isAbstract() || m.isAbstract()) {
           debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
-          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles);
+          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
         }
 
         TIntHashSet propagated = null;
@@ -1157,7 +1172,7 @@ public class Mappings {
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final Boolean inheritorOf = myPresent.isInheritorOf(methodClass.name, it.name);
+            final Boolean inheritorOf = myPresent.isInheritorOf(methodClass.name, it.name, null);
             final boolean isInheritor = inheritorOf != null && inheritorOf;
 
             debug("Method: ", method.name);
@@ -1410,7 +1425,7 @@ public class Mappings {
 
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
                 debug("Added static specifier --- affecting subclasses");
-                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles);
+                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
             }
             else {
@@ -1418,7 +1433,7 @@ public class Mappings {
                   (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
                 debug("Added final, public or abstract specifier --- affecting subclasses");
-                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles);
+                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
@@ -1714,7 +1729,7 @@ public class Mappings {
             debug("Extends changed: ", extendsChanged);
             debug("Interfaces removed: ", interfacesRemoved);
 
-            myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged, myCompiledFiles);
+            myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged, myCompiledFiles, null);
 
             if (!changedClass.isAnonymous()) {
               final TIntHashSet parents = new TIntHashSet();
