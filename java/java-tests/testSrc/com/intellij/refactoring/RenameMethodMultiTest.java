@@ -16,6 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
@@ -82,8 +84,9 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
   }
 
   public void testAlignedMultilineParameters() throws Exception {
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
+    javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("void test123(int i, int j)", "test123asd");
   }
 
