@@ -629,7 +629,7 @@ public class JBTabsImpl extends JComponent
       return;
     }
     mySingleRowLayout.myMorePopup = new JBPopupMenu();
-    for (final TabInfo each : myVisibleInfos) {
+    for (final TabInfo each : getVisibleInfos()) {
       if (!mySingleRowLayout.isTabHidden(each)) continue;
       final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
       item.setForeground(each.getDefaultForeground());
@@ -1285,7 +1285,7 @@ public class JBTabsImpl extends JComponent
 
     if (myVisibleInfos.size() == 1) return null;
 
-    int index = myVisibleInfos.indexOf(info);
+    int index = getVisibleInfos().indexOf(info);
 
     TabInfo result = null;
     if (index > 0) {
@@ -2797,7 +2797,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public int getIndexOf(@Nullable final TabInfo tabInfo) {
-    return myVisibleInfos.indexOf(tabInfo);
+    return getVisibleInfos().indexOf(tabInfo);
   }
 
   @Override
@@ -2902,7 +2902,7 @@ public class JBTabsImpl extends JComponent
       tabs = findNavigatableTabs(tabs);
       e.getPresentation().setEnabled(tabs != null);
       if (tabs != null) {
-        _update(e, tabs, tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo()));
+        _update(e, tabs, tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo()));
       }
     }
 
@@ -2927,7 +2927,7 @@ public class JBTabsImpl extends JComponent
     }
 
     private static boolean isNavigatable(JBTabsImpl tabs) {
-      final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
+      final int selectedIndex = tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo());
       return tabs.isNavigationVisible() && selectedIndex >= 0 && tabs.myNavigationActionsEnabled;
     }
 
@@ -2943,7 +2943,7 @@ public class JBTabsImpl extends JComponent
       tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
 
-      final int index = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
+      final int index = tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo());
       if (index == -1) return;
       _actionPerformed(e, tabs, index);
     }
