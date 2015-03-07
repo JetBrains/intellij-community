@@ -15,8 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -45,7 +43,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
       relayout();
     }
   };
-  @NotNull private final JRootPane myParent;
+  private final JRootPane myParent;
 
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
@@ -54,12 +52,6 @@ public class BalloonLayoutImpl implements BalloonLayout {
     myLayeredPane.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(@NotNull ComponentEvent e) {
-        queueRelayout();
-      }
-    });
-    LafManager.getInstance().addLafManagerListener(new LafManagerListener() {
-      @Override
-      public void lookAndFeelChanged(LafManager source) {
         queueRelayout();
       }
     });
@@ -80,7 +72,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
 
-  private void queueRelayout() {
+  public void queueRelayout() {
     myRelayoutAlarm.cancelAllRequests();
     myRelayoutAlarm.addRequest(myRelayoutRunnable, 200);
   }
