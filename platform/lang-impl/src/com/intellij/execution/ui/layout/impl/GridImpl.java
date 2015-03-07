@@ -79,6 +79,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     myTopSplit.setFirstComponent(left);
     myTopSplit.setInnerComponent(center);
     myTopSplit.setLastComponent(right);
+    myTopSplit.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myTopSplit);
     mySplitter.setSecondComponent(bottom);
   }
