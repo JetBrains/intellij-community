@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.ExecutionAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
@@ -84,6 +85,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -109,9 +111,11 @@ import javax.swing.*;
 import javax.tools.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -127,6 +131,7 @@ public class BuildManager implements ApplicationComponent{
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
   private static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create(BuildParametersKeys.FORCE_MODEL_LOADING);
   private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
+  private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildManager");
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
@@ -206,6 +211,42 @@ public class BuildManager implements ApplicationComponent{
     private boolean shouldSaveDocuments() {
       final Project contextProject = getCurrentContextProject();
       return contextProject != null && canStartAutoMake(contextProject);
+    }
+  };
+
+  private final Runnable myGCTask = new Runnable() {
+    // should be executed from the main queue with runCommand!
+    @Override
+    public void run() {
+      // todo: make customizable in UI?
+      final int unusedThresholdDays = Registry.intValue("compiler.build.data.unused.threshold", -1);
+      if (unusedThresholdDays <= 0) {
+        return;
+      }
+      final File buildSystemDir = getBuildSystemDirectory();
+      final File[] dirs = buildSystemDir.listFiles(new FileFilter() {
+        @Override
+        public boolean accept(File pathname) {
+          return pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName());
+        }
+      });
+      final Date now = new Date();
+      for (File buildDataProjectDir : dirs) {
+        final File usageFile = getUsageFile(buildDataProjectDir);
+        if (usageFile.exists()) {
+          final Pair<Date, File> usageData = readUsageFile(usageFile);
+          if (usageData != null) {
+            final File projectFile = usageData.second;
+            if ((projectFile != null && !projectFile.exists()) || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
+              FileUtil.delete(buildDataProjectDir);
+            }
+          }
+        }
+        else {
+          updateUsageFile(null, buildDataProjectDir); // set usage stamp to start countdown
+        }
+      }
     }
   };
 
@@ -299,6 +340,13 @@ public class BuildManager implements ApplicationComponent{
         stopListening();
       }
     });
+
+    JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+      @Override
+      public void run() {
+        runCommand(myGCTask);
+      }
+    }, 3, 180, TimeUnit.MINUTES);
   }
 
   private List<Project> getOpenProjects() {
@@ -1131,6 +1179,50 @@ public class BuildManager implements ApplicationComponent{
     return projectPath != null? Utils.getDataStorageRoot(getBuildSystemDirectory(), projectPath) : null;
   }
 
+  private static File getUsageFile(@NotNull File projectSystemDir) {
+    return new File(projectSystemDir, "ustamp");
+  }
+
+  private static void updateUsageFile(@Nullable Project project, @NotNull File projectSystemDir) {
+    final File usageFile = getUsageFile(projectSystemDir);
+    StringBuilder content = new StringBuilder();
+    try {
+      synchronized (USAGE_STAMP_DATE_FORMAT) {
+        content.append(USAGE_STAMP_DATE_FORMAT.format(System.currentTimeMillis()));
+      }
+      if (project != null && !project.isDisposed()) {
+        final String projectFilePath = project.getProjectFilePath();
+        if (!StringUtil.isEmptyOrSpaces(projectFilePath)) {
+          content.append("\n").append(FileUtil.toCanonicalPath(projectFilePath));
+        }
+      }
+      FileUtil.writeToFile(usageFile, content.toString());
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+  }
+
+  @Nullable
+  private Pair<Date, File> readUsageFile(File usageFile) {
+    try {
+      final List<String> lines = FileUtil.loadLines(usageFile, CharsetToolkit.UTF8_CHARSET.name());
+      if (!lines.isEmpty()) {
+        final String dateString = lines.get(0);
+        final Date date;
+        synchronized (USAGE_STAMP_DATE_FORMAT) {
+          date = USAGE_STAMP_DATE_FORMAT.parse(dateString);
+        }
+        final File projectFile = lines.size() > 1? new File(lines.get(1)) : null;
+        return Pair.create(date, projectFile);
+      }
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+    return null;
+  }
+
   private static int getMinorVersion(String vs) {
     final int dashIndex = vs.lastIndexOf('_');
     if (dashIndex >= 0) {
@@ -1395,6 +1487,15 @@ public class BuildManager implements ApplicationComponent{
       StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
         @Override
         public void run() {
+          runCommand(new Runnable() {
+            @Override
+            public void run() {
+              final File projectSystemDir = getProjectSystemDirectory(project);
+              if (projectSystemDir != null) {
+                updateUsageFile(project, projectSystemDir);
+              }
+            }
+          });
           scheduleAutoMake(); // run automake after project opened
         }
       });
