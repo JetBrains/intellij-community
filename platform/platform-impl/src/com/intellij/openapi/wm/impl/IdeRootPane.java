@@ -224,8 +224,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void createStatusBar(IdeFrame frame) {
-    myUISettings.addUISettingsListener(this, myApplication);
-
     myStatusBar = new IdeStatusBarImpl();
     myStatusBar.install(frame);
 
