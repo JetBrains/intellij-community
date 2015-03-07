@@ -1942,12 +1942,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testCommentAfterDeclaration() throws Exception {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
 
     int oldMargin = codeStyleSettings.getDefaultRightMargin();
+    int oldWrap = javaSettings.ASSIGNMENT_WRAP;
 
     try {
       codeStyleSettings.setDefaultRightMargin(20);
-      codeStyleSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+      javaSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
       doMethodTest(
         "int i=0; //comment comment",
         "int i =\n" +
@@ -1957,6 +1959,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     }
     finally {
       codeStyleSettings.setDefaultRightMargin(oldMargin);
+      javaSettings.ASSIGNMENT_WRAP = oldWrap;
     }
   }
 
