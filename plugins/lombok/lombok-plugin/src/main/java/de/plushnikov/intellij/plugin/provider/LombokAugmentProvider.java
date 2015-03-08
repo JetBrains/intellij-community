@@ -1,11 +1,14 @@
 package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
@@ -84,8 +87,16 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     try {
       final PsiClass psiClass = (PsiClass) element;
 
-      final boolean isLombokPresent = UserMapKeys.isLombokPossiblePresent(element);
-      if (isLombokPresent) {
+      boolean fileOpenInEditor = true;
+      final PsiFile containingFile = psiClass.getContainingFile();
+      if (null != containingFile) {
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (null != virtualFile) {
+          fileOpenInEditor = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
+        }
+      }
+
+      if (fileOpenInEditor || checkLombokPresent(psiClass)) {
         return process(type, project, psiClass);
       }
     } finally {
@@ -93,6 +104,15 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
 
     return emptyResult;
+  }
+
+  private boolean checkLombokPresent(PsiClass psiClass) {
+    boolean result = UserMapKeys.isLombokPossiblePresent(psiClass);
+    if (result) {
+      result = verifyLombokAnnotationPresent(psiClass);
+    }
+    UserMapKeys.updateLombokPresent(psiClass, result);
+    return result;
   }
 
   @Nullable
@@ -115,31 +135,20 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   private <Psi extends PsiElement> List<Psi> process(@NotNull Class<Psi> type, @NotNull Project project, @NotNull PsiClass psiClass) {
-    final boolean isLombokPossiblePresent = verifyLombokPresent(psiClass);
+    if (log.isDebugEnabled()) {
+      log.debug(String.format("Process call for type: %s class: %s", type, psiClass.getQualifiedName()));
+    }
 
-    UserMapKeys.updateLombokPresent(psiClass, isLombokPossiblePresent);
-
-    if (isLombokPossiblePresent) {
-      if (log.isDebugEnabled()) {
-        log.debug(String.format("Process call for type: %s class: %s", type, psiClass.getQualifiedName()));
-      }
-
-      final List<Psi> result = new ArrayList<Psi>();
-      for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
-        if (processor.canProduce(type) && processor.isEnabled(project)) {
-          result.addAll((Collection<Psi>) processor.process(psiClass));
-        }
-      }
-      return result;
-    } else {
-      if (log.isDebugEnabled()) {
-        log.debug(String.format("Skipped call for type: %s class: %s", type, psiClass.getQualifiedName()));
+    final List<Psi> result = new ArrayList<Psi>();
+    for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
+      if (processor.canProduce(type) && processor.isEnabled(project)) {
+        result.addAll((Collection<Psi>) processor.process(psiClass));
       }
     }
-    return Collections.emptyList();
+    return result;
   }
 
-  private boolean verifyLombokPresent(@NotNull PsiClass psiClass) {
+  private boolean verifyLombokAnnotationPresent(@NotNull PsiClass psiClass) {
     if (PsiAnnotationUtil.checkAnnotationsSimpleNameExistsIn(psiClass, registeredAnnotationNames)) {
       return true;
     }
@@ -157,7 +166,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     final PsiElement psiClassParent = psiClass.getParent();
     if (psiClassParent instanceof PsiClass) {
-      return verifyLombokPresent((PsiClass) psiClassParent);
+      return verifyLombokAnnotationPresent((PsiClass) psiClassParent);
     }
 
     return false;
