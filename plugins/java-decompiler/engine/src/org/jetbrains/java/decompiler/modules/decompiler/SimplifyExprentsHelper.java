@@ -27,11 +27,13 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
@@ -45,6 +47,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class SimplifyExprentsHelper {
 
@@ -882,12 +885,12 @@ public class SimplifyExprentsHelper {
           "statement type:if iftype:if exprsize:-1\n" +
           " exprent position:head type:if\n" +
           "  exprent type:function functype:eq\n" +
-          "   exprent type:field name:$field$\n" +
+          "   exprent type:field name:$fieldname$\n" +
           "   exprent type:constant consttype:null\n" +
           " statement type:basicblock\n" +
           "  exprent position:-1 type:assignment ret:$assignfield$\n" +
           "   exprent type:var index:$var$\n" +
-          "   exprent type:field name:$field$\n" +
+          "   exprent type:field name:$fieldname$\n" +
           " statement type:sequence statsize:2\n" +
           "  statement type:trycatch\n" +  
           "   statement type:basicblock exprsize:1\n" +
@@ -899,7 +902,7 @@ public class SimplifyExprentsHelper {
           "    exprent type:exit exittype:throw\n" + 
           "  statement type:basicblock exprsize:1\n" + 
           "   exprent type:assignment\n" + 
-          "    exprent type:field name:$field$\n" +
+          "    exprent type:field name:$fieldname$ ret:$field$\n" +
           "    exprent type:var index:$var$"
         );
   }
@@ -911,6 +914,7 @@ public class SimplifyExprentsHelper {
       
       String class_name = (String)class14Builder.getVariableValue("$classname$");
       AssignmentExprent assfirst = (AssignmentExprent)class14Builder.getVariableValue("$assignfield$");
+      FieldExprent fieldexpr = (FieldExprent)class14Builder.getVariableValue("$field$");
 
       assfirst.replaceExprent(assfirst.getRight(), new ConstExprent(VarType.VARTYPE_CLASS, class_name, null));
       
@@ -920,6 +924,12 @@ public class SimplifyExprentsHelper {
       stat.setExprents(data);
 
       SequenceHelper.destroyAndFlattenStatement(stat);
+      
+      ClassWrapper wrapper = (ClassWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_WRAPPER);
+      if (wrapper != null) {
+        wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fieldexpr.getName(), fieldexpr.getDescriptor().descriptorString));
+      }
+      
     }
     
     return ret;

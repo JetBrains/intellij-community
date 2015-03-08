@@ -30,6 +30,7 @@ import java.util.Map;
 
 public class DecompilerContext {
   public static final String CURRENT_CLASS = "CURRENT_CLASS";
+  public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
   public static final String CURRENT_METHOD = "CURRENT_METHOD";
   public static final String CURRENT_METHOD_DESCRIPTOR = "CURRENT_METHOD_DESCRIPTOR";
