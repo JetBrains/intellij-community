@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -50,7 +51,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.script.*;
@@ -58,9 +58,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * @author gregsh
@@ -69,41 +71,67 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
   private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
-  private static final Key<ConsoleHistoryController> HISTORY_CONTROLLER_KEY = Key.create("HISTORY_CONTROLLER_KEY");
 
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
+
   static class Engines {
-    static final List<ScriptEngineFactory> ourEngines = new CopyOnWriteArrayList<ScriptEngineFactory>();
+    static final Map<String, ScriptEngineFactory> ourEngines = ContainerUtil.newConcurrentMap();
+    static final Future<List<ScriptEngineFactory>> ourFuture;
     static {
-      PooledThreadExecutor.INSTANCE.submit(
-        new Runnable() {
+      ourFuture = PooledThreadExecutor.INSTANCE.submit(
+        new Callable<List<ScriptEngineFactory>>() {
           @Override
-          public void run() {
+          public List<ScriptEngineFactory> call() throws Exception {
             try {
-              ourEngines.addAll(new ScriptEngineManager().getEngineFactories());
+              LOG.info("Loading javax.script.* engines...");
+              List<ScriptEngineFactory> factories = new ScriptEngineManager().getEngineFactories();
+              for (ScriptEngineFactory factory : factories) {
+                List<String> extensions = factory.getExtensions();
+                LOG.info(factory.getClass().getName() + ": *." + StringUtil.join(extensions, "/") + ": " +
+                         factory.getLanguageName() + "/" + factory.getLanguageVersion() +
+                         " (" + factory.getEngineName() + "/" + factory.getEngineVersion() + ")");
+                for (String ext : extensions) {
+                  ourEngines.put(ext, factory);
+                }
+              }
+              return factories;
             }
             catch (Throwable e) {
               LOG.error(e);
             }
+            return Collections.emptyList();
           }
         });
+    }
+
+    public static void prepareEngines(boolean force) {
+      if (!force) return;
+      try {
+        ourFuture.get();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
     }
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = !Engines.ourEngines.isEmpty() && e.getProject() != null;
-    e.getPresentation().setEnabledAndVisible(enabled);
+    boolean hasEngines = !Engines.ourFuture.isDone() || !Engines.ourEngines.isEmpty();
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && hasEngines);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    Engines.prepareEngines(true);
     if (Engines.ourEngines.size() == 1) {
-      runConsole(e, Engines.ourEngines.get(0));
+      runConsole(e, Engines.ourEngines.values().iterator().next());
     }
     else {
+      List<ScriptEngineFactory> engines = ContainerUtil.newArrayList(Engines.ourEngines.values());
+      ContainerUtil.removeDuplicates(engines);
       DefaultActionGroup actions = new DefaultActionGroup(
-        ContainerUtil.map(Engines.ourEngines, new NotNullFunction<ScriptEngineFactory, AnAction>() {
+        ContainerUtil.map(engines, new NotNullFunction<ScriptEngineFactory, AnAction>() {
           @NotNull
           @Override
           public AnAction fun(final ScriptEngineFactory engine) {
@@ -138,25 +166,14 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   public static void configureConsole(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
-    ScriptEngine engine = findScriptEngine(file);
-    if (engine == null) return;
+    Engines.prepareEngines(false);
     //new ConsoleHistoryController(IdeConsoleRootType.getInstance(), engine.getFactory().getLanguageName())
-    MyRunAction runAction = new MyRunAction(engine);
+    MyRunAction runAction = new MyRunAction();
     for (FileEditor fileEditor : source.getEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
       Editor editor = ((TextEditor)fileEditor).getEditor();
       runAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
     }
-  }
-
-  @Nullable
-  private static ScriptEngine findScriptEngine(@NotNull VirtualFile file) {
-    for (ScriptEngineFactory factory : Engines.ourEngines) {
-      if (factory.getExtensions().contains(file.getExtension())) {
-        return factory.getScriptEngine();
-      }
-    }
-    return null;
   }
 
   private static void executeQuery(@NotNull final Project project_,
@@ -208,6 +225,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
     catch (Exception e) {
+      //noinspection ThrowableResultOfMethodCallIgnored
       Throwable ex = ExceptionUtil.getRootCause(e);
       consoleView.print(ex.getClass().getSimpleName() + ": " + ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
@@ -275,12 +293,9 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   }
 
 
-  private static class MyRunAction extends DumbAwareAction{
-    private final ScriptEngine myEngine;
+  private static class MyRunAction extends DumbAwareAction {
 
-    public MyRunAction(ScriptEngine engine) {
-      myEngine = engine;
-    }
+    private ScriptEngine engine;
 
     @Override
     public void update(AnActionEvent e) {
@@ -296,7 +311,17 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (project == null || editor == null || virtualFile == null) return;
-      executeQuery(project, virtualFile, editor, myEngine);
+      Engines.prepareEngines(true);
+      ScriptEngineFactory factory = Engines.ourEngines.get(virtualFile.getExtension());
+      if (engine == null || engine.getFactory() != factory) {
+        engine = factory == null ? null : factory.getScriptEngine();
+      }
+      if (engine == null) {
+        LOG.warn("Script engine not found for: " + virtualFile.getName());
+      }
+      else {
+        executeQuery(project, virtualFile, editor, engine);
+      }
     }
   }
 }
