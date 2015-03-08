@@ -234,8 +234,6 @@ public class JpsGantProjectBuilder {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
     if (!myDryRun) {
-      myBuildInfoPrinter.printBlockOpenedMessage(this, "compile");
-      info("##teamcity[blockOpened name='compile']");
       final AntMessageHandler messageHandler = new AntMessageHandler();
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
@@ -271,10 +269,14 @@ public class JpsGantProjectBuilder {
       info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
       long compilationStart = System.currentTimeMillis();
       try {
+        myBuildInfoPrinter.printBlockOpenedMessage(this, "Compilation");
         Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
       }
       catch (Throwable e) {
         error(e);
+      }
+      finally {
+        myBuildInfoPrinter.printBlockClosedMessage(this, "Compilation");
       }
       if (messageHandler.myFailed) {
         error("Compilation failed");
@@ -283,7 +285,6 @@ public class JpsGantProjectBuilder {
         myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
         myStatisticsReported = true;
       }
-      myBuildInfoPrinter.printBlockClosedMessage(this, "compile");
     }
     else {
       info("Building skipped as we're running dry");
