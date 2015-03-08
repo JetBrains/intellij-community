@@ -19,13 +19,6 @@ public class BuilderStatic {
     }
 
     public static void main(String[] args) {
-        BuilderStatic.BuilderStaticBuilder audjjwajtj;
         BuilderStatic.builder().duh("duh").build();
-    }
-
-    public static class InnerTest {
-        public void test() {
-
-        }
     }
 }
