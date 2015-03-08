@@ -234,7 +234,7 @@ public class JpsGantProjectBuilder {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
     if (!myDryRun) {
-      info("##teamcity[blockOpened name='compile']")
+      info("##teamcity[blockOpened name='compile']");
       final AntMessageHandler messageHandler = new AntMessageHandler();
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
@@ -282,7 +282,7 @@ public class JpsGantProjectBuilder {
         myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
         myStatisticsReported = true;
       }
-      info("##teamcity[blockClosed name='compile']")
+      info("##teamcity[blockClosed name='compile']");
     }
     else {
       info("Building skipped as we're running dry");
