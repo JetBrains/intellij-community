@@ -21,7 +21,6 @@ includeTargets << new File("${guessHome(this)}/build/scripts/cucumber-tests.gant
 requireProperty("out", "$home/out")
 
 target(compile: "Compile project") {
-  projectBuilder.info("##teamcity[blockOpened name='compile']")
   ant.delete(failonerror: false) {
     fileset(dir: "$home/reports")
     fileset(dir: "$home/bin", includes: "*.hprof")
@@ -29,11 +28,10 @@ target(compile: "Compile project") {
 
   loadProject()
   projectBuilder.targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
-  if (isDefined("avoid.project.rebuild")) {
+  if (!isDefined("avoid.project.rebuild")) {
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
   }
-  projectBuilder.info("##teamcity[blockClosed name='compile']")
 }
 
 private pass(String prop) {
