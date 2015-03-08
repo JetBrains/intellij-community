@@ -114,7 +114,7 @@ public class FastExtendedPostdominanceHelper {
           
           Statement edge_destination = edge.getDestination();
           
-          if(!setVisited.contains(edge_destination) /*&& !setStack.contains(edge_destination)*/) {
+          if(!setVisited.contains(edge_destination)) {
             
             stack.add(edge_destination);
             stackPath.add(path.getCopy());

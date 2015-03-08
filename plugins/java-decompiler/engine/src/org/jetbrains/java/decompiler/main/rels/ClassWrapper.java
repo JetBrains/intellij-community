@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class ClassWrapper {
 
   public void init() throws IOException {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
     // collect field names
