@@ -36,8 +36,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
@@ -49,7 +49,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -383,5 +386,10 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
         }
       }
     }
+  }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.introduce.field";
   }
 }
