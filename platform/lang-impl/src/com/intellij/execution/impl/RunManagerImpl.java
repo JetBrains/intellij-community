@@ -634,8 +634,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       return;
     }
 
-    List<BeforeRunTask> tasks = ContainerUtil.createLockFreeCopyOnWriteList(getBeforeRunTasks(settings.getConfiguration()));
-    Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new HashMap<Key<BeforeRunTask>, BeforeRunTask>();
+    List<BeforeRunTask> tasks = new ArrayList<BeforeRunTask>(getBeforeRunTasks(settings.getConfiguration()));
+    Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new THashMap<Key<BeforeRunTask>, BeforeRunTask>();
     List<BeforeRunTask> beforeRunTasks = settings.isTemplate()
                                          ? getHardcodedBeforeRunTasks(settings.getConfiguration())
                                          : getBeforeRunTasks(getConfigurationTemplate(settings.getFactory()).getConfiguration());
