@@ -1,17 +1,18 @@
 package de.plushnikov.builder;
 
-import lombok.Builder;
+@lombok.Builder
+public class BuilderConstructorException {
 
-public class BuilderExceptions {
-    @Builder
-    private static void foo(int i) throws Exception {
+    private int i;
+
+    public BuilderConstructorException(int i) throws Exception {
         System.out.println("sss");
     }
 
     public static void main(String[] args) {
         try {
             builder().i(2).build();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
     }
 }

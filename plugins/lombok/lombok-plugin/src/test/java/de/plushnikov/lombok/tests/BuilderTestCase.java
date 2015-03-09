@@ -43,4 +43,13 @@ public class BuilderTestCase extends LombokParsingTestCase {
   public void testBuilderWithExistingBuilderClass() throws IOException {
     doTest();
   }
+
+  public void testBuilderConstructorException() throws IOException {
+    doTest();
+  }
+
+//  TODO fixme
+//  public void testBuilderMethodException() throws IOException {
+//    doTest();
+//  }
 }
