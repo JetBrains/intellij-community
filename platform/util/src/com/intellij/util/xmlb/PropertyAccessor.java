@@ -26,7 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-class PropertyAccessor implements Accessor {
+class PropertyAccessor implements MutableAccessor {
   private final String myName;
   private final Class<?> myType;
   private final Method myReadMethod;
@@ -63,11 +63,6 @@ class PropertyAccessor implements Accessor {
     catch (InvocationTargetException e) {
       throw new XmlSerializationException(e);
     }
-  }
-
-  @Override
-  public void write(Object o, Object value) {
-    set(o, value);
   }
 
   @Override
@@ -142,5 +137,10 @@ class PropertyAccessor implements Accessor {
   @NonNls
   public String toString() {
     return "PropertyAccessor[" + myReadMethod.getDeclaringClass().getName() + "." + getName() +"]";
+  }
+
+  @Override
+  public void write(Object o, Object value) {
+    set(o, value);
   }
 }

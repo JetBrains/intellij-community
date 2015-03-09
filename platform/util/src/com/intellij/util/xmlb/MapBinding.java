@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Attribute;
@@ -31,8 +30,6 @@ import java.util.*;
 import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
-  private static final Logger LOG = Logger.getInstance(MapBinding.class);
-
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
     @SuppressWarnings({"unchecked", "NullableProblems"})
     @Override
@@ -54,7 +51,7 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  public MapBinding(@NotNull Accessor accessor) {
+  public MapBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
@@ -114,47 +111,41 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
-    List<?> childNodes;
+  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+    List<Element> childNodes;
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
-      assert nodes.size() == 1;
-      childNodes = ((Element)nodes.get(0)).getContent();
+      assert elements.size() == 1;
+      childNodes = elements.get(0).getChildren();
     }
     else {
-      childNodes = nodes;
+      childNodes = elements;
     }
     return deserialize(context, childNodes);
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Object node) {
+  public Object deserialize(Object context, @NotNull Element element) {
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
-      return deserialize(context, ((Element)node).getContent());
+      return deserialize(context, element.getChildren());
     }
     else {
-      return deserialize(context, Collections.singletonList((Element)node));
+      return deserialize(context, Collections.singletonList(element));
     }
   }
 
-  private Map deserialize(Object context, List<?> childNodes) {
+  private Map deserialize(Object context, List<Element> childNodes) {
     Map map = (Map)context;
     map.clear();
 
-    for (Object childNode : childNodes) {
-      if (XmlSerializerImpl.isIgnoredNode(childNode)) {
-        continue;
-      }
-
-      Element entry = (Element)childNode;
-
-      if (!entry.getName().equals(getEntryAttributeName())) {
-        LOG.warn("unexpected entry for serialized Map will be skipped: " + entry);
+    for (Element childNode : childNodes) {
+      if (!childNode.getName().equals(getEntryAttributeName())) {
+        LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
         continue;
       }
 
       //noinspection unchecked
-      map.put(deserializeKeyOrValue(entry, getKeyAttributeName(), context, keyBinding, keyClass),
-              deserializeKeyOrValue(entry, getValueAttributeName(), context, valueBinding, valueClass));
+      map.put(deserializeKeyOrValue(childNode, getKeyAttributeName(), context, keyBinding, keyClass),
+              deserializeKeyOrValue(childNode, getValueAttributeName(), context, valueBinding, valueClass));
     }
     return map;
   }
@@ -164,11 +155,12 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
       return;
     }
 
-    Object serialized = binding == null ? TextBinding.convertToString(value) : binding.serialize(value, entry, filter);
-    if (serialized instanceof String) {
-      entry.setAttribute(attributeName, (String)serialized);
+    if (binding == null) {
+      entry.setAttribute(attributeName, XmlSerializerImpl.convertToString(value));
     }
-    else if (serialized != null) {
+    else {
+      Object serialized = binding.serialize(value, entry, filter);
+      if (serialized != null) {
       if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
         entry.addContent((Content)serialized);
       }
@@ -179,22 +171,23 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
       }
     }
   }
+  }
 
   private Object deserializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, Object context, @Nullable Binding binding, @NotNull Class<?> valueClass) {
     Attribute attribute = entry.getAttribute(attributeName);
     if (attribute != null) {
-      return binding == null ? XmlSerializerImpl.convert(attribute.getValue(), valueClass) : binding.deserialize(context, attribute);
+      return XmlSerializerImpl.convert(attribute.getValue(), valueClass);
     }
     else if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
       assert binding != null;
-      for (Object child : entry.getContent()) {
-        if (binding.isBoundTo(child)) {
-          return binding.deserialize(context, child);
+      for (Element element : entry.getChildren()) {
+        if (binding.isBoundTo(element)) {
+          return binding.deserialize(context, element);
         }
       }
     }
     else {
-      List<Content> children = XmlSerializerImpl.getFilteredContent(entry.getChild(attributeName));
+      List<Element> children = entry.getChild(attributeName).getChildren();
       if (children.isEmpty()) {
         return null;
       }
@@ -207,16 +200,12 @@ class MapBinding extends Binding implements MultiNodeBinding, MainBinding {
   }
 
   @Override
-  public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) {
-      return false;
-    }
-
+  public boolean isBoundTo(@NotNull Element element) {
     if (myMapAnnotation != null && !myMapAnnotation.surroundWithTag()) {
-      return myMapAnnotation.entryTagName().equals(((Element)node).getName());
+      return myMapAnnotation.entryTagName().equals(element.getName());
     }
     else {
-      return ((Element)node).getName().equals(MAP);
+      return element.getName().equals(MAP);
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,14 +24,16 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 abstract class Binding {
-  protected final Accessor myAccessor;
+  static final Logger LOG = Logger.getInstance(Binding.class);
 
-  protected Binding(Accessor accessor) {
+  protected final MutableAccessor myAccessor;
+
+  protected Binding(MutableAccessor accessor) {
     myAccessor = accessor;
   }
 
   @NotNull
-  public Accessor getAccessor() {
+  public MutableAccessor getAccessor() {
     return myAccessor;
   }
 
@@ -38,22 +41,21 @@ abstract class Binding {
   public abstract Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter);
 
   @Nullable
-  public abstract Object deserialize(Object context, @NotNull Object node);
+  public Object deserialize(Object context, @NotNull Element element) {
+    return context;
+  }
 
-  public abstract boolean isBoundTo(Object node);
+  public boolean isBoundTo(@NotNull Element element) {
+    return false;
+  }
 
   void init(@NotNull Type originalType) {
     // called (and make sense) only if MainBinding
   }
 
-  @NotNull
-  public Class getBoundNodeType() {
-    return Element.class;
-  }
-
   @SuppressWarnings("CastToIncompatibleInterface")
   @Nullable
-  public static Object deserializeList(@NotNull Binding binding, Object context, @NotNull List<?> nodes) {
+  public static Object deserializeList(@NotNull Binding binding, Object context, @NotNull List<Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }

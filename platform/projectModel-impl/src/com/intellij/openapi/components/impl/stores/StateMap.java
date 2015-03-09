@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-final class StateMap {
+public final class StateMap {
   private static final Logger LOG = Logger.getInstance(StateMap.class);
 
   private static final Format XML_FORMAT = Format.getRawFormat().
@@ -178,7 +178,7 @@ final class StateMap {
       }
     }
     catch (IOException e) {
-      throw new StateStorageException(e);
+      throw new RuntimeException(e);
     }
     return ArrayUtil.realloc(byteOut.getInternalBuffer(), byteOut.size());
   }

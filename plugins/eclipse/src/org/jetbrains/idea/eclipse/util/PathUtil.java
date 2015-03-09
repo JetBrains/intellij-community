@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,7 @@ package org.jetbrains.idea.eclipse.util;
 
 import com.intellij.openapi.util.io.FileUtil;
 
-import java.io.File;
-
 public class PathUtil {
-
-  public static final String UNRESOLVED_PREFIX = "?";
-  public static final String HTTP_PREFIX = "http://";
-  public static final String HTTPS_PREFIX = "https://";
-
   public static String normalize(String path) {
     path = FileUtil.toSystemIndependentName(path);
     if (path.endsWith("/")) {
@@ -102,7 +95,7 @@ public class PathUtil {
       return path;
     }
     else {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("..");
       int count = normalize(path).split("/").length;
       while (--count > 0) {

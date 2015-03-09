@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,9 +157,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
       // [dsl] we get here if either old file didn't exist or renaming failed
       final File oldFile = new File(getModuleFilePath());
-      final File parentFile = oldFile.getParentFile();
-
-      final File newFile = new File(parentFile, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      final File newFile = new File(oldFile.getParentFile(), newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       getStateStore().setModuleFilePath(newFile.getCanonicalPath());
     }
     catch (IOException e) {

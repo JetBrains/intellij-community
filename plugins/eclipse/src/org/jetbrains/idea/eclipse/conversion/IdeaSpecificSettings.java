@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,25 +32,20 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.CachedXmlDocumentSet;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSame;
@@ -69,17 +64,6 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
-
-  private IdeaSpecificSettings() {
-  }
-
-  public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
-    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml, false).getRootElement(), model, null, new HashMap<String, String>());
-  }
-
-  @Override
-  protected void readLibraryLevels(Element root, Map<String, String> levels) {
-  }
 
   @Override
   protected ContentEntry[] getEntries(ModifiableRootModel model) {
@@ -151,7 +135,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   @Override
-  protected void readLanguageLevel(Element root, ModifiableRootModel model) throws InvalidDataException {
+  protected void readLanguageLevel(Element root, ModifiableRootModel model) {
     model.getModuleExtension(LanguageLevelModuleExtensionImpl.class).readExternal(root);
   }
 
@@ -256,12 +240,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
   }
 
-  public static boolean writeIDEASpecificClasspath(final Element root, ModuleRootModel model) throws WriteExternalException {
-
+  public static boolean writeIdeaSpecificClasspath(@NotNull Element root, @NotNull ModuleRootModel model) {
     boolean isModified = false;
 
-    final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
-
+    CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
     if (compilerModuleExtension.getCompilerOutputUrlForTests() != null) {
       final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
       pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
@@ -277,15 +259,14 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       isModified = true;
     }
 
-    final LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
-    final LanguageLevel languageLevel = languageLevelModuleExtension.getLanguageLevel();
-    if (languageLevel != null) {
+    LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
+    if (languageLevelModuleExtension.getLanguageLevel() != null) {
       languageLevelModuleExtension.writeExternal(root);
       isModified = true;
     }
 
     for (ContentEntry entry : model.getContentEntries()) {
-      final Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
+      Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
       contentEntryElement.setAttribute(IdeaXml.URL_ATTR, entry.getUrl());
       root.addContent(contentEntryElement);
       for (SourceFolder sourceFolder : entry.getSourceFolders()) {
@@ -295,7 +276,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
           isModified = true;
         }
-        final String packagePrefix = sourceFolder.getPackagePrefix();
+        String packagePrefix = sourceFolder.getPackagePrefix();
         if (!StringUtil.isEmptyOrSpaces(packagePrefix)) {
           Element element = new Element(IdeaXml.PACKAGE_PREFIX_TAG);
           contentEntryElement.addContent(element);
@@ -305,20 +286,19 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         }
       }
 
-      final VirtualFile entryFile = entry.getFile();
+      VirtualFile entryFile = entry.getFile();
       for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-        final String exludeFolderUrl = excludeFolder.getUrl();
-        final VirtualFile excludeFile = excludeFolder.getFile();
+        VirtualFile excludeFile = excludeFolder.getFile();
         if (entryFile == null || excludeFile == null || VfsUtilCore.isAncestor(entryFile, excludeFile, false)) {
           Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
           contentEntryElement.addContent(element);
-          element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
+          element.setAttribute(IdeaXml.URL_ATTR, excludeFolder.getUrl());
           isModified = true;
         }
       }
     }
 
-    final Map<String, String> libLevels = new LinkedHashMap<String, String>();
+    Map<String, String> libLevels = new LinkedHashMap<String, String>();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
@@ -335,7 +315,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         if (EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null || jdk != null) {
           if (entry instanceof InheritedJdkOrderEntry) {
             root.setAttribute(INHERIT_JDK, "true");
-          } else {
+          }
+          else {
             root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
             if (jdk != null) {
               root.setAttribute("jdk_type", jdk.getSdkType().getName());
@@ -346,10 +327,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
       if (!(entry instanceof LibraryOrderEntry)) continue;
 
-      final Element element = new Element("lib");
+      Element element = new Element("lib");
       element.setAttribute("name", entry.getPresentableName());
-      final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
-      final DependencyScope scope = libraryEntry.getScope();
+      LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      DependencyScope scope = libraryEntry.getScope();
       element.setAttribute("scope", scope.name());
       if (libraryEntry.isModuleLevel()) {
         final String[] urls = libraryEntry.getRootUrls(OrderRootType.SOURCES);
@@ -371,7 +352,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         }
 
         final String[] javadocUrls = libraryEntry.getRootUrls(JavadocOrderRootType.getInstance());
-        for (int i = 1; i < javadocUrls.length;  i++) {
+        for (int i = 1; i < javadocUrls.length; i++) {
           Element javadocElement = new Element(JAVADOCROOT_ATTR);
           javadocElement.setAttribute("url", javadocUrls[i]);
           element.addContent(javadocElement);
@@ -394,8 +375,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           isModified = true;
           continue;
         }
-      } else {
-        final String libraryLevel = libraryEntry.getLibraryLevel();
+      }
+      else {
+        String libraryLevel = libraryEntry.getLibraryLevel();
         if (!LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryLevel)) {
           libLevels.put(libraryEntry.getLibraryName(), libraryLevel);
         }
@@ -407,9 +389,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
 
     if (!libLevels.isEmpty()) {
-      final Element libLevelsElement = new Element("levels");
+      Element libLevelsElement = new Element("levels");
       for (String libName : libLevels.keySet()) {
-        final Element libElement = new Element("level");
+        Element libElement = new Element("level");
         libElement.setAttribute("name", libName);
         libElement.setAttribute("value", libLevels.get(libName));
         libLevelsElement.addContent(libElement);

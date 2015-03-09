@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.impl.storage;
+package com.intellij.openapi.components;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.List;
+public interface StateStorageChooserEx {
+  enum Resolution {
+    DO, SKIP, CLEAR
+  }
 
-public interface FileSet {
-  void listFiles(@NotNull List<VirtualFile> list);
-
-  boolean hasChanged();
-
-  void commit() throws IOException;
+  @NotNull
+  Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation);
 }

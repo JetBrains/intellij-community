@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 
@@ -28,28 +29,20 @@ import java.util.Map;
  * Date: 11/8/12
  */
 public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
-  public void readIDEASpecific(final Element root, T model, @Nullable SdkType projectSdkType, Map<String, String> levels) throws InvalidDataException {
+  public void readIdeaSpecific(@NotNull Element root, T model, @Nullable SdkType projectSdkType, @Nullable Map<String, String> levels) {
     expandElement(root, model);
 
     readLanguageLevel(root, model);
 
     setupCompilerOutputs(root, model);
-    final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
-    if (!entriesElements.isEmpty()) {
-      for (Object o : entriesElements) {
-        readContentEntry((Element)o, createContentEntry(model, ((Element)o).getAttributeValue(IdeaXml.URL_ATTR)), model);
-      }
-    } else {
-      final C[] entries = getEntries(model);//todo
-      if (entries.length > 0) {
-        readContentEntry(root, entries[0], model);
-      }
-    }
+    readContentEntry(root, model);
 
     setupJdk(root, model, projectSdkType);
     setupLibraryRoots(root, model);
     overrideModulesScopes(root, model);
-    readLibraryLevels(root, levels);
+    if (levels != null) {
+      readLibraryLevels(root, levels);
+    }
   }
 
   public void initLevels(final Element root, T model, Map<String, String> levels) throws InvalidDataException {
@@ -61,20 +54,27 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
   public void updateEntries(Element root, T model, @Nullable SdkType projectSdkType) {
     setupJdk(root, model, projectSdkType);
     setupCompilerOutputs(root, model);
-    final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
-    if (!entriesElements.isEmpty()) {
-      for (Object o : entriesElements) {
-        readContentEntry((Element)o, createContentEntry(model, ((Element)o).getAttributeValue(IdeaXml.URL_ATTR)), model);
-      }
-    } else {
-      final C[] entries = getEntries(model);//todo
+    readContentEntry(root, model);
+  }
+
+  private void readContentEntry(Element root, T model) {
+    List<Element> entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
+    if (entriesElements.isEmpty()) {
+      // todo
+      C[] entries = getEntries(model);
       if (entries.length > 0) {
         readContentEntry(root, entries[0], model);
       }
     }
+    else {
+      for (Element element : entriesElements) {
+        readContentEntry(element, createContentEntry(model, element.getAttributeValue(IdeaXml.URL_ATTR)), model);
+      }
+    }
   }
 
-  protected abstract void readLibraryLevels(Element root, Map<String, String> levels);
+  protected void readLibraryLevels(Element root, @NotNull Map<String, String> levels) {
+  }
 
   protected abstract C[] getEntries(T model);
 
@@ -86,7 +86,7 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
 
   protected abstract void setupCompilerOutputs(Element root, T model);
 
-  protected abstract void readLanguageLevel(Element root, T model) throws InvalidDataException;
+  protected abstract void readLanguageLevel(Element root, T model);
 
   protected abstract void expandElement(Element root, T model);
 

@@ -27,7 +27,7 @@ public class XmlSerializerUtil {
   public static <T> void copyBean(@NotNull T from, @NotNull T to) {
     assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign " +
                                                              from.getClass() + " to " + to.getClass();
-    for (Accessor accessor : BeanBinding.getAccessors(from.getClass())) {
+    for (MutableAccessor accessor : BeanBinding.getAccessors(from.getClass())) {
       accessor.set(to, accessor.read(from));
     }
   }
@@ -44,7 +44,8 @@ public class XmlSerializerUtil {
     }
   }
 
-  public static List<Accessor> getAccessors(Class aClass) {
+  @NotNull
+  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     return BeanBinding.getAccessors(aClass);
   }
 }

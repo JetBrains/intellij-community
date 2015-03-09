@@ -15,15 +15,21 @@
  */
 package com.intellij.util.xmlb;
 
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+public interface MutableAccessor extends Accessor {
+  void set(@NotNull Object host, @Nullable Object value);
 
-interface MultiNodeBinding {
-  @Nullable
-  Object deserializeList(Object context, @NotNull List<Element> elements);
+  void setBoolean(@NotNull Object host, boolean value);
 
-  boolean isMulti();
+  void setInt(@NotNull Object host, int value);
+
+  void setShort(@NotNull Object host, short value);
+
+  void setLong(@NotNull Object host, long value);
+
+  void setDouble(@NotNull Object host, double value);
+
+  void setFloat(@NotNull Object host, float value);
 }

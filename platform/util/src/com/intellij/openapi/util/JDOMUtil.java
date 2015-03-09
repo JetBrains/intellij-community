@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,35 +186,21 @@ public class JDOMUtil {
   }
 
   public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
-    element.setName(intern(interner, element.getName()));
+    element.setName(interner.intern(element.getName()));
 
     for (Attribute attr : element.getAttributes()) {
-      attr.setName(intern(interner, attr.getName()));
-      attr.setValue(intern(interner, attr.getValue()));
+      attr.setName(interner.intern(attr.getName()));
+      attr.setValue(interner.intern(attr.getValue()));
     }
 
     for (Content o : element.getContent()) {
       if (o instanceof Element) {
-        Element e = (Element)o;
-        internElement(e, interner);
+        internElement((Element)o, interner);
       }
       else if (o instanceof Text) {
-        Text text = (Text)o;
-        text.setText(intern(interner, text.getText()));
-      }
-      else if (o instanceof Comment) {
-        Comment comment = (Comment)o;
-        comment.setText(intern(interner, comment.getText()));
-      }
-      else {
-        throw new IllegalArgumentException("Wrong node: " + o);
+        ((Text)o).setText(interner.intern(o.getValue()));
       }
     }
-  }
-
-  @NotNull
-  private static String intern(@NotNull final StringInterner interner, @NotNull final String s) {
-    return interner.intern(s);
   }
 
   @NotNull

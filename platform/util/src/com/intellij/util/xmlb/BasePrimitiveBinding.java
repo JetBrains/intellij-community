@@ -29,7 +29,7 @@ abstract class BasePrimitiveBinding extends Binding {
   @Nullable
   protected Binding myBinding;
 
-  protected BasePrimitiveBinding(@NotNull Accessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
+  protected BasePrimitiveBinding(@NotNull MutableAccessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
     super(accessor);
 
     myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
@@ -43,11 +43,5 @@ abstract class BasePrimitiveBinding extends Binding {
       //noinspection unchecked
       myConverter = ReflectionUtil.newInstance(converterClass);
     }
-  }
-
-  @NotNull
-  @Override
-  public Class getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 }
