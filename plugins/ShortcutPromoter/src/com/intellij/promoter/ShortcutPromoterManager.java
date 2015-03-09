@@ -5,29 +5,28 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 @State(
   name = "ShortcutPromoterManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/promoter.xml", roamingType = RoamingType.PER_PLATFORM)}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/promoter.xml", roamingType = RoamingType.PER_PLATFORM)
 )
-public class ShortcutPromoterManager implements ApplicationComponent, AnActionListener, ExportableApplicationComponent,
-                                                PersistentStateComponent<Element> {
-  private final HashMap<String, PromoterState> myState = new LinkedHashMap<String, PromoterState>();
-  private final HashMap<String, ShortcutPromoterEP> myExtensions = new HashMap<String, ShortcutPromoterEP>();
+public class ShortcutPromoterManager implements ApplicationComponent, AnActionListener, PersistentStateComponent<Element> {
+  private final Map<String, PromoterState> myState = new LinkedHashMap<String, PromoterState>();
+  private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<String, ShortcutPromoterEP>();
 
   @Override
   public void initComponent() {
@@ -70,24 +69,10 @@ public class ShortcutPromoterManager implements ApplicationComponent, AnActionLi
 
   @Override
   public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-
   }
 
   @Override
   public void beforeEditorTyping(char c, DataContext dataContext) {
-
-  }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("shortcutPromoter")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return "Shortcut Promoter";
   }
 
   @Nullable
@@ -107,13 +92,13 @@ public class ShortcutPromoterManager implements ApplicationComponent, AnActionLi
   public void loadState(Element state) {
     myState.clear();
     for (Element action : state.getChildren("action")) {
-      final String id = action.getAttributeValue("actionId");
-      final String clicks = action.getAttributeValue("clicks");
       try {
-        final PromoterState info = new PromoterState();
-        info.setClicks(Integer.parseInt(clicks));
-        myState.put(id, info);
-      } catch (Exception ignore) {}
+        PromoterState info = new PromoterState();
+        info.setClicks(StringUtil.parseInt(action.getAttributeValue("clicks"), 0));
+        myState.put(action.getAttributeValue("actionId"), info);
+      }
+      catch (Exception ignore) {
+      }
     }
   }
 }
