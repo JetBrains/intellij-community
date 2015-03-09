@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.coverage;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -181,34 +196,38 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return filteredPackageNames.length == 0 && getFilteredClassNames().length == 0;
   }
 
-  public @NotNull List<PsiPackage> getCurrentSuitePackages(Project project) {
-    List<PsiPackage> packages = new ArrayList<PsiPackage>();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final String[] filters = getFilteredPackageNames();
-    if (filters.length == 0) {
-      if (getFilteredClassNames().length > 0) return Collections.emptyList();
+  public @NotNull List<PsiPackage> getCurrentSuitePackages(final Project project) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiPackage>>() {
+      public List<PsiPackage> compute() {
+        final List<PsiPackage> packages = new ArrayList<PsiPackage>();
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        final String[] filters = getFilteredPackageNames();
+        if (filters.length == 0) {
+          if (getFilteredClassNames().length > 0) return Collections.emptyList();
 
-      final PsiPackage defaultPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
-      if (defaultPackage != null) {
-        packages.add(defaultPackage);
-      }
-    } else {
-      final List<String> nonInherited = new ArrayList<String>();
-      for (final String filter : filters) {
-        if (!isSubPackage(filters, filter)) {
-          nonInherited.add(filter);
+          final PsiPackage defaultPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
+          if (defaultPackage != null) {
+            packages.add(defaultPackage);
+          }
         }
-      }
-      
-      for (String filter : nonInherited) {
-        final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(filter);
-        if (psiPackage != null) {
-          packages.add(psiPackage);
-        }
-      }
-    }
+        else {
+          final List<String> nonInherited = new ArrayList<String>();
+          for (final String filter : filters) {
+            if (!isSubPackage(filters, filter)) {
+              nonInherited.add(filter);
+            }
+          }
 
-    return packages;
+          for (String filter : nonInherited) {
+            final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(filter);
+            if (psiPackage != null) {
+              packages.add(psiPackage);
+            }
+          }
+        }
+        return packages;
+      }
+    });
   }
 
   private static boolean isSubPackage(String[] filters, String filter) {
