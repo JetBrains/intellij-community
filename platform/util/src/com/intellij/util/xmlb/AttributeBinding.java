@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 class AttributeBinding extends BasePrimitiveBinding {
   private final Class<?> valueClass;
 
-  public AttributeBinding(@NotNull Accessor accessor, @NotNull Attribute attribute) {
+  public AttributeBinding(@NotNull MutableAccessor accessor, @NotNull Attribute attribute) {
     super(accessor, attribute.value(), attribute.converter());
 
     valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
@@ -46,28 +46,13 @@ class AttributeBinding extends BasePrimitiveBinding {
     return new org.jdom.Attribute(myName, stringValue);
   }
 
-  @Override
-  @Nullable
-  public Object deserialize(Object context, @NotNull Object node) {
-    String value = ((org.jdom.Attribute)node).getValue();
+  void set(@NotNull Object host, @NotNull String value) {
     if (myConverter == null) {
-      XmlSerializerImpl.doSet(context, value, myAccessor, valueClass);
+      XmlSerializerImpl.doSet(host, value, myAccessor, valueClass);
     }
     else {
-      myAccessor.set(context, myConverter.fromString(value));
+      myAccessor.set(host, myConverter.fromString(value));
     }
-    return context;
-  }
-
-  @Override
-  public boolean isBoundTo(Object node) {
-    return node instanceof org.jdom.Attribute && ((org.jdom.Attribute)node).getName().equals(myName);
-  }
-
-  @NotNull
-  @Override
-  public Class getBoundNodeType() {
-    return org.jdom.Attribute.class;
   }
 
   public String toString() {

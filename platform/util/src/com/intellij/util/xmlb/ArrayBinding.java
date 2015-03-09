@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 class ArrayBinding extends AbstractCollectionBinding  {
-  public ArrayBinding(@NotNull Class<?> valueClass, @Nullable Accessor accessor) {
+  public ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
     super(valueClass.getComponentType(), accessor);
   }
 

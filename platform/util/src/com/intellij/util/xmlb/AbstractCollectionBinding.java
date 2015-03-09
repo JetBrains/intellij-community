@@ -38,7 +38,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   protected final Class<?> itemType;
   private final AbstractCollection annotation;
 
-  public AbstractCollectionBinding(@NotNull Class elementType, @Nullable Accessor accessor) {
+  public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
 
     itemType = elementType;
@@ -89,9 +89,9 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   }
 
   @Nullable
-  private Binding getElementBinding(@NotNull Object node) {
+  private Binding getElementBinding(@NotNull Element element) {
     for (Binding binding : getElementBindings().values()) {
-      if (binding.isBoundTo(node)) {
+      if (binding.isBoundTo(element)) {
         return binding;
       }
     }
@@ -134,7 +134,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+  public Object deserializeList(Object context, @NotNull List<Element> elements) {
     Collection result;
     if (getTagName(context) == null) {
       if (context instanceof Collection) {
@@ -144,20 +144,18 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       else {
         result = new SmartList();
       }
-      for (Object node : nodes) {
-        if (!XmlSerializerImpl.isIgnoredNode(node)) {
+      for (Element node : elements) {
           //noinspection unchecked
           result.add(deserializeItem(node, context));
         }
-      }
 
       if (result == context) {
         return result;
       }
     }
     else {
-      assert nodes.size() == 1;
-      result = deserializeSingle(context, (Element)nodes.get(0));
+      assert elements.size() == 1;
+      result = deserializeSingle(context, elements.get(0));
     }
     return processResult(result, context);
   }
@@ -190,23 +188,16 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
     }
   }
 
-  private Object deserializeItem(Object node, Object context) {
+  private Object deserializeItem(@NotNull Element node, Object context) {
     Binding binding = getElementBinding(node);
     if (binding == null) {
       String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
       String value;
       if (attributeName.isEmpty()) {
-        List<Content> children = ((Element)node).getContent();
-        if (children.isEmpty()) {
-          value = null;
+        value = XmlSerializerImpl.getTextValue(node, "");
         }
         else {
-          Content content = children.get(0);
-          value = content instanceof Text ? content.getValue() : null;
-        }
-      }
-      else {
-        value = ((Element)node).getAttributeValue(attributeName);
+        value = node.getAttributeValue(attributeName);
       }
       return XmlSerializerImpl.convert(value, itemType);
     }
@@ -216,7 +207,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Object node) {
+  public Object deserialize(Object context, @NotNull Element element) {
     Collection result;
     if (getTagName(context) == null) {
       if (context instanceof Collection) {
@@ -227,17 +218,15 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
         result = new SmartList();
       }
 
-      if (!XmlSerializerImpl.isIgnoredNode(node)) {
         //noinspection unchecked
-        result.add(deserializeItem(node, context));
-      }
+      result.add(deserializeItem(element, context));
 
       if (result == context) {
         return result;
       }
     }
     else {
-      result = deserializeSingle(context, (Element)node);
+      result = deserializeSingle(context, element);
     }
     return processResult(result, context);
   }
@@ -245,12 +234,10 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   @NotNull
   private Collection deserializeSingle(Object context, @NotNull Element node) {
     Collection result = createCollection(node.getName());
-    for (Content child : node.getContent()) {
-      if (!XmlSerializerImpl.isIgnoredNode(child)) {
+    for (Element child : node.getChildren()) {
         //noinspection unchecked
         result.add(deserializeItem(child, context));
       }
-    }
     return result;
   }
 
@@ -259,19 +246,14 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   }
 
   @Override
-  public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) {
-      return false;
-    }
-
-    Element element = (Element)node;
-    String tagName = getTagName(node);
+  public boolean isBoundTo(@NotNull Element element) {
+    String tagName = getTagName(element);
     if (tagName == null) {
       if (element.getName().equals(annotation == null ? Constants.OPTION : annotation.elementTag())) {
         return true;
       }
 
-      if (getElementBinding(node) != null) {
+      if (getElementBinding(element) != null) {
         return true;
       }
     }

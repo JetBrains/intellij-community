@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 class TextBinding extends Binding {
   private final Class<?> valueClass;
 
-  public TextBinding(@NotNull Accessor accessor) {
+  public TextBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
@@ -35,22 +35,7 @@ class TextBinding extends Binding {
     return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
   }
 
-  @Override
-  @Nullable
-  public Object deserialize(Object context, @NotNull Object node) {
-    String value = ((Text)node).getValue();
+  void set(@NotNull Object context, @NotNull String value) {
     XmlSerializerImpl.doSet(context, value, myAccessor, valueClass);
-    return context;
-  }
-
-  @Override
-  public boolean isBoundTo(Object node) {
-    return node instanceof Text;
-  }
-
-  @NotNull
-  @Override
-  public Class getBoundNodeType() {
-    return Text.class;
   }
 }

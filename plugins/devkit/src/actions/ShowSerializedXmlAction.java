@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.MutableAccessor;
@@ -45,6 +46,7 @@ import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
