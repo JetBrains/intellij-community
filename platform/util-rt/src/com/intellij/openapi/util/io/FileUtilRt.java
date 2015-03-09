@@ -46,7 +46,6 @@ public class FileUtilRt {
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, getUserFileSizeLimit());
 
-  private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
@@ -136,7 +135,9 @@ public class FileUtilRt {
       initSuccess = true;
     }
     catch (Throwable ignored) {
-      LOG.info("Was not able to detect NIO API");
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("INFO: was not able to detect NIO API");
+
       ourFileToPathMethod = null;
       ourFilesWalkMethod = null;
       ourFilesDeleteIfExistsMethod = null;
@@ -430,12 +431,12 @@ public class FileUtilRt {
    *
    * @param path           the path to use
    * @param executableFlag new value of executable attribute
-   * @throws java.io.IOException if there is a problem with setting the flag
+   * @throws IOException if there is a problem with setting the flag
    */
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     final File file = new File(path);
     if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
-      LOG.warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
+      logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
     }
   }
 
@@ -647,12 +648,12 @@ public class FileUtilRt {
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
       if (cause == null || !ourNoSuchFileExceptionClass.isInstance(cause)) {
-        LOG.info(e);
+        logger().info(e);
         return false;
       }
     }
     catch (Exception e) {
-      LOG.info(e);
+      logger().info(e);
       return false;
     }
     return true;
@@ -715,7 +716,7 @@ public class FileUtilRt {
       return true;
     }
     catch (IOException e) {
-      LOG.info(e);
+      logger().info(e);
       return false;
     }
   }
@@ -755,10 +756,10 @@ public class FileUtilRt {
 
     long timeStamp = fromFile.lastModified();
     if (timeStamp < 0) {
-      LOG.warn("Invalid timestamp " + timeStamp + " of '" + fromFile + "'");
+      logger().warn("Invalid timestamp " + timeStamp + " of '" + fromFile + "'");
     }
     else if (!toFile.setLastModified(timeStamp)) {
-      LOG.warn("Unable to set timestamp " + timeStamp + " to '" + toFile + "'");
+      logger().warn("Unable to set timestamp " + timeStamp + " to '" + toFile + "'");
     }
   }
 
@@ -812,5 +813,9 @@ public class FileUtilRt {
     };
 
     boolean charsEqual(char ch1, char ch2);
+  }
+
+  private static LoggerRt logger() {
+    return LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilRt");
   }
 }
