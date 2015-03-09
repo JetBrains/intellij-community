@@ -26,7 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-class PropertyAccessor implements Accessor {
+class PropertyAccessor implements MutableAccessor {
   private final String myName;
   private final Class<?> myType;
   private final Method myReadMethod;
@@ -141,5 +141,6 @@ class PropertyAccessor implements Accessor {
 
   @Override
   public void write(Object o, Object value) {
+    set(o, value);
   }
 }
