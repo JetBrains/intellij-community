@@ -33,8 +33,8 @@ import java.util.Map;
 
 @State(
   name = "DiffSettings",
-  storages = {@Storage(
-    file = DiffUtil.DIFF_CONFIG)})
+  storages = @Storage(file = DiffUtil.DIFF_CONFIG)
+)
 public class DiffSettingsHolder implements PersistentStateComponent<DiffSettingsHolder.State> {
   public static final Key<DiffSettings> KEY = Key.create("DiffSettings");
 
