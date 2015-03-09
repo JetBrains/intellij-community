@@ -54,4 +54,9 @@ public class PyIntroduceVariableHandler extends IntroduceHandler {
   protected String getHelpId() {
     return "python.reference.introduceVariable";
   }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.introduce.variable";
+  }
 }
