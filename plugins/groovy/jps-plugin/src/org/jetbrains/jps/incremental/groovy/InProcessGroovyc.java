@@ -54,9 +54,11 @@ class InProcessGroovyc implements GroovycFlavor {
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
   private final Collection<String> myOutputs;
+  private final boolean myHasStubExcludes;
 
-  InProcessGroovyc(Collection<String> outputs) {
+  InProcessGroovyc(Collection<String> outputs, boolean hasStubExcludes) {
     myOutputs = outputs;
+    myHasStubExcludes = hasStubExcludes;
   }
 
   @Override
@@ -65,7 +67,8 @@ class InProcessGroovyc implements GroovycFlavor {
                                         final JpsGroovySettings settings,
                                         final File tempFile,
                                         final GroovycOutputParser parser) throws Exception {
-    final LinkedBlockingQueue<String> mailbox = forStubs && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
+    boolean jointPossible = forStubs && !myHasStubExcludes;
+    final LinkedBlockingQueue<String> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
                                                 ? new LinkedBlockingQueue<String>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
