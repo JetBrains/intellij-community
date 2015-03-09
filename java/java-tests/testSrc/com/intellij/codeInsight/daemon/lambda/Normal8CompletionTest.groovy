@@ -74,4 +74,40 @@ class Test {
     assert items.find { LookupElementPresentation.renderElement(it).itemText == 'x -> {}' }
   }
 
+
+  public void "test constructor ref"() {
+    myFixture.configureByText "a.java", """
+interface Foo9 {
+  Bar test(int p);
+}
+
+class Bar {
+  public Bar(int p) {}
+}
+
+class Test88 {
+  {
+    Foo9 f = Bar::<caret>;
+  }
+}
+"""
+    myFixture.completeBasic()
+    myFixture.type('\n')
+
+    myFixture.checkResult """
+interface Foo9 {
+  Bar test(int p);
+}
+
+class Bar {
+  public Bar(int p) {}
+}
+
+class Test88 {
+  {
+    Foo9 f = Bar::new;
+  }
+}
+"""
+  }
 }
