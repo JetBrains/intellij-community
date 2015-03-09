@@ -66,10 +66,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1511,12 +1508,22 @@ public class FindDialog extends DialogWrapper {
     }
 
     private void navigateToSelectedUsage(JBTable source) {
-      int row = source.getSelectedRow();
-      Object valueAt = source.getModel().getValueAt(row, 0);
-      if (valueAt instanceof Usage) {
+      int[] rows = source.getSelectedRows();
+      List<Usage> navigations = null;
+      for(int row:rows) {
+        Object valueAt = source.getModel().getValueAt(row, 0);
+        if (valueAt instanceof Usage) {
+          if (navigations == null) navigations = new SmartList<Usage>();
+          Usage at = (Usage)valueAt;
+          navigations.add(at);
+        }
+      }
+
+      if (navigations != null) {
         applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
         doCancelAction();
-        ((Usage)valueAt).navigate(true);
+        navigations.get(0).navigate(true);
+        for(int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
       }
     }
 

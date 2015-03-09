@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -60,13 +62,19 @@ final class SchemesManagerFactoryImpl extends SchemesManagerFactory implements S
 
   @Override
   public void save() {
+    List<Throwable> errors = null;
     for (SchemesManager registeredManager : myRegisteredManagers) {
       try {
         registeredManager.save();
       }
       catch (Throwable e) {
-        LOG.error("Cannot save settings for " + registeredManager.getClass().getName(), e);
+        if (errors == null) {
+          errors = new SmartList<Throwable>();
+        }
+        errors.add(e);
       }
     }
+
+    CompoundRuntimeException.doThrow(errors);
   }
 }

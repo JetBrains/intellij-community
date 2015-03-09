@@ -38,17 +38,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -146,19 +143,33 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static List<ExportableComponent> getComponentsStored(@NotNull File zipFile,
+  private static List<ExportableComponent> getComponentsStored(@NotNull File settings,
                                                                @NotNull Collection<? extends ExportableComponent> registeredComponents) throws IOException {
+    THashSet<String> zipEntries = new THashSet<String>();
+    ZipFile zip = new ZipFile(settings);
+    try {
+      Enumeration enumeration = zip.entries();
+      while (enumeration.hasMoreElements()) {
+        ZipEntry zipEntry = (ZipEntry)enumeration.nextElement();
+        zipEntries.add(zipEntry.getName());
+      }
+    }
+    finally {
+      zip.close();
+    }
+
     File configPath = new File(PathManager.getConfigPath());
     List<ExportableComponent> components = new ArrayList<ExportableComponent>();
+
     for (ExportableComponent component : registeredComponents) {
       for (File exportFile : component.getExportFiles()) {
-        String rPath = FileUtilRt.getRelativePath(configPath, exportFile);
-        assert rPath != null;
-        String relativePath = FileUtilRt.toSystemIndependentName(rPath);
-        if (exportFile.isDirectory()) {
+        String relativePath = FileUtilRt.getRelativePath(configPath, exportFile);
+        assert relativePath != null;
+        relativePath = FileUtilRt.toSystemIndependentName(relativePath);
+        if (exportFile.getName().indexOf('.') == -1 && !exportFile.isFile()) {
           relativePath += '/';
         }
-        if (ZipUtil.isZipContainsEntry(zipFile, relativePath)) {
+        if (zipEntries.contains(relativePath)) {
           components.add(component);
           break;
         }
