@@ -16,7 +16,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.RoamingType;
@@ -46,6 +45,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -517,27 +517,22 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       return;
     }
 
-    for (final E scheme : schemesToSave) {
+    List<Throwable> errors = null;
+    for (E scheme : schemesToSave) {
       try {
         saveScheme(scheme, nameGenerator);
       }
-      catch (final Exception e) {
-        Application app = ApplicationManager.getApplication();
-        if (app.isUnitTestMode() || app.isCommandLine()) {
-          LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
+      catch (Throwable e) {
+        if (errors == null) {
+          errors = new SmartList<Throwable>();
         }
-        else {
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
-            }
-          });
-        }
+        errors.add(e);
       }
     }
 
     deleteFiles(dir);
+
+    CompoundRuntimeException.doThrow(errors);
   }
 
   private void saveScheme(@NotNull E scheme, @NotNull UniqueNameGenerator nameGenerator) throws WriteExternalException, IOException {
