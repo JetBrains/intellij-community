@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,19 +230,16 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       }
     }
 
-    String defaultName = state.name();
-    String resourceBundleName;
-    if (pluginDescriptor != null && pluginDescriptor instanceof IdeaPluginDescriptor && !"com.intellij".equals(pluginDescriptor.getPluginId().getIdString())) {
+    String resourceBundleName = null;
+    if (pluginDescriptor != null && pluginDescriptor instanceof IdeaPluginDescriptor) {
       resourceBundleName = ((IdeaPluginDescriptor)pluginDescriptor).getResourceBundleBaseName();
     }
-    else {
+
+    if (StringUtil.isEmpty(resourceBundleName)) {
       resourceBundleName = OptionsBundle.PATH_TO_BUNDLE;
     }
 
-    if (resourceBundleName == null) {
-      return defaultName;
-    }
-
+    String defaultName = state.name();
     ClassLoader classLoader = pluginDescriptor == null ? null : pluginDescriptor.getPluginClassLoader();
     classLoader = classLoader == null ? aClass.getClassLoader() : classLoader;
     if (classLoader != null) {
