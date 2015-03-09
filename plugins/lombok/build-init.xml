@@ -7,7 +7,7 @@
     <tstamp/>
     <mkdir dir="${basedir}/Tools"/>
 
-    <get src="http://download.jetbrains.com/idea/ideaIC-${ideaVersion}.tar.gz"
+    <get src="http://download-cf.jetbrains.com/idea/ideaIC-${ideaVersion}.tar.gz"
          dest="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz"
          verbose="false" skipexisting="true" usetimestamp="true"/>
     <untar src="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz" dest="${basedir}"/>
