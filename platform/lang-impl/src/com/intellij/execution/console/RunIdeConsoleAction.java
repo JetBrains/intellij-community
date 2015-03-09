@@ -69,9 +69,10 @@ import java.util.concurrent.Future;
  */
 public class RunIdeConsoleAction extends DumbAwareAction {
 
+  private static final String IDE = "IDE";
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
-  private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
 
+  private static final Key<WeakReference<RunContentDescriptor>> DESCRIPTOR_KEY = Key.create("DESCRIPTOR_KEY");
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
   static class Engines {
@@ -176,7 +177,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     }
   }
 
-  private static void executeQuery(@NotNull final Project project_,
+  private static void executeQuery(@NotNull Project project,
                                    @NotNull VirtualFile file,
                                    @NotNull Editor editor,
                                    @NotNull ScriptEngine engine) {
@@ -194,32 +195,12 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     catch (IOException ignored) {
     }
     String command = document.getText(selectedRange);
-    final RunContentDescriptor descriptor = getConsoleView(project_, file, engine);
+    RunContentDescriptor descriptor = getConsoleView(project, file, engine);
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
     try {
-      class IDE {
-        private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
-        public final Application application = ApplicationManager.getApplication();
-        public final Project project = project_;
-        public void print(Object o) {
-          printInContent(descriptor, o, ConsoleViewContentType.NORMAL_OUTPUT);
-        }
-        public void error(Object o) {
-          printInContent(descriptor, o, ConsoleViewContentType.ERROR_OUTPUT);
-        }
-        public Object put(Object key, Object value) {
-          return value == null ? bindings.remove(key) : bindings.put(key, value);
-        }
-        public Object get(Object key) {
-          return bindings.get(key);
-        }
-      }
-
       //myHistoryController.getModel().addToHistory(command);
       consoleView.print("> " + command, ConsoleViewContentType.USER_INPUT);
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
-      Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-      if (bindings.get("IDE") == null) bindings.put("IDE", new IDE());
       Object o = engine.eval(profile == null ? command : profile + "\n" + command);
       consoleView.print("=> " + o, ConsoleViewContentType.NORMAL_OUTPUT);
       consoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -268,6 +249,8 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         return true;
       }
     };
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    bindings.put(IDE, new IDE(project, descriptor));
 
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     //toolbarActions.add(new DumbAwareAction("Rerun", null, AllIcons.Actions.Rerun) {
@@ -322,6 +305,34 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       else {
         executeQuery(project, virtualFile, editor, engine);
       }
+    }
+  }
+
+  public static class IDE {
+    private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
+    public final Application application = ApplicationManager.getApplication();
+    public final Project project;
+    private final WeakReference<RunContentDescriptor> descriptor;
+
+    IDE(Project project, RunContentDescriptor descriptor) {
+      this.project = project;
+      this.descriptor = new WeakReference<RunContentDescriptor>(descriptor);
+    }
+
+    public void print(Object o) {
+      printInContent(descriptor.get(), o, ConsoleViewContentType.NORMAL_OUTPUT);
+    }
+
+    public void error(Object o) {
+      printInContent(descriptor.get(), o, ConsoleViewContentType.ERROR_OUTPUT);
+    }
+
+    public Object put(Object key, Object value) {
+      return value == null ? bindings.remove(key) : bindings.put(key, value);
+    }
+
+    public Object get(Object key) {
+      return bindings.get(key);
     }
   }
 }
