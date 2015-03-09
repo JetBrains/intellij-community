@@ -165,4 +165,9 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
       return myTarget.getContainingFile();
     }
   }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.introduce.parameter";
+  }
 }
