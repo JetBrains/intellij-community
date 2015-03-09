@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,9 +243,14 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Nullable
   public RunnerAndConfigurationSettings getSettings(@Nullable RunConfiguration configuration) {
-    if (configuration == null) return null;
+    if (configuration == null) {
+      return null;
+    }
+
     for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
-      if (settings.getConfiguration() == configuration) return settings;
+      if (settings.getConfiguration() == configuration) {
+        return settings;
+      }
     }
     return null;
   }
@@ -255,15 +260,15 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
    */
   @Override
   @NotNull
-  public List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull final ConfigurationType type) {
-    final LinkedHashSet<RunnerAndConfigurationSettings> set = new LinkedHashSet<RunnerAndConfigurationSettings>();
+  public List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull ConfigurationType type) {
+    List<RunnerAndConfigurationSettings> result = new SmartList<RunnerAndConfigurationSettings>();
     for (RunnerAndConfigurationSettings configuration : getSortedConfigurations()) {
-      final ConfigurationType configurationType = configuration.getType();
+      ConfigurationType configurationType = configuration.getType();
       if (configurationType != null && type.getId().equals(configurationType.getId())) {
-        set.add(configuration);
+        result.add(configuration);
       }
     }
-    return Collections.unmodifiableList(new ArrayList<RunnerAndConfigurationSettings>(set));
+    return result;
   }
 
   @NotNull
