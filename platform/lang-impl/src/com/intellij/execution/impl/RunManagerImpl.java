@@ -318,7 +318,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   @NotNull
-  public RunnerAndConfigurationSettings getConfigurationTemplate(final ConfigurationFactory factory) {
+  public RunnerAndConfigurationSettings getConfigurationTemplate(@NotNull ConfigurationFactory factory) {
     RunnerAndConfigurationSettings template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {
       template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject, this), true);
@@ -621,7 +621,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   private void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings settings, String elementType) {
-    final Element configurationElement = new Element(elementType);
+    Element configurationElement = new Element(elementType);
     parentNode.addContent(configurationElement);
     try {
       ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
@@ -634,8 +634,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       return;
     }
 
-    final List<BeforeRunTask> tasks = ContainerUtil.createLockFreeCopyOnWriteList(getBeforeRunTasks(settings.getConfiguration()));
-    final Element methodsElement = new Element(METHOD);
+    List<BeforeRunTask> tasks = ContainerUtil.createLockFreeCopyOnWriteList(getBeforeRunTasks(settings.getConfiguration()));
     Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new HashMap<Key<BeforeRunTask>, BeforeRunTask>();
     List<BeforeRunTask> beforeRunTasks = settings.isTemplate()
                                          ? getHardcodedBeforeRunTasks(settings.getConfiguration())
@@ -657,6 +656,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         }
       }
     }
+
+    Element methodsElement = new Element(METHOD);
     for (int i = 0, size = tasks.size(); i < size; i++) {
       BeforeRunTask task = tasks.get(i);
       int j = 0;
@@ -669,9 +670,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         j++;
       }
       if (task.equals(templateTask) && i == j) {
-        continue; // not necessary saving if the task is the same as template and on the same place
+        // not necessary saving if the task is the same as template and on the same place
+        continue;
       }
-      final Element child = new Element(OPTION);
+      Element child = new Element(OPTION);
       child.setAttribute(NAME_ATTR, task.getProviderId().toString());
       task.writeExternal(child);
       methodsElement.addContent(child);
@@ -1148,17 +1150,15 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer());
     }
-    final List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
-    if (tasks != null) {
-      return getCopies(tasks);
-    }
-    return getTemplateBeforeRunTasks(settings);
+
+    List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
+    return tasks == null ? getTemplateBeforeRunTasks(settings) : getCopies(tasks);
   }
 
-  private List<BeforeRunTask> getTemplateBeforeRunTasks(RunConfiguration settings) {
+  private List<BeforeRunTask> getTemplateBeforeRunTasks(@NotNull RunConfiguration settings) {
     final RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
     final List<BeforeRunTask> templateTasks = myConfigurationToBeforeTasksMap.get(template.getConfiguration());
-    return templateTasks != null ? getCopies(templateTasks) : getHardcodedBeforeRunTasks(settings);
+    return templateTasks == null ? getHardcodedBeforeRunTasks(settings) : getCopies(templateTasks);
   }
 
   private List<BeforeRunTask> getHardcodedBeforeRunTasks(RunConfiguration settings) {
@@ -1178,12 +1178,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @NotNull
-  private static List<BeforeRunTask> getCopies(List<BeforeRunTask> original) {
-    List<BeforeRunTask> result = new ArrayList<BeforeRunTask>();
-    if (original != null) {
-      for (BeforeRunTask task : original) {
-        if (!task.isEnabled())
-          continue;
+  private static List<BeforeRunTask> getCopies(@NotNull List<BeforeRunTask> original) {
+    List<BeforeRunTask> result = new SmartList<BeforeRunTask>();
+    for (BeforeRunTask task : original) {
+      if (task.isEnabled()) {
         result.add(task.clone());
       }
     }
