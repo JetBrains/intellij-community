@@ -20,6 +20,6 @@ public class SvnPropertiesDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return new SvnPropertiesDiffViewer(context, (SvnPropertiesDiffRequest)request);
+    return SvnPropertiesDiffViewer.create(context, (SvnPropertiesDiffRequest)request);
   }
 }

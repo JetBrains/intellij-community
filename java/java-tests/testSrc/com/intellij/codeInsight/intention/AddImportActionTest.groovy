@@ -278,6 +278,21 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
+  public void "test don't import class if qualified name is not valid"() {
+    myFixture.addClass('''
+package a..p;
+public class MMM {}
+''')
+    myFixture.configureByText 'a.java', '''
+class Test {
+    {
+      MM<caret>M m;
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
   public void "test don't import class in assignment"() {
     myFixture.configureByText 'a.java', '''
 class Test {

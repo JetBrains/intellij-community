@@ -1,8 +1,10 @@
 package com.intellij.refactoring;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
@@ -767,8 +769,9 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   // Checking preserving method parameters alignment
   public void testT127() {
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
+    javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTestMethodType("test234",
                      myFactory.createTypeFromText("int", null),
                      myFactory.createTypeFromText("long", null));

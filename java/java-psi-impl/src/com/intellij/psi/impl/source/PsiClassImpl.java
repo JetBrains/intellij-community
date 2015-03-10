@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -182,16 +183,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
     PsiElement parent = getParent();
     if (parent instanceof PsiJavaFile) {
-      String packageName = ((PsiJavaFile)parent).getPackageName();
-      if (packageName.isEmpty()) {
-        return getName();
-      }
-      return packageName + "." + getName();
+      return StringUtil.getQualifiedName(((PsiJavaFile)parent).getPackageName(), getName());
     }
     if (parent instanceof PsiClass) {
       String parentQName = ((PsiClass)parent).getQualifiedName();
       if (parentQName == null) return null;
-      return parentQName + "." + getName();
+      return StringUtil.getQualifiedName(parentQName, getName());
     }
 
     return null;

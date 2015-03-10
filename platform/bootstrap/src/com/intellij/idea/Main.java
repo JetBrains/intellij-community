@@ -33,7 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
+import static java.io.File.pathSeparator;
+
 public class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int UPDATE_FAILED = 2;
@@ -53,6 +54,7 @@ public class Main {
 
   private Main() { }
 
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
@@ -173,7 +175,7 @@ public class Main {
                          "-Djna.debug_load=true",
                          "-Djna.debug_load.jna=true",
                          "-classpath",
-                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
+                         patchCopy.getPath() + pathSeparator + log4jCopy.getPath() + pathSeparator + jnaCopy.getPath() + pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
@@ -207,7 +209,7 @@ public class Main {
 
   public static void showMessage(String title, Throwable t) {
     StringWriter message = new StringWriter();
-    message.append("Internal error. Please report to http://");
+    message.append("Internal error. Please report to https://");
     boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
     message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
     message.append("\n\n");
@@ -215,35 +217,41 @@ public class Main {
     showMessage(title, message.toString(), true);
   }
 
-  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
-    if (isCommandLine() || GraphicsEnvironment.isHeadless()) {
-      PrintStream stream = error ? System.err : System.out;
-      stream.println("\n" + title + ": " + message);
-    }
-    else {
+    PrintStream stream = error ? System.err : System.out;
+    stream.println("\n" + title + ": " + message);
+
+    boolean headless = isCommandLine() || GraphicsEnvironment.isHeadless();
+    if (!headless) {
       try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
       catch (Throwable ignore) { }
 
-      JTextPane textPane = new JTextPane();
-      textPane.setEditable(false);
-      textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(UIUtil.getPanelBackground());
-      textPane.setCaretPosition(0);
-      JScrollPane scrollPane = new JScrollPane(
-        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      scrollPane.setBorder(null);
+      try {
+        JTextPane textPane = new JTextPane();
+        textPane.setEditable(false);
+        textPane.setText(message.replaceAll("\t", "    "));
+        textPane.setBackground(UIUtil.getPanelBackground());
+        textPane.setCaretPosition(0);
+        JScrollPane scrollPane = new JScrollPane(
+          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(null);
 
-      int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
-      Dimension component = scrollPane.getPreferredSize();
-      if (component.height >= maxHeight) {
-        Object setting = UIManager.get("ScrollBar.width");
-        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
-        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
+        Dimension component = scrollPane.getPreferredSize();
+        if (component.height >= maxHeight) {
+          Object setting = UIManager.get("ScrollBar.width");
+          int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+          scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        }
+
+        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
-
-      int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+      catch (Throwable t) {
+        stream.println("\nAlso, an UI exception occurred on attempt to show above message:");
+        t.printStackTrace(stream);
+      }
     }
   }
 }

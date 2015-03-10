@@ -17,12 +17,14 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
@@ -397,9 +399,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testForceBraces() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int old = settings.IF_BRACE_FORCE;
-    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     try {
       doTest();
     }

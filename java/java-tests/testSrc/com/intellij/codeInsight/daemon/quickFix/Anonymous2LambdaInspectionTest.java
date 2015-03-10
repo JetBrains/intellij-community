@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 

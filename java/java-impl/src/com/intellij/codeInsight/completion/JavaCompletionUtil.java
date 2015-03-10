@@ -550,6 +550,10 @@ public class JavaCompletionUtil {
                                                                          Conditions.<PsiClass>alwaysTrue());
       }
     }
+    
+    if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
+      return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
+    }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
     if (_ret == null || !(_ret instanceof LookupItem)) return Collections.emptyList();

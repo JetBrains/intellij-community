@@ -100,7 +100,7 @@ public class SvnDiffViewer implements DiffViewer {
   @NotNull
   private static DiffViewer createPropertiesViewer(@NotNull DiffRequest propertyRequest, @NotNull MyPropertyContext propertyContext) {
     if (propertyRequest instanceof SvnPropertiesDiffRequest) {
-      return new SvnPropertiesDiffViewer(propertyContext, ((SvnPropertiesDiffRequest)propertyRequest));
+      return SvnPropertiesDiffViewer.create(propertyContext, ((SvnPropertiesDiffRequest)propertyRequest), true);
     }
     else {
       return ErrorDiffTool.INSTANCE.createComponent(propertyContext, propertyRequest);
