@@ -30,10 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +47,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Configure code style";
+    return "Reformat and configure code style";
   }
 
   @Nls
@@ -67,9 +64,18 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        SelectionModel model = editor.getSelectionModel();
+        CodeStyleManager.getInstance(project).reformatRange(file, model.getSelectionStart(), model.getSelectionEnd());
+      }
+    });
+
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+
     new FragmentCodeStyleSettingsDialog(project, editor, file, settings, settingsToShow).show();
   }
 
