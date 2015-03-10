@@ -381,7 +381,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-        if (myUseNewRendering) myView.invalidateLines(startLine - 1, endLine + 1);
+        TextAttributes attributes = highlighter.getTextAttributes();
+        if (myUseNewRendering && start != end && attributes != null && attributes.getFontType() != Font.PLAIN) {
+          myView.invalidateLines(startLine - 1, endLine + 1);
+        }
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
@@ -579,7 +582,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (caretImpl != null) {
       caretImpl.updateVisualPosition();
       if (caretImpl.hasSelection()) {
-        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd());
+        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd(), false);
       }
     }
   }
@@ -598,7 +601,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getPrefixTextWidthInPixels() {
-    return myUseNewRendering ? myView.getPrefixTextWidthInPixels() : myPrefixWidthInPixels;
+    return myUseNewRendering ? (int)myView.getPrefixTextWidthInPixels() : myPrefixWidthInPixels;
   }
 
   @Override
@@ -715,7 +718,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void resetSizes() {
     if (myUseNewRendering) {
-      myView.reinitAllForEditorTextFieldCellRenderer();
+      myView.reset();
     }
     else {
       mySizeContainer.reset();
@@ -1185,6 +1188,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int yPositionToVisibleLine(int y) {
+    if (myUseNewRendering) return myView.yToVisualLine(y);
     assert y >= 0 : y;
     return y / getLineHeight();
   }
@@ -1369,6 +1373,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return EditorUtil.charWidth(c, fontType, this);
   }
 
+  @NotNull
+  public Point offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
+    return myView.offsetToXY(offset, leanTowardsLargerOffsets);
+  }
+  
   @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
@@ -1457,7 +1466,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition visible) {
-    if (myUseNewRendering) return myView.visualPositionToXY(visible);
+    return visualPositionToXY(visible, false);
+  }
+  
+  public Point visualPositionToXY(@NotNull VisualPosition visible, boolean leanTowardsLargerColumns) {
+    if (myUseNewRendering) return myView.visualPositionToXY(visible, leanTowardsLargerColumns); 
     int y = visibleLineToY(visible.line);
     LogicalPosition logical = visualToLogicalPosition(new VisualPosition(visible.line, 0));
     int logLine = logical.line;
@@ -1681,24 +1694,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int visibleLineToY(int line) {
+    if (myUseNewRendering) return myView.visualLineToY(line);
     if (line < 0) throw new IndexOutOfBoundsException("Wrong line: " + line);
     return line * getLineHeight();
   }
 
   @Override
-  public void repaint(final int startOffset, int endOffset) {
+  public void repaint(int startOffset, int endOffset) {
+    repaint(startOffset, endOffset, true);
+  }
+  
+  void repaint(int startOffset, int endOffset, boolean invalidateTextLayout) {
+    if (myDocument.isInBulkUpdate()) {
+      return;
+    }
     if (myUseNewRendering) {
       assertIsDispatchThread();
       endOffset = Math.min(endOffset, myDocument.getTextLength());
-      
-      myView.invalidateLines(myDocument.getLineNumber(startOffset), myDocument.getLineNumber(endOffset));
 
-      if (!isShowing() || myDocument.isInBulkUpdate()) {
+      if (invalidateTextLayout) {
+        myView.invalidateLines(myDocument.getLineNumber(startOffset), myDocument.getLineNumber(endOffset));
+      }
+
+      if (!isShowing()) {
         return;
       }
     }
     else {
-      if (!isShowing() || myDocument.isInBulkUpdate()) {
+      if (!isShowing()) {
         return;
       }
 
@@ -1769,7 +1792,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (!myUseNewRendering) {
+    if (myUseNewRendering) {
+      myView.reset();
+    }
+    else {
       mySizeContainer.reset();
     }
     validateSize();
@@ -3312,6 +3338,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getAscent() {
+    if (myUseNewRendering) return myView.getAscent();
     return getLineHeight() - getDescent();
   }
 
@@ -3568,6 +3595,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getLineHeight() {
+    if (myUseNewRendering) return myView.getLineHeight();
     assertReadAccess();
     int lineHeight = myLineHeight;
     if (lineHeight < 0) {
@@ -3587,6 +3615,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getDescent() {
+    if (myUseNewRendering) return myView.getDescent();
     if (myDescent != -1) {
       return myDescent;
     }
@@ -3616,6 +3645,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getCharHeight() {
+    if (myUseNewRendering) return myView.getCharHeight();
     if (myCharHeight == -1) {
       assertIsDispatchThread();
       FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
@@ -3688,7 +3718,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   @Override
   public Dimension getContentSize() {
-    if (myUseNewRendering) return myView.getContentSize();
+    if (myUseNewRendering) return myView.getPreferredSize();
     Dimension size = mySizeContainer.getContentSize();
     return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
   }
@@ -4512,9 +4542,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final List<CaretRectangle> caretPoints = new ArrayList<CaretRectangle>();
     for (Caret caret : getCaretModel().getAllCarets()) {
       VisualPosition caretPosition = caret.getVisualPosition();
-      Point pos1 = visualPositionToXY(caretPosition);
-      Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, caretPosition.column + 1));
-      caretPoints.add(new CaretRectangle(pos1, pos2.x - pos1.x, caret));
+      Point pos1 = visualPositionToXY(caretPosition, true);
+      Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, caretPosition.column + 1), false);
+      caretPoints.add(new CaretRectangle(pos1, pos2.x - pos1.x, caret, myUseNewRendering));
     }
     myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[caretPoints.size()]));
   }
@@ -4590,9 +4620,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final int myWidth;
     public final Caret myCaret;
 
-    private CaretRectangle(Point point, int width, Caret caret) {
+    private CaretRectangle(Point point, int width, Caret caret, boolean useNewRendering) {
       myPoint = point;
-      myWidth = Math.max(width, 2);
+      myWidth = useNewRendering && width < 0 ? Math.min(width, -2) : Math.max(width, 2);
       myCaret = caret;
     }
   }
@@ -4606,7 +4636,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long myStartTime = 0;
 
     private CaretCursor() {
-      myLocations = new CaretRectangle[] {new CaretRectangle(new Point(0, 0), 0, null)};
+      myLocations = new CaretRectangle[] {new CaretRectangle(new Point(0, 0), 0, null, myUseNewRendering)};
       setEnabled(true);
     }
 
@@ -4650,13 +4680,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void repaint() {
       for (CaretRectangle location : myLocations) {
-        myEditorComponent.repaintEditorComponent(myUseNewRendering ? location.myPoint.x - getCharHeight() * 3 : location.myPoint.x, 
-                                                 location.myPoint.y, 
-                                                 myUseNewRendering ? getCharHeight() * 6 : location.myWidth, 
-                                                 getLineHeight());
+        myEditorComponent.repaintEditorComponent(myUseNewRendering ? Math.min(location.myPoint.x, location.myPoint.x + location.myWidth) : 
+                                                 location.myPoint.x, location.myPoint.y, 
+                                                 myUseNewRendering ? Math.abs(location.myWidth) : location.myWidth, getLineHeight());
       }
     }
-    
+
     @Nullable
     private CaretRectangle[] getCaretLocations() {
       if (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent())) return null;
