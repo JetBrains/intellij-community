@@ -29,6 +29,9 @@
       <option name="DELETED_LINES_COLOR" value="9f9f9f"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
+      <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
+      <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
+      <option name="DIFF_SEPARATORS_BOTTOM_BORDER"/>
     </colors>
 
     <attributes>
@@ -1165,6 +1168,9 @@
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="4c4638"/>
+      <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
+      <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
+      <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
