@@ -113,18 +113,15 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
               assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
               if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
                 throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.class.$0",
-                                   e.getName()));
+                  PyBundle.message("refactoring.move.module.members.error.destination.file.contains.class.$0", e.getName()));
               }
               if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
                 throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0",
-                                   e.getName()));
+                  PyBundle.message("refactoring.move.module.members.error.destination.file.contains.function.$0", e.getName()));
               }
               if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(e.getName()) != null) {
                 throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.global.variable.$0",
-                                   e.getName()));
+                  PyBundle.message("refactoring.move.module.members.error.destination.file.contains.global.variable.$0", e.getName()));
               }
               final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
               final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
