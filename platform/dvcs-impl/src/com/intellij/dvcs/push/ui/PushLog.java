@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
@@ -141,7 +142,7 @@ public class PushLog extends JPanel implements DataProvider {
           else {
             if (mySyncStrategy) {
               resetEditSync();
-              ContainerUtil.process(getChildNodesByType(root, RepositoryNode.class), new Processor<RepositoryNode>() {
+              ContainerUtil.process(getChildNodesByType(root, RepositoryNode.class, false), new Processor<RepositoryNode>() {
                 @Override
                 public boolean process(RepositoryNode node) {
                   node.fireOnChange();
@@ -246,7 +247,6 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void linkSelected(LinkLabel aSource, String aLinkData) {
         mySyncStrategy = true;
-        //todo improved
         DefaultMutableTreeNode nodeToEdit = getFirstNodeToEdit();
         if (nodeToEdit != null) {
           myTree.startEditingAtPath(TreeUtil.getPathFromRoot(nodeToEdit));
@@ -268,7 +268,7 @@ public class PushLog extends JPanel implements DataProvider {
     List<CommitNode> nodes = ContainerUtil.newArrayList();
     for (DefaultMutableTreeNode node : selectedNodes) {
       if (node instanceof RepositoryNode) {
-        nodes.addAll(getChildNodesByType(node, CommitNode.class));
+        nodes.addAll(getChildNodesByType(node, CommitNode.class, true));
       }
       else if (node instanceof CommitNode && !nodes.contains(node)) {
         nodes.add((CommitNode)node);
@@ -287,7 +287,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type) {
+  private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
     List<T> nodes = ContainerUtil.newArrayList();
     if (node.getChildCount() < 1) {
       return nodes;
@@ -298,7 +298,12 @@ public class PushLog extends JPanel implements DataProvider {
       if (type.isInstance(childNode)) {
         @SuppressWarnings("unchecked")
         T nodeT = (T)childNode;
-        nodes.add(0, nodeT);
+        if (reverseOrder) {
+          nodes.add(0, nodeT);
+        }
+        else {
+          nodes.add(nodeT);
+        }
       }
     }
     return nodes;
@@ -400,7 +405,23 @@ public class PushLog extends JPanel implements DataProvider {
 
   @Nullable
   private DefaultMutableTreeNode getFirstNodeToEdit() {
-    return (DefaultMutableTreeNode)myTree.getModel().getChild(myTree.getModel().getRoot(), 0);
+    // start edit last selected component if editable
+    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode) {
+      RepositoryNode selectedNode = ((RepositoryNode)myTree.getLastSelectedPathComponent());
+      if (selectedNode.isEditableNow()) return selectedNode;
+    }
+    List<RepositoryNode> repositoryNodes = getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(),
+                                                               RepositoryNode.class, false);
+    RepositoryNode editableNode = ContainerUtil.find(repositoryNodes, new Condition<RepositoryNode>() {
+      @Override
+      public boolean value(RepositoryNode repositoryNode) {
+        return repositoryNode.isEditableNow();
+      }
+    });
+    if (editableNode != null) {
+      TreeUtil.selectNode(myTree, editableNode);
+    }
+    return editableNode;
   }
 
   public JComponent getPreferredFocusedComponent() {
