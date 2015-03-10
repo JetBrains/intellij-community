@@ -22,6 +22,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.ui.components.panels.HorizontalLayout;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,25 +40,20 @@ import java.awt.*;
 public class EditorNotificationPanel extends JPanel {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
-  protected final JPanel myLinksPanel;
+  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(5));
 
   public EditorNotificationPanel() {
     super(new BorderLayout());
-    setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
 
-    setPreferredSize(new Dimension(-1, 24));
+    JPanel panel = new NonOpaquePanel(new BorderLayout());
+    panel.add(BorderLayout.CENTER, myLabel);
+    panel.add(BorderLayout.EAST, myLinksPanel);
+    panel.setBorder(JBUI.Borders.empty(0, 0, 0, 5));
+    panel.setMinimumSize(new Dimension(0, 0));
 
-    add(myLabel, BorderLayout.CENTER);
-
-    myLinksPanel = new JPanel(new FlowLayout());
-    myLinksPanel.setBackground(getBackground());
-
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBackground(getBackground());
-    myGearLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 0, 0));
-    panel.add(myLinksPanel, BorderLayout.WEST);
-    panel.add(myGearLabel, BorderLayout.EAST);
-    add(panel, BorderLayout.EAST);
+    add(BorderLayout.CENTER, panel);
+    add(BorderLayout.EAST, myGearLabel);
+    setBorder(JBUI.Borders.empty(0, 10));
   }
 
   public void setText(String text) {
@@ -110,10 +108,5 @@ public class EditorNotificationPanel extends JPanel {
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       action.actionPerformed(event);
     }
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    return new Dimension(0, 0);
   }
 }
