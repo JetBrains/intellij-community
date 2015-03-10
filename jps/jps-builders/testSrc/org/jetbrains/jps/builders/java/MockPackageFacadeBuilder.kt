@@ -148,25 +148,27 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
   override fun getPresentableName(): String {
     return "Mock Package Facade Generator"
   }
-}
 
-private val PACKAGE_CACHE_STORAGE_PROVIDER = object: StorageProvider<AbstractStateStorage<String, String>>() {
-  override fun createStorage(targetDataDir: File): AbstractStateStorage<String, String> {
-    val storageFile = File(targetDataDir, "mockPackageFacade/packages")
-    return object : AbstractStateStorage<String, String>(storageFile, PathStringDescriptor(), EnumeratorStringDescriptor()) {
+  class object {
+    private val PACKAGE_CACHE_STORAGE_PROVIDER = object : StorageProvider<AbstractStateStorage<String, String>>() {
+      override fun createStorage(targetDataDir: File): AbstractStateStorage<String, String> {
+        val storageFile = File(targetDataDir, "mockPackageFacade/packages")
+        return object : AbstractStateStorage<String, String>(storageFile, PathStringDescriptor(), EnumeratorStringDescriptor()) {
+        }
+      }
+    }
+
+    private fun getPackageName(sourceFile: File): String {
+      val text = String(FileUtil.loadFileText(sourceFile))
+      val matcher = Pattern.compile("\\p{javaWhitespace}*package\\p{javaWhitespace}+([^;]*);.*").matcher(text)
+      if (matcher.matches()) {
+        return matcher.group(1)
+      }
+      return ""
+    }
+
+    private fun isCompilable(file: File): Boolean {
+      return FileUtilRt.extensionEquals(file.getName(), "p")
     }
   }
-}
-
-private fun getPackageName(sourceFile: File): String {
-  val text = String(FileUtil.loadFileText(sourceFile))
-  val matcher = Pattern.compile("\\p{javaWhitespace}*package\\p{javaWhitespace}+([^;]*);.*").matcher(text)
-  if (matcher.matches()) {
-    return matcher.group(1)
-  }
-  return ""
-}
-
-private fun isCompilable(file: File): Boolean {
-  return FileUtilRt.extensionEquals(file.getName(), "p")
 }
