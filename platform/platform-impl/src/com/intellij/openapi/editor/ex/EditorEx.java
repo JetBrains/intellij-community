@@ -114,11 +114,6 @@ public interface EditorEx extends Editor {
 
   int getMaxWidthInRange(int startOffset, int endOffset);
 
-  /**
-   * @deprecated Does nothing currently. To be removed in IDEA 15.
-   */
-  void stopOptimizedScrolling();
-
   boolean setCaretVisible(boolean b);
 
   boolean setCaretEnabled(boolean enabled);

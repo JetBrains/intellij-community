@@ -4611,10 +4611,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     reinitSettings();
   }
 
-  @Override
-  public void stopOptimizedScrolling() {
-  }
-
   public static class CaretRectangle {
     public final Point myPoint;
     public final int myWidth;
