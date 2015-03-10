@@ -132,7 +132,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       }
     }
 
-    private VisiblePack getVisiblePack(VisiblePack visiblePack, List<Request> requests) {
+    @Nullable
+    private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
       RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
