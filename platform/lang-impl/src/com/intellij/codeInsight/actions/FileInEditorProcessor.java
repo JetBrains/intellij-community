@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.codeInsight.actions.TextRangeType.*;
+import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 
 class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
@@ -201,6 +203,7 @@ class FileInEditorProcessor {
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return false;
     }
-    return myEditor != null && !myProcessSelectedText;
+    EditorSettingsExternalizable.OptionSet editorOptions = EditorSettingsExternalizable.getInstance().getOptions();
+    return editorOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION && myEditor != null && !myProcessSelectedText;
   }
 }
