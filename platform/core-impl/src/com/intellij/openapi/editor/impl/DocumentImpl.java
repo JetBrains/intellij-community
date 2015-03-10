@@ -939,6 +939,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public final int getLineCount() {
+    if (getTextLength() == 0) return 0;
     int lineCount = getLineSet().getLineCount();
     assert lineCount >= 0;
     return lineCount;
