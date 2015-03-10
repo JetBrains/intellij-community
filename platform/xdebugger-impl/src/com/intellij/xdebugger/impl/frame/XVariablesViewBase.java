@@ -63,6 +63,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   private XDebuggerTreeState myTreeState;
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
+  private MySelectionListener mySelectionListener;
 
   protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
     myDebuggerTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
@@ -97,35 +98,24 @@ public abstract class XVariablesViewBase extends XDebugView {
     final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
     if (fileEditor instanceof PsiAwareTextEditorImpl) {
       final Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
-      final SelectionListener listener = new SelectionListener() {
-        @Override
-        public void selectionChanged(final SelectionEvent e) {
-          if (!Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
-            return;
-          }
-          final String text = editor.getDocument().getText(e.getNewRange());
-          if (!StringUtil.isEmpty(text) && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
-            final XDebugSession session = getSession(getTree());
-            if (session == null) return;
-            XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-            if (evaluator == null) return;
-            TextRange range = e.getNewRange();
-            ExpressionInfo info = new ExpressionInfo(range);
-            int offset = range.getStartOffset();
-            LogicalPosition pos = editor.offsetToLogicalPosition(offset);
-            Point point = editor.logicalPositionToXY(pos);
-            new XValueHint(project, editor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session).invokeHint();
-          }
-        }
-      };
-      ((SelectionModelImpl)editor.getSelectionModel()).addSelectionListener(listener, tree);
+      removeSelectionListener();
+      mySelectionListener = new MySelectionListener(editor, stackFrame, project);
+      ((SelectionModelImpl)editor.getSelectionModel()).addSelectionListener(mySelectionListener, tree);
     }
   }
 
   protected void saveCurrentTreeState(@Nullable XStackFrame stackFrame) {
     disposeTreeRestorer();
+    removeSelectionListener();
     myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
     myTreeState = XDebuggerTreeState.saveState(myDebuggerTreePanel.getTree());
+  }
+
+  private void removeSelectionListener() {
+    if (mySelectionListener != null) {
+      mySelectionListener.remove();
+      mySelectionListener = null;
+    }
   }
 
   private void disposeTreeRestorer() {
@@ -146,6 +136,43 @@ public abstract class XVariablesViewBase extends XDebugView {
   @Override
   public void dispose() {
     disposeTreeRestorer();
+    removeSelectionListener();
     DnDManager.getInstance().unregisterSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
+  }
+
+  private class MySelectionListener implements SelectionListener {
+    private final Editor myEditor;
+    private final XStackFrame myStackFrame;
+    private final Project myProject;
+
+    public MySelectionListener(Editor editor, XStackFrame stackFrame, Project project) {
+      myEditor = editor;
+      myStackFrame = stackFrame;
+      myProject = project;
+    }
+
+    public void remove() {
+      myEditor.getSelectionModel().removeSelectionListener(this);
+    }
+
+    @Override
+    public void selectionChanged(final SelectionEvent e) {
+      if (!Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
+        return;
+      }
+      final String text = myEditor.getDocument().getText(e.getNewRange());
+      if (!StringUtil.isEmpty(text) && !(text.contains("exec(") || text.contains("++") || text.contains("--") || text.contains("="))) {
+        final XDebugSession session = getSession(getTree());
+        if (session == null) return;
+        XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
+        if (evaluator == null) return;
+        TextRange range = e.getNewRange();
+        ExpressionInfo info = new ExpressionInfo(range);
+        int offset = range.getStartOffset();
+        LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
+        Point point = myEditor.logicalPositionToXY(pos);
+        new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session).invokeHint();
+      }
+    }
   }
 }
