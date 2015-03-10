@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.impl.SelectionModelImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
@@ -100,7 +99,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       final Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
       removeSelectionListener();
       mySelectionListener = new MySelectionListener(editor, stackFrame, project);
-      ((SelectionModelImpl)editor.getSelectionModel()).addSelectionListener(mySelectionListener, tree);
+      editor.getSelectionModel().addSelectionListener(mySelectionListener);
     }
   }
 
