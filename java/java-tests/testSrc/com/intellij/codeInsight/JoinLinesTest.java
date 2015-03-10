@@ -195,7 +195,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
     // Inspired by IDEA-65342
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.setDefaultRightMargin(50);
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    settings.getCommonSettings(JavaLanguage.INSTANCE).CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTest(2);
   }
   
