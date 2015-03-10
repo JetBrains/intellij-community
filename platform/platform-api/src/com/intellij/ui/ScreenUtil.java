@@ -322,6 +322,49 @@ public class ScreenUtil {
     rectangle.height = move.height - insets.top - insets.bottom;
   }
 
+  /**
+   * Finds the best place for the specified rectangle on the screen.
+   *
+   * @param rectangle    the rectangle to move and resize
+   * @param top          preferred offset between {@code rectangle.y} and popup above
+   * @param bottom       preferred offset between {@code rectangle.y} and popup below
+   * @param rightAligned shows that the rectangle should be moved to the left
+   */
+  public static void fitToScreenVertical(Rectangle rectangle, int top, int bottom, boolean rightAligned) {
+    Rectangle screen = getScreenRectangle(rectangle.x, rectangle.y);
+    if (rectangle.width > screen.width) {
+      rectangle.width = screen.width;
+    }
+    if (rightAligned) {
+      rectangle.x -= rectangle.width;
+    }
+    if (rectangle.x < screen.x) {
+      rectangle.x = screen.x;
+    }
+    else {
+      int max = screen.x + screen.width;
+      if (rectangle.x > max) {
+        rectangle.x = max - rectangle.width;
+      }
+    }
+    int above = rectangle.y - screen.y - top;
+    int below = screen.height - above - top - bottom;
+    if (below > rectangle.height) {
+      rectangle.y += bottom;
+    }
+    else if (above > rectangle.height) {
+      rectangle.y -= rectangle.height + top;
+    }
+    else if (below > above) {
+      rectangle.y += bottom;
+      rectangle.height = below;
+    }
+    else {
+      rectangle.y -= rectangle.height + top;
+      rectangle.height = above;
+    }
+  }
+
   public static void fitToScreen(Rectangle r) {
     Rectangle screen = getScreenRectangle(r.x, r.y);
 
