@@ -878,17 +878,23 @@ SectionEnd
 FunctionEnd*/
 
 Function un.FeedbackPage1
-  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFeedbackPage1.ini"
-  !insertmacro MUI_HEADER_TEXT "Thank you for using ${MUI_PRODUCT}!" ""
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallFeedbackPage1.ini" "Field 2" "Text" "Why are you uninstalling ${MUI_PRODUCT}?"
-  !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFeedbackPage1.ini"
+  StrCmp "${UninstallFeedback}" "Required" show_feed_back_dialog skip_dialog
+show_feed_back_dialog:  
+    !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFeedbackPage1.ini"
+    !insertmacro MUI_HEADER_TEXT "Thank you for using ${MUI_PRODUCT}!" ""
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallFeedbackPage1.ini" "Field 2" "Text" "Why are you uninstalling ${MUI_PRODUCT}?"
+    !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFeedbackPage1.ini"
+skip_dialog:
 FunctionEnd
 
 Function un.FeedbackPage2
-  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFeedbackPage2.ini"
-  !insertmacro MUI_HEADER_TEXT "Thank you for using ${MUI_PRODUCT}!" ""
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallFeedbackPage2.ini" "Field 2" "Text" "Another ${MUI_PRODUCT} version/edition"
-  !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFeedbackPage2.ini"
+  StrCmp "${UninstallFeedback}" "Required" show_feed_back_dialog skip_dialog
+show_feed_back_dialog:  
+    !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFeedbackPage2.ini"
+    !insertmacro MUI_HEADER_TEXT "Thank you for using ${MUI_PRODUCT}!" ""
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallFeedbackPage2.ini" "Field 2" "Text" "Another ${MUI_PRODUCT} version/edition"
+    !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFeedbackPage2.ini"
+skip_dialog:
 FunctionEnd
 
 
