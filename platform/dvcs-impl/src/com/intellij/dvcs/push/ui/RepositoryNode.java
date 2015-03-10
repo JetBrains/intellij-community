@@ -166,6 +166,10 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     t.start();
   }
 
+  @Override
+  public boolean isEditableNow() {
+    return myRepositoryPanel.isEditable();
+  }
 
   public int compareTo(@NotNull RepositoryNode repositoryNode) {
     String name = myRepositoryPanel.getRepositoryName();
