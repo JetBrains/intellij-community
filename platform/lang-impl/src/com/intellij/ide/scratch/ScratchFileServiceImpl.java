@@ -235,11 +235,15 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Override
     @Nullable
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
-      if (project == null || file == null) return null;
+      if (project == null || file == null || !(fileType instanceof ScratchFileType)) return null;
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       if (rootType == null) return null;
       Language language = rootType.substituteLanguage(project, file);
-      return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      SyntaxHighlighter highlighter = language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      if (highlighter != null) return highlighter;
+      FileType originalFileType = RootType.getOriginalFileType(file);
+      highlighter = originalFileType == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(originalFileType, project, file);
+      return highlighter;
     }
   }
 
