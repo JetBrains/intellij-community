@@ -207,7 +207,7 @@ public class Main {
 
   public static void showMessage(String title, Throwable t) {
     StringWriter message = new StringWriter();
-    message.append("Internal error. Please report to http://");
+    message.append("Internal error. Please report to https://");
     boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
     message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
     message.append("\n\n");
