@@ -217,33 +217,39 @@ public class Main {
 
   @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
   public static void showMessage(String title, String message, boolean error) {
-    if (isCommandLine() || GraphicsEnvironment.isHeadless()) {
-      PrintStream stream = error ? System.err : System.out;
-      stream.println("\n" + title + ": " + message);
-    }
-    else {
+    PrintStream stream = error ? System.err : System.out;
+    stream.println("\n" + title + ": " + message);
+
+    boolean headless = isCommandLine() || GraphicsEnvironment.isHeadless();
+    if (!headless) {
       try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
       catch (Throwable ignore) { }
 
-      JTextPane textPane = new JTextPane();
-      textPane.setEditable(false);
-      textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(UIUtil.getPanelBackground());
-      textPane.setCaretPosition(0);
-      JScrollPane scrollPane = new JScrollPane(
-        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      scrollPane.setBorder(null);
+      try {
+        JTextPane textPane = new JTextPane();
+        textPane.setEditable(false);
+        textPane.setText(message.replaceAll("\t", "    "));
+        textPane.setBackground(UIUtil.getPanelBackground());
+        textPane.setCaretPosition(0);
+        JScrollPane scrollPane = new JScrollPane(
+          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(null);
 
-      int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
-      Dimension component = scrollPane.getPreferredSize();
-      if (component.height >= maxHeight) {
-        Object setting = UIManager.get("ScrollBar.width");
-        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
-        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
+        Dimension component = scrollPane.getPreferredSize();
+        if (component.height >= maxHeight) {
+          Object setting = UIManager.get("ScrollBar.width");
+          int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+          scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        }
+
+        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
-
-      int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+      catch (Throwable t) {
+        stream.println("\nAlso, an UI exception occurred on attempt to show above message:");
+        t.printStackTrace(stream);
+      }
     }
   }
 }
