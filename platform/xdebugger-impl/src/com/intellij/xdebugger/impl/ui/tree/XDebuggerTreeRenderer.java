@@ -140,7 +140,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     if (myHaveLink) {
       return myLink.getFragmentTagAt(x - myLinkOffset);
     }
-    return null;
+    return super.getFragmentTagAt(x);
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
