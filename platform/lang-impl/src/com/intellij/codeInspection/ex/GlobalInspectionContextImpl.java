@@ -559,7 +559,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       if (localTool instanceof PairedUnfairLocalInspectionTool) {
         String batchShortName = ((PairedUnfairLocalInspectionTool)localTool).getInspectionForBatchShortName();
         InspectionProfile currentProfile = getCurrentProfile();
-        InspectionToolWrapper batchInspection = currentProfile == null ? null : currentProfile.getInspectionTool(batchShortName, getProject());
+        InspectionToolWrapper batchInspection;
+        if (currentProfile == null) {
+          batchInspection = null;
+        }
+        else {
+          final InspectionToolWrapper pairedWrapper = currentProfile.getInspectionTool(batchShortName, getProject());
+          batchInspection = pairedWrapper != null ? pairedWrapper.createCopy() : null;
+        }
         if (batchInspection != null && !myTools.containsKey(batchShortName)) {
           // add to existing inspections to run
           InspectionProfileEntry batchTool = batchInspection.getTool();
