@@ -97,7 +97,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
     descriptor.withTreeRootVisible(true);
-    myBrowseFieldWithButton.addBrowseFolderListener(PyBundle.message("refactoring.move.class.or.function.choose.destination.file.title"),
+    myBrowseFieldWithButton.addBrowseFolderListener(PyBundle.message("refactoring.move.module.members.dialog.choose.destination.file.title"),
                                                     null,
                                                     project,
                                                     descriptor,
