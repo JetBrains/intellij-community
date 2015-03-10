@@ -710,14 +710,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
     @Override
-    public boolean isEnabled() {
-      return myFoldingModel != null;
-    }
-
-    @Override
     protected void expandAll(boolean expand) {
-      assert myFoldingModel != null;
-      myFoldingModel.expandAll(expand);
+      if (myFoldingModel != null) myFoldingModel.expandAll(expand);
     }
   }
 
