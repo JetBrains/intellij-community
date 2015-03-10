@@ -52,6 +52,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
   private JPanel myTablePanel;
   private TextFieldWithBrowseButton myBrowseFieldWithButton;
   private JBLabel myDescription;
+  private JTextField mySourcePathField;
 
   /**
    * Either creates new dialog or return singleton instance initialized with {@link #setInstanceToReplace)}.
@@ -90,8 +91,10 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     final PsiNamedElement firstElement = elements.get(0);
     setTitle(PyBundle.message("refactoring.move.module.members.dialog.title"));
 
+    final String sourceFilePath = getContainingFileName(firstElement);
+    mySourcePathField.setText(sourceFilePath);
     if (destination == null) {
-      destination = getContainingFileName(firstElement);
+      destination = sourceFilePath;
     }
     myBrowseFieldWithButton.setText(destination);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
