@@ -1387,7 +1387,7 @@ public class PyUtil {
     }
     if (!(psi instanceof PyFile)) {
       throw new IncorrectOperationException(PyBundle.message(
-        "refactoring.move.class.or.function.error.cannot.place.elements.into.nonpython.file"));
+        "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
     }
     return (PyFile)psi;
   }

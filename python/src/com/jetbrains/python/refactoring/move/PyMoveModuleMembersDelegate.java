@@ -104,7 +104,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
         doMove(project, new PsiElement[] {e}, targetContainer, null);
       }
       else {
-        CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.move.class.or.function.error.selection"),
+        CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.move.module.members.error.selection"),
                                             RefactoringBundle.message("error.title"), null);
       }
       return true;

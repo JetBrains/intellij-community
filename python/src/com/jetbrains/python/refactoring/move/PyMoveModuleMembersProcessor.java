@@ -272,7 +272,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   private static void checkValidImportableFile(PsiElement anchor, VirtualFile file) {
     final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
-      throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0",
+      throw new IncorrectOperationException(PyBundle.message("refactoring.move.module.members.error.cannot.use.module.name.$0",
                                                              file.getName()));
     }
   }
