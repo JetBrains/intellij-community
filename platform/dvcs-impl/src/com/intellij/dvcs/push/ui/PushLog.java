@@ -16,9 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -54,7 +52,7 @@ import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 
-public class PushLog extends JPanel implements TypeSafeDataProvider {
+public class PushLog extends JPanel implements DataProvider {
 
   private final static String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
@@ -239,7 +237,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myTree.setRowHeight(0);
   }
 
-  public JComponent createStrategyPanel() {
+  private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBackground(myTree.getBackground());
     final LinkLabel<String> linkLabel = new LinkLabel<String>("Edit all targets", null);
@@ -332,22 +330,24 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (VcsDataKeys.CHANGES == key) {
+  public Object getData(String id) {
+    if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      sink.put(key, ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class));
+      return ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class);
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
+      return ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(CommitNode commitNode) {
           Hash hash = commitNode.getUserObject().getId();
           return new TextRevisionNumber(hash.asString(), hash.toShortString());
         }
-      }), VcsRevisionNumber.class));
+      }), VcsRevisionNumber.class);
     }
+    return null;
   }
 
   @NotNull
