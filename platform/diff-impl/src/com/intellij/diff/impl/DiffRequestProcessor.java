@@ -416,6 +416,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
+    toolbar.setTargetComponent(myMainPanel);
 
     myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
@@ -791,6 +792,14 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
+      Object data;
+
+      DataProvider contentProvider = DiffUtil.getDataProvider(myContentPanel.getContent());
+      if (contentProvider != null) {
+        data = contentProvider.getData(dataId);
+        if (data != null) return data;
+      }
+
       if (OpenInEditorAction.KEY.is(dataId)) {
         return myOpenInEditorAction;
       }
@@ -812,7 +821,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return myContext;
       }
 
-      Object data = myState.getData(dataId);
+      data = myState.getData(dataId);
       if (data != null) return data;
 
       DataProvider requestProvider = myActiveRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);

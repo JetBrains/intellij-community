@@ -80,7 +80,7 @@ public class FocusTrackback {
 
 
     final Application app = ApplicationManager.getApplication();
-    if (app == null || wrongOS()) return;
+    if (app == null || app.isHeadlessEnvironment() || wrongOS()) return;
 
     register(parent);
 

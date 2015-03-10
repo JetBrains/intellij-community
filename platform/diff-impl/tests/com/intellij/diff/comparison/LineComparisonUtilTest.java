@@ -162,6 +162,14 @@ public class LineComparisonUtilTest extends ComparisonUtilTestBase {
       ._Def_(mod(0, 0, 3, 3))
       ._Trim_(del(0, 0, 1), mod(2, 1, 1, 2))
       .all();
+
+    TestData.lines("}_ }", " }")
+      ._Def_(del(0, 0, 1))
+      .def();
+
+    TestData.lines("{_}", "{_ {_ }_}_x")
+      ._Def_(ins(1, 1, 2), ins(2, 4, 1))
+      .def();
   }
 
   public void testNonDeterministicCases() {

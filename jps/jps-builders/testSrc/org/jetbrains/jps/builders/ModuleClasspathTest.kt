@@ -86,12 +86,9 @@ public class ModuleClasspathTest(): JpsBuildTestCase() {
   }
 
   public fun getPathsList(files: Collection<File>): List<String> {
-    return files.map(::getCanonicalPath)
+    return files.map { file ->
+      val path = file.getPath()
+      if (path.contains(".")) toCanonicalPath(path)!! else toSystemIndependentName(path)
+    }
   }
 }
-
-private fun getCanonicalPath(file: File): String {
-  val path = file.getPath()
-  return if (path.contains(".")) FileUtil.toCanonicalPath(path)!! else FileUtil.toSystemIndependentName(path)
-}
-

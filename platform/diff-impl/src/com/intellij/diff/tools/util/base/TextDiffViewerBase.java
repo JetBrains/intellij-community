@@ -357,6 +357,11 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
 
     @Override
+    public boolean isVisible() {
+      return getTextSettings().getContextRange() != -1;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return !getTextSettings().isExpandByDefault();
     }

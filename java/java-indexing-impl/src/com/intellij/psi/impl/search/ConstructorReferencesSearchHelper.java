@@ -15,8 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -52,7 +51,7 @@ public class ConstructorReferencesSearchHelper {
     final boolean[] constructorCanBeCalledImplicitly = new boolean[1];
     final boolean[] isEnum = new boolean[1];
     final boolean[] isUnder18 = new boolean[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(constructor.getProject()).runReadActionInSmartMode(new Runnable() {
       @Override
       public void run() {
         constructorCanBeCalledImplicitly[0] = constructor.getParameterList().getParametersCount() == 0;
@@ -98,7 +97,7 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "this(..)"
-    if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    if (!DumbService.getInstance(constructor.getProject()).runReadActionInSmartMode(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         return processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, isStrictSignatureSearch,
@@ -127,7 +126,7 @@ public class ConstructorReferencesSearchHelper {
   private static boolean processEnumReferences(@NotNull final Processor<PsiReference> processor,
                                                @NotNull final PsiMethod constructor,
                                                @NotNull final PsiClass aClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    return DumbService.getInstance(constructor.getProject()).runReadActionInSmartMode(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         for (PsiField field : aClass.getFields()) {
@@ -148,18 +147,24 @@ public class ConstructorReferencesSearchHelper {
   private static boolean process18MethodPointers(@NotNull final Processor<PsiReference> processor,
                                                  @NotNull final PsiMethod constructor,
                                                  @NotNull PsiClass aClass, SearchScope searchScope) {
-    return ReferencesSearch.search(aClass, searchScope).forEach(new ReadActionProcessor<PsiReference>() {
+    return ReferencesSearch.search(aClass, searchScope).forEach(new Processor<PsiReference>() {
       @Override
-      public boolean processInReadAction(PsiReference reference) {
+      public boolean process(PsiReference reference) {
         final PsiElement element = reference.getElement();
         if (element != null) {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiMethodReferenceExpression &&
-              ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
-            if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
-              if (!processor.process((PsiReference)parent)) return false;
+          return DumbService.getInstance(element.getProject()).runReadActionInSmartMode(new Computable<Boolean>() {
+            @Override
+            public Boolean compute() {
+              final PsiElement parent = element.getParent();
+              if (parent instanceof PsiMethodReferenceExpression &&
+                  ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
+                if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
+                  if (!processor.process((PsiReference)parent)) return false;
+                }
+              }
+              return true;
             }
-          }
+          });
         }
         return true;
       }
@@ -219,7 +224,7 @@ public class ConstructorReferencesSearchHelper {
                                                  @NotNull final PsiMethod constructor,
                                                  @NotNull final PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return true;
-    boolean same = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    boolean same = DumbService.getInstance(constructor.getProject()).runReadActionInSmartMode(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         return myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass());

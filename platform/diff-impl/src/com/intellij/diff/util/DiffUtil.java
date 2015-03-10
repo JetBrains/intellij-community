@@ -33,8 +33,12 @@ import com.intellij.diff.tools.util.LineFragmentCache;
 import com.intellij.diff.tools.util.LineFragmentCache.PolicyData;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -71,6 +75,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -858,6 +863,38 @@ public class DiffUtil {
     }
     if (request != null) {
       T data = request.getUserData(key);
+      if (data != null) return data;
+    }
+    return null;
+  }
+
+  //
+  // DataProvider
+  //
+
+  @Nullable
+  public static DataProvider getDataProvider(@Nullable Object component) {
+    DataProvider dataProvider = null;
+    if (component instanceof DataProvider) {
+      return (DataProvider)component;
+    }
+    else if (component instanceof TypeSafeDataProvider) {
+      return new TypeSafeDataProviderAdapter((TypeSafeDataProvider)component);
+    }
+    else if (component instanceof JComponent) {
+      return DataManager.getDataProvider((JComponent)component);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {
+    if (provider != null) {
+      Object data = provider.getData(dataId);
+      if (data != null) return data;
+    }
+    if (fallbackProvider != null) {
+      Object data = fallbackProvider.getData(dataId);
       if (data != null) return data;
     }
     return null;
