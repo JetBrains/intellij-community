@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -54,8 +55,12 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        if (psiClass.isDeprecated()) {
-          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        try {
+          if (psiClass.isDeprecated()) {
+            return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+          }
+        }
+        catch (IndexNotReadyException ignore) {
         }
         return null;
       }
