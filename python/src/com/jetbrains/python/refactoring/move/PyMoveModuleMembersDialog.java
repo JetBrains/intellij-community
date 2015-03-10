@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.move;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -14,19 +15,23 @@ import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,6 +39,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PyMoveModuleMembersDialog extends RefactoringDialog {
+  @NonNls private final static String BULK_MOVE_TABLE_VISIBLE = "py.move.module.member.dialog.table.visible";
 
   /**
    * Instance to be injected to mimic this class in tests
@@ -45,6 +51,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
   private JPanel myCenterPanel;
   private JPanel myTablePanel;
   private TextFieldWithBrowseButton myBrowseFieldWithButton;
+  private JBLabel myDescription;
 
   /**
    * Either creates new dialog or return singleton instance initialized with {@link #setInstanceToReplace)}.
@@ -107,8 +114,39 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     myMemberSelectionTable = new TopLevelSymbolsSelectionTable(symbolsInfos, myModuleMemberModel);
     myMemberSelectionTable.addMemberInfoChangeListener(myModuleMemberModel);
     // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
-    myTablePanel.add(ScrollPaneFactory.createScrollPane(myMemberSelectionTable), BorderLayout.CENTER);
+    final boolean tableIsVisible = PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
+    final String description;
+    if (!tableIsVisible && elements.size() == 1) {
+      if (firstElement instanceof PyFunction) {
+        description =  PyBundle.message("refactoring.move.module.members.dialog.description.function.$0", firstElement.getName());
+      }
+      else if (firstElement instanceof PyClass) {
+        description = PyBundle.message("refactoring.move.module.members.dialog.description.class.$0", firstElement.getName());
+      }
+      else {
+        description = PyBundle.message("refactoring.move.module.members.dialog.description.variable.$0", firstElement.getName());
+      }
+    }
+    else {
+      description = PyBundle.message("refactoring.move.module.members.dialog.description.selection");
+    }
+    myDescription.setText(description);
+    final HideableDecorator decorator = new HideableDecorator(myTablePanel, PyBundle.message("refactoring.move.module.members.dialog.table.title"), true) {
+      @Override
+      protected void on() {
+        super.on();
+        myDescription.setText(PyBundle.message("refactoring.move.module.members.dialog.description.selection"));
+        PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, "true");
+      }
 
+      @Override
+      protected void off() {
+        super.off();
+        PropertiesComponent.getInstance().setValue(BULK_MOVE_TABLE_VISIBLE, "false");
+      }
+    };
+    decorator.setOn(tableIsVisible);
+    decorator.setContentComponent(ScrollPaneFactory.createScrollPane(myMemberSelectionTable));
     init();
   }
 

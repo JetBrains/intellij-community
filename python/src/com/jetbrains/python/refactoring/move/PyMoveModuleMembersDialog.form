@@ -11,12 +11,12 @@
     </clientProperties>
     <border type="none"/>
     <children>
-      <component id="f467d" class="com.intellij.ui.components.JBLabel">
+      <component id="f467d" class="com.intellij.ui.components.JBLabel" binding="myDescription">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/jetbrains/python/PyBundle" key="refactoring.move.selected.elements"/>
+          <text resource-bundle="com/jetbrains/python/PyBundle" key="refactoring.move.module.members.dialog.description.selection"/>
         </properties>
       </component>
       <component id="894e0" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myBrowseFieldWithButton">
@@ -31,9 +31,9 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndentWithoutInsets"/>
+          <BorderFactoryClass class="java.lang.String" value=""/>
         </clientProperties>
-        <border type="line" title="Declared members"/>
+        <border type="none"/>
         <children/>
       </grid>
     </children>
