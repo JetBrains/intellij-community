@@ -44,6 +44,7 @@ junit.jar
 jzlib-1.1.1.jar
 log4j.jar
 markdownj-core-0.4.2-SNAPSHOT.jar
+markdown4j-2.2.jar
 microba.jar
 miglayout-swing.jar
 nanoxml-2.2.3.jar
