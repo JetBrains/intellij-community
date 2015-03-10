@@ -234,6 +234,10 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   public int getCheckBoxHeight() {
     return myCheckBoxHeight;
   }
+
+  public boolean isEditable() {
+    return myDestPushTargetPanelComponent.getValue() != null;
+  }
 }
 
 

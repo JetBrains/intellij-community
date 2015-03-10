@@ -540,7 +540,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       //there is no selection path if we start editing during initial validation//
       if (treePath == null) return true;
       Object treeNode = treePath.getLastPathComponent();
-      return treeNode instanceof EditableTreeNode;
+      return treeNode instanceof EditableTreeNode && ((EditableTreeNode)treeNode).isEditableNow();
     }
 
     public Object getCellEditorValue() {
