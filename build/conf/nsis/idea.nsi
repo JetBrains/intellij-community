@@ -366,14 +366,18 @@ Page custom ConfirmDesktopShortcut
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION PageFinishRun
-!insertmacro MUI_PAGE_FINISH
 
-!define MUI_UNINSTALLER
+;!define MUI_UNINSTALLER
 ;!insertmacro MUI_UNPAGE_CONFIRM
+!define MUI_UNABORTWARNING
 UninstPage custom un.ConfirmDeleteSettings
+UninstPage custom un.FeedbackPage1
+UninstPage custom un.FeedbackPage2
 !insertmacro MUI_UNPAGE_INSTFILES
+;!insertmacro MUI_UNPAGE_FINISH
+;!define MUI_UNPAGE_FINISH PageFinishUninstall
 
-OutFile "${OUT_DIR}\${OUT_FILE}.exe"
+OutFile "c:\Build\Installation\installation.exe"
 
 InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
 !define MUI_BRANDINGTEXT " "
@@ -867,6 +871,24 @@ SectionEnd
 ;------------------------------------------------------------------------------
 ; custom install pages
 ;------------------------------------------------------------------------------
+/*Function PageFinishUninstall
+  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFinishPage1.ini"
+  !insertmacro MUI_HEADER_TEXT "Uninstallation Complete" ""
+  !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFinishPage1.ini"
+FunctionEnd*/
+
+Function un.FeedbackPage1
+  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFeedbackPage1.ini"
+  !insertmacro MUI_HEADER_TEXT "Thank you for using IntelliJ IDEA!" ""
+  !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFeedbackPage1.ini"
+FunctionEnd
+
+Function un.FeedbackPage2
+  !insertmacro INSTALLOPTIONS_EXTRACT "UninstallFeedbackPage2.ini"
+  !insertmacro MUI_HEADER_TEXT "Thank you for using IntelliJ IDEA!" ""
+  !insertmacro INSTALLOPTIONS_DISPLAY "UninstallFeedbackPage2.ini"
+FunctionEnd
+
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
@@ -897,6 +919,7 @@ skip_association:
 done:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
+
 FunctionEnd
 
 
@@ -1181,7 +1204,6 @@ remove_IntelliJIdeaProjectFile:
 done:
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
 ; UNCOMMENT THIS IN RELEASE BUILD
-  StrCmp "${UNINSTALL_WEB_PAGE}" "NoWebPage" end_of_uninstall
-  ExecShell "" "${UNINSTALL_WEB_PAGE}"
-end_of_uninstall:
+; ExecShell "" "https://www.jetbrains.com/idea/uninstall/"
+
 SectionEnd
