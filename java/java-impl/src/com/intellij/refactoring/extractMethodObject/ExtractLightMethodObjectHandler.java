@@ -150,7 +150,7 @@ public class ExtractLightMethodObjectHandler {
 
     final ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(container, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(container, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false, false);
     }
     catch (AnalysisCanceledException e) {
       return null;

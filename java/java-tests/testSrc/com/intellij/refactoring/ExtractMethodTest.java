@@ -233,6 +233,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDuplicateInUnreachableCode() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testExpressionDuplicates() throws Exception {
     doDuplicatesTest();
   }
