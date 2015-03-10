@@ -80,7 +80,7 @@ public class FocusTrackback {
 
 
     final Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode() || wrongOS()) return;
+    if (app == null || wrongOS()) return;
 
     register(parent);
 
