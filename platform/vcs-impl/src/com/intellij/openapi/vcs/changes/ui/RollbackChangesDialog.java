@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
@@ -51,11 +52,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
-    rollbackChanges(project, changes, true);
-  }
-
-  public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously) {
-    rollbackChanges(project, changes, refreshSynchronously, null);
+    rollbackChanges(project, changes, true, null);
   }
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously,
@@ -73,14 +70,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
     lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
-    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt);
-  }
-
-  public static void rollback(final Project project,
-                              final List<LocalChangeList> changeLists,
-                              final List<Change> changes,
-                              final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
-    new RollbackChangesDialog(project, changeLists, changes, refreshSynchronously, afterVcsRefreshInAwt).show();
+    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt).show();
   }
 
   public RollbackChangesDialog(final Project project,
