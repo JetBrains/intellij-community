@@ -20,7 +20,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +46,7 @@ public interface LanguageConsoleView extends ConsoleView, Disposable {
   VirtualFile getVirtualFile();
 
   @NotNull
-  Editor getCurrentEditor();
+  EditorEx getCurrentEditor();
 
   @NotNull
   EditorEx getConsoleEditor();
@@ -65,6 +64,9 @@ public interface LanguageConsoleView extends ConsoleView, Disposable {
 
   @Nullable
   String getPrompt();
+
+  @Nullable
+  ConsoleViewContentType getPromptAttributes();
 
   void setPrompt(@Nullable String prompt);
 

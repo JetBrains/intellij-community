@@ -693,8 +693,20 @@ public class Main {
     shouldFail { rebuild() }
   }
 
+  public void "test compile groovy excluded from stub generation"() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
+    myFixture.addFileToProject 'Bar.groovy', 'class Bar extends Foo {}'
+
+    excludeFromCompilation(GroovyCompilerConfiguration.getInstance(project).excludeFromStubGeneration, foo)
+
+    assertEmpty make()
+  }
+
   private void excludeFromCompilation(PsiFile foo) {
-    final ExcludesConfiguration configuration = CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration()
+    excludeFromCompilation(CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration(), foo)
+  }
+
+  private excludeFromCompilation(ExcludesConfiguration configuration, PsiFile foo) {
     configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
   }
 

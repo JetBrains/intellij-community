@@ -24,9 +24,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
 public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePreprocessor {
   @NotNull private final Project myProject;
   @Nullable private final PsiManagerImpl myPsiManager;
@@ -35,7 +32,14 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     myProject = project;
     myPsiManager = null;
   }
-  
+
+  /**
+   * Note that this constructor can't be used for preprocessors that is defined in extensions
+   * because it will be invoke during constructing PsiManager.
+   *
+   * @deprecated to delete in IDEA 15, define preprocessor as an extension of {@link PsiTreeChangePreprocessor#EP_NAME} and
+   * use {@link this#PsiTreeChangePreprocessorBase(Project)} instead
+   */
   public PsiTreeChangePreprocessorBase(@NotNull PsiManagerImpl psiManager) {
     myPsiManager = psiManager;
     myProject = psiManager.getProject();
@@ -53,34 +57,34 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
           break; // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
         }
 
-      case CHILDREN_CHANGED :
+      case CHILDREN_CHANGED:
         if (event.isGenericChange()) {
           return;
         }
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-      break;
+        break;
 
       case BEFORE_CHILD_ADDITION:
       case BEFORE_CHILD_REMOVAL:
-      case CHILD_ADDED :
-      case CHILD_REMOVED :
+      case CHILD_ADDED:
+      case CHILD_REMOVED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-      break;
+        break;
 
       case BEFORE_PROPERTY_CHANGE:
-      case PROPERTY_CHANGED :
+      case PROPERTY_CHANGED:
         changedInsideCodeBlock = false;
-      break;
+        break;
 
       case BEFORE_CHILD_REPLACEMENT:
-      case CHILD_REPLACED :
+      case CHILD_REPLACED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
-      break;
+        break;
 
       case BEFORE_CHILD_MOVEMENT:
-      case CHILD_MOVED :
+      case CHILD_MOVED:
         changedInsideCodeBlock = isInsideCodeBlock(event.getOldParent()) && isInsideCodeBlock(event.getNewParent());
-      break;
+        break;
     }
 
     if (!changedInsideCodeBlock) {

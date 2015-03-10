@@ -101,6 +101,10 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     return Comparing.compare(myNamespace, o.myNamespace);
   }
 
+  public boolean hasTag(@NotNull String tagName) {
+    return myTags.contains(tagName);
+  }
+
   public int getRating(@Nullable String tagName, @Nullable String version) {
     int rate = 0;
     if (tagName != null && myTags.contains(tagName)) {

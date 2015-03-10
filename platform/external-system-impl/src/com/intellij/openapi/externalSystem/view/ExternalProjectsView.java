@@ -125,8 +125,9 @@ public class ExternalProjectsView extends SimpleToolWindowPanel implements DataP
     String toolWindowId =
       toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : myExternalSystemId.getReadableName();
 
-    myNotificationGroup = NotificationGroup.toolWindowGroup(
-      "notification.group.id." + externalSystemId.getId().toLowerCase(Locale.ENGLISH), toolWindowId);
+    String notificationId = "notification.group.id." + externalSystemId.getId().toLowerCase(Locale.ENGLISH);
+    NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationId);
+    myNotificationGroup = registeredGroup != null ? registeredGroup : NotificationGroup.toolWindowGroup(notificationId, toolWindowId);
   }
 
   @Nullable

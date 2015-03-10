@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.options.ConfigurationException;
@@ -57,7 +58,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
     return new WizardInputField<JTextField>(IJ_BASE_PACKAGE, defaultValue) {
 
-      private final JTextField myField = new JTextField(defaultValue);
+      private final JTextField myField = new JTextField(PropertiesComponent.getInstance().getValue(IJ_BASE_PACKAGE, defaultValue));
 
       @Override
       public String getLabel() {
@@ -89,6 +90,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
         if (!StringUtil.isEmpty(value) && !PsiNameHelperImpl.getInstance().isQualifiedName(value)) {
           throw new ConfigurationException(value + " is not a valid package name");
         }
+        PropertiesComponent.getInstance().setValue(IJ_BASE_PACKAGE, value);
         return true;
       }
     };

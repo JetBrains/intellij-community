@@ -8,8 +8,6 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -27,6 +25,11 @@ public class StringToConstraintsTransformerTest {
   @Test(expected = MalformedPatternException.class)
   public void testCharacterExpectedAfterQuote() {
     test("' asdf");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testCharacterExpectedAfterQuote2() {
+    test("'");
   }
 
   @Test(expected = MalformedPatternException.class)
@@ -153,6 +156,34 @@ public class StringToConstraintsTransformerTest {
     assertEquals("$type$ $a$ = $b$;", myOptions.getSearchPattern());
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     assertEquals("\"if ('_a:[regex( .*e.* )]) { '_st*; }\"", constraint.getWithinConstraint());
+  }
+
+  @Test
+  public void testEscaping() {
+    test("\\[within( \"if ('_a) { '_st*; }\" )]");
+    assertEquals("[within( \"if ($a$) { $st$; }\" )]", myOptions.getSearchPattern());
+    test("\\[");
+    assertEquals("[", myOptions.getSearchPattern());
+    test("\\'aaa");
+    assertEquals("'aaa", myOptions.getSearchPattern());
+    test("'a\\:");
+    assertEquals("$a$:", myOptions.getSearchPattern());
+  }
+
+  @Test
+  public void testQuotes() {
+    test("''");
+    assertEquals("'", myOptions.getSearchPattern());
+    test("'''c");
+    assertEquals("'$c$", myOptions.getSearchPattern());
+    test("'a''b");
+    assertEquals("'a'$b$", myOptions.getSearchPattern());
+    test("'aa'_bb");
+    assertEquals("$aa$$bb$", myOptions.getSearchPattern());
+    test("'\\n''z");
+    assertEquals("'\\n'$z$", myOptions.getSearchPattern());
+    test("'\\u0123''a");
+    assertEquals("'\\u0123'$a$", myOptions.getSearchPattern());
   }
 
   private void test(String pattern) {

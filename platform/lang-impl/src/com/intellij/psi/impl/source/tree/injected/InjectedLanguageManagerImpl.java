@@ -105,7 +105,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     myProgress = new DaemonProgressIndicator();
     project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
-      public void daemonCancelEventOccurred() {
+      public void daemonCancelEventOccurred(@NotNull String reason) {
         myProgress.cancel();
       }
     });

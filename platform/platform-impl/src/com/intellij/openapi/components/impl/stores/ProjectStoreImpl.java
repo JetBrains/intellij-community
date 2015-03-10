@@ -445,7 +445,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected final void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  protected final List<Throwable> doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles, @Nullable List<Throwable> errors) {
     ProjectImpl.UnableToSaveProjectNotification[] notifications =
       NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
     if (notifications.length > 0) {
@@ -454,7 +454,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     beforeSave(readonlyFiles);
 
-    super.doSave(saveSessions, readonlyFiles);
+    super.doSave(saveSessions, readonlyFiles, errors);
 
     if (!readonlyFiles.isEmpty()) {
       ReadonlyStatusHandler.OperationStatus status;
@@ -473,13 +473,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       else {
         List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
         readonlyFiles.clear();
-        List<Throwable> errors = null;
         for (Pair<SaveSession, VirtualFile> entry : oldList) {
           errors = executeSave(entry.first, readonlyFiles, errors);
         }
 
         if (errors != null) {
-          throw new CompoundRuntimeException(errors);
+          CompoundRuntimeException.doThrow(errors);
         }
 
         if (!readonlyFiles.isEmpty()) {
@@ -488,6 +487,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
       }
     }
+
+    return errors;
   }
 
   protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {

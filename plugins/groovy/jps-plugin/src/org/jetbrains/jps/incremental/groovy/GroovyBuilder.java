@@ -94,7 +94,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
-      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false);
+      Ref<Boolean> hasStubExcludes = Ref.create(false);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false, hasStubExcludes);
       if (toCompile.isEmpty()) {
         return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.NOTHING_DONE;
       }
@@ -112,7 +113,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
 
-      GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, settings, finalOutputs, compilerOutput, toCompile);
+      GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, settings, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
 
       Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
@@ -154,7 +155,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                                        ModuleChunk chunk,
                                                        JpsGroovySettings settings,
                                                        Map<ModuleBuildTarget, String> finalOutputs,
-                                                       String compilerOutput, List<File> toCompile) throws Exception {
+                                                       String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
     GroovycContinuation continuation = takeContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
@@ -192,7 +193,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
     );
     GroovycFlavor groovyc =
-      inProcess ? new InProcessGroovyc(finalOutputs.values()) : new ForkedGroovyc(optimizeClassLoading, chunk);
+      inProcess ? new InProcessGroovyc(finalOutputs.values(), hasStubExcludes) : new ForkedGroovyc(optimizeClassLoading, chunk);
 
     GroovycOutputParser parser = new GroovycOutputParser(chunk, context);
 
@@ -402,7 +403,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   static List<File> collectChangedFiles(CompileContext context,
                                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                        final boolean forStubs, final boolean forEclipse)
+                                        final boolean forStubs, final boolean forEclipse, final Ref<Boolean> hasExcludes)
     throws IOException {
 
     final JpsJavaCompilerConfiguration configuration =
@@ -419,6 +420,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         if ((isGroovyFile(path) || forEclipse && path.endsWith(".java")) &&
             !configuration.isResourceFile(file, sourceRoot.root)) {
           if (forStubs && settings.isExcludedFromStubGeneration(file)) {
+            hasExcludes.set(true);
             return true;
           }
 

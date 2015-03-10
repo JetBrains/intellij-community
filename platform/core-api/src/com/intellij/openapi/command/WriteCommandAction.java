@@ -170,7 +170,12 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static void runWriteCommandAction(Project project, @NotNull final Runnable runnable) {
-    new Simple(project) {
+    runWriteCommandAction(project, "Undefined", null, runnable);
+  }
+
+  public static void runWriteCommandAction(Project project, @Nullable final String commandName,
+                                           @Nullable final String groupID, @NotNull final Runnable runnable, PsiFile... files) {
+    new Simple(project, commandName, groupID, files) {
       @Override
       protected void run() throws Throwable {
         runnable.run();

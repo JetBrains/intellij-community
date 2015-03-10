@@ -65,7 +65,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
       return true;
     }
     else if (url.contains("://") || url.startsWith("//") || startsWithAllowedPrefix(url)) {
-      references.add(PsiReferenceBase.createSelfReference(psiElement, psiElement));
+      references.add(PsiReferenceBase.createSelfReference(psiElement, rangeInElement, psiElement));
       return true;
     }
     return false;

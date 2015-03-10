@@ -117,7 +117,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       return;
     }
 
-    myDeploymentConfiguration.checkConfiguration(server, myDeploymentSource);
+    myDeploymentConfiguration.checkConfiguration(server, myDeploymentSource, getProject());
   }
 
   private RemoteServer<S> findServer() {

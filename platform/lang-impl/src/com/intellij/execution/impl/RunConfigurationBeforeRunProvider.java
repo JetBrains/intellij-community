@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,20 +138,20 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @NotNull
-  private static List<RunnerAndConfigurationSettings> getAvailableConfigurations(RunConfiguration runConfiguration) {
+  private static List<RunnerAndConfigurationSettings> getAvailableConfigurations(@NotNull RunConfiguration runConfiguration) {
     Project project = runConfiguration.getProject();
-    if (project == null || !project.isInitialized())
+    if (project == null || !project.isInitialized()) {
       return Collections.emptyList();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    }
 
-    final ArrayList<RunnerAndConfigurationSettings> configurations
-      = new ArrayList<RunnerAndConfigurationSettings>(runManager.getSortedConfigurations());
+    List<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(RunManagerImpl.getInstanceImpl(project).getSortedConfigurations());
     String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
     for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
       RunnerAndConfigurationSettings settings = iterator.next();
-      final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
-      if (runner == null || settings.getConfiguration() == runConfiguration)
+      ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
+      if (runner == null || settings.getConfiguration() == runConfiguration) {
         iterator.remove();
+      }
     }
     return configurations;
   }
@@ -293,8 +293,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         return;
       }
       if (myConfigurationName != null && myConfigurationType != null) {
-        Collection<RunnerAndConfigurationSettings> configurations = RunManagerImpl.getInstanceImpl(myProject).getSortedConfigurations();
-        for (RunnerAndConfigurationSettings runConfiguration : configurations) {
+        for (RunnerAndConfigurationSettings runConfiguration : RunManagerImpl.getInstanceImpl(myProject).getSortedConfigurations()) {
           ConfigurationType type = runConfiguration.getType();
           if (myConfigurationName.equals(runConfiguration.getName())
               && type != null

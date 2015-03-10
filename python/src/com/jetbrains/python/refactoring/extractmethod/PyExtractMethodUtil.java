@@ -33,6 +33,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.*;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -60,6 +62,7 @@ import java.util.*;
 
 /**
  * * TODO: Merge with {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#createMethod(String, com.jetbrains.python.psi.PyClass, com.jetbrains.python.psi.PyFunction.Modifier, java.util.Collection, String...)}
+ *
  * @author oleg
  */
 public class PyExtractMethodUtil {
@@ -108,6 +111,11 @@ public class PyExtractMethodUtil {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            final RefactoringEventData beforeData = new RefactoringEventData();
+            beforeData.addElements(new PsiElement[]{statement1, statement2});
+            project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+              .refactoringStarted(getRefactoringId(), beforeData);
+
             final StringBuilder builder = new StringBuilder();
             final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
             final boolean hasOutputVariables = !fragment.getOutputVariables().isEmpty();
@@ -148,7 +156,7 @@ public class PyExtractMethodUtil {
             if (fragment.isYieldInside()) {
               builder.append("yield from ");
             }
-            if (isMethod){
+            if (isMethod) {
               appendSelf(firstElement, builder, isStaticMethod);
             }
             builder.append(methodName).append("(");
@@ -159,11 +167,17 @@ public class PyExtractMethodUtil {
             // replace statements with call
             callElement = replaceElements(elementsRange, callElement);
             callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
-            if (callElement != null)
+            if (callElement != null) {
               processDuplicates(callElement, generatedMethod, finder, editor);
+            }
 
             // Set editor
             setSelectionAndCaret(editor, callElement);
+
+            final RefactoringEventData afterData = new RefactoringEventData();
+            afterData.addElement(generatedMethod);
+            project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+              .refactoringDone(getRefactoringId(), afterData);
           }
         });
       }
@@ -182,8 +196,9 @@ public class PyExtractMethodUtil {
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
       if (containingClass != null) {
         for (PyFunction function : containingClass.getMethods(false)) {
-          if (!function.equals(owner) && !function.equals(generatedMethod))
+          if (!function.equals(owner) && !function.equals(generatedMethod)) {
             scope.add(function);
+          }
         }
       }
     }
@@ -256,14 +271,14 @@ public class PyExtractMethodUtil {
                                            final Editor editor,
                                            final PyCodeFragment fragment,
                                            @NotNull final PsiElement expression) {
-    if (!fragment.getOutputVariables().isEmpty()){
+    if (!fragment.getOutputVariables().isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           "Cannot perform refactoring from expression with local variables modifications inside code fragment",
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
-    if (fragment.isReturnInstructionInside()){
+    if (fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           "Cannot extract method with return instructions inside code fragment",
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
@@ -303,16 +318,18 @@ public class PyExtractMethodUtil {
               final StringBuilder builder = new StringBuilder();
               if (fragment.isYieldInside()) {
                 builder.append("yield from ");
-              } else {
+              }
+              else {
                 builder.append("return ");
               }
-              if (isMethod){
+              if (isMethod) {
                 appendSelf(expression, builder, isStaticMethod);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
               final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-              final PyElement generated = generator.createFromText(LanguageLevel.forElement(expression), PyElement.class, builder.toString());
+              final PyElement generated =
+                generator.createFromText(LanguageLevel.forElement(expression), PyElement.class, builder.toString());
               PsiElement callElement = null;
               if (generated instanceof PyReturnStatement) {
                 callElement = ((PyReturnStatement)generated).getExpression();
@@ -325,8 +342,9 @@ public class PyExtractMethodUtil {
               if (callElement != null) {
                 callElement = PyReplaceExpressionUtil.replaceExpression(expression, callElement);
               }
-              if (callElement != null)
+              if (callElement != null) {
                 processDuplicates(callElement, generatedMethod, finder, editor);
+              }
               // Set editor
               setSelectionAndCaret(editor, callElement);
             }
@@ -413,7 +431,7 @@ public class PyExtractMethodUtil {
     for (PyParameter parameter : generatedMethod.getParameterList().getParameters()) {
       final String name = parameter.getName();
       final String newName = map.get(name);
-      if (name != null && newName != null && !name.equals(newName)){
+      if (name != null && newName != null && !name.equals(newName)) {
         Map<PsiElement, String> allRenames = new java.util.HashMap<PsiElement, String>();
         allRenames.put(parameter, newName);
         UsageInfo[] usages = RenameUtil.findUsages(parameter, newName, false, false, allRenames);
@@ -556,23 +574,23 @@ public class PyExtractMethodUtil {
     final ExtractMethodValidator validator = new PyExtractMethodValidator(element, project);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       String name = System.getProperty(NAME);
-      if (name == null){
+      if (name == null) {
         name = "foo";
       }
       final String error = validator.check(name);
-      if (error != null){
+      if (error != null) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
         if (Messages.showOkCancelDialog(error + ". " + RefactoringBundle.message("do.you.wish.to.continue"),
-                                        RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != Messages.OK){
+                                        RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != Messages.OK) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
       }
       final List<AbstractVariableData> data = new ArrayList<AbstractVariableData>();
       for (String in : fragment.getInputVariables()) {
         final AbstractVariableData d = new AbstractVariableData();
-        d.name = in+"_new";
+        d.name = in + "_new";
         d.originalName = in;
         d.passAsParameter = true;
         data.add(d);
@@ -623,6 +641,10 @@ public class PyExtractMethodUtil {
     return Pair.create(dialog.getMethodName(), dialog.getVariableData());
   }
 
+  public static String getRefactoringId() {
+    return "refactoring.python.extract.method";
+  }
+
   private static class PyExtractMethodValidator implements ExtractMethodValidator {
     private final PsiElement myElement;
     private final Project myProject;
@@ -654,7 +676,7 @@ public class PyExtractMethodUtil {
     }
 
     public String check(final String name) {
-      if (myFunction != null && !myFunction.fun(name)){
+      if (myFunction != null && !myFunction.fun(name)) {
         return PyBundle.message("refactoring.extract.method.error.name.clash");
       }
       return null;

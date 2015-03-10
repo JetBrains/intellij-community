@@ -190,6 +190,7 @@ gulpfile
 gulpfiles
 gzip
 gzipped
+hadoop
 hamcrest
 hardcoded
 hardlink

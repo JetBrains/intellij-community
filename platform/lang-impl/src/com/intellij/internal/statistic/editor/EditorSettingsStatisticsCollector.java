@@ -70,8 +70,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isPreselectRename(), true, "noPreselectOnRename");
     addIfDiffers(set, es.isShowInlineLocalDialog(), true, "noInlineDialog");
     addIfDiffers(set, es.isRefrainFromScrolling(), false, "minimizeScrolling");
-    addIfDiffers(set, es.getOptions().SHOW_REFORMAT_DIALOG, true, "noReformatDialog");
-    addIfDiffers(set, es.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG, true, "noOptimizeImportsDialog");
+    addIfDiffers(set, es.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION, true, "afterReformatNotification");
     addIfDiffers(set, es.isSmartHome(), true, "noSmartHome");
     addIfDiffers(set, es.isCamelWords(), false, "camelWords");
 

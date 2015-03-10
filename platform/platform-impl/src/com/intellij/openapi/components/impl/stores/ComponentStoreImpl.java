@@ -103,16 +103,21 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       }
     }
 
+    List<Throwable> errors = null;
     for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
       try {
         settingsSavingComponent.save();
       }
       catch (Throwable e) {
-        LOG.error(e);
+        if (errors == null) {
+          errors = new SmartList<Throwable>();
+        }
+        errors.add(e);
       }
     }
 
-    doSave(externalizationSession == null ? null : externalizationSession.createSaveSessions(), readonlyFiles);
+    errors = doSave(externalizationSession == null ? null : externalizationSession.createSaveSessions(), readonlyFiles, errors);
+    CompoundRuntimeException.doThrow(errors);
   }
 
   @TestOnly
@@ -143,7 +148,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     AccessToken token = WriteAction.start();
     try {
       VfsRootAccess.allowRootAccess(file.getAbsolutePath());
-      doSave(sessions, Collections.<Pair<SaveSession, VirtualFile>>emptyList());
+      CompoundRuntimeException.doThrow(doSave(sessions, Collections.<Pair<SaveSession, VirtualFile>>emptyList(), null));
     }
     finally {
       try {
@@ -173,16 +178,15 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
   }
 
-  protected void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  @Nullable
+  protected List<Throwable> doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles, @Nullable List<Throwable> errors) {
     if (saveSessions != null) {
-      List<Throwable> errors = null;
       for (SaveSession session : saveSessions) {
         errors = executeSave(session, readonlyFiles, errors);
       }
-      if (errors != null) {
-        throw new CompoundRuntimeException(errors);
-      }
     }
+
+    return errors;
   }
 
   @Nullable

@@ -65,11 +65,22 @@ public class InferenceFromSourceUtil {
              returnValue == MethodContract.ValueConstraint.FALSE_VALUE;
     }
 
-    if (returnType instanceof PsiClassType) {
+    if (!(returnType instanceof PsiPrimitiveType)) {
       return returnValue == MethodContract.ValueConstraint.NULL_VALUE ||
              returnValue == MethodContract.ValueConstraint.NOT_NULL_VALUE;
     }
 
+    return false;
+  }
+
+  static boolean suppressNullable(PsiMethod method) {
+    if (method.getParameterList().getParametersCount() == 0) return false;
+
+    for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+      if (contract.returnValue == MethodContract.ValueConstraint.NULL_VALUE) {
+        return true;
+      }
+    }
     return false;
   }
 }

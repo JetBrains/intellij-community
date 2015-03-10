@@ -16,7 +16,9 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -30,6 +32,10 @@ import java.util.HashSet;
  * @author dsl
  */
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
+
+  private CommonCodeStyleSettings getJavaSettings() {
+    return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+  }
 
   public void testSimple() {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
@@ -363,20 +369,20 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testMethodParametersAlignmentAfterMethodNameChange() {
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, "test123asd", null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
   public void testMethodParametersAlignmentAfterMethodVisibilityChange() {
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(PsiModifier.PROTECTED, null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
   public void testMethodParametersAlignmentAfterMethodReturnTypeChange() {
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 

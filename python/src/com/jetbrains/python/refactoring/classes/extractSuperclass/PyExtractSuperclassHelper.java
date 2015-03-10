@@ -28,7 +28,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.FluentIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
@@ -60,9 +64,22 @@ public final class PyExtractSuperclassHelper {
                                 @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
                                 final String superBaseName,
                                 final String targetFile) {
+    final Project project = clazz.getProject();
+
     //We will need to change it probably while param may be read-only
     //noinspection AssignmentToMethodParameter
     selectedMemberInfos = new ArrayList<PyMemberInfo<PyElement>>(selectedMemberInfos);
+
+    final RefactoringEventData beforeData = new RefactoringEventData();
+    beforeData.addElements(FluentIterable.from(selectedMemberInfos).transform(new Function<PyMemberInfo<PyElement>, PsiElement>() {
+      @Override
+      public PsiElement fun(PyMemberInfo<PyElement> info) {
+        return info.getMember();
+      }
+    }).toList());
+
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      .refactoringStarted(getRefactoringId(), beforeData);
 
     // PY-12171
     final PyMemberInfo<PyElement> objectMember = MembersManager.findMember(selectedMemberInfos, ALLOW_OBJECT);
@@ -81,7 +98,7 @@ public final class PyExtractSuperclassHelper {
       }
     }
 
-    final Project project = clazz.getProject();
+
 
     final String text = "class " + superBaseName + ":\n  pass" + "\n";
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
@@ -92,6 +109,11 @@ public final class PyExtractSuperclassHelper {
       PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
     }
     PyClassRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
+
+    final RefactoringEventData afterData = new RefactoringEventData();
+    afterData.addElement(newClass);
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      .refactoringDone(getRefactoringId(), afterData);
 
   }
 
@@ -234,5 +256,9 @@ public final class PyExtractSuperclassHelper {
       ret = psi_mgr.findDirectory(the_root);
     }
     return ret;
+  }
+
+  public static String getRefactoringId() {
+    return "refactoring.python.extract.superclass";
   }
 }

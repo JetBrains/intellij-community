@@ -112,7 +112,6 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
       if (!myCommonSettingsMap.containsKey(target)) {
         CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
         if (initialSettings != null) {
-          initialSettings.copyNonDefaultValuesFrom(myParentSettings);
           init(initialSettings, target);
         }
       }
@@ -121,7 +120,6 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   private void init(@NotNull CommonCodeStyleSettings initialSettings, @NotNull Language target) {
     initialSettings.setRootSettings(myParentSettings);
-    initialSettings.importOldIndentOptions(myParentSettings);
     registerCommonSettings(target, initialSettings);
   }
 
