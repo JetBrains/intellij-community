@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.intellij.lang.documentation;
 
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -73,6 +75,16 @@ public interface DocumentationProvider {
   @Nullable
   PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element);
 
+  /**
+   * Returns the target element for a link in a documentation comment. The link needs to use the
+   * {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL} protocol.
+   *
+   * @param psiManager the PSI manager for the project in which the documentation is requested.
+   * @param link       the text of the link, not including the protocol.
+   * @param context    the element from which the navigation is performed.
+   * @return the navigation target, or null if the link couldn't be resolved.
+   * @see DocumentationManagerUtil#createHyperlink(StringBuilder, String, String, boolean)
+   */
   @Nullable
   PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context);
 }
