@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -45,6 +46,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final boolean myRefreshSynchronously;
   private final Runnable myAfterVcsRefreshInAwt;
   private final MultipleChangeListBrowser myBrowser;
+  private final boolean myInvokedFromModalContext;
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
@@ -82,6 +84,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
     myAfterVcsRefreshInAwt = afterVcsRefreshInAwt;
+    myInvokedFromModalContext = LaterInvocator.isInModalContext();
 
     myInfoCalculator = new ChangeInfoCalculator();
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
@@ -146,9 +149,9 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    new RollbackWorker(myProject, myOperationName).doRollback(myBrowser.getChangesIncludedInAllLists(),
-                                                                     myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
-                                                                     myAfterVcsRefreshInAwt, null);
+    RollbackWorker worker = new RollbackWorker(myProject, myOperationName, myInvokedFromModalContext);
+    worker.doRollback(myBrowser.getChangesIncludedInAllLists(), myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
+                      myAfterVcsRefreshInAwt, null);
   }
 
   @Nullable
