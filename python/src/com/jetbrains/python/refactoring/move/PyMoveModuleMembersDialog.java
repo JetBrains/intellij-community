@@ -155,6 +155,12 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   @Nullable
   @Override
+  protected String getDimensionServiceKey() {
+    return "#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog";
+  }
+
+  @Nullable
+  @Override
   protected JComponent createCenterPanel() {
     return myCenterPanel;
   }
