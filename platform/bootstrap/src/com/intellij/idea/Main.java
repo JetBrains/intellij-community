@@ -33,7 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
+import static java.io.File.pathSeparator;
+
 public class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int UPDATE_FAILED = 2;
@@ -53,6 +54,7 @@ public class Main {
 
   private Main() { }
 
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
@@ -173,7 +175,7 @@ public class Main {
                          "-Djna.debug_load=true",
                          "-Djna.debug_load.jna=true",
                          "-classpath",
-                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
+                         patchCopy.getPath() + pathSeparator + log4jCopy.getPath() + pathSeparator + jnaCopy.getPath() + pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
@@ -215,7 +217,7 @@ public class Main {
     showMessage(title, message.toString(), true);
   }
 
-  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);
