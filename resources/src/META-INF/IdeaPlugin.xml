@@ -1053,7 +1053,7 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
 
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
-
+    <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
 
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>

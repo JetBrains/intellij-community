@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -316,10 +317,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
     final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
+
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
-    VcsLogHighlighter.VcsCommitStyle defaultStyle = new VcsLogHighlighter.VcsCommitStyle(
+    VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory.createStyle(
       rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
       dummyRendererComponent.getBackground());
+
     List<VcsLogHighlighter.VcsCommitStyle> styles =
       ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
         @Override
@@ -327,7 +330,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
           return highlighter.getStyle(rowInfo.getCommit(), selected);
         }
       });
-    return VcsLogHighlighter.VcsCommitStyle.combine(ContainerUtil.append(styles, defaultStyle));
+
+    return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
   public void viewportSet(JViewport viewport) {

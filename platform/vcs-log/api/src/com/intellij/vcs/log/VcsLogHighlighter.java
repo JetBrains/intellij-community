@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collection;
 
 /**
  * Allows to add some highlighting to the Vcs Log table entries.
@@ -27,7 +26,7 @@ import java.util.Collection;
 public interface VcsLogHighlighter {
 
   /**
-   * Return the color which should be used for the log table entries foreground, or null if default color should be used.
+   * Return the style which should be used for the log table commit entry, or VcsCommitStyle.DEFAULT if this highlighter does not specify any style for this commit.
    *
    * @param commitIndex index of commit (can be transferred to the Hash and vice versa).
    * @param isSelected  if true, the row currently has selection on it.
@@ -35,52 +34,27 @@ public interface VcsLogHighlighter {
   @NotNull
   VcsCommitStyle getStyle(int commitIndex, boolean isSelected);
 
+  /**
+   * Describes how to display commit entry in the log table (for example, text or background color).
+   */
+  interface VcsCommitStyle {
+    /**
+     * Default commit entry style.
+     */
+    VcsCommitStyle DEFAULT = VcsCommitStyleFactory.createStyle(null, null);
 
-  class VcsCommitStyle {
-    public static final VcsCommitStyle DEFAULT = new VcsCommitStyle(null, null);
-    @Nullable private final Color myForeground;
-    @Nullable private final Color myBackground;
-
-    public VcsCommitStyle(@Nullable Color foreground, @Nullable Color background) {
-      myForeground = foreground;
-      myBackground = background;
-    }
-
+    /**
+     * Text color for commit entry or null if unspecified.
+     */
     @Nullable
-    public Color getForeground() {
-      return myForeground;
-    }
+    Color getForeground();
 
+    /**
+     * Background color for commit entry or null if unspecified.
+     */
     @Nullable
-    public Color getBackground() {
-      return myBackground;
-    }
+    Color getBackground();
 
-    @NotNull
-    public static VcsCommitStyle foreground(@Nullable Color foreground) {
-      return new VcsCommitStyle(foreground, null);
-    }
-
-    @NotNull
-    public static VcsCommitStyle background(@Nullable Color background) {
-      return new VcsCommitStyle(null, background);
-    }
-
-    public static VcsCommitStyle combine(@NotNull Collection<VcsCommitStyle> styles) {
-      Color foreground = null;
-      Color background = null;
-
-      for (VcsCommitStyle style : styles) {
-        if (foreground == null && style.getForeground() != null) {
-          foreground = style.getForeground();
-        }
-        if (background == null && style.getBackground() != null) {
-          background = style.getBackground();
-        }
-        if (background != null && foreground != null) break;
-      }
-
-      return new VcsCommitStyle(foreground, background);
-    }
   }
+
 }

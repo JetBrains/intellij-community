@@ -217,7 +217,7 @@ public class DeepComparator implements Disposable {
         @NotNull
         @Override
         public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-          return VcsCommitStyle.foreground(!myNonPickedCommits.contains(commitIndex) ? JBColor.GRAY : null);
+          return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(commitIndex) ? JBColor.GRAY : null);
         }
       };
       myUi.addHighlighter(myHighlighter);

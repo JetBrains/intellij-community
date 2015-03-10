@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.groovy;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -109,7 +110,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
     if (!useGreclipse(context)) return ModuleLevelBuilder.ExitCode.NOTHING_DONE;
 
     try {
-      final List<File> toCompile = GroovyBuilder.collectChangedFiles(context, dirtyFilesHolder, false, true);
+      final List<File> toCompile = GroovyBuilder.collectChangedFiles(context, dirtyFilesHolder, false, true, Ref.create(false));
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
