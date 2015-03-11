@@ -77,7 +77,7 @@ public abstract class PsiAnchor {
     PsiAnchor stubRef = createStubReference(element, file);
     if (stubRef != null) return stubRef;
 
-    if (!element.isPhysical() && element instanceof PsiCompiledElement|| element instanceof LightElement) {
+    if (!element.isPhysical() && element instanceof PsiCompiledElement || element instanceof LightElement || element instanceof SyntheticElement) {
       return new HardReference(element);
     }
 
