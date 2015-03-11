@@ -2248,6 +2248,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   //}
   //
   public void testVersionRangeInDependencyManagementDoesntBreakIndirectDependency() throws Exception {
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

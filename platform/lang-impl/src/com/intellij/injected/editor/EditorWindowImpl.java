@@ -714,11 +714,6 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   @Override
-  public void stopOptimizedScrolling() {
-    myDelegate.stopOptimizedScrolling();
-  }
-
-  @Override
   public CopyProvider getCopyProvider() {
     return myDelegate.getCopyProvider();
   }

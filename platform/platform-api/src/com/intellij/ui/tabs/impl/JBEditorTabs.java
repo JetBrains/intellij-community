@@ -25,8 +25,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
@@ -221,17 +219,9 @@ public class JBEditorTabs extends JBTabsImpl {
     }
 
     getPainter().doPaintBackground(g2d, clip, vertical, rectangle);
-    if (getTabsPosition() == JBTabsPosition.top && isSingleRow()) {
+    if (isSingleRow()) {
       g2d.setPaint(getEmptySpaceColor());
-      if (getFirstTabOffset() > 0) {
-        g2d.fillRect(clip.x, clip.y, clip.x + getFirstTabOffset() - 1, clip.y + maxLength - getActiveTabUnderlineHeight());
-      }
-      g2d.fillRect(clip.x + maxOffset, clip.y, clip.width - maxOffset, clip.y + maxLength - getActiveTabUnderlineHeight());
-      g2d.setPaint(new JBColor(Gray._181, UIUtil.getPanelBackground()));
-      g2d.setPaint(getPainter().getBackgroundColor());
-      g2d.drawLine(clip.x + maxOffset, clip.y + maxLength - getActiveTabUnderlineHeight(), clip.x + clip.width, clip.y + maxLength - getActiveTabUnderlineHeight());
-      g2d.setPaint(getEmptySpaceColor());
-      g2d.drawLine(clip.x, clip.y + maxLength, clip.width, clip.y + maxLength);
+      g2d.fill(rectangle);
     }
   }
 

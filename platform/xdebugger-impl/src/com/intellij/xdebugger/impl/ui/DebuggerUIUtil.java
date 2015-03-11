@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -117,9 +118,13 @@ public class DebuggerUIUtil {
 
     JBPopup popup = createValuePopup(project, textArea, callback);
     if (editor == null) {
-      int y = (event.getYOnScreen() - size.height < 0) ? event.getY() : event.getY() - size.height;
-      Point point = new Point(event.getX() - size.width, y);
-      popup.show(new RelativePoint(event.getComponent(), point));
+      Rectangle bounds = new Rectangle(event.getLocationOnScreen(), size);
+      ScreenUtil.fitToScreenVertical(bounds, 5, 5, true);
+      if (size.width != bounds.width || size.height != bounds.height) {
+        size = bounds.getSize();
+        textArea.setPreferredSize(size);
+      }
+      popup.showInScreenCoordinates(event.getComponent(), bounds.getLocation());
     }
     else {
       popup.showInBestPositionFor(editor);

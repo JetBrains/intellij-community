@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,7 +57,7 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
 
   private static void applyDefaults(MavenWorkspaceSettings settings) {
     if(StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
-      if(MavenServerManager.getInstance().isUsedMaven2ForProjectImport()) {
+      if(MavenServerManager.getInstance().isUsedMaven2ForProjectImport() || ApplicationManager.getApplication().isUnitTestMode()) {
         settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
       } else {
         settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);

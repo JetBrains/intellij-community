@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -47,7 +48,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       if (VcsUserImpl.isSamePerson(users.get(details.getRoot()), details.getAuthor())) {
-        return VcsCommitStyleImpl.background(ME_BG);
+        return VcsCommitStyleFactory.background(ME_BG);
       }
     }
     return VcsCommitStyle.DEFAULT;

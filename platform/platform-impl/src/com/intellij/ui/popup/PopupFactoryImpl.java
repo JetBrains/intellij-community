@@ -231,7 +231,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
             new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), actualActionPlace, presentation,
                               ActionManager.getInstance(), 0);
           actionEvent.setInjectedContext(action.isInInjectedContext());
-          action.update(actionEvent);
+          ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
           ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
         }
       });

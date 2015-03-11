@@ -187,4 +187,9 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   public void saveSilentForcePushTarget(@NotNull GitPushTarget target) {
     myCommonPushSettings.addForcePushTarget(target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
   }
+
+  @Override
+  public boolean mayChangeTargetsSync() {
+    return true;
+  }
 }

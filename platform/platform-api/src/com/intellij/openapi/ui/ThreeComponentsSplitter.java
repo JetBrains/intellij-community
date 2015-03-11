@@ -38,8 +38,6 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
-  public static final int MIN_SIZE = 0;
-
   private int myDividerWidth;
   /**
    *                        /------/
@@ -66,6 +64,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private int myFirstSize = 0;
   private int myLastSize = 0;
+  private int myMinSize = 0;
 
   private boolean myShowDividerControls;
   private int myDividerZone;
@@ -192,17 +191,17 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     else {
       firstCompontSize = getFirstSize();
       lastComponentSize = getLastSize();
-      int sizeLack = firstCompontSize + lastComponentSize - (componentSize - dividersCount * dividerWidth - MIN_SIZE);
+      int sizeLack = firstCompontSize + lastComponentSize - (componentSize - dividersCount * dividerWidth - myMinSize);
       if (sizeLack > 0) {
         // Lacking size. Reduce first & last component's size, inner -> MIN_SIZE
         double firstSizeRatio = (double)firstCompontSize / (firstCompontSize + lastComponentSize);
         if (firstCompontSize > 0) {
           firstCompontSize -= sizeLack * firstSizeRatio;
-          firstCompontSize = Math.max(MIN_SIZE, firstCompontSize);
+          firstCompontSize = Math.max(myMinSize, firstCompontSize);
         }
         if (lastComponentSize > 0) {
           lastComponentSize -= sizeLack * (1 - firstSizeRatio);
-          lastComponentSize = Math.max(MIN_SIZE, lastComponentSize);
+          lastComponentSize = Math.max(myMinSize, lastComponentSize);
         }
         innerComponentSize = getMinSize(myInnerComponent);
       }
@@ -385,6 +384,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       }
     }
   }
+  public void setMinSize(int minSize) {
+    myMinSize = Math.max(0, minSize);
+    doLayout();
+    repaint();
+  }
+
 
   public void setFirstSize(final int size) {
     myFirstSize = size;
@@ -412,7 +417,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   public int getMaxSize(boolean first) {
     final int size = getOrientation() ? this.getHeight() : this.getWidth();
-    return size - (first? myLastSize: myFirstSize) - MIN_SIZE;
+    return size - (first? myLastSize: myFirstSize) - myMinSize;
   }
 
   private int getMinSize(JComponent component) {
@@ -426,7 +431,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         }
       }
     }
-    return MIN_SIZE;
+    return myMinSize;
   }
 
   @Override

@@ -133,7 +133,6 @@ public class XValueHint extends AbstractValueHint {
       if (prev != null) {
         prev.hideHint();
       }
-      HINT_KEY.set(getEditor(), this);
       getEditor().putUserData(HINT_KEY, this);
     }
     return result;

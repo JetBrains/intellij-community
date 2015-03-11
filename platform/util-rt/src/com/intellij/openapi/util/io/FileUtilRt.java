@@ -136,7 +136,7 @@ public class FileUtilRt {
     }
     catch (Throwable ignored) {
       //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("INFO: was not able to detect NIO API");
+      System.err.println("INFO: was not able to detect NIO API");
 
       ourFileToPathMethod = null;
       ourFilesWalkMethod = null;

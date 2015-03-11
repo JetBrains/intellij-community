@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,10 +67,6 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
     if (!myBreakpoint.getType().isSuspendThreadSupported()) {
       return;
     }
-
-    mySuspendPolicyGroup = new ButtonGroup();
-    mySuspendPolicyGroup.add(mySuspendAll);
-    mySuspendPolicyGroup.add(mySuspendThread);
 
     updateSuspendPolicyFont();
 

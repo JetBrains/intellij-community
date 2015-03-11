@@ -752,6 +752,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     @Override
     public void paintBorder(Component component, Graphics g, int x, int y, int w, int h) {
       Rectangle selectedBounds = myTabs.getSelectedBounds();
+      if (selectedBounds != null && selectedBounds.y > 0) selectedBounds = null;//Not first row selection
       Rectangle bounds = new Rectangle(x, y, w, h);
       g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
       drawLine(bounds, selectedBounds, g, 0);

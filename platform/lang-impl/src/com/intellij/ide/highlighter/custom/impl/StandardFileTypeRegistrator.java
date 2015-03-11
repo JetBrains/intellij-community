@@ -42,7 +42,7 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
     }
 
     if (table.isHasBraces() || table.isHasBrackets() || table.isHasParens()) {
-      BraceMatchingUtil.registerBraceMatcher(abstractFileType,new CustomFileTypeBraceMatcher());
+      BraceMatchingUtil.registerBraceMatcher(abstractFileType, CustomFileTypeBraceMatcher.createBraceMatcher());
     }
 
     TypedHandler.registerQuoteHandler(abstractFileType, new CustomFileTypeQuoteHandler());

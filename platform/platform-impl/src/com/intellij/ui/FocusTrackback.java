@@ -52,8 +52,8 @@ public class FocusTrackback {
 
   private Window myRoot;
 
-  private WeakReference<Component> myFocusOwner;
-  private WeakReference<Component> myLocalFocusOwner;
+  private WeakReference<Component> myFocusOwner = new WeakReference<Component>(null);
+  private WeakReference<Component> myLocalFocusOwner = new WeakReference<Component>(null);
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
   private static final Map<Window, Component> ourRootWindowToFocusedMap = new WeakKeyWeakValueHashMap<Window, Component>();
@@ -80,7 +80,7 @@ public class FocusTrackback {
 
 
     final Application app = ApplicationManager.getApplication();
-    if (app == null || wrongOS()) return;
+    if (app == null || app.isHeadlessEnvironment() || wrongOS()) return;
 
     register(parent);
 

@@ -19,7 +19,8 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
-import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
@@ -48,19 +49,22 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
                                         final int componentLocal, final String formClassName) {
     FontDescriptor descriptor = (FontDescriptor) property.getPropertyValue(lwComponent);
     if (descriptor.isFixedFont() && !descriptor.isFullyDefinedFont()) {
-      generator.loadLocal(componentLocal);
-      generatePushFont(generator, componentLocal, lwComponent, descriptor, property.getReadMethodName());
+      Label fontNullLabel = generator.newLabel();
+      generatePushFont(generator, componentLocal, lwComponent, descriptor, property.getReadMethodName(), fontNullLabel);
 
       Method setFontMethod = new Method(property.getWriteMethodName(), Type.VOID_TYPE, new Type[] { ourFontType } );
       Type componentType = AsmCodeGenerator.typeFromClassName(lwComponent.getComponentClassName());
       generator.invokeVirtual(componentType, setFontMethod);
+      generator.mark(fontNullLabel);
+
       return true;
     }
     return false;
   }
 
   public static void generatePushFont(final GeneratorAdapter generator, final int componentLocal, final LwComponent lwComponent,
-                                      final FontDescriptor descriptor, final String readMethodName) {
+                                      final FontDescriptor descriptor, final String readMethodName,
+                                      Label fontNullLabel) {
     final int fontLocal = generator.newLocal(ourFontType);
 
     generator.loadLocal(componentLocal);
@@ -68,6 +72,12 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
     Method getFontMethod = new Method(readMethodName, ourFontType, new Type[0] );
     generator.invokeVirtual(componentType, getFontMethod);
     generator.storeLocal(fontLocal);
+
+    if (fontNullLabel != null) {
+      generator.loadLocal(fontLocal);
+      generator.ifNull(fontNullLabel);
+      generator.loadLocal(componentLocal);
+    }
 
     generator.newInstance(ourFontType);
     generator.dup();
