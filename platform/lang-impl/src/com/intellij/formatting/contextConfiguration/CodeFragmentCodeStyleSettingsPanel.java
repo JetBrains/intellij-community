@@ -16,20 +16,11 @@
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,30 +38,16 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
-
-  private final Project myProject;
-  private final Editor myEditor;
-  private final PsiFile myFile;
-
-  private final int mySelectionEnd;
-  private final int mySelectionStart;
-  private final String myTextBefore;
+  private final SelectedTextFormatter mySelectedTextFormatter;
 
   public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
                                             @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
-                                            @NotNull Project project, 
-                                            @NotNull Editor editor, 
-                                            @NotNull PsiFile file) 
+                                            @NotNull Language language,
+                                            @NotNull SelectedTextFormatter selectedTextFormatter)
   {
-    super(file.getLanguage(), settings, settings.clone());
+    super(language, settings, settings.clone());
     mySettingsToShow = settingsToShow;
-    myProject = project;
-    myEditor = editor;
-    myFile = file;
-
-    myTextBefore = myEditor.getSelectionModel().getSelectedText();
-    mySelectionStart = myEditor.getSelectionModel().getSelectionStart();
-    mySelectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+    mySelectedTextFormatter = selectedTextFormatter;
 
     ensureTabs();
   }
@@ -95,72 +72,19 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     return filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
   }
 
-  public void restoreSelectedText() {
-    final Document document = myEditor.getDocument();
-    final int start = myEditor.getSelectionModel().getSelectionStart();
-    final int end = myEditor.getSelectionModel().getSelectionEnd();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          @Override
-          public void run() {
-            document.replaceString(start, end, myTextBefore);
-          }
-        }, "Configure code style on selected fragment: restore text before", null);
-      }
-    });
-
-    myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
-  }
-
   private void reformatSelectedTextWithNewSettings() {
-    final SelectionModel model = myEditor.getSelectionModel();
-    if (model.hasSelection()) {
-      try {
-        apply(getSettings());
-      }
-      catch (ConfigurationException e) {
-        LOG.debug("Cannot apply code style settings", e);
-      }
-
-      CodeStyleSettings clone = getSettings().clone();
-
-      try {
-        clone.getCommonSettings(myFile.getLanguage()).KEEP_LINE_BREAKS = false;
-        CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(clone);
-        reformatRange(myFile, getSelectedRange());
-      }
-      finally {
-        CodeStyleSettingsManager.getInstance(myProject).dropTemporarySettings();
-      }
+    try {
+      apply(getSettings());
     }
+    catch (ConfigurationException e) {
+      LOG.debug("Cannot apply code style settings", e);
+    }
+
+    CodeStyleSettings clonedSettings = getSettings().clone();
+    clonedSettings.getCommonSettings(getDefaultLanguage()).KEEP_LINE_BREAKS = false;
+    mySelectedTextFormatter.reformatSelectedText(clonedSettings);
   }
 
-  private static void reformatRange(final @NotNull PsiFile file, final @NotNull TextRange range) {
-    final Project project = file.getProject();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            CodeStyleManager.getInstance(project).reformatText(file, range.getStartOffset(), range.getEndOffset());
-          }
-        });
-      }
-    }, "Reformat", null);
-  }
-
-  @NotNull
-  private TextRange getSelectedRange() {
-    SelectionModel model = myEditor.getSelectionModel();
-    int start = model.getSelectionStart();
-    int end = model.getSelectionEnd();
-    return TextRange.create(start, end);
-  }
-  
   private class SpacesPanelWithoutPreview extends MySpacesPanel {
     private JPanel myPanel;
 
