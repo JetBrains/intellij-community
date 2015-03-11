@@ -128,6 +128,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       CodeStyleSettings clone = getSettings().clone();
 
       try {
+        clone.getCommonSettings(myFile.getLanguage()).KEEP_LINE_BREAKS = false;
         CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(clone);
         reformatRange(myFile, getSelectedRange());
       }
@@ -169,7 +170,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void somethingChanged() {
-      restoreSelectedText();
       reformatSelectedTextWithNewSettings();
     }
 
@@ -261,7 +261,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     
     @Override
     protected void somethingChanged() {
-      restoreSelectedText();
       reformatSelectedTextWithNewSettings();
     }
     
