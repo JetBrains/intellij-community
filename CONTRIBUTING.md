@@ -1,4 +1,4 @@
-Contributting to IntelliJ IDEA
+Contributing to IntelliJ IDEA
 ===
 
 Opening a PR, please make sure you've read these articles:
@@ -7,7 +7,7 @@ Opening a PR, please make sure you've read these articles:
 - [Contribute Code](http://www.jetbrains.org/display/IJOS/Contribute#Contribute-ContributeCode)
 
 Additionally, you **NEED** to have a signed CLA sent to JetBrains before your
-code can be merged, You can download one from [Contributor License Agreement](http://www.jetbrains.org/display/IJOS/Contributor+Agreement)
+code can be merged, you can download one from [Contributor License Agreement](http://www.jetbrains.org/display/IJOS/Contributor+Agreement)
 
 Building the IDE
 ==
