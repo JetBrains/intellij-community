@@ -43,6 +43,7 @@ import java.util.List;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
+  // immutable map instance with reliable user-specified iteration order
   private Map<String, String> myEnvs = Collections.emptyMap();
   private boolean myPassParentEnvs;
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -63,7 +64,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
    */
   @NotNull
   public Map<String, String> getEnvs() {
-    return Collections.unmodifiableMap(myEnvs);
+    return myEnvs;
   }
 
   /**
