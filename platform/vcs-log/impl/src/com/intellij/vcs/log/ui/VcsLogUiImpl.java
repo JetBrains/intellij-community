@@ -35,8 +35,8 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
-  public static final ExtensionPointName<VcsLogHighlighterCreator> LOG_HIGHLIGHTER_CREATOR_EP =
-    ExtensionPointName.create("com.intellij.logHighlighterCreator");
+  public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
+    ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
@@ -74,8 +74,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
 
-    for (VcsLogHighlighterCreator creator : Extensions.getExtensions(LOG_HIGHLIGHTER_CREATOR_EP, myProject)) {
-      addHighlighter(creator.createHighlighter(myLogDataHolder, myUiProperties));
+    for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
+      addHighlighter(factory.createHighlighter(myLogDataHolder, myUiProperties));
     }
   }
 

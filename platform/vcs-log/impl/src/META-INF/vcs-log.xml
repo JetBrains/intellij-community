@@ -2,7 +2,7 @@
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
-    <extensionPoint name="logHighlighterCreator" interface="com.intellij.vcs.log.ui.VcsLogHighlighterCreator" area="IDEA_PROJECT"/>
+    <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.VcsLogHighlighterFactory" area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -16,7 +16,7 @@
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector" />
 
-    <logHighlighterCreator implementation="com.intellij.vcs.log.ui.MyCommitsHighlighter$Creator"/>
+    <logHighlighterFactory implementation="com.intellij.vcs.log.ui.MyCommitsHighlighter$Factory"/>
   </extensions>
 
   <actions>

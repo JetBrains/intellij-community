@@ -50,7 +50,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private int myCurrentBranchesChecksum;
   @Nullable private VcsLogRefs myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
-  @NotNull private volatile Map<Pair<VirtualFile, String>, BranchChecker> myCheckers = ContainerUtil.newHashMap();
+  @NotNull private volatile Map<Pair<VirtualFile, String>, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
 
   ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
     myDataHolder = dataHolder;
@@ -88,9 +88,9 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private void clearCache() {
     myCache = createCache();
     myTaskExecutor.clear();
-    Map<Pair<VirtualFile, String>, BranchChecker> checkers = myCheckers;
-    myCheckers = ContainerUtil.newHashMap();
-    for (BranchChecker c : checkers.values()) {
+    Map<Pair<VirtualFile, String>, ContainedInBranchCondition> checkers = myConditions;
+    myConditions = ContainerUtil.newHashMap();
+    for (ContainedInBranchCondition c : checkers.values()) {
       c.dispose();
     }
     // re-request containing branches information for the commit user (possibly) currently stays on
@@ -136,7 +136,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   }
 
   @NotNull
-  public Condition<Hash> getBranchChecker(@NotNull final String branchName, @NotNull final VirtualFile root) {
+  public Condition<Hash> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     if (myRefs == null || myGraph == null) return Conditions.alwaysFalse();
     VcsRef branchRef = ContainerUtil.find(myRefs.getBranches(), new Condition<VcsRef>() {
       @Override
@@ -145,12 +145,12 @@ public class ContainingBranchesGetter implements VcsLogListener {
       }
     });
     if (branchRef == null) return Conditions.alwaysFalse();
-    BranchChecker checker = myCheckers.get(Pair.create(root, branchName));
-    if (checker == null) {
-      checker = new BranchChecker(myGraph.getBranchChecker(myDataHolder.getCommitIndex(branchRef.getCommitHash())));
-      myCheckers.put(Pair.create(root, branchName), checker);
+    ContainedInBranchCondition condition = myConditions.get(Pair.create(root, branchName));
+    if (condition == null) {
+      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(myDataHolder.getCommitIndex(branchRef.getCommitHash())));
+      myConditions.put(Pair.create(root, branchName), condition);
     }
-    return checker;
+    return condition;
   }
 
   @NotNull
@@ -211,11 +211,11 @@ public class ContainingBranchesGetter implements VcsLogListener {
     }
   }
 
-  private class BranchChecker implements Condition<Hash> {
+  private class ContainedInBranchCondition implements Condition<Hash> {
     @NotNull private final Condition<Integer> myChecker;
     private volatile boolean isDisposed = false;
 
-    public BranchChecker(@NotNull Condition<Integer> checker) {
+    public ContainedInBranchCondition(@NotNull Condition<Integer> checker) {
       myChecker = checker;
     }
 

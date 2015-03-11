@@ -52,7 +52,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     return VcsCommitStyle.DEFAULT;
   }
 
-  public static class Creator implements VcsLogHighlighterCreator {
+  public static class Factory implements VcsLogHighlighterFactory {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {

@@ -46,7 +46,7 @@ public interface PermanentGraph<CommitId> {
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
 
   @NotNull
-  Condition<CommitId> getBranchChecker(@NotNull CommitId currentBranchHead);
+  Condition<CommitId> getContainedInBranchCondition(@NotNull CommitId currentBranchHead);
 
   enum SortType {
     Normal("Off", "Sort commits topologically and by date"),

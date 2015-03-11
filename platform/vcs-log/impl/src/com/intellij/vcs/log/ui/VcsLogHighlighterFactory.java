@@ -20,7 +20,7 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 
-public interface VcsLogHighlighterCreator {
+public interface VcsLogHighlighterFactory {
   @NotNull
   VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties);
 }

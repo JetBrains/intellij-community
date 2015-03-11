@@ -26,7 +26,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogHighlighterCreator;
+import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -56,8 +56,8 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
           if (repo.getCurrentRevision() != null) currentBranch = "HEAD"; // does this work for hg?
         }
         if (currentBranch != null) {
-          Condition<Hash> checker = myDataHolder.getContainingBranchesGetter().getBranchChecker(currentBranch, details.getRoot());
-          if (checker.value(details.getId())) {
+          Condition<Hash> condition = myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+          if (condition.value(details.getId())) {
             return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
           }
         }
@@ -66,7 +66,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     return VcsCommitStyle.DEFAULT;
   }
 
-  public static class Creator implements VcsLogHighlighterCreator {
+  public static class Factory implements VcsLogHighlighterFactory {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {

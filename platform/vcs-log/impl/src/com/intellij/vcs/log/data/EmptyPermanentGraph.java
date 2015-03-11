@@ -63,7 +63,7 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
 
   @NotNull
   @Override
-  public Condition<Integer> getBranchChecker(@NotNull Integer currentBranchHead) {
+  public Condition<Integer> getContainedInBranchCondition(@NotNull Integer currentBranchHead) {
     return Conditions.alwaysFalse();
   }
 

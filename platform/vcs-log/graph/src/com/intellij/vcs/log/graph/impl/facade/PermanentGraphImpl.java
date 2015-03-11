@@ -168,7 +168,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
 
   @NotNull
   @Override
-  public Condition<CommitId> getBranchChecker(@NotNull final CommitId head) {
+  public Condition<CommitId> getContainedInBranchCondition(@NotNull final CommitId head) {
     if (head instanceof Integer) {
       final TIntHashSet branchNodes = new TIntHashSet();
       myBranchesGetter.walkBranch(myPermanentCommitsInfo.getNodeId(head), new Consumer<Integer>() {
