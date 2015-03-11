@@ -21,12 +21,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,6 +167,18 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (scope == this) return scope;
 
     return new UnionScope(this, scope);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static GlobalSearchScope union(@NotNull GlobalSearchScope[] scopes) {
+    if (scopes.length == 0) {
+      throw new IllegalArgumentException("Empty scope array");
+    }
+    if (scopes.length == 1) {
+      return scopes[0];
+    }
+    return new UnionScope(scopes);
   }
 
   @NotNull
@@ -403,17 +420,31 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   private static class UnionScope extends GlobalSearchScope {
-    private final GlobalSearchScope myScope1;
-    private final GlobalSearchScope myScope2;
+    private final GlobalSearchScope[] myScopes;
     private final int myNestingLevel;
 
     private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
-      super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
-      myScope1 = scope1;
-      myScope2 = scope2;
-      myNestingLevel = 1 +
-                     Math.max(scope1 instanceof UnionScope ? ((UnionScope)scope1).myNestingLevel : 0,
-                              scope2 instanceof UnionScope ? ((UnionScope)scope2).myNestingLevel : 0);
+      this(new GlobalSearchScope[]{scope1, scope2});
+    }
+
+    private UnionScope(@NotNull GlobalSearchScope[] scopes) {
+      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, new Function<GlobalSearchScope, Project>() {
+        @Override
+        public Project fun(GlobalSearchScope scope) {
+          return scope.getProject();
+        }
+      }), null));
+      assert scopes.length > 1 : Arrays.asList(scopes);
+      myScopes = scopes;
+      final int[] nested = {0};
+      ContainerUtil.process(scopes, new Processor<GlobalSearchScope>() {
+        @Override
+        public boolean process(GlobalSearchScope scope) {
+          nested[0] = Math.max(nested[0], scope instanceof UnionScope ? ((UnionScope)scope).myNestingLevel : 0);
+          return true;
+        }
+      });
+      myNestingLevel = 1 + nested[0];
       if (myNestingLevel > 1000) {
         throw new IllegalStateException("Too many scopes combined: " + myNestingLevel + StringUtil.first(toString(), 500, true));
       }
@@ -422,47 +453,78 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @NotNull
     @Override
     public String getDisplayName() {
-      return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
+      return PsiBundle.message("psi.search.scope.union", myScopes[0].getDisplayName(), myScopes[1].getDisplayName());
     }
 
     @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      return myScope1.contains(file) || myScope2.contains(file);
+    public boolean contains(@NotNull final VirtualFile file) {
+      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
+        @Override
+        public boolean value(GlobalSearchScope scope) {
+          return scope.contains(file);
+        }
+      }) != null;
     }
 
     @Override
     public boolean isSearchOutsideRootModel() {
-      return myScope1.isSearchOutsideRootModel() || myScope2.isSearchOutsideRootModel();
+      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
+        @Override
+        public boolean value(GlobalSearchScope scope) {
+          return scope.isSearchOutsideRootModel();
+        }
+      }) != null;
     }
 
     @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      int res1 = myScope1.contains(file1) && myScope1.contains(file2) ? myScope1.compare(file1, file2) : 0;
-      int res2 = myScope2.contains(file1) && myScope2.contains(file2) ? myScope2.compare(file1, file2) : 0;
-
-      if (res1 == 0) return res2;
-      if (res2 == 0) return res1;
-
-      res1 /= Math.abs(res1);
-      res2 /= Math.abs(res2);
-      if (res1 == res2) return res1;
-
-      return 0;
+    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
+      final int[] result = {0};
+      ContainerUtil.process(myScopes, new Processor<GlobalSearchScope>() {
+        @Override
+        public boolean process(GlobalSearchScope scope) {
+          int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
+          if (result[0] == 0) {
+            result[0] = res1;
+            return true;
+          }
+          if ((result[0] > 0) != (res1 > 0)) {
+            result[0] = 0;
+            return false;
+          }
+          return true;
+        }
+      });
+      return result[0];
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return myScope1.isSearchInModuleContent(aModule) || myScope2.isSearchInModuleContent(aModule);
+    public boolean isSearchInModuleContent(@NotNull final Module module) {
+      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
+        @Override
+        public boolean value(GlobalSearchScope scope) {
+          return scope.isSearchInModuleContent(module);
+        }
+      }) != null;
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
-      return myScope1.isSearchInModuleContent(aModule, testSources) || myScope2.isSearchInModuleContent(aModule, testSources);
+    public boolean isSearchInModuleContent(@NotNull final Module module, final boolean testSources) {
+      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
+        @Override
+        public boolean value(GlobalSearchScope scope) {
+          return scope.isSearchInModuleContent(module, testSources);
+        }
+      }) != null;
     }
 
     @Override
     public boolean isSearchInLibraries() {
-      return myScope1.isSearchInLibraries() || myScope2.isSearchInLibraries();
+      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
+        @Override
+        public boolean value(GlobalSearchScope scope) {
+          return scope.isSearchInLibraries();
+        }
+      }) != null;
     }
 
     @Override
@@ -472,18 +534,18 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       UnionScope that = (UnionScope)o;
 
-      return myScope1.equals(that.myScope1) && myScope2.equals(that.myScope2);
+      return new HashSet<GlobalSearchScope>(Arrays.asList(myScopes)).equals(new HashSet<GlobalSearchScope>(Arrays.asList(that.myScopes)));
     }
 
     @Override
     public int hashCode() {
-      return 31 * myScope1.hashCode() + myScope2.hashCode();
+      return Arrays.hashCode(myScopes);
     }
 
     @NonNls
     @Override
     public String toString() {
-      return "Union: (" + myScope1 + ", " + myScope2 + ")";
+      return "Union: (" + StringUtil.join(Arrays.asList(myScopes), ",") + ")";
     }
   }
 

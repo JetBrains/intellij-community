@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
@@ -866,13 +867,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
-    GlobalSearchScope commonScope = null;
-    for (RequestWithProcessor r : requests) {
-      final GlobalSearchScope scope = (GlobalSearchScope)r.request.searchScope;
-      commonScope = commonScope == null ? scope : commonScope.uniteWith(scope);
-    }
-    assert commonScope != null;
-    return commonScope;
+    Set<GlobalSearchScope> scopes = ContainerUtil.map2Set(requests, new Function<RequestWithProcessor, GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope fun(RequestWithProcessor request) {
+        return (GlobalSearchScope)request.request.searchScope;
+      }
+    });
+    return GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[scopes.size()]));
   }
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors,
