@@ -115,7 +115,7 @@ public class LogModel implements Disposable {
     return myStamps.get(notification);
   }
 
-  void removeNotification(Notification notification) {
+  public void removeNotification(Notification notification) {
     synchronized (myNotifications) {
       myNotifications.remove(notification);
     }
