@@ -49,4 +49,10 @@
       </component>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="mySuspendPolicyGroup" bound="true">
+      <member id="aba21"/>
+      <member id="91d9b"/>
+    </group>
+  </buttonGroups>
 </form>
