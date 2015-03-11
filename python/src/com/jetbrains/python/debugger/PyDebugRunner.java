@@ -224,12 +224,13 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSaveCallSignatures()) {
       debugParams.addParameter("--save-signatures");
-      addProjectRootsToEnv(project, generalCommandLine);
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
       generalCommandLine.getEnvironment().put(GEVENT_SUPPORT, "True");
     }
+
+    addProjectRootsToEnv(project, generalCommandLine);
 
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",

@@ -76,6 +76,10 @@ class PyDBFrame:
                 if exception_breakpoint is not None:
                     if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
                         # print frame.f_code.co_name
+                        if exception_breakpoint.ignore_libraries:
+                            if mainDebugger.not_in_scope(frame.f_code.co_filename):
+                                return False, frame
+
                         add_exception_to_frame(frame, (exception, value, trace))
                         thread.additionalInfo.message = exception_breakpoint.qname
                         flag = True
@@ -87,7 +91,6 @@ class PyDBFrame:
                             result = mainDebugger.plugin.exception_break(mainDebugger, self, frame, self._args, arg)
                             if result:
                                 (flag, frame) = result
-
                     except:
                         flag = False
 

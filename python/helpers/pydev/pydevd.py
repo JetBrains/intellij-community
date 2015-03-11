@@ -342,6 +342,7 @@ class PyDB:
         self.SetTrace = pydevd_tracing.SetTrace
         self.break_on_exceptions_thrown_in_same_context = False
         self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
+        self.project_roots = None
 
         # Suspend debugger even if breakpoint condition raises an exception
         SUSPEND_ON_BREAKPOINT_EXCEPTION = True
@@ -375,6 +376,15 @@ class PyDB:
             self.plugin = PluginManager(self)
         return self.plugin
 
+    def not_in_scope(self, filename):
+        if self.project_roots is None:
+            return False
+        filename = os.path.normcase(filename)
+        for root in self.project_roots:
+            root = os.path.normcase(root)
+            if filename.startswith(root):
+                return False
+        return True
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
@@ -632,6 +642,7 @@ class PyDB:
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
+        ignore_libraries
         ):
         try:
             eb = ExceptionBreakpoint(
@@ -639,6 +650,7 @@ class PyDB:
                 notify_always,
                 notify_on_terminate,
                 notify_on_first_raise_only,
+                ignore_libraries
             )
         except ImportError:
             pydev_log.error("Error unable to add break on exception for: %s (exception could not be imported)\n" % (exception,))
@@ -1116,9 +1128,12 @@ class PyDB:
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     if text.find('\t') != -1:
-                        exception, notify_always, notify_on_terminate = text.split('\t', 2)
+                        exception, notify_always, notify_on_terminate, ignore_libraries = text.split('\t', 3)
                     else:
-                        exception, notify_always, notify_on_terminate = text, 0, 0
+                        exception, notify_always, notify_on_terminate, ignore_libraries = text, 0, 0, 0
+
+                    if ignore_libraries > 0 and self.project_roots is None:
+                        self.project_roots = os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
 
                     if exception.find('-') != -1:
                         type, exception = exception.split('-')
@@ -1130,7 +1145,8 @@ class PyDB:
                             exception,
                             notify_always=int(notify_always) > 0,
                             notify_on_terminate = int(notify_on_terminate) == 1,
-                            notify_on_first_raise_only=int(notify_always) == 2
+                            notify_on_first_raise_only=int(notify_always) == 2,
+                            ignore_libraries=int(ignore_libraries) > 0
                         )
 
                         if exception_breakpoint is not None:

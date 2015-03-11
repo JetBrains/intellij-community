@@ -168,6 +168,7 @@ public class PyExceptionBreakpointType
 
   private static class PyExceptionBreakpointPropertiesPanel
     extends XBreakpointCustomPropertiesPanel<XBreakpoint<PyExceptionBreakpointProperties>> {
+    private JCheckBox myIgnoreLibrariesCheckBox;
     private JCheckBox myNotifyOnTerminateCheckBox;
     private JCheckBox myNotifyOnRaiseCheckBox;
     private JRadioButton myAlwaysRadio;
@@ -176,6 +177,7 @@ public class PyExceptionBreakpointType
     @NotNull
     @Override
     public JComponent getComponent() {
+      myIgnoreLibrariesCheckBox = new JCheckBox("Ignore library files");
       myNotifyOnTerminateCheckBox = new JCheckBox("On termination");
       myNotifyOnRaiseCheckBox = new JCheckBox("On raise");
       myAlwaysRadio = new JRadioButton("At each level of call chain");
@@ -187,6 +189,9 @@ public class PyExceptionBreakpointType
 
       Box notificationsBox = Box.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myIgnoreLibrariesCheckBox, BorderLayout.NORTH);
+      notificationsBox.add(panel);
+      panel = new JPanel(new BorderLayout());
       panel.add(myNotifyOnTerminateCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);
       panel = new JPanel(new BorderLayout());
@@ -243,6 +248,7 @@ public class PyExceptionBreakpointType
 
     @Override
     public void saveTo(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+      breakpoint.getProperties().setIgnoreLibraries(myIgnoreLibrariesCheckBox.isSelected());
       breakpoint.getProperties().setNotifyOnTerminate(myNotifyOnTerminateCheckBox.isSelected());
 
       breakpoint.getProperties().setNotifyAlways(myNotifyOnRaiseCheckBox.isSelected() && myAlwaysRadio.isSelected());
@@ -251,6 +257,7 @@ public class PyExceptionBreakpointType
 
     @Override
     public void loadFrom(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+      myIgnoreLibrariesCheckBox.setSelected(breakpoint.getProperties().isIgnoreLibraries());
       myNotifyOnTerminateCheckBox.setSelected(breakpoint.getProperties().isNotifyOnTerminate());
 
       boolean always = breakpoint.getProperties().isNotifyAlways();

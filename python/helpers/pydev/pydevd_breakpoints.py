@@ -22,6 +22,7 @@ class ExceptionBreakpoint:
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
+        ignore_libraries
         ):
         exctype = _get_class(qname)
         self.qname = qname
@@ -33,6 +34,7 @@ class ExceptionBreakpoint:
         self.notify_on_terminate = notify_on_terminate
         self.notify_always = notify_always
         self.notify_on_first_raise_only = notify_on_first_raise_only
+        self.ignore_libraries = ignore_libraries
 
         self.type = exctype
 
