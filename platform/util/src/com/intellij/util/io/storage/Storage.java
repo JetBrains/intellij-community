@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io.storage;
 
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.util.io.PagePool;
 
 import java.io.File;
@@ -45,6 +46,22 @@ public class Storage extends AbstractStorage {
   public int createNewRecord() throws IOException {
     synchronized (myLock) {
       return myRecordsTable.createNewRecord();
+    }
+  }
+
+  public void replaceBytes(int record, int offset, ByteSequence bytes) throws IOException {
+    synchronized (myLock) {
+      final int changedBytesLength = bytes.getLength();
+
+      final int currentSize = myRecordsTable.getSize(record);
+      assert currentSize >= 0;
+      assert offset + bytes.getLength() <= currentSize;
+
+      if (changedBytesLength == 0) return;
+
+      final long address = myRecordsTable.getAddress(record);
+
+      myDataTable.writeBytes(address + offset, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
     }
   }
 

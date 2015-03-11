@@ -26,6 +26,7 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -233,6 +234,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Nullable
   private static DataInputStream readContent(@NotNull VirtualFile file) {
+    if (StringUtil.endsWith(file.getNameSequence(), ".java")) {
+      int a = 1;
+    }
     return FSRecords.readContent(getFileId(file));
   }
 
