@@ -63,6 +63,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
   public void testJavadocRefs() throws Exception {
     doTest("i", "A", null);
   }
+  
+  public void testJavadocRefs1() throws Exception {
+    doTest("i", "B.A", null);
+  }
 
   public void testHideOuterclassMethod() throws Exception {
     doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
