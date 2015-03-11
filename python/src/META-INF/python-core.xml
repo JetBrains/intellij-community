@@ -745,6 +745,13 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
+    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.packages.PyConvertModuleToPackageAction"
+            text="Convert to Package"
+            description="Create package with the same name and move content of the module to __init__.py">
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
+    </action>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
