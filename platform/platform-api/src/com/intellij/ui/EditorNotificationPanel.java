@@ -48,7 +48,7 @@ public class EditorNotificationPanel extends JPanel {
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, myLabel);
     panel.add(BorderLayout.EAST, myLinksPanel);
-    panel.setBorder(JBUI.Borders.empty(3, 0, 3, 5));
+    panel.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
     panel.setMinimumSize(new Dimension(0, 0));
 
     add(BorderLayout.CENTER, panel);
