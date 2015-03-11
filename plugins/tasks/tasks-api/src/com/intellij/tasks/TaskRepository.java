@@ -321,6 +321,11 @@ public abstract class TaskRepository {
   protected boolean myShouldFormatCommitMessage;
   protected String myCommitMessageFormat = "{id} {summary}";
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "(URL='" + myUrl + "')";
+  }
+
   private static String trimTrailingSlashes(String url) {
     if (url == null) return "";
     for (int i = url.length() - 1; i >= 0; i--) {
