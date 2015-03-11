@@ -126,11 +126,9 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           }
 
           final PsiMethod method = callExpression.resolveMethod();
-          if (method == null) {
-            LOG.error(callExpression);
-            return null;
+          if (method != null) {
+            return MethodSignatureUtil.areSignaturesEqual((PsiMethod)element, method) ? callExpression : null;
           }
-          return MethodSignatureUtil.areSignaturesEqual((PsiMethod)element, method) ? callExpression : null;
         }
       }
       finally {
