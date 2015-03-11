@@ -71,7 +71,7 @@ class Test {
   }
 }"""
     def items = myFixture.completeBasic()
-    assert items.find { LookupElementPresentation.renderElement(it).itemText == 'x -> {}' }
+    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x -> {}'
   }
 
 
