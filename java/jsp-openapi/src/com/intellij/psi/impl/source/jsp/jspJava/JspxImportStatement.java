@@ -17,10 +17,11 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.SyntheticElement;
 
 /**
  * @author peter
  */
-public interface JspxImportStatement extends PsiImportStatement {
+public interface JspxImportStatement extends PsiImportStatement, SyntheticElement {
   PsiFile getDeclarationFile();
 }
