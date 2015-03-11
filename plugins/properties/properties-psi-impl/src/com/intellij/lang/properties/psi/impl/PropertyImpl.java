@@ -448,8 +448,13 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     if (delimiter == null) {
       return null;
     }
-    final String separatorText = delimiter.getText();
-    LOG.assertTrue(separatorText.length() == 1);
+    String separatorText = delimiter.getText();
+    LOG.assertTrue(separatorText.length() > 0);
+    separatorText = separatorText.trim();
+    if (separatorText.isEmpty()) {
+      separatorText = " ";
+    }
+    LOG.assertTrue(separatorText.length() == 1, "\"" + separatorText + "\"");
     return separatorText.charAt(0);
   }
 
