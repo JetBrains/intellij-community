@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -50,19 +51,19 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
-import static java.util.Arrays.asList;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
-    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabledAndVisible(visible);
     if (! visible) return;
 
     final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
@@ -113,77 +114,49 @@ public class RollbackAction extends AnAction implements DumbAware {
 
     List<Change> changes = getChanges(project, e);
 
-    LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
+    final LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
       hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
     }
 
-    if (changes != null) {
-      if (modifiedWithoutEditing != null) {
-        for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext(); ) {
-          Change next = iterator.next();
-          if (modifiedWithoutEditing.contains(next.getVirtualFile())) {
-            iterator.remove();
-          }
+    if (modifiedWithoutEditing != null) {
+      changes = ContainerUtil.filter(changes, new Condition<Change>() {
+        @Override
+        public boolean value(Change change) {
+          return !modifiedWithoutEditing.contains(change.getVirtualFile());
         }
-      }
-      if (!changes.isEmpty() || !hasChanges) {
-        RollbackChangesDialog.rollbackChanges(project, changes);
-      }
+      });
+    }
+
+    if (!changes.isEmpty() || !hasChanges) {
+      RollbackChangesDialog.rollbackChanges(project, changes);
     }
   }
 
-  private static class ChangesCheckHelper {
-    private Change[] myChanges;
-    private final boolean myChangesSet;
-
-    public ChangesCheckHelper(final Project project, final AnActionEvent e) {
-      Change[] changes = e.getData(VcsDataKeys.CHANGES);
-      if (changes == null) {
-        final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-        if (files != null) {
-          final ChangeListManager clManager = ChangeListManager.getInstance(project);
-          final List<Change> changesList = new LinkedList<Change>();
-          for (VirtualFile vf : files) {
-            changesList.addAll(clManager.getChangesIn(vf));
-          }
-          if (! changesList.isEmpty()) {
-            changes = changesList.toArray(new Change[changesList.size()]);
-          }
-        }
-      }
-      myChangesSet = changes != null && changes.length > 0;
-      if (myChangesSet) {
-        if (ChangesUtil.allChangesInOneListOrWholeListsSelected(project, changes)) {
-          myChanges = changes;
-        }
-      }
-    }
-
-    public boolean isChangesSet() {
-      return myChangesSet;
-    }
-
-    public Change[] getChanges() {
-      return myChanges;
-    }
-  }
-
-  @Nullable
+  @NotNull
   private static List<Change> getChanges(final Project project, final AnActionEvent e) {
-    final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
-    if (helper.isChangesSet() && helper.getChanges() != null) return ContainerUtil.newArrayList(helper.getChanges());
-
-    final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (virtualFiles != null && virtualFiles.length > 0) {
-      List<Change> result = new ArrayList<Change>();
-      for(VirtualFile file: virtualFiles) {
-        result.addAll(ChangeListManager.getInstance(project).getChangesIn(file));
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    if (changes == null) {
+      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+      if (files != null) {
+        final ChangeListManager clManager = ChangeListManager.getInstance(project);
+        final List<Change> changesList = new ArrayList<Change>();
+        for (VirtualFile vf : files) {
+          changesList.addAll(clManager.getChangesIn(vf));
+        }
+        if (!changesList.isEmpty()) {
+          changes = changesList.toArray(new Change[changesList.size()]);
+        }
       }
-      return result;
     }
-    return null;
+    if (changes != null && changes.length > 0) {
+      if (ChangesUtil.allChangesInOneListOrWholeListsSelected(project, changes)) {
+        return ContainerUtil.newArrayList(changes);
+      }
+    }
+
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -195,7 +168,7 @@ public class RollbackAction extends AnAction implements DumbAware {
 
     final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
-      LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>(asList(virtualFiles));
+      LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>(Arrays.asList(virtualFiles));
       result.retainAll(ChangeListManager.getInstance(project).getModifiedWithoutEditing());
       return result;
     }
@@ -248,7 +221,7 @@ public class RollbackAction extends AnAction implements DumbAware {
         }
 
         VfsUtil.markDirty(true, false, VfsUtilCore.toVirtualFileArray(modifiedWithoutEditing));
-        
+
         VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
           public void run() {
             for (VirtualFile virtualFile : modifiedWithoutEditing) {
