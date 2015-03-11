@@ -15,13 +15,10 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
-import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ConfigurationException;
@@ -38,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.*;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow;
 
 public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
@@ -93,13 +90,11 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   }
   
   static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
-    private final TabbedLanguageCodeStylePanel myTabbedLanguagePanel;
+    private final CodeFragmentCodeStyleSettingsPanel myTabbedLanguagePanel;
     private final CodeStyleSettings mySettings;
     private final Editor myEditor;
     
     private final String myTextBefore;
-    private final int mySelectionStart;
-    private final int mySelectionEnd;
     private final Project myProject;
 
     public FragmentCodeStyleSettingsDialog(@NotNull Project project,
@@ -111,11 +106,8 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       myProject = project;
       myEditor = editor;
       mySettings = settings;
-      
+
       myTextBefore = myEditor.getSelectionModel().getSelectedText();
-      mySelectionStart = myEditor.getSelectionModel().getSelectionStart();
-      mySelectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-      
       myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, project, editor, file);
       
       setTitle("Configure Code Style Settings: " + file.getLanguage().getDisplayName());
@@ -144,29 +136,9 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     public void doCancelAction() {
       String textAfter = myEditor.getSelectionModel().getSelectedText();
       if (!StringUtil.equals(myTextBefore, textAfter)) {
-        restoreSelectedText();
+        myTabbedLanguagePanel.restoreSelectedText();
       }
       super.doCancelAction();
-    }
-
-    private void restoreSelectedText() {
-      final Document document = myEditor.getDocument();
-      final int start = myEditor.getSelectionModel().getSelectionStart();
-      final int end = myEditor.getSelectionModel().getSelectionEnd();
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              document.replaceString(start, end, myTextBefore);
-            }
-          }, "Configure code style on selected fragment: restore text before", null);
-        }
-      });
-      
-      myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
     }
   }
 }

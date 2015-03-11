@@ -19,13 +19,17 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
 class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
@@ -44,6 +49,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
+
+  private final int mySelectionEnd;
+  private final int mySelectionStart;
+  private final String myTextBefore;
 
   public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
                                             @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
@@ -56,6 +65,11 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     myProject = project;
     myEditor = editor;
     myFile = file;
+
+    myTextBefore = myEditor.getSelectionModel().getSelectedText();
+    mySelectionStart = myEditor.getSelectionModel().getSelectionStart();
+    mySelectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+
     ensureTabs();
   }
 
@@ -77,6 +91,26 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
   public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
     return filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
+  }
+
+  public void restoreSelectedText() {
+    final Document document = myEditor.getDocument();
+    final int start = myEditor.getSelectionModel().getSelectionStart();
+    final int end = myEditor.getSelectionModel().getSelectionEnd();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(start, end, myTextBefore);
+          }
+        }, "Configure code style on selected fragment: restore text before", null);
+      }
+    });
+
+    myEditor.getSelectionModel().setSelection(mySelectionStart, mySelectionEnd);
   }
 
   private void reformatSelectedTextWithNewSettings() {
@@ -133,6 +167,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void somethingChanged() {
+      restoreSelectedText();
       reformatSelectedTextWithNewSettings();
     }
 
@@ -207,6 +242,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     
     @Override
     protected void somethingChanged() {
+      restoreSelectedText();
       reformatSelectedTextWithNewSettings();
     }
     
