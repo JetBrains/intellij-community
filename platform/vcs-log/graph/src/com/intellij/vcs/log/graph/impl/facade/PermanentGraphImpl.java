@@ -185,17 +185,17 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       };
     }
     else {
-      final TIntHashSet branchNodes = new TIntHashSet();
+      final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
       myBranchesGetter.walkBranch(myPermanentCommitsInfo.getNodeId(head), new Consumer<Integer>() {
         @Override
         public void consume(Integer node) {
-          branchNodes.add(node);
+          branchNodes.add(myPermanentCommitsInfo.getCommitId(node));
         }
       });
       return new Condition<CommitId>() {
         @Override
         public boolean value(CommitId commitId) {
-          return branchNodes.contains(myPermanentCommitsInfo.getNodeId(commitId));
+          return branchNodes.contains(commitId);
         }
       };
     }
