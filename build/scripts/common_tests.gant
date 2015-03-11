@@ -27,7 +27,8 @@ target(compile: "Compile project") {
   }
 
   loadProject()
-  projectBuilder.targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
+  prepareOutputFolder()
+
   if (!isDefined("avoid.project.rebuild")) {
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
