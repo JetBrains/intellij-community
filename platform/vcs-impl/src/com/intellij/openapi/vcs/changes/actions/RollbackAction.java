@@ -36,10 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
@@ -71,7 +68,8 @@ public class RollbackAction extends AnAction implements DumbAware {
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
-                              hasReversibleFiles(e, project);
+                              hasReversibleFiles(e, project) ||
+                              currentChangelistNotEmpty(project);
     e.getPresentation().setEnabled(isEnabled);
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName + "...");
@@ -92,6 +90,12 @@ public class RollbackAction extends AnAction implements DumbAware {
       }
     }
     return false;
+  }
+
+  private static boolean currentChangelistNotEmpty(Project project) {
+    ChangeListManager clManager = ChangeListManager.getInstance(project);
+    ChangeList list = clManager.getDefaultChangeList();
+    return list != null && !list.getChanges().isEmpty();
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -154,6 +158,12 @@ public class RollbackAction extends AnAction implements DumbAware {
       if (ChangesUtil.allChangesInOneListOrWholeListsSelected(project, changes)) {
         return ContainerUtil.newArrayList(changes);
       }
+    }
+
+    final ChangeListManager clManager = ChangeListManager.getInstance(project);
+    ChangeList list = clManager.getDefaultChangeList();
+    if (list != null) {
+      return ContainerUtil.newArrayList(list.getChanges());
     }
 
     return Collections.emptyList();
