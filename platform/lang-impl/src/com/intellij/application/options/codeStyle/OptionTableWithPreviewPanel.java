@@ -63,7 +63,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private boolean myShowAllStandardOptions;
   protected boolean isFirstUpdate = true;
 
-
   public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);
   }

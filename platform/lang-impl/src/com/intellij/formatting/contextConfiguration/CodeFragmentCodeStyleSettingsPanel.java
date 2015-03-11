@@ -36,7 +36,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
@@ -214,10 +216,12 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void init() {
-      List<String> settingNames = mySettingsToShow.getSettings(getSettingsType());
-      String[] names = ContainerUtil.toArray(settingNames, new String[settingNames.size()]);
-      showStandardOptions(names);
+      Collection<String> settingNames = mySettingsToShow.getSettings(getSettingsType());
       initTables();
+
+      Collection<String> fields = populateWithAssociatedFields(settingNames);
+      String[] names = ContainerUtil.toArray(fields, new String[fields.size()]);
+      showStandardOptions(names);
 
       myTreeTable = createOptionsTree(getSettings());
       JBScrollPane scrollPane = new JBScrollPane(myTreeTable) {
@@ -233,6 +237,21 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       showStandardOptions(names);
 
       isFirstUpdate = false;
+    }
+
+    @NotNull
+    private Collection<String> populateWithAssociatedFields(Collection<String> settingNames) {
+      Set<String> commonFields = ContainerUtil.newHashSet();
+      for (String fieldName : settingNames) {
+        SettingsGroup settingsGroup = getAssociatedSettingsGroup(fieldName);
+        if (settingsGroup == null) {
+          commonFields.add(fieldName);
+        }
+        else if (settingsGroup.title != WRAPPING_KEEP) {
+          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames);
+        }
+      }
+      return commonFields;
     }
 
     @Override
