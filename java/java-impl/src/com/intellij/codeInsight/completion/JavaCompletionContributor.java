@@ -225,6 +225,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
+    if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
+      for (LookupElement element : LambdaCompletionProvider.getLambdaVariants(parameters)) {
+        result.addElement(PrioritizedLookupElement.withPriority(element, 1));
+      }
+    }
+
     PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
@@ -246,10 +252,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
-
-    if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
-      new LambdaCompletionProvider().addCompletions(parameters, new ProcessingContext(), result);
-    }
 
     addAllClasses(parameters, result, inheritors);
 
