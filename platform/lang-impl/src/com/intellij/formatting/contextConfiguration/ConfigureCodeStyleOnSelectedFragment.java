@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -95,7 +96,6 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     private final Editor myEditor;
     
     private final String myTextBefore;
-    private final Project myProject;
 
     public FragmentCodeStyleSettingsDialog(@NotNull Project project,
                                            @NotNull Editor editor,
@@ -103,7 +103,6 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
                                            CodeStyleSettings settings,
                                            CodeStyleSettingsToShow settingsToShow) {
       super(project, true);
-      myProject = project;
       myEditor = editor;
       mySettings = settings;
 
@@ -119,6 +118,12 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     @Override
     protected JComponent createCenterPanel() {
       return myTabbedLanguagePanel.getPanel();
+    }
+
+    @Override
+    protected void dispose() {
+      super.dispose();
+      Disposer.dispose(myTabbedLanguagePanel);
     }
 
     @Override
