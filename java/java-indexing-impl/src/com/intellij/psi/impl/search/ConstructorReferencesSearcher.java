@@ -39,6 +39,6 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
       }
     });
     new ConstructorReferencesSearchHelper(manager[0])
-      .processConstructorReferences(consumer, method, aClass, scope, p.isIgnoreAccessScope(), true, p.getOptimizer());
+      .processConstructorReferences(consumer, method, aClass, scope, p.getProject(), p.isIgnoreAccessScope(), true, p.getOptimizer());
   }
 }

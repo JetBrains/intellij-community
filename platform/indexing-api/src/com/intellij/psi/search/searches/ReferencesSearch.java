@@ -16,6 +16,7 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
@@ -43,6 +44,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     private final SearchScope myScope;
     private final boolean myIgnoreAccessScope;
     private final SearchRequestCollector myOptimizer;
+    private final Project myProject;
     private final boolean isSharedOptimizer;
 
     public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, boolean ignoreAccessScope, @Nullable SearchRequestCollector optimizer) {
@@ -51,10 +53,16 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       myIgnoreAccessScope = ignoreAccessScope;
       isSharedOptimizer = optimizer != null;
       myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession()) : optimizer;
+      myProject = PsiUtilCore.getProjectInReadAction(elementToSearch);
     }
 
     public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, final boolean ignoreAccessScope) {
       this(elementToSearch, scope, ignoreAccessScope, null);
+    }
+
+    @NotNull
+    public Project getProject() {
+      return myProject;
     }
 
     @NotNull
