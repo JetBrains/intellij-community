@@ -421,7 +421,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (NIO_FILE_API_AVAILABLE) {
+    if (NIOReflect.IS_AVAILABLE) {
       return deleteRecursivelyNIO(file);
     }
     return deleteRecursively(file);

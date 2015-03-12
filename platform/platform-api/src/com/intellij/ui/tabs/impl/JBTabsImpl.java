@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -67,6 +68,12 @@ public class JBTabsImpl extends JComponent
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
+  private static final Comparator<TabInfo> ABC_COMPARATOR = new Comparator<TabInfo>() {
+    @Override
+    public int compare(TabInfo o1, TabInfo o2) {
+      return StringUtil.naturalCompare(o1.getText(), o2.getText());
+    }
+  };
 
   @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
@@ -424,7 +431,7 @@ public class JBTabsImpl extends JComponent
     myTabListeners.clear();
   }
 
-  void resetTabsCache() {
+  protected void resetTabsCache() {
     myAllTabs = null;
   }
 
@@ -622,7 +629,7 @@ public class JBTabsImpl extends JComponent
       return;
     }
     mySingleRowLayout.myMorePopup = new JBPopupMenu();
-    for (final TabInfo each : myVisibleInfos) {
+    for (final TabInfo each : getVisibleInfos()) {
       if (!mySingleRowLayout.isTabHidden(each)) continue;
       final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
       item.setForeground(each.getDefaultForeground());
@@ -1278,7 +1285,7 @@ public class JBTabsImpl extends JComponent
 
     if (myVisibleInfos.size() == 1) return null;
 
-    int index = myVisibleInfos.indexOf(info);
+    int index = getVisibleInfos().indexOf(info);
 
     TabInfo result = null;
     if (index > 0) {
@@ -1296,14 +1303,15 @@ public class JBTabsImpl extends JComponent
   private TabInfo findEnabledForward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
+    List<TabInfo> infos = getVisibleInfos();
     while (true) {
       index++;
-      if (index == myVisibleInfos.size()) {
+      if (index == infos.size()) {
         if (!cycle) break;
         index = 0;
       }
       if (index == from) break;
-      final TabInfo each = myVisibleInfos.get(index);
+      final TabInfo each = infos.get(index);
       if (each.isEnabled()) return each;
     }
 
@@ -1318,14 +1326,15 @@ public class JBTabsImpl extends JComponent
   private TabInfo findEnabledBackward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
+    List<TabInfo> infos = getVisibleInfos();
     while (true) {
       index--;
       if (index == -1) {
         if (!cycle) break;
-        index = myVisibleInfos.size() - 1;
+        index = infos.size() - 1;
       }
       if (index == from) break;
-      final TabInfo each = myVisibleInfos.get(index);
+      final TabInfo each = infos.get(index);
       if (each.isEnabled()) return each;
     }
 
@@ -1351,6 +1360,9 @@ public class JBTabsImpl extends JComponent
 
     for (TabInfo each : myHiddenInfos.keySet()) {
       result.add(getIndexInVisibleArray(each), each);
+    }
+    if (isAlphabeticalMode()) {
+      Collections.sort(result, ABC_COMPARATOR);
     }
 
     myAllTabs = result;
@@ -1484,7 +1496,7 @@ public class JBTabsImpl extends JComponent
 
 
       List<TabInfo> visible = new ArrayList<TabInfo>();
-      visible.addAll(myVisibleInfos);
+      visible.addAll(getVisibleInfos());
 
       if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
         if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
@@ -2070,7 +2082,13 @@ public class JBTabsImpl extends JComponent
   }
 
   protected List<TabInfo> getVisibleInfos() {
-    return myVisibleInfos;
+    if (!isAlphabeticalMode()) {
+      return myVisibleInfos;
+    } else {
+      List<TabInfo> sortedCopy = new ArrayList<TabInfo>(myVisibleInfos);
+      Collections.sort(sortedCopy, ABC_COMPARATOR);
+      return sortedCopy;
+    }
   }
 
   protected LayoutPassInfo getLastLayoutPass() {
@@ -2779,7 +2797,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public int getIndexOf(@Nullable final TabInfo tabInfo) {
-    return myVisibleInfos.indexOf(tabInfo);
+    return getVisibleInfos().indexOf(tabInfo);
   }
 
   @Override
@@ -2884,7 +2902,7 @@ public class JBTabsImpl extends JComponent
       tabs = findNavigatableTabs(tabs);
       e.getPresentation().setEnabled(tabs != null);
       if (tabs != null) {
-        _update(e, tabs, tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo()));
+        _update(e, tabs, tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo()));
       }
     }
 
@@ -2909,7 +2927,7 @@ public class JBTabsImpl extends JComponent
     }
 
     private static boolean isNavigatable(JBTabsImpl tabs) {
-      final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
+      final int selectedIndex = tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo());
       return tabs.isNavigationVisible() && selectedIndex >= 0 && tabs.myNavigationActionsEnabled;
     }
 
@@ -2925,7 +2943,7 @@ public class JBTabsImpl extends JComponent
       tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
 
-      final int index = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
+      final int index = tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo());
       if (index == -1) return;
       _actionPerformed(e, tabs, index);
     }
@@ -2946,7 +2964,10 @@ public class JBTabsImpl extends JComponent
 
     @Override
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      tabs.select(tabs.findEnabledForward(selectedIndex, true), true);
+      TabInfo tabInfo = tabs.findEnabledForward(selectedIndex, true);
+      if (tabInfo != null) {
+        tabs.select(tabInfo, true);
+      }
     }
   }
 
@@ -2962,7 +2983,10 @@ public class JBTabsImpl extends JComponent
 
     @Override
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
-      tabs.select(tabs.findEnabledBackward(selectedIndex, true), true);
+      TabInfo tabInfo = tabs.findEnabledBackward(selectedIndex, true);
+      if (tabInfo != null) {
+        tabs.select(tabInfo, true);
+      }
     }
   }
 

@@ -96,7 +96,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   }
 
   @NotNull
-  private static MyPathAndProjectButtonPanel createPanel(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
+  public static MyPathAndProjectButtonPanel createPanel(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
     final EditorTextField textField = createTextField(project, externalSystemId);
     
     final FixedSizeButton selectRegisteredProjectButton = new FixedSizeButton();
