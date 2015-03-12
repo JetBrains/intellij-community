@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -29,6 +30,8 @@ import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSys
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager.ExternalProjectsStateProvider;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -53,6 +56,7 @@ import java.util.*;
  * @since 10/28/2014
  */
 public class ExternalSystemTaskActivator {
+  private static final Logger LOG = Logger.getInstance(ExternalSystemTaskActivator.class);
 
   public static final String RUN_CONFIGURATION_TASK_PREFIX = "run: ";
   @NotNull private final Project myProject;
@@ -98,7 +102,7 @@ public class ExternalSystemTaskActivator {
 
     for (Phase phase : Phase.values()) {
       if (taskActivationState.getTasks(phase).contains(taskName)) {
-        result.add(ExternalSystemBundle.message(phase.myMessageKey));
+        result.add(phase.toString());
       }
     }
     return StringUtil.join(result, ", ");
@@ -162,7 +166,7 @@ public class ExternalSystemTaskActivator {
 
       final Set<String> tasks = ContainerUtil.newLinkedHashSet();
       for (Phase phase : phases) {
-        if(hashPath || phase.isSyncPhase())
+        if (hashPath || (phase.isSyncPhase() && isShareSameRootPath(modules, activation)))
         ContainerUtil.addAll(tasks, activation.state.getTasks(phase));
       }
 
@@ -199,6 +203,25 @@ public class ExternalSystemTaskActivator {
     return runTasksQueue(tasksQueue);
   }
 
+  private boolean isShareSameRootPath(@NotNull Collection<String> modules,
+                                      @NotNull ExternalProjectsStateProvider.TasksActivation activation) {
+    final AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, activation.systemId);
+    final String rootProjectPath = getRootProjectPath(systemSettings, activation.projectPath);
+    final List<String> rootPath = ContainerUtil.mapNotNull(modules, new Function<String, String>() {
+      @Override
+      public String fun(String path) {
+        return getRootProjectPath(systemSettings, path);
+      }
+    });
+    return rootPath.contains(rootProjectPath);
+  }
+
+  @Nullable
+  private static String getRootProjectPath(@NotNull AbstractExternalSystemSettings systemSettings, @NotNull String projectPath) {
+    final ExternalProjectSettings projectSettings = systemSettings.getLinkedProjectSettings(projectPath);
+    return projectSettings != null ? projectSettings.getExternalProjectPath() : null;
+  }
+
   private boolean runTasksQueue(final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue) {
     final Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings> pair = tasksQueue.poll();
     if (pair == null) return true;
@@ -227,7 +250,7 @@ public class ExternalSystemTaskActivator {
     return result.get();
   }
 
-  public void addListener(Listener l) {
+  public void addListener(@NotNull Listener l) {
     myListeners.add(l);
   }
 
@@ -240,32 +263,104 @@ public class ExternalSystemTaskActivator {
     return taskActivationState.getTasks(phase).contains(taskData.getName());
   }
 
-  public void addTasks(List<TaskData> tasks, Phase phase) {
+  public void addTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) return;
+    addTasks(ContainerUtil.map(tasks, new Function<TaskData, TaskActivationEntry>() {
+      @Override
+      public TaskActivationEntry fun(TaskData data) {
+        return new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName());
+      }
+    }));
+    fireTasksChanged();
+  }
+
+  public void addTasks(@NotNull Collection<TaskActivationEntry> entries) {
+    if (entries.isEmpty()) return;
 
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManager.getInstance(myProject).getStateProvider();
-    for (TaskData task : tasks) {
-      final TaskActivationState taskActivationState = stateProvider.getTasksActivation(task.getOwner(),
-                                                                                       task.getLinkedExternalProjectPath());
-      taskActivationState.getTasks(phase).add(task.getName());
+    for (TaskActivationEntry entry : entries) {
+      final TaskActivationState taskActivationState = stateProvider.getTasksActivation(entry.systemId, entry.projectPath);
+      taskActivationState.getTasks(entry.phase).add(entry.taskName);
     }
 
     fireTasksChanged();
   }
 
-  public void removeTasks(List<TaskData> tasks, Phase phase) {
+  public void removeTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) return;
+    removeTasks(ContainerUtil.map(tasks, new Function<TaskData, TaskActivationEntry>() {
+      @Override
+      public TaskActivationEntry fun(TaskData data) {
+        return new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName());
+      }
+    }));
+  }
 
+  public void removeTasks(@NotNull Collection<TaskActivationEntry> entries) {
+    if (entries.isEmpty()) return;
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManager.getInstance(myProject).getStateProvider();
-
-    for (TaskData task : tasks) {
-      final TaskActivationState taskActivationState = stateProvider.getTasksActivation(task.getOwner(),
-                                                                                       task.getLinkedExternalProjectPath());
-      taskActivationState.getTasks(phase).remove(task.getName());
+    for (TaskActivationEntry activationEntry : entries) {
+      final TaskActivationState taskActivationState =
+        stateProvider.getTasksActivation(activationEntry.systemId, activationEntry.projectPath);
+      taskActivationState.getTasks(activationEntry.phase).remove(activationEntry.taskName);
     }
-
     fireTasksChanged();
   }
+
+  public void addTask(@NotNull TaskActivationEntry entry) {
+    addTasks(Collections.singleton(entry));
+  }
+
+  public void removeTask(@NotNull TaskActivationEntry entry) {
+    removeTasks(Collections.singleton(entry));
+  }
+
+
+  public void moveTasks(@NotNull Collection<TaskActivationEntry> entries, int increment) {
+    LOG.assertTrue(increment == -1 || increment == 1);
+
+    final ExternalProjectsStateProvider stateProvider = ExternalProjectsManager.getInstance(myProject).getStateProvider();
+    for (TaskActivationEntry activationEntry : entries) {
+      final TaskActivationState taskActivationState =
+        stateProvider.getTasksActivation(activationEntry.systemId, activationEntry.projectPath);
+      final List<String> tasks = taskActivationState.getTasks(activationEntry.phase);
+      final int i1 = tasks.indexOf(activationEntry.taskName);
+      final int i2 = i1 + increment;
+      if (i1 != -1 && tasks.size() > i2 && i2 >= 0) {
+        Collections.swap(tasks, i1, i2);
+      }
+    }
+  }
+
+  public void moveProjects(@NotNull ProjectSystemId systemId,
+                           @NotNull List<String> projectsPathsToMove,
+                           @Nullable Collection<String> pathsGroup,
+                           int increment) {
+    LOG.assertTrue(increment == -1 || increment == 1);
+
+    final ExternalProjectsStateProvider stateProvider = ExternalProjectsManager.getInstance(myProject).getStateProvider();
+    final Map<String, TaskActivationState> activationMap = stateProvider.getProjectsTasksActivationMap(systemId);
+    final List<String> currentPaths = ContainerUtil.newArrayList(activationMap.keySet());
+    if (pathsGroup != null) {
+      currentPaths.retainAll(pathsGroup);
+    }
+
+    for (String path : projectsPathsToMove) {
+      final int i1 = currentPaths.indexOf(path);
+      final int i2 = i1 + increment;
+      if (i1 != -1 && currentPaths.size() > i2 && i2 >= 0) {
+        Collections.swap(currentPaths, i1, i2);
+      }
+    }
+
+    Map<String, TaskActivationState> rearrangedMap = ContainerUtil.newLinkedHashMap();
+    for (String path : currentPaths) {
+      rearrangedMap.put(path, activationMap.get(path));
+      activationMap.remove(path);
+    }
+    activationMap.putAll(rearrangedMap);
+  }
+
 
   public void fireTasksChanged() {
     for (Listener each : myListeners) {
@@ -290,9 +385,49 @@ public class ExternalSystemTaskActivator {
     public boolean isSyncPhase () {
       return this == BEFORE_SYNC || this == AFTER_SYNC;
     }
+
+    @Override
+    public String toString() {
+      return ExternalSystemBundle.message(myMessageKey);
+    }
   }
 
   public interface Listener {
     void tasksActivationChanged();
+  }
+
+  public static class TaskActivationEntry {
+    @NotNull private final ProjectSystemId systemId;
+    @NotNull private final Phase phase;
+    @NotNull private final String projectPath;
+    @NotNull private final String taskName;
+
+    public TaskActivationEntry(@NotNull ProjectSystemId systemId,
+                               @NotNull Phase phase, @NotNull String projectPath, @NotNull String taskName) {
+      this.systemId = systemId;
+      this.phase = phase;
+      this.projectPath = projectPath;
+      this.taskName = taskName;
+    }
+
+    @NotNull
+    public ProjectSystemId getSystemId() {
+      return systemId;
+    }
+
+    @NotNull
+    public Phase getPhase() {
+      return phase;
+    }
+
+    @NotNull
+    public String getProjectPath() {
+      return projectPath;
+    }
+
+    @NotNull
+    public String getTaskName() {
+      return taskName;
+    }
   }
 }
