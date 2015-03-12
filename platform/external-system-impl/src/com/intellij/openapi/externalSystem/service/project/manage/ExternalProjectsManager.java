@@ -201,6 +201,11 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
       public TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath) {
         return myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation().get(projectPath);
       }
+
+      @Override
+      public  Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull final ProjectSystemId systemId) {
+          return myState.getExternalSystemsState().get(systemId.getId()).getExternalSystemsTaskActivation();
+      }
     };
   }
 
@@ -235,5 +240,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
     List<TasksActivation> getTasksActivation(@NotNull ProjectSystemId systemId);
 
     TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
+
+    Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull ProjectSystemId systemId);
   }
 }

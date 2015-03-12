@@ -32,9 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.*;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.getRunConfigurationActivationTaskName;
 
 /**
  * @author Vladislav.Soroka
@@ -97,8 +97,8 @@ class ExternalSystemRunManagerListener extends RunManagerAdapter {
           stateProvider.getTasksActivation(taskExecutionSettings.getExternalSystemId(), taskExecutionSettings.getExternalProjectPath());
 
         for (Phase phase : Phase.values()) {
-          final Set<String> modifiableActivationTasks = activation.getTasks(phase);
-          for (String task : ContainerUtil.newTroveSet(modifiableActivationTasks)) {
+          final List<String> modifiableActivationTasks = activation.getTasks(phase);
+          for (String task : ContainerUtil.newArrayList(modifiableActivationTasks)) {
             if (pair.first.equals(task)) {
               modifiableActivationTasks.remove(task);
               final String runConfigurationActivationTaskName = getRunConfigurationActivationTaskName(settings);

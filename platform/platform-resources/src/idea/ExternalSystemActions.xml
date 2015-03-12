@@ -24,6 +24,10 @@
             class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
     </action>
 
+    <action id="ExternalSystem.OpenTasksActivationManager"
+            class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
+    </action>
+
     <action id="ExternalSystem.ExpandAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$ExpandAll"
             text="Expand All"
             icon="AllIcons.Actions.Expandall"
@@ -93,6 +97,8 @@
       <reference ref="ExternalSystemView.BaseProjectMenu"/>
       <separator/>
       <reference id="ExternalSystem.ToggleAutoImport"/>
+      <separator/>
+      <reference id="ExternalSystem.OpenTasksActivationManager"/>
     </group>
 
     <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
