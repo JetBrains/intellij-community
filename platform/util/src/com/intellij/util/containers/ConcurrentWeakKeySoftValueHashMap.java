@@ -332,6 +332,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public V putIfAbsent(@NotNull K key, @NotNull V value) {
+    processQueues();
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K, V> valueReference = keyReference.getValueReference();
 
@@ -341,6 +342,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
+    processQueues();
     KeyReference<K, V> oldKeyReference = createKeyReference(key, oldValue);
     ValueReference<K, V> oldValueReference = oldKeyReference.getValueReference();
     KeyReference<K, V> newKeyReference = createKeyReference(key, newValue);
@@ -351,6 +353,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
+    processQueues();
     KeyReference<K, V> keyReference = createKeyReference(key, value);
     ValueReference<K, V> valueReference = keyReference.getValueReference();
     ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
