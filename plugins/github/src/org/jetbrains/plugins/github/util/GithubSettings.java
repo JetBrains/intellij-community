@@ -62,6 +62,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public int CONNECTION_TIMEOUT = 5000;
     public boolean VALID_GIT_AUTH = true;
     public ThreeState CREATE_PULL_REQUEST_CREATE_REMOTE = ThreeState.UNSURE;
+    public boolean CLONE_GIT_USING_SSH = false;
   }
 
   public static GithubSettings getInstance() {
@@ -132,6 +133,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
   }
 
+  public boolean isCloneGitUsingSsh() {
+    return myState.CLONE_GIT_USING_SSH;
+  }
+
   @NotNull
   public ThreeState getCreatePullRequestCreateRemote() {
     return myState.CREATE_PULL_REQUEST_CREATE_REMOTE;
@@ -159,6 +164,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
     myState.OPEN_IN_BROWSER_GIST = openInBrowserGist;
+  }
+
+  public void setCloneGitUsingSsh(boolean value) {
+    myState.CLONE_GIT_USING_SSH = value;
   }
 
   @NotNull
