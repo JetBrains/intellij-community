@@ -295,6 +295,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
+        LOG.info("Searching for task '" + id + "' in " + repository);
         Task issue = repository.findTask(id);
         if (issue != null) {
           LocalTask localTask = findTask(id);
@@ -696,6 +697,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
+            LOG.info("Updating issues cache (every " + myConfig.updateInterval + " min)");
             updateIssues(null);
           }
         }
@@ -820,8 +822,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         long start = System.currentTimeMillis();
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         long timeSpent = System.currentTimeMillis() - start;
-        LOG.debug(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
-                                timeSpent, tasks.length, repository.getUrl(), request));
+        LOG.info(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
+                               timeSpent, tasks.length, repository.getUrl(), request));
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {

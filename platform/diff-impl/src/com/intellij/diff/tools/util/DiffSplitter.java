@@ -36,8 +36,9 @@ public class DiffSplitter extends Splitter {
   @Override
   protected Divider createDivider() {
     return new DividerImpl() {
-      public void paint(Graphics g) {
-        super.paint(g);
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         if (myPainter != null) myPainter.paint(g, this);
       }
     };

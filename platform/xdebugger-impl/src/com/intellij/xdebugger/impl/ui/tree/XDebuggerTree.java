@@ -37,7 +37,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -50,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -64,6 +62,13 @@ import java.util.List;
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
+
+  private final ComponentListener myMoveListener = new ComponentAdapter() {
+    @Override
+    public void componentMoved(ComponentEvent e) {
+      repaint(); // needed to repaint links in cell renderer on horizontal scrolling
+    }
+  };
 
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
@@ -207,37 +212,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     registerShortcuts();
 
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
-  }
 
-  @Override
-  public void setUI(TreeUI ui) {
-    super.setUI(ui instanceof LinkTreeUI ? ui : new LinkTreeUI());
-  }
-
-  static class LinkTreeUI extends WideSelectionTreeUI {
-    private final ComponentListener myListener = new ComponentAdapter() {
-      @Override
-      public void componentMoved(ComponentEvent e) {
-        tree.repaint(); // needed to repaint links in cell renderer on horizontal scrolling
-      }
-    };
-
-    @Override
-    protected void installListeners() {
-      super.installListeners();
-      tree.addComponentListener(myListener);
-    }
-
-    @Override
-    protected void uninstallListeners() {
-      tree.removeComponentListener(myListener);
-      super.uninstallListeners();
-    }
-
-    @Override
-    public int getRowX(int row, int depth) {
-      return super.getRowX(row, depth);
-    }
+    addComponentListener(myMoveListener);
   }
 
   public void updateEditor() {
@@ -373,6 +349,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     UIUtil.dispose(this);
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
+    removeComponentListener(myMoveListener);
   }
 
   private void registerShortcuts() {

@@ -150,11 +150,5 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
       myUpdate.run();
     }
-
-    @Override
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(DependencyUISettings.getInstance().SCOPE_TYPE == FILE);
-    }
   }
 }

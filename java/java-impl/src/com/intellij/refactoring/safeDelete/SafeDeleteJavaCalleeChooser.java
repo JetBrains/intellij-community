@@ -139,7 +139,13 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
       }
 
       final List<PsiMethod> callees = computeCalleesSafeToDelete(getMethod());
-      return callees != null ? callees : Collections.<PsiMethod>emptyList();
+      if (callees != null) {
+        callees.remove(getTopMethod());
+        return callees;
+      }
+      else {
+        return Collections.<PsiMethod>emptyList();
+      }
     }
 
     @Override

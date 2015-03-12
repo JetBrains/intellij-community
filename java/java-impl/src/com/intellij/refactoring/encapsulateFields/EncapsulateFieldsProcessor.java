@@ -219,18 +219,19 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           if (existing != null) {
             for (PsiReference reference : ReferencesSearch.search(existing)) {
               final PsiElement place = reference.getElement();
-              LOG.assertTrue(place instanceof PsiReferenceExpression);
-              final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
-              final PsiClass inheritor;
-              if (qualifierExpression == null) {
-                inheritor = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
-              } else {
-                inheritor = PsiUtil.resolveClassInType(qualifierExpression.getType());
-              }
+              if (place instanceof PsiReferenceExpression) {
+                final PsiExpression qualifierExpression = ((PsiReferenceExpression)place).getQualifierExpression();
+                final PsiClass inheritor;
+                if (qualifierExpression == null) {
+                  inheritor = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
+                } else {
+                  inheritor = PsiUtil.resolveClassInType(qualifierExpression.getType());
+                }
 
-              if (InheritanceUtil.isInheritorOrSelf(inheritor, myClass, true)) {
-                conflicts.putValue(existing, "There is already a " + RefactoringUIUtil.getDescription(existing, true) + " which would be hidden by generated " + (isGetter ? "getter" : "setter"));
-                break;
+                if (InheritanceUtil.isInheritorOrSelf(inheritor, myClass, true)) {
+                  conflicts.putValue(existing, "There is already a " + RefactoringUIUtil.getDescription(existing, true) + " which would be hidden by generated " + (isGetter ? "getter" : "setter"));
+                  break;
+                }
               }
             }
           }

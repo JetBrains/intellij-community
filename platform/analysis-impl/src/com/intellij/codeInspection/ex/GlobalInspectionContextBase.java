@@ -187,7 +187,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public void doInspections(@NotNull final AnalysisScope scope) {
     if (!GlobalInspectionContextUtil.canRunInspections(myProject, true)) return;
 
-    cleanupTools();
+    cleanup();
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override

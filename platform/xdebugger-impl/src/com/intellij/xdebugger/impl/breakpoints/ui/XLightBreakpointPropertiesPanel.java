@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,11 +91,11 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
   private JPanel myConditionEnabledPanel;
   private final List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
 
-  private List<XBreakpointPropertiesSubPanel<B>> mySubPanels = new ArrayList<XBreakpointPropertiesSubPanel<B>>();
+  private final List<XBreakpointPropertiesSubPanel<B>> mySubPanels = new ArrayList<XBreakpointPropertiesSubPanel<B>>();
 
   private XDebuggerExpressionComboBox myConditionComboBox;
 
-  private B myBreakpoint;
+  private final B myBreakpoint;
 
   private final boolean myShowAllOptions;
   private static final String CONDITION_ENABLED_LABEL = "label";

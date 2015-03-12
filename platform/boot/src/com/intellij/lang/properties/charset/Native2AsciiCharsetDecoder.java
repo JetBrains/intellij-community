@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private final StringBuilder myOutBuffer = new StringBuilder();
   private final Charset myBaseCharset;
 
-  public Native2AsciiCharsetDecoder(final Native2AsciiCharset charset) {
+  Native2AsciiCharsetDecoder(final Native2AsciiCharset charset) {
     super(charset, 1, 6);
     myBaseCharset = charset.getBaseCharset();
   }
@@ -51,9 +51,9 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private CoderResult doFlush(final CharBuffer out) {
     if (myOutBuffer.length() != 0) {
       int remaining = out.remaining();
-      int outlen = Math.min(remaining, myOutBuffer.length());
-      out.put(myOutBuffer.toString().substring(0,outlen).toCharArray());
-      myOutBuffer.delete(0, outlen);
+      int outLen = Math.min(remaining, myOutBuffer.length());
+      out.append(myOutBuffer, 0, outLen);
+      myOutBuffer.delete(0, outLen);
       if (myOutBuffer.length() != 0) return CoderResult.OVERFLOW;
     }
     return CoderResult.UNDERFLOW;

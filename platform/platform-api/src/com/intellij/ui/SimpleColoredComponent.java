@@ -514,7 +514,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private boolean needFontFallback(Font font, String text) {
-    return mySupportFontFallback && font.canDisplayUpTo(text) != -1;
+    return mySupportFontFallback && font.canDisplayUpTo(text) != -1
+           && text.indexOf(CharacterIterator.DONE) == -1; // see IDEA-137517, TextLayout does not support this character
   }
 
   /**

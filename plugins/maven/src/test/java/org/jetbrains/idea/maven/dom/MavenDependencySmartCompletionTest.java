@@ -206,7 +206,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
     LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
+    assertSize(2, elements);
 
     myFixture.type('\n');
 
@@ -245,7 +245,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
     LookupElement[] elements = myFixture.completeBasic();
-    assertSize(1, elements);
+    assertSize(2, elements);
 
     myFixture.type('\n');
 

@@ -883,7 +883,7 @@ public class AsmCodeGenerator {
         generator.push((String) null);
       }
       else {
-        FontPropertyCodeGenerator.generatePushFont(generator, componentLocal, container, font, "getFont");
+        FontPropertyCodeGenerator.generatePushFont(generator, componentLocal, container, font, "getFont", null);
       }
       if (container.getBorderTitleColor() == null) {
         generator.push((String) null);

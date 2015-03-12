@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Override
   public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
-    if (!allowPsiModification) {
+    if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
     List<Throwable> throwables = new ArrayList<Throwable>(0);
@@ -356,5 +356,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     finally {
       allowPsiModification = old;
     }
+  }
+
+  public static boolean isAllowPsiModification() {
+    return allowPsiModification;
   }
 }

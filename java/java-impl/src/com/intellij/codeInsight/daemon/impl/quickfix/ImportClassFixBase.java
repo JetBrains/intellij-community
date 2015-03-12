@@ -119,7 +119,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     boolean referenceHasTypeParameters = hasTypeParameters(myRef);
-    PsiClass[] classes = PsiShortNamesCache.getInstance(myElement.getProject()).getClassesByName(name, scope);
+    final Project project = myElement.getProject();
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
     List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myElement.getParent() instanceof PsiAnnotation;
@@ -130,7 +131,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       if (referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
-        if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
+        if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
         if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);

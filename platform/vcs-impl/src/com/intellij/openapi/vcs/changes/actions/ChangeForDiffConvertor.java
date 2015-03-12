@@ -57,8 +57,7 @@ public class ChangeForDiffConvertor implements Convertor<Change, DiffRequestPres
     }
     if (ChangesUtil.isTextConflictingChange(ch)) {
       final AbstractVcs vcs = ChangesUtil.getVcsForChange(ch, myProject);
-      final MergeProvider mergeProvider = vcs.getMergeProvider();
-      if (mergeProvider == null) return null;
+      if (vcs == null || vcs.getMergeProvider() == null) return null;
       final FilePath path = ChangesUtil.getFilePath(ch);
       VirtualFile vf = path.getVirtualFile();
       if (vf == null) {

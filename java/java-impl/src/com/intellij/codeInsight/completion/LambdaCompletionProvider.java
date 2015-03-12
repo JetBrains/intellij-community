@@ -31,7 +31,11 @@ import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfacePa
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: anna
@@ -41,9 +45,14 @@ public class LambdaCompletionProvider extends CompletionProvider<CompletionParam
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return;
-    final ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
-    for (ExpectedTypeInfo expectedType : expectedTypes) {
+    result.addAllElements(getLambdaVariants(parameters));
+  }
+
+  static List<LookupElement> getLambdaVariants(@NotNull CompletionParameters parameters) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return Collections.emptyList();
+
+    List<LookupElement> result = ContainerUtil.newArrayList();
+    for (ExpectedTypeInfo expectedType : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       final PsiType defaultType = expectedType.getDefaultType();
       if (LambdaUtil.isFunctionalType(defaultType)) {
         final PsiType functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
@@ -80,10 +89,11 @@ public class LambdaCompletionProvider extends CompletionProvider<CompletionParam
                 EditorModificationUtil.insertStringAtCaret(editor, " -> ");
               }
             });
-          result.addElement(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+          result.add(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
         }
       }
     }
+    return result;
   }
 
   private static String getParamName(PsiParameter param, JavaCodeStyleManager javaCodeStyleManager, PsiElement originalPosition) {
