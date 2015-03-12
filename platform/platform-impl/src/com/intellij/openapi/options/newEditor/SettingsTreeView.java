@@ -117,7 +117,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       protected Transferable createTransferable(JComponent c) {
         final TreePath path = myTree.getPathForRow(myTree.getLeadSelectionRow());
         if (path != null) {
-          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
+          final String pathInTheTree = StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
             @Nullable
             @Override
             public String fun(Object o) {
@@ -129,7 +129,10 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
                 return node != null ? node.myDisplayName : null;
               }
             }
-          }), " | "));
+          }), " | ");
+          if (!StringUtil.isEmpty(pathInTheTree)) {
+            return new TextTransferable("File | Settings | " + pathInTheTree);
+          }
         }
         return null;
       }
