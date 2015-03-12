@@ -72,6 +72,10 @@ class ForkedGroovyc implements GroovycFlavor {
     vmParams.add("-Xmx" + settings.heapSize + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+    
+    if ("false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
+      vmParams.add("-D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false");
+    }
 
     String grapeRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);
     if (grapeRoot != null) {
