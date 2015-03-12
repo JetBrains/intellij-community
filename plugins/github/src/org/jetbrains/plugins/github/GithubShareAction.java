@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -46,6 +47,7 @@ import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -64,9 +66,7 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
@@ -121,13 +121,19 @@ public class GithubShareAction extends DumbAwareAction {
     final GithubAuthDataHolder authHolder = GithubAuthDataHolder.createFromSettings();
 
     // check for existing git repo
-    boolean externalRemoteDetected = false;
+    Set<String> existingRemotes = Collections.emptySet();
     if (gitDetected) {
       final String githubRemote = GithubUtil.findGithubRemoteUrl(gitRepository);
       if (githubRemote != null) {
         if (!checkExistingRemote(project, authHolder, githubRemote)) return;
       }
-      externalRemoteDetected = !gitRepository.getRemotes().isEmpty();
+
+      existingRemotes = ContainerUtil.map2Set(gitRepository.getRemotes(), new Function<GitRemote, String>() {
+        @Override
+        public String fun(GitRemote remote) {
+          return remote.getName();
+        }
+      });
     }
 
     // get available GitHub repos with modal progress
@@ -138,7 +144,7 @@ public class GithubShareAction extends DumbAwareAction {
 
     // Show dialog (window)
     final GithubShareDialog shareDialog =
-      new GithubShareDialog(project, githubInfo.getRepositoryNames(), githubInfo.getUser().canCreatePrivateRepo());
+      new GithubShareDialog(project, githubInfo.getRepositoryNames(), existingRemotes, githubInfo.getUser().canCreatePrivateRepo());
     DialogManager.show(shareDialog);
     if (!shareDialog.isOK()) {
       return;
@@ -146,9 +152,8 @@ public class GithubShareAction extends DumbAwareAction {
     final boolean isPrivate = shareDialog.isPrivate();
     final String name = shareDialog.getRepositoryName();
     final String description = shareDialog.getDescription();
+    final String remoteName = shareDialog.getRemoteName();
 
-    // finish the job in background
-    final boolean finalExternalRemoteDetected = externalRemoteDetected;
     new Task.Backgroundable(project, "Sharing project on GitHub...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -180,7 +185,6 @@ public class GithubShareAction extends DumbAwareAction {
         }
 
         final String remoteUrl = GithubUrlUtil.getCloneUrl(githubInfo.getUser().getLogin(), name);
-        final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
 
         //git remote add origin git@github.com:login/name.git
         LOG.info("Adding GitHub as a remote host");
