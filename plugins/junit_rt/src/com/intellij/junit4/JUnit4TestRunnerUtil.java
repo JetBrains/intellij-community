@@ -333,7 +333,7 @@ public class JUnit4TestRunnerUtil {
       super(clazz);
       myName = name;
       myMethodName = methodName;
-      myRunnerClass = (Parameterized)runnerClass.getConstructor(new Class[] {Class.class}).newInstance(new Object[]{clazz});
+      myRunnerClass = runnerClass.equals(Parameterized.class) ? this : (Parameterized)runnerClass.getConstructor(new Class[] {Class.class}).newInstance(new Object[]{clazz});
     }
 
     protected List getChildren() {
