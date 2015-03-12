@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring.convert;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,11 +14,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,14 +29,9 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertPackageToModuleAction extends BaseRefactoringAction {
+public class PyConvertPackageToModuleAction extends PyBaseConvertRefactoringAction {
   private static final Logger LOG = Logger.getInstance(PyConvertPackageToModuleAction.class);
   private static final String ID = "py.refactoring.convert.package.to.module";
-
-  @Override
-  protected boolean isAvailableInEditorOnly() {
-    return false;
-  }
 
   @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
@@ -65,16 +57,6 @@ public class PyConvertPackageToModuleAction extends BaseRefactoringAction {
   private static boolean isSpecialDirectory(@NotNull PsiDirectory element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     return module == null || (PyUtil.getSourceRoots(module).contains(element.getVirtualFile()));
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return language.isKindOf(PythonLanguage.getInstance());
-  }
-
-  @Override
-  protected boolean isAvailableForFile(PsiFile file) {
-    return isAvailableForLanguage(file.getLanguage());
   }
 
   @Nullable
@@ -118,14 +100,7 @@ public class PyConvertPackageToModuleAction extends BaseRefactoringAction {
     final String moduleName = packageName + PyNames.DOT_PY;
     final VirtualFile existing = parentDirVFile.findChild(moduleName);
     if (existing != null) {
-      final String message;
-      if (existing.isDirectory()) {
-        message = PyBundle.message("refactoring.convert.module.to.package.error.directory.exists", moduleName);
-      }
-      else {
-        message = PyBundle.message("refactoring.convert.module.to.package.error.file.exists", moduleName);
-      }
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, ID, pyPackage.getProject());
+      showFileExistsErrorMessage(existing, ID, pyPackage.getProject());
       return;
     }
     final PsiFile initPy = pyPackage.findFile(PyNames.INIT_DOT_PY);
