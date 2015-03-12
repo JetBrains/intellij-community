@@ -1,4 +1,4 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.util.io.FileUtil

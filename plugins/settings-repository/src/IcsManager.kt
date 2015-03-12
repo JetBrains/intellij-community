@@ -40,12 +40,12 @@ val PLUGIN_NAME: String = "Settings Repository"
 
 val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 
-val icsManager: IcsManager = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
+public val icsManager: IcsManager = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
 
 public class IcsManager : ApplicationLoadListener {
   val settings: IcsSettings
 
-  {
+  init {
     try {
       settings = loadSettings()
     }

@@ -1,19 +1,22 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.settingsRepository.test
 
-import org.junit.Test
-import org.eclipse.jgit.transport.URIish
-import org.eclipse.jgit.transport.CredentialItem
 import com.intellij.openapi.util.NotNullLazyValue
-import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-
-import org.hamcrest.CoreMatchers.*
-import org.hamcrest.text.IsEmptyString.*
-import org.junit.Assert.assertThat
-import java.io.File
-import org.junit.After
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.CredentialItem
+import org.eclipse.jgit.transport.URIish
+import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.not
+import org.hamcrest.CoreMatchers.nullValue
+import org.hamcrest.text.IsEmptyString.isEmptyString
+import org.jetbrains.settingsRepository.CredentialsStore
+import org.jetbrains.settingsRepository.FileCredentialsStore
+import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
+import org.junit.After
+import org.junit.Assert.assertThat
+import org.junit.Test
+import java.io.File
 
 class CredentialsTest {
   private var storeFile: File? = null

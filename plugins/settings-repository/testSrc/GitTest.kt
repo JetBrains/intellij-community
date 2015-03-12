@@ -1,4 +1,4 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
 import com.intellij.openapi.application.ApplicationManager
@@ -27,10 +27,13 @@ import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.writePath
+import org.jetbrains.settingsRepository.AM
+import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
+import org.jetbrains.settingsRepository.icsManager
 import org.junit.After
 import org.junit.Assert.assertThat
 import org.junit.Before
@@ -50,10 +53,10 @@ class GitTest {
   private val remoteRepository: Repository
     get() = testHelper.repository!!
 
-  class object {
+  default object {
     private var ICS_DIR: File? = null
 
-    {
+    init {
       Logger.setFactory(javaClass<TestLoggerFactory>())
       PlatformTestCase.initPlatformLangPrefix()
     }
