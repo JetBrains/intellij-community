@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
@@ -50,7 +49,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private int myCurrentBranchesChecksum;
   @Nullable private VcsLogRefs myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
-  @NotNull private volatile Map<Pair<VirtualFile, String>, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
+  @NotNull private volatile Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
 
   ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
     myDataHolder = dataHolder;
@@ -88,9 +87,9 @@ public class ContainingBranchesGetter implements VcsLogListener {
   private void clearCache() {
     myCache = createCache();
     myTaskExecutor.clear();
-    Map<Pair<VirtualFile, String>, ContainedInBranchCondition> checkers = myConditions;
+    Map<VirtualFile, ContainedInBranchCondition> conditions = myConditions;
     myConditions = ContainerUtil.newHashMap();
-    for (ContainedInBranchCondition c : checkers.values()) {
+    for (ContainedInBranchCondition c : conditions.values()) {
       c.dispose();
     }
     // re-request containing branches information for the commit user (possibly) currently stays on
@@ -145,11 +144,12 @@ public class ContainingBranchesGetter implements VcsLogListener {
       }
     });
     if (branchRef == null) return Conditions.alwaysFalse();
-    ContainedInBranchCondition condition = myConditions.get(Pair.create(root, branchName));
-    if (condition == null) {
-      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(
-        Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash()))));
-      myConditions.put(Pair.create(root, branchName), condition);
+    ContainedInBranchCondition condition = myConditions.get(root);
+    if (condition == null || !condition.getBranch().equals(branchName)) {
+      condition =
+        new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash()))),
+                          branchName);
+      myConditions.put(root, condition);
     }
     return condition;
   }
@@ -214,10 +214,17 @@ public class ContainingBranchesGetter implements VcsLogListener {
 
   private class ContainedInBranchCondition implements Condition<Hash> {
     @NotNull private final Condition<Integer> myCondition;
+    @NotNull private final String myBranch;
     private volatile boolean isDisposed = false;
 
-    public ContainedInBranchCondition(@NotNull Condition<Integer> condition) {
+    public ContainedInBranchCondition(@NotNull Condition<Integer> condition, @NotNull String branch) {
       myCondition = condition;
+      myBranch = branch;
+    }
+
+    @NotNull
+    public String getBranch() {
+      return myBranch;
     }
 
     @Override
