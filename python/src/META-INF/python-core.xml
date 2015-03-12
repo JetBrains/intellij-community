@@ -745,18 +745,16 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
-    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.packages.PyConvertModuleToPackageAction"
+    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convert.PyConvertModuleToPackageAction"
             text="Convert to Python Package"
-            description="Create package with the same name and move content of the module to __init__.py">
-      <add-to-group group-id="ProjectViewPopupMenu"/>
-      <add-to-group group-id="EditorTabPopupMenu"/>
+            description="Create package with the same name and move content of the module to its __init__.py">
+      <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.packages.PyConvertPackageToModuleAction"
+    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convert.PyConvertPackageToModuleAction"
             text="Convert to Python Module"
             description="Create module with the same name and move content of __init__.py to that module">
-      <add-to-group group-id="ProjectViewPopupMenu"/>
-      <add-to-group group-id="EditorTabPopupMenu"/>
+      <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
 

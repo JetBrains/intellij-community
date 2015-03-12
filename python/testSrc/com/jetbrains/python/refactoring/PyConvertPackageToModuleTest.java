@@ -5,7 +5,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.refactoring.packages.PyConvertPackageToModuleAction;
+import com.jetbrains.python.refactoring.convert.PyConvertPackageToModuleAction;
 
 /**
  * @author Mikhail Golubev
@@ -21,7 +21,7 @@ public class PyConvertPackageToModuleTest extends PyTestCase {
     final VirtualFile directory = assertInstanceOf(myFixture.findFileInTempDir("a"), VirtualFile.class);
     final PsiDirectory packageToConvert = PsiManager.getInstance(myFixture.getProject()).findDirectory(directory);
     assertNotNull(packageToConvert);
-    PyConvertPackageToModuleAction.createModuleFromPackage(packageToConvert, myFixture.getProject());
+    new PyConvertPackageToModuleAction().createModuleFromPackage(packageToConvert);
 
     PlatformTestUtil.assertDirectoriesEqual(copiedDirectory, getVirtualFileByName(getTestDataPath() +rootAfterPath));
   }
