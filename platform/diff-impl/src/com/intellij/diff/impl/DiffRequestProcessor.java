@@ -37,6 +37,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -794,7 +795,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public Object getData(@NonNls String dataId) {
       Object data;
 
-      DataProvider contentProvider = DiffUtil.getDataProvider(myContentPanel.getContent());
+      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getContent());
       if (contentProvider != null) {
         data = contentProvider.getData(dataId);
         if (data != null) return data;
