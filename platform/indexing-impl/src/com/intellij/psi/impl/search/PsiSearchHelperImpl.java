@@ -844,10 +844,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
-    Set<GlobalSearchScope> scopes = ContainerUtil.map2Set(requests, new Function<RequestWithProcessor, GlobalSearchScope>() {
+    Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, new Function<RequestWithProcessor, GlobalSearchScope>() {
       @Override
-      public GlobalSearchScope fun(RequestWithProcessor request) {
-        return (GlobalSearchScope)request.request.searchScope;
+      public GlobalSearchScope fun(RequestWithProcessor r) {
+        return (GlobalSearchScope)r.request.searchScope;
       }
     });
     return GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[scopes.size()]));
