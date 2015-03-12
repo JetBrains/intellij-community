@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -23,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -231,7 +233,15 @@ public class GithubShareAction extends DumbAwareAction {
               });
           }
         });
-      GithubNotifications.showInfoURL(project, "Project Is Already on GitHub", "GitHub", repo.getHtmlUrl());
+      int result = Messages.showDialog(project,
+                                       "Successfully connected to " + repo.getHtmlUrl() + ".\n" +
+                                       "Do you want to proceed anyway?",
+                                       "Project Is Already on GitHub",
+                                       new String[]{"Continue", "Open in Browser", Messages.CANCEL_BUTTON}, 2, Messages.getQuestionIcon());
+      if (result == 0) return true;
+      if (result == 1) {
+        BrowserUtil.browse(repo.getHtmlUrl());
+      }
       return false;
     }
     catch (GithubStatusCodeException e) {
