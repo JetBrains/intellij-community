@@ -74,7 +74,7 @@ public class RollbackWorker {
               afterVcsRefreshInAwt.run();
             }
           }
-        }, updateMode, "Refresh change lists after update", ModalityState.current());
+        }, updateMode, "Refresh changelists after update", ModalityState.current());
       }
     };
 

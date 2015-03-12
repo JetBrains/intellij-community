@@ -229,7 +229,7 @@ public class GitCherryPickStepdefs {
 
   private static void assertOnlyDefaultChangelist() {
     String DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME;
-    assertEquals("Only default change list is expected", 1, myChangeListManager.getChangeListsNumber());
+    assertEquals("Only default changelist is expected", 1, myChangeListManager.getChangeListsNumber());
     assertEquals("Default changelist is not active", DEFAULT, myChangeListManager.getDefaultChangeList().getName());
   }
 
