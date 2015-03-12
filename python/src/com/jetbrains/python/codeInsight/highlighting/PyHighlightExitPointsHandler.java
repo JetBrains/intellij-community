@@ -55,8 +55,6 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
   }
 
   public void computeUsages(final List<PsiElement> targets) {
-    //FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
-
     final PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PyReturnStatement)) {
       return;
@@ -121,5 +119,11 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
       }
     }
     return statements; 
+  }
+
+  @Nullable
+  @Override
+  public String getFeatureId() {
+    return super.getFeatureId();
   }
 }

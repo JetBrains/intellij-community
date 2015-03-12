@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -50,8 +51,6 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
 
   @Override
   public void computeUsages(final List<PsiElement> targets) {
-    //FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
-
     PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return;
 
@@ -140,5 +139,11 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     }
     myStatusText = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", exitStatements.size(),
                                                                       HighlightUsagesHandler.getShortcutText());
+  }
+
+  @Nullable
+  @Override
+  public String getFeatureId() {
+    return ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN;
   }
 }
