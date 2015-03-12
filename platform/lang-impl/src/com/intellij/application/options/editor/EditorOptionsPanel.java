@@ -88,8 +88,8 @@ public class EditorOptionsPanel {
   private JCheckBox    myCbRenameLocalVariablesInplace;
   private JCheckBox    myCbHighlightIdentifierUnderCaret;
   private JCheckBox    myCbEnsureBlankLineBeforeCheckBox;
-  private JCheckBox    myShowReformatCodeDialogCheckBox;
-  private JCheckBox    myShowOptimizeImportsDialogCheckBox;
+  private JCheckBox    myShowNotificationAfterReformatCodeCheckBox;
+  private JCheckBox    myShowNotificationAfterOptimizeImportsCheckBox;
   private JCheckBox    myCbUseSoftWrapsAtEditor;
   private JCheckBox    myCbUseSoftWrapsAtConsole;
   private JCheckBox    myCbUseCustomSoftWrapIndent;
@@ -224,8 +224,8 @@ public class EditorOptionsPanel {
     myPreselectCheckBox.setSelected(editorSettings.isPreselectRename());
     myShowInlineDialogForCheckBox.setSelected(editorSettings.isShowInlineLocalDialog());
 
-    myShowReformatCodeDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_REFORMAT_DIALOG);
-    myShowOptimizeImportsDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
+    myShowNotificationAfterReformatCodeCheckBox.setSelected(editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION);
+    myShowNotificationAfterOptimizeImportsCheckBox.setSelected(editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION);
 
     myErrorHighlightingPanel.reset();
 
@@ -328,7 +328,7 @@ public class EditorOptionsPanel {
     if (quickDocDelay != null) {
       editorSettings.setQuickDocOnMouseOverElementDelayMillis(quickDocDelay);
     }
-    
+
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
@@ -339,8 +339,8 @@ public class EditorOptionsPanel {
     editorSettings.setPreselectRename(myPreselectCheckBox.isSelected());
     editorSettings.setShowInlineLocalDialog(myShowInlineDialogForCheckBox.isSelected());
 
-    editorSettings.getOptions().SHOW_REFORMAT_DIALOG = myShowReformatCodeDialogCheckBox.isSelected();
-    editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = myShowOptimizeImportsDialogCheckBox.isSelected();
+    editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = myShowNotificationAfterReformatCodeCheckBox.isSelected();
+    editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = myShowNotificationAfterOptimizeImportsCheckBox.isSelected();
 
     reinitAllEditors();
 
@@ -387,7 +387,7 @@ public class EditorOptionsPanel {
       return null;
     }
   }
-  
+
   public static void restartDaemons() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
@@ -482,8 +482,8 @@ public class EditorOptionsPanel {
     isModified |= isModified(myPreselectCheckBox, editorSettings.isPreselectRename());
     isModified |= isModified(myShowInlineDialogForCheckBox, editorSettings.isShowInlineLocalDialog());
 
-    isModified |= isModified(myShowReformatCodeDialogCheckBox, editorSettings.getOptions().SHOW_REFORMAT_DIALOG);
-    isModified |= isModified(myShowOptimizeImportsDialogCheckBox, editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
+    isModified |= isModified(myShowNotificationAfterReformatCodeCheckBox, editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION);
+    isModified |= isModified(myShowNotificationAfterOptimizeImportsCheckBox, editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION);
 
     isModified |= myErrorHighlightingPanel.isModified();
 
@@ -545,7 +545,7 @@ public class EditorOptionsPanel {
       }
     });
   }
-  
+
   private void initSoftWrapsSettingsProcessing() {
     ItemListener listener = new ItemListener() {
       @Override

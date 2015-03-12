@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.codeInsight.actions.TextRangeType.*;
+import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 
 class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
@@ -177,7 +179,7 @@ class FileInEditorProcessor {
   }
 
   @NotNull
-  private String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
+  private static String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
     String firstNotificationLine = reformatNotification != null ? reformatNotification : rearrangeNotification;
     if (reformatNotification != null && rearrangeNotification != null) {
       firstNotificationLine += ", " + rearrangeNotification;
@@ -186,7 +188,7 @@ class FileInEditorProcessor {
     return firstNotificationLine;
   }
 
-  private static void showHint(@NotNull Editor editor, @NotNull String info) {
+  public static void showHint(@NotNull Editor editor, @NotNull String info) {
     JComponent component = HintUtil.createInformationLabel(info);
     LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
@@ -201,6 +203,7 @@ class FileInEditorProcessor {
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return false;
     }
-    return myEditor != null && !myProcessSelectedText;
+    EditorSettingsExternalizable.OptionSet editorOptions = EditorSettingsExternalizable.getInstance().getOptions();
+    return editorOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION && myEditor != null && !myProcessSelectedText;
   }
 }

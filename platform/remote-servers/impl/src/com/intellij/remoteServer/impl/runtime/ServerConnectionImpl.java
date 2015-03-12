@@ -142,7 +142,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myLogManagers.put(deploymentName, logManager);
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
         onDeploymentStarted.run(deploymentName);
-        instance.deploy(task, logManager, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler, deployment));
+        instance
+          .deploy(task, logManager, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler, deployment));
       }
     });
   }
@@ -290,7 +291,10 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
             }
           }
         }
-        myLogManagers.remove(deploymentName).disposeLogs();
+        DeploymentLogManagerImpl logManager = myLogManagers.remove(deploymentName);
+        if (logManager != null) {
+          logManager.disposeLogs();
+        }
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
       }

@@ -89,7 +89,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
         if (PlatformDataKeys.HELP_ID.is(dataId)) {
           return "reference.dialogs.diff.folder";
         }
-        return null;
+        return myDirDiffPanel.getData(dataId);
       }
     });
   }

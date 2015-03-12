@@ -234,7 +234,9 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
     WeakReference<RunContentDescriptor> ref = psiFile.getCopyableUserData(DESCRIPTOR_KEY);
     RunContentDescriptor existing = ref == null ? null : ref.get();
-    if (existing != null && existing.getExecutionConsole() != null) return existing;
+    if (existing != null && existing.getExecutionConsole() != null) {
+      return ensureIdeBound(project, existing, engine);
+    }
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
@@ -249,8 +251,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
         return true;
       }
     };
-    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-    bindings.put(IDE, new IDE(project, descriptor));
 
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     //toolbarActions.add(new DumbAwareAction("Rerun", null, AllIcons.Actions.Rerun) {
@@ -272,9 +272,18 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
-    return descriptor;
+    return ensureIdeBound(project, descriptor, engine);
   }
 
+  private static RunContentDescriptor ensureIdeBound(@NotNull Project project,
+                                                     @NotNull RunContentDescriptor descriptor,
+                                                     @NotNull ScriptEngine engine) {
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    if (!bindings.containsKey(IDE)) {
+      bindings.put(IDE, new IDE(project, descriptor));
+    }
+    return descriptor;
+  }
 
   private static class MyRunAction extends DumbAwareAction {
 
@@ -296,7 +305,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       if (project == null || editor == null || virtualFile == null) return;
       Engines.prepareEngines(true);
       ScriptEngineFactory factory = Engines.ourEngines.get(virtualFile.getExtension());
-      if (engine == null || engine.getFactory() != factory) {
+      if (engine == null || !engine.getFactory().getClass().isInstance(factory)) {
         engine = factory == null ? null : factory.getScriptEngine();
       }
       if (engine == null) {

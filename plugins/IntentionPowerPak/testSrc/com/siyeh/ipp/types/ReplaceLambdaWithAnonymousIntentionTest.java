@@ -15,8 +15,10 @@
  */
 package com.siyeh.ipp.types;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
   public void testSimpleRunnable() {
@@ -85,6 +87,16 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
 
   public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() throws Exception {
     doTest();
+  }
+
+  public void testInvalidLambdaParamList() throws Exception {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Override

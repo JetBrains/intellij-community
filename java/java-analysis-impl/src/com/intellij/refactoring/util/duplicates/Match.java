@@ -282,7 +282,7 @@ public final class Match {
     try {
       final Project project = getMatchStart().getProject();
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(project)
-          .getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment));
+          .getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
       final int endOffset = controlFlow.getEndOffset(getMatchEnd());
       final int startOffset = controlFlow.getStartOffset(getMatchStart());
       final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, endOffset, controlFlow.getSize());

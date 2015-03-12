@@ -89,4 +89,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
 
   public abstract void saveSilentForcePushTarget(@NotNull Target target);
 
+  public boolean mayChangeTargetsSync() {
+    return false;
+  }
 }

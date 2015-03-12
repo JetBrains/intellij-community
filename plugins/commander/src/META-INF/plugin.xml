@@ -2,7 +2,8 @@
   <id>com.intellij.commander</id>
   <name>Commander</name>
   <description>Provides a two-panel view for navigating and working with the project structure</description>
-  <version>1.0.0</version>
+  <version>999.999</version>
+  <idea-version since-build="141.1" until-build="142.0"/>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
   <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
 

@@ -353,7 +353,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     awaitingTerminationAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (ExecutorRegistry.getInstance().isStarting(environment)) {
+        if (DumbService.getInstance(myProject).isDumb() || ExecutorRegistry.getInstance().isStarting(environment)) {
           awaitingTerminationAlarm.addRequest(this, 100);
           return;
         }
