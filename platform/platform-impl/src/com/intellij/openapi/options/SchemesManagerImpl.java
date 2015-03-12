@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.RoamingType;
@@ -46,6 +45,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -131,38 +131,71 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
         @Override
         public void fileCreated(@NotNull VirtualFileEvent event) {
-          if (event.getRequestor() == null && isMy(event)) {
-            E readScheme = readSchemeFromFile(event.getFile(), true, false);
-            if (readScheme != null) {
-              myProcessor.initScheme(readScheme);
-              myProcessor.onSchemeAdded(readScheme);
+          if (event.getRequestor() == null) {
+            if (event.getFile().isDirectory()) {
+              VirtualFile dir = getVirtualDir();
+              if (event.getFile().equals(dir)) {
+                for (VirtualFile file : dir.getChildren()) {
+                  if (isMy(file)) {
+                    schemeCreatedExternally(file);
+                  }
+                }
+              }
             }
+            else if (isMy(event)) {
+              schemeCreatedExternally(event.getFile());
+            }
+          }
+        }
+
+        private void schemeCreatedExternally(@NotNull VirtualFile file) {
+          E readScheme = readSchemeFromFile(file, true, false);
+          if (readScheme != null) {
+            myProcessor.initScheme(readScheme);
+            myProcessor.onSchemeAdded(readScheme);
           }
         }
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          if (event.getRequestor() == null && isMy(event)) {
-            E scheme = findSchemeFor(event.getFile().getName());
-            T oldCurrentScheme = null;
-            if (scheme != null) {
-              oldCurrentScheme = getCurrentScheme();
-              //noinspection unchecked
-              removeScheme((T)scheme);
-              myProcessor.onSchemeDeleted(scheme);
-            }
-
-            T newCurrentScheme = getCurrentScheme();
-            if (oldCurrentScheme != null && newCurrentScheme == null) {
-              if (!mySchemes.isEmpty()) {
-                setCurrentSchemeName(mySchemes.get(0).getName());
-                newCurrentScheme = getCurrentScheme();
+          if (event.getRequestor() == null) {
+            if (event.getFile().isDirectory()) {
+              VirtualFile dir = myDir;
+              if (event.getFile().equals(dir)) {
+                myDir = null;
+                for (VirtualFile file : dir.getChildren()) {
+                  if (isMy(file)) {
+                    schemeDeletedExternally(file);
+                  }
+                }
               }
             }
-
-            if (oldCurrentScheme != newCurrentScheme) {
-              myProcessor.onCurrentSchemeChanged(oldCurrentScheme);
+            else if (isMy(event)) {
+              schemeDeletedExternally(event.getFile());
             }
+          }
+        }
+
+        private void schemeDeletedExternally(@NotNull VirtualFile file) {
+          E scheme = findSchemeFor(file.getName());
+          T oldCurrentScheme = null;
+          if (scheme != null) {
+            oldCurrentScheme = getCurrentScheme();
+            //noinspection unchecked
+            removeScheme((T)scheme);
+            myProcessor.onSchemeDeleted(scheme);
+          }
+
+          T newCurrentScheme = getCurrentScheme();
+          if (oldCurrentScheme != null && newCurrentScheme == null) {
+            if (!mySchemes.isEmpty()) {
+              setCurrentSchemeName(mySchemes.get(0).getName());
+              newCurrentScheme = getCurrentScheme();
+            }
+          }
+
+          if (oldCurrentScheme != newCurrentScheme) {
+            myProcessor.onCurrentSchemeChanged(oldCurrentScheme);
           }
         }
       }, false, ApplicationManager.getApplication());
@@ -187,7 +220,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private boolean isMy(@NotNull VirtualFileEvent event) {
-    return StringUtilRt.endsWithIgnoreCase(event.getFile().getNameSequence(), mySchemeExtension);
+    return isMy(event.getFile());
+  }
+
+  private boolean isMy(@NotNull VirtualFile file) {
+    return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension);
   }
 
   @Override
@@ -480,27 +517,22 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       return;
     }
 
-    for (final E scheme : schemesToSave) {
+    List<Throwable> errors = null;
+    for (E scheme : schemesToSave) {
       try {
         saveScheme(scheme, nameGenerator);
       }
-      catch (final Exception e) {
-        Application app = ApplicationManager.getApplication();
-        if (app.isUnitTestMode() || app.isCommandLine()) {
-          LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
+      catch (Throwable e) {
+        if (errors == null) {
+          errors = new SmartList<Throwable>();
         }
-        else {
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
-            }
-          });
-        }
+        errors.add(e);
       }
     }
 
     deleteFiles(dir);
+
+    CompoundRuntimeException.doThrow(errors);
   }
 
   private void saveScheme(@NotNull E scheme, @NotNull UniqueNameGenerator nameGenerator) throws WriteExternalException, IOException {

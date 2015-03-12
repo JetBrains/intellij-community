@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
    */
   @Nullable
-  public abstract T createTask(final RunConfiguration runConfiguration);
+  public abstract T createTask(RunConfiguration runConfiguration);
 
   /**
    * @return <code>true</code> if task configuration is changed
@@ -82,8 +82,10 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   public static <T extends BeforeRunTask> BeforeRunTaskProvider<T> getProvider(Project project, Key<T> key) {
     BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(EXTENSION_POINT_NAME, project);
     for (BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
-      if (provider.getId() == key)
+      if (provider.getId() == key) {
+        //noinspection unchecked
         return (BeforeRunTaskProvider<T>)provider;
+      }
     }
     return null;
   }

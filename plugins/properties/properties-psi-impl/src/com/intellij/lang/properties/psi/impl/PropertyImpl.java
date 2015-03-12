@@ -441,4 +441,29 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new PropertyImplEscaper(this);
   }
+
+  @Nullable
+  public Character getKeyValueDelimiter() {
+    final PsiElement delimiter = findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
+    if (delimiter == null) {
+      return null;
+    }
+    String separatorText = delimiter.getText();
+    LOG.assertTrue(separatorText.length() > 0);
+    separatorText = separatorText.trim();
+    if (separatorText.isEmpty()) {
+      separatorText = " ";
+    }
+    LOG.assertTrue(separatorText.length() == 1, "\"" + separatorText + "\"");
+    return separatorText.charAt(0);
+  }
+
+  public void replaceKeyValueDelimiterWithDefault() {
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "yyy", "xxx");
+    final ASTNode oldDelimiter = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
+    LOG.assertTrue(oldDelimiter != null);
+    final ASTNode newDelimiter = property.getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
+    LOG.assertTrue(newDelimiter != null);
+    getNode().replaceChild(oldDelimiter, newDelimiter);
+  }
 }

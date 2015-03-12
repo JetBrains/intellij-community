@@ -136,6 +136,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if (ReferencesSearch.search(parameter, new LocalSearchScope(qualifierExpression)).findFirst() != null) {
           return false;
         }
+        final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve instanceof PsiVariable) {
+          if (ReferencesSearch.search(resolve, new LocalSearchScope(methodCallExpression.getArgumentList())).findFirst() != null) {
+            return false;
+          }
+        }
         qualifierClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
       }
       else if (qualifierExpression == null) {

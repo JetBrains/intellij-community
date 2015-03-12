@@ -18,6 +18,8 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
+import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -97,8 +99,9 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
-      property.delete();
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      public void run() {
+        property.delete();
       }
     });
 
@@ -176,5 +179,16 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertEquals("c d", properties.get(1).getUnescapedKey());
     assertEquals(" e=f", properties.get(2).getUnescapedKey());
     assertEquals("\u1234\\uxyzt", properties.get(3).getUnescapedKey());
+  }
+
+  public void testNonDefaultKeyValueDelimiter() {
+    final PropertiesCodeStyleSettings codeStyleSettings = PropertiesCodeStyleSettings.getInstance(getProject());
+    codeStyleSettings.KEY_VALUE_DELIMITER = ':';
+    final PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", "yyy");
+    final Character delimiter = property.getKeyValueDelimiter();
+    assertNotNull(delimiter);
+    assertEquals(':', (char)delimiter);
+    assertEquals("xxx:yyy", property.getPsiElement().getText());
+    codeStyleSettings.KEY_VALUE_DELIMITER = PropertiesCodeStyleSettings.DEFAULT_KEY_VALUE_DELIMITER;
   }
 }

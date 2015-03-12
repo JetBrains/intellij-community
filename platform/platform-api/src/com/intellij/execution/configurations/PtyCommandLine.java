@@ -43,6 +43,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
   public static final String RUN_PROCESSES_WITH_PTY = "run.processes.with.pty";
   private boolean myUseCygwinLaunch;
+  private boolean myConsoleMode = true;
 
   public PtyCommandLine() { }
 
@@ -54,7 +55,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     try {
-      return startProcessWithPty(commands, true);
+      return startProcessWithPty(commands, myConsoleMode);
     }
     catch (Throwable e) {
       File logFile = getPtyLogFile();
@@ -78,6 +79,10 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public void setUseCygwinLaunch(boolean useCygwinLaunch) {
     myUseCygwinLaunch = useCygwinLaunch;
+  }
+
+  public void setConsoleMode(boolean consoleMode) {
+    myConsoleMode = consoleMode;
   }
 
   private static File getPtyLogFile() {

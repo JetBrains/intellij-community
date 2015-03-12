@@ -22,6 +22,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesList;
+import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -127,12 +128,12 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
         return Comparing.compare(p1.getKey(), p2.getKey());
       }
     });
-
+    final char delimiter = PropertiesCodeStyleSettings.getInstance(file.getProject()).KEY_VALUE_DELIMITER;
     final StringBuilder rawText = new StringBuilder();
     for (int i = 0; i < properties.size(); i++) {
       IProperty property = properties.get(i);
       final String value = property.getValue();
-      rawText.append(PropertiesElementFactory.getPropertyText(property.getName(), value != null ? value : ""));
+      rawText.append(PropertiesElementFactory.getPropertyText(property.getName(), value != null ? value : "", delimiter, null));
       if (i != properties.size() - 1) {
         rawText.append("\n");
       }
