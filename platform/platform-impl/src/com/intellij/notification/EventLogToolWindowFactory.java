@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
@@ -38,7 +37,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.AncestorEvent;
 
@@ -85,21 +83,13 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     group.add(new DisplayBalloons());
     group.add(new ToggleSoftWraps(editor));
     group.add(new ScrollToTheEndToolbarAction(editor));
-    group.add(createMarkNotificationsAsReadAction(project, editor));
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_MARK_ALL_NOTIFICATIONS_AS_READ));
     group.add(new EventLogConsole.ClearLogAction(console));
     group.add(new ContextHelpAction(EventLog.HELP_ID));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
   }
-
-  @NotNull
-  private static MarkAllNotificationsAsReadAction createMarkNotificationsAsReadAction(@Nullable Project project, @NotNull Editor editor) {
-    MarkAllNotificationsAsReadAction result = new MarkAllNotificationsAsReadAction(project);
-    ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_MARK_ALL_NOTIFICATIONS_AS_READ).getShortcutSet();
-    result.registerCustomShortcutSet(shortcutSet, editor.getContentComponent());
-    return result;
-  }
-
+  
   private static class DisplayBalloons extends ToggleAction implements DumbAware {
     public DisplayBalloons() {
       super("Show balloons", "Enable or suppress notification balloons", AllIcons.General.Balloon);
