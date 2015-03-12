@@ -90,7 +90,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>>();
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
-  private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+  private static class Holder {
+    private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+  }
 
   public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
@@ -131,7 +133,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (CHECK_ELEMENT_LEVEL) {
+    if (Holder.CHECK_ELEMENT_LEVEL) {
       ((CheckLevelHighlightInfoHolder)myHolder).enterLevel(element);
       element.accept(this);
       ((CheckLevelHighlightInfoHolder)myHolder).enterLevel(null);
@@ -159,7 +161,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          @NotNull final HighlightInfoHolder holder,
                          @NotNull final Runnable highlight) {
     myFile = file;
-    myHolder = CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
+    myHolder = Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
     boolean success = true;
     try {
       myLanguageLevel = PsiUtil.getLanguageLevel(file);

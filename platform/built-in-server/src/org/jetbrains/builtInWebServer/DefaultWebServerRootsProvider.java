@@ -205,7 +205,8 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
       DirectoryInfo info = directoryIndex.getInfoForFile(file);
-      if (!info.isInProject()) {
+      // we serve excluded files
+      if (!info.isExcluded() && !info.isInProject()) {
         return null;
       }
 

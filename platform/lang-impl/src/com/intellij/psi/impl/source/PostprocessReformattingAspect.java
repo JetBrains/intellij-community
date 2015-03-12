@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private static final Key<Throwable> REFORMAT_ORIGINATOR = Key.create("REFORMAT_ORIGINATOR");
-  private static final boolean STORE_REFORMAT_ORIGINATOR_STACKTRACE = ApplicationManager.getApplication().isInternal();
+
+  private static class Holder {
+    private static final boolean STORE_REFORMAT_ORIGINATOR_STACKTRACE = ApplicationManager.getApplication().isInternal();
+  }
 
   private final ThreadLocal<Context> myContext = new ThreadLocal<Context>() {
     @Override
@@ -300,7 +303,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     if (list == null) {
       list = new ArrayList<ASTNode>();
       getContext().myReformatElements.put(viewProvider, list);
-      if (STORE_REFORMAT_ORIGINATOR_STACKTRACE) {
+      if (Holder.STORE_REFORMAT_ORIGINATOR_STACKTRACE) {
         viewProvider.putUserData(REFORMAT_ORIGINATOR, new Throwable());
       }
     }
@@ -536,7 +539,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       final boolean isGenerated = CodeEditUtil.isNodeGenerated(node);
 
       ((TreeElement)node).acceptTree(new RecursiveTreeElementVisitor() {
-        boolean inGeneratedContext = !isGenerated;
+        private boolean inGeneratedContext = !isGenerated;
 
         @Override
         protected boolean visitNode(TreeElement element) {
