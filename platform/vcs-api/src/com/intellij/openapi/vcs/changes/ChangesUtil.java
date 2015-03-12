@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,22 +186,25 @@ public class ChangesUtil {
     return result.toArray(new Navigatable[result.size()]);
   }
 
-  public static boolean allChangesInOneListOrWholeListsSelected(@NotNull final Project project, @Nullable Change[] changes) {
+  public static boolean allChangesInOneListOrWholeListsSelected(@NotNull final Project project, @NotNull Change[] changes) {
     final ChangeListManager clManager = ChangeListManager.getInstance(project);
     if (clManager.getChangeListNameIfOnlyOne(changes) != null) return true;
     final List<LocalChangeList> list = clManager.getChangeListsCopy();
 
     final HashSet<Change> checkSet = new HashSet<Change>();
-    checkSet.addAll(Arrays.asList(changes));
+    ContainerUtil.addAll(checkSet, changes);
     for (LocalChangeList localChangeList : list) {
       final Collection<Change> listChanges = localChangeList.getChanges();
-      boolean first = true;
-      for (Change listChange : listChanges) {
-        if (! checkSet.contains(listChange)) {
-          if (! first) return false;
-          break;
+      if (listChanges.isEmpty()) continue;
+      Change first = listChanges.iterator().next();
+      if (checkSet.contains(first)) {
+        for (Change change : listChanges) {
+          if (!checkSet.contains(change)) return false;
         }
-        first = false;
+      } else {
+        for (Change change : listChanges) {
+          if (checkSet.contains(change)) return false;
+        }
       }
     }
     return true;

@@ -167,7 +167,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
       FilePath fp = new FilePathImpl(virtualFiles[i]);
       FileStatus status = fileStatuses[i];
       if (status == null) {
-        assertFalse("File [" + tos(fp) + " shouldn't be in the change list, but it was.", result.containsKey(fp));
+        assertFalse("File [" + tos(fp) + " shouldn't be in the changelist, but it was.", result.containsKey(fp));
         continue;
       }
       assertTrue("File [" + tos(fp) + "] didn't change. Changes: " + tos(result), result.containsKey(fp));

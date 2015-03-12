@@ -267,7 +267,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     try {
       boolean success = waiter.await(100, TimeUnit.SECONDS);
       if (!success) {
-        LOG.error("Couldn't await for change list manager refresh");
+        LOG.error("Couldn't await for changelist manager refresh");
       }
     }
     catch (InterruptedException e) {

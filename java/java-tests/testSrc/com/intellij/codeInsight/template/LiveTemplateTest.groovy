@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
@@ -298,7 +299,7 @@ class Foo {
     configure();
     startTemplate("iter", "iterations")
     state.nextTab();
-    ((LookupImpl)LookupManagerImpl.getActiveLookup(getEditor())).finishLookup((char)0);
+    ((LookupImpl)LookupManagerImpl.getActiveLookup(getEditor())).finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
     checkResult();
   }
 

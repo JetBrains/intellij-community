@@ -108,6 +108,8 @@ public class OnesideEditorRangeHighlighter {
 
     for (Element piece : myPieces) {
       RangeHighlighterEx delegate = piece.getDelegate();
+      if (!delegate.isValid()) continue;
+
       RangeHighlighter highlighter = model
         .addRangeHighlighter(piece.getStart(), piece.getEnd(), delegate.getLayer(), delegate.getTextAttributes(), delegate.getTargetArea());
       highlighter.setEditorFilter(delegate.getEditorFilter());

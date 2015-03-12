@@ -269,9 +269,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         if (editor.getCaretModel().getCaretCount() > 1 && !supportsMultiCaretMode(customLiveTemplate)) {
           continue;
         }
+        final Document document = editor.getDocument();
+        PsiDocumentManager.getInstance(myProject).commitDocument(document);
         if (isApplicable(customLiveTemplate, editor, file)) {
-          final Document document = editor.getDocument();
-          PsiDocumentManager.getInstance(myProject).commitDocument(document);
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
           final String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
