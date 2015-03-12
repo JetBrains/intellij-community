@@ -210,7 +210,7 @@ public class GithubShareAction extends DumbAwareAction {
     final GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remote);
     if (path == null) {
       return GithubNotifications.showYesNoDialog(project,
-                                                 "Project is already on GitHub",
+                                                 "Project Is Already on GitHub",
                                                  "Can't connect to repository from configured remote. You could want to check .git config.\n" +
                                                  "Do you want to proceed anyway?");
     }
@@ -231,22 +231,22 @@ public class GithubShareAction extends DumbAwareAction {
               });
           }
         });
-      GithubNotifications.showInfoURL(project, "Project is already on GitHub", "GitHub", repo.getHtmlUrl());
+      GithubNotifications.showInfoURL(project, "Project Is Already on GitHub", "GitHub", repo.getHtmlUrl());
       return false;
     }
     catch (GithubStatusCodeException e) {
       if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
         return GithubNotifications.showYesNoDialog(project,
-                                                   "Project is already on GitHub",
+                                                   "Project Is Already on GitHub",
                                                    "Can't connect to repository from configured remote. You could want to check .git config.\n" +
                                                    "Do you want to proceed anyway?");
       }
 
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", e);
+      GithubNotifications.showErrorDialog(project, "Failed to Connect to GitHub", e);
       return false;
     }
     catch (IOException e) {
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", e);
+      GithubNotifications.showErrorDialog(project, "Failed to Connect to GitHub", e);
       return false;
     }
   }
@@ -278,7 +278,7 @@ public class GithubShareAction extends DumbAwareAction {
         });
     }
     catch (IOException e) {
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", e);
+      GithubNotifications.showErrorDialog(project, "Failed to Connect to GitHub", e);
       return null;
     }
   }

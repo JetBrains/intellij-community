@@ -145,7 +145,7 @@ public class GithubSettingsPanel {
           );
         }
         catch (IOException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Can't create API token", ex);
+          GithubNotifications.showErrorDialog(myPane, "Can't Create API Token", ex);
         }
       }
     });
