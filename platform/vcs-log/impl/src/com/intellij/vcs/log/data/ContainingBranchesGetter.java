@@ -147,7 +147,8 @@ public class ContainingBranchesGetter implements VcsLogListener {
     if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(Pair.create(root, branchName));
     if (condition == null) {
-      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(myDataHolder.getCommitIndex(branchRef.getCommitHash())));
+      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(
+        Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash()))));
       myConditions.put(Pair.create(root, branchName), condition);
     }
     return condition;
@@ -212,17 +213,17 @@ public class ContainingBranchesGetter implements VcsLogListener {
   }
 
   private class ContainedInBranchCondition implements Condition<Hash> {
-    @NotNull private final Condition<Integer> myChecker;
+    @NotNull private final Condition<Integer> myCondition;
     private volatile boolean isDisposed = false;
 
-    public ContainedInBranchCondition(@NotNull Condition<Integer> checker) {
-      myChecker = checker;
+    public ContainedInBranchCondition(@NotNull Condition<Integer> condition) {
+      myCondition = condition;
     }
 
     @Override
     public boolean value(Hash hash) {
       if (isDisposed) return false;
-      return myChecker.value(myDataHolder.getCommitIndex(hash));
+      return myCondition.value(myDataHolder.getCommitIndex(hash));
     }
 
     public void dispose() {

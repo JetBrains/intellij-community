@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -63,7 +64,7 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
 
   @NotNull
   @Override
-  public Condition<Integer> getContainedInBranchCondition(@NotNull Integer currentBranchHead) {
+  public Condition<Integer> getContainedInBranchCondition(@NotNull Collection<Integer> currentBranchHead) {
     return Conditions.alwaysFalse();
   }
 

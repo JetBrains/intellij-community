@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -46,7 +47,7 @@ public interface PermanentGraph<CommitId> {
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
 
   @NotNull
-  Condition<CommitId> getContainedInBranchCondition(@NotNull CommitId currentBranchHead);
+  Condition<CommitId> getContainedInBranchCondition(@NotNull Collection<CommitId> currentBranchHead);
 
   enum SortType {
     Normal("Off", "Sort commits topologically and by date"),

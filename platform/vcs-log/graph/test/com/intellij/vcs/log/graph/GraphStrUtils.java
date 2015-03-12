@@ -23,7 +23,7 @@ import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
-import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
+import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.impl.print.EdgesInRowGenerator;
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex;
 import com.intellij.vcs.log.graph.parser.CommitParser;
@@ -70,12 +70,12 @@ public class GraphStrUtils {
     return s.toString();
   }
 
-  public static String containingBranchesGetterToStr(ContainingBranchesGetter containingBranchesGetter, int nodesCount) {
+  public static String containingBranchesGetterToStr(ReachableNodes reachableNodes, Set<Integer> branches, int nodesCount) {
     StringBuilder s = new StringBuilder();
     for (int nodeIndex = 0; nodeIndex < nodesCount; nodeIndex++) {
       if (nodeIndex != 0) s.append("\n");
 
-      List<Integer> branchNodeIndexes = new ArrayList<Integer>(containingBranchesGetter.getBranchNodeIndexes(nodeIndex));
+      List<Integer> branchNodeIndexes = new ArrayList<Integer>(reachableNodes.getContainingBranches(nodeIndex, branches));
       if (branchNodeIndexes.isEmpty()) {
         s.append("none");
         continue;
