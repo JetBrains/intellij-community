@@ -2597,7 +2597,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T extends Comparable<T>> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2) {
     for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
-      int result = o1.get(i).compareTo(o2.get(i));
+      int result = Comparing.compare(o1.get(i), o2.get(i));
       if (result != 0) {
         return result;
       }
