@@ -155,9 +155,7 @@ public class RollbackAction extends AnAction implements DumbAware {
       }
     }
     if (changes != null && changes.length > 0) {
-      if (ChangesUtil.allChangesInOneListOrWholeListsSelected(project, changes)) {
-        return ContainerUtil.newArrayList(changes);
-      }
+      return ContainerUtil.newArrayList(changes);
     }
 
     final ChangeListManager clManager = ChangeListManager.getInstance(project);

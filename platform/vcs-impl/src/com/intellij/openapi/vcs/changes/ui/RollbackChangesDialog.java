@@ -95,6 +95,15 @@ public class RollbackChangesDialog extends DialogWrapper {
           myInfoCalculator.update(new ArrayList<Change>(myBrowser.getAllChanges()),
                                   new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
           myCommitLegendPanel.update();
+
+          Collection<Change> selected = myBrowser.getChangesIncludedInAllLists();
+          List<Change> visibleSelected = myBrowser.getCurrentIncludedChanges();
+          if (selected.size() != visibleSelected.size()) {
+            setErrorText("Selection contains changes from other changelist");
+          }
+          else {
+            setErrorText(null);
+          }
         }
       }
     };
