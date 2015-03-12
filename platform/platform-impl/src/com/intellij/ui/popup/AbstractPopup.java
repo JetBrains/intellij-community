@@ -838,9 +838,14 @@ public class AbstractPopup implements JBPopup {
         myContent,
         myMovable ? new Insets(i, i, i, i) : new Insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
+        private Cursor myCursor;
+
         @Override
         protected void setCursor(Component content, Cursor cursor) {
-          glass.setCursor(cursor, this);
+          if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
+            glass.setCursor(cursor, this);
+            myCursor = cursor;
+          }
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
