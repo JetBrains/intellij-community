@@ -28,6 +28,7 @@ import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Suite;
 import org.junit.runners.model.FrameworkMethod;
 
 import java.io.BufferedReader;
@@ -324,16 +325,17 @@ public class JUnit4TestRunnerUtil {
     }
   }
 
-  private static class SelectedParameterizedRunner extends Parameterized {
+  private static class SelectedParameterizedRunner extends Suite {
+    public static final List NO_RUNNERS = new ArrayList();
     private final String myName;
     private final String myMethodName;
     private Parameterized myRunnerClass;
 
     public SelectedParameterizedRunner(Class clazz, String name, String methodName, Class runnerClass) throws Throwable {
-      super(clazz);
+      super(clazz, NO_RUNNERS);
       myName = name;
       myMethodName = methodName;
-      myRunnerClass = runnerClass.equals(Parameterized.class) ? this : (Parameterized)runnerClass.getConstructor(new Class[] {Class.class}).newInstance(new Object[]{clazz});
+      myRunnerClass = (Parameterized)runnerClass.getConstructor(new Class[] {Class.class}).newInstance(new Object[]{clazz});
     }
 
     protected List getChildren() {
