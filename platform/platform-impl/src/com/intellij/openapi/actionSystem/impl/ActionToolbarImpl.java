@@ -1000,7 +1000,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setMovable(true) // fit the screen automatically
-      .setMayBeParent(true) // a dialog-based popup is not always on top
       .setRequestFocus(false)
       .setTitle(null)
       .setCancelOnClickOutside(true)
