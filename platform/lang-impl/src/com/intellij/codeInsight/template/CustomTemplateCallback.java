@@ -18,7 +18,9 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -42,6 +44,7 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class CustomTemplateCallback {
+  private static final Logger LOGGER = Logger.getInstance(CustomTemplateCallback.class);
   private final TemplateManager myTemplateManager;
   @NotNull private final Editor myEditor;
   @NotNull private final PsiFile myFile;
@@ -102,13 +105,13 @@ public class CustomTemplateCallback {
 
   private boolean isAvailableTemplate(@NotNull TemplateImpl template) {
     if (myApplicableContextTypes == null) {
-      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);  
+      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);
     }
     return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }
 
   public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
-    if(myInInjectedFragment) {
+    if (myInInjectedFragment) {
       template.setToReformat(false);
     }
     myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
@@ -158,11 +161,16 @@ public class CustomTemplateCallback {
   @NotNull
   public static PsiElement getContext(@NotNull PsiFile file, int offset, boolean searchInInjectedFragment) {
     PsiElement element = null;
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = documentManager.getDocument(file);
-    searchInInjectedFragment &= document != null && documentManager.isCommitted(document); 
     if (searchInInjectedFragment && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+      Document document = documentManager.getDocument(file);
+      if (document != null && !documentManager.isCommitted(document)) {
+        LOGGER.error("Trying to access to injected template context on uncommited document, offset = " + offset,
+                     AttachmentFactory.createAttachment(file.getVirtualFile()));
+      }
+      else {
+        element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+      }
     }
     if (element == null) {
       element = PsiUtilCore.getElementAtOffset(file, offset);
