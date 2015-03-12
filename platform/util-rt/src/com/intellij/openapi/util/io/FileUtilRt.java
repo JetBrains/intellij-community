@@ -69,84 +69,84 @@ public class FileUtilRt {
 
   private static String ourCanonicalTempPathCache = null;
 
-  protected static final boolean NIO_FILE_API_AVAILABLE;
+  protected static final class NIOReflect {
+    // NIO-reflection initialization placed in a separate class for lazy loading 
+    static final boolean IS_AVAILABLE;
 
-  // todo: replace reflection with normal code after migration to JDK 1.8
-  private static Method ourFilesDeleteIfExistsMethod;
-  private static Method ourFilesWalkMethod;
-  private static Method ourFileToPathMethod;
-  private static Object ourDeletionVisitor;
-  private static Class ourNoSuchFileExceptionClass;
-  static {
-    boolean initSuccess = false;
-    try {
-      final Class<?> pathClass = Class.forName("java.nio.file.Path");
-      final Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
-      final Class<?> filesClass = Class.forName("java.nio.file.Files");
-      ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
+    // todo: replace reflection with normal code after migration to JDK 1.8
+    private static Method ourFilesDeleteIfExistsMethod;
+    private static Method ourFilesWalkMethod;
+    private static Method ourFileToPathMethod;
+    private static Object ourDeletionVisitor;
+    private static Class ourNoSuchFileExceptionClass;
 
-      ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
-      ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
-      ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
-      final Class<?> fileVisitResultClass = Class.forName("java.nio.file.FileVisitResult");
-      final Object Result_Continue = fileVisitResultClass.getDeclaredField("CONTINUE").get(null);
-      final Object Result_Terminate = fileVisitResultClass.getDeclaredField("TERMINATE").get(null);
-      ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-          if (args.length == 2) {
-            final Object second = args[1];
-            if (second instanceof Throwable) {
-              throw (Throwable)second;
-            }
-            final String methodName = method.getName();
-            if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
-              if (!performDelete(args[0])) {
-                return Result_Terminate;
+    static {
+      boolean initSuccess = false;
+      try {
+        final Class<?> pathClass = Class.forName("java.nio.file.Path");
+        final Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
+        final Class<?> filesClass = Class.forName("java.nio.file.Files");
+        ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
+
+        ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
+        ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
+        ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
+        final Class<?> fileVisitResultClass = Class.forName("java.nio.file.FileVisitResult");
+        final Object Result_Continue = fileVisitResultClass.getDeclaredField("CONTINUE").get(null);
+        final Object Result_Terminate = fileVisitResultClass.getDeclaredField("TERMINATE").get(null);
+        ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
+          @Override
+          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (args.length == 2) {
+              final Object second = args[1];
+              if (second instanceof Throwable) {
+                throw (Throwable)second;
               }
-            }
-          }
-          return Result_Continue;
-        }
-
-        private boolean performDelete(@NotNull final Object fileObject) {
-          Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
-            public Boolean execute(boolean lastAttempt) {
-              try {
-                //Files.deleteIfExists(file);
-                ourFilesDeleteIfExistsMethod.invoke(null, fileObject);
-                return Boolean.TRUE;
-              }
-              catch (InvocationTargetException e) {
-                if (!(e.getCause() instanceof IOException)) {
-                  return Boolean.FALSE;
+              final String methodName = method.getName();
+              if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
+                if (!performDelete(args[0])) {
+                  return Result_Terminate;
                 }
               }
-              catch (IllegalAccessException e) {
-                return Boolean.FALSE;
-              }
-              return lastAttempt? Boolean.FALSE : null;
             }
-          });
-          return Boolean.TRUE.equals(result);
-        }
+            return Result_Continue;
+          }
 
-      });
-      initSuccess = true;
+          private boolean performDelete(@NotNull final Object fileObject) {
+            Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
+              public Boolean execute(boolean lastAttempt) {
+                try {
+                  //Files.deleteIfExists(file);
+                  ourFilesDeleteIfExistsMethod.invoke(null, fileObject);
+                  return Boolean.TRUE;
+                }
+                catch (InvocationTargetException e) {
+                  if (!(e.getCause() instanceof IOException)) {
+                    return Boolean.FALSE;
+                  }
+                }
+                catch (IllegalAccessException e) {
+                  return Boolean.FALSE;
+                }
+                return lastAttempt ? Boolean.FALSE : null;
+              }
+            });
+            return Boolean.TRUE.equals(result);
+          }
+        });
+        initSuccess = true;
+      }
+      catch (Throwable ignored) {
+        logger().info("Was not able to detect NIO API");
+        ourFileToPathMethod = null;
+        ourFilesWalkMethod = null;
+        ourFilesDeleteIfExistsMethod = null;
+        ourDeletionVisitor = null;
+        ourNoSuchFileExceptionClass = null;
+      }
+      IS_AVAILABLE = initSuccess;
     }
-    catch (Throwable ignored) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("INFO: was not able to detect NIO API");
-
-      ourFileToPathMethod = null;
-      ourFilesWalkMethod = null;
-      ourFilesDeleteIfExistsMethod = null;
-      ourDeletionVisitor = null;
-      ourNoSuchFileExceptionClass = null;
-    }
-    NIO_FILE_API_AVAILABLE = initSuccess;
   }
-
 
   @NotNull
   public static String getExtension(@NotNull String fileName) {
@@ -619,7 +619,7 @@ public class FileUtilRt {
    * @return true if the file did not exist or was successfully deleted 
    */
   public static boolean delete(@NotNull File file) {
-    if (NIO_FILE_API_AVAILABLE) {
+    if (NIOReflect.IS_AVAILABLE) {
       return deleteRecursivelyNIO(file);
     }
     return deleteRecursively(file);
@@ -642,12 +642,12 @@ public class FileUtilRt {
         }
       });
       */
-      final Object pathObject = ourFileToPathMethod.invoke(file);
-      ourFilesWalkMethod.invoke(null, pathObject, ourDeletionVisitor);
+      final Object pathObject = NIOReflect.ourFileToPathMethod.invoke(file);
+      NIOReflect.ourFilesWalkMethod.invoke(null, pathObject, NIOReflect.ourDeletionVisitor);
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
-      if (cause == null || !ourNoSuchFileExceptionClass.isInstance(cause)) {
+      if (cause == null || !NIOReflect.ourNoSuchFileExceptionClass.isInstance(cause)) {
         logger().info(e);
         return false;
       }

@@ -15,7 +15,9 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -34,7 +36,6 @@ public class CompoundRuntimeException extends RuntimeException {
     myThrowables = throwables;
   }
 
-
   @Override
   public void printStackTrace(PrintStream s) {
     for (Throwable throwable : myThrowables) {
@@ -50,17 +51,25 @@ public class CompoundRuntimeException extends RuntimeException {
     }
   }
 
-  public static void doThrow(@NotNull List<Throwable> throwables) {
+  public static void doThrow(@Nullable List<Throwable> throwables) {
+    if (ContainerUtil.isEmpty(throwables)) {
+      return;
+    }
+
     if (throwables.size() == 1) {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Throwable throwable = throwables.get(0);
-      if (throwable instanceof RuntimeException) {
-        throw (RuntimeException)throwable;
-      }
       if (throwable instanceof Error) {
         throw (Error)throwable;
       }
+      else if (throwable instanceof RuntimeException) {
+        throw (RuntimeException)throwable;
+      }
+      else {
+        throw new RuntimeException(throwable);
+      }
     }
-    throw new CompoundRuntimeException(throwables);
+    else {
+      throw new CompoundRuntimeException(throwables);
+    }
   }
 }

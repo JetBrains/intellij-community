@@ -7,7 +7,7 @@ public interface Observable<T> {
   default  <R> Observable<R> map(Function<T, R> f) {
     return new Observable<R>() {
         @Override
-        public void subscribe(Consumer<T> consumer) {
+        public void subscribe(Consumer<R> consumer) {
             Observable.this.subscribe(null);
         }
     };

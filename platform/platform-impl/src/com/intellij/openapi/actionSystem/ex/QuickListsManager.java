@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -40,7 +39,6 @@ import java.util.Collection;
 import java.util.Set;
 
 public class QuickListsManager implements ExportableApplicationComponent {
-  private static final Logger LOG = Logger.getInstance(QuickListsManager.class);
   static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/quicklists";
 
   private static final String LIST_TAG = "list";
