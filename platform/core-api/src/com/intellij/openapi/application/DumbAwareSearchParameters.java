@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.content;
+package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.List;
-
 /**
- * @author Konstantin Bulenkov
- * @since 14.1
+ * A marker interface for {@link QueryExecutorBase} parameters which indicates that searches should only be executed when indexing is complete.
+ * The query executors that are not {@link com.intellij.openapi.project.DumbAware} are delayed in processing until index is ready.
+ * 
+ * @author peter
  */
-public interface TabbedContent extends Content {
-  String SPLIT_PROPERTY_PREFIX = "tabbed.toolwindow.expanded.";
-
-  void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab);
-  void removeContent(@NotNull JComponent content);
-  void selectContent(int index);
-  List<Pair<String, JComponent>> getTabs();
-  String getTitlePrefix();
-  void setTitlePrefix(String titlePrefix);
-  void split();
+public interface DumbAwareSearchParameters {
+  @NotNull
+  Project getProject();
 }

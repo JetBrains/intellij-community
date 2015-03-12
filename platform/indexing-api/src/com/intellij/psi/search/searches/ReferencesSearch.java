@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.DumbAwareSearchParameters;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   private ReferencesSearch() {
   }
 
-  public static class SearchParameters {
+  public static class SearchParameters implements DumbAwareSearchParameters {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private final boolean myIgnoreAccessScope;

@@ -49,35 +49,35 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     super.setUp();
   }
 
-  public void testSimpleTransform() {
+  public void _testSimpleTransform() {
     doTest();
   }
 
-  public void testSimpleFilter() {
+  public void _testSimpleFilter() {
     doTest();
   }
 
-  public void testSimpleFind() {
+  public void _testSimpleFind() {
     doTest();
   }
 
-  public void testSimpleAll() {
+  public void _testSimpleAll() {
     doTest();
   }
 
-  public void testSimpleAny() {
+  public void _testSimpleAny() {
     doTest();
   }
 
-  public void testLambdaIsntAnonymous() {
+  public void _testLambdaIsntAnonymous() {
     doTest();
   }
 
-  public void testLambdaIsntAnonymous2() {
+  public void _testLambdaIsntAnonymous2() {
     doTest();
   }
 
-  public void testLambdaIsntAnonymous3() {
+  public void _testLambdaIsntAnonymous3() {
     doTest();
   }
 

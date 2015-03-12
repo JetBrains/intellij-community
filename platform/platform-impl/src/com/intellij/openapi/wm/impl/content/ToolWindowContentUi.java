@@ -19,16 +19,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -358,6 +356,18 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     group.add(myNextTabAction);
     group.add(myPreviousTabAction);
     group.add(myShowContent);
+
+    if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
+      group.addAction(createSplitTabsAction((TabbedContent)content));
+    }
+
+    if (Boolean.TRUE == content.getUserData(Content.TABBED_CONTENT_KEY)) {
+      final String groupName = content.getUserData(Content.TAB_GROUP_NAME_KEY);
+      if (groupName != null) {
+        group.addAction(createMergeTabsAction(myManager, groupName));
+      }
+    }
+
     group.addSeparator();
   }
 
@@ -377,6 +387,44 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     final ActionPopupMenu popupMenu =
       ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
     popupMenu.getComponent().show(comp, x, y);
+  }
+
+  private static AnAction createSplitTabsAction(final TabbedContent content) {
+    return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        content.split();
+      }
+    };
+  }
+
+  private static AnAction createMergeTabsAction(final ContentManager manager, final String tabPrefix) {
+    return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final Content selectedContent = manager.getSelectedContent();
+        final List<Pair<String, JComponent>> tabs = new ArrayList<Pair<String, JComponent>>();
+        int selectedTab = -1;
+        for (Content content : manager.getContents()) {
+          if (tabPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) {
+            final String label = content.getTabName().substring(tabPrefix.length() + 2);
+            final JComponent component = content.getComponent();
+            if (content == selectedContent) {
+              selectedTab = tabs.size();
+            }
+            tabs.add(Pair.create(label, component));
+            manager.removeContent(content, false);
+            content.setComponent(null);
+            Disposer.dispose(content);
+          }
+        }
+        PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
+        for (int i = 0; i < tabs.size(); i++) {
+          final Pair<String, JComponent> tab = tabs.get(i);
+          ContentUtilEx.addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
+        }
+      }
+    };
   }
 
   private void processHide(final MouseEvent e) {

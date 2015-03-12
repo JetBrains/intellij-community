@@ -17,7 +17,6 @@ package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.UsageSearchContext;
@@ -27,23 +26,21 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.DataProvider;
 
 public class DataProviderSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+  public DataProviderSearcher() {
+    super(true);
+  }
 
   @Override
-  public void processQuery(@NotNull final MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
-    DumbService.getInstance(queryParameters.getProject()).runReadActionInSmartMode(new Runnable() {
-      @Override
-      public void run() {
-        final PsiMethod method = queryParameters.getMethod();
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
+    final PsiMethod method = queryParameters.getMethod();
 
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
-        if (annotation == null) return;
-        final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue("name");
-        if (dataProviderMethodName != null) {
-          final String providerName = StringUtil.unquoteString(dataProviderMethodName.getText());
-          queryParameters.getOptimizer().searchWord(providerName, queryParameters.getEffectiveSearchScope(), UsageSearchContext.IN_STRINGS, true, method);
-        }
-      }
-    });
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+    if (annotation == null) return;
+    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue("name");
+    if (dataProviderMethodName != null) {
+      final String providerName = StringUtil.unquoteString(dataProviderMethodName.getText());
+      queryParameters.getOptimizer().searchWord(providerName, queryParameters.getEffectiveSearchScope(), UsageSearchContext.IN_STRINGS, true, method);
+    }
   }
 
 }
