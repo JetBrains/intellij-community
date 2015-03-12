@@ -718,6 +718,11 @@
                      groupName="Code style issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
                      displayName="Block marker comment"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
+                     groupBundle="messages.InspectionsBundle"
+                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
+                     displayName="Pseudo functional expression using static class"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
