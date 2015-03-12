@@ -38,7 +38,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
-    <logHighlighterFactory implementation="com.intellij.dvcs.ui.CurrentBranchHighlighter$Factory"/>
   </extensions>
 </idea-plugin>
 

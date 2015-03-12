@@ -106,6 +106,15 @@ public interface VcsLogProvider {
   @Nullable
   <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
 
+  /**
+   * Returns currently checked out branch in given root, or null if not on any branch or provided root is not under version control.
+   *
+   * @param root root for which branch is requested.
+   * @return branch that is currently checked out in the specified root.
+   */
+  @Nullable
+  String getCurrentBranch(@NotNull VirtualFile root);
+
   interface Requirements {
 
     /**

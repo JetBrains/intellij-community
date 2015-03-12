@@ -487,6 +487,18 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
+  public String getCurrentBranch(@NotNull VirtualFile root) {
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) return null;
+    String currentBranchName = repository.getCurrentBranchName();
+    if (currentBranchName == null && repository.getCurrentRevision() != null) {
+      return "HEAD";
+    }
+    return currentBranchName;
+  }
+
+  @Nullable
+  @Override
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     if (property == VcsLogProperties.LIGHTWEIGHT_BRANCHES) {
       return (T)Boolean.TRUE;

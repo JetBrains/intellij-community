@@ -210,6 +210,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return null;
   }
 
+  @Nullable
+  @Override
+  public String getCurrentBranch(@NotNull VirtualFile root) {
+    return null;
+  }
+
   private static class MockRefManager implements VcsLogRefManager {
 
     public static final Comparator<VcsRef> FAKE_COMPARATOR = new Comparator<VcsRef>() {

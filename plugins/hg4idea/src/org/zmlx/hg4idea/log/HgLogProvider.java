@@ -276,6 +276,14 @@ public class HgLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
+  public String getCurrentBranch(@NotNull VirtualFile root) {
+    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) return null;
+    return repository.getCurrentBranchName();
+  }
+
+  @Nullable
+  @Override
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     return null;
   }

@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.ui;
+package com.intellij.vcs.log.ui;
 
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommitStyleFactory;
-import com.intellij.vcs.log.VcsLogHighlighter;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -35,12 +29,10 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private final VcsRepositoryManager myRepositoryManager;
 
   public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
-    myRepositoryManager = myDataHolder.getProject().getComponent(VcsRepositoryManager.class);
   }
 
   @NotNull
@@ -49,17 +41,12 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (isSelected || !myUiProperties.isHighlightCurrentBranch()) return VcsCommitStyle.DEFAULT;
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
-      Repository repo = myRepositoryManager.getRepositoryForRoot(details.getRoot());
-      if (repo != null) {
-        String currentBranch = repo.getCurrentBranchName();
-        if (currentBranch == null) {
-          if (repo.getCurrentRevision() != null) currentBranch = "HEAD"; // does this work for hg?
-        }
-        if (currentBranch != null) {
-          Condition<Hash> condition = myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
-          if (condition.value(details.getId())) {
-            return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
-          }
+      VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
+      String currentBranch = provider.getCurrentBranch(details.getRoot());
+      if (currentBranch != null) {
+        Condition<Hash> condition = myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+        if (condition.value(details.getId())) {
+          return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
         }
       }
     }
