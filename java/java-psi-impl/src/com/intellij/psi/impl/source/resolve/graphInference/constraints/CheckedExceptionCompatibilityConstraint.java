@@ -116,7 +116,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
             thrownTypes.addAll(ContainerUtil.filter(exceptions, new Condition<PsiClassType>() {
               @Override
               public boolean value(PsiClassType type) {
-                return session.isProperType(type) && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_EXCEPTION);
+                return !ExceptionUtil.isUncheckedException(type);
               }
             }));
           }
@@ -154,7 +154,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         }
       } else {
         final ArrayList<PsiType> expectedProperTypes = new ArrayList<PsiType>(expectedThrownTypes);
-        expectedProperTypes.retainAll(expectedNonProperThrownTypes);
+        expectedProperTypes.removeAll(expectedNonProperThrownTypes);
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedProperTypes, thrownType)) {
             for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
