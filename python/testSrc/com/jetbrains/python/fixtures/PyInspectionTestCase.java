@@ -1,5 +1,6 @@
 package com.jetbrains.python.fixtures;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,18 @@ public abstract class PyInspectionTestCase extends PyTestCase {
 
   @NotNull
   protected abstract Class<? extends PyInspection> getInspectionClass();
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    InspectionProfileImpl.INIT_INSPECTIONS = false;
+    super.tearDown();
+  }
 
   /**
    * Launches test. To be called by test author
