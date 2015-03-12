@@ -34,4 +34,5 @@ public interface TabbedContent extends Content {
   List<Pair<String, JComponent>> getTabs();
   String getTitlePrefix();
   void setTitlePrefix(String titlePrefix);
+  void split();
 }
