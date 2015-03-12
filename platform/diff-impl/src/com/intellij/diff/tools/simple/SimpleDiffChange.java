@@ -284,7 +284,7 @@ public class SimpleDiffChange {
       mySide = side;
       myHighlighter = highlighter;
 
-      myHighlighter.setGutterIconRenderer(createRenderer());
+      update(true);
     }
 
     public void destroy() {
@@ -295,7 +295,7 @@ public class SimpleDiffChange {
       if (!force && !areModifiersChanged()) {
         return;
       }
-      myHighlighter.setGutterIconRenderer(createRenderer());
+      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
     }
 
     private boolean areModifiersChanged() {
