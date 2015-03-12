@@ -15,11 +15,13 @@
  */
 package com.intellij.util;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
@@ -38,6 +40,14 @@ public class ContentUtilEx extends ContentsUtil {
   }
 
   public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select, @Nullable Disposable childDisposable) {
+    if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix, false)) {
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, groupPrefix + ": " + tabName, true);
+      content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
+      content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
+      addContent(manager, content, select);
+      return;
+    }
+
     TabbedContent tabbedContent = null;
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent && content.getTabName().startsWith(groupPrefix + ": ")) {
