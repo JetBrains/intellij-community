@@ -179,7 +179,7 @@ class FileInEditorProcessor {
   }
 
   @NotNull
-  private String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
+  private static String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
     String firstNotificationLine = reformatNotification != null ? reformatNotification : rearrangeNotification;
     if (reformatNotification != null && rearrangeNotification != null) {
       firstNotificationLine += ", " + rearrangeNotification;
@@ -188,7 +188,7 @@ class FileInEditorProcessor {
     return firstNotificationLine;
   }
 
-  private static void showHint(@NotNull Editor editor, @NotNull String info) {
+  public static void showHint(@NotNull Editor editor, @NotNull String info) {
     JComponent component = HintUtil.createInformationLabel(info);
     LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
