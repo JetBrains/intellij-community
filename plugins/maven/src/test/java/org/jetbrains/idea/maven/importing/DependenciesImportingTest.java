@@ -2191,7 +2191,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>central</id>" +
-                  "    <url>file://localhost/${basedir}/repo</url>" +
+                  "    <url>file://localhost/" + repoPath + "</url>" +
                   "  </repository>" +
                   "</repositories>");
 
