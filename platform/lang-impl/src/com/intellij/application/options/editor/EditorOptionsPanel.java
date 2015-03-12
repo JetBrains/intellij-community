@@ -89,6 +89,7 @@ public class EditorOptionsPanel {
   private JCheckBox    myCbHighlightIdentifierUnderCaret;
   private JCheckBox    myCbEnsureBlankLineBeforeCheckBox;
   private JCheckBox    myShowNotificationAfterReformatCodeCheckBox;
+  private JCheckBox    myShowNotificationAfterOptimizeImportsCheckBox;
   private JCheckBox    myCbUseSoftWrapsAtEditor;
   private JCheckBox    myCbUseSoftWrapsAtConsole;
   private JCheckBox    myCbUseCustomSoftWrapIndent;
@@ -224,6 +225,7 @@ public class EditorOptionsPanel {
     myShowInlineDialogForCheckBox.setSelected(editorSettings.isShowInlineLocalDialog());
 
     myShowNotificationAfterReformatCodeCheckBox.setSelected(editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION);
+    myShowNotificationAfterOptimizeImportsCheckBox.setSelected(editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION);
 
     myErrorHighlightingPanel.reset();
 
@@ -326,7 +328,7 @@ public class EditorOptionsPanel {
     if (quickDocDelay != null) {
       editorSettings.setQuickDocOnMouseOverElementDelayMillis(quickDocDelay);
     }
-    
+
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
@@ -338,6 +340,7 @@ public class EditorOptionsPanel {
     editorSettings.setShowInlineLocalDialog(myShowInlineDialogForCheckBox.isSelected());
 
     editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = myShowNotificationAfterReformatCodeCheckBox.isSelected();
+    editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = myShowNotificationAfterOptimizeImportsCheckBox.isSelected();
 
     reinitAllEditors();
 
@@ -384,7 +387,7 @@ public class EditorOptionsPanel {
       return null;
     }
   }
-  
+
   public static void restartDaemons() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
@@ -480,6 +483,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myShowInlineDialogForCheckBox, editorSettings.isShowInlineLocalDialog());
 
     isModified |= isModified(myShowNotificationAfterReformatCodeCheckBox, editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION);
+    isModified |= isModified(myShowNotificationAfterOptimizeImportsCheckBox, editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION);
 
     isModified |= myErrorHighlightingPanel.isModified();
 
@@ -541,7 +545,7 @@ public class EditorOptionsPanel {
       }
     });
   }
-  
+
   private void initSoftWrapsSettingsProcessing() {
     ItemListener listener = new ItemListener() {
       @Override

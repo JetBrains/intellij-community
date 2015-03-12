@@ -71,6 +71,11 @@ public class DependentGroovycRunner {
         config.setTargetDirectory(finalOutputs[0]);
       }
     }
+    
+    if (!"false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
+      config.getOptimizationOptions().put("asmResolving", true);
+      config.getOptimizationOptions().put("classLoaderResolving", false);
+    }
 
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
     renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
