@@ -149,9 +149,10 @@ binding.setVariable("loadProject", {
 })
 
 binding.setVariable("prepareOutputFolder", {
-  projectBuilder.targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
+  def targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
+  projectBuilder.targetFolder = targetFolder
   if (projectBuilder.buildIncrementally && Boolean.parseBoolean(p("jps.build.clear.incremental.caches", "false"))) {
-    FileUtil.delete(new File(projectBuilder.targetFolder))
+    FileUtil.delete(new File(targetFolder))
     FileUtil.delete(new File(projectBuilder.dataStorageRoot))
   }
 })
