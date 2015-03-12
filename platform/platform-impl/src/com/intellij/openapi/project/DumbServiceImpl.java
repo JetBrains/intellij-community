@@ -308,7 +308,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         semaphore.up();
       }
     });
-    semaphore.waitFor();
+    while (true) {
+      if (semaphore.waitFor(50)) {
+        return;
+      }
+      ProgressManager.checkCanceled();
+    }
   }
 
   @Override
