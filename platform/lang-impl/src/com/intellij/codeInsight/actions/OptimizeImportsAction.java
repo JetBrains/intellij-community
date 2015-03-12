@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
@@ -254,9 +255,15 @@ public class OptimizeImportsAction extends AnAction {
 
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
       myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
-
+      myOnlyVcsCheckBox.setBorder(new EmptyBorder(0, 10 , 0, 0));
       panel.add(myOnlyVcsCheckBox);
       return panel;
+    }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return HELP_ID;
     }
   }
 }
