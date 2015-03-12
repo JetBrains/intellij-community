@@ -238,4 +238,8 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
   }
 
+  @Override
+  public void updateUI() {
+    setFont(UIUtil.getLabelFont());
+  }
 }
