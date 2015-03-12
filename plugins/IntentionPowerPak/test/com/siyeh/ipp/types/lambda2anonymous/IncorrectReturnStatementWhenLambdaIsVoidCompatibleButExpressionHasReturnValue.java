@@ -3,6 +3,12 @@ class Test {
   String c = null;
 
   public void main(String[] args){
-    SwingUtilities.invokeLater((<caret>) -> c.substring(0).toString());
+    p((<caret>s) -> c.substring(0).toString());
   }
+
+  void p(I i) {}
+
+  interface I {
+    void f(String s);
+  } 
 }
