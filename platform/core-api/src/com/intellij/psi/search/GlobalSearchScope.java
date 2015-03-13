@@ -547,6 +547,16 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public String toString() {
       return "Union: (" + StringUtil.join(Arrays.asList(myScopes), ",") + ")";
     }
+
+    @NotNull
+    @Override
+    public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+      if (scope instanceof UnionScope) {
+        GlobalSearchScope[] newScopes = ArrayUtil.mergeArrays(myScopes, ((UnionScope)scope).myScopes);
+        return new UnionScope(newScopes);
+      }
+      return super.uniteWith(scope);
+    }
   }
 
   @NotNull

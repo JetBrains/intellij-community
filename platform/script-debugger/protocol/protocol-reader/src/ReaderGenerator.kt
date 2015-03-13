@@ -1,13 +1,12 @@
 package org.jetbrains.protocolReader
 
 import gnu.trove.THashMap
-
 import java.io.File
 import java.nio.file.FileSystems
-import java.util.*
+import java.util.HashMap
+import java.util.LinkedHashMap
 
 public class ReaderGenerator {
-
   public class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: Array<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
     val basePackagesMap: Collection<Map<Class<*>, String>>
 
