@@ -61,7 +61,7 @@ class CommandExecutor implements Consumer<String> {
 
     for (final Command command : myCommands) {
       if (command.getName().equals(commandName)) {
-        final List<String> argument = Arrays.asList(EMPTY_SPACE.split(file.getText()));
+        final List<String> argument = Arrays.asList(EMPTY_SPACE.split(file.getText().trim()));
         // 1 because we need to command which is on the first place
         command.execute(myModule, argument.subList(1, argument.size()));
       }
