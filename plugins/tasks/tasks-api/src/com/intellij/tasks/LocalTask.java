@@ -26,6 +26,11 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * Local task represents is concrete task with associated context that is available in IDE.
+ * Unlike general tasks created by various task repositories, local tasks are uniform and persisted in project settings.
+ * They not necessarily should be bound to some requests in issue tracking system (see {@link #isIssue()}) and can be created
+ * by other means as well (e.g. for tracking changelist).
+ *
  * @author Dmitry Avdeev
  */
 public abstract class LocalTask extends Task {

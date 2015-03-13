@@ -91,7 +91,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         TaskManager taskManager = TaskManager.getManager(project);
         if (element instanceof TaskPsiElement) {
           Task task = ((TaskPsiElement)element).getTask();
-          LocalTask localTask = taskManager.findTask(task.getId());
+          LocalTask localTask = taskManager.findLocalTask(task.getCoordinates());
           if (localTask != null) {
             taskManager.activateTask(localTask, !shiftPressed.get());
           }

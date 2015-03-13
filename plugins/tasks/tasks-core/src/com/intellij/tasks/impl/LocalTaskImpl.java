@@ -69,6 +69,8 @@ public class LocalTaskImpl extends LocalTask {
   private Date myLastPost;
   private List<BranchInfo> myBranches = new ArrayList<BranchInfo>();
 
+  private TaskCoordinates myCoordinates;
+
 
   /** for serialization */
   public LocalTaskImpl() {    
@@ -101,6 +103,22 @@ public class LocalTaskImpl extends LocalTask {
   @NotNull
   public String getId() {
     return myId;
+  }
+
+  @NotNull
+  @Override
+  public String getGlobalId() {
+    return myCoordinates == null ? super.getGlobalId() : myCoordinates.getGlobalID();
+  }
+
+  @NotNull
+  @Override
+  public TaskCoordinates getCoordinates() {
+    return myCoordinates == null ? super.getCoordinates() : myCoordinates;
+  }
+
+  public void setCoordinates(@NotNull TaskCoordinates coordinates) {
+    myCoordinates = coordinates;
   }
 
   @Attribute("summary")
@@ -161,6 +179,7 @@ public class LocalTaskImpl extends LocalTask {
 
     myProject = issue.getProject();
     myNumber = issue.getNumber();
+    myCoordinates = issue.getCoordinates();
   }
 
   public void setId(String id) {

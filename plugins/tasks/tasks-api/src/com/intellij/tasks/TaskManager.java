@@ -95,8 +95,18 @@ public abstract class TaskManager {
 
   public abstract List<Task> getCachedIssues(final boolean withClosed);
 
+  /**
+   * Updating issue using only its ID is considered unreliable. Use {@link #updateLocalTask(LocalTask)} instead.
+   * <p/>
+   * To be removed in IDEA 15.
+   *
+   * @see #updateLocalTask(LocalTask)
+   */
+  @Deprecated
   @Nullable
   public abstract Task updateIssue(@NotNull String id);
+
+  public abstract void updateLocalTask(@NotNull LocalTask task);
 
   public abstract List<LocalTask> getLocalTasks();
 
@@ -111,8 +121,17 @@ public abstract class TaskManager {
   @NotNull
   public abstract LocalTask getActiveTask();
 
+  /**
+   * Finding local issue using only its ID is considered unreliable. Use {@link #findLocalTask(TaskCoordinates)} instead.
+   * <p/>
+   * To be removed in IDEA 15.
+   */
+  @Deprecated
   @Nullable
   public abstract LocalTask findTask(String id);
+
+  @Nullable
+  public abstract LocalTask findLocalTask(@NotNull TaskCoordinates coordinates);
 
   /**
    * Update issue cache asynchronously

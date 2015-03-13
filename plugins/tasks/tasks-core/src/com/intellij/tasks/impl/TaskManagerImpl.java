@@ -92,10 +92,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
     }
   };
-  private static final Convertor<Task, String> KEY_CONVERTOR = new Convertor<Task, String>() {
+  private static final Convertor<Task, TaskCoordinates> KEY_CONVERTOR = new Convertor<Task, TaskCoordinates>() {
     @Override
-    public String convert(Task o) {
-      return o.getId();
+    public TaskCoordinates convert(Task o) {
+      return o.getCoordinates();
     }
   };
   static final String TASKS_NOTIFICATION_GROUP = "Task Group";
@@ -104,21 +104,21 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final WorkingContextManager myContextManager;
 
-  private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<String, Task>());
+  private final Map<TaskCoordinates, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<TaskCoordinates, Task>());
 
-  private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTask>() {
+  private final Map<TaskCoordinates, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<TaskCoordinates, LocalTask>() {
     @Override
-    public LocalTask put(String key, LocalTask task) {
+    public LocalTask put(TaskCoordinates key, LocalTask task) {
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
-        ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<Map.Entry<String,LocalTask>>(entrySet());
-        Collections.sort(list, new Comparator<Map.Entry<String, LocalTask>>() {
+        ArrayList<Map.Entry<TaskCoordinates, LocalTask>> list = new ArrayList<Map.Entry<TaskCoordinates, LocalTask>>(entrySet());
+        Collections.sort(list, new Comparator<Map.Entry<TaskCoordinates, LocalTask>>() {
           @Override
-          public int compare(@NotNull Map.Entry<String, LocalTask> o1, @NotNull Map.Entry<String, LocalTask> o2) {
+          public int compare(@NotNull Map.Entry<TaskCoordinates, LocalTask> o1, @NotNull Map.Entry<TaskCoordinates, LocalTask> o2) {
             return TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue());
           }
         });
-        for (Map.Entry<String, LocalTask> oldest : list) {
+        for (Map.Entry<TaskCoordinates, LocalTask> oldest : list) {
           if (!oldest.getValue().isDefault()) {
             remove(oldest.getKey());
             break;
@@ -214,9 +214,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     if (myActiveTask.equals(task)) {
       activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true);
     }
-    myTasks.remove(task.getId());
-    myDispatcher.getMulticaster().taskRemoved(task);
-    myContextManager.removeContext(task);
+    final boolean existed = (myTasks.remove(task.getCoordinates()) != null);
+    if (existed) {
+      myDispatcher.getMulticaster().taskRemoved(task);
+      myContextManager.removeContext(task);
+    }
   }
 
   @Override
@@ -238,7 +240,18 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Nullable
   @Override
   public LocalTask findTask(String id) {
-    return myTasks.get(id);
+    for (Map.Entry<TaskCoordinates, LocalTask> entry : myTasks.entrySet()) {
+      if (entry.getKey().getGlobalID().equals(id)) {
+        return entry.getValue();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public LocalTask findLocalTask(@NotNull TaskCoordinates coordinates) {
+    return coordinates.isIncomplete() ? myTasks.get(coordinates) : findTask(coordinates.getGlobalID());
   }
 
   @NotNull
@@ -311,6 +324,39 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
     return null;
+  }
+
+  @Override
+  public void updateLocalTask(@NotNull LocalTask task) {
+    final String id = task.getGlobalId();
+    for (TaskRepository repository : getAllRepositories()) {
+      final TaskCoordinates coordinates = task.getCoordinates();
+      if (!coordinates.isIncomplete()) {
+        if (repository.extractId(id) == null) {
+          continue;
+        }
+      }
+      else {
+        if (!matchesCoordinates(repository, coordinates)) {
+          continue;
+        }
+      }
+      try {
+        LOG.info("Searching for task '" + id + "' in " + repository);
+        final Task issue = repository.findTask(id);
+        if (issue != null) {
+          task.updateFromIssue(issue);
+        }
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    }
+  }
+
+  private boolean matchesCoordinates(@NotNull TaskRepository repository, @NotNull TaskCoordinates coordinates) {
+    return repository.getRepositoryType().getName().equals(coordinates.getRepositoryType()) &&
+           repository.getUrl().equals(coordinates.getRepositoryUrl());
   }
 
   @Override
@@ -494,7 +540,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getId()) {
 
             public void run(@NotNull ProgressIndicator indicator) {
-              updateIssue(task.getId());
+              updateLocalTask(task);
             }
           });
         }
@@ -511,7 +557,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private void addTask(LocalTaskImpl task) {
-    myTasks.put(task.getId(), task);
+    myTasks.put(task.getCoordinates(), task);
     myDispatcher.getMulticaster().taskAdded(task);
   }
 
@@ -785,12 +831,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       synchronized (myIssueCache) {
         myIssueCache.clear();
         for (Task issue : issues) {
-          myIssueCache.put(issue.getId(), issue);
+          myIssueCache.put(issue.getCoordinates(), issue);
         }
       }
       // update local tasks
       synchronized (myTasks) {
-        for (Map.Entry<String, LocalTask> entry : myTasks.entrySet()) {
+        for (Map.Entry<TaskCoordinates, LocalTask> entry : myTasks.entrySet()) {
           Task issue = myIssueCache.get(entry.getKey());
           if (issue != null) {
             entry.getValue().updateFromIssue(issue);

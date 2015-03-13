@@ -44,7 +44,7 @@ public class TaskSearchSupport {
     ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(withClosed), new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
-        return myManager.findTask(task.getId()) == null;
+        return myManager.findLocalTask(task.getCoordinates()) == null;
       }
     }));
     List<Task> filteredTasks = filterTasks(pattern, tasks);

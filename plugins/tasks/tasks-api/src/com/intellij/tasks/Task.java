@@ -31,16 +31,49 @@ public abstract class Task {
   public static Task[] EMPTY_ARRAY = new Task[0];
 
   /**
-   * Global unique task identifier, e.g. IDEA-00001. It's important that its format is consistent with
+   * Semi-unique task identifier, that helps user to identify issue, e.g. IDEA-00001. It's important that its format is consistent with
    * {@link TaskRepository#extractId(String)}, because otherwise task won't be updated on its activation.
    *
-   * @return unique global ID as described
+   * Note that it's not necessarily unique <i>across all projects on the server (if any)</i>, it's sole purpose is to be presented in UI.
+   * Use {@link #getGlobalId()} to return globally unique ID of the task.
+   *
+   * @return presentable ID as described
    *
    * @see com.intellij.tasks.TaskRepository#extractId(String)
    * @see com.intellij.tasks.TaskManager#activateTask(Task, boolean)
    */
   @NotNull
   public abstract String getId();
+
+  /**
+   * Difference between ID and global ID is that the latter one is used to uniquely identify task on remote server, аt the same time usual
+   * ID returned by {@link #getId()} is not required to be unique and can be more readable and thus is shown in UI.
+   * However these IDs are not necessarily different e.g request ID of type ABC-123 in YouTrack can be treated both as ID (presentable,
+   * local) and global ID that can be used to unambiguously locate request on server.
+   * By default this method returns value of {@link #getId()}.
+   *
+   * For example Gitlab uses two different types of ID for this purpose <tt>id</tt> is global ID, it's number bound to the issue that is
+   * unique across all projects, and <tt>iid</tt> is per-project ID, it's shorter and more convenient for user to see.
+   *
+   * Another example is Trello. In its case global ID is 96-bit hash value, and normal ID is short incrementing number associated with
+   * card's board. You also can think about them as local and global changeset's IDs in Mercurial.
+   *
+   * @return unique global ID as described
+   * @since 14.1
+   */
+  @NotNull
+  public String getGlobalId() {
+    return getId();
+  }
+
+  @NotNull
+  public TaskCoordinates getCoordinates() {
+    final TaskRepository repository = getRepository();
+    if (repository == null) {
+      return new TaskCoordinates(isIssue() ? "" : TaskCoordinates.LOCAL_REPOSITORY_TYPE, "", getGlobalId());
+    }
+    return new TaskCoordinates(repository.getRepositoryType().getName(), repository.getUrl(), getGlobalId());
+  }
 
   /**
    * Short task description.
@@ -79,6 +112,9 @@ public abstract class Task {
    */
   public abstract boolean isIssue();
 
+  /**
+   * Means that this task was created from issue/request of {@link TaskRepository}. Otherwise it's probably {@link LocalTask} not bound to any issue.
+   */
   @Nullable
   public abstract String getIssueUrl();
 
@@ -113,12 +149,12 @@ public abstract class Task {
 
   @Override
   public final boolean equals(Object obj) {
-    return obj instanceof Task && ((Task)obj).getId().equals(getId());
+    return obj instanceof Task && ((Task)obj).getGlobalId().equals(getGlobalId());
   }
 
   @Override
   public final int hashCode() {
-    return getId().hashCode();
+    return getGlobalId().hashCode();
   }
 
   /**
