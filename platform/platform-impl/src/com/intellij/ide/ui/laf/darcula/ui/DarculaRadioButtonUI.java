@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBGradientPaint;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -83,16 +84,29 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     final int h = iconRect.height - rad;
 
     g.translate(x, y);
+    //noinspection UseJBColor
+    final JBGradientPaint ijGradient = new JBGradientPaint(c, new Color(0x4985e4), new Color(0x4074c9));
 
     //setup AA for lines
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     final boolean focus = b.hasFocus();
-    g.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5),
-                                       0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
-    if (focus) {
-      g.fillOval(0, JBUI.scale(1), w, h);
+    if (UIUtil.isUnderDarcula() || !b.isSelected()) {
+      g.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5),
+                                         0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
     } else {
-      g.fillOval(0, JBUI.scale(1), w - JBUI.scale(1), h - JBUI.scale(1));
+      g.setPaint(ijGradient);
+    }
+    if (!UIUtil.isUnderDarcula() && b.isSelected()) {
+      final GraphicsConfig fillOvalConf = new GraphicsConfig(g);
+      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+      g.fillOval(0, 1, w, h);
+      fillOvalConf.restore();
+    } else {
+      if (focus) {
+        g.fillOval(0, JBUI.scale(1), w, h);
+      } else {
+        g.fillOval(0, JBUI.scale(1), w - JBUI.scale(1), h - JBUI.scale(1));
+      }
     }
 
     if (focus) {
@@ -109,8 +123,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
         g.setPaint(Gray._40.withAlpha(200));
         g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
       } else {
-        g.setPaint(b.isEnabled() ? Gray._30 : Gray._130);
-        g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
+        g.setPaint(b.isSelected() ? ijGradient : b.isEnabled() ? Gray._30 : Gray._130);
+        if (!b.isSelected()) {
+          g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
+        }
       }
     }
 
