@@ -163,7 +163,7 @@ public class ITNProxy {
     params.put("app.name.version", appInfo.getVersionName());
     params.put("app.eap", Boolean.toString(appInfo.isEAP()));
     params.put("app.internal", Boolean.toString(application.isInternal()));
-    params.put("app.build", appInfo.getBuild().asString());
+    params.put("app.build", appInfo.getApiVersion());
     params.put("app.version.major", appInfo.getMajorVersion());
     params.put("app.version.minor", appInfo.getMinorVersion());
     params.put("app.build.date", format(appInfo.getBuildDate()));
