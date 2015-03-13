@@ -18,7 +18,7 @@ __author__ = 'Ilya.Kazakevich'
 version = LooseVersion(django.get_version())
 assert version < LooseVersion('1.8a'), "Only Django <1.8 is supported now"
 # Some django versions require setup
-if django.setup:
+if hasattr(django, 'setup'):
     django.setup()
 dumper = _xml.XmlDumper()
 _optparse.report_data(dumper)
