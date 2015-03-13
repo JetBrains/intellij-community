@@ -17,13 +17,13 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +43,7 @@ public class GradleUrlProvider implements TestLocationProvider {
   @NotNull
   public List<Location> getLocation(@NotNull String protocolId, @NotNull String locationData, Project project) {
     if (!PROTOCOL_ID.equals(protocolId)) return Collections.emptyList();
+    if (DumbService.isDumb(project)) return Collections.emptyList();
 
     final String className = extractFullClassName(locationData);
     if (className == null) return Collections.emptyList();

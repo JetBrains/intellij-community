@@ -26,10 +26,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -89,6 +86,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
@@ -1852,7 +1850,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final Ref<Boolean> connectorIsReady = Ref.create(false);
+    final AtomicBoolean connectorIsReady = new AtomicBoolean(false);
     myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
       @Override
       public void connectorIsReady() {
@@ -1890,17 +1888,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               }
               else {
                 fail();
-                if (myExecutionResult != null || !connectorIsReady.get()) {
-                  // propagate exception only in case we succeeded to obtain execution result,
-                  // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
-                  // this problem to the user
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
+                DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+                  @Override
+                  public void run() {
+                    // propagate exception only in case we succeeded to obtain execution result,
+                    // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
+                    // this problem to the user
+                    if (myExecutionResult != null || !connectorIsReady.get()) {
                       ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                     }
-                  });
-                }
+                  }
+                });
                 break;
               }
             }

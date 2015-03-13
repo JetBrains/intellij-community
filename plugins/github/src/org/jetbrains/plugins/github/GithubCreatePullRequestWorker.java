@@ -503,13 +503,15 @@ public class GithubCreatePullRequestWorker {
     String targetBranchName = "'" + fork.getRemoteName() + "/" + branch.getRemoteName() + "'";
     if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-        .showYesNoDialog(myProject, "Do you want to proceed anyway?",
-                         "Empty pull request: the branch " + localBranchName + " is fully merged to the branch " + targetBranchName);
+        .showYesNoDialog(myProject, "Empty Pull Request",
+                         "The branch " + localBranchName + " is fully merged to the branch " + targetBranchName + '\n' +
+                         "Do you want to proceed anyway?");
     }
     if (!info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-        .showYesNoDialog(myProject, "Do you want to proceed anyway?",
-                         "The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName);
+        .showYesNoDialog(myProject, "Target Branch Is Not Fully Merged",
+                         "The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName + '\n' +
+                         "Do you want to proceed anyway?");
     }
 
     return true;
