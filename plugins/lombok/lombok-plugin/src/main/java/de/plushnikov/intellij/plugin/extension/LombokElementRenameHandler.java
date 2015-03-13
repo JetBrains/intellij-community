@@ -20,13 +20,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class LombokElementRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    final PsiElement element = getElement(dataContext);
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     return element instanceof LombokLightMethodBuilder;
-  }
-
-  @Nullable
-  private static PsiElement getElement(DataContext dataContext) {
-    return LangDataKeys.PSI_ELEMENT.getData(dataContext);
   }
 
   public boolean isRenaming(DataContext dataContext) {
@@ -34,27 +29,17 @@ public class LombokElementRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
-    final PsiElement element = getElement(dataContext);
-    invokeInner(project, editor, element);
+    invokeInner(project, editor);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
-    PsiElement element = elements.length == 1 ? elements[0] : null;
-    if (element == null) {
-      element = getElement(dataContext);
-    }
     Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
-    invokeInner(project, editor, element);
+    invokeInner(project, editor);
   }
 
-  private void invokeInner(Project project, Editor editor, PsiElement element) {
-    String message = RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
-    if (!message.isEmpty()) {
-      showErrorMessage(project, editor, message);
-    }
-  }
-
-  void showErrorMessage(Project project, @Nullable Editor editor, String message) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
+  private void invokeInner(Project project, Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor,
+        RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed."),
+        RefactoringBundle.message("rename.title"), null);
   }
 }
