@@ -15,20 +15,29 @@
  */
 package com.intellij.openapi.components.store;
 
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ReadOnlyModificationException extends RuntimeException {
   private final VirtualFile myFile;
+  private final StateStorage.SaveSession mySession;
 
-  public ReadOnlyModificationException(@NotNull VirtualFile file, @NotNull  Throwable cause) {
+  public ReadOnlyModificationException(@NotNull VirtualFile file, @Nullable Throwable cause, StateStorage.SaveSession session) {
     super(cause);
 
     myFile = file;
+    mySession = session;
   }
 
   @NotNull
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Nullable
+  public StateStorage.SaveSession getSession() {
+    return mySession;
   }
 }
