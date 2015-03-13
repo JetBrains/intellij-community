@@ -1132,7 +1132,7 @@ class PyDB:
                     else:
                         exception, notify_always, notify_on_terminate, ignore_libraries = text, 0, 0, 0
 
-                    if ignore_libraries > 0 and self.project_roots is None:
+                    if int(ignore_libraries) > 0 and self.project_roots is None:
                         self.project_roots = os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
 
                     if exception.find('-') != -1:
