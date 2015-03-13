@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class BrowserUtil {
 
   @Nullable
   public static URL getURL(String url) throws MalformedURLException {
-    return isAbsoluteURL(url) ? VfsUtil.convertToURL(url) : new URL("file", "", url);
+    return isAbsoluteURL(url) ? VfsUtilCore.convertToURL(url) : new URL("file", "", url);
   }
 
   public static void browse(@NotNull VirtualFile file) {
