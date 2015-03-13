@@ -15,7 +15,12 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -100,7 +105,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myDataPack = initialDataPack;
 
     myRefsPanel = new RefsPanel(myColorManager);
-    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot());
+    myCommitDetailsPanel = new DataPanel(logDataHolder.getProject(), logDataHolder.isMultiRoot(), logDataHolder);
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myMainContentPanel = new JPanel(new MigLayout("flowy, ins 0, hidemode 3, gapy 0")) {
@@ -239,13 +244,20 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @Nullable private List<String> myBranches;
     private boolean myExpanded = false;
 
-    DataPanel(@NotNull Project project, boolean multiRoot) {
+    DataPanel(@NotNull Project project, boolean multiRoot, @NotNull Disposable disposable) {
       super(UIUtil.HTML_MIME, "");
       myProject = project;
       myMultiRoot = multiRoot;
       setEditable(false);
       setOpaque(false);
       putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+
+      EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+        @Override
+        public void globalSchemeChange(EditorColorsScheme scheme) {
+          update();
+        }
+      }, disposable);
 
       DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
@@ -293,7 +305,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       else {
         setText("<html><head>" +
-                UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
+                UIUtil.getCssFontDeclaration(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN)) +
                 "</head><body>" +
                 myMainText +
                 "<br/>" +
