@@ -52,6 +52,9 @@
 		<custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
 
     <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
+
+    <!--<renamePsiElementProcessor id="lombokTypeParamRef" order="first"-->
+    <!--implementation="de.plushnikov.intellij.plugin.extension.LombokRenameReferenceProcessor"/>-->
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
