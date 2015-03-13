@@ -64,17 +64,10 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    Language language = file.getLanguage();
-    CodeStyleSettings clonedSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings().clone();
-    clonedSettings.getCommonSettings(language).KEEP_LINE_BREAKS = false;
-
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
-    textFormatter.reformatSelectedText(clonedSettings);
-
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-
-    new FragmentCodeStyleSettingsDialog(project, textFormatter, language, settings, settingsToShow).show();
+    new FragmentCodeStyleSettingsDialog(project, textFormatter, file.getLanguage(), settings, settingsToShow).show();
   }
 
   private static CodeStyleSettingsToShow calculateAffectingSettings(@NotNull Editor editor, @NotNull PsiFile file) {
