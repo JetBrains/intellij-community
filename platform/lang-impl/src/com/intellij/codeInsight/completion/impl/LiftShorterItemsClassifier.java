@@ -85,7 +85,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private FList<LookupElement> prependOrReuse(FList<LookupElement> tail, LookupElement head) {
     IdentityHashMap<LookupElement, FList<LookupElement>> cache = myPrepends.get(tail);
     if (cache == null) {
-      myPrepends.put(tail, cache = newIdentityHashMap());
+      myPrepends.put(tail, cache = new IdentityHashMap<LookupElement, FList<LookupElement>>(1));
     }
     FList<LookupElement> result = cache.get(head);
     if (result == null) {
