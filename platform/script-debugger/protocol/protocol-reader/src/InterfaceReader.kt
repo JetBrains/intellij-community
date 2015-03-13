@@ -1,16 +1,6 @@
 package org.jetbrains.protocolReader
 
-import org.jetbrains.io.JsonReaderEx
-import org.jetbrains.jsonProtocol.JsonField
-import org.jetbrains.jsonProtocol.JsonSubtype
-import org.jetbrains.jsonProtocol.StringIntPair
-
-import java.lang.reflect.Method
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
-import java.lang.reflect.WildcardType
-import java.util.*
-import gnu.trove.*
+import org.jetbrains.protocolReader.InterfaceReader
 
 fun InterfaceReader(protocolInterfaces: Array<Class<*>>): InterfaceReader {
   val __ = InterfaceReader(LinkedHashMap<Class<*>, TypeWriter<*>>(protocolInterfaces.size()))
@@ -130,6 +120,9 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
           if (jsonField != null && jsonField.allowAnyPrimitiveValue()) {
             return RAW_STRING_PARSER
           }
+          else if ((jsonField != null && jsonField.optional()) || method.getAnnotation<JsonOptionalField>(javaClass<JsonOptionalField>()) != null) {
+            return NULLABLE_STRING_PARSER
+          }
         }
         return STRING_PARSER
       }
@@ -220,6 +213,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
     private val NUMBER_PARSER = PrimitiveValueReader("double")
 
     private val STRING_PARSER = PrimitiveValueReader("String")
+    private val NULLABLE_STRING_PARSER = PrimitiveValueReader(className = "String", nullable = true)
 
     private val RAW_STRING_PARSER = PrimitiveValueReader("String", null, true)
     private val RAW_STRING_OR_MAP_PARSER = object : PrimitiveValueReader("Object", null, true) {

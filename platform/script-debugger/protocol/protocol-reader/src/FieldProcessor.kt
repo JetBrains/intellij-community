@@ -1,24 +1,15 @@
 package org.jetbrains.protocolReader
 
-import gnu.trove.THashSet
-import org.jetbrains.jsonProtocol.JsonField
-import org.jetbrains.jsonProtocol.JsonOptionalField
-import org.jetbrains.jsonProtocol.JsonSubtypeCasting
-
-import java.lang.reflect.Method
-import java.lang.reflect.ParameterizedType
-import java.util.*
-
 class FieldProcessor(private val reader: InterfaceReader, typeClass: Class<*>) {
   val fieldLoaders = ArrayList<FieldLoader>()
   val methodHandlerMap = LinkedHashMap<Method, MethodHandler>()
   val volatileFields = ArrayList<VolatileFieldBinding>()
   var lazyRead: Boolean = false
 
-  {
+  init {
     val methods = typeClass.getMethods()
     // todo sort by source location
-    Arrays.sort(methods, {(o1, o2) -> o1.getName().compareTo(o2.getName())})
+    Arrays.sort(methods, {(o1, o2) -> o1.getName().compareTo(o2.getName()) })
 
     val skippedNames = THashSet<String>()
     for (method in methods) {

@@ -1,9 +1,7 @@
 package org.jetbrains.protocolReader
 
-import gnu.trove.THashMap
-import gnu.trove.THashSet
-
-import java.util.ArrayList
+import org.jetbrains.protocolReader.GlobalScope
+import org.jetbrains.protocolReader.State
 
 public fun GlobalScope(typeWriters: Collection<TypeWriter<*>>, basePackages: Collection<Map<Class<*>, String>>): GlobalScope {
   return GlobalScope(State(typeWriters, basePackages))
@@ -40,7 +38,7 @@ private class State(typeWriters: Collection<TypeWriter<*>>, private val basePack
   private val typesWithFactories = THashSet<TypeWriter<*>>()
   val typesWithFactoriesList = ArrayList<TypeWriter<*>>();
 
-  {
+  init {
     var uniqueCode = 0
     val result = THashMap<TypeWriter<*>, String>(typeWriters.size())
     for (handler in typeWriters) {
