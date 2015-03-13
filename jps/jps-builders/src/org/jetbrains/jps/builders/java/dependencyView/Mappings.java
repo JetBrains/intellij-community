@@ -289,7 +289,9 @@ public class Mappings {
             }
           }
 
-          acc.add(reflcass);
+          if (!acc.add(reflcass)) {
+            return; // SOE prevention
+          }
         }
 
         final TIntHashSet subclasses = myClassToSubclasses.get(reflcass);
@@ -354,7 +356,7 @@ public class Mappings {
       };
     }
 
-    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (m.name == myInitName) {
         return; // overriding is not defined for constructors
       }
@@ -362,6 +364,13 @@ public class Mappings {
       if (subClasses == null) {
         return;
       }
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+      }
+      if (!visitedClasses.add(fromClass.name)) {
+        return;
+      }
+      final TIntHashSet _visitedClasses = visitedClasses;
       subClasses.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int subClassName) {
@@ -377,7 +386,7 @@ public class Mappings {
               }
             }
             if (cont) {
-              addOverridingMethods(m, r, predicate, container);
+              addOverridingMethods(m, r, predicate, container, _visitedClasses);
             }
           }
           return true;
@@ -389,7 +398,7 @@ public class Mappings {
       final MethodRepr.Predicate predicate = lessSpecific(m);
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
       addOverridenMethods(c, predicate, result, null);
-      addOverridingMethods(m, c, predicate, result);
+      addOverridingMethods(m, c, predicate, result, null);
       return result;
     }
 
@@ -817,17 +826,15 @@ public class Mappings {
   }
 
   private TIntHashSet addAllSubclasses(final int root, final TIntHashSet acc) {
+    if (!acc.add(root)) {
+      return acc;
+    }
     final TIntHashSet directSubclasses = myClassToSubclasses.get(root);
-
-    acc.add(root);
-
     if (directSubclasses != null) {
       directSubclasses.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int s) {
-          if (!acc.contains(s)) {
-            addAllSubclasses(s, acc);
-          }
+          addAllSubclasses(s, acc);
           return true;
         }
       });
@@ -1281,7 +1288,7 @@ public class Mappings {
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = new HashSet<Pair<MethodRepr, ClassRepr>>();
 
-        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Collection<File> fNames = myClassToSourceFile.get(p.second.name);
@@ -1400,7 +1407,7 @@ public class Mappings {
 
               final List<Pair<MethodRepr, ClassRepr>> overridingMethods = new LinkedList<Pair<MethodRepr, ClassRepr>>();
 
-              myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+              myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
               for(final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
                 final ClassRepr aClass = p.getSecond();
