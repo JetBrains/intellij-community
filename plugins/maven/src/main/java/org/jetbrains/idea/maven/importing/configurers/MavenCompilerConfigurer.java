@@ -36,6 +36,7 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
     if (module == null) return;
 
     String targetLevel = mavenProject.getTargetLevel();
+    // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
     if (targetLevel == null) {
       targetLevel = "1.5";
     }
