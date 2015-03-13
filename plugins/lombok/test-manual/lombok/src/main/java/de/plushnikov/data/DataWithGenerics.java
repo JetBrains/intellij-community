@@ -20,7 +20,7 @@ public class DataWithGenerics<T> {
         test.getCallback();
         test.getCommand();
 
-        DataWithGenerics<String> foo = new DataWithGenerics<String>("foo", new Runnable() {
+        DataWithGenerics<String> foo = new DataWithGenerics<String>("fooqwqww", new Runnable() {
             public void run() {
             }
         });

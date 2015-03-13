@@ -18,12 +18,12 @@ public abstract class SynchronizedBean {
 
   @Synchronized("fooLock")
   public void foo2() {
-    System.out.println("foo2");
+    System.out.println("foo2sdfsdf");
   }
 
   @Synchronized("readLock")
   public void foo() {
-    System.out.println("bar2");
+    System.out.println("bar2dfsdfdsf");
   }
 
   @Synchronized

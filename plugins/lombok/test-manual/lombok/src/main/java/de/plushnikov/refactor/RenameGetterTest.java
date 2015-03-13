@@ -2,37 +2,39 @@ package de.plushnikov.refactor;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 public class RenameGetterTest {
     @Getter
     @Setter
-    private String someStringS;
+    @Accessors(prefix = "f")
+    private String fSomeString2;
 
     public static RenameGetterTest factoryMethod() {
         RenameGetterTest foo = new RenameGetterTest();
-        foo.getSomeStringS();
-        foo.setSomeStringS("abcd");
+        foo.getSomeString2();
+        foo.setSomeString2("abcd");
         return foo;
     }
 
     private static class Inner {
         public void doIt() {
             RenameGetterTest foo1 = new RenameGetterTest();
-            foo1.getSomeStringS();
-            foo1.setSomeStringS("abcd");
+            foo1.getSomeString2();
+            foo1.setSomeString2("abcd");
         }
     }
 
     private class InnerNonStatic {
         public void doIt() {
-            getSomeStringS();
-            setSomeStringS("abcd");
+            getSomeString2();
+            setSomeString2("abcd");
         }
     }
 
     public static void main(String[] args) {
         RenameGetterTest foo2 = new RenameGetterTest();
-        foo2.getSomeStringS();
-        foo2.setSomeStringS("abcd");
+        foo2.getSomeString2();
+        foo2.setSomeString2("abcd");
     }
 }

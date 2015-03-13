@@ -119,7 +119,12 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   protected String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
 
-    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
+    final String psiFieldName = psiField.getName();
+    return getSetterName(accessorsInfo, psiFieldName, isBoolean);
+  }
+
+  public String getSetterName(AccessorsInfo accessorsInfo, String psiFieldName, boolean isBoolean) {
+    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiFieldName);
     if (accessorsInfo.isFluent()) {
       return LombokUtils.decapitalize(fieldNameWithoutPrefix);
     }

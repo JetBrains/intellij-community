@@ -5,43 +5,52 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 public class FindUsages {
+    @Accessors(prefix = "_", fluent = true)
+    @Getter
+    @Setter
+    private Integer _variableA;
+
     @Accessors(prefix = "_")
     @Getter
     @Setter
-    private Integer _foo;
+    private Integer _varaibleB;
 
     @Getter
     @Setter
-    private Integer bar2;
+    private Integer variableC;
 
-    private Integer baz1;
+    private Integer variableD;
 
-    public Integer getBaz1() {
-        return baz1;
+    public Integer getVariableD() {
+        return variableD;
     }
 
-    public void setBaz1(Integer baz1) {
-        this.baz1 = baz1;
+    public void setVariableD(Integer variableD) {
+        this.variableD = variableD;
     }
 
     private FindUsages() {
-        _foo = 10;
-        bar2 = 20;
-        baz1 = 40;
+        _variableA = 10;
+        _varaibleB = 10;
+        variableC = 20;
+        variableD = 40;
     }
 
     public static void main(String[] args) {
         FindUsages m = new FindUsages();
-        System.out.println(m.getFoo());
-        System.out.println(m.getBar2());
-        System.out.println(m.getBaz1());
+        System.out.println(m.variableA());
+        System.out.println(m.getVaraibleB());
+        System.out.println(m.getVariableC());
+        System.out.println(m.getVariableD());
 
-        m.setFoo(1);
-        m.setBar2(2);
-        m.setBaz1(4);
+        m.variableA(1);
+        m.setVaraibleB(1);
+        m.setVariableC(2);
+        m.setVariableD(4);
 
-        System.out.println(m.getFoo());
-        System.out.println(m.getBar2());
-        System.out.println(m.getBaz1());
+        System.out.println(m.variableA());
+        System.out.println(m.getVaraibleB());
+        System.out.println(m.getVariableC());
+        System.out.println(m.getVariableD());
     }
 }

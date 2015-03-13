@@ -53,8 +53,7 @@
 
     <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
 
-    <!--<renamePsiElementProcessor id="lombokTypeParamRef" order="first"-->
-    <!--implementation="de.plushnikov.intellij.plugin.extension.LombokRenameReferenceProcessor"/>-->
+    <renamePsiElementProcessor id="javaVariable" order="first" implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">

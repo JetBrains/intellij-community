@@ -90,7 +90,7 @@ public class Main {
 
 
         GenericPairClass<String, Integer> pairClass = new GenericPairClass<String, Integer>();
-        pairClass.setKey("foo");
+        pairClass.setKey("foowwwww");
         pairClass.setValue(123);
     }
 

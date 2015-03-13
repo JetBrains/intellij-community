@@ -97,12 +97,18 @@ public abstract class AbstractProcessor implements Processor {
   protected String getGetterName(final @NotNull PsiField psiField, final @NotNull PsiClass psiClass) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
 
-    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiField.getName());
+    final String psiFieldName = psiField.getName();
+    final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+
+    return getGetterName(accessorsInfo, psiFieldName, isBoolean, psiClass);
+  }
+
+  public String getGetterName(AccessorsInfo accessorsInfo, String psiFieldName, boolean isBoolean, PsiClass psiClass) {
+    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiFieldName);
     if (accessorsInfo.isFluent()) {
       return LombokUtils.decapitalize(fieldNameWithoutPrefix);
     }
 
-    final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
     final boolean useBooleanPrefix = isBoolean && !ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
 
     return LombokUtils.toGetterName(fieldNameWithoutPrefix, useBooleanPrefix);
