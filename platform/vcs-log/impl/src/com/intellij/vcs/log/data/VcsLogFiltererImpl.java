@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 public class VcsLogFiltererImpl implements VcsLogFilterer {
+  private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
@@ -65,7 +67,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."));
+            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+              new MyTask(project, "Applying filters..."));
           }
         });
       }
@@ -103,37 +106,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       VisiblePack visiblePack = null;
       List<Request> requests;
       while (!(requests = myTaskController.popRequests()).isEmpty()) {
-        RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
-        FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
-        SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
-        List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-        myRequestsToRun.addAll(moreCommitsRequests);
-
-        if (refreshRequest != null) {
-          myDataPack = refreshRequest.dataPack;
+        try {
+          visiblePack = getVisiblePack(visiblePack, requests);
         }
-        if (filterRequest != null) {
-          myFilters = filterRequest.filters;
+        catch (Throwable t) {
+          LOG.error("Error while filtering log", t);
         }
-        if (sortTypeRequest != null) {
-          mySortType = sortTypeRequest.sortType;
-        }
-
-        if (myDataPack == null) { // when filter is set during initialization, just remember filters
-          continue;
-        }
-
-        if (filterRequest != null) {
-          // "more commits needed" has no effect if filter changes; it also can't come after filter change request
-          myCommitCount = CommitCountStage.INITIAL;
-        }
-        else if (!moreCommitsRequests.isEmpty()) {
-          myCommitCount = myCommitCount.next();
-        }
-
-        Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(myDataPack, mySortType, myFilters, myCommitCount);
-        visiblePack = pair.first;
-        myCommitCount = pair.second;
       }
 
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
@@ -152,6 +130,42 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           }
         });
       }
+    }
+
+    @Nullable
+    private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
+      RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
+      FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
+      SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
+      List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
+      myRequestsToRun.addAll(moreCommitsRequests);
+
+      if (refreshRequest != null) {
+        myDataPack = refreshRequest.dataPack;
+      }
+      if (filterRequest != null) {
+        myFilters = filterRequest.filters;
+      }
+      if (sortTypeRequest != null) {
+        mySortType = sortTypeRequest.sortType;
+      }
+
+      if (myDataPack == null) { // when filter is set during initialization, just remember filters
+        return visiblePack;
+      }
+
+      if (filterRequest != null) {
+        // "more commits needed" has no effect if filter changes; it also can't come after filter change request
+        myCommitCount = CommitCountStage.INITIAL;
+      }
+      else if (!moreCommitsRequests.isEmpty()) {
+        myCommitCount = myCommitCount.next();
+      }
+
+      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(myDataPack, mySortType, myFilters, myCommitCount);
+      visiblePack = pair.first;
+      myCommitCount = pair.second;
+      return visiblePack;
     }
   }
 

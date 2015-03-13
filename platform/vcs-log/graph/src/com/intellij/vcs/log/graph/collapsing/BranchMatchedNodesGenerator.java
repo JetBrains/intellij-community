@@ -56,6 +56,7 @@ public class BranchMatchedNodesGenerator {
   private void generate(@NotNull Set<Integer> startedNodes) {
     for (int startNode : startedNodes) {
       myNodesVisibility.set(startNode, true);
+      if (startNode < 0) continue;
       myDfsUtil.nodeDfsIterator(startNode, new DfsUtil.NextNode() {
         @Override
         public int fun(int currentNode) {

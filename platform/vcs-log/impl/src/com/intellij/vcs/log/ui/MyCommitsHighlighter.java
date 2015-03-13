@@ -47,7 +47,8 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     Map<VirtualFile, VcsUser> users = myDataHolder.getCurrentUser();
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
-      if (VcsUserImpl.isSamePerson(users.get(details.getRoot()), details.getAuthor())) {
+      VcsUser currentUser = users.get(details.getRoot());
+      if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
         return VcsCommitStyleFactory.background(ME_BG);
       }
     }
