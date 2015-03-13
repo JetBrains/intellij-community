@@ -153,8 +153,8 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     final String parentClass = currentTest.getInfo().getComment();
     TestProxy dynamicParent = myKnownDynamicParents.get(parentClass);
     if (dynamicParent == null) {
-      final TestProxy root = model.getRoot();
-      if (Comparing.strEqual(parentClass, StringUtil.getQualifiedName(root.getInfo().getComment(), root.getName()))) {
+      final TestProxy root = findParent(parentClass, model.getRoot());
+      if (root != null) {
         dynamicParent = root;
       }
       else {
@@ -167,11 +167,29 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
           public void readFrom(ObjectReader reader) {
           }
         });
-        root.addChild(dynamicParent);
+        model.getRoot().addChild(dynamicParent);
       }
       myKnownDynamicParents.put(parentClass, dynamicParent);
     }
     return dynamicParent;
+  }
+
+  private static TestProxy findParent(String parentClass, TestProxy root) {
+    if (isAccepted(root, parentClass)) {
+      return root;
+    }
+
+    for (TestProxy proxy : root.getChildren()) {
+      if (isAccepted(proxy, parentClass)) {
+        return proxy;
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean isAccepted(TestProxy root, String parentClass) {
+    return Comparing.strEqual(parentClass, StringUtil.getQualifiedName(root.getInfo().getComment(), root.getName()));
   }
 
   public void notifyTestResult(ObjectReader reader) {
