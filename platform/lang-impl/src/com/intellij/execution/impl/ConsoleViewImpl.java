@@ -511,9 +511,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         // are soft wrapped. We want to update viewport position then when the console becomes visible.
         Rectangle oldR = e.getOldRectangle();
 
-        if (!shouldPreserveCurrentVisualArea() &&
-            oldR != null && oldR.height <= 0 &&
-            e.getNewRectangle().height > 0) {
+        if (oldR != null && oldR.height <= 0 &&
+            e.getNewRectangle().height > 0 &&
+            !shouldPreserveCurrentVisualArea()) {
           scrollToEnd();
         }
       }
@@ -771,14 +771,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     if (!preserveCurrentVisualArea) {
-      EditorUtil.scrollToTheEnd(myEditor);
+      scrollToEnd();
     }
   }
 
   private boolean shouldPreserveCurrentVisualArea() {
-    JScrollBar scrollBar = myEditor == null ? null : myEditor.getScrollPane().getVerticalScrollBar();
-    if (scrollBar == null || scrollBar.getVisibleAmount() == 0) return myLastPreserveVisualArea;
-    myLastPreserveVisualArea = scrollBar.getValue() + scrollBar.getVisibleAmount() != scrollBar.getMaximum();
+    if (myEditor == null) return myLastPreserveVisualArea;
+    Document document = myEditor.getDocument();
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    myLastPreserveVisualArea = document.getLineNumber(caretOffset) < document.getLineCount() - 1;
     return myLastPreserveVisualArea;
   }
 
