@@ -37,6 +37,12 @@ public class GitlabTask extends Task {
   @NotNull
   @Override
   public String getId() {
+    return String.valueOf(myIssue.getLocalId());
+  }
+
+  @NotNull
+  @Override
+  public String getGlobalId() {
     return String.valueOf(myIssue.getId());
   }
 
