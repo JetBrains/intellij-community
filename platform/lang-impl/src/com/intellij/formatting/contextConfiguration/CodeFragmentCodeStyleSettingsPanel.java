@@ -81,7 +81,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }
 
     CodeStyleSettings clonedSettings = getSettings().clone();
-    clonedSettings.getCommonSettings(getDefaultLanguage()).KEEP_LINE_BREAKS = false;
     mySelectedTextFormatter.reformatSelectedText(clonedSettings);
   }
 
