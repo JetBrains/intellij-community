@@ -166,7 +166,7 @@ public class DfaUtil {
 
     if (rc == RunnerResult.OK) {
       if (hasNulls.get()) {
-        return Nullness.NULLABLE;
+        return InferenceFromSourceUtil.suppressNullable(method) ? Nullness.UNKNOWN : Nullness.NULLABLE;
       }
       if (hasNotNulls.get() && !hasUnknowns.get()) {
         return Nullness.NOT_NULL;

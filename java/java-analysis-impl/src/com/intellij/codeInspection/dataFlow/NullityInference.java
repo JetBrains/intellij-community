@@ -117,7 +117,7 @@ public class NullityInference {
       });
       
       if (hasNulls.get()) {
-        return Nullness.NULLABLE;
+        return InferenceFromSourceUtil.suppressNullable(method) ? Nullness.UNKNOWN : Nullness.NULLABLE;
       }
       
       if (hasErrors.get() || hasUnknowns.get() || delegates.size() > 1) {

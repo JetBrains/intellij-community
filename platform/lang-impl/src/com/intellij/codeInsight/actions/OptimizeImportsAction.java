@@ -22,9 +22,11 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -32,9 +34,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
+  private static final String NO_IMPORTS_OPTIMIZED = "Unused imports not found";
+
 
   @Override
   public void actionPerformed(AnActionEvent event) {
@@ -126,7 +131,24 @@ public class OptimizeImportsAction extends AnAction {
       new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
     else{
-      new OptimizeImportsProcessor(project, file).run();
+      final OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
+      if (editor != null && EditorSettingsExternalizable.getInstance().getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION) {
+        optimizer.setCollectInfo(true);
+        optimizer.setPostRunnable(new Runnable() {
+          @Override
+          public void run() {
+            LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
+            if (collector != null) {
+              String info = collector.getOptimizeImportsNotification();
+              if (!editor.isDisposed() && editor.getComponent().isShowing()) {
+                String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
+                FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message));
+              }
+            }
+          }
+        });
+      }
+      optimizer.run();
     }
   }
 
@@ -233,9 +255,15 @@ public class OptimizeImportsAction extends AnAction {
 
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
       myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
-
+      myOnlyVcsCheckBox.setBorder(new EmptyBorder(0, 10 , 0, 0));
       panel.add(myOnlyVcsCheckBox);
       return panel;
+    }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return HELP_ID;
     }
   }
 }

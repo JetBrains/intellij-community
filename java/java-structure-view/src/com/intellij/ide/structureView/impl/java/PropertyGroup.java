@@ -167,15 +167,9 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return true;
   }
 
-
-
   public int hashCode() {
-    int result;
-    result = myPropertyName != null?myPropertyName.hashCode():0;
-    result = 29 * result + (myPropertyType != null ? myPropertyType.hashCode() : 0);
-    return result;
+    return myPropertyName != null ? myPropertyName.hashCode() : 0;
   }
-
 
   public String getGetterName() {
     return PropertyUtil.suggestGetterName(myPropertyName, myPropertyType);

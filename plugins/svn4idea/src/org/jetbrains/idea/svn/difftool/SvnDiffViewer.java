@@ -10,10 +10,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder.SvnDiffSettings;
@@ -93,6 +93,16 @@ public class SvnDiffViewer implements DiffViewer {
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(mySplitter, BorderLayout.CENTER);
     myPanel.add(myNotificationPanel, BorderLayout.SOUTH);
+    DataManager.registerDataProvider(myPanel, new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        DataProvider propertiesDataProvider = DataManagerImpl.getDataProviderEx(myPropertiesViewer.getComponent());
+        DataProvider contentDataProvider = DataManagerImpl.getDataProviderEx(myContentViewer.getComponent());
+        DataProvider defaultDP = myPropertiesViewerFocused ? propertiesDataProvider : contentDataProvider;
+        DataProvider fallbackDP = myPropertiesViewerFocused ? contentDataProvider : propertiesDataProvider;
+        return DiffUtil.getData(defaultDP, fallbackDP, dataId);
+      }
+    });
 
     updatePropertiesPanel();
   }

@@ -159,7 +159,7 @@ public class SimpleDiffChange {
 
   public void update() {
     for (MyGutterOperation operation : myOperations) {
-      operation.update();
+      operation.update(false);
     }
   }
 
@@ -284,18 +284,18 @@ public class SimpleDiffChange {
       mySide = side;
       myHighlighter = highlighter;
 
-      myHighlighter.setGutterIconRenderer(createRenderer());
+      update(true);
     }
 
     public void destroy() {
       myHighlighter.dispose();
     }
 
-    public void update() {
-      if (!areModifiersChanged()) {
+    public void update(boolean force) {
+      if (!force && !areModifiersChanged()) {
         return;
       }
-      myHighlighter.setGutterIconRenderer(createRenderer());
+      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
     }
 
     private boolean areModifiersChanged() {

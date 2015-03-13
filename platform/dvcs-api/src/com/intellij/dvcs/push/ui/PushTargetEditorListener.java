@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,8 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.dvcs.push.OutgoingResult;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
-
-public interface EditableTreeNode extends CustomRenderedTreeNode {
-
-  void fireOnChange();
-
-  void fireOnCancel();
-
-  void fireOnSelectionChange(boolean isSelected);
-
-  void cancelLoading();
-
-  void startLoading(@NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future, boolean initial);
-
-  boolean isEditableNow();
+public interface PushTargetEditorListener {
+  void onTargetInEditModeChanged(@NotNull String value);
 }

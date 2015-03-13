@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
@@ -74,6 +75,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     final HighlightUsagesHandlerBase handler = createCustomHandler(editor, file);
     if (handler != null) {
+      final String featureId = handler.getFeatureId();
+
+      if (featureId != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
+      }
+
       handler.highlightUsages();
       return;
     }

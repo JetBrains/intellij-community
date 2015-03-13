@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class PushController implements Disposable {
     myDialog = dialog;
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
-    myPushLog = new PushLog(myProject, rootNode);
+    myPushLog = new PushLog(myProject, rootNode, isSyncStrategiesAllowed());
     myPushLog.getTree().addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
@@ -101,6 +101,17 @@ public class PushController implements Disposable {
     });
     startLoadingCommits();
     Disposer.register(dialog.getDisposable(), this);
+  }
+
+  private boolean isSyncStrategiesAllowed() {
+    return !mySingleRepoProject &&
+           ContainerUtil.and(getAffectedSupports(myProject),
+                             new Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>() {
+                               @Override
+                               public boolean value(PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget> support) {
+                                 return support.mayChangeTargetsSync();
+                               }
+                             });
   }
 
   private boolean isSingleRepoProject() {
@@ -262,6 +273,11 @@ public class PushController implements Disposable {
         else {
           myExcludedRepositoryRoots.add(model.getRepository().getRoot().getPath());
         }
+      }
+
+      @Override
+      public void onTargetInEditMode(@NotNull String currentValue) {
+        myPushLog.fireEditorUpdated(currentValue);
       }
     });
     rootNode.add(repoNode);
@@ -497,6 +513,11 @@ public class PushController implements Disposable {
   @Override
   public void dispose() {
     myExecutorService.shutdownNow();
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   private void addMoreCommits(RepositoryNode repositoryNode) {

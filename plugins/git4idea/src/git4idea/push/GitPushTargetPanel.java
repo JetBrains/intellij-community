@@ -19,6 +19,8 @@ import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -36,7 +38,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
@@ -74,7 +75,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Nullable private GitPushTarget myCurrentTarget;
   @Nullable private String myError;
   @Nullable private Runnable myFireOnChangeAction;
-  private boolean myRepaintFreezed;
 
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myPushSupport = support;
@@ -143,30 +143,15 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (dialog.showAndGet()) {
       String name = dialog.getRemoteName();
       String url = dialog.getRemoteUrl();
-      freezeRepaint(); // showing a modal progress triggers the push dialog repaint => tries to render current target which is null yet.
-      try {
-        String error = validateRemoteUnderModal(name, url);
-        if (error != null) {
-          LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
-          Messages.showErrorDialog(myProject, error, "Invalid Remote URL");
-        }
-        else {
-          addRemoteUnderModal(name, url);
-        }
+      String error = validateRemoteUnderModal(name, url);
+      if (error != null) {
+        LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", name, url, error));
+        Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote URL");
       }
-      finally {
-        unfreezeRepaint();
+      else {
+        addRemoteUnderModal(name, url);
       }
     }
-
-  }
-
-  private void unfreezeRepaint() {
-    myRepaintFreezed = false;
-  }
-
-  private void freezeRepaint() {
-    myRepaintFreezed = true;
   }
 
   @Nullable
@@ -250,8 +235,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @Override
-  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive) {
-    if (myRepaintFreezed) return;
+  public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive, @Nullable String forceRenderedText) {
 
     SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (myError != null) {
@@ -270,9 +254,14 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       }
       if (!remotes.isEmpty()) {
         renderer.append(SEPARATOR, targetTextAttributes);
-
+        if (forceRenderedText != null) {
+          //if sync typing available we need to emulate editor changes
+          myTargetEditor.setText(forceRenderedText);
+          renderer.append(forceRenderedText);
+          return;
+        }
         GitPushTarget target = getValue();
-        if (target.isNewBranchCreated()) {
+        if (target != null && target.isNewBranchCreated()) {
           renderer.append("+", PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.SYNTHETIC_ATTRIBUTES, isActive), this);
         }
         myTargetRenderer.setSelected(isSelected);
@@ -282,10 +271,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  @NotNull
+  @Nullable
   @Override
   public GitPushTarget getValue() {
-    return ObjectUtils.assertNotNull(myCurrentTarget);
+    return myCurrentTarget;
   }
 
   @NotNull
@@ -300,9 +289,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void fireOnChange() {
-    if (myError != null) {
-      return;
-    }
+    //any changes are senselessly if no remotes
+    if (myError != null || myRepository.getRemotes().isEmpty()) return;
     String remoteName = myRemoteRenderer.getText();
     String branchName = myTargetEditor.getText();
     try {
@@ -336,7 +324,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @NotNull
-  public static List<String> getTargetNames(@NotNull GitRepository repository) {
+  private static List<String> getTargetNames(@NotNull GitRepository repository) {
     List<GitRemoteBranch> remoteBranches = ContainerUtil.sorted(repository.getBranches().getRemoteBranches(), REMOTE_BRANCH_COMPARATOR);
     return ContainerUtil.map(remoteBranches, new Function<GitRemoteBranch, String>() {
       @Override
@@ -363,5 +351,16 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       }
       return o1.getNameForLocalOperations().compareTo(o2.getNameForLocalOperations());
     }
+  }
+
+  @Override
+  public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
+    myTargetEditor.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        super.documentChanged(e);
+        listener.onTargetInEditModeChanged(myTargetEditor.getText());
+      }
+    });
   }
 }

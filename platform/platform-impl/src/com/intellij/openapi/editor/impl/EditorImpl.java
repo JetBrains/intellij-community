@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2879,12 +2879,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 for (LineExtensionInfo info : extensions) {
                   final String text = info.getText();
                   additionalText += text;
-                  drawStringWithSoftWraps(g, text, 0, text.length(), position, clip,
+                  position.x = drawString(g, text, 0, text.length(), position, clip,
                                           info.getEffectColor() == null ? effectColor : info.getEffectColor(),
                                           info.getEffectType() == null ? effectType : info.getEffectType(),
                                           info.getFontType(),
                                           info.getColor() == null ? currentColor : info.getColor(),
-                                          clipStartOffset, context);
+                                          context);
                 }
               }
             }
