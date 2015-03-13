@@ -5,7 +5,7 @@ import de.plushnikov.lombok.LombokParsingTestCase;
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class EqualsAndHashCodeTestCase extends LombokParsingTestCase {
+public class EqualsAndHashCodeTest extends LombokParsingTestCase {
 
   public void testEqualsAndHashCode() throws Exception {
     doTest();

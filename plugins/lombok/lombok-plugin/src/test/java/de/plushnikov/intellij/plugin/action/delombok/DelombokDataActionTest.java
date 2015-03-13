@@ -1,9 +1,9 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import de.plushnikov.intellij.plugin.action.LombokLightActionTest;
+import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
 
-public class DelombokDataActionTest extends LombokLightActionTest {
+public class DelombokDataActionTest extends LombokLightActionTestCase {
 
   protected AnAction getAction() {
     return new DelombokDataAction();

@@ -4,7 +4,7 @@ import de.plushnikov.lombok.LombokParsingTestCase;
 
 import java.io.IOException;
 
-public class ValueTestCase extends LombokParsingTestCase {
+public class ValueTest extends LombokParsingTestCase {
   protected boolean shouldCompareModifiers() {
     return false;
   }

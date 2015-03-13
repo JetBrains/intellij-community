@@ -5,7 +5,7 @@ import de.plushnikov.lombok.LombokParsingTestCase;
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class DelegateTestCase extends LombokParsingTestCase {
+public class DelegateTest extends LombokParsingTestCase {
 
   public void testDelegateOnGetter() throws Exception {
     //TODO known problem, try to fix later

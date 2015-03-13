@@ -7,13 +7,13 @@ import java.io.IOException;
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class ConstructorTestCase extends LombokParsingTestCase {
+public class ToStringTest extends LombokParsingTestCase {
 
-  public void testConstructors() throws IOException {
+  public void testToStringInner() throws IOException {
     doTest();
   }
 
-  public void testConflictingStaticConstructorNames() throws IOException {
+  public void testToStringPlain() throws IOException {
     doTest();
   }
 }

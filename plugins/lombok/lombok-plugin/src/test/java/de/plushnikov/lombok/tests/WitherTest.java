@@ -4,7 +4,7 @@ import de.plushnikov.lombok.LombokParsingTestCase;
 
 import java.io.IOException;
 
-public class WitherTestCase extends LombokParsingTestCase {
+public class WitherTest extends LombokParsingTestCase {
 
   protected boolean shouldCompareCodeBlocks() {
     return false;

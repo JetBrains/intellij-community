@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class BuilderTestCase extends LombokParsingTestCase {
+public class BuilderTest extends LombokParsingTestCase {
 
   // This test is lombok's homepage example.
   public void testBuilderExample() throws IOException {
