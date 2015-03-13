@@ -2097,7 +2097,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Color getBackground() {
-    return UIUtil.isUnderNimbusLookAndFeel() ? UIUtil.getPanelBackground() : super.getBackground();
+    return UIUtil.isUnderNimbusLookAndFeel() ? UIUtil.getPanelBackground() : UIUtil.getBgFillColor(getParent());
   }
 
   protected void doPaintInactive(Graphics2D g2d,
