@@ -24,7 +24,6 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
@@ -34,8 +33,6 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TextTransferable;
@@ -115,24 +112,13 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       @Nullable
       @Override
       protected Transferable createTransferable(JComponent c) {
-        final TreePath path = myTree.getPathForRow(myTree.getLeadSelectionRow());
-        if (path != null) {
-          final String pathInTheTree = StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
-            @Nullable
-            @Override
-            public String fun(Object o) {
-              if (o == path.getPath()[0]) {
-                return null;
-              }
-              else {
-                final MyNode node = extractNode(o);
-                return node != null ? node.myDisplayName : null;
-              }
-            }
-          }), " | ");
-          if (!StringUtil.isEmpty(pathInTheTree)) {
-            return new TextTransferable("File | Settings | " + pathInTheTree);
+        MyNode node = extractNode(myTree.getPathForRow(myTree.getLeadSelectionRow()));
+        if (node != null) {
+          StringBuilder sb = new StringBuilder("File | Settings");
+          for (String name : getPathNames(node)) {
+            sb.append(" | ").append(name);
           }
+          return new TextTransferable(sb.toString());
         }
         return null;
       }
@@ -206,8 +192,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
   @NotNull
   String[] getPathNames(Configurable configurable) {
+    return getPathNames(findNode(configurable));
+  }
+
+  private static String[] getPathNames(MyNode node) {
     ArrayDeque<String> path = new ArrayDeque<String>();
-    MyNode node = findNode(configurable);
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();
