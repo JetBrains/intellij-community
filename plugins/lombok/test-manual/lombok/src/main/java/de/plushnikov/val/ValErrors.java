@@ -8,6 +8,6 @@ public class ValErrors {
 	}
 	
 	public void arrayInitializer() {
-//		val e = { "foo", "bar"};
+//		val e = { "foo", "bar2"};
 	}
 }

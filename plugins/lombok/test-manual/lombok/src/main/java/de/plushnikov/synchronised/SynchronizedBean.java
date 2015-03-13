@@ -23,7 +23,7 @@ public abstract class SynchronizedBean {
 
   @Synchronized("readLock")
   public void foo() {
-    System.out.println("bar");
+    System.out.println("bar2");
   }
 
   @Synchronized
