@@ -185,6 +185,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
     Insets insets = getTabsBorder().getEffectiveBorder();
 
+    int minOffset = vertical ? getHeight(): getWidth();
     int maxOffset = 0;
     int maxLength = 0;
 
@@ -193,18 +194,21 @@ public class JBEditorTabs extends JBTabsImpl {
       TabLabel tabLabel = myInfo2Label.get(visibleInfo);
       Rectangle r = tabLabel.getBounds();
       if (r.width == 0 || r.height == 0) continue;
-      maxOffset = vertical ? r.y + r.height : r.x + r.width;
+      minOffset = Math.min(vertical ? r.y : r.x, minOffset);
+      maxOffset = Math.max(vertical ? r.y + r.height : r.x + r.width, maxOffset);
       maxLength = vertical ? r.width : r.height;
-      break;
     }
 
+    minOffset--;
     maxOffset++;
 
-    Rectangle r2 = getBounds();
+    Rectangle r2 = new Rectangle(0, 0, getWidth(), getHeight());
 
-    Rectangle rectangle;
+    Rectangle beforeTabs;
+    Rectangle afterTabs;
     if (vertical) {
-      rectangle = new Rectangle(insets.left, maxOffset, getWidth(),
+      beforeTabs = new Rectangle(insets.left, insets.top, getWidth(), minOffset - insets.top);
+      afterTabs = new Rectangle(insets.left, maxOffset, getWidth(),
                                 r2.height - maxOffset - insets.top - insets.bottom);
     } else {
       int y = r2.y + insets.top;
@@ -212,16 +216,20 @@ public class JBEditorTabs extends JBTabsImpl {
       if (getTabsPosition() == JBTabsPosition.bottom) {
         y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
       } else {
+        y--;
+        height++;
         height -= getActiveTabUnderlineHeight();
       }
 
-      rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
+      afterTabs = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
+      beforeTabs = new Rectangle(0, y, minOffset, height);
     }
 
-    getPainter().doPaintBackground(g2d, clip, vertical, rectangle);
+    getPainter().doPaintBackground(g2d, clip, vertical, afterTabs);
     if (isSingleRow()) {
       g2d.setPaint(getEmptySpaceColor());
-      g2d.fill(rectangle);
+      g2d.fill(beforeTabs);
+      g2d.fill(afterTabs);
     }
   }
 

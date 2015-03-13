@@ -51,7 +51,7 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
 
       @Override
       protected Color getEmptySpaceColor() {
-        return UIUtil.getPanelBackground();
+        return UIUtil.getBgFillColor(getParent());
       }
 
       @Override
