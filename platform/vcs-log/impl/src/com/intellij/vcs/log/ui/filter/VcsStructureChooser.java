@@ -43,6 +43,7 @@ import com.intellij.util.TreeNodeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,7 @@ public class VcsStructureChooser extends DialogWrapper {
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
   public static final String CAN_NOT_ADD_TEXT =
     "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
+  private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
 
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myInitialRoots;
@@ -135,7 +137,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    return "git4idea.history.wholeTree.VcsStructureChooser";
+    return VCS_STRUCTURE_CHOOSER_KEY;
   }
 
   @Override
@@ -164,7 +166,6 @@ public class VcsStructureChooser extends DialogWrapper {
     };
     descriptor.setRoots(list);
     myTree = new Tree();
-    myTree.setMinimumSize(new Dimension(200, 200));
     myTree.setBorder(BORDER);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(true);
@@ -273,6 +274,7 @@ public class VcsStructureChooser extends DialogWrapper {
         recalculateErrorText();
       }
     });
+    panel.setPreferredSize(JBUI.size(400, 300));
     return panel;
   }
 
