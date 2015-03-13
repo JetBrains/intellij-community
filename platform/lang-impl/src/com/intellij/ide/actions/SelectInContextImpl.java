@@ -63,9 +63,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
   @Override
   @NotNull
   public VirtualFile getVirtualFile() {
-    final VirtualFile vFile = myPsiFile.getVirtualFile();
-    assert vFile != null;
-    return vFile;
+    return myPsiFile.getViewProvider().getVirtualFile();
   }
 
   @Override
