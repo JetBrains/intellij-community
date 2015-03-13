@@ -1183,7 +1183,7 @@ done:
 ; UNCOMMENT THIS IN RELEASE BUILD
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 6" "State"
   StrCmp "$R3" "0" end_of_uninstall
-  StrCmp "${UNINSTALL_WEB_PAGE}" "NotRequired"  end_of_uninstall
+  StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" end_of_uninstall
   ExecShell "" "${UNINSTALL_WEB_PAGE}"
 end_of_uninstall:
 SectionEnd
