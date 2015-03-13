@@ -5,7 +5,7 @@ jdk:
 cache:
   directories:
   - $HOME/.m2
-  - idea-IC
+  - $HOME/Tools
 
 install:
   - mvn install
