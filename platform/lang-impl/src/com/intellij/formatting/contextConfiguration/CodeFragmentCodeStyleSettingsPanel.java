@@ -143,6 +143,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       initTables();
 
       Collection<String> fields = populateWithAssociatedFields(settingNames);
+      fields.add("KEEP_LINE_BREAKS");
+
       String[] names = ContainerUtil.toArray(fields, new String[fields.size()]);
       showStandardOptions(names);
 
