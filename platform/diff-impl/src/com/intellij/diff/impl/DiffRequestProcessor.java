@@ -48,6 +48,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -235,14 +236,32 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Abstract
   //
 
+  @Nullable private ApplyData myApplyData;
+
   @CalledInAwt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     myIterationState = IterationState.NONE;
 
-    boolean hadFocus = isFocused();
+    myApplyData = new ApplyData(request, force || (myApplyData != null && myApplyData.force), scrollToChangePolicy);
+    IdRunnable task = new IdRunnable(this) {
+      @Override
+      public void run() {
+        if (myApplyData == null) return;
+        doApplyRequest(myApplyData.request, myApplyData.force, myApplyData.scrollToChangePolicy);
+        myApplyData = null;
+      }
+    };
+
+    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task);
+  }
+
+  @CalledInAwt
+  private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
 
     request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
+
+    boolean hadFocus = isFocused();
 
     myState.destroy();
     myToolbarStatusPanel.setContent(null);
@@ -888,6 +907,18 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       myContext.putUserData(key, value);
+    }
+  }
+
+  private static class ApplyData {
+    @NotNull private final DiffRequest request;
+    private final boolean force;
+    @Nullable private final ScrollToPolicy scrollToChangePolicy;
+
+    public ApplyData(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+      this.request = request;
+      this.force = force;
+      this.scrollToChangePolicy = scrollToChangePolicy;
     }
   }
 
