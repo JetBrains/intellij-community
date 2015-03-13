@@ -35,6 +35,12 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new LocalInspectionToolWrapper(new LocalInspectionTool() {
       @NotNull
       @Override
+      public String getShortName() {
+        return getDisplayName();
+      }
+
+      @NotNull
+      @Override
       public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                             boolean isOnTheFly,
                                             @NotNull LocalInspectionToolSession session) {
