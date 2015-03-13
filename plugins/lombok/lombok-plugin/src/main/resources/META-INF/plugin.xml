@@ -204,6 +204,7 @@
 				    <li>Fixed #81: @Builder: buildMethod should have same throws-list as annotated static method</li>
 				    <li>Fixed #82: Abstract Class + @Delegate</li>
 				    <li>Fixed #83: Getting inconvertible types error assigning new builder instance</li>
+				    <li>Fixed #84: Properly find usages of @Getters & @Setters on fields with @Acccessor prefixes</li>
 				</ol>
 			</li>
 		  <li>0.9.1
