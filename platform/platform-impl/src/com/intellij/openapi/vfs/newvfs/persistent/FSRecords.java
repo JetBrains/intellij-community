@@ -124,8 +124,8 @@ public class FSRecords implements Forceable {
   }
 
   static void writeAttributesToRecord(int id, int parentId, FileAttributes attributes, String name) {
+    w.lock();
     try {
-      w.lock();
       setName(id, name);
 
       setTimestamp(id, attributes.lastModified);
@@ -173,8 +173,8 @@ public class FSRecords implements Forceable {
 
 
     public static void connect() {
+      w.lock();
       try {
-        w.lock();
         if (!ourInitialized) {
           init();
           setupFlushing();
@@ -386,8 +386,8 @@ public class FSRecords implements Forceable {
     }
 
     public static void force() {
+      w.lock();
       try {
-        w.lock();
         if (myRecords != null) {
           markClean();
         }
@@ -407,8 +407,8 @@ public class FSRecords implements Forceable {
     public static void flushSome() {
       if (!isDirty() || HeavyProcessLatch.INSTANCE.isRunning()) return;
 
+      w.lock();
       try {
-        w.lock();
         if (myFlushingFuture == null) {
           return; // avoid NPE when close has already taken place
         }
@@ -546,8 +546,8 @@ public class FSRecords implements Forceable {
   }
 
   public static long getCreationTimestamp() {
+    r.lock();
     try {
-      r.lock();
       return DbConnection.getTimestamp();
     }
     finally {
@@ -577,8 +577,8 @@ public class FSRecords implements Forceable {
 
   // todo: Address  / capacity store in records table, size store with payload
   public static int createRecord() {
+    w.lock();
     try {
-      w.lock();
       DbConnection.markDirty();
 
       final int free = DbConnection.getFreeRecord();
@@ -608,19 +608,18 @@ public class FSRecords implements Forceable {
     return (int)getRecords().length();
   }
   public static int getMaxId() {
+    r.lock();
     try {
-      r.lock();
       return length()/RECORD_SIZE;
     }
     finally {
       r.unlock();
     }
-
   }
 
   static void deleteRecordRecursively(int id) {
+    w.lock();
     try {
-      w.lock();
       incModCount(id);
       if (lazyVfsDataCleaning) {
         markAsDeletedRecursively(id);
@@ -645,8 +644,8 @@ public class FSRecords implements Forceable {
   }
 
   private static void markAsDeleted(final int id) {
+    w.lock();
     try {
-      w.lock();
       DbConnection.markDirty();
       addToFreeRecordsList(id);
     }
@@ -667,8 +666,8 @@ public class FSRecords implements Forceable {
   }
 
   private static void deleteRecord(final int id) {
+    w.lock();
     try {
-      w.lock();
       DbConnection.markDirty();
       deleteContentAndAttributes(id);
 
@@ -723,8 +722,8 @@ public class FSRecords implements Forceable {
 
   static int[] listRoots() {
     try {
+      r.lock();
       try {
-        r.lock();
         final DataInputStream input = readAttribute(1, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
@@ -774,114 +773,110 @@ public class FSRecords implements Forceable {
   }
 
   public static int findRootRecord(@NotNull String rootUrl) {
+    w.lock();
+
     try {
-      try {
-        w.lock();
-        DbConnection.markDirty();
-        final int root = getNames().enumerate(rootUrl);
+      DbConnection.markDirty();
+      final int root = getNames().enumerate(rootUrl);
 
-        final DataInputStream input = readAttribute(1, ourChildrenAttr);
-        int[] names = ArrayUtil.EMPTY_INT_ARRAY;
-        int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
+      final DataInputStream input = readAttribute(1, ourChildrenAttr);
+      int[] names = ArrayUtil.EMPTY_INT_ARRAY;
+      int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
-        if (input != null) {
-          try {
-            final int count = DataInputOutputUtil.readINT(input);
-            names = ArrayUtil.newIntArray(count);
-            ids = ArrayUtil.newIntArray(count);
-            int prevId = 0;
-            int prevNameId = 0;
-
-            for (int i = 0; i < count; i++) {
-              final int name = DataInputOutputUtil.readINT(input) + prevNameId;
-              final int id = DataInputOutputUtil.readINT(input) + prevId;
-              if (name == root) {
-                return id;
-              }
-
-              prevNameId = names[i] = name;
-              prevId = ids[i] = id;
-            }
-          }
-          finally {
-            input.close();
-          }
-        }
-
-        final DataOutputStream output = writeAttribute(1, ourChildrenAttr);
-        int id;
+      if (input != null) {
         try {
-          id = createRecord();
-
-          int index = Arrays.binarySearch(ids, id);
-          ids = ArrayUtil.insert(ids, -index - 1, id);
-          names = ArrayUtil.insert(names, -index - 1, root);
-
-          saveNameIdSequenceWithDeltas(names, ids, output);
-        }
-        finally {
-          output.close();
-        }
-
-        return id;
-      }
-      finally {
-        w.unlock();
-      }
-    }
-    catch (Throwable e) {
-      throw DbConnection.handleError(e);
-    }
-  }
-
-  public static void deleteRootRecord(int id) {
-    try {
-      try {
-        w.lock();
-        DbConnection.markDirty();
-        final DataInputStream input = readAttribute(1, ourChildrenAttr);
-        assert input != null;
-        int count;
-        int[] names;
-        int[] ids;
-        try {
-          count = DataInputOutputUtil.readINT(input);
-
+          final int count = DataInputOutputUtil.readINT(input);
           names = ArrayUtil.newIntArray(count);
           ids = ArrayUtil.newIntArray(count);
           int prevId = 0;
           int prevNameId = 0;
+
           for (int i = 0; i < count; i++) {
-            names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
-            ids[i] = DataInputOutputUtil.readINT(input) + prevId;
-            prevId = ids[i];
-            prevNameId = names[i];
+            final int name = DataInputOutputUtil.readINT(input) + prevNameId;
+            final int id = DataInputOutputUtil.readINT(input) + prevId;
+            if (name == root) {
+              return id;
+            }
+
+            prevNameId = names[i] = name;
+            prevId = ids[i] = id;
           }
         }
         finally {
           input.close();
         }
+      }
 
-        final int index = ArrayUtil.find(ids, id);
-        assert index >= 0;
+      final DataOutputStream output = writeAttribute(1, ourChildrenAttr);
+      int id;
+      try {
+        id = createRecord();
 
-        names = ArrayUtil.remove(names, index);
-        ids = ArrayUtil.remove(ids, index);
+        int index = Arrays.binarySearch(ids, id);
+        ids = ArrayUtil.insert(ids, -index - 1, id);
+        names = ArrayUtil.insert(names, -index - 1, root);
 
-        final DataOutputStream output = writeAttribute(1, ourChildrenAttr);
-        try {
-          saveNameIdSequenceWithDeltas(names, ids, output);
-        }
-        finally {
-          output.close();
+        saveNameIdSequenceWithDeltas(names, ids, output);
+      }
+      finally {
+        output.close();
+      }
+
+      return id;
+    } catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  public static void deleteRootRecord(int id) {
+    w.lock();
+
+    try {
+      DbConnection.markDirty();
+      final DataInputStream input = readAttribute(1, ourChildrenAttr);
+      assert input != null;
+      int count;
+      int[] names;
+      int[] ids;
+      try {
+        count = DataInputOutputUtil.readINT(input);
+
+        names = ArrayUtil.newIntArray(count);
+        ids = ArrayUtil.newIntArray(count);
+        int prevId = 0;
+        int prevNameId = 0;
+        for (int i = 0; i < count; i++) {
+          names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
+          ids[i] = DataInputOutputUtil.readINT(input) + prevId;
+          prevId = ids[i];
+          prevNameId = names[i];
         }
       }
       finally {
-        w.unlock();
+        input.close();
       }
-    }
-    catch (Throwable e) {
+
+      final int index = ArrayUtil.find(ids, id);
+      assert index >= 0;
+
+      names = ArrayUtil.remove(names, index);
+      ids = ArrayUtil.remove(ids, index);
+
+      final DataOutputStream output = writeAttribute(1, ourChildrenAttr);
+      try {
+        saveNameIdSequenceWithDeltas(names, ids, output);
+      }
+      finally {
+        output.close();
+      }
+    } catch (Throwable e) {
       throw DbConnection.handleError(e);
+    }
+    finally {
+      w.unlock();
     }
   }
 
@@ -972,8 +967,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void updateList(int id, @NotNull int[] children) {
+    w.lock();
     try {
-      w.lock();
       DbConnection.markDirty();
       final DataOutputStream record = writeAttribute(id, ourChildrenAttr);
       DataInputOutputUtil.writeINT(record, children.length);
@@ -1023,8 +1018,8 @@ public class FSRecords implements Forceable {
   }
 
   public static int getModCount() {
+    r.lock();
     try {
-      r.lock();
       return getRecords().getInt(HEADER_GLOBAL_MOD_COUNT_OFFSET);
     }
     finally {
@@ -1059,8 +1054,8 @@ public class FSRecords implements Forceable {
       return;
     }
 
+    w.lock();
     try {
-      w.lock();
       incModCount(id);
       putRecordInt(id, PARENT_OFFSET, parent);
     }
@@ -1134,8 +1129,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void setName(int id, String name) {
+    w.lock();
     try {
-      w.lock();
       incModCount(id);
       putRecordInt(id, NAME_OFFSET, getNames().enumerate(name));
     }
@@ -1148,8 +1143,8 @@ public class FSRecords implements Forceable {
   }
 
   public static int getFlags(int id) {
+    r.lock();
     try {
-      r.lock();
       return getRecordInt(id, FLAGS_OFFSET);
     }
     finally {
@@ -1158,8 +1153,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void setFlags(int id, int flags, final boolean markAsChange) {
+    w.lock();
     try {
-      w.lock();
       if (markAsChange) {
         incModCount(id);
       }
@@ -1174,8 +1169,8 @@ public class FSRecords implements Forceable {
   }
 
   public static long getLength(int id) {
+    r.lock();
     try {
-      r.lock();
       return getRecords().getLong(getOffset(id, LENGTH_OFFSET));
     }
     finally {
@@ -1184,8 +1179,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void setLength(int id, long len) {
+    w.lock();
     try {
-      w.lock();
       incModCount(id);
       getRecords().putLong(getOffset(id, LENGTH_OFFSET), len);
     }
@@ -1198,8 +1193,8 @@ public class FSRecords implements Forceable {
   }
 
   public static long getTimestamp(int id) {
+    r.lock();
     try {
-      r.lock();
       return getRecords().getLong(getOffset(id, TIMESTAMP_OFFSET));
     }
     finally {
@@ -1208,8 +1203,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void setTimestamp(int id, long value) {
+    w.lock();
     try {
-      w.lock();
       incModCount(id);
       getRecords().putLong(getOffset(id, TIMESTAMP_OFFSET), value);
     }
@@ -1222,8 +1217,8 @@ public class FSRecords implements Forceable {
   }
 
   public static int getModCount(int id) {
+    r.lock();
     try {
-      r.lock();
       return getRecordInt(id, MOD_COUNT_OFFSET);
     }
     finally {
@@ -1267,8 +1262,8 @@ public class FSRecords implements Forceable {
   public static DataInputStream readContent(int fileId) {
     try {
       int page;
+      r.lock();
       try {
-        r.lock();
         checkFileIsValid(fileId);
 
         page = getContentRecordId(fileId);
@@ -1308,8 +1303,8 @@ public class FSRecords implements Forceable {
   public static DataInputStream readAttributeWithLock(int fileId, FileAttribute att) {
     try {
       synchronized (att.getId()) {
+        r.lock();
         try {
-          r.lock();
           DataInputStream stream = readAttribute(fileId, att);
           if (stream != null && att.isVersioned()) {
             try {
@@ -1479,8 +1474,8 @@ public class FSRecords implements Forceable {
   }
 
   public static int acquireFileContent(int fileId) {
+    w.lock();
     try {
-      w.lock();
       int record = getContentRecordId(fileId);
       if (record > 0) getContentStorage().acquireRecord(record);
       return record;
@@ -1494,8 +1489,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void releaseContent(int contentId) {
+    w.lock();
     try {
-      w.lock();
       RefCountingStorage contentStorage = getContentStorage();
       if (weHaveContentHashes) {
         contentStorage.releaseRecord(contentId, false);
@@ -1541,8 +1536,8 @@ public class FSRecords implements Forceable {
   }
 
   public static int storeUnlinkedContent(byte[] bytes) {
+    w.lock();
     try {
-      w.lock();
       int recordId;
 
       if (weHaveContentHashes) {
@@ -1605,8 +1600,8 @@ public class FSRecords implements Forceable {
       int page;
       RefCountingStorage contentStorage = getContentStorage();
       final boolean fixedSize;
+      w.lock();
       try {
-        w.lock();
         incModCount(myFileId);
 
         checkFileIsValid(myFileId);
@@ -1738,8 +1733,8 @@ public class FSRecords implements Forceable {
           final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
           if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
+            w.lock();
             try {
-              w.lock();
 
               rewriteDirectoryRecordWithAttrContent(_out);
               incModCount(myFileId);
@@ -1751,8 +1746,8 @@ public class FSRecords implements Forceable {
             }
           } else {
             int page;
+            w.lock();
             try {
-              w.lock();
               incModCount(myFileId);
               page = findAttributePage(myFileId, myAttribute, true);
               if (inlineAttributes && page < 0) {
@@ -1870,8 +1865,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void dispose() {
+    w.lock();
     try {
-      w.lock();
       DbConnection.force();
       DbConnection.closeFiles();
     }
@@ -1891,8 +1886,8 @@ public class FSRecords implements Forceable {
   public static void checkSanity() {
     long t = System.currentTimeMillis();
 
+    r.lock();
     try {
-      r.lock();
       final int fileLength = length();
       assert fileLength % RECORD_SIZE == 0;
       int recordCount = fileLength / RECORD_SIZE;

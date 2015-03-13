@@ -4,8 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFile;
-
-import static com.jetbrains.python.refactoring.packages.PyConvertModuleToPackageAction.createPackageFromModule;
+import com.jetbrains.python.refactoring.convert.PyConvertModuleToPackageAction;
 
 /**
  * @author Mikhail Golubev
@@ -20,7 +19,7 @@ public class PyConvertModuleToPackageTest extends PyTestCase {
     myFixture.configureByFile("a.py");
 
     final PyFile moduleToConvert = assertInstanceOf(myFixture.getFile(), PyFile.class);
-    createPackageFromModule(moduleToConvert, myFixture.getProject());
+    new PyConvertModuleToPackageAction().createPackageFromModule(moduleToConvert);
 
     PlatformTestUtil.assertDirectoriesEqual(copiedDirectory, getVirtualFileByName(getTestDataPath() +rootAfterPath));
   }

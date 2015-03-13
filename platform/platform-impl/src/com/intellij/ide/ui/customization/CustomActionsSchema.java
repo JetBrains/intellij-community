@@ -32,6 +32,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ImageLoader;
@@ -327,7 +328,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
         if (iconPath != null && new File(FileUtil.toSystemDependentName(iconPath)).exists()) {
           Image image = null;
           try {
-            image = ImageLoader.loadFromStream(VfsUtil.convertToURL(VfsUtil.pathToUrl(iconPath)).openStream());
+            image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtil.pathToUrl(iconPath)).openStream());
           }
           catch (IOException e) {
             LOG.debug(e);

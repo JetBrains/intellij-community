@@ -77,10 +77,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -642,6 +639,75 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     LOG.assertTrue(!progress.isRunning());
 
     return !progress.isCanceled();
+  }
+
+
+  @Override
+  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable final Project project, @NotNull final String progressTitle,
+                                                                 final boolean canBeCanceled,
+                                                                 final String cancelText, final JComponent parentComponent,
+                                                                 @NotNull final Runnable process) {
+    assertIsDispatchThread();
+    boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
+    if (writeAccessAllowed // Disallow running process in separate thread from under write action.
+                           // The thread will deadlock trying to get read action otherwise.
+      ) {
+      throw new IncorrectOperationException("Starting process with progress from within write action makes no sense");
+    }
+
+    final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
+    // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
+    // does not have a chance to run, and as a result the progress won't be disposed
+    Disposer.register(this, progress);
+
+    progress.setTitle(progressTitle);
+
+    final CountDownLatch readActionAcquired = new CountDownLatch(1);
+    final CountDownLatch modalityEntered = new CountDownLatch(1);
+    executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              readActionAcquired.countDown();
+              waitFor(modalityEntered);
+              ProgressManager.getInstance().runProcess(process, progress);
+            }
+          });
+        }
+        catch (ProcessCanceledException e) {
+          progress.cancel();
+          // ok to ignore.
+        }
+        catch (RuntimeException e) {
+          progress.cancel();
+          throw e;
+        }
+      }
+    });
+
+    waitFor(readActionAcquired);
+    progress.startBlocking(new Runnable() {
+      @Override
+      public void run() {
+        modalityEntered.countDown();
+      }
+    });
+
+    LOG.assertTrue(!progress.isRunning());
+
+    return !progress.isCanceled();
+  }
+
+  private static void waitFor(@NotNull CountDownLatch modalityEntered) {
+    try {
+      modalityEntered.await();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

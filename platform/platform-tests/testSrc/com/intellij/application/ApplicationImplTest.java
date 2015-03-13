@@ -18,6 +18,7 @@ package com.intellij.application;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -29,6 +30,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -319,5 +321,42 @@ public class ApplicationImplTest extends PlatformTestCase {
     thread.start();
     thread.join();
     assertNotNull(exception);
+  }
+
+  public void testRunProcessWithProgressSynchronouslyInReadAction() throws Throwable {
+    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, new Runnable() {
+        @Override
+        public void run() {
+          try {
+            assertFalse(SwingUtilities.isEventDispatchThread());
+            assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+          }
+          catch (Throwable e) {
+            exception = e;
+          }
+        }
+      });
+    assertTrue(result);
+    if (exception != null) throw exception;
+  }
+
+  public void testRunProcessWithProgressSynchronouslyInReadActionWithPendingWriteAction() throws Throwable {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+      }
+    });
+    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, new Runnable() {
+        @Override
+        public void run() {
+          TimeoutUtil.sleep(10000);
+        }
+      });
+    assertTrue(result);
+    UIUtil.dispatchAllInvocationEvents();
+    if (exception != null) throw exception;
   }
 }

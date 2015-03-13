@@ -103,7 +103,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     Disposer.register(this, myDialog);
 
     myFocusTrackback.registerFocusComponent(myDialog.getPanel());
-    addStateDelegate(new AbstractProgressIndicatorExBase(){
+    addStateDelegate(new AbstractProgressIndicatorExBase() {
       @Override
       public void cancel() {
         super.cancel();
@@ -186,6 +186,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void startBlocking() {
+    startBlocking(EmptyRunnable.getInstance());
+  }
+
+  public void startBlocking(@NotNull Runnable init) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (this) {
       LOG.assertTrue(!isRunning());
@@ -193,6 +197,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
 
     enterModality();
+    init.run();
 
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
       @Override
