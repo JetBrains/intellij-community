@@ -58,7 +58,7 @@ public class EPathUtil {
     }
     else {
       final String relativeToModulePath = EPathCommonUtil.getRelativeToModulePath(path);
-      final int relativeIdx = ideaUrl.indexOf(relativeToModulePath);
+      final int relativeIdx = relativeToModulePath != null ? ideaUrl.indexOf(relativeToModulePath) : -1;
       if (relativeIdx != -1) {
         final String pathToProjectFile = VfsUtilCore.urlToPath(ideaUrl.substring(0, relativeIdx));
         if (Comparing.strEqual(EPathCommonUtil.getRelativeModuleName(path),
