@@ -53,7 +53,7 @@ import java.util.List;
  * @author max
  */
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
-  private TreeTable myTreeTable;
+  protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
 
   private final List<Option> myOptions = new ArrayList<Option>();
@@ -61,8 +61,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private final Set<String> myAllowedOptions = new THashSet<String>();
   private final Map<String, String> myRenamedFields = new THashMap<String, String>();
   private boolean myShowAllStandardOptions;
-  private boolean isFirstUpdate = true;
-
+  protected boolean isFirstUpdate = true;
 
   public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);

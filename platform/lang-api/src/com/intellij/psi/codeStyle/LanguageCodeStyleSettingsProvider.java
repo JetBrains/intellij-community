@@ -17,16 +17,20 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -202,6 +206,12 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return fieldCollector.getCollectedFields();
   }
 
+  public Set<String> getSupportedFields(SettingsType type) {
+    SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
+    fieldCollector.collectFields(type);
+    return fieldCollector.getCollectedFields();
+  }
+
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
     private final Set<String> myCollectedFields = new HashSet<String>();
     private SettingsType myCurrSettingsType;
@@ -211,6 +221,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
         myCurrSettingsType = settingsType;
         LanguageCodeStyleSettingsProvider.this.customizeSettings(this, settingsType);
       }
+    }
+
+    public void collectFields(SettingsType type) {
+      myCurrSettingsType = type;
+      LanguageCodeStyleSettingsProvider.this.customizeSettings(this, type);
     }
 
     @Override
@@ -275,5 +290,4 @@ public abstract class LanguageCodeStyleSettingsProvider {
       return myCollectedFields;
     }
   }
-
 }

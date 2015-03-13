@@ -149,11 +149,11 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       .setItemChoosenCallback(new Runnable() {
         @Override
         public void run() {
+          myValue = myList.getSelectedValue();
           final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
           for (ActionListener listener : myListeners) {
             listener.actionPerformed(event);
           }
-          myValue = myList.getSelectedValue();
           TableUtil.stopEditing(myTable);
 
           myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.

@@ -18,8 +18,19 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
+  private MultiMap<String, String> myGroupToFields = new MultiMap<String, String>();
+  private Map<String, SettingsGroup> myFieldNameToGroup;
+
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
     init();
@@ -28,6 +39,23 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   @Override
   public LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
+  }
+
+  @Override
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
+    super.addOption(fieldName, title, groupName);
+    if (groupName != null) {
+      myGroupToFields.putValue(groupName, fieldName);
+    }
+  }
+
+  @Override
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
+                           @NotNull String[] options, @NotNull int[] values) {
+    super.addOption(fieldName, title, groupName, options, values);
+    if (groupName == null) {
+      myGroupToFields.putValue(title, fieldName);
+    }
   }
 
   @Override
@@ -136,8 +164,34 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.local.variables.annotation"), WRAP_OPTIONS, WRAP_VALUES);
   }
 
+  protected SettingsGroup getAssociatedSettingsGroup(String fieldName) {
+    if (myFieldNameToGroup == null) {
+      myFieldNameToGroup = ContainerUtil.newHashMap();
+      Set<String> groups = myGroupToFields.keySet();
+      for (String group : groups) {
+        Collection<String> fields = myGroupToFields.get(group);
+        SettingsGroup settingsGroup = new SettingsGroup(group, fields);
+        for (String field : fields) {
+          myFieldNameToGroup.put(field, settingsGroup);
+        }
+      }
+    }
+    return myFieldNameToGroup.get(fieldName);
+  }
+
   @Override
   protected String getTabTitle() {
     return ApplicationBundle.message("wrapping.and.braces");
+  }
+
+  protected static class SettingsGroup {
+    public final String title;
+    public final Collection<String> commonCodeStyleSettingFieldNames;
+
+    public SettingsGroup(@NotNull String title,
+                         @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
+      this.title = title;
+      this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
+    }
   }
 }

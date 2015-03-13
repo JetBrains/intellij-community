@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.util.PlatformUtils;
@@ -46,6 +48,12 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public String getConfigurableDisplayName() {
     return "Java";
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 
   @Nullable
