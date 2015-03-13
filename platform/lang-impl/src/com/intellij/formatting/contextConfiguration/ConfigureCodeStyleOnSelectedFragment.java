@@ -46,7 +46,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Reformat and configure code style";
+    return "Configure code style";
   }
 
   @Nls
