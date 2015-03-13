@@ -776,8 +776,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private boolean shouldPreserveCurrentVisualArea() {
-    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    if (scrollBar.getVisibleAmount() == 0) return myLastPreserveVisualArea;
+    JScrollBar scrollBar = myEditor == null ? null : myEditor.getScrollPane().getVerticalScrollBar();
+    if (scrollBar == null || scrollBar.getVisibleAmount() == 0) return myLastPreserveVisualArea;
     myLastPreserveVisualArea = scrollBar.getValue() + scrollBar.getVisibleAmount() != scrollBar.getMaximum();
     return myLastPreserveVisualArea;
   }
