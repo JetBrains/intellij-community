@@ -287,30 +287,23 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
     }
 
-    private void deleteFiles(@NotNull VirtualFile dir) {
+    private void deleteFiles(@NotNull VirtualFile dir) throws IOException {
       AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
       try {
         for (VirtualFile file : dir.getChildren()) {
           if (removedFileNames.contains(file.getName())) {
-            deleteFile(file, this);
+            try {
+              file.delete(this);
+            }
+            catch (FileNotFoundException e) {
+              throw new ReadOnlyModificationException(file, e, null);
+            }
           }
         }
       }
       finally {
         token.finish();
       }
-    }
-  }
-
-  public static void deleteFile(@NotNull VirtualFile file, @NotNull Object requestor) {
-    try {
-      file.delete(requestor);
-    }
-    catch (FileNotFoundException e) {
-      throw new ReadOnlyModificationException(file, e);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
     }
   }
 }
