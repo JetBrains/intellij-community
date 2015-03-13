@@ -88,6 +88,7 @@ public class HighlightMethodUtil {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
       if (!PsiUtil.isAccessible(containingFile.getProject(), superMethod, method, null)) continue;
+      if (!includeRealPositionInfo && MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, includeRealPositionInfo);
       if (info != null) return info;
     }

@@ -1,18 +1,9 @@
 package org.jetbrains.protocolReader
 
-
-fun PrimitiveValueReader(name: String): PrimitiveValueReader {
-  return PrimitiveValueReader(name, null, false)
-}
-
-fun PrimitiveValueReader(name: String, defaultValue: String): PrimitiveValueReader {
-  return PrimitiveValueReader(name, defaultValue, false)
-}
-
-open class PrimitiveValueReader(private val className: String, val defaultValue: String?, private val asRawString: Boolean) : ValueReader() {
+open class PrimitiveValueReader(private val className: String, val defaultValue: String? = null, private val asRawString: Boolean = false, private val nullable: Boolean = false) : ValueReader() {
   private val readPostfix: String
 
-  {
+  init {
     if (Character.isLowerCase(className.charAt(0))) {
       readPostfix = Character.toUpperCase(className.charAt(0)) + className.substring(1)
     }
@@ -29,7 +20,11 @@ open class PrimitiveValueReader(private val className: String, val defaultValue:
     }
     else {
       addReaderParameter(subtyping, out)
-      out.append(".next").append(readPostfix).append("()")
+      out.append(".next");
+      if (nullable) {
+        out.append("Nullable");
+      }
+      out.append(readPostfix).append("()")
       //beginReadCall(readPostfix, subtyping, out, name);
     }
   }

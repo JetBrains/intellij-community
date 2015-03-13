@@ -18,15 +18,18 @@ public class GithubShareDialog extends DialogWrapper {
   private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+");
   private final GithubSharePanel myGithubSharePanel;
   private final Set<String> myAvailableNames;
+  private final Set<String> myAvailableRemotes;
 
-  public GithubShareDialog(final Project project, final Set<String> availableNames, final boolean privateRepoAllowed) {
+  public GithubShareDialog(Project project, Set<String> availableNames, Set<String> availableRemotes, boolean privateRepoAllowed) {
     super(project);
     myAvailableNames = availableNames;
+    myAvailableRemotes = availableRemotes;
     myGithubSharePanel = new GithubSharePanel(this);
     init();
     setTitle("Share Project On GitHub");
     setOKButtonText("Share");
     myGithubSharePanel.setRepositoryName(project.getName());
+    myGithubSharePanel.setRemoteName(availableRemotes.isEmpty() ? "origin" : "github");
     myGithubSharePanel.setPrivateRepoAvailable(privateRepoAllowed);
     init();
     updateOkButton();
@@ -53,7 +56,8 @@ public class GithubShareDialog extends DialogWrapper {
   }
 
   public void updateOkButton() {
-    final String repositoryName = getRepositoryName();
+    String repositoryName = getRepositoryName();
+    String remoteName = getRemoteName();
     if (StringUtil.isEmpty(repositoryName)){
       setErrorText("No repository name selected");
       setOKActionEnabled(false);
@@ -61,6 +65,11 @@ public class GithubShareDialog extends DialogWrapper {
     }
     if (myAvailableNames.contains(repositoryName)){
       setErrorText("Repository with selected name already exists");
+      setOKActionEnabled(false);
+      return;
+    }
+    if (myAvailableRemotes.contains(remoteName)) {
+      setErrorText("Remote with selected name already exists");
       setOKActionEnabled(false);
       return;
     }
@@ -83,6 +92,10 @@ public class GithubShareDialog extends DialogWrapper {
 
   public String getDescription() {
     return myGithubSharePanel.getDescription();
+  }
+
+  public String getRemoteName() {
+    return myGithubSharePanel.getRemoteName();
   }
 
   @TestOnly

@@ -139,7 +139,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
       );
     }
     catch (IOException e) {
-      GithubNotifications.showErrorDialog(myProject, "Can't get access token", e);
+      GithubNotifications.showErrorDialog(myProject, "Can't Get Access Token", e);
     }
   }
 

@@ -36,10 +36,13 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
     if (module == null) return;
 
     String targetLevel = mavenProject.getTargetLevel();
-    if (targetLevel != null) {
-      CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-      configuration.setBytecodeTargetLevel(module, targetLevel);
+    // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
+    if (targetLevel == null) {
+      targetLevel = "1.5";
     }
+
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    configuration.setBytecodeTargetLevel(module, targetLevel);
 
     VirtualFile directoryFile = mavenProject.getDirectoryFile();
 

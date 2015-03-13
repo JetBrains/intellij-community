@@ -123,10 +123,15 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    writeTempFile();
-    finish();
+    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+      @Override
+      public void run() {
+        writeTempFile();
+        finish();
 
-    if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
+        if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
+      }
+    });
   }
 
   @Override
