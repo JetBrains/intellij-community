@@ -40,7 +40,7 @@ private class State(typeWriters: Collection<TypeWriter<*>>, private val basePack
   private val typesWithFactories = THashSet<TypeWriter<*>>()
   val typesWithFactoriesList = ArrayList<TypeWriter<*>>();
 
-  {
+  init {
     var uniqueCode = 0
     val result = THashMap<TypeWriter<*>, String>(typeWriters.size())
     for (handler in typeWriters) {
