@@ -527,15 +527,15 @@ public class JavaFxPsiUtil {
     return false;
   }
 
-  public static PsiType getWrappedPropertyType(PsiField field, final Project project, final Map<String, PsiType> typeMap) {
-    final PsiType fieldType = field.getType();
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
-    final PsiClass fieldClass = resolveResult.getElement();
-    if (fieldClass == null) return fieldType;
-    return CachedValuesManager.getManager(project).getCachedValue(field, new CachedValueProvider<PsiType>() {
+  public static PsiType getWrappedPropertyType(final PsiField field, final Project project, final Map<String, PsiType> typeMap) {
+    return CachedValuesManager.getCachedValue(field, new CachedValueProvider<PsiType>() {
       @Nullable
       @Override
       public Result<PsiType> compute() {
+        final PsiType fieldType = field.getType();
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
+        final PsiClass fieldClass = resolveResult.getElement();
+        if (fieldClass == null) return Result.create(fieldType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         PsiType substitute = null;
         for (String typeName : typeMap.keySet()) {
           if (InheritanceUtil.isInheritor(fieldType, typeName)) {
