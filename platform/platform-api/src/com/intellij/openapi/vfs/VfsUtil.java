@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -211,8 +209,6 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
-  @NonNls private static final String MAILTO = "mailto";
-
   /**
    * Searches for the file specified by given java,net.URL.
    * Note that this method currently tested only for "file" and "jar" protocols under Unix and Windows
@@ -241,51 +237,16 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * Converts VsfUrl info java.net.URL. Does not support "jar:" protocol.
+   * Converts VsfUrl info java.net.URL.
    *
    * @param vfsUrl VFS url (as constructed by VfsFile.getUrl())
    * @return converted URL or null if error has occured
+   * @deprecated Use {@link VfsUtilCore#convertToURL(String)} instead. To be removed in IDEA 16.
    */
-
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Nullable
   public static URL convertToURL(@NotNull String vfsUrl) {
-    if (vfsUrl.startsWith(StandardFileSystems.JAR_PROTOCOL)) {
-      LOG.error("jar: protocol not supported.");
-      return null;
-    }
-
-    // [stathik] for supporting mail URLs in Plugin Manager
-    if (vfsUrl.startsWith(MAILTO)) {
-      try {
-        return new URL (vfsUrl);
-      }
-      catch (MalformedURLException e) {
-        return null;
-      }
-    }
-
-    String[] split = vfsUrl.split("://");
-
-    if (split.length != 2) {
-      LOG.debug("Malformed VFS URL: " + vfsUrl);
-      return null;
-    }
-
-    String protocol = split[0];
-    String path = split[1];
-
-    try {
-      if (protocol.equals(StandardFileSystems.FILE_PROTOCOL)) {
-        return new URL(StandardFileSystems.FILE_PROTOCOL, "", path);
-      }
-      else {
-        return UrlClassLoader.internProtocol(new URL(vfsUrl));
-      }
-    }
-    catch (MalformedURLException e) {
-      LOG.debug("MalformedURLException occurred:" + e.getMessage());
-      return null;
-    }
+    return VfsUtilCore.convertToURL(vfsUrl);
   }
 
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
