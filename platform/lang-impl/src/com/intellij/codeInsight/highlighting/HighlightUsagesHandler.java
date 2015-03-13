@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,10 +62,10 @@ import java.util.*;
 public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.highlighting.HighlightUsagesHandler");
 
-  public static void invoke(@NotNull Project project, @NotNull Editor editor, PsiFile file) {
+  public static void invoke(@NotNull final Project project, @NotNull final Editor editor, final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SelectionModel selectionModel = editor.getSelectionModel();
+    final SelectionModel selectionModel = editor.getSelectionModel();
     if (file == null && !selectionModel.hasSelection()) {
       selectionModel.selectWordAtCaret(false);
     }
@@ -85,6 +86,25 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
 
+    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        UsageTarget[] usageTargets = getUsageTargets(editor, file);
+        if (usageTargets == null) {
+          handleNoUsageTargets(file, editor, selectionModel, project);
+          return;
+        }
+
+        boolean clearHighlights = isClearHighlights(editor);
+        for (UsageTarget target : usageTargets) {
+          target.highlightUsages(file, editor, clearHighlights);
+        }
+      }
+    });
+  }
+
+  @Nullable
+  private static UsageTarget[] getUsageTargets(@NotNull Editor editor, PsiFile file) {
     UsageTarget[] usageTargets = UsageTargetUtil.findUsageTargets(editor, file);
 
     if (usageTargets == null) {
@@ -116,28 +136,25 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         }
       }
     }
+    return usageTargets;
+  }
 
-    if (usageTargets == null) {
-      if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
-      selectionModel.selectWordAtCaret(false);
-      String selection = selectionModel.getSelectedText();
-      LOG.assertTrue(selection != null);
-      for (int i = 0; i < selection.length(); i++) {
-        if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
-          selectionModel.removeSelection();
-          return;
-        }
+  private static void handleNoUsageTargets(PsiFile file,
+                                           @NotNull Editor editor,
+                                           SelectionModel selectionModel,
+                                           @NotNull Project project) {
+    if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
+    selectionModel.selectWordAtCaret(false);
+    String selection = selectionModel.getSelectedText();
+    LOG.assertTrue(selection != null);
+    for (int i = 0; i < selection.length(); i++) {
+      if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
+        selectionModel.removeSelection();
       }
-
-      doRangeHighlighting(editor, project);
-      selectionModel.removeSelection();
-      return;
     }
 
-    boolean clearHighlights = isClearHighlights(editor);
-    for (UsageTarget target : usageTargets) {
-      target.highlightUsages(file, editor, clearHighlights);
-    }
+    doRangeHighlighting(editor, project);
+    selectionModel.removeSelection();
   }
 
   @Nullable

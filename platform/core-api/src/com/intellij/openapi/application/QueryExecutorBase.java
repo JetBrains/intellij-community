@@ -57,7 +57,7 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
       }
     };
 
-    if (myRequireReadAction) {
+    if (myRequireReadAction && !ApplicationManager.getApplication().isReadAccessAllowed()) {
       Runnable runnable = new Runnable() {
         public void run() {
           processQuery(queryParameters, wrapper);

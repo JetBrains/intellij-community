@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ImageLoader;
 import org.jdom.Element;
 
@@ -83,7 +84,7 @@ public class LogFilter implements JDOMExternalizable {
     if (myIconPath != null && new File(FileUtil.toSystemDependentName(myIconPath)).exists()) {
       Image image = null;
       try {
-        image = ImageLoader.loadFromStream(VfsUtil.convertToURL(VfsUtil.pathToUrl(myIconPath)).openStream());
+        image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtil.pathToUrl(myIconPath)).openStream());
       }
       catch (IOException e) {
         LOG.debug(e);
