@@ -93,6 +93,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
     @Override
     protected void somethingChanged() {
+      mySelectedTextFormatter.restoreSelectedText();
       reformatSelectedTextWithNewSettings();
     }
 
@@ -186,6 +187,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     
     @Override
     protected void somethingChanged() {
+      mySelectedTextFormatter.restoreSelectedText();
       reformatSelectedTextWithNewSettings();
     }
     
