@@ -388,7 +388,7 @@ public class TestPackage extends TestObject {
     public void run(@NotNull ProgressIndicator indicator) {
       try {
         mySocket = myServerSocket.accept();
-        DumbService.getInstance(myProject).repeatUntilPassesInSmartMode(new Runnable() {
+        DumbService.getInstance(getProject()).repeatUntilPassesInSmartMode(new Runnable() {
           @Override
           public void run() {
             myClasses.clear();
@@ -410,8 +410,13 @@ public class TestPackage extends TestObject {
 
     @Override
     public void onSuccess() {
-      myCallback.found(myClasses, myJunit4[0]);
-      finish();
+      DumbService.getInstance(getProject()).runWhenSmart(new Runnable() {
+        @Override
+        public void run() {
+          myCallback.found(myClasses, myJunit4[0]);
+          finish();
+        }
+      });
     }
   }
 
