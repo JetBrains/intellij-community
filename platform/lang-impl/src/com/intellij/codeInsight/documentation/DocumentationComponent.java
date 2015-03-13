@@ -553,7 +553,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     setElement(element);
 
     boolean justShown = false;
-    if (!myIsShown && myHint != null) {
+    if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       myEditorPane.setText(text);
       applyFontSize();
       myManager.showHint(myHint);

@@ -642,7 +642,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
-    if (hint == null || !hint.isVisible()) {
+    if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       myDocInfoHintRef = null;
       return null;
     }
