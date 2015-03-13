@@ -1,7 +1,6 @@
 // Copyright (c) 2009 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
 package org.jetbrains.jsonProtocol;
 
 import java.lang.annotation.ElementType;
