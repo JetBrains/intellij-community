@@ -56,11 +56,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.*;
 import java.util.List;
 
@@ -92,10 +95,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
+    myModifierProvider.init();
   }
 
   @Override
   protected void onDisposeAwt() {
+    myModifierProvider.destroy();
     destroyChangedBlocks();
     super.onDisposeAwt();
   }
@@ -906,28 +911,66 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private boolean myCtrlPressed;
     private boolean myAltPressed;
 
-    public ModifierProvider() {
+    private Window myWindow;
+
+    private final WindowFocusListener myWindowFocusListener = new WindowFocusListener() {
+      @Override
+      public void windowGainedFocus(WindowEvent e) {
+        resetState();
+      }
+
+      @Override
+      public void windowLostFocus(WindowEvent e) {
+        resetState();
+      }
+    };
+
+    public void init() {
+      // we can use KeyListener on Editors, but Ctrl+Click will not work with focus in other place.
+      // ex: commit dialog with focus in commit message
       IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
         @Override
         public boolean dispatch(AWTEvent e) {
           if (e instanceof KeyEvent) {
-            final int keyCode = ((KeyEvent)e).getKeyCode();
-            if (keyCode == KeyEvent.VK_SHIFT) {
-              myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;
-              updateActions();
-            }
-            if (keyCode == KeyEvent.VK_CONTROL) {
-              myCtrlPressed = e.getID() == KeyEvent.KEY_PRESSED;
-              updateActions();
-            }
-            if (keyCode == KeyEvent.VK_ALT) {
-              myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-              updateActions();
-            }
+            onKeyEvent((KeyEvent)e);
           }
           return false;
         }
       }, SimpleDiffViewer.this);
+
+      myWindow = UIUtil.getWindow(myPanel);
+      if (myWindow != null) {
+        myWindow.addWindowFocusListener(myWindowFocusListener);
+      }
+    }
+
+    public void destroy() {
+      if (myWindow != null) {
+        myWindow.removeWindowFocusListener(myWindowFocusListener);
+      }
+    }
+
+    private void onKeyEvent(KeyEvent e) {
+      final int keyCode = e.getKeyCode();
+      if (keyCode == KeyEvent.VK_SHIFT) {
+        myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        updateActions();
+      }
+      if (keyCode == KeyEvent.VK_CONTROL) {
+        myCtrlPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        updateActions();
+      }
+      if (keyCode == KeyEvent.VK_ALT) {
+        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        updateActions();
+      }
+    }
+
+    private void resetState() {
+      myShiftPressed = false;
+      myAltPressed = false;
+      myCtrlPressed = false;
+      updateActions();
     }
 
     public boolean isShiftPressed() {
