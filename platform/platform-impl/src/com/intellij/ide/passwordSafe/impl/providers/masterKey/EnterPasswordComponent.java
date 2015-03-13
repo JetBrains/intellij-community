@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.ide.TypePresentationService;
 import com.intellij.ide.passwordSafe.HelpID;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
@@ -28,7 +27,7 @@ public class EnterPasswordComponent extends PasswordComponentBase {
 
   public EnterPasswordComponent(@NotNull MasterKeyPasswordSafe safe, @NotNull Class<?> requestor) {
     super(safe, "Enter");
-    String requestorName = TypePresentationService.getDefaultTypeName(requestor); // requestor.getSimpleName();
+    String requestorName = getRequestorTitle(requestor);
     myPromptLabel.setText("<html><br>Master password is required to unlock the password database.<br>" +
                           "The password database will be unlocked during this session<br>" +
                           "for all subsystems.<br>" +

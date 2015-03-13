@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -503,6 +502,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
 
+    List<Throwable> errors = null;
     VirtualFile dir = getVirtualDir();
     if (!hasSchemes) {
       myFilesToDelete.clear();
@@ -510,14 +510,14 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         try {
           StorageUtil.deleteFile(this, dir);
         }
-        catch (IOException e) {
-          throw new StateStorageException(e);
+        catch (Throwable e) {
+          errors = new SmartList<Throwable>();
+          errors.add(e);
         }
       }
       return;
     }
 
-    List<Throwable> errors = null;
     for (E scheme : schemesToSave) {
       try {
         saveScheme(scheme, nameGenerator);
@@ -530,7 +530,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
 
-    deleteFiles(dir);
+    errors = deleteFiles(dir, errors);
 
     CompoundRuntimeException.doThrow(errors);
   }
@@ -620,9 +620,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return !scheme.getName().equals(scheme.getExternalInfo().getPreviouslySavedName());
   }
 
-  private void deleteFiles(@Nullable VirtualFile dir) {
+  @Nullable
+  private List<Throwable> deleteFiles(@Nullable VirtualFile dir, List<Throwable> errors) {
     if (myFilesToDelete.isEmpty()) {
-      return;
+      return errors;
     }
 
     if (myProvider != null && myProvider.isEnabled()) {
@@ -639,7 +640,15 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       try {
         for (VirtualFile file : dir.getChildren()) {
           if (myFilesToDelete.contains(file.getNameWithoutExtension())) {
-            DirectoryBasedStorage.deleteFile(file, this);
+            try {
+              file.delete(this);
+            }
+            catch (IOException e) {
+              if (errors == null) {
+                errors = new SmartList<Throwable>();
+              }
+              errors.add(e);
+            }
           }
         }
         myFilesToDelete.clear();
@@ -648,6 +657,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         token.finish();
       }
     }
+    return errors;
   }
 
   @Nullable

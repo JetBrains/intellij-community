@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubUser;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
-import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.util.*;
 
 import javax.swing.*;
@@ -71,6 +71,7 @@ public class GithubSettingsPanel {
   private JBLabel myAuthTypeLabel;
   private JSpinner myTimeoutSpinner;
   private JButton myCreateTokenButton;
+  private JBCheckBox myCloneUsingSshCheckBox;
 
   private boolean myCredentialsModified;
 
@@ -145,7 +146,7 @@ public class GithubSettingsPanel {
           );
         }
         catch (IOException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Can't create API token", ex);
+          GithubNotifications.showErrorDialog(myPane, "Can't Create API Token", ex);
         }
       }
     });
@@ -286,6 +287,7 @@ public class GithubSettingsPanel {
     setPassword(mySettings.isAuthConfigured() ? DEFAULT_PASSWORD_TEXT : "");
     setAuthType(mySettings.getAuthType());
     setConnectionTimeout(mySettings.getConnectionTimeout());
+    myCloneUsingSshCheckBox.setSelected(mySettings.isCloneGitUsingSsh());
     resetCredentialsModification();
   }
 
@@ -294,12 +296,15 @@ public class GithubSettingsPanel {
       mySettings.setAuthData(getAuthData(), true);
     }
     mySettings.setConnectionTimeout(getConnectionTimeout());
+    mySettings.setCloneGitUsingSsh(myCloneUsingSshCheckBox.isSelected());
     resetCredentialsModification();
   }
 
   public boolean isModified() {
-    return myCredentialsModified || !Comparing.equal(mySettings.getHost(), getHost()) ||
-           !Comparing.equal(mySettings.getConnectionTimeout(), getConnectionTimeout());
+    return myCredentialsModified ||
+           !Comparing.equal(mySettings.getHost(), getHost()) ||
+           !Comparing.equal(mySettings.getConnectionTimeout(), getConnectionTimeout()) ||
+           !Comparing.equal(mySettings.isCloneGitUsingSsh(), myCloneUsingSshCheckBox.isSelected());
   }
 
   public void resetCredentialsModification() {

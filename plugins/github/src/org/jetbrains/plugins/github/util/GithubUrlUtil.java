@@ -209,6 +209,11 @@ public class GithubUrlUtil {
 
   @NotNull
   public static String getCloneUrl(@NotNull String user, @NotNull String repo) {
-    return getGithubHost() + "/" + user + "/" + repo + ".git";
+    if (GithubSettings.getInstance().isCloneGitUsingSsh()) {
+      return "git@" + getGitHostWithoutProtocol() + ":" + user + "/" + repo + ".git";
+    }
+    else {
+      return "https://" + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
+    }
   }
 }

@@ -975,7 +975,7 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" hide_feedback_checkbox done
 hide_feedback_checkbox:
-    ; show feedback web page checkbox through uninstall of products which is need.
+    ; do not show feedback web page checkbox through products uninstall.
     push $R1
     !insertmacro INSTALLOPTIONS_READ $R1 "DeleteSettings.ini" "Settings" "NumFields"
     IntOp $R1 $R1 - 1
