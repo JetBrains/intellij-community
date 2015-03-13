@@ -1,0 +1,13 @@
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/Tools
+
+install:
+  - mvn install
+  - ant -f build-init.xml
+  - ant -f build-test.xml -DIDEA_HOME=./idea-IC

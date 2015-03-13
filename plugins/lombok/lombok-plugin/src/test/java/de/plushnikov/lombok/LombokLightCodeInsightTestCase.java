@@ -13,15 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * Date: 20.01.14 Time: 20:27
- */
 public abstract class LombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
-  static {
-    // Init home of IDEAS Sources
-    System.setProperty("idea.home.path", "E:\\Projekte\\Idea\\_ideaIC-140.2683.2");
-  }
-
   private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
   private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
 

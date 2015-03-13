@@ -1,6 +1,7 @@
-import lombok.Delegate;
-
 import java.lang.Exception;
+
+class Exception {
+}
 
 interface Callable<V> {
   V call() throws Exception;
@@ -8,7 +9,7 @@ interface Callable<V> {
 
 public class DelegateWithException implements Callable<Integer> {
 
-  @Delegate
+  @lombok.Delegate
   private final Callable<Integer> delegated;
 
   @java.beans.ConstructorProperties({"delegated"})

@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.9.1</version>
+  <version>0.9.2</version>
 
   <idea-version since-build="138.00"/>
 
@@ -200,7 +200,14 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
-		<li>0.9.1
+		  <li>0.9.2
+				<ol>
+				    <li>Fixed #81: @Builder: buildMethod should have same throws-list as annotated static method</li>
+				    <li>Fixed #82: Abstract Class + @Delegate</li>
+				    <li>Fixed #83: Getting inconvertible types error assigning new builder instance</li>
+				</ol>
+			</li>
+		  <li>0.9.1
 				<ol>
 				    <li>Fixed #33: Builder annotation with partial implementation shows errors</li>
 				    <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>

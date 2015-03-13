@@ -1,4 +1,5 @@
-import java.lang.Exception;
+class Exception {
+}
 
 interface Callable<V> {
   V call() throws Exception;

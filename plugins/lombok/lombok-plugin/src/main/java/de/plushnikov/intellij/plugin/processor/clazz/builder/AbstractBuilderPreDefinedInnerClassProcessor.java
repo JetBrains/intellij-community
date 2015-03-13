@@ -9,7 +9,7 @@ import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
-import de.plushnikov.intellij.plugin.psi.LombokLightClass;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     List<? super PsiElement> result = Collections.emptyList();
 
     final PsiElement parentElement = psiClass.getParent();
-    if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClass)) {
+    if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClassBuilder)) {
       PsiMethod psiParentMethod = null;
       final PsiClass psiParentClass = (PsiClass) parentElement;
       PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiParentClass, getSupportedAnnotation());

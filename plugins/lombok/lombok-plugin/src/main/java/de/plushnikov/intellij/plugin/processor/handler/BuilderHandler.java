@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
@@ -425,9 +426,25 @@ public class BuilderHandler {
         .withModifier(PsiModifier.PUBLIC)
         .withBody(psiCodeBlock);
 
+    if (null == psiMethod) {
+      final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
+      if (!classConstructors.isEmpty()) {
+        final PsiMethod constructor = classConstructors.iterator().next();
+        addExceptions(methodBuilder, constructor);
+      }
+    } else {
+      addExceptions(methodBuilder, psiMethod);
+    }
+
     addTypeParameters(builderClass, psiMethod, methodBuilder);
 
     return methodBuilder;
+  }
+
+  private void addExceptions(LombokLightMethodBuilder methodBuilder, PsiMethod psiMethod) {
+    for (PsiClassType psiClassType : psiMethod.getThrowsList().getReferencedTypes()) {
+      methodBuilder.withException(psiClassType);
+    }
   }
 
   private void addTypeParameters(PsiClass builderClass, PsiMethod psiMethod, LombokLightMethodBuilder methodBuilder) {

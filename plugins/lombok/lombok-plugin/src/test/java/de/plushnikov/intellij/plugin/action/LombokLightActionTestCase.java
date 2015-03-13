@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import de.plushnikov.lombok.LombokLightCodeInsightTestCase;
 
-public abstract class LombokLightActionTest extends LombokLightCodeInsightTestCase {
+public abstract class LombokLightActionTestCase extends LombokLightCodeInsightTestCase {
   protected void doTest() throws Exception {
     myFixture.configureByFile(getBasePath() + "/before" + getTestName(false) + ".java");
     performActionTest();

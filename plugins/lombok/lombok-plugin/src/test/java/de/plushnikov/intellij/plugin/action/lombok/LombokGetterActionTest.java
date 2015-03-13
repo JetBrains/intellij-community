@@ -1,9 +1,9 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import de.plushnikov.intellij.plugin.action.LombokLightActionTest;
+import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
 
-public class LombokGetterActionTest extends LombokLightActionTest {
+public class LombokGetterActionTest extends LombokLightActionTestCase {
 
   protected AnAction getAction() {
     return new LombokGetterAction();

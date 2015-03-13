@@ -10,7 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.psi.LombokLightClass;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class LombokStructureViewExtension implements StructureViewExtension {
     }
 
     for (PsiClass psiInnerClass : psiClass.getInnerClasses()) {
-      if (psiInnerClass instanceof LombokLightClass) {
+      if (psiInnerClass instanceof LombokLightClassBuilder) {
         result.add(new JavaClassTreeElement(psiInnerClass, false, new HashSet<PsiClass>() {{
           add(psiClass);
         }}));

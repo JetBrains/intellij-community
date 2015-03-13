@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class GetterTestCase extends LombokParsingTestCase {
+public class GetterTest extends LombokParsingTestCase {
 
   protected boolean shouldCompareCodeBlocks() {
     return false;
