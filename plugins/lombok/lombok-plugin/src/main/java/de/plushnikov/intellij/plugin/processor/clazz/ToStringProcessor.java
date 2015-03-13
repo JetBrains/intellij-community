@@ -12,7 +12,6 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
-import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -112,7 +111,6 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final String blockText = String.format("return \"%s(%s)\";", psiClass.getQualifiedName(), paramString);
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
-    UserMapKeys.addReadUsageFor(psiFields);
     return method;
   }
 

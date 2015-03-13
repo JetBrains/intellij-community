@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.string;
 
 public class LombokConfigCompletionContributor extends CompletionContributor {
 

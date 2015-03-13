@@ -3,9 +3,8 @@
 package de.plushnikov.intellij.plugin.language;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.TokenType;
-
+import com.intellij.psi.tree.IElementType;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 
 

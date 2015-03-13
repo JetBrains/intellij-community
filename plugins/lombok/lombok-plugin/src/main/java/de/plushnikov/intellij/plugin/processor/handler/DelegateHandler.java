@@ -21,7 +21,6 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -114,9 +113,6 @@ public class DelegateHandler {
         for (Pair<PsiMethod, PsiSubstitutor> pair : methodsToDelegate) {
           target.add(generateDelegateMethod(psiClass, psiElement, psiAnnotation, pair.getFirst(), pair.getSecond()));
         }
-
-        UserMapKeys.addGeneralUsageFor(psiElement);
-        UserMapKeys.addReadUsageFor(psiElement);
       }
     }
   }

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -63,7 +62,6 @@ public class SynchronizedProcessor extends AbstractProcessor {
               problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName),
                   PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.FINAL, true, false));
             }
-            UserMapKeys.addReadUsageFor(lockField);
           } else {
             final PsiClassType javaLangObjectType = PsiType.getJavaLangObject(containingClass.getManager(), GlobalSearchScope.allScope(containingClass.getProject()));
 
