@@ -1102,7 +1102,7 @@ public class FSRecords implements Forceable {
       r.lock();
       try {
         final int nameId = getRecordInt(id, NAME_OFFSET);
-        return nameId != 0 ? getNames().valueOf(nameId) : "";
+        return nameId != 0 ? FileNameCache.getVFileName(nameId).toString() : "";
       }
       finally {
         r.unlock();
