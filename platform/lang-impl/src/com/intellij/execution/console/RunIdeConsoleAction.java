@@ -212,14 +212,12 @@ public class RunIdeConsoleAction extends DumbAwareAction {
       consoleView.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
     }
     selectContent(descriptor);
-    consoleView.scrollToEnd();
   }
 
   private static void printInContent(RunContentDescriptor descriptor, Object o, ConsoleViewContentType contentType) {
     selectContent(descriptor);
     ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
     consoleView.print(o + "\n", contentType);
-    consoleView.scrollToEnd();
   }
 
   private static void selectContent(RunContentDescriptor descriptor) {
@@ -253,22 +251,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     };
 
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    //toolbarActions.add(new DumbAwareAction("Rerun", null, AllIcons.Actions.Rerun) {
-    //  @Override
-    //  public void update(@NotNull AnActionEvent e) {
-    //    ProgressIndicator indicator = indicatorRef.get();
-    //    e.getPresentation().setEnabled(file.isValid() && (indicator == null || !indicator.isRunning()));
-    //  }
-    //
-    //  @Override
-    //  public void actionPerformed(@NotNull AnActionEvent e) {
-    //    consoleView.clear();
-    //    rerunRunnable.run();
-    //  }
-    //});
-    for (AnAction action : consoleView.createConsoleActions()) {
-      toolbarActions.add(action);
-    }
+    toolbarActions.addAll(consoleView.createConsoleActions());
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
@@ -318,9 +301,10 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   public static class IDE {
-    private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
     public final Application application = ApplicationManager.getApplication();
     public final Project project;
+
+    private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
     private final WeakReference<RunContentDescriptor> descriptor;
 
     IDE(Project project, RunContentDescriptor descriptor) {
