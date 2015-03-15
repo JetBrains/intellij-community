@@ -21,4 +21,9 @@
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomScriptMemberContributor"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.unresolvedReferenceQuickFixProvider
+        implementation="org.jetbrains.idea.maven.dom.intentions.GroovyResolveReferenceQuickFixProvider"/>
+  </extensions>
 </idea-plugin>

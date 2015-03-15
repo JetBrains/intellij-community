@@ -20,10 +20,10 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ResolveReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
+public class JavaResolveReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
 
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
-    registrar.register(new AddMavenDependencyQuickFix(ref));
+    registrar.register(new JavaAddMavenDependencyQuickFix(ref));
   }
 
   @NotNull
