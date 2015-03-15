@@ -352,7 +352,7 @@ public class RecentProjectPanel extends JPanel {
 
       FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
       int maxWidth = RecentProjectPanel.this.getWidth() - JBUI.scale(40);
-      if (fm.stringWidth(fullText) > maxWidth) {
+      if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
         int left = 1; int right = 1;
         int center = fullText.length() / 2;
         String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
