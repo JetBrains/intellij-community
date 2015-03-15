@@ -103,8 +103,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        int sideInset = !UISettings.getInstance().HIDE_TABS_IF_NEED ? 2 : 10;
-        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, sideInset, TabsUtil.TAB_VERTICAL_PADDING, sideInset));
+        return new UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 10, TabsUtil.TAB_VERTICAL_PADDING, 10));
       }
     }).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()

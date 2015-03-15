@@ -173,17 +173,9 @@ public class TabLabel extends JPanel {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs()) {
-      if (UISettings.getInstance().HIDE_TABS_IF_NEED) {
-        if (UISettings.getInstance().SHOW_CLOSE_BUTTON) insets.right = 3;
-      }
-      else {
-        insets.right = (UISettings.getInstance().SHOW_CLOSE_BUTTON || !UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) ? 3 : 6;
-        insets.left = 5;
-      }
-      return new Insets(insets.top, insets.left, insets.bottom, insets.right);
+    if (myTabs.isEditorTabs() && UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+        insets.right = 3;
     }
-
     return insets;
   }
 
