@@ -27,10 +27,11 @@ import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class IntelliSortChooserToggleAction extends ToggleAction implements DumbAware {
+  @NotNull private static final String DEFAULT_TEXT = "IntelliSort";
   @NotNull private static final String DEFAULT_DESCRIPTION = "Turn IntelliSort On/Off";
 
   public IntelliSortChooserToggleAction() {
-    super("IntelliSort", DEFAULT_DESCRIPTION, IconUtil.flip(VcsLogIcons.Branch, false));
+    super(DEFAULT_TEXT, DEFAULT_DESCRIPTION, IconUtil.flip(VcsLogIcons.Branch, false));
   }
 
   @Override
@@ -54,9 +55,15 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
     e.getPresentation().setEnabled(BekSorter.isBekEnabled() && logUI != null);
 
     if (logUI != null) {
-      e.getPresentation().setDescription("Turn IntelliSort " + (logUI.getBekType() == PermanentGraph.SortType.Normal ? "On" : "Off" + ""));
+      boolean off = logUI.getBekType() == PermanentGraph.SortType.Normal;
+      e.getPresentation().setText("IntelliSort is " + (off ? "Off" : "On"));
+      e.getPresentation().setDescription("Turn IntelliSort " + (off ? "on" : "off") + " (" +
+                                         (off
+                                          ? PermanentGraph.SortType.Bek.getDescription().toLowerCase()
+                                          : PermanentGraph.SortType.Normal.getDescription().toLowerCase()) + ").");
     }
     else {
+      e.getPresentation().setText(DEFAULT_TEXT);
       e.getPresentation().setDescription(DEFAULT_DESCRIPTION);
     }
   }
