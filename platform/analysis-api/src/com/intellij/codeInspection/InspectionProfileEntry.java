@@ -120,12 +120,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (injectionHost != null) {
       Set<InspectionSuppressor> injectionHostSuppressors = getSuppressors(injectionHost);
       for (InspectionSuppressor suppressor : injectionHostSuppressors) {
-        addAllSuppressActions(fixes, injectionHost, suppressor, ThreeState.YES, getShortName());
+        addAllSuppressActions(fixes, injectionHost, suppressor, ThreeState.YES, getSuppressId());
       }
     }
 
     for (InspectionSuppressor suppressor : suppressors) {
-      addAllSuppressActions(fixes, element, suppressor, injectionHost != null ? ThreeState.NO : ThreeState.UNSURE, getShortName());
+      addAllSuppressActions(fixes, element, suppressor, injectionHost != null ? ThreeState.NO : ThreeState.UNSURE, getSuppressId());
     }
     return fixes.toArray(new SuppressQuickFix[fixes.size()]);
   }
@@ -134,8 +134,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
                                             PsiElement element,
                                             InspectionSuppressor suppressor,
                                             ThreeState appliedToInjectionHost,
-                                            String toolShortName) {
-    final SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolShortName);
+                                            String toolId) {
+    final SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolId);
     for (SuppressQuickFix action : actions) {
       if (action instanceof InjectionAwareSuppressQuickFix) {
         ((InjectionAwareSuppressQuickFix)action).setShouldBeAppliedToInjectionHost(appliedToInjectionHost);

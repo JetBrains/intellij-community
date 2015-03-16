@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,16 +28,14 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   @NonNls static final String ALL = "ALL";
 
   @NotNull
-  public static SuppressQuickFix[] getSuppressFixes(@NotNull String shortName) {
-    return getSuppressFixes(shortName, new DefaultXmlSuppressionProvider());
+  public static SuppressQuickFix[] getSuppressFixes(@NotNull String toolId) {
+    return getSuppressFixes(toolId, new DefaultXmlSuppressionProvider());
   }
 
   @NotNull
-  public static SuppressQuickFix[] getSuppressFixes(@NotNull String shortName, @NotNull XmlSuppressionProvider provider) {
-    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null) return SuppressQuickFix.EMPTY_ARRAY;
-    final String id = key.getID();
-    return new SuppressQuickFix[]{new SuppressTagStatic(id, provider), new SuppressForFile(id, provider), new SuppressAllForFile(provider)};
+  public static SuppressQuickFix[] getSuppressFixes(@NotNull String toolId, @NotNull XmlSuppressionProvider provider) {
+    return new SuppressQuickFix[]{new SuppressTagStatic(toolId, provider), new SuppressForFile(toolId, provider),
+      new SuppressAllForFile(provider)};
   }
 
   public abstract static class XmlSuppressFix implements SuppressQuickFix {
