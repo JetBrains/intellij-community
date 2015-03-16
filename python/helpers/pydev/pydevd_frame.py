@@ -78,6 +78,7 @@ class PyDBFrame:
                         # print frame.f_code.co_name
                         if exception_breakpoint.ignore_libraries:
                             if mainDebugger.not_in_scope(frame.f_code.co_filename):
+                                pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
                                 return False, frame
 
                         add_exception_to_frame(frame, (exception, value, trace))
