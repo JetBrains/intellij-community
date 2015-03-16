@@ -313,7 +313,6 @@ public class SimpleDiffChange {
       boolean isEditable = DiffUtil.isEditable(mySide.select(myEditor1, myEditor2));
       boolean isOtherEditable = DiffUtil.isEditable(mySide.other().select(myEditor1, myEditor2));
 
-      if (myCtrlPressed && myShiftPressed) return null;
       if ((myShiftPressed || !isOtherEditable) && isEditable) {
         return createRevertRenderer(mySide);
       }
