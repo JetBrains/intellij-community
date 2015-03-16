@@ -20,6 +20,7 @@ package com.intellij.openapi.util;
  * @author peter
  */
 public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("AtomicNullableLazyValue");
   private volatile T myValue;
   private volatile boolean myComputed;
 
@@ -30,12 +31,17 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
     if (computed) {
       return value;
     }
+    //noinspection SynchronizeOnThis
     synchronized (this) {
       computed = myComputed;
       value = myValue;
       if (!computed) {
-        myValue = value = compute();
-        myComputed = true;
+        RecursionGuard.StackStamp stamp = ourGuard.markStack();
+        value = compute();
+        if (stamp.mayCacheNow()) {
+          myValue = value;
+          myComputed = true;
+        }
       }
     }
     return value;

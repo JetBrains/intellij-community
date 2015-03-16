@@ -23,6 +23,7 @@ import com.intellij.util.NotNullFunction;
  * @author peter
  */
 public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NotNullLazyKey");
   private final NotNullFunction<H,T> myFunction;
 
   private NotNullLazyKey(@NotNull @NonNls String name, @NotNull NotNullFunction<H, T> function) {
@@ -34,7 +35,11 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
   public final T getValue(@NotNull H h) {
     T data = h.getUserData(this);
     if (data == null) {
-      h.putUserData(this, data = myFunction.fun(h));
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      data = myFunction.fun(h);
+      if (stamp.mayCacheNow()) {
+        h.putUserData(this, data);
+      }
     }
     return data;
   }

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("VolatileNullableLazyValue");
   private volatile boolean myComputed;
   @Nullable private volatile T myValue;
 
@@ -28,13 +29,17 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   @Nullable
   protected abstract T compute();
 
-  @Override
   @Nullable
-  public final T getValue() {
+  public T getValue() {
+    T value = myValue;
     if (!myComputed) {
-      myValue = compute();
-      myComputed = true;
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      value = compute();
+      if (stamp.mayCacheNow()) {
+        myValue = value;
+        myComputed = true;
+      }
     }
-    return myValue;
+    return value;
   }
 }
