@@ -61,6 +61,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +78,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -422,7 +426,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        assert !isReadAccessAllowed(): describe(Thread.currentThread());
+        assert !isReadAccessAllowed() : describe(Thread.currentThread());
         try {
           return action.call();
         }
@@ -435,7 +439,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         finally {
           //ReflectionUtil.resetThreadLocals();
           Thread.interrupted(); // reset interrupted status
-          assert !isReadAccessAllowed(): describe(Thread.currentThread());
+          assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }
         return null;
       }
@@ -662,8 +666,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     progress.setTitle(progressTitle);
 
-    final CountDownLatch readActionAcquired = new CountDownLatch(1);
-    final CountDownLatch modalityEntered = new CountDownLatch(1);
+    final Semaphore readActionAcquired = new Semaphore();
+    readActionAcquired.down();
+    final Semaphore modalityEntered = new Semaphore();
+    modalityEntered.down();
     executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -671,8 +677,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              readActionAcquired.countDown();
-              waitFor(modalityEntered);
+              readActionAcquired.up();
+              modalityEntered.waitFor();
               ProgressManager.getInstance().runProcess(process, progress);
             }
           });
@@ -688,26 +694,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     });
 
-    waitFor(readActionAcquired);
+    readActionAcquired.waitFor();
     progress.startBlocking(new Runnable() {
       @Override
       public void run() {
-        modalityEntered.countDown();
+        modalityEntered.up();
       }
     });
 
     LOG.assertTrue(!progress.isRunning());
 
     return !progress.isCanceled();
-  }
-
-  private static void waitFor(@NotNull CountDownLatch modalityEntered) {
-    try {
-      modalityEntered.await();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
