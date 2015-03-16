@@ -45,7 +45,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private int myActionExecutionCount;
 
   public void setUp() throws Exception {
-    assumeFalse(GraphicsEnvironment.isHeadless());
+    assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
 
     super.setUp();
 
