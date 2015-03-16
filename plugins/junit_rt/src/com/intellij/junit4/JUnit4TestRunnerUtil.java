@@ -343,7 +343,7 @@ public class JUnit4TestRunnerUtil {
       try {
         Method getChildren = Parameterized.class.getDeclaredMethod("getChildren", new Class[0]);
         getChildren.setAccessible(true);
-        children = (List)getChildren.invoke(myRunnerClass, new Object[0]);
+        children = new ArrayList((List)getChildren.invoke(myRunnerClass, new Object[0]));
       }
       catch (Throwable e) {
         children = super.getChildren();
@@ -390,7 +390,7 @@ public class JUnit4TestRunnerUtil {
             final BlockJUnit4ClassRunner child = (BlockJUnit4ClassRunner)children.get(i);
             final Method getChildrenMethod = BlockJUnit4ClassRunner.class.getDeclaredMethod("getChildren", new Class[0]);
             getChildrenMethod.setAccessible(true);
-            final List list = (List)getChildrenMethod.invoke(child, new Object[0]);
+            final List list = new ArrayList ((List)getChildrenMethod.invoke(child, new Object[0]));
             for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
               final FrameworkMethod description = (FrameworkMethod)iterator.next();
               if (!description.getName().equals(myMethodName)) {
