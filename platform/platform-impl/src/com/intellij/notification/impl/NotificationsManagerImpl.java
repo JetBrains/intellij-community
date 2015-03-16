@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
@@ -248,6 +249,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     Window frame = WindowManager.getInstance().getFrame(project);
     if (frame == null && project == null) {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      while (frame instanceof DialogWrapperDialog && ((DialogWrapperDialog)frame).getDialogWrapper().isModalProgress()) {
+        frame = frame.getOwner();
+      }
     }
     if (frame == null && project == null) {
       frame = (Window)WelcomeFrame.getInstance();
