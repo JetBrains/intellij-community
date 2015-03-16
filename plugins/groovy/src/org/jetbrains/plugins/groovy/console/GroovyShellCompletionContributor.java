@@ -36,7 +36,7 @@ public class GroovyShellCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
-    if (!(file instanceof GroovyShellCodeFragment)) return;
+    if (!(file instanceof GroovyShellCodeFragment) || !((GroovyShellCodeFragment)file).isShell()) return;
 
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();

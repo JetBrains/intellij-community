@@ -1,5 +1,6 @@
 package com.intellij.tasks;
 
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -7,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class CustomTaskState {
-  private String myId;
-  private String myPresentableName;
+  private String myId = "";
+  private String myPresentableName = "";
   private boolean myPredefined;
 
   /**
@@ -28,6 +29,7 @@ public class CustomTaskState {
    *
    * @see TaskRepository#setTaskState(Task, CustomTaskState)
    */
+  @Attribute("id")
   @NotNull
   public String getId() {
     return myId;
@@ -36,13 +38,14 @@ public class CustomTaskState {
   /**
    * For serialization purposes only.
    */
-  public void setId(String id) {
+  public void setId(@NotNull String id) {
     myId = id;
   }
 
   /**
    * Text that describes this state and will be shown to user in UI (unlike ID it's not necessarily unique).
    */
+  @Attribute("name")
   @NotNull
   public String getPresentableName() {
     return myPresentableName;
@@ -112,7 +115,8 @@ public class CustomTaskState {
    *
    * @see #asPredefined()
    */
-  private boolean isPredefined() {
+  @Attribute("predefined")
+  public boolean isPredefined() {
     return myPredefined;
   }
 

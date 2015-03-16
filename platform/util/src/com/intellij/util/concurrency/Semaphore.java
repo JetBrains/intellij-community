@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public class Semaphore {
+  /**
+   * Creates Semaphore in an up state
+   */
+  public Semaphore() {
+  }
+
   private static final class Sync extends AbstractQueuedSynchronizer {
     @Override
     public int tryAcquireShared(int acquires) {
@@ -38,7 +44,7 @@ public class Semaphore {
       }
     }
 
-    final void down() {
+    private void down() {
       while (true) {
         int current = getState();
         int next = current + 1;

@@ -15,34 +15,34 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
- * Allow to reuse equal strings to avoid memory being wasted on them. Strings are cached on weak references
+ * Allow to reuse structurally equal objects to avoid memory being wasted on them. Objects are cached on weak references
  * and garbage-collected when not needed anymore.
  *
- * @see WeakInterner
  * @author peter
  */
-public class WeakStringInterner extends StringInterner {
-  private final WeakInterner<String> myDelegate = new WeakInterner<String>();
+public class WeakInterner<T> {
+  private final ConcurrentMap<T, T> myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   
   @NotNull
-  @Override
-  public String intern(@NotNull String name) {
-    return myDelegate.intern(name);
+  public T intern(@NotNull T name) {
+    return ConcurrencyUtil.cacheOrGet(myMap, name, name);
   }
 
-  @Override
   public void clear() {
-    myDelegate.clear();
+    myMap.clear();
   }
 
   @NotNull
-  @Override
-  public Set<String> getValues() {
-    return myDelegate.getValues();
+  public Set<T> getValues() {
+    return ContainerUtil.newTroveSet(myMap.values());
   }
+
+
 }
