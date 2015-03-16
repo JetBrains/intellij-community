@@ -111,4 +111,10 @@ public class XInspectDialog extends DialogWrapper {
   protected String getDimensionServiceKey() {
     return "#xdebugger.XInspectDialog";
   }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myDebuggerTreePanel.getTree();
+  }
 }
