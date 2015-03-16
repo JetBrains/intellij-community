@@ -167,6 +167,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       ContainerUtil.addIfNotNull(suppressors, elementLanguageSuppressor);
       return suppressors;
     }
+    if (!element.getLanguage().isKindOf(viewProvider.getBaseLanguage())) {
+      // handling embedding elements {@link EmbeddingElementType
+      Set<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
+      ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
+      ContainerUtil.addIfNotNull(suppressors, elementLanguageSuppressor);
+      return suppressors;
+    }
     return elementLanguageSuppressor != null
            ? Collections.singleton(elementLanguageSuppressor)
            : Collections.<InspectionSuppressor>emptySet();
