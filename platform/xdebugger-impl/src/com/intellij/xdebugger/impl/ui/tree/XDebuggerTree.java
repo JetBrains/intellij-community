@@ -388,6 +388,20 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myLaterInvocator;
   }
 
+  public void selectNodeOnLoad(final Condition<TreeNode> nodeFilter) {
+    addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (nodeFilter.value(node)) {
+          setSelectionPath(node.getPath());
+        }
+      }
+
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {}
+    });
+  }
+
   public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
