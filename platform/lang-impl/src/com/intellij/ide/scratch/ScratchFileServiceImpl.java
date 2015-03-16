@@ -306,7 +306,9 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   @Override
-  public VirtualFile findFile(@NotNull final RootType rootType, @NotNull final String pathName, Option option) throws IOException {
+  public VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
     String fullPath = getRootPath(rootType) + "/" + pathName;
     if (option != Option.create_new_always) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fullPath);

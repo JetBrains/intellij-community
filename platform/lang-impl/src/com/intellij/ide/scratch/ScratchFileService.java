@@ -42,7 +42,7 @@ public abstract class ScratchFileService {
   @Nullable
   public abstract RootType getRootType(@NotNull VirtualFile file);
 
-  public abstract VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, Option option) throws IOException;
+  public abstract VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException;
 
   @NotNull
   public abstract PerFileMappings<Language> getScratchesMapping();
