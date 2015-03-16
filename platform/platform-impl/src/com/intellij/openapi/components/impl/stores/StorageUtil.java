@@ -35,6 +35,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,6 +43,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -136,7 +138,7 @@ public class StorageUtil {
 
     boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
     if (equals) {
-      LOG.warn("Content equals, but it must be handled not on this level");
+      LOG.warn("Content equals, but it must be handled not on this level — " + result.getName());
       return result;
     }
     else {
@@ -176,7 +178,10 @@ public class StorageUtil {
           }
         });
       }
-    });
+    }
+    finally {
+      token.finish();
+    }
   }
 
   private static boolean isEqualContent(VirtualFile result,
@@ -189,17 +194,18 @@ public class StorageUtil {
     if (result.getLength() != toWriteLength) {
       equals = false;
     }
-    catch (FileNotFoundException e) {
-      if (virtualFile == null) {
-        throw e;
+    else {
+      byte[] bytes = result.contentsToByteArray();
+      if (lineSeparatorIfPrependXmlProlog != null) {
+        if (!ArrayUtil.startsWith(bytes, XML_PROLOG) || !ArrayUtil.startsWith(bytes, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes())) {
+          equals = false;
+        }
       }
-      else {
-        throw new ReadOnlyModificationException(virtualFile, e);
+      if (!ArrayUtil.startsWith(bytes, headerLength, content.toByteArray())) {
+        equals = false;
       }
     }
-    finally {
-      token.finish();
-    }
+    return equals;
   }
 
   public static void deleteFile(@NotNull File file, @NotNull final Object requestor, @Nullable final VirtualFile virtualFile) throws IOException {
@@ -245,16 +251,23 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
+  public static VirtualFile getOrCreateVirtualFile(@Nullable final Object requestor, @NotNull final File ioFile) throws IOException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     if (virtualFile == null) {
       File parentFile = ioFile.getParentFile();
       // need refresh if the directory has just been created
-      VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
+      final VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
       if (parentVirtualFile == null) {
         throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile == null ? "" : parentFile.getPath()));
       }
-      virtualFile = parentVirtualFile.createChildData(requestor, ioFile.getName());
+      boolean underWriteAction = ApplicationManager.getApplication().isWriteAccessAllowed();
+      virtualFile = underWriteAction ? parentVirtualFile.createChildData(requestor, ioFile.getName()) :
+                    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+                      @Override
+                      public VirtualFile compute() throws IOException {
+                        return parentVirtualFile.createChildData(requestor, ioFile.getName());
+                      }
+                    });
     }
     return virtualFile;
   }
