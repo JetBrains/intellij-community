@@ -127,7 +127,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   protected Color getArrowButtonFillColor(Color defaultColor) {
     final Color color = myComboBox.hasFocus() ? UIManager.getColor("ComboBox.darcula.arrowFocusedFillColor")
                         : UIManager.getColor("ComboBox.darcula.arrowFillColor");
-    return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? UIUtil.getControlColor() : color;
+    return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? new JBColor(getBorderColor(), UIUtil.getControlColor()) : color;
   }
 
   @Override
