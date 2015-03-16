@@ -176,7 +176,6 @@ public class JavaCompletionUtil {
     return result;
   }
 
-  @Nullable
   private static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
     if (substitutor == null) return null;
 
