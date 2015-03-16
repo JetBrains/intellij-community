@@ -178,7 +178,6 @@ public class GithubShareAction extends DumbAwareAction {
 
         GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
         final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
-        LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
         if (repository == null) {
           GithubNotifications.showError(project, "Failed to create GitHub Repository", "Can't find Git repository");
           return;
