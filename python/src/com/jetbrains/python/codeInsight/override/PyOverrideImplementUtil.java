@@ -121,7 +121,7 @@ public class PyOverrideImplementUtil {
           return new SpeedSearchComparator(false) {
             @Nullable
             @Override
-            public Iterable<TextRange> matchingFragments(String pattern, String text) {
+            public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
               return super.matchingFragments(PyMethodMember.trimUnderscores(pattern), text);
             }
           };

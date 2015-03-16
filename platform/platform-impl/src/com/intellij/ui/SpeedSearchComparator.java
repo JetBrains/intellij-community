@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,11 +49,11 @@ public class SpeedSearchComparator {
   }
 
   @Nullable
-  public Iterable<TextRange> matchingFragments(String pattern, String text) {
+  public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
     return obtainMatcher(pattern).matchingFragments(text);
   }
 
-  private MinusculeMatcher obtainMatcher(String pattern) {
+  private MinusculeMatcher obtainMatcher(@NotNull String pattern) {
     if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
       myRecentSearchText = pattern;
       if (myShouldMatchCamelCase) {
