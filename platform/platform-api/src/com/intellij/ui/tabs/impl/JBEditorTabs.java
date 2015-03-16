@@ -271,7 +271,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
     shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1);
     shape.labelTopY =
-      shape.labelPath.getY() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? shape.labelPath.deltaY(1) : 0) ;
+      shape.labelPath.getY() + (getPosition() == JBTabsPosition.top ? shape.labelPath.deltaY(1) : 0) ;
     shape.labelLeftX = shape.labelPath.getX() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(
       1));
     shape.labelRightX = shape.labelPath.getMaxX() - shape.labelPath.deltaX(1);
