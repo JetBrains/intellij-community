@@ -126,6 +126,10 @@ public class JavaTestGenerator implements TestGenerator {
     final Properties defaultProperties = FileTemplateManager.getInstance(targetDirectory.getProject()).getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
     properties.setProperty(FileTemplate.ATTRIBUTE_NAME, d.getClassName());
+    final PsiClass targetClass = d.getTargetClass();
+    if (targetClass != null && targetClass.isValid()) {
+      properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, targetClass.getQualifiedName());
+    }
     try {
       final PsiElement psiElement = FileTemplateUtil.createFromTemplate(fileTemplate, templateName, properties, targetDirectory);
       if (psiElement instanceof PsiClass) {

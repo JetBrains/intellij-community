@@ -442,6 +442,10 @@ public class CreateTestDialog extends DialogWrapper {
     return myTargetClassNameField.getText();
   }
 
+  public PsiClass getTargetClass() {
+    return myTargetClass;
+  }
+
   @Nullable
   public String getSuperClassName() {
     String result = mySuperClassField.getText().trim();
