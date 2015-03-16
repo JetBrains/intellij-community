@@ -2031,7 +2031,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             JBScrollPane content = new JBScrollPane(myList) {
               {
-                setBorder(null);
+                if (UIUtil.isUnderDarcula()) {
+                  setBorder(null);
+                }
               }
               @Override
               public Dimension getPreferredSize() {
