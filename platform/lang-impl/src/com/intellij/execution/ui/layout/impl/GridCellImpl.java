@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.MutualMap;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
@@ -35,7 +34,7 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -69,12 +68,7 @@ public class GridCellImpl implements GridCell {
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new JBTabsImpl(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
-      @SuppressWarnings("UseJBColor")
-      @Override
-      protected Color getFocusedTopFillColor() {
-        return  UIUtil.isUnderDarcula() ? ColorUtil.toAlpha(new Color(0x1E2533), 100)  : new Color(202, 211, 227);
-      }
+    myTabs = new JBEditorTabs(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
 
       @Override
       public boolean useSmallLabels() {
@@ -87,18 +81,6 @@ public class GridCellImpl implements GridCell {
           return;
         }
         super.paintBorder(g2d, shape, borderColor);
-      }
-
-      @SuppressWarnings("UseJBColor")
-      @Override
-      protected Color getFocusedBottomFillColor() {
-        return UIUtil.isUnderDarcula() ? new Color(0x1E2533)  : new Color(0xc2cbdb);
-      }
-
-      @SuppressWarnings("UseJBColor")
-      @Override
-      public Color getBackground() {
-        return UIUtil.isUnderDarcula() ? new Color(0x27292A) : super.getBackground();
       }
 
       @Override
