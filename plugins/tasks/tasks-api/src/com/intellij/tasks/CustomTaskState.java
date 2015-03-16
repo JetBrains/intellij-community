@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class CustomTaskState {
-  private String myId;
-  private String myPresentableName;
+  private String myId = "";
+  private String myPresentableName = "";
   private boolean myPredefined;
 
   /**
@@ -38,7 +38,7 @@ public class CustomTaskState {
   /**
    * For serialization purposes only.
    */
-  public void setId(String id) {
+  public void setId(@NotNull String id) {
     myId = id;
   }
 
