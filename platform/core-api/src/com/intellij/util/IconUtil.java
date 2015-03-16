@@ -425,8 +425,9 @@ public class IconUtil {
     final BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
     int[] rgba = new int[4];
     float[] hsb = new float[3];
-    for (int y = 0; y < image.getHeight(); y++) {
-      for (int x = 0; x < image.getWidth(); x++) {
+    boolean hiDPI = RetinaImage.isAppleHiDPIScaledImage(image);
+    for (int y = 0; y < image.getHeight() * (hiDPI ? 2 : 1); y++) {
+      for (int x = 0; x < image.getWidth() * (hiDPI ? 2 : 1); x++) {
         image.getRaster().getPixel(x, y, rgba);
         if (rgba[3] != 0) {
           Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
