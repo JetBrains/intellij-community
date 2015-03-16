@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,8 @@ public class JUnitUtil {
   private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(
     Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME));
   
-  public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
+  @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
+  @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -104,6 +106,19 @@ public class JUnitUtil {
 
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (psiClass.getQualifiedName() == null) return false;
+    final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
+    if (topLevelClass != null) {
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
+      if (annotation != null) {
+        final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
+        if (attributeValue instanceof PsiClassObjectAccessExpression) {
+          final String runnerName = ((PsiClassObjectAccessExpression)attributeValue).getOperand().getType().getCanonicalText();
+          if (!(PARAMETERIZED_CLASS_NAME.equals(runnerName) || SUITE_CLASS_NAME.equals(runnerName))) {
+            return true;
+          }
+        }
+      }
+    }
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
