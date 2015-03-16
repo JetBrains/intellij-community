@@ -260,14 +260,9 @@ public abstract class TaskRepository {
    * @see TaskRepository#getFeatures()
    */
   public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
-    TaskState predefinedState = null;
-    try {
-      predefinedState = TaskState.valueOf(state.getId());
-    }
-    catch (IllegalArgumentException ignored) {
-    }
-    if (predefinedState != null) {
-      setTaskState(task, predefinedState);
+    if (state.isPredefined()) {
+      //noinspection ConstantConditions
+      setTaskState(task, state.asPredefined());
     }
   }
 
