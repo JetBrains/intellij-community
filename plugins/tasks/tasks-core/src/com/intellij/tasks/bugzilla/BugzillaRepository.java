@@ -169,6 +169,12 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       case RESOLVED:
         request.withParameter("status", "RESOLVED").withParameter("resolution", "FIXED");
         break;
+      case SUBMITTED:
+        request.withParameter("status", "UNCONFIRMED");
+        break;
+      case OPEN:
+        request.withParameter("status", "CONFIRMED");
+        break;
       default:
         return;
     }
