@@ -76,6 +76,10 @@ class ForkedGroovyc implements GroovycFlavor {
     if ("false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
       vmParams.add("-D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false");
     }
+    String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
+    if (configScript != null) {
+      vmParams.add("-D" + GroovyRtConstants.GROOVYC_CONFIG_SCRIPT + "=" + configScript);
+    }
 
     String grapeRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);
     if (grapeRoot != null) {

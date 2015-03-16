@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.CompilerWorkspaceConfiguration
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -94,7 +95,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Foo", "239");
   }
 
-  private void shouldFail(Closure action) {
+  protected static void shouldFail(Closure action) {
     List<CompilerMessage> messages = action()
     assert messages.find { it.category == CompilerMessageCategory.ERROR }
   }
@@ -905,6 +906,17 @@ class AppTest {
       assert error?.virtualFile
       assert groovyFile.classes[0] == GroovyCompilerLoader.findClassByStub(project, error.virtualFile)
     }
+
+    public void "test config script"() {
+      def script = FileUtil.createTempFile("configScriptTest", ".groovy", true)
+      FileUtil.writeToFile(script, "import groovy.transform.*; withConfig(configuration) { ast(CompileStatic) }")
+
+      CompilerWorkspaceConfiguration.getInstance(project).COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "-Dgroovyc.config.script=" + script.path
+
+      myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
+      shouldFail { make() }
+    }
+    
   }
 
   static class EclipseTest extends GroovyCompilerTest {
