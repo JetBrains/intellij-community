@@ -55,7 +55,7 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
             assertNotNull(classpathModel);
             assertEquals(3, classpathModel.getClasspath().size());
 
-            assertEquals("junit-4.11.jar", new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
+            assertEquals("junit-4.12.jar", new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
             assertEquals("hamcrest-core-1.3.jar", new File(classpathModel.getClasspath().getAt(1).getClasses().iterator().next()).getName());
             assertEquals("someDep.jar", new File(classpathModel.getClasspath().getAt(2).getClasses().iterator().next()).getName());
           }
@@ -64,7 +64,7 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
             assertNotNull("Null build classpath for module: " + module.getName(), classpathModel);
             assertEquals("Wrong build classpath for module: " + module.getName(), 3, classpathModel.getClasspath().size());
 
-            assertEquals("Wrong build classpath for module: " + module.getName(), "junit-4.11.jar",
+            assertEquals("Wrong build classpath for module: " + module.getName(), "junit-4.12.jar",
                          new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
             assertEquals("Wrong build classpath for module: " + module.getName(), "hamcrest-core-1.3.jar",
                          new File(classpathModel.getClasspath().getAt(1).getClasses().iterator().next()).getName());
