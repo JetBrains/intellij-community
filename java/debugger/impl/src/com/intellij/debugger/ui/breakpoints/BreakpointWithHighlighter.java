@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -455,5 +455,14 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     if (packageName != null) {
       myPackageName = packageName;
     }
+  }
+
+  public String toString() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return getDescription();
+      }
+    });
   }
 }
