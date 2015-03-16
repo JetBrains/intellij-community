@@ -544,6 +544,10 @@ public class JBTabsImpl extends JComponent
     myFirstTabOffset = firstTabOffset;
   }
 
+  public int tabMSize() {
+    return 20;
+  }
+
   class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
 
     private TabLabel myCurrentOverLabel;
