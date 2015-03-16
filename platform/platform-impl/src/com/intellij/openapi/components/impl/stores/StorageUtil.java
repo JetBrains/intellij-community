@@ -138,7 +138,8 @@ public class StorageUtil {
 
     boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
     if (equals) {
-      LOG.warn("Content equals, but it must be handled not on this level — " + result.getName());
+      // commented — the upcoming fix of such warnings will not be cherry-picked to release (is not safe)
+      //LOG.warn("Content equals, but it must be handled not on this level — " + result.getName());
       return result;
     }
     else {
