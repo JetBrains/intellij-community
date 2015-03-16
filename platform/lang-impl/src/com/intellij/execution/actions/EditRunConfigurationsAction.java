@@ -19,7 +19,6 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -39,9 +38,6 @@ public class EditRunConfigurationsAction extends AnAction{
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null && project.isDisposed()) {
       return;
-    }
-    if (project == null) {
-      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
     if (project == null) {
       //setup template project configurations
