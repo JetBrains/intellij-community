@@ -31,7 +31,9 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,12 +41,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
@@ -77,6 +81,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
       editor.getCaretModel().moveToOffset(document.getText().indexOf("Test"));
       DocumentationManager documentationManager = DocumentationManager.getInstance(myProject);
       documentationManager.showJavaDocInfo(editor, psiFile, false);
+      waitTillDone(documentationManager.getLastAction());
       JBPopup popup = documentationManager.getDocInfoHint();
       assertNotNull(popup);
       DocumentationComponent documentationComponent = (DocumentationComponent)popup.getContent().getComponent(0);
@@ -92,7 +97,18 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
       EditorFactory.getInstance().releaseEditor(editor);
     }
   }
-  
+
+  private static void waitTillDone(ActionCallback actionCallback) throws InterruptedException {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 300000) {
+      //noinspection BusyWait
+      Thread.sleep(100);
+      UIUtil.dispatchAllInvocationEvents();
+      if (actionCallback.isProcessed()) return;
+    }
+    fail("Timed out waiting for documentation to show");
+  }
+
   @NotNull
   private static VirtualFile getJarFile(String name) {
     VirtualFile file = getVirtualFile(new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/documentation/" + name));
@@ -104,20 +120,32 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   
   private static byte[] getImageDataFromDocumentationComponent(DocumentationComponent documentationComponent) throws Exception {
     JEditorPane editorPane = (JEditorPane)documentationComponent.getComponent();
-    HTMLDocument document = (HTMLDocument)editorPane.getDocument();
-    HTMLDocument.Iterator it = document.getIterator(HTML.Tag.IMG);
-    assertTrue(it.isValid());
-    String relativeUrl = (String)it.getAttributes().getAttribute(HTML.Attribute.SRC);
-    it.next();
-    assertFalse(it.isValid());
-    URL imageUrl = new URL(document.getBase(), relativeUrl);
-    InputStream stream = imageUrl.openStream();
-    try {
-      return FileUtil.loadBytes(stream);
-    }
-    finally {
-      stream.close();
-    }
+    final HTMLDocument document = (HTMLDocument)editorPane.getDocument();
+    final Ref<byte[]> result = new Ref<byte[]>();
+    document.render(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          HTMLDocument.Iterator it = document.getIterator(HTML.Tag.IMG);
+          assertTrue(it.isValid());
+          String relativeUrl = (String)it.getAttributes().getAttribute(HTML.Attribute.SRC);
+          it.next();
+          assertFalse(it.isValid());
+          URL imageUrl = new URL(document.getBase(), relativeUrl);
+          InputStream stream = imageUrl.openStream();
+          try {
+            result.set(FileUtil.loadBytes(stream));
+          }
+          finally {
+            stream.close();
+          }
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    return result.get();
   }
 
   @Override

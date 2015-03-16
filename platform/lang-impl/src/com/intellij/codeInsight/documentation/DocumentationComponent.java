@@ -92,7 +92,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
-  private Style myFontSizeStyle;
+  private final MutableAttributeSet myFontSizeStyle = new SimpleAttributeSet();
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private final MyShowSettingsButton myShowSettingsButton;
@@ -552,17 +552,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
     setElement(element);
 
-    boolean justShown = false;
+    myEditorPane.setText(text);
+    applyFontSize();
+    
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      myEditorPane.setText(text);
-      applyFontSize();
       myManager.showHint(myHint);
-      myIsShown = justShown = true;
-    }
-
-    if (!justShown) {
-      myEditorPane.setText(text);
-      applyFontSize();
+      myIsShown = true;
     }
 
     if (!skip) {
@@ -585,9 +580,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     final StyledDocument styledDocument = (StyledDocument)document;
-    if (myFontSizeStyle == null) {
-      myFontSizeStyle = styledDocument.addStyle("active", null);
-    }
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
@@ -596,11 +588,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     }
 
-    final Style sizeStyle = myFontSizeStyle;
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), sizeStyle, false);
+        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false);
       }
     });
   }
