@@ -165,6 +165,10 @@ public class JavaCompletionUtil {
         return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalize(substitutor));
       }
 
+      @Override
+      public PsiType visitType(PsiType type) {
+        return type;
+      }
     }.mapType(type);
     if (result == null) {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
