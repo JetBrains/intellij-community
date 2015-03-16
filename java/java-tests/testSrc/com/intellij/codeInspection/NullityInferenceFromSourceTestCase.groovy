@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 package com.intellij.codeInspection
+import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.Contract
 
 import static com.intellij.codeInspection.dataFlow.Nullness.*
 /**
@@ -120,6 +122,13 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
     void "test skip when errors"() {
       assert inferNullity(parse('String foo() { if(); return 2; } ')) == UNKNOWN
     }
+
+    void "test no nullable annotation in presence of inferred null contract"() {
+      def method = parse('Object foo(Object o) { if (o == null) return null; return 2; }')
+      def annos = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(method)
+      assert annos.collect { it.qualifiedName } == [Contract.name]
+    }
+
   }
 
   static class DfaInferenceTest extends NullityInferenceFromSourceTestCase {
