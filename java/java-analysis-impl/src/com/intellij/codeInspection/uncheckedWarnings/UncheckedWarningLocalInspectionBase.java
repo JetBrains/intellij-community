@@ -248,7 +248,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
         final PsiExpression element = callExpression instanceof PsiMethodCallExpression
                                          ? ((PsiMethodCallExpression)callExpression).getMethodExpression()
                                          : callExpression;
-        registerProblem(description, callExpression, element, myGenerifyFixes);
+        registerProblem(description, null, element, myGenerifyFixes);
       }
       else {
         if (IGNORE_UNCHECKED_ASSIGNMENT) return;
