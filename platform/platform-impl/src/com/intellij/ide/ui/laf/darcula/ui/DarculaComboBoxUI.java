@@ -84,7 +84,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
           g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
           g.fillRect(0, 0, w, h);
         }
-        g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getForeground().darker()));
+        g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getBorderColor()));
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
@@ -409,8 +409,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
 
-  private static Color getBorderColor() {
-    return new JBColor(Gray._150, Gray._100);
+  private Color getBorderColor() {
+    if (comboBox != null && myComboBox.isEnabled()) {
+      return new JBColor(Gray._150, Gray._100);
+    }
+    return new JBColor(Gray._150, Gray._88);
   }
 
   @Override
