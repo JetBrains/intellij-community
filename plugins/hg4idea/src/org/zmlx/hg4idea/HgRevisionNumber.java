@@ -23,6 +23,7 @@ import java.util.List;
 
 public class HgRevisionNumber implements VcsRevisionNumber {
 
+  private static final int SHORT_HASH_SIZE = 12;
   @NotNull private final String revision;
   @NotNull private final String changeset;
   @NotNull private final String commitMessage;
@@ -145,12 +146,20 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     if (revCompare != 0) {
       return revCompare;
     }
+    else if (getShortHash(changeset).equals(getShortHash(other.changeset))) {
+      //if local revision numbers are equal then it's enough to compare 12 symbols hash; collisions couldn't occur
+      return 0;
+    }
     // If they are equal, the working revision is greater.
     if (isWorkingVersion) {
       return other.isWorkingVersion ? 0 : 1;
     } else {
       return other.isWorkingVersion ? -1 : 0;
     }
+  }
+
+  private static String getShortHash(@NotNull String changeset) {
+    return changeset.substring(0, SHORT_HASH_SIZE);
   }
 
   /**
@@ -165,7 +174,8 @@ public class HgRevisionNumber implements VcsRevisionNumber {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(revision, changeset);
+    // if short revision number is not empty, then short changeset is enough, a.e. annotations
+    return Objects.hashCode(revision, revision.isEmpty() ? changeset : getShortHash(changeset));
   }
 
   @Override

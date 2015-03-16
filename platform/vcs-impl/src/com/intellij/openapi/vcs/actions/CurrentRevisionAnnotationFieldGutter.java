@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Consumer;
 
 import java.awt.*;
@@ -41,7 +42,7 @@ class CurrentRevisionAnnotationFieldGutter extends AnnotationFieldGutter impleme
                                        Editor editor,
                                        LineAnnotationAspect aspect,
                                        TextAnnotationPresentation highlighting,
-                                       Couple<Map<String, Color>> colorScheme) {
+                                       Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
     super(annotation, editor, aspect, highlighting, colorScheme);
   }
 

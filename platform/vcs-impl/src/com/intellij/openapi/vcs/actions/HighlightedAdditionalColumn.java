@@ -31,7 +31,7 @@ class HighlightedAdditionalColumn extends AnnotationFieldGutter {
                               Editor editor,
                               LineAnnotationAspect aspect,
                               TextAnnotationPresentation presentation,
-                              Couple<Map<String, Color>> colorScheme) {
+                              Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
     super(annotation, editor, aspect, presentation, colorScheme);
   }
 
