@@ -21,8 +21,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
   @NonNls static final String ALL = "ALL";
@@ -38,10 +40,11 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       new SuppressAllForFile(provider)};
   }
 
-  public abstract static class XmlSuppressFix implements SuppressQuickFix {
+  public abstract static class XmlSuppressFix implements InjectionAwareSuppressQuickFix, ContainerBasedSuppressQuickFix {
 
     protected final String myId;
     protected final XmlSuppressionProvider myProvider;
+    private ThreeState myShouldBeAppliedToInjectionHost;
 
     protected XmlSuppressFix(String inspectionId, XmlSuppressionProvider suppressionProvider) {
       myId = inspectionId;
@@ -54,13 +57,30 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
 
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
-      return context.isValid();
+      return context.isValid() && getContainer(context) != null;
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
       return getName();
+    }
+    
+    @Nullable
+    @Override
+    public PsiElement getContainer(@Nullable PsiElement context) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public ThreeState isShouldBeAppliedToInjectionHost() {
+      return myShouldBeAppliedToInjectionHost;
+    }
+
+    @Override
+    public void setShouldBeAppliedToInjectionHost(@NotNull ThreeState shouldBeAppliedToInjectionHost) {
+      myShouldBeAppliedToInjectionHost = shouldBeAppliedToInjectionHost;
     }
   }
 
@@ -86,7 +106,12 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       if (PsiTreeUtil.getParentOfType(element, XmlTag.class) == null) return;
       myProvider.suppressForTag(element, myId);
     }
-
+    
+    @Nullable
+    @Override
+    public PsiElement getContainer(@Nullable PsiElement context) {
+      return PsiTreeUtil.getParentOfType(context, XmlTag.class);
+    }
   }
 
   public static class SuppressForFile extends XmlSuppressFix {
@@ -108,8 +133,16 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (element == null || !element.isValid() || !(element.getContainingFile() instanceof XmlFile)) return;
-      myProvider.suppressForFile(element, myId);
+      PsiElement container = getContainer(element);
+      if (container instanceof XmlFile) {
+        myProvider.suppressForFile(element, myId);
+      }
+    }
+    
+    @Nullable
+    @Override
+    public PsiElement getContainer(@Nullable PsiElement context) {
+      return context == null || !context.isValid() ? null : context.getContainingFile();
     }
   }
 

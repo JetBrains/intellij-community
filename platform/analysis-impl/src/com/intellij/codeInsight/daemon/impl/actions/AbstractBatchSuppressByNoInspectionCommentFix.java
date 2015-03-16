@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.InjectionAwareSuppressQuickFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -44,11 +41,12 @@ import java.util.List;
  * @author Roman.Chernyatchik
  * @date Aug 13, 2009
  */
-public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements InjectionAwareSuppressQuickFix, Iconable {
+public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements ContainerBasedSuppressQuickFix, InjectionAwareSuppressQuickFix, Iconable {
   @NotNull protected final String myID;
   private final boolean myReplaceOtherSuppressionIds;
   private ThreeState myShouldBeAppliedToInjectionHost = ThreeState.UNSURE;
 
+  @Override
   @Nullable
   public abstract PsiElement getContainer(final PsiElement context);
 
@@ -62,10 +60,11 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements I
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
   }
 
-  public void setShouldBeAppliedToInjectionHost(ThreeState shouldBeAppliedToInjectionHost) {
+  public void setShouldBeAppliedToInjectionHost(@NotNull ThreeState shouldBeAppliedToInjectionHost) {
     myShouldBeAppliedToInjectionHost = shouldBeAppliedToInjectionHost;
   }
 
+  @NotNull
   @Override
   public ThreeState isShouldBeAppliedToInjectionHost() {
     return myShouldBeAppliedToInjectionHost;
