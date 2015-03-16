@@ -25,11 +25,13 @@ import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -56,7 +58,6 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public class CompilerTask extends Task.Backgroundable {
   private static final String APP_ICON_ID = "compiler";
   @NotNull
   private final Object myContentId = new IDObject("content_id");
-  
+
   @NotNull
   private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
   private NewErrorTreeViewPanel myErrorTreeView;
@@ -140,7 +141,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
     onClose.run();
   }
-  
+
   @Override
   public String getProcessId() {
     return "compilation";
@@ -279,7 +280,7 @@ public class CompilerTask extends Task.Backgroundable {
           });
         }
       }
-      
+
       private void stopAppIconProgress() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
@@ -289,7 +290,7 @@ public class CompilerTask extends Task.Backgroundable {
               if (myErrorCount > 0) {
                 appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
                 appIcon.requestAttention(myProject, true);
-              } 
+              }
               else if (!myCompilationStartedAutomatically) {
                 appIcon.setOkBadge(myProject, true);
                 appIcon.requestAttention(myProject, false);
@@ -453,7 +454,7 @@ public class CompilerTask extends Task.Backgroundable {
     if (myIndicator.isCanceled()) {
       return;
     }
-    
+
     final JComponent component;
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
@@ -463,7 +464,7 @@ public class CompilerTask extends Task.Backgroundable {
           myProject,
           myRestartWork
       );
-      
+
       myErrorTreeView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
         @Override
         public void stopProcess() {
@@ -477,7 +478,7 @@ public class CompilerTask extends Task.Backgroundable {
       });
       component = myErrorTreeView.getComponent();
     }
-    
+
     final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
     CONTENT_ID_KEY.set(content, myContentId);
@@ -525,7 +526,7 @@ public class CompilerTask extends Task.Backgroundable {
         final Object contentSessionId = SESSION_ID_KEY.get(content);
         toRemove = contentSessionId != null && contentSessionId != mySessionId; // the content was added by previous compilation
       }
-      if (toRemove) { 
+      if (toRemove) {
         messageView.getContentManager().removeContent(content, true);
       }
     }
@@ -583,34 +584,10 @@ public class CompilerTask extends Task.Backgroundable {
 
     @Override
     public boolean canCloseProject(final Project project) {
-      assert project != null;
-      if (!project.equals(myProject)) {
-        return true;
-      }
-      if (shouldAskUser()) {
-        int result = Messages.showOkCancelDialog(
-          myProject,
-          CompilerBundle.message("warning.compiler.running.on.project.close"),
-          CompilerBundle.message("compiler.running.dialog.title"),
-          Messages.getQuestionIcon()
-        );
-        if (result != Messages.OK) {
-          return false; // veto closing
-        }
-        myUserAcceptedCancel = true;
-
-        final MessageBusConnection connection = project.getMessageBus().connect();
-        connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
-          @Override
-          public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-            connection.disconnect();
-            ProjectUtil.closeAndDispose(project);
-          }
-        });
+      if (project != null && project.equals(myProject)) {
         cancel();
-        return false; // cancel compiler and let it finish, after compilation close the project, but currently - veto closing
       }
-      return !myIndicator.isRunning();
+      return true;
     }
 
     public void setContent(Content content, ContentManager contentManager) {
@@ -684,11 +661,11 @@ public class CompilerTask extends Task.Backgroundable {
 
   public static final class IDObject {
     private final String myDisplayName;
-  
+
     public IDObject(@NotNull String displayName) {
       myDisplayName = displayName;
     }
-  
+
     @Override
     public String toString() {
       return myDisplayName;
