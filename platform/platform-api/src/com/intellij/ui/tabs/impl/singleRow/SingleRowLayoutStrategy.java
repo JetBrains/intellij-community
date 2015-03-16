@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -136,7 +137,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength) {
-      return new Rectangle(position, fixedPos, length, fixedFitLength);
+      return new Rectangle(position, fixedPos + (myTabs.getTabsPosition() == JBTabsPosition.bottom ? 1 : 0), length, fixedFitLength);
     }
 
     public int getStartPosition(final SingleRowPassInfo data) {
