@@ -15,7 +15,10 @@
  */
 package com.intellij.testFramework;
 
+import org.junit.runner.Runner;
 import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParametersFactory;
+import org.junit.runners.parameterized.ParametersRunnerFactory;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,16 +35,24 @@ public class Parameterized extends org.junit.runners.Parameterized {
     String name() default "{index}";
   }
 
+  private List<Runner> l;
+  
   public Parameterized(Class<?> klass) throws Throwable {
     super(klass);
     FrameworkMethod parametersMethod = getParametersMethod();
     if (parametersMethod != null) {
       Parameters parameters = parametersMethod.getAnnotation(Parameters.class);
       Method declaredMethod =
-        org.junit.runners.Parameterized.class.getDeclaredMethod("createRunnersForParameters", Iterable.class, String.class);
+        org.junit.runners.Parameterized.class.getDeclaredMethod("createRunnersForParameters", Iterable.class, String.class, ParametersRunnerFactory.class);
       declaredMethod.setAccessible(true);
-      declaredMethod.invoke(this, allParameters(klass, parametersMethod), parameters.name());
+      l = (List<Runner>)declaredMethod.invoke(this, allParameters(klass, parametersMethod), parameters.name(), BlockJUnit4ClassRunnerWithParametersFactory.class.newInstance());
     }
+  }
+
+
+  @Override
+  protected List<Runner> getChildren() {
+    return l;
   }
 
   private FrameworkMethod getParametersMethod() throws Exception {
