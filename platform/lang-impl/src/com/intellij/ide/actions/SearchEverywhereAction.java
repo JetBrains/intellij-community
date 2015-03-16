@@ -1344,10 +1344,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           buildRecentFiles(pattern);
           check();
           runReadAction(new Runnable() {
-                      public void run() {
-                        buildStructure(pattern);
-                      }
-                    }, true);
+            public void run() {
+              buildStructure(pattern);
+            }
+          }, true);
           updatePopup();
           check();
           buildToolWindows(pattern);
@@ -1680,7 +1680,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchResult getSymbols(String pattern, final int max, final boolean includeLibs, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult symbols = new SearchResult();
-      if (!Registry.is("search.everywhere.symbols")) {
+      if (!Registry.is("search.everywhere.symbols") || shouldSkipPattern(pattern)) {
         return symbols;
       }
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
@@ -1718,7 +1718,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult classes = new SearchResult();
-      if (chooseByNamePopup == null) {
+      if (chooseByNamePopup == null || shouldSkipPattern(pattern)) {
         return classes;
       }
       chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, includeLibs,
@@ -2185,6 +2185,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       ApplicationManager.getApplication().executeOnPooledThread(this);
       return myDone;
     }
+  }
+
+  private static boolean shouldSkipPattern(String pattern) {
+    return Registry.is("search.everywhere.pattern.checking") && StringUtil.split(pattern, ".").size() == 2;
   }
 
   protected void resetFields() {
