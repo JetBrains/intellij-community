@@ -463,7 +463,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     WelcomeFrame.notifyFrameClosed(this);
 
     if (myRootPane != null) {
+      // clear both our and swing hard refs
       myRootPane = null;
+      setRootPane(null);
     }
 
     if (myFrameDecorator != null) {
