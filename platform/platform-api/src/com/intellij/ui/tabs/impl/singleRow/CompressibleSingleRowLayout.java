@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     for (int i = 0; i < layout.size(); i++) {
       final TabLabel label = myTabs.myInfo2Label.get(layout.get(i));
       if (maxGridSize == 0) {
-        maxGridSize = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * 20;
+        maxGridSize = GraphicsUtil.stringWidth("m", label.getLabelComponent().getFont()) * myTabs.tabMSize();
       }
       int lengthIncrement = label.getPreferredSize().width;
       lengths[i] = lengthIncrement;
