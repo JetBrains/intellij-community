@@ -216,10 +216,10 @@ public class JBEditorTabs extends JBTabsImpl {
       if (getTabsPosition() == JBTabsPosition.bottom) {
         y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
       } else {
-        y--;
         height++;
         height -= getActiveTabUnderlineHeight();
       }
+      y--;
 
       afterTabs = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
       beforeTabs = new Rectangle(0, y, minOffset, height);
