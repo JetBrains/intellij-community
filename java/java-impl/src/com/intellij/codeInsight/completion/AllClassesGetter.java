@@ -216,8 +216,6 @@ public class AllClassesGetter {
                                               final boolean filterByScope, final boolean pkgContext) {
     ProgressManager.checkCanceled();
 
-    if (!context.isValid() || !psiClass.isValid()) return false;
-
     if (JavaCompletionUtil.isInExcludedPackage(psiClass, false)) return false;
 
     final String qualifiedName = psiClass.getQualifiedName();
