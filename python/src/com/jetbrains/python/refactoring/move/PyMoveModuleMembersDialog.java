@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -199,12 +201,22 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     return myBrowseFieldWithButton.getText();
   }
 
+  /**
+   * @return selected elements in the same order as they are declared in the original file
+   */
   @NotNull
   public List<PyElement> getSelectedTopLevelSymbols() {
-    return ContainerUtil.map(myMemberSelectionTable.getSelectedMemberInfos(), new Function<PyModuleMemberInfo, PyElement>() {
+    final Collection<PyModuleMemberInfo> selectedMembers = myMemberSelectionTable.getSelectedMemberInfos();
+    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, new Function<PyModuleMemberInfo, PyElement>() {
       @Override
       public PyElement fun(PyModuleMemberInfo info) {
         return info.getMember();
+      }
+    });
+    return ContainerUtil.sorted(selectedElements, new Comparator<PyElement>() {
+      @Override
+      public int compare(PyElement e1, PyElement e2) {
+        return PyPsiUtils.isBefore(e1, e2) ? -1 : 1;
       }
     });
   }
