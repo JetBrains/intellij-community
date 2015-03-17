@@ -26,6 +26,7 @@ fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boole
     }
   }
   catch (e: Exception) {
+    LOG.warn(e)
     NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
   }
   NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)

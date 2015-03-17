@@ -1,28 +1,28 @@
 package org.jetbrains.jgit.dirCache
 
-import org.eclipse.jgit.lib.Constants
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import org.eclipse.jgit.dircache.BaseDirCacheEditor
+import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.dircache.DirCacheEntry
 import org.eclipse.jgit.internal.JGitText
-import java.util.Comparator
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.FileMode
+import org.eclipse.jgit.lib.Repository
+import org.jetbrains.settingsRepository.byteBufferToBytes
+import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
+import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.text.MessageFormat
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.dircache.DirCache
-import org.eclipse.jgit.dircache.BaseDirCacheEditor
-import org.eclipse.jgit.dircache.DirCacheEntry
-import java.io.File
-import org.eclipse.jgit.lib.FileMode
-import java.io.FileInputStream
 import java.util.Collections
-import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.SystemInfo
-import org.jetbrains.settingsRepository.byteBufferToBytes
+import java.util.Comparator
 
 private val EDIT_CMP = object : Comparator<PathEdit> {
   override fun compare(o1: PathEdit, o2: PathEdit): Int {
     val a = o1.path
     val b = o2.path
-    return DirCache.cmp(a, a.size, b, b.size)
+    return DirCache.cmp(a, a.size(), b, b.size())
   }
 }
 
@@ -56,7 +56,7 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
     val maxIndex = cache.getEntryCount()
     var lastIndex = 0
     for (edit in edits) {
-      var entryIndex = cache.findEntry(edit.path, edit.path.size)
+      var entryIndex = cache.findEntry(edit.path, edit.path.size())
       val missing = entryIndex < 0
       if (entryIndex < 0) {
         entryIndex = -(entryIndex + 1)
@@ -71,7 +71,7 @@ public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repos
         continue
       }
       if (edit is DeleteDirectory) {
-        lastIndex = cache.nextEntry(edit.path, edit.path.size, entryIndex)
+        lastIndex = cache.nextEntry(edit.path, edit.path.size(), entryIndex)
         continue
       }
 
@@ -121,7 +121,7 @@ public abstract class PathEdit(val path: ByteArray) {
 private fun encodePath(path: String): ByteArray {
   val bytes = byteBufferToBytes(Constants.CHARSET.encode(path))
   if (SystemInfo.isWindows) {
-    for (i in 0..bytes.size - 1) {
+    for (i in 0..bytes.size() - 1) {
       if (bytes[i].toChar() == '\\') {
         bytes[i] = '/'.toByte()
       }
@@ -151,7 +151,7 @@ class AddFile(private val pathString: String) : PathEdit(encodePath(pathString))
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEdit(encodePath(path)) {
+class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size(), private val lastModified: Long = System.currentTimeMillis()) : PathEdit(encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.setFileMode(FileMode.REGULAR_FILE)
     entry.setLength(size)
@@ -229,7 +229,7 @@ public fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fro
   }
 }
 
-public fun Repository.writePath(path: String, bytes: ByteArray, size: Int = bytes.size) {
+public fun Repository.writePath(path: String, bytes: ByteArray, size: Int = bytes.size()) {
   edit(AddLoadedFile(path, bytes, size))
   FileUtil.writeToFile(File(getWorkTree(), path), bytes, 0, size)
 }

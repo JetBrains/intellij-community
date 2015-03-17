@@ -1,23 +1,22 @@
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
-
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeProvider2
+import com.intellij.openapi.vcs.merge.MergeSession
+import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.PathUtilRt
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
-import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.PathUtilRt
-import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.OutputStream
-import com.intellij.openapi.application.ApplicationManager
 import java.util.Arrays
-import com.intellij.openapi.vcs.merge.MergeProvider2
-import com.intellij.openapi.vcs.merge.MergeSession
-import org.jetbrains.annotations.TestOnly
 
 public abstract class BaseRepositoryManager protected() : RepositoryManager {
   protected var dir: File = File(getPluginSystemDir(), "repository")
@@ -26,7 +25,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
 
   override fun listSubFileNames(path: String): Collection<String> {
     val files = File(dir, path).list()
-    if (files == null || files.size == 0) {
+    if (files == null || files.size() == 0) {
       return listOf()
     }
     return listOf(*files)
@@ -39,14 +38,27 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
   override fun read(path: String): InputStream? {
     synchronized (lock) {
       val file = File(dir, path)
+      // we ignore empty files as well - delete if corrupted
+      if (file.length() == 0L) {
+        if (file.exists()) {
+          try {
+            LOG.warn("File $path is empty (length 0), will be removed")
+            delete(file, path)
+          }
+          catch (e: Exception) {
+            LOG.error(e)
+          }
+        }
+        return null
+      }
       //noinspection IOResourceOpenedButNotSafelyClosed
-      return if (file.exists()) FileInputStream(file) else null
+      return if (file.length() == 0L) FileInputStream(file) else null
     }
   }
 
   override fun write(path: String, content: ByteArray, size: Int) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Write " + path)
+      LOG.debug("Write $path")
     }
 
     try {
@@ -80,16 +92,18 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
           return
         }
 
-        val isFile = file.isFile()
-        removeFileAndParentDirectoryIfEmpty(file, dir, isFile)
-
-
-        deleteFromIndex(path, isFile)
+        delete(file, path)
       }
     }
     catch (e: Exception) {
       LOG.error(e)
     }
+  }
+
+  private fun delete(file: File, path: String) {
+    val isFile = file.isFile()
+    removeFileAndParentDirectoryIfEmpty(file, dir, isFile)
+    deleteFromIndex(path, isFile)
   }
 
   protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
