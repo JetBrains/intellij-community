@@ -315,14 +315,16 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Set<Deployment> result = new TreeSet<Deployment>(getServer().getType().getDeploymentComparator());
+    Set<Deployment> result = new LinkedHashSet<Deployment>();
+    Set<Deployment> orderedDeployments = new TreeSet<Deployment>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
-      result.addAll(myLocalDeployments.values());
+      orderedDeployments.addAll(myLocalDeployments.values());
     }
-
+    result.addAll(orderedDeployments);
     synchronized (myRemoteDeployments) {
-      result.addAll(myRemoteDeployments.values());
+      orderedDeployments.addAll(myRemoteDeployments.values());
     }
+    result.addAll(orderedDeployments);
     return result;
   }
 
