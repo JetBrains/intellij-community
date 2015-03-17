@@ -399,7 +399,8 @@
 
     <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
     <lang.syntaxHighlighterFactory key="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>
-    <braceMatcher filetype="PLAIN_TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher"/>
+    <lang.braceMatcher language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher"/>
+    <lang.quoteHandler language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeQuoteHandler"/>
     <lang.ast.factory language="TEXT" implementationClass="com.intellij.psi.impl.source.tree.PlainTextASTFactory"/>
 
     <getDataRule key="psi.File" implementationClass="com.intellij.ide.impl.dataRules.PsiFileRule"/>
@@ -626,6 +627,9 @@
       <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <category>Language Injection</category>
     </intentionAction>
@@ -729,8 +733,6 @@
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
                     serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.compiler.ProblemsView"
-                    serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
 
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 

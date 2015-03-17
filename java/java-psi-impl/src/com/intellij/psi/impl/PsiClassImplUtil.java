@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -711,6 +712,10 @@ public class PsiClassImplUtil {
 
   @Nullable
   public static PsiClassType correctType(PsiClassType originalType, final GlobalSearchScope resolveScope) {
+    if (!Registry.is("java.correct.class.type.by.place.resolve.scope")) {
+      return originalType;
+    }
+
     final PsiClassType.ClassResolveResult originalResolveResult = originalType.resolveGenerics();
     PsiClass superClass = originalResolveResult.getElement();
     if (superClass == null) {
@@ -746,7 +751,7 @@ public class PsiClassImplUtil {
             }
           });
           if (substitute == null) return null;
-          
+
           substitutor = substitutor.put(typeParameters[i], substitute);
         }
       }
@@ -971,8 +976,11 @@ public class PsiClassImplUtil {
                                                       @NotNull PsiManager manager,
                                                       @NotNull GlobalSearchScope resolveScope,
                                                       boolean includeObject) {
-    PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
-    if (objectClass == null) includeObject = false;
+    PsiClass objectClass = null;
+    if (includeObject) {
+      objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+      if (objectClass == null) includeObject = false;
+    }
     if (listOfTypes.length == 0) {
       if (includeObject) return new PsiClass[]{objectClass};
       return PsiClass.EMPTY_ARRAY;

@@ -66,7 +66,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void load() throws IOException, StateStorageException {
+  public void load() throws IOException {
     super.load();
 
     String moduleTypeId = getMainStorageData().myOptions.get(Module.ELEMENT_TYPE);

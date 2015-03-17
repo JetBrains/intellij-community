@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -701,7 +700,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
   private static void stressRead(@NotNull final VirtualFilePointer pointer) {
     for (int i = 0; i < 10; i++) {
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    JobLauncher.getInstance().submitToJobThread(new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {

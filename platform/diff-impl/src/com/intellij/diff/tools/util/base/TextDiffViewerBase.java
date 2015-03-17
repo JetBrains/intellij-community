@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
+  public static final Key<Boolean> READ_ONLY_LOCK_KEY = Key.create("ReadOnlyLockAction");
+
   @NotNull private final TextDiffSettings myTextSettings;
 
   @NotNull private final MyFontSizeListener myFontSizeListener = new MyFontSizeListener();
@@ -353,6 +357,11 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
 
     @Override
+    public boolean isVisible() {
+      return getTextSettings().getContextRange() != -1;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return !getTextSettings().isExpandByDefault();
     }
@@ -366,6 +375,51 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
 
     protected abstract void expandAll(boolean expand);
+  }
+
+  protected class ReadOnlyLockAction extends ToggleAction implements DumbAware {
+    private final List<? extends EditorEx> myEditableEditors;
+
+    public ReadOnlyLockAction() {
+      super("Disable editing", null, AllIcons.Nodes.Padlock);
+      setEnabledInModalContext(true);
+      myEditableEditors = ContainerUtil.filter(getEditors(), new Condition<EditorEx>() {
+        @Override
+        public boolean value(EditorEx editor) {
+          return !editor.isViewer();
+        }
+      });
+      if (isVisible()) { // apply default state
+        setSelected(null, isSelected(null));
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!isVisible()) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+      else {
+        super.update(e);
+      }
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myContext.getUserData(READ_ONLY_LOCK_KEY) != Boolean.FALSE;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myContext.putUserData(READ_ONLY_LOCK_KEY, state);
+      for (EditorEx editor : myEditableEditors) {
+        editor.setViewer(state);
+      }
+    }
+
+    private boolean isVisible() {
+      return !myEditableEditors.isEmpty() && myContext.getUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK) == Boolean.TRUE;
+    }
   }
 
   private final class MyEditorMouseListener extends EditorPopupHandler {

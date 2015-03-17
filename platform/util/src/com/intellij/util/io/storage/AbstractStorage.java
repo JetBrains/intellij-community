@@ -331,6 +331,22 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
+  public void replaceBytes(int record, int offset, ByteSequence bytes) throws IOException {
+    synchronized (myLock) {
+      final int changedBytesLength = bytes.getLength();
+
+      final int currentSize = myRecordsTable.getSize(record);
+      assert currentSize >= 0;
+      assert offset + bytes.getLength() <= currentSize;
+
+      if (changedBytesLength == 0) return;
+
+      final long address = myRecordsTable.getAddress(record);
+
+      myDataTable.writeBytes(address + offset, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+    }
+  }
+
   public static class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
     private final AbstractStorage myStorage;
     private final int myRecordId;

@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -387,7 +388,7 @@ public class TestPackage extends TestObject {
     public void run(@NotNull ProgressIndicator indicator) {
       try {
         mySocket = myServerSocket.accept();
-        DumbService.getInstance(myProject).repeatUntilPassesInSmartMode(new Runnable() {
+        DumbService.getInstance(getProject()).repeatUntilPassesInSmartMode(new Runnable() {
           @Override
           public void run() {
             myClasses.clear();
@@ -395,6 +396,9 @@ public class TestPackage extends TestObject {
           }
         });
         myFoundTests = !myClasses.isEmpty();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (IOException e) {
         LOG.info(e);
@@ -406,8 +410,13 @@ public class TestPackage extends TestObject {
 
     @Override
     public void onSuccess() {
-      myCallback.found(myClasses, myJunit4[0]);
-      finish();
+      DumbService.getInstance(getProject()).runWhenSmart(new Runnable() {
+        @Override
+        public void run() {
+          myCallback.found(myClasses, myJunit4[0]);
+          finish();
+        }
+      });
     }
   }
 

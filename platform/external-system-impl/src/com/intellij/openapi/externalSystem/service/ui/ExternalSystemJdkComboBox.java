@@ -92,6 +92,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     myProject = project;
   }
 
+  @NotNull
   public ExternalSystemJdkComboBox withoutJre() {
     suggestJre = false;
     return this;
@@ -155,7 +156,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
                  ));
     }
 
-    if (myProject != null) {
+    if (myProject != null && !myProject.isDisposed()) {
       final Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
       result.put(ExternalSystemJdkUtil.USE_PROJECT_JDK,
                  new JdkComboBoxItem(

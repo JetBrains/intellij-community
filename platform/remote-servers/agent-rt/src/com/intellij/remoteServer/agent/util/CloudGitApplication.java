@@ -15,10 +15,13 @@
  */
 package com.intellij.remoteServer.agent.util;
 
+import com.intellij.remoteServer.agent.annotation.ImmediateCall;
+
 /**
  * @author michael.golubev
  */
 public interface CloudGitApplication extends CloudRemoteApplication {
 
+  @ImmediateCall
   String getGitUrl();
 }

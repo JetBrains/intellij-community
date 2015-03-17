@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
     final XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, myMarkers);
     final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(), descriptor.getFirst());
     tree.setRoot(root, true);
+    tree.setSelectionRow(0);
     // expand root on load
     tree.expandNodesOnLoad(new Condition<TreeNode>() {
       @Override

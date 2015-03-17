@@ -22,7 +22,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,20 +43,11 @@ public class ColorSelectionComponent extends JPanel {
   private static final String CUSTOM_COLOR_NAME = "Custom";
   private Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<String, ColorButton>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
-  private final JPanel myInnerPanel;
   private ChangeListener myChangeListener;
 
   public ColorSelectionComponent() {
-    setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-    myInnerPanel = new JPanel();
-    myInnerPanel.setLayout(new BoxLayout(myInnerPanel, BoxLayout.X_AXIS));
-    myInnerPanel.setBorder(
-      BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-    if (!UIUtil.isUnderDarcula()) {
-      myInnerPanel.setBackground(Color.WHITE);
-    }
-    add(myInnerPanel, BorderLayout.CENTER);
+    super(new GridLayout(1, 0, 5, 5));
+    setOpaque(false);
   }
 
   public void setChangeListener(ChangeListener changeListener) {
@@ -90,17 +80,15 @@ public class ColorSelectionComponent extends JPanel {
   public void addCustomColorButton() {
     CustomColorButton customButton = new CustomColorButton();
     myButtonGroup.add(customButton);
-    myInnerPanel.add(customButton);
+    add(customButton);
     myColorToButtonMap.put(customButton.getText(), customButton);
-    myInnerPanel.add(Box.createHorizontalStrut(5));
   }
 
   public void addColorButton(@NotNull String name, @NotNull Color color) {
     ColorButton colorButton = new ColorButton(name, color);
     myButtonGroup.add(colorButton);
-    myInnerPanel.add(colorButton);
+    add(colorButton);
     myColorToButtonMap.put(name, colorButton);
-    myInnerPanel.add(Box.createHorizontalStrut(5));
   }
 
   public void setCustomButtonColor(@NotNull Color color) {
@@ -171,7 +159,7 @@ public class ColorSelectionComponent extends JPanel {
         }
       });
 
-      setBackground(new JBColor(Color.WHITE, UIUtil.getControlColor()));
+      setOpaque(false);
       setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     }
 
@@ -239,7 +227,7 @@ public class ColorSelectionComponent extends JPanel {
     }
   }
 
-  private class ColorButtonUI extends StickyButtonUI<ColorButton> {
+  private static class ColorButtonUI extends StickyButtonUI<ColorButton> {
 
     @Override
     protected Color getBackgroundColor(final ColorButton button) {

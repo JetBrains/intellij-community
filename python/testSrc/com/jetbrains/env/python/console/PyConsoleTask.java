@@ -1,14 +1,18 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
@@ -40,6 +44,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private Semaphore myConsoleInitSemaphore;
   private PydevConsoleExecuteActionHandler myExecuteHandler;
 
+  private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
+
   public PyConsoleTask() {
     setWorkingFolder(getTestDataPath());
   }
@@ -57,7 +63,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @NotNull
   protected String output() {
-    return myConsoleView.getConsole().getHistoryViewer().getDocument().getText();
+    return myConsoleView.getHistoryViewer().getDocument().getText();
   }
 
   public void setProcessCanTerminate(boolean processCanTerminate) {
@@ -100,6 +106,15 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     disposeConsoleProcess();
 
+    if (!myContentDescriptorRef.isNull()) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(myContentDescriptorRef.get());
+        }
+      });
+    }
+
     if (myConsoleView != null) {
       new WriteAction() {
         @Override
@@ -119,7 +134,15 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner = PydevConsoleRunner.create(project, sdk, PyConsoleType.PYTHON, getWorkingFolder());
+    PydevConsoleRunner consoleRunner =
+      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap(), new String[]{}) {
+        @Override
+        protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
+          myContentDescriptorRef.set(contentDescriptor);
+          super.showConsole(defaultExecutor, contentDescriptor);
+        }
+      };
+
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);
@@ -312,7 +335,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PyDebugValue val = getValue(varName);
     myCommunication.changeVariable(val, value);
   }
-  
+
   protected PyDebugValue getValue(String varName) throws PyDebuggerException {
     XValueChildrenList l = myCommunication.loadFrame();
 
@@ -325,14 +348,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         return (PyDebugValue)l.getValue(i);
       }
     }
-    
+
     return null;
   }
-  
+
   protected List<String> getCompoundValueChildren(PyDebugValue value) throws PyDebuggerException {
     XValueChildrenList list = myCommunication.loadVariable(value);
     List<String> result = Lists.newArrayList();
-    for (int i = 0; i<list.size(); i++) {
+    for (int i = 0; i < list.size(); i++) {
       result.add(((PyDebugValue)list.getValue(i)).getValue());
     }
     return result;
@@ -362,12 +385,12 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   public void addTextToEditor(final String text) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        getConsoleView().getLanguageConsole().setInputText(text);
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
-    }
+                                   @Override
+                                   public void run() {
+                                     getConsoleView().setInputText(text);
+                                     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+                                   }
+                                 }
     );
   }
 }

@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -110,6 +111,8 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     private void findTopLevelSemicolons(PsiElement element) {
+      if (LanguageUtil.isInTemplateLanguageFile(element)) return;
+      
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = skipForwardWhiteSpacesAndComments(sibling)) {
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
           registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

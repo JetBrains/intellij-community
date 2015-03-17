@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ public class FileBasedStorage extends XmlElementStorage {
     return isUseXmlProlog();
   }
 
+  @NotNull
   @Override
   protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
     return new FileSaveSession(storageData);
@@ -194,7 +195,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
       CharBuffer charBuffer = CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(file.contentsToByteArray()));
       myLineSeparator = StorageUtil.detectLineSeparators(charBuffer, isUseLfLineSeparatorByDefault() ? null : LineSeparator.LF);
-      return JDOMUtil.loadDocument(charBuffer).getRootElement();
+      return JDOMUtil.loadDocument(charBuffer).detachRootElement();
     }
     catch (JDOMException e) {
       return processReadException(e);
@@ -228,6 +229,7 @@ public class FileBasedStorage extends XmlElementStorage {
     super.setDefaultState(element);
   }
 
+  @SuppressWarnings("unused")
   public void updatedFromStreamProvider(@NotNull Set<String> changedComponentNames, boolean deleted) {
     if (myRoamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state
@@ -239,16 +241,16 @@ public class FileBasedStorage extends XmlElementStorage {
       if (newElement == null) {
         StorageUtil.deleteFile(myFile, this, myCachedVirtualFile);
         // if data was loaded, mark as changed all loaded components
-        if (myLoadedData != null) {
-          changedComponentNames.addAll(myLoadedData.getComponentNames());
-          myLoadedData = null;
+        if (myStorageData != null) {
+          changedComponentNames.addAll(myStorageData.getComponentNames());
+          myStorageData = null;
         }
       }
-      else if (myLoadedData != null) {
+      else if (myStorageData != null) {
         StorageData newStorageData = createStorageData();
         loadState(newStorageData, newElement);
-        changedComponentNames.addAll(myLoadedData.getChangedComponentNames(newStorageData, myPathMacroSubstitutor));
-        myLoadedData = newStorageData;
+        changedComponentNames.addAll(myStorageData.getChangedComponentNames(newStorageData, myPathMacroSubstitutor));
+        myStorageData = newStorageData;
       }
     }
     catch (Throwable e) {

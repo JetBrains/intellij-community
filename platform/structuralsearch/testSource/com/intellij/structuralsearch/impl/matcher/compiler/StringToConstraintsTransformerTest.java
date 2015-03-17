@@ -4,6 +4,7 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +25,11 @@ public class StringToConstraintsTransformerTest {
   @Test(expected = MalformedPatternException.class)
   public void testCharacterExpectedAfterQuote() {
     test("' asdf");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testCharacterExpectedAfterQuote2() {
+    test("'");
   }
 
   @Test(expected = MalformedPatternException.class)
@@ -115,10 +121,69 @@ public class StringToConstraintsTransformerTest {
     test("'a:x!(");
   }
 
+  @Test(expected = MalformedPatternException.class)
+  public void testRepeatingConstraints() {
+    test("'a*:foo 'a+:[regex( bla )]");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testRepeatingConstraints2() {
+    test("'a:foo 'a*");
+  }
+
   @Test
   public void testMethodReference() {
     test("'_a::'_b");
     assertEquals("$a$::$b$", myOptions.getSearchPattern());
+  }
+
+  @Test
+  public void testCompleteMatchConditions() {
+    test("[within( \"if('_a) { 'st*; }\" )]1+1");
+    assertEquals("1+1", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    assertEquals("\"if('_a) { 'st*; }\"", constraint.getWithinConstraint());
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testBadWithin() {
+    test("'_type 'a:[within( \"if ('_a) { '_st*; }\" )] = '_b;");
+  }
+
+  @Test
+  public void testScriptEscaping() {
+    test("[within( \"if ('_a:[regex( .*e.* )\\]) { '_st*; }\" )]'_type 'a = '_b;");
+    assertEquals("$type$ $a$ = $b$;", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    assertEquals("\"if ('_a:[regex( .*e.* )]) { '_st*; }\"", constraint.getWithinConstraint());
+  }
+
+  @Test
+  public void testEscaping() {
+    test("\\[within( \"if ('_a) { '_st*; }\" )]");
+    assertEquals("[within( \"if ($a$) { $st$; }\" )]", myOptions.getSearchPattern());
+    test("\\[");
+    assertEquals("[", myOptions.getSearchPattern());
+    test("\\'aaa");
+    assertEquals("'aaa", myOptions.getSearchPattern());
+    test("'a\\:");
+    assertEquals("$a$:", myOptions.getSearchPattern());
+  }
+
+  @Test
+  public void testQuotes() {
+    test("''");
+    assertEquals("'", myOptions.getSearchPattern());
+    test("'''c");
+    assertEquals("'$c$", myOptions.getSearchPattern());
+    test("'a''b");
+    assertEquals("'a'$b$", myOptions.getSearchPattern());
+    test("'aa'_bb");
+    assertEquals("$aa$$bb$", myOptions.getSearchPattern());
+    test("'\\n''z");
+    assertEquals("'\\n'$z$", myOptions.getSearchPattern());
+    test("'\\u0123''a");
+    assertEquals("'\\u0123'$a$", myOptions.getSearchPattern());
   }
 
   private void test(String pattern) {

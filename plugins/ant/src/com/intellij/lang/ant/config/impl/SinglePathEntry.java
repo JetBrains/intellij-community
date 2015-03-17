@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -51,12 +49,12 @@ public class SinglePathEntry implements AntClasspathEntry {
     this(new File(osPath));
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(final Element element) {
     String value = element.getAttributeValue(PATH);
     myFile = new File(PathUtil.toPresentableUrl(value));
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) {
     String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, myFile.getAbsolutePath().replace(File.separatorChar, '/'));
     element.setAttribute(PATH, url);
   }

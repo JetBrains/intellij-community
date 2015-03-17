@@ -30,6 +30,7 @@ import java.util.concurrent.Future;
  * @author traff
  */
 public abstract class BaseOutputReader extends BaseDataReader {
+  protected static final int DELAY_AFTER_BLOCKING_READ = 10;
 
   protected final Reader myReader;
 
@@ -63,7 +64,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
         @Override
         public void run() {
           try {
-            Thread.sleep(10);
+            Thread.sleep(DELAY_AFTER_BLOCKING_READ);
             submitToken();
           }
           catch (InterruptedException ignore) { }

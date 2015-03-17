@@ -273,8 +273,6 @@
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
-    <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
-
     <extensionPoint name="hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
 
     <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
@@ -720,6 +718,11 @@
                      groupName="Code style issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
                      displayName="Block marker comment"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
+                     groupBundle="messages.InspectionsBundle"
+                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
+                     displayName="Pseudo functional expression using static class"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
@@ -1055,7 +1058,7 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
 
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
-
+    <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
 
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
@@ -1343,8 +1346,6 @@
     <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
 
     <printOption implementation="com.intellij.codeEditor.printing.HyperlinksToClassesOption"/>
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
-                        serviceImplementation="com.intellij.codeEditor.printing.MethodSeparatorProvider"/>
 
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JspIndexPatternBuilder"/>

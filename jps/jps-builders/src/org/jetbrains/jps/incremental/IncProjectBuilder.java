@@ -437,32 +437,57 @@ public class IncProjectBuilder {
   private void cleanOutputRoots(CompileContext context) throws ProjectBuildException {
     // whole project is affected
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
-    final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
-    if (shouldClear) {
-      clearOutputs(context);
-    }
-    else {
-      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-        if (context.getScope().isAffected(target)) {
-          clearOutputFilesUninterruptibly(context, target);
+    ProjectBuildException ex = null;
+    try {
+      final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
+      final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
+      if (shouldClear) {
+        clearOutputs(context);
+      }
+      else {
+        for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+          context.checkCanceled();
+          if (context.getScope().isAffected(target)) {
+            clearOutputFilesUninterruptibly(context, target);
+          }
         }
       }
     }
-
-    try {
-      projectDescriptor.timestamps.getStorage().clean();
+    catch (ProjectBuildException e) {
+      ex = e;
     }
-    catch (IOException e) {
-      throw new ProjectBuildException("Error cleaning timestamps storage", e);
+    finally {
+      try {
+        projectDescriptor.timestamps.getStorage().clean();
+      }
+      catch (IOException e) {
+        if (ex == null) {
+          ex = new ProjectBuildException("Error cleaning timestamps storage", e);
+        }
+        else {
+          LOG.info("Error cleaning timestamps storage", e);
+        }
+      }
+      finally {
+        try {
+          projectDescriptor.dataManager.clean();
+        }
+        catch (IOException e) {
+          if (ex == null) {
+            ex = new ProjectBuildException("Error cleaning compiler storages", e);
+          }
+          else {
+            LOG.info("Error cleaning compiler storages", e);
+          }
+        }
+        finally {
+          projectDescriptor.fsState.clearAll();
+          if (ex != null) {
+            throw ex;
+          }
+        }
+      }
     }
-    try {
-      projectDescriptor.dataManager.clean();
-    }
-    catch (IOException e) {
-      throw new ProjectBuildException("Error cleaning compiler storages", e);
-    }
-    myProjectDescriptor.fsState.clearAll();
   }
 
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
@@ -591,6 +616,7 @@ public class IncProjectBuilder {
 
     if (SYNC_DELETE) {
       for (File file : filesToDelete) {
+        context.checkCanceled();
         FileUtil.delete(file);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
@@ -129,11 +130,6 @@ public class DynamicToolWindowWrapper {
   private JPanel buildBigPanel() {
     myBigPanel = new SimpleToolWindowPanel(true);
 
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
-    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
-    myBigPanel.setToolbar(actionToolbar.getComponent());
-
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
     final JPanel panel = new JPanel(new BorderLayout());
@@ -144,6 +140,11 @@ public class DynamicToolWindowWrapper {
 
     panel.add(myTreeTablePanel);
     myBigPanel.setPreferredSize(new Dimension(200, myBigPanel.getHeight()));
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
+    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
+    myBigPanel.setToolbar(actionToolbar.getComponent());
 
     myBigPanel.revalidate();
     return myBigPanel;
@@ -390,7 +391,7 @@ public class DynamicToolWindowWrapper {
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
 
-    scrollPane.setPreferredSize(new Dimension(600, 400));
+    scrollPane.setPreferredSize(JBUI.size(600, 400));
     return scrollPane;
   }
 

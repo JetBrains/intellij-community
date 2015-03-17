@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jmock.cglib.MockObjectTestCase;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
@@ -52,10 +53,10 @@ public class ExtensionComponentAdapterTest extends MockObjectTestCase {
     return adapter;
   }
 
-  static Element readElement(String text) {
-    Element extensionElement1 = null;
+  @NotNull
+  static Element readElement(@NotNull String text) {
     try {
-      extensionElement1 = new SAXBuilder().build(new StringReader(text)).getRootElement();
+      return new SAXBuilder().build(new StringReader(text)).getRootElement();
     }
     catch (JDOMException e) {
       throw new RuntimeException(e);
@@ -63,8 +64,5 @@ public class ExtensionComponentAdapterTest extends MockObjectTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    Element extensionElement = extensionElement1;
-    return extensionElement;
   }
-
 }

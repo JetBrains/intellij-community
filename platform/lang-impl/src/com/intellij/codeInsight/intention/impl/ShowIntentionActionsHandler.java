@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -73,7 +72,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
     //intentions check isWritable before modification: if (!file.isWritable()) return;
-    if (file instanceof PsiCodeFragment) return;
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null && !state.isFinished()) {

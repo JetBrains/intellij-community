@@ -40,6 +40,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   static {
     NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
     // 184 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex");
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
@@ -49,7 +50,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     // 16 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex");
     // 10 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "numpy.core.multiarray.ndarray");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.array", "numpy.core.multiarray.ndarray");
     // 9 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("any", "object");
     // 5 occurrences
@@ -171,7 +173,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public PyType getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       return getCallType((PyFunction)callable, null, context);
     }

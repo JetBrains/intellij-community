@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,6 +33,7 @@ import java.awt.event.MouseEvent;
 
 import static org.junit.Assume.assumeFalse;
 
+@SkipInHeadlessEnvironment
 public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private static final String OUR_KEYMAP_NAME = "IdeMouseEventDispatcherTestKeymap";
   private static final String OUR_TEST_ACTION = "IdeMouseEventDispatcherTestAction";
@@ -45,7 +47,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private int myActionExecutionCount;
 
   public void setUp() throws Exception {
-    assumeFalse(GraphicsEnvironment.isHeadless());
+    assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
 
     super.setUp();
 

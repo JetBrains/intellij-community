@@ -45,12 +45,12 @@ public class PyClassCellRenderer extends DefaultListCellRenderer {
           boolean cellHasFocus) {
     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-    return customizeRenderer(this, value, myShowReadOnly);
+    return customizeRenderer(value, myShowReadOnly);
   }
 
-  public static JLabel customizeRenderer(final JLabel cellRendererComponent, final Object value, final boolean showReadOnly) {
+  public JLabel customizeRenderer(final Object value, final boolean showReadOnly) {
     PyClass aClass = (PyClass) value;
-    cellRendererComponent.setText(getClassText(aClass));
+    setText(getClassText(aClass));
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (showReadOnly) {
@@ -58,9 +58,9 @@ public class PyClassCellRenderer extends DefaultListCellRenderer {
     }
     Icon icon = aClass.getIcon(flags);
     if(icon != null) {
-      cellRendererComponent.setIcon(icon);
+      setIcon(icon);
     }
-    return cellRendererComponent;
+    return this;
   }
 
   @Nullable

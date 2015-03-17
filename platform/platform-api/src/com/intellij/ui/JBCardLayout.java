@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -243,7 +244,7 @@ public class JBCardLayout extends CardLayout {
     p.add(centerPanel, BorderLayout.CENTER);
     p.add(nextButton, BorderLayout.EAST);
     f.setContentPane(p);
-    f.setSize(new Dimension(600, 800));
+    f.setSize(JBUI.size(600, 800));
     f.setLocationRelativeTo(null);
     f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     f.setVisible(true);

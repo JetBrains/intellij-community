@@ -10,19 +10,23 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder.SvnDiffSettings;
@@ -77,8 +81,7 @@ public class SvnDiffViewer implements DiffViewer {
 
     mySettings = initSettings(context);
 
-    mySplitter = new Splitter(true);
-    mySplitter.setDividerWidth(5);
+    mySplitter = new MySplitter("Property Changes");
     mySplitter.setProportion(mySettings.getSplitterProportion());
     mySplitter.setFirstComponent(myContentViewer.getComponent());
 
@@ -90,6 +93,16 @@ public class SvnDiffViewer implements DiffViewer {
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(mySplitter, BorderLayout.CENTER);
     myPanel.add(myNotificationPanel, BorderLayout.SOUTH);
+    DataManager.registerDataProvider(myPanel, new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        DataProvider propertiesDataProvider = DataManagerImpl.getDataProviderEx(myPropertiesViewer.getComponent());
+        DataProvider contentDataProvider = DataManagerImpl.getDataProviderEx(myContentViewer.getComponent());
+        DataProvider defaultDP = myPropertiesViewerFocused ? propertiesDataProvider : contentDataProvider;
+        DataProvider fallbackDP = myPropertiesViewerFocused ? contentDataProvider : propertiesDataProvider;
+        return DiffUtil.getData(defaultDP, fallbackDP, dataId);
+      }
+    });
 
     updatePropertiesPanel();
   }
@@ -97,7 +110,7 @@ public class SvnDiffViewer implements DiffViewer {
   @NotNull
   private static DiffViewer createPropertiesViewer(@NotNull DiffRequest propertyRequest, @NotNull MyPropertyContext propertyContext) {
     if (propertyRequest instanceof SvnPropertiesDiffRequest) {
-      return new SvnPropertiesDiffViewer(propertyContext, ((SvnPropertiesDiffRequest)propertyRequest));
+      return SvnPropertiesDiffViewer.create(propertyContext, ((SvnPropertiesDiffRequest)propertyRequest), true);
     }
     else {
       return ErrorDiffTool.INSTANCE.createComponent(propertyContext, propertyRequest);
@@ -334,6 +347,46 @@ public class SvnDiffViewer implements DiffViewer {
     @Override
     public void focusGained(FocusEvent e) {
       myPropertiesViewerFocused = myValue;
+    }
+  }
+
+  private static class MySplitter extends Splitter {
+    @NotNull private final String myLabelText;
+
+    public MySplitter(@NotNull String text) {
+      super(true);
+      myLabelText = text;
+      setOrientation(true);
+    }
+
+    @Override
+    protected Divider createDivider() {
+      return new DividerImpl() {
+        @Override
+        public void setOrientation(boolean isVerticalSplit) {
+          if (!isVertical()) LOG.warn("unsupported state: splitter should be vertical");
+
+          removeAll();
+
+          setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+
+          JLabel label = new JLabel(myLabelText);
+          label.setFont(UIUtil.getOptionPaneMessageFont());
+          label.setForeground(UIUtil.getLabelForeground());
+          add(label, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(2), 0, 0));
+          setDividerWidth(label.getPreferredSize().height + JBUI.scale(4));
+
+          revalidate();
+          repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          g.setColor(JBColor.border());
+          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
+        }
+      };
     }
   }
 }

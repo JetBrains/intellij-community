@@ -3,8 +3,8 @@ public ##
   static ##
 #end
 $field.type ##
-#set($name = $StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($field.name)))
-#if ($field.boolean)
+#set($name = $StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project))))
+#if ($field.boolean && $field.primitive)
   #if ($StringUtil.startsWithIgnoreCase($name, 'is'))
     #set($name = $StringUtil.decapitalize($name))
   #else

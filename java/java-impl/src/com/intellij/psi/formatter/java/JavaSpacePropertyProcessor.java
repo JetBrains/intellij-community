@@ -368,18 +368,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private boolean shouldHandleAsSimpleMethod(@NotNull PsiMethod method) {
     if (!mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) return false;
-    
-    boolean skipElement = true;
-    for (PsiElement element : method.getChildren()) {
-      if (element instanceof PsiTypeElement) skipElement = false;
-      if (skipElement) continue;
-    
-      if (element.textContains('\n')) {
-        return false;
-      }
-    }
-
-    return true;
+    PsiCodeBlock body = method.getBody();
+    return body != null && !body.textContains('\n');
   }
 
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {
@@ -1599,12 +1589,21 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void visitArrayInitializer() {
     if (myRole1 == ChildRole.LBRACE) {
       if (mySettings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE) {
-        int spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        int spaces;
+        if (myRole2 != ChildRole.RBRACE) {
+          spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        }
+        else {
+          spaces = mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        }
         myResult = Spacing.createDependentLFSpacing(spaces, spaces, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
                                     mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
-        createSpaceProperty(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        boolean addSpace = (myRole2 != ChildRole.RBRACE)
+                           ? mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES
+                           : mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES;
+        createSpaceProperty(addSpace, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
 
     }

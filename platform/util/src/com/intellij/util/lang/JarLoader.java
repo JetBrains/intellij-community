@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class JarLoader extends Loader {
     if (myCanLockJar) {
       ZipFileCache.release(zipFile);
     }
-    else if (zipFile != null) {
+    else {
       zipFile.close();
     }
   }
@@ -72,21 +72,21 @@ class JarLoader extends Loader {
   @NotNull
   @Override
   public ClasspathCache.LoaderData buildData() throws IOException {
-    ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
     ZipFile zipFile = acquireZipFile();
     try {
+      ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
-        ZipEntry zipEntry = entries.nextElement();
-        String name = zipEntry.getName();
+        ZipEntry entry = entries.nextElement();
+        String name = entry.getName();
         loaderData.addResourceEntry(name);
         loaderData.addNameEntry(name);
       }
+      return loaderData;
     }
     finally {
       releaseZipFile(zipFile);
     }
-    return loaderData;
   }
 
   @Override
@@ -99,15 +99,15 @@ class JarLoader extends Loader {
     }
 
     try {
-      ZipFile file = acquireZipFile();
+      ZipFile zipFile = acquireZipFile();
       try {
-        ZipEntry entry = file.getEntry(name);
+        ZipEntry entry = zipFile.getEntry(name);
         if (entry != null) {
-          return MemoryResource.load(getBaseURL(), file, entry);
+          return MemoryResource.load(getBaseURL(), zipFile, entry);
         }
       }
       finally {
-        releaseZipFile(file);
+        releaseZipFile(zipFile);
       }
     }
     catch (Exception e) {

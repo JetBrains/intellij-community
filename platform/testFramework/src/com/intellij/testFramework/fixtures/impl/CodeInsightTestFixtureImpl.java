@@ -17,7 +17,6 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -25,7 +24,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
@@ -35,7 +33,10 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -84,6 +85,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -109,11 +111,11 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -126,9 +128,6 @@ import java.util.*;
  */
 @SuppressWarnings({"TestMethodWithIncorrectSignature", "JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "TestOnlyProblems"})
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
-
-  @NonNls private static final String PROFILE = "Configurable";
-
   private static final Function<IntentionAction,String> INTENTION_NAME_FUN = new Function<IntentionAction, String>() {
     @Override
     public String fun(final IntentionAction intentionAction) {
@@ -141,9 +140,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private Editor myEditor;
   private String myTestDataPath;
   private boolean myEmptyLookup;
-
-  private InspectionProfileEntry[] myInspections;
-  private final Map<String, InspectionToolWrapper> myAvailableTools = new THashMap<String, InspectionToolWrapper>();
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
@@ -263,9 +259,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
-    myInspections = inspections;
-    if (isInitialized()) {
-      configureInspections(myInspections);
+    assertInitialized();
+    for (InspectionProfileEntry inspection : inspections) {
+      LightPlatformTestCase.enableInspectionTool(getProject(), InspectionToolRegistrar.wrapTool(inspection));
     }
   }
 
@@ -280,7 +276,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void enableInspections(@NotNull final Collection<Class<? extends LocalInspectionTool>> inspections) {
-    final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
+    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
     for (Class<? extends LocalInspectionTool> clazz : inspections) {
       try {
         LocalInspectionTool inspection = clazz.getConstructor().newInstance();
@@ -295,24 +291,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void disableInspections(@NotNull InspectionProfileEntry... inspections) {
-    myAvailableTools.clear();
-    List<InspectionProfileEntry> tools = new ArrayList<InspectionProfileEntry>(Arrays.asList(myInspections));
-    for (Iterator<InspectionProfileEntry> i = tools.iterator(); i.hasNext();) {
-      final InspectionProfileEntry tool = i.next();
-      for (InspectionProfileEntry toRemove : inspections) {
-        if (tool.getShortName().equals(toRemove.getShortName())) {
-          i.remove();
-          break;
-        }
-      }
+    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
+    for (InspectionProfileEntry inspection : inspections) {
+      profile.disableTool(inspection.getShortName(), getProject());
     }
-    myInspections = tools.toArray(new InspectionProfileEntry[tools.size()]);
-    configureInspections(myInspections);
   }
 
   @Override
   public void enableInspections(@NotNull InspectionToolProvider... providers) {
-    final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
+    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
     for (InspectionToolProvider provider : providers) {
       for (Class clazz : provider.getInspectionClasses()) {
         try {
@@ -327,8 +314,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }
-    myInspections = tools.toArray(new LocalInspectionTool[tools.size()]);
-    configureInspections(myInspections);
+    enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
   }
 
   @Override
@@ -469,6 +455,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
+  @TestOnly
   public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
                                                                            @NotNull final Project project,
                                                                            @NotNull InspectionManagerEx inspectionManager,
@@ -477,16 +464,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
       @Override
       protected List<Tools> getUsedTools() {
-        try {
-          InspectionProfileImpl.INIT_INSPECTIONS = true;
-          for (InspectionToolWrapper tool : toolWrappers) {
-            profile.enableTool(tool.getShortName(), project);
+        return InspectionProfileImpl.initAndDo(new Computable<List<Tools>>() {
+          @Override
+          public List<Tools> compute() {
+            for (InspectionToolWrapper tool : toolWrappers) {
+              profile.enableTool(tool.getShortName(), project);
+            }
+            return profile.getAllEnabledInspectionTools(project);
           }
-          return profile.getAllEnabledInspectionTools(project);
-        }
-        finally {
-          InspectionProfileImpl.INIT_INSPECTIONS = false;
-        }
+        });
       }
     };
     context.setCurrentScope(scope);
@@ -930,7 +916,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public Collection<GutterMark> findCaretGutters() {
+  public Collection<GutterMark> findGuttersAtCaret() {
     CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<GutterMark>();
     findGutters(processor);
     return processor.getResults();
@@ -1224,7 +1210,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-        configureInspections(myInspections == null ? LocalInspectionTool.EMPTY_ARRAY : myInspections);
+        configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), Collections.<String>emptyList(), getTestRootDisposable());
 
         DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
         daemonCodeAnalyzer.prepareForTest();
@@ -1241,6 +1227,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
         FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
         VirtualFile[] openFiles = editorManager.getOpenFiles();
         for (VirtualFile openFile : openFiles) {
@@ -1250,9 +1237,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         myEditor = null;
         myFile = null;
         myPsiManager = null;
-
-        myInspections = null;
-        myAvailableTools.clear();
 
         try {
           myProjectFixture.tearDown();
@@ -1267,89 +1251,51 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.tearDown();
   }
 
-  private void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
-    final String shortName = tool.getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-
-    if (key == null) {
-      String id = tool instanceof LocalInspectionTool ? ((LocalInspectionTool)tool).getID() : shortName;
-      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), id);
-    }
-    myAvailableTools.put(shortName, toolWrapper);
-  }
-
-  private void configureInspections(@NotNull InspectionProfileEntry[] tools) {
-    for (InspectionProfileEntry tool : tools) {
-      enableInspectionTool(tool);
-    }
-
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
-      @Override
-      @NotNull
-      public ModifiableModel getModifiableModel() {
-        mySource = this;
-        return this;
-      }
-
-      @Override
-      @NotNull
-      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
-        final Collection<InspectionToolWrapper> tools = myAvailableTools.values();
-        return tools.toArray(new InspectionToolWrapper[tools.size()]);
-      }
-
-      @Override
-      public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
-        if (myAvailableTools.containsKey(id)) {
-          return myAvailableTools.get(id);
+  public static void configureInspections(@NotNull InspectionProfileEntry[] tools,
+                                          @NotNull final Project project,
+                                          @NotNull final Collection<String> disabledInspections,
+                                          @NotNull Disposable parentDisposable) {
+    InspectionToolWrapper[] wrapped =
+      ContainerUtil.map2Array(tools, InspectionToolWrapper.class, new Function<InspectionProfileEntry, InspectionToolWrapper>() {
+        @Override
+        public InspectionToolWrapper fun(InspectionProfileEntry tool) {
+          return InspectionToolRegistrar.wrapTool(tool);
         }
+      });
 
-        return super.getToolById(id, element);
-      }
+    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
+    profile.disableToolByDefault(new ArrayList<String>(disabledInspections), project);
 
-      @NotNull
-      @Override
-      public List<Tools> getAllEnabledInspectionTools(Project project) {
-        List<Tools> result = new ArrayList<Tools>();
-        for (InspectionToolWrapper toolWrapper : getInspectionTools(getFile())) {
-          result.add(new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true));
-        }
-        return result;
-      }
-
-      @Override
-      public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return key != null && myAvailableTools.containsKey(key.toString()) && !myDisabledInspections.contains(key.toString());
-      }
-
-      @Override
-      public InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
-        return myAvailableTools.get(shortName);
-      }
-
-      @Override
-      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        final InspectionToolWrapper toolWrapper = myAvailableTools.get(key.toString());
-        return toolWrapper == null ? HighlightDisplayLevel.WARNING : toolWrapper.getDefaultLevel();
-      }
-
-      @Override
-      public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        return myAvailableTools.get(shortName);
-      }
-    };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    final Profile oldRootProfile = inspectionProfileManager.getRootProfile();
     inspectionProfileManager.addProfile(profile);
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        inspectionProfileManager.deleteProfile(PROFILE);
+        inspectionProfileManager.deleteProfile(profile.getName());
+        inspectionProfileManager.setRootProfile(oldRootProfile.getName());
+        clearAllToolsIn(InspectionProfileImpl.getDefaultProfile(), project);
       }
     });
     inspectionProfileManager.setRootProfile(profile.getName());
-    InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
-    InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
+    InspectionProfileImpl.initAndDo(new Computable() {
+      @Override
+      public Object compute() {
+        InspectionProjectProfileManager.getInstance(project).updateProfile(profile);
+        InspectionProjectProfileManager.getInstance(project).setProjectProfile(profile.getName());
+        return null;
+      }
+    });
+  }
+
+  private static void clearAllToolsIn(@NotNull InspectionProfileImpl profile, @NotNull Project project) {
+    List<ScopeToolState> tools = profile.getAllTools(project);
+    for (ScopeToolState state : tools) {
+      InspectionToolWrapper wrapper = state.getTool();
+      if (wrapper.getExtension() != null) {
+        ReflectionUtil.resetField(wrapper, InspectionProfileEntry.class, "myTool"); // make it not initialized
+      }
+    }
   }
 
   @NotNull

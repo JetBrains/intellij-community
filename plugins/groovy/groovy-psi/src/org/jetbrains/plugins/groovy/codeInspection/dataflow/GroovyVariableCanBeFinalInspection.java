@@ -96,7 +96,7 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
   }
 
   @Override
-  public void check(final GrControlFlowOwner owner, final ProblemsHolder problemsHolder) {
+  public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
     final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<TObjectIntHashMap<GrVariable>>(
       flow,

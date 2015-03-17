@@ -52,7 +52,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<K, V> map) {
+  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newHashMap(map);
   }
 
@@ -815,7 +815,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T find(@NotNull Iterable<? extends T> iterable, final T equalTo) {
+  public static <T> T find(@NotNull Iterable<? extends T> iterable, @NotNull final T equalTo) {
     return find(iterable, new Condition<T>() {
       @Override
       public boolean value(final T object) {
@@ -1576,7 +1576,7 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
-  public static <T> void sort(@NotNull List<T> list, @NotNull Comparator<T> comparator) {
+  public static <T> void sort(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
     int size = list.size();
 
     if (size < 2) return;
@@ -2358,7 +2358,20 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap() {
+    return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <K, V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
     //noinspection deprecation
     return new ConcurrentSoftValueHashMap<K, V>();
   }
@@ -2425,6 +2438,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
     return ContainerUtilRt.map2Set(collection, mapper);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T, V> Set<V> map2LinkedSet(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+    if (collection.isEmpty()) return Collections.emptySet();
+    Set <V> set = new LinkedHashSet<V>(collection.size());
+    for (final T t : collection) {
+      set.add(mapper.fun(t));
+    }
+    return set;
   }
 
   @NotNull
@@ -2597,7 +2621,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T extends Comparable<T>> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2) {
     for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
-      int result = o1.get(i).compareTo(o2.get(i));
+      int result = Comparing.compare(o1.get(i), o2.get(i));
       if (result != 0) {
         return result;
       }

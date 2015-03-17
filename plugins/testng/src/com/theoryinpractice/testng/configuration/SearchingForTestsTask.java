@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
@@ -109,6 +110,9 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         logCantRunException(e);
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (IOException e) {
       LOG.info(e);
     }
@@ -119,10 +123,15 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    writeTempFile();
-    finish();
+    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+      @Override
+      public void run() {
+        writeTempFile();
+        finish();
 
-    if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
+        if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
+      }
+    });
   }
 
   @Override

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,6 +39,7 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   private List<File> myArtifacts;
   private Set<ExtIdeaContentRoot> myContentRoots;
   private ExtIdeaCompilerOutput myCompilerOutput;
+  private Map<String, Set<File>> myArtifactsByConfiguration;
 
   public ModuleExtendedModelImpl(String name, String group, String version, File buildDir) {
     myName = name;
@@ -93,5 +95,14 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
 
   public void setCompilerOutput(ExtIdeaCompilerOutput compilerOutput) {
     myCompilerOutput = compilerOutput;
+  }
+
+  public void setArtifactsByConfiguration(Map<String, Set<File>> artifactsByConfiguration) {
+    myArtifactsByConfiguration = artifactsByConfiguration;
+  }
+
+  @Override
+  public Map<String, Set<File>> getArtifactsByConfiguration() {
+    return myArtifactsByConfiguration == null ? Collections.<String, Set<File>>emptyMap() : myArtifactsByConfiguration;
   }
 }

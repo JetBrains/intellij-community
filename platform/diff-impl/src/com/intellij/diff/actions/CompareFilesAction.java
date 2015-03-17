@@ -42,8 +42,31 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
-    String text = getTemplatePresentation().getText();
-    if (files != null && files.length == 1) text += "...";
+    String text = "Compare Files";
+    if (files != null && files.length == 1) {
+      text = "Compare With...";
+    }
+    else if (files != null && files.length == 2) {
+      Type type1 = getType(files[0]);
+      Type type2 = getType(files[1]);
+
+      if (type1 != type2) {
+        text = "Compare";
+      }
+      else {
+        switch (type1) {
+          case FILE:
+            text = "Compare Files";
+            break;
+          case DIRECTORY:
+            text = "Compare Directories";
+            break;
+          case ARCHIEVE:
+            text = "Compare Archieves";
+            break;
+        }
+      }
+    }
     e.getPresentation().setText(text);
   }
 
@@ -93,7 +116,9 @@ public class CompareFilesAction extends BaseShowDiffAction {
   private static VirtualFile getOtherFile(@Nullable Project project, @NotNull VirtualFile file) {
     FileChooserDescriptor descriptor;
     String key;
-    if (file.isDirectory() || file.getFileType() instanceof ArchiveFileType) {
+
+    Type type = getType(file);
+    if (type == Type.DIRECTORY || type == Type.ARCHIEVE) {
       descriptor = new FileChooserDescriptor(false, true, true, false, false, false);
       key = LAST_USED_FOLDER_KEY;
     }
@@ -121,4 +146,14 @@ public class CompareFilesAction extends BaseShowDiffAction {
     if (project == null) return;
     PropertiesComponent.getInstance(project).setValue(key, file.getPath());
   }
+
+  @NotNull
+  private static Type getType(@Nullable VirtualFile file) {
+    if (file == null) return Type.FILE;
+    if (file.isDirectory()) return Type.DIRECTORY;
+    if (file.getFileType() instanceof ArchiveFileType) return Type.ARCHIEVE;
+    return Type.FILE;
+  }
+
+  private enum Type {FILE, DIRECTORY, ARCHIEVE}
 }

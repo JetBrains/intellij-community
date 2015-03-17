@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
   private JPanel createRulesPanel(MyTableModel model, TableView<DependencyRule> table) {
     table.setSurrendersFocusOnKeystroke(true);
-    table.setPreferredScrollableViewportSize(new Dimension(300, 150));
+    table.setPreferredScrollableViewportSize(JBUI.size(300, 150));
     table.setShowGrid(true);
     table.setRowHeight(new PackageSetChooserCombo(myProject, null).getPreferredSize().height);
 

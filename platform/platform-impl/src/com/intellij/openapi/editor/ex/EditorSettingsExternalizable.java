@@ -78,9 +78,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    public boolean SHOW_REFORMAT_DIALOG = true;
-    @SuppressWarnings("SpellCheckingInspection")
-    public boolean SHOW_OPIMIZE_IMPORTS_DIALOG = true;
+    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";

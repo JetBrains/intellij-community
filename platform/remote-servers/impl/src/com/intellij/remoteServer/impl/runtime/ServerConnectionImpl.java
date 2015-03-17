@@ -142,7 +142,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myLogManagers.put(deploymentName, logManager);
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
         onDeploymentStarted.run(deploymentName);
-        instance.deploy(task, logManager, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler, deployment));
+        instance
+          .deploy(task, logManager, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler, deployment));
       }
     });
   }
@@ -290,7 +291,10 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
             }
           }
         }
-        myLogManagers.remove(deploymentName).disposeLogs();
+        DeploymentLogManagerImpl logManager = myLogManagers.remove(deploymentName);
+        if (logManager != null) {
+          logManager.disposeLogs();
+        }
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
       }
@@ -311,14 +315,16 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Set<Deployment> result = new TreeSet<Deployment>(getServer().getType().getDeploymentComparator());
+    Set<Deployment> result = new LinkedHashSet<Deployment>();
+    Set<Deployment> orderedDeployments = new TreeSet<Deployment>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
-      result.addAll(myLocalDeployments.values());
+      orderedDeployments.addAll(myLocalDeployments.values());
     }
-
+    result.addAll(orderedDeployments);
     synchronized (myRemoteDeployments) {
-      result.addAll(myRemoteDeployments.values());
+      orderedDeployments.addAll(myRemoteDeployments.values());
     }
+    result.addAll(orderedDeployments);
     return result;
   }
 

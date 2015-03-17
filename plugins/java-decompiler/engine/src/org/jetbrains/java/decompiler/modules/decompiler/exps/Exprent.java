@@ -15,6 +15,13 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -22,10 +29,12 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 
-import java.util.*;
-
-public class Exprent {
+public class Exprent implements IMatchable {
 
   public static final int MULTIPLE_USES = 1;
   public static final int SIDE_EFFECTS_FREE = 2;
@@ -131,4 +140,58 @@ public class Exprent {
       }
     }
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public IMatchable findObject(MatchNode matchNode, int index) {
+    
+    if(matchNode.getType() != MatchNode.MATCHNODE_EXPRENT) {
+      return null;
+    }
+
+    List<Exprent> lstAllExprents = getAllExprents();
+    
+    if(lstAllExprents == null || lstAllExprents.isEmpty()) {
+      return null;
+    }
+    
+    String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+    if(position != null) {
+      if(position.matches("-?\\d+")) {
+        return lstAllExprents.get((lstAllExprents.size() + Integer.parseInt(position)) % lstAllExprents.size()); // care for negative positions
+      }
+    } else if(index < lstAllExprents.size()) { // use 'index' parameter
+      return lstAllExprents.get(index);
+    }
+
+    return null;
+  }
+
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    
+    if(matchNode.getType() != MatchNode.MATCHNODE_EXPRENT) {
+      return false;
+    }
+    
+    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+      switch(rule.getKey()) {
+      case EXPRENT_TYPE:
+        if(this.type != ((Integer)rule.getValue().value).intValue()) {
+          return false;
+        }
+        break;
+      case EXPRENT_RET:
+        if(!engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {
+          return false;
+        }
+        break;
+      }
+      
+    }
+    
+    return true;
+  }
+  
 }

@@ -77,38 +77,11 @@ public class CommonCodeStyleSettings {
     return myLanguage;
   }
 
-  void importOldIndentOptions(@NotNull CodeStyleSettings rootSettings) {
-    if (myFileType != null && myIndentOptions != null) {
-      if (getFileTypeIndentOptionsProvider() == null) {
-        IndentOptions fileTypeIdentOptions = rootSettings.getAdditionalIndentOptions(myFileType);
-        if (fileTypeIdentOptions != null) {
-          myIndentOptions.copyFrom(fileTypeIdentOptions);
-          rootSettings.unregisterAdditionalIndentOptions(myFileType);
-        }
-        else if (rootSettings.USE_SAME_INDENTS && !rootSettings.IGNORE_SAME_INDENTS_FOR_LANGUAGES) {
-          myIndentOptions.copyFrom(rootSettings.OTHER_INDENT_OPTIONS);
-        }
-      }
-    }
-  }
-
   @NotNull
   public IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
     return myIndentOptions;
   }
-
-  @Nullable
-  private FileTypeIndentOptionsProvider getFileTypeIndentOptionsProvider() {
-    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-    for (FileTypeIndentOptionsProvider provider : providers) {
-      if (provider.getFileType().equals(myFileType)) {
-        return provider;
-      }
-    }
-    return null;
-  }
-
 
   @Nullable
   public FileType getFileType() {
@@ -631,6 +604,13 @@ public class CommonCodeStyleSettings {
    * "int X[] {1, 3, 5}"
    */
   public boolean SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
+
+  /**
+   * "int X[] { }"
+   * or
+   * "int X[] {}"
+   */
+  public boolean SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
 

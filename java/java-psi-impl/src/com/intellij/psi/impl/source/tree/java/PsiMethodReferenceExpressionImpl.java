@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -151,6 +150,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (identifierName.equals(signature.getName())) {
             result.add(signature.getMethod());
           }
+        }
+
+        if (result.isEmpty()) {
+          return null;
         }
         methods = result.toArray(new PsiMethod[result.size()]);
       }
@@ -480,7 +483,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
         if (qContainingClass != null && containingClass != null &&
-            PsiMethodReferenceUtil.isReceiverType(left, containingClass, (PsiMethod)resolve)) {
+            PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(left, this), qContainingClass, subst)) {
           subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
           LOG.assertTrue(subst != null);
         }

@@ -81,6 +81,10 @@
                      key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="false" level="INFO"
                      implementationClass="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection"/>
+    <localInspection language="Properties" shortName="WrongPropertyKeyValueDelimiter" bundle="messages.PropertiesBundle"
+                     key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>
@@ -99,6 +103,8 @@
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
+
+    <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
   </extensions>
 
   <project-components>

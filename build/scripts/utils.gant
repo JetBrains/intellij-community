@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -144,6 +146,15 @@ binding.setVariable("loadProject", {
   compilerOptions.GENERATE_NO_WARNINGS = true
   compilerOptions.DEPRECATION = false
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
+})
+
+binding.setVariable("prepareOutputFolder", {
+  def targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
+  projectBuilder.targetFolder = targetFolder
+  if (projectBuilder.buildIncrementally && Boolean.parseBoolean(p("jps.build.clear.incremental.caches", "false"))) {
+    FileUtil.delete(new File(targetFolder))
+    FileUtil.delete(projectBuilder.dataStorageRoot)
+  }
 })
 
 boolean hasSourceRoots(JpsModule module) {
@@ -383,11 +394,11 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   new File("$path/bin/idea.properties").text = effectiveProperties.toString()
-  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops"
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions
+  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -784,6 +795,8 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
         exclude(name: "MacOS/*")
+        exclude(name: "build.txt")
+        exclude(name: "NOTICE.txt")
         extraBins.each {
           exclude(name: it)
         }
@@ -801,6 +814,13 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         extraBins.each {
           include(name: it)
         }
+      }
+    }
+
+    allPaths.each {
+      zipfileset(dir: it, prefix: "$zipRoot/Resources") {
+        include(name: "build.txt")
+        include(name: "NOTICE.txt")
       }
     }
 

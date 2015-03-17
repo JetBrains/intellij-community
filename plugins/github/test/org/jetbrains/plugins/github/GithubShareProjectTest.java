@@ -2,6 +2,8 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import git4idea.commands.Git;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
@@ -35,14 +37,29 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
   }
 
   public void testGithubAlreadyExists() throws Throwable {
-    registerDefaultShareDialogHandler();
-    registerDefaultUntrackedFilesDialogHandler();
+    final boolean[] dialogShown = new boolean[1];
+    TestDialog oldTestDialog = Messages.setTestDialog(new TestDialog() {
+      @Override
+      public int show(String message) {
+        dialogShown[0] = message.contains("Successfully connected to") && message.contains("Do you want to proceed anyway?");
+        return 1;
+      }
+    });
 
-    createProjectFiles();
-    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
-    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+    try {
+      registerDefaultShareDialogHandler();
+      registerDefaultUntrackedFilesDialogHandler();
 
-    checkNotification(NotificationType.INFORMATION, "Project is already on GitHub", null);
+      createProjectFiles();
+      GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+      assertFalse(dialogShown[0]);
+
+      GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+      assertTrue(dialogShown[0]);
+    }
+    finally {
+      Messages.setTestDialog(oldTestDialog);
+    }
   }
 
   public void testExistingGit() throws Throwable {

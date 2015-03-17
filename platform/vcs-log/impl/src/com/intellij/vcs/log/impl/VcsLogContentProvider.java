@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -104,6 +105,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   private void initContentInternal() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myContainer.add(myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME), BorderLayout.CENTER);
   }
 
@@ -117,10 +119,15 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private class MyVcsListener implements VcsListener {
     @Override
     public void directoryMappingChanged() {
-      myContainer.removeAll();
-      Disposer.dispose(myLogManager);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myContainer.removeAll();
+          Disposer.dispose(myLogManager);
 
-      initContentInternal();
+          initContentInternal();
+        }
+      });
     }
   }
 

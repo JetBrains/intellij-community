@@ -105,13 +105,10 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.xml.XmlPsiManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.treeChangePreprocessor implementation="com.intellij.xml.XmlPsiTreeChangePreprocessor"/>
     <tipAndTrick file="TagNameCompletion.html"/>
 
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
@@ -476,6 +473,10 @@
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>

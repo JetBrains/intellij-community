@@ -16,8 +16,12 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +33,21 @@ import java.awt.geom.Path2D;
 
 public class DiffDrawUtil {
   private DiffDrawUtil() {
+  }
+
+  @NotNull
+  public static Color getDividerColor() {
+    return getDividerColor(null);
+  }
+
+  @NotNull
+  public static Color getDividerColor(@Nullable Editor editor) {
+    EditorColorsScheme scheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    Color gutterBackground = scheme.getColor(EditorColors.GUTTER_BACKGROUND);
+    if (gutterBackground == null) {
+      gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
+    }
+    return gutterBackground;
   }
 
   public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
@@ -52,15 +71,28 @@ public class DiffDrawUtil {
                                    int start1, int end1,
                                    int start2, int end2,
                                    @NotNull Color color) {
+    drawTrapezium(g, x1, x2, start1, end1, start2, end2, color, getFramingColor(color));
+  }
+
+  public static void drawTrapezium(@NotNull Graphics2D g,
+                                   int x1, int x2,
+                                   int start1, int end1,
+                                   int start2, int end2,
+                                   @Nullable Color fillColor,
+                                   @Nullable Color borderColor) {
     final int[] xPoints = new int[]{x1, x2, x2, x1};
     final int[] yPoints = new int[]{start1, start2, end2, end1};
 
-    g.setColor(color);
-    g.fillPolygon(xPoints, yPoints, xPoints.length);
+    if (fillColor != null) {
+      g.setColor(fillColor);
+      g.fillPolygon(xPoints, yPoints, xPoints.length);
+    }
 
-    g.setColor(getFramingColor(color));
-    g.drawLine(x1, start1, x2, start2);
-    g.drawLine(x1, end1, x2, end2);
+    if (borderColor != null) {
+      g.setColor(borderColor);
+      g.drawLine(x1, start1, x2, start2);
+      g.drawLine(x1, end1, x2, end2);
+    }
   }
 
   public static void drawCurveTrapezium(@NotNull Graphics2D g,
@@ -218,17 +250,7 @@ public class DiffDrawUtil {
   public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                   @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
     TextAttributes attributes = getStripeTextAttributes(type, editor);
-
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
-    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
-                                                                          HighlighterTargetArea.LINES_IN_RANGE);
-    marker.setThinErrorStripeMark(true);
-
-    // We won't use addLineHighlighter as it will fail to add marker into empty document.
-    //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
-
-    marker.setLineSeparatorPlacement(placement);
-    marker.setLineSeparatorRenderer(new LineSeparatorRenderer() {
+    LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
         // TODO: change LineSeparatorRenderer interface ?
@@ -241,7 +263,39 @@ public class DiffDrawUtil {
           drawShadowedLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
         }
       }
-    });
+    };
+    return createLineMarker(editor, line, placement, attributes, renderer);
+  }
+
+  @NotNull
+  public static RangeHighlighter createBorderLineMarker(@NotNull final Editor editor, int line,
+                                                        @NotNull final SeparatorPlacement placement) {
+    LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        // TODO: change LineSeparatorRenderer interface ?
+        Rectangle clip = g.getClipBounds();
+        x2 = clip.x + clip.width;
+        g.setColor(JBColor.border());
+        g.drawLine(x1, y, x2, y);
+      }
+    };
+    return createLineMarker(editor, line, placement, null, renderer);
+  }
+
+  @NotNull
+  public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
+                                                  @Nullable TextAttributes attributes, @NotNull LineSeparatorRenderer renderer) {
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
+    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
+                                                                          HighlighterTargetArea.LINES_IN_RANGE);
+    marker.setThinErrorStripeMark(true);
+
+    // We won't use addLineHighlighter as it will fail to add marker into empty document.
+    //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
+
+    marker.setLineSeparatorPlacement(placement);
+    marker.setLineSeparatorRenderer(renderer);
 
     return marker;
   }

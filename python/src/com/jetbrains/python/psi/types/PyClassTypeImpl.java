@@ -32,7 +32,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
@@ -139,27 +138,22 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     resolving.add(key);
     try {
-      return doResolveMember(name, location, direction, resolveContext, inherited, null);
+      return doResolveMember(name, location, direction, resolveContext, inherited);
     }
     finally {
       resolving.remove(key);
     }
   }
 
-  /**
-   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
-   */
   @Nullable
-  public List<? extends RatedResolveResult> doResolveMember(@NotNull String name,
-                                                            @Nullable PyExpression location,
-                                                            @NotNull AccessDirection direction,
-                                                            @NotNull PyResolveContext resolveContext,
-                                                            boolean inherited,
-                                                            @Nullable final PyClassMembersProvider providerToSkip) {
+  private List<? extends RatedResolveResult> doResolveMember(@NotNull String name,
+                                                             @Nullable PyExpression location,
+                                                             @NotNull AccessDirection direction,
+                                                             @NotNull PyResolveContext resolveContext,
+                                                             boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location,
-                                          providerToSkip); //overriding members provers have priority to normal resolve
+      resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -194,7 +188,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
-    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location, providerToSkip);
+    classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -231,8 +225,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     if (inherited) {
       classMember =
-        resolveByMembersProviders(this, name, location,
-                                  providerToSkip);  //ask providers after real class introspection as providers have less priority
+        resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -243,7 +236,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location, providerToSkip);
+          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location);
 
           if (superMember != null) {
             return ResolveResultList.to(superMember);
@@ -259,9 +252,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     Ref<ResolveResultList> resultRef = null;
     Property property = myClass.findProperty(name, inherited);
     if (property != null) {
-      Maybe<Callable> accessor = property.getByDirection(direction);
+      Maybe<PyCallable> accessor = property.getByDirection(direction);
       if (accessor.isDefined()) {
-        Callable accessor_code = accessor.value();
+        PyCallable accessor_code = accessor.value();
         ResolveResultList ret = new ResolveResultList();
         if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
         PyTargetExpression site = property.getDefinitionSite();
@@ -351,17 +344,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
-  /**
-   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
-   */
   @Nullable
-  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name,
-                                                      @Nullable PsiElement location,
-                                                      @Nullable final PyClassMembersProvider providerToSkip) {
+  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      if (provider == providerToSkip) {
-        continue;
-      }
       final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
       if (resolveResult != null) return resolveResult;
     }
@@ -369,14 +354,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
-  /**
-   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
-   */
   @Nullable
-  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location,
-                                                                @Nullable final PyClassMembersProvider providerToSkip) {
+  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      if (provider instanceof PyOverridingClassMembersProvider && provider != providerToSkip) {
+      if (provider instanceof PyOverridingClassMembersProvider) {
         final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
         if (resolveResult != null) return resolveResult;
       }
@@ -385,14 +366,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return null;
   }
 
-  /**
-   * @param providerToSkip provider that should not be used (use it to prevent recursion). Pass null to use any provider.
-   */
   @Nullable
-  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location,
-                                                                         @Nullable final PyClassMembersProvider providerToSkip) {
+  private static PsiElement resolveByOverridingAncestorsMembersProviders(PyClassType type, String name, @Nullable PyExpression location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      if (provider instanceof PyOverridingAncestorsClassMembersProvider && provider != providerToSkip) {
+      if (provider instanceof PyOverridingAncestorsClassMembersProvider) {
         final PsiElement resolveResult = provider.resolveMember(type, name, location);
         if (resolveResult != null) return resolveResult;
       }
@@ -432,53 +409,27 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (namesAlready == null) {
       namesAlready = new HashSet<String>();
     }
-
-    /**
-     * [element_name] => (how_element_obtained, element_it_self).
-     * To be used to replace elements with providers that may override them.
-     */
-    final Map<String, Pair<ElementType, Object>> usedNames = new HashMap<String, Pair<ElementType, Object>>();
-
+    List<Object> ret = new ArrayList<Object>();
 
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
-    addOwnClassMembers(location, namesAlready, suppressParentheses, usedNames);
-    namesAlready.addAll(usedNames.keySet());
+    addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
     PsiFile origin = (location != null) ?
                      CompletionUtil.getOriginalOrSelf(location)
                        .getContainingFile() :
                      null;
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
-    final List<Object> inheritedMembers = addInheritedMembers(prefix, location, namesAlready, context, usedNames, typeEvalContext);
-    namesAlready.addAll(usedNames.keySet());
+    addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
-
-    // TODO: extract method?
-    // Adding elements from providers
+    // from providers
     for (final PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (final PyCustomMember member : provider.getMembers(this, location)) {
         final String name = member.getName();
-        final LookupElementBuilder element = PyCustomMemberUtils.toLookUpElement(member, getName());
-
-        final Pair<ElementType, Object> usedNameInfo = usedNames.get(name);
-        /**
-         * If element exists already (usedNameInfo != null) then we need to check if it is overwritable.
-         * OWN elements could be overwritten by PyOverridingClassMembersProvider
-         * INHERITED only by PyOverridingAncestorsClassMembersProvider
-         */
-        if (usedNameInfo == null ||
-            (usedNameInfo.first == ElementType.INHERITED && provider instanceof PyOverridingAncestorsClassMembersProvider) ||
-            (usedNameInfo.first == ElementType.OWN && provider instanceof PyOverridingClassMembersProvider)) {
-          usedNames.put(name, Pair.<ElementType, Object>create(ElementType.BY_PROVIDER, element));
+        if (!namesAlready.contains(name)) {
+          ret.add(PyCustomMemberUtils.toLookUpElement(member, getName()));
         }
       }
     }
-
-
-    final List<Object> ret = new ArrayList<Object>(getElementsFromUsedNames(usedNames));
-    namesAlready.addAll(usedNames.keySet());
-    ret.addAll(inheritedMembers);
-
 
     if (!myClass.isNewStyleClass()) {
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
@@ -498,11 +449,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ret.toArray();
   }
 
-
-  private void addOwnClassMembers(PsiElement expressionHook,
-                                  Set<String> namesAlready,
-                                  boolean suppressParentheses,
-                                  @NotNull final Map<String, Pair<ElementType, Object>> usedNames) {
+  private void addOwnClassMembers(PsiElement expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
@@ -528,12 +475,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       if (namesAlready.contains(name)) continue;
       if (!withinOurClass && isClassPrivate(name)) continue;
       namesAlready.add(name);
-      usedNames.put(name, Pair.<ElementType, Object>create(ElementType.OWN, le));
+      ret.add(le);
     }
     if (slots != null) {
       for (String name : slots) {
         if (!namesAlready.contains(name)) {
-          usedNames.put(name, Pair.<ElementType, Object>create(ElementType.OWN, LookupElementBuilder.create(name)));
+          ret.add(LookupElementBuilder.create(name));
         }
       }
     }
@@ -547,14 +494,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return false;
   }
 
-  @NotNull
-  private List<Object> addInheritedMembers(String name,
-                                           PsiElement expressionHook,
-                                           Set<String> namesAlready,
-                                           ProcessingContext context,
-                                           @NotNull final Map<String, Pair<ElementType, Object>> usedNames,
-                                           @NotNull TypeEvalContext typeEvalContext) {
-    final List<Object> ret = new ArrayList<Object>();
+  private void addInheritedMembers(String name,
+                                   PsiElement expressionHook,
+                                   Set<String> namesAlready,
+                                   ProcessingContext context,
+                                   List<Object> ret,
+                                   @NotNull TypeEvalContext typeEvalContext) {
     for (PyExpression expression : myClass.getSuperClassExpressions()) {
       final PsiReference reference = expression.getReference();
       PsiElement element = null;
@@ -576,14 +521,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         for (Object ob : ancestry) {
           String inheritedName = ob.toString();
           if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
-            usedNames.put(inheritedName, Pair.create(ElementType.INHERITED, ob));
+            ret.add(ob);
             namesAlready.add(inheritedName);
           }
         }
         ContainerUtil.addAll(ret, ancestry);
       }
     }
-    return ret;
   }
 
   private static boolean isClassPrivate(String lookup_string) {
@@ -662,32 +606,5 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     return new PyClassTypeImpl(pyClass, isDefinition);
-  }
-
-  // TOOD: Doc
-  private static List<Object> getElementsFromUsedNames(@NotNull final Map<String, Pair<ElementType, Object>> usedNames) {
-    final List<Object> ret = new ArrayList<Object>();
-    for (final Pair<ElementType, Object> objectPair : usedNames.values()) {
-      ret.add(objectPair.second);
-    }
-    return ret;
-  }
-
-  /**
-   * How class member was obtained
-   */
-  private enum ElementType {
-    /**
-     * Class own member
-     */
-    OWN,
-    /**
-     * Inherited from parent
-     */
-    INHERITED,
-    /**
-     * Added by provider (via extension point)
-     */
-    BY_PROVIDER
   }
 }

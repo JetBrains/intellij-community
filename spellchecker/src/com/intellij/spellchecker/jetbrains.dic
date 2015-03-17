@@ -121,6 +121,7 @@ dereference
 dereferences
 desc
 deserializable
+deserialization
 deserialize
 deserializer
 deserializers
@@ -189,6 +190,7 @@ gulpfile
 gulpfiles
 gzip
 gzipped
+hadoop
 hamcrest
 hardcoded
 hardlink
@@ -282,6 +284,7 @@ logon
 logout
 longblob
 longtext
+lookahead
 lookup
 lucene
 lvalue

@@ -44,14 +44,14 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -436,11 +436,9 @@ public class SearchDialog extends DialogWrapper {
     );
 
     model.getConfig().getMatchOptions().clearVariableConstraints();
-    if (matchOptions.hasVariableConstraints()) {
-      for (Iterator<String> i = matchOptions.getVariableConstraintNames(); i.hasNext(); ) {
-        final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(i.next()).clone();
-        model.getConfig().getMatchOptions().addVariableConstraint(constraint);
-      }
+    for (String name : matchOptions.getVariableConstraintNames()) {
+      final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(name).clone();
+      model.getConfig().getMatchOptions().addVariableConstraint(constraint);
     }
 
     MatchOptions options = configuration.getMatchOptions();
@@ -493,12 +491,23 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected JComponent createEditorContent() {
-    JPanel result = new JPanel(new BorderLayout());
+    final JPanel result = new JPanel(new BorderLayout());
 
-    result.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("search.template")));
     searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
     result.add(BorderLayout.CENTER, searchCriteriaEdit.getComponent());
     result.setMinimumSize(new Dimension(150, 100));
+
+    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+    labelPanel.add(new JLabel(SSRBundle.message("search.template")));
+
+    labelPanel.add(UIUtil.createCompleteMatchInfo(new Producer<Configuration>() {
+      @Nullable
+      @Override
+      public Configuration produce() {
+        return model.getConfig();
+      }
+    }));
+    result.add(BorderLayout.NORTH, labelPanel);
 
     return result;
   }
@@ -651,7 +660,6 @@ public class SearchDialog extends DialogWrapper {
             new EditVarConstraintsDialog(
               searchContext.getProject(),
               model, getVariablesFromListeners(),
-              isReplaceDialog(),
               (FileType)fileTypes.getSelectedItem()
             ).show();
             initiateValidation();
@@ -829,6 +837,7 @@ public class SearchDialog extends DialogWrapper {
     for (Variable variable : variables) {
       variableNames.add(variable.getName());
     }
+    variableNames.add(Configuration.CONTEXT_VAR_NAME);
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 

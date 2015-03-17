@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -260,9 +261,15 @@ public class CopyReferenceAction extends DumbAwareAction {
   @Nullable
   private static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
     if (element == null) return null;
-    for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-      String result = provider.getQualifiedName(element);
-      if (result != null) return result;
+    DumbService.getInstance(element.getProject()).setAlternativeResolveEnabled(true);
+    try {
+      for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+        String result = provider.getQualifiedName(element);
+        if (result != null) return result;
+      }
+    }
+    finally {
+      DumbService.getInstance(element.getProject()).setAlternativeResolveEnabled(false);
     }
     return null;
   }

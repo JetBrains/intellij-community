@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 package com.intellij.codeInspection
+import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.Contract
 
 import static com.intellij.codeInspection.dataFlow.Nullness.*
 /**
@@ -87,10 +89,29 @@ String bar() { return "z"; }
     assert inferNullity(parse('Object foo() { return () -> { return null; }; }')) == NOT_NULL
   }
 
+  void "test in presence of explicit null contract"() {
+    assert inferNullity(parse('''
+@Contract("null->null")
+Object foo(Object o) { if (o == null) return null; return 2; }
+''')) == UNKNOWN
+  }
+  void "test in presence of inferred null contract"() {
+    assert inferNullity(parse('''
+Object foo(Object o) { if (o == null) return null; return 2; }
+''')) == UNKNOWN
+  }
+
+  void "test in presence of fail contract"() {
+    assert inferNullity(parse('''
+@Contract("null->fail")
+Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
+''')) == NOT_NULL
+  }
+
   protected abstract Nullness inferNullity(PsiMethod method)
 
   protected PsiMethod parse(String method) {
-    return myFixture.addClass("final class Foo { $method }").methods[0]
+    return myFixture.addClass("import org.jetbrains.annotations.*; final class Foo { $method }").methods[0]
   }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
@@ -101,6 +122,13 @@ String bar() { return "z"; }
     void "test skip when errors"() {
       assert inferNullity(parse('String foo() { if(); return 2; } ')) == UNKNOWN
     }
+
+    void "test no nullable annotation in presence of inferred null contract"() {
+      def method = parse('Object foo(Object o) { if (o == null) return null; return 2; }')
+      def annos = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(method)
+      assert annos.collect { it.qualifiedName } == [Contract.name]
+    }
+
   }
 
   static class DfaInferenceTest extends NullityInferenceFromSourceTestCase {

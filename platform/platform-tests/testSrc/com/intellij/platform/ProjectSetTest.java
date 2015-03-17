@@ -112,14 +112,22 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   public void testOpenProject() throws IOException {
+    doOpenProject("project.json", "untitled");
+  }
+
+  public void testDefault() throws IOException {
+    doOpenProject("default.json", "projectSet");
+  }
+
+  private static void doOpenProject(String file, final String projectName) throws IOException {
     ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
     context.directory = VfsUtil.findFileByIoFile(new File(getTestDataPath()), true);
-    readDescriptor(new File(getTestDataPath() + "project.json"), context);
+    readDescriptor(new File(getTestDataPath() + file), context);
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     Project project = ContainerUtil.find(projects, new Condition<Project>() {
       @Override
       public boolean value(Project project) {
-        return "untitled".equals(project.getName());
+        return projectName.equals(project.getName());
       }
     });
     assertNotNull(project);

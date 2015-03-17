@@ -64,6 +64,11 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
+  @NotNull
+  protected ClassPath getClassPath() {
+    return myClassPath;
+  }
+
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
     private ClassLoader myParent = null;
@@ -115,7 +120,9 @@ public class UrlClassLoader extends ClassLoader {
     }
     
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
     public Builder noPreload() { myPreload = false; return this; }
+    public Builder preload(boolean preload) { myPreload = preload; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
@@ -152,15 +159,7 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated use {@link #build()} (to remove in IDEA 15) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
-    super(parent);
-    myURLs = ContainerUtil.map(urls, new Function<URL, URL>() {
-      @Override
-      public URL fun(URL url) {
-        return internProtocol(url);
-      }
-    });
-    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload, false, null, null);
-    myAllowBootstrapResources = false;
+    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache).allowUnescaped(allowUnescaped).preload(preload));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -171,9 +170,14 @@ public class UrlClassLoader extends ClassLoader {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
+    myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
+  }
+
+  @NotNull
+  protected final ClassPath createClassPath(@NotNull Builder builder) {
+    return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -193,7 +197,7 @@ public class UrlClassLoader extends ClassLoader {
   /** @deprecated to be removed in IDEA 15 */
   @SuppressWarnings({"unused", "deprecation"})
   public void addURL(URL url) {
-    myClassPath.addURL(url);
+    getClassPath().addURL(url);
     myURLs.add(url);
   }
 
@@ -203,7 +207,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
       throw new ClassNotFoundException(name);
     }
@@ -218,7 +222,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected Class _findClass(@NotNull String name) {
-    Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
       return null;
     }
@@ -270,7 +274,7 @@ public class UrlClassLoader extends ClassLoader {
   private Resource _getResource(final String name) {
     String n = name;
     if (n.startsWith("/")) n = n.substring(1);
-    return myClassPath.getResource(n, true);
+    return getClassPath().getResource(n, true);
   }
 
   @Nullable
@@ -290,7 +294,7 @@ public class UrlClassLoader extends ClassLoader {
   // Accessed from PluginClassLoader via reflection // TODO do we need it?
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    return myClassPath.getResources(name, true);
+    return getClassPath().getResources(name, true);
   }
 
   public static void loadPlatformLibrary(@NotNull String libName) {
@@ -351,7 +355,6 @@ public class UrlClassLoader extends ClassLoader {
   public interface CachingCondition {
 
     /**
-     * @param url
      * @return whether the internal information should be cached for files in a specific classpath component URL: inside the directory or
      * a jar.
      */

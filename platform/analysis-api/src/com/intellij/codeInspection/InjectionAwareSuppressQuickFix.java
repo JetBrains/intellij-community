@@ -2,6 +2,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This kind of suppression fix allows to clients to specify whether the fix should
@@ -12,7 +13,8 @@ import com.intellij.util.ThreeState;
  * See {@link InspectionProfileEntry#getBatchSuppressActions(PsiElement)} for details.
  */
 public interface InjectionAwareSuppressQuickFix extends SuppressQuickFix {
+  @NotNull
   ThreeState isShouldBeAppliedToInjectionHost();
 
-  void setShouldBeAppliedToInjectionHost(ThreeState shouldBeAppliedToInjectionHost);
+  void setShouldBeAppliedToInjectionHost(@NotNull ThreeState shouldBeAppliedToInjectionHost);
 }

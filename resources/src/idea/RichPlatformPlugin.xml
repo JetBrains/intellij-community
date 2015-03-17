@@ -263,6 +263,9 @@
          it's only required in full IDEA -->
     <applicationConfigurable groupId="build" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
+    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
+    <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
+                         id="preferences.externalDependencies" displayName="Required Plugins"/>
 
     <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
                              displayName="Console Folding"/>

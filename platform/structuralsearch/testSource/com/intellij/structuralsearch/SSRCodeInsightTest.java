@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
@@ -28,8 +29,8 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
                                                                                     new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
-    myFixture.enableInspections(myInspection);
     myFixture.setUp();
+    myFixture.enableInspections(myInspection);
     myFixture.setTestDataPath(getTestDataPath());
   }
 
@@ -60,6 +61,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
 
     //search pattern
     final MatchOptions options = new MatchOptions();
+    options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern(searchPattern);
     configuration.setMatchOptions(options);
 

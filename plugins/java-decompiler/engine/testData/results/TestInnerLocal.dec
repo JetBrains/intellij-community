@@ -9,6 +9,8 @@ public class TestInnerLocal {
       }
 
       new Inner("test");// 25
+      new TestInnerLocal.Inner1Static("test");// 26
+      new TestInnerLocal.Inner1Static.Inner2Static("test");// 27
    }
 
    public void testMethod() {
@@ -21,6 +23,9 @@ public class TestInnerLocal {
       }
 
       new Inner("test");// 37
+      new TestInnerLocal.Inner1Static("test");// 38
+      new TestInnerLocal.Inner1("test");// 39
+      new TestInnerLocal.Inner1Static.Inner2Static("test");// 40
    }
 
    static class Inner1Static {
@@ -57,42 +62,52 @@ class 'TestInnerLocal$1Inner' {
 class 'TestInnerLocal' {
    method 'testStaticMethod ()V' {
       4      10
+      e      11
+      18      12
    }
 
    method 'testMethod ()V' {
-      5      22
+      5      24
+      f      25
+      1a      26
+      24      27
    }
 }
 
 class 'TestInnerLocal$2Inner' {
    method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
-      b      18
+      b      20
    }
 }
 
 class 'TestInnerLocal$Inner1Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      29
+      6      34
    }
 }
 
 class 'TestInnerLocal$Inner1Static$Inner2Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      36
+      6      41
    }
 }
 
 class 'TestInnerLocal$Inner1' {
    method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
-      b      45
+      b      50
    }
 }
 
 Lines mapping:
 22 <-> 7
 25 <-> 11
-34 <-> 19
-37 <-> 23
-46 <-> 46
-53 <-> 30
-59 <-> 37
+26 <-> 12
+27 <-> 13
+34 <-> 21
+37 <-> 25
+38 <-> 26
+39 <-> 27
+40 <-> 28
+46 <-> 51
+53 <-> 35
+59 <-> 42

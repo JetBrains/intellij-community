@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -57,8 +55,6 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
   }
 
   public void computeUsages(final List<PsiElement> targets) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
-
     final PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PyReturnStatement)) {
       return;
@@ -123,5 +119,11 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
       }
     }
     return statements; 
+  }
+
+  @Nullable
+  @Override
+  public String getFeatureId() {
+    return super.getFeatureId();
   }
 }

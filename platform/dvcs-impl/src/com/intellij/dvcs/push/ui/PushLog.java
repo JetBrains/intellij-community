@@ -15,9 +15,11 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
@@ -26,14 +28,19 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -46,7 +53,7 @@ import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 
-public class PushLog extends JPanel implements TypeSafeDataProvider {
+public class PushLog extends JPanel implements DataProvider {
 
   private final static String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
@@ -55,8 +62,13 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
   private boolean myShouldRepaint = false;
+  private boolean mySyncStrategy;
+  @Nullable private String mySyncRenderedText;
+  private final boolean myAllowSyncStrategy;
 
-  public PushLog(Project project, final CheckedTreeNode root) {
+
+  public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+    myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
@@ -101,15 +113,18 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         if (myShouldRepaint) {
           refreshNode(root);
         }
+        restoreSelection(node);
         return result;
       }
 
       @Override
       public void cancelEditing() {
+        DefaultMutableTreeNode lastSelectedPathComponent = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
         super.cancelEditing();
         if (myShouldRepaint) {
           refreshNode(root);
         }
+        restoreSelection(lastSelectedPathComponent);
       }
     };
     myTree.setUI(new MyTreeUi());
@@ -131,7 +146,19 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
             ((EditableTreeNode)node).fireOnCancel();
           }
           else {
-            ((EditableTreeNode)node).fireOnChange();
+            if (mySyncStrategy) {
+              resetEditSync();
+              ContainerUtil.process(getChildNodesByType(root, RepositoryNode.class, false), new Processor<RepositoryNode>() {
+                @Override
+                public boolean process(RepositoryNode node) {
+                  node.fireOnChange();
+                  return true;
+                }
+              });
+            }
+            else {
+              ((EditableTreeNode)node).fireOnChange();
+            }
           }
         }
         myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
@@ -143,6 +170,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
         if (node != null && node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnCancel();
         }
+        resetEditSync();
         myTree.firePropertyChange(PushLogTreeUtil.EDIT_MODE_PROP, true, false);
       }
     });
@@ -188,8 +216,25 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
-    myScrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
+    myScrollPane = new JBScrollPane(myTree) {
+
+      @Override
+      public void layout() {
+        super.layout();
+        if (syncStrategyPanel != null) {
+          Rectangle bounds = this.getViewport().getBounds();
+          int height = bounds.height - syncStrategyPanel.getPreferredSize().height;
+          this.getViewport().setBounds(bounds.x, bounds.y, bounds.width, height);
+          syncStrategyPanel.setBounds(bounds.x, bounds.y + height, bounds.width,
+                                      syncStrategyPanel.getPreferredSize().height);
+        }
+      }
+    };
     myScrollPane.setOpaque(false);
+    if (syncStrategyPanel != null) {
+      myScrollPane.add(syncStrategyPanel);
+    }
     splitter.setFirstComponent(myScrollPane);
     splitter.setSecondComponent(myChangesBrowser);
 
@@ -198,6 +243,32 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     myTree.setMinimumSize(new Dimension(200, myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
   }
+
+  private void restoreSelection(@Nullable DefaultMutableTreeNode node) {
+    if (node != null) {
+      TreeUtil.selectNode(myTree, node);
+    }
+  }
+
+  private JComponent createStrategyPanel() {
+    final JPanel labelPanel = new JPanel(new BorderLayout());
+    labelPanel.setBackground(myTree.getBackground());
+    final LinkLabel<String> linkLabel = new LinkLabel<String>("Edit all targets", null);
+    linkLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    linkLabel.setListener(new LinkListener<String>() {
+      @Override
+      public void linkSelected(LinkLabel aSource, String aLinkData) {
+        mySyncStrategy = true;
+        DefaultMutableTreeNode nodeToEdit = getFirstNodeToEdit();
+        if (nodeToEdit != null) {
+          myTree.startEditingAtPath(TreeUtil.getPathFromRoot(nodeToEdit));
+        }
+      }
+    }, null);
+    labelPanel.add(linkLabel, BorderLayout.EAST);
+    return labelPanel;
+  }
+
 
   @NotNull
   private static List<Change> collectAllChanges(@NotNull List<CommitNode> commitNodes) {
@@ -209,7 +280,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     List<CommitNode> nodes = ContainerUtil.newArrayList();
     for (DefaultMutableTreeNode node : selectedNodes) {
       if (node instanceof RepositoryNode) {
-        nodes.addAll(getChildNodes((RepositoryNode)node));
+        nodes.addAll(getChildNodesByType(node, CommitNode.class, true));
       }
       else if (node instanceof CommitNode && !nodes.contains(node)) {
         nodes.add((CommitNode)node);
@@ -228,16 +299,23 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   @NotNull
-  private static List<CommitNode> getChildNodes(@NotNull RepositoryNode node) {
-    List<CommitNode> nodes = ContainerUtil.newArrayList();
+  private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
+    List<T> nodes = ContainerUtil.newArrayList();
     if (node.getChildCount() < 1) {
       return nodes;
     }
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
          childNode != null;
          childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
-      if (childNode instanceof CommitNode) {
-        nodes.add(0, (CommitNode)childNode);
+      if (type.isInstance(childNode)) {
+        @SuppressWarnings("unchecked")
+        T nodeT = (T)childNode;
+        if (reverseOrder) {
+          nodes.add(0, nodeT);
+        }
+        else {
+          nodes.add(nodeT);
+        }
       }
     }
     return nodes;
@@ -269,22 +347,24 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
   }
 
   // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (VcsDataKeys.CHANGES == key) {
+  public Object getData(String id) {
+    if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      sink.put(key, ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class));
+      return ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class);
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
+      return ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(CommitNode commitNode) {
           Hash hash = commitNode.getUserObject().getId();
           return new TextRevisionNumber(hash.asString(), hash.toShortString());
         }
-      }), VcsRevisionNumber.class));
+      }), VcsRevisionNumber.class);
     }
+    return null;
   }
 
   @NotNull
@@ -324,7 +404,36 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       }
       return true;
     }
+    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
+      mySyncStrategy = true;
+      DefaultMutableTreeNode node = getFirstNodeToEdit();
+      if (node != null) {
+        myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
+      }
+      return true;
+    }
     return super.processKeyBinding(ks, e, condition, pressed);
+  }
+
+  @Nullable
+  private DefaultMutableTreeNode getFirstNodeToEdit() {
+    // start edit last selected component if editable
+    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode) {
+      RepositoryNode selectedNode = ((RepositoryNode)myTree.getLastSelectedPathComponent());
+      if (selectedNode.isEditableNow()) return selectedNode;
+    }
+    List<RepositoryNode> repositoryNodes = getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(),
+                                                               RepositoryNode.class, false);
+    RepositoryNode editableNode = ContainerUtil.find(repositoryNodes, new Condition<RepositoryNode>() {
+      @Override
+      public boolean value(RepositoryNode repositoryNode) {
+        return repositoryNode.isEditableNow();
+      }
+    });
+    if (editableNode != null) {
+      TreeUtil.selectNode(myTree, editableNode);
+    }
+    return editableNode;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -386,7 +495,25 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+  private void setSyncText(String value) {
+    mySyncRenderedText = value;
+  }
+
+  public void fireEditorUpdated(@NotNull String currentText) {
+    if (mySyncStrategy) {
+      setSyncText(currentText);
+      myTree.repaint();
+    }
+  }
+
+  private void resetEditSync() {
+    if (mySyncStrategy) {
+      mySyncStrategy = false;
+      mySyncRenderedText = null;
+    }
+  }
+
+  private class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -403,7 +530,13 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       ColoredTreeCellRenderer renderer = getTextRenderer();
       if (value instanceof CustomRenderedTreeNode) {
-        ((CustomRenderedTreeNode)value).render(renderer);
+        if (tree.isEditing() && mySyncStrategy && value instanceof RepositoryNode) {
+          //sync rendering all editable fields
+          ((RepositoryNode)value).render(renderer, mySyncRenderedText);
+        }
+        else {
+          ((CustomRenderedTreeNode)value).render(renderer);
+        }
       }
       else {
         renderer.append(userObject == null ? "" : userObject.toString());
@@ -440,7 +573,7 @@ public class PushLog extends JPanel implements TypeSafeDataProvider {
       //there is no selection path if we start editing during initial validation//
       if (treePath == null) return true;
       Object treeNode = treePath.getLastPathComponent();
-      return treeNode instanceof EditableTreeNode;
+      return treeNode instanceof EditableTreeNode && ((EditableTreeNode)treeNode).isEditableNow();
     }
 
     public Object getCellEditorValue() {

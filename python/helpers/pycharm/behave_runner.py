@@ -19,7 +19,8 @@ from behave.tag_expression import TagExpression
 import re
 
 import _bdd_utils
-
+from distutils import version
+from behave import __version__ as behave_version
 
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
@@ -27,7 +28,6 @@ _FEATURES_FOLDER = 'features'  # "features" folder name.
 __author__ = 'Ilya.Kazakevich'
 
 from behave import configuration, runner
-from behave.formatter import formatters
 
 
 def _get_dirs_to_run(base_dir_to_search):
@@ -242,7 +242,16 @@ if __name__ == "__main__":
         command_args += ["-n", re.escape(scenario_name)]  # TODO : rewite pythonic
 
     my_config = configuration.Configuration(command_args=command_args)
-    formatters.register_as(_Null, "com.intellij.python.null")
+
+    # Temporary workaround to support API changes in 1.2.5
+    if version.LooseVersion(behave_version) >= version.LooseVersion("1.2.5"):
+        from behave.formatter import _registry
+        _registry.register_as("com.intellij.python.null",_Null)
+    else:
+        from behave.formatter import formatters
+        formatters.register_as(_Null, "com.intellij.python.null")
+
+
     my_config.format = ["com.intellij.python.null"]  # To prevent output to stdout
     my_config.reporters = []  # To prevent summary to stdout
     my_config.stdout_capture = False  # For test output

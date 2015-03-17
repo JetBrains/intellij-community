@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,26 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 
 class ArrayBinding extends AbstractCollectionBinding  {
-  public ArrayBinding(final Class<?> valueClass, final Accessor accessor) {
-    super(valueClass.getComponentType(), Constants.ARRAY, accessor);
+  public ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
+    super(valueClass.getComponentType(), accessor);
+  }
+
+  @Override
+  protected String getCollectionTagName(@Nullable Object target) {
+    return "array";
   }
 
   @Override
   @SuppressWarnings({"unchecked"})
   Object processResult(Collection result, Object target) {
-    return result.toArray((Object[])Array.newInstance(getElementType(), result.size()));
+    return result.toArray((Object[])Array.newInstance(itemType, result.size()));
   }
 
   @NotNull

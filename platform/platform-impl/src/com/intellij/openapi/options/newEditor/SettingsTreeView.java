@@ -35,6 +35,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -54,6 +55,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
@@ -105,6 +107,27 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setShowsRootHandles(false);
     myTree.setExpandableItemsEnabled(false);
     RelativeFont.BOLD.install(myTree);
+
+    myTree.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        MyNode node = extractNode(myTree.getPathForRow(myTree.getLeadSelectionRow()));
+        if (node != null) {
+          StringBuilder sb = new StringBuilder("File | Settings");
+          for (String name : getPathNames(node)) {
+            sb.append(" | ").append(name);
+          }
+          return new TextTransferable(sb.toString());
+        }
+        return null;
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     myScroller = ScrollPaneFactory.createScrollPane(null, true);
     myScroller.setViewport(new GradientViewport(myTree, 5, 0, 0, 0, true) {
@@ -169,8 +192,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
   @NotNull
   String[] getPathNames(Configurable configurable) {
+    return getPathNames(findNode(configurable));
+  }
+
+  private static String[] getPathNames(MyNode node) {
     ArrayDeque<String> path = new ArrayDeque<String>();
-    MyNode node = findNode(configurable);
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();

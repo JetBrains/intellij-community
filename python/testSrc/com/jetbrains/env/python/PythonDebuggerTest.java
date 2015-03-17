@@ -324,7 +324,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() throws Exception {
-        createExceptionBreak(myFixture, true, false, false);
+        createExceptionBreakZeroDivisionError(myFixture, true, false, false, false);
       }
 
       @Override
@@ -342,10 +342,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  private static void createExceptionBreak(IdeaProjectTestFixture fixture,
-                                           boolean notifyOnTerminate,
-                                           boolean notifyAlways,
-                                           boolean notifyOnFirst) {
+  private static void createExceptionBreakZeroDivisionError(IdeaProjectTestFixture fixture,
+                                                            boolean notifyOnTerminate,
+                                                            boolean notifyAlways,
+                                                            boolean notifyOnFirst,
+                                                            boolean ignoreLibraries) {
     XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
     XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
 
@@ -353,11 +354,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyAlways(notifyAlways);
     properties.setNotifyOnlyOnFirst(notifyOnFirst);
+    properties.setIgnoreLibraries(ignoreLibraries);
     addExceptionBreakpoint(fixture, properties);
     properties = new PyExceptionBreakpointProperties("builtins.ZeroDivisionError"); //for python 3
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyAlways(notifyAlways);
     properties.setNotifyOnlyOnFirst(notifyOnFirst);
+    properties.setIgnoreLibraries(ignoreLibraries);
     addExceptionBreakpoint(fixture, properties);
   }
 
@@ -365,7 +368,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() throws Exception {
-        createExceptionBreak(myFixture, false, true, false);
+        createExceptionBreakZeroDivisionError(myFixture, false, true, false, false);
       }
 
       @Override
@@ -391,7 +394,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
       public void before() throws Exception {
-        createExceptionBreak(myFixture, false, false, true);
+        createExceptionBreakZeroDivisionError(myFixture, false, false, true, false);
       }
 
       @Override
@@ -405,6 +408,44 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("-iron");
+      }
+    });
+  }
+
+  private static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                                       boolean notifyOnTerminate,
+                                                       boolean notifyAlways,
+                                                       boolean notifyOnFirst,
+                                                       boolean ignoreLibraries) {
+    XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
+    XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
+
+    PyExceptionBreakpointProperties properties = new PyExceptionBreakpointProperties("BaseException");
+    properties.setNotifyOnTerminate(notifyOnTerminate);
+    properties.setNotifyAlways(notifyAlways);
+    properties.setNotifyOnlyOnFirst(notifyOnFirst);
+    properties.setIgnoreLibraries(ignoreLibraries);
+    addExceptionBreakpoint(fixture, properties);
+  }
+
+  public void testExceptionBreakpointIgnoreLibraries() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
+      @Override
+      public void before() throws Exception {
+        createExceptionBreak(myFixture, false, true, false, true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
+        resume();
+        waitForTerminate();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython");
       }
     });
   }

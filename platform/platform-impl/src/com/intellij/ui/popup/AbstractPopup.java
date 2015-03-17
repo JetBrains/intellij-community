@@ -838,9 +838,14 @@ public class AbstractPopup implements JBPopup {
         myContent,
         myMovable ? new Insets(i, i, i, i) : new Insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
+        private Cursor myCursor;
+
         @Override
         protected void setCursor(Component content, Cursor cursor) {
-          glass.setCursor(cursor, this);
+          if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
+            glass.setCursor(cursor, this);
+            myCursor = cursor;
+          }
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
@@ -861,8 +866,8 @@ public class AbstractPopup implements JBPopup {
           }
         }
       };
-      ListenerUtil.addMouseListener(myCaption, moveListener);
-      ListenerUtil.addMouseMotionListener(myCaption, moveListener);
+      myCaption.addMouseListener(moveListener);
+      myCaption.addMouseMotionListener(moveListener);
       final MyContentPanel saved = myContent;
       Disposer.register(this, new Disposable() {
         @Override
@@ -1781,7 +1786,10 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myWindow != null) {
-      myWindow.setMinimumSize(myMinSize);
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myWindow.getLocationOnScreen());
+      int width = Math.min(screenRectangle.width, myMinSize.width);
+      int height = Math.min(screenRectangle.height, myMinSize.height);
+      myWindow.setMinimumSize(new Dimension(width, height));
     }
   }
 

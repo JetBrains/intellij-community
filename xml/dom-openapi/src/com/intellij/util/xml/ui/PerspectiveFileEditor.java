@@ -48,6 +48,8 @@ import java.beans.PropertyChangeSupport;
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
   private final Wrapper myWrapper = new Wrapper();
   private boolean myInitialised = false;
+  /** createCustomComponent() is in progress */
+  private boolean myInitializing;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
@@ -214,7 +216,9 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     if (!checkIsValid() || myInvalidated) return;
     ensureInitialized();
     setShowing(true);
-    reset();
+    if (myInitialised) {
+      reset();
+    }
   }
 
   protected final void setShowing(final boolean b) {
@@ -222,8 +226,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   protected final synchronized void ensureInitialized() {
-    if (!isInitialised()) {
-      myWrapper.setContent(createCustomComponent());
+    if (!isInitialised() && !myInitializing) {
+      myInitializing = true;
+      JComponent component = createCustomComponent();
+      myWrapper.setContent(component);
       myInitialised = true;
     }
   }

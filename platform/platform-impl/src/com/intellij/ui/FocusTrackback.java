@@ -52,8 +52,8 @@ public class FocusTrackback {
 
   private Window myRoot;
 
-  private Component myFocusOwner;
-  private Component myLocalFocusOwner;
+  private WeakReference<Component> myFocusOwner = new WeakReference<Component>(null);
+  private WeakReference<Component> myLocalFocusOwner = new WeakReference<Component>(null);
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
   private static final Map<Window, Component> ourRootWindowToFocusedMap = new WeakKeyWeakValueHashMap<Window, Component>();
@@ -80,7 +80,7 @@ public class FocusTrackback {
 
 
     final Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode() || wrongOS()) return;
+    if (app == null || app.isHeadlessEnvironment() || wrongOS()) return;
 
     register(parent);
 
@@ -94,14 +94,17 @@ public class FocusTrackback {
     setLocalFocusOwner(manager.getPermanentFocusOwner());
 
     final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
-    if (myLocalFocusOwner == null && fm.isFocusBeingTransferred()) {
+    if (myLocalFocusOwner.get() == null && fm.isFocusBeingTransferred()) {
       if (index > 0) {
         int eachIndex = index - 1;
         while (eachIndex > 0) {
           final FocusTrackback each = stack.get(eachIndex);
-          if (!each.isConsumed() && each.myLocalFocusOwner != null) {
-            setLocalFocusOwner(each.myLocalFocusOwner);
-            break;
+          if (!each.isConsumed()) {
+            Component component = each.myLocalFocusOwner.get();
+            if (component != null) {
+              setLocalFocusOwner(component);
+              break;
+            }
           }
           eachIndex--;
         }
@@ -133,7 +136,7 @@ public class FocusTrackback {
   }
 
   private void setLocalFocusOwner(Component component) {
-    myLocalFocusOwner = component;
+    myLocalFocusOwner = new WeakReference<Component>(component);
   }
 
   public static Component getFocusFor(Window parent) {
@@ -288,8 +291,9 @@ public class FocusTrackback {
     final int index = stack.indexOf(trackback);
     Component toFocus = null;
 
-    if (trackback.myLocalFocusOwner != null) {
-      toFocus = trackback.myLocalFocusOwner;
+    Component focusOwner = trackback.myLocalFocusOwner.get();
+    if (focusOwner != null) {
+      toFocus = focusOwner;
 
       if (UIUtil.isMeaninglessFocusOwner(toFocus)) {
         toFocus = null;
@@ -365,7 +369,7 @@ public class FocusTrackback {
 
   @Nullable
   public Component getFocusOwner() {
-    return myFocusOwner;
+    return myFocusOwner.get();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -387,8 +391,8 @@ public class FocusTrackback {
 
     myParentWindow = null;
     myRoot = null;
-    myFocusOwner = null;
-    myLocalFocusOwner = null;
+    myFocusOwner.clear();
+    myLocalFocusOwner.clear();
   }
 
   private boolean isConsumed() {
@@ -410,7 +414,7 @@ public class FocusTrackback {
   }
 
   private void setFocusOwner(final Component focusOwner) {
-    myFocusOwner = focusOwner;
+    myFocusOwner = new WeakReference<Component>(focusOwner);
   }
 
   public void setMustBeShown(final boolean mustBeShown) {

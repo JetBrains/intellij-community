@@ -19,6 +19,7 @@ package com.maddyhome.idea.copyright.ui;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -356,8 +357,10 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   }
 
   @Nls
-  public String getDisplayName() { //todo mapped names
-    return fileType.getName();
+  public String getDisplayName() {
+    return fileType instanceof LanguageFileType 
+           ? ((LanguageFileType)fileType).getLanguage().getDisplayName() 
+           : fileType.getName();
   }
 
   public String getHelpTopic() {

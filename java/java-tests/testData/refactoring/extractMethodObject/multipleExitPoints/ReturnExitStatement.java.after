@@ -2,7 +2,7 @@ class A {
   boolean foo() {
 
       Inner inner = new Inner().invoke();
-      if (inner.is()) return inner.isFoo();
+      if (inner.is()) return inner.getFoo();
 
 
       return false;
@@ -16,7 +16,7 @@ class A {
             return myResult;
         }
 
-        public Boolean isFoo() {
+        public Boolean getFoo() {
             return foo;
         }
 

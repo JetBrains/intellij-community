@@ -43,7 +43,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
       relayout();
     }
   };
-  @NotNull private final JRootPane myParent;
+  private final JRootPane myParent;
 
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
@@ -72,7 +72,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
 
-  private void queueRelayout() {
+  public void queueRelayout() {
     myRelayoutAlarm.cancelAllRequests();
     myRelayoutAlarm.addRequest(myRelayoutRunnable, 200);
   }

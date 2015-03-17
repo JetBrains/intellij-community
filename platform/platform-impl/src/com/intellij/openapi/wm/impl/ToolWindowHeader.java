@@ -30,10 +30,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.BitUtil;
@@ -224,6 +221,19 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         return true;
       }
     }.installOn(westPanel);
+    westPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseReleased(final MouseEvent e) {
+        Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            ToolWindowHeader.this.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowHeader.this));
+          }
+        };
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(runnable);
+      }
+    });
   }
 
   @Override

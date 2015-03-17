@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,7 +60,7 @@ public class InstalledPluginsState {
 
   public boolean hasNewerVersion(@NotNull PluginId id) {
     synchronized (myLock) {
-      return !wasUpdated(id) && myUpdateSettings.myOutdatedPlugins.contains(id.getIdString());
+      return !wasUpdated(id) && myUpdateSettings.getOutdatedPlugins().contains(id.getIdString());
     }
   }
 
@@ -89,13 +90,14 @@ public class InstalledPluginsState {
     String idString = id.getIdString();
 
     synchronized (myLock) {
+      List<String> outdatedPlugins = myUpdateSettings.getOutdatedPlugins();
       if (newer) {
-        if (!myUpdateSettings.myOutdatedPlugins.contains(idString)) {
-          myUpdateSettings.myOutdatedPlugins.add(idString);
+        if (!outdatedPlugins.contains(idString)) {
+          outdatedPlugins.add(idString);
         }
       }
       else {
-        myUpdateSettings.myOutdatedPlugins.remove(idString);
+        outdatedPlugins.remove(idString);
       }
     }
   }
@@ -108,7 +110,7 @@ public class InstalledPluginsState {
     boolean existing = PluginManager.isPluginInstalled(id);
 
     synchronized (myLock) {
-      myUpdateSettings.myOutdatedPlugins.remove(id.getIdString());
+      myUpdateSettings.getOutdatedPlugins().remove(id.getIdString());
       if (existing) {
         myUpdatedPlugins.put(id, descriptor);
       }

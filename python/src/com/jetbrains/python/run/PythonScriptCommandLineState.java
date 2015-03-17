@@ -123,7 +123,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     @Override
     protected void createContentDescriptorAndActions() {
       AnAction a = createConsoleExecAction(myConsoleExecuteActionHandler);
-      registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsole().getConsoleEditor().getComponent());
+      registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
     }
 
     @Override

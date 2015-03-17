@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -47,6 +49,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -61,6 +64,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -75,12 +79,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 12;
+  private static final int VERSION = 13;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
   private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
+
+  @NonNls
+  private static final String DEFAULT_IGNORED =
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
+
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -131,7 +140,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
-  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
+  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory, PropertiesComponent propertiesComponent) {
+    int fileTypeChangedCounter = StringUtilRt.parseInt(propertiesComponent.getValue("fileTypeChangedCounter"), 0);
+    fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
+    autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
+
     myMessageBus = bus;
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
       @NotNull
@@ -210,6 +223,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     });
 
+    //noinspection SpellCheckingInspection
+    myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
+
     // this should be done BEFORE reading state
     initStandardFileTypes();
   }
@@ -259,6 +275,32 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     for (StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
+    }
+
+    if (PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr()) {
+      // build scripts are correct, but it is required to run from sources
+      return;
+    }
+
+    try {
+      URL defaultFileTypesUrl = FileTypeManagerImpl.class.getResource("/defaultFileTypes.xml");
+      if (defaultFileTypesUrl != null) {
+        Element defaultFileTypesElement = JDOMUtil.load(URLUtil.openStream(defaultFileTypesUrl));
+        for (Element e : defaultFileTypesElement.getChildren()) {
+          //noinspection SpellCheckingInspection
+          if ("filetypes".equals(e.getName())) {
+            for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
+              loadFileType(element, true);
+            }
+          }
+          else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(e.getName())) {
+            readGlobalMappings(e);
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -346,10 +388,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
-  // -------------------------------------------------------------------------
-  // ApplicationComponent interface implementation
-  // -------------------------------------------------------------------------
-
   @Override
   public void disposeComponent() {
   }
@@ -374,10 +412,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       restoreStandardFileExtensions();
     }
   }
-
-  // -------------------------------------------------------------------------
-  // Implementation of abstract methods
-  // -------------------------------------------------------------------------
 
   @Override
   @NotNull
@@ -511,7 +545,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileType();
   }
 
-  private volatile FileAttribute autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", 0, true);
+  private volatile FileAttribute autoDetectedAttribute;
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
     DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
     boolean wasAutodetectedAsText = fileType == FileTypes.PLAIN_TEXT;
@@ -550,7 +584,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
     if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
-      for (FileType fileType: getRegisteredFileTypes()) {
+      for (FileType fileType: mySchemesManager.getAllSchemes()) {
         if (fileTypeName.equals(fileType.getName())) {
           return fileType;
         }
@@ -777,13 +811,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
-  @NotNull
-  @Override
-  public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
-    return mySchemesManager;
-  }
-
-  private final AtomicInteger fileTypeChangedCount = new AtomicInteger();
+  private final AtomicInteger fileTypeChangedCount;
   @Override
   public void fireFileTypesChanged() {
     clearCaches();
@@ -791,7 +819,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void clearCaches() {
-    autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.incrementAndGet());
+    int count = fileTypeChangedCount.incrementAndGet();
+    autoDetectedAttribute = autoDetectedAttribute.newVersion(count);
+    PropertiesComponent.getInstance().setValue("fileTypeChangedCounter", Integer.toString(count));
     packedFlags.clear();
   }
 
@@ -813,40 +843,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void loadState(Element parentNode) {
-    int savedVersion = getVersion(parentNode);
+  public void loadState(Element state) {
+    int savedVersion = StringUtilRt.parseInt(state.getAttributeValue(ATTRIBUTE_VERSION), 0);
 
-    String previousIgnores = getIgnoredFilesList();
-
-    for (Element e : parentNode.getChildren()) {
-      //noinspection SpellCheckingInspection
-      if ("filetypes".equals(e.getName())) {
-        for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
-          loadFileType(element, true);
-        }
+    for (Element element : state.getChildren()) {
+      if (element.getName().equals(ELEMENT_IGNORE_FILES)) {
+        myIgnoredPatterns.setIgnoreMasks(element.getAttributeValue(ATTRIBUTE_LIST));
       }
-      else if (ELEMENT_IGNORE_FILES.equals(e.getName())) {
-        myIgnoredPatterns.setIgnoreMasks(e.getAttributeValue(ATTRIBUTE_LIST));
-      }
-      else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(e.getName())) {
-        readGlobalMappings(e);
+      else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(element.getName())) {
+        readGlobalMappings(element);
       }
     }
 
-    if (savedVersion == 0) {
-      addIgnore(".svn");
-    }
-    if (savedVersion < 2) {
-      restoreStandardFileExtensions();
-    }
     if (savedVersion < 4) {
+      if (savedVersion == 0) {
+        addIgnore(".svn");
+      }
+
+      if (savedVersion < 2) {
+        restoreStandardFileExtensions();
+      }
+
       addIgnore("*.pyc");
       addIgnore("*.pyo");
       addIgnore(".git");
     }
+
     if (savedVersion < 5) {
       addIgnore("*.hprof");
     }
+
     if (savedVersion < 6) {
       addIgnore("_svn");
     }
@@ -856,7 +882,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     if (savedVersion < 8) {
-      addIgnore("*.lib");
       addIgnore("*~");
     }
 
@@ -872,16 +897,24 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       addIgnore("*.rbc");
     }
 
-    if (savedVersion == 11 && PlatformUtils.isCLion()) {
-      // TODO During EAP CLion missed FileTypesManager.xml and users got empty excludes list
-      // TODO this code is only necessary until CLion 1.0 is released, then can be safely deleted
-      // previousIgnores come now from FileTypesManager.xml and merged with anything user may have added manually
-      myIgnoredPatterns.setIgnoreMasks(StringUtil.join(Arrays.asList(previousIgnores, getIgnoredFilesList()), ";"));
+    if (savedVersion < 13) {
+      // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.  
+      Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
+      masks.remove("*.lib");
+      
+      myIgnoredPatterns.clearPatterns();
+      for (String each : masks) {
+        myIgnoredPatterns.addIgnoreMask(each);
+      }
     }
 
     myIgnoredFileCache.clearCache();
-    fileTypeChangedCount.set(JDOMExternalizer.readInteger(parentNode, "fileTypeChangedCounter", 0));
-    autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+
+    String counter = JDOMExternalizer.readString(state, "fileTypeChangedCounter");
+    if (counter != null) {
+      fileTypeChangedCount.set(StringUtilRt.parseInt(counter, 0));
+      autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+    }
   }
 
   private void readGlobalMappings(@NotNull Element e) {
@@ -903,7 +936,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     List<Trinity<FileNameMatcher, String, Boolean>> removedAssociations = AbstractFileType.readRemovedAssociations(e);
-
     for (Trinity<FileNameMatcher, String, Boolean> trinity : removedAssociations) {
       FileType type = getFileTypeByName(trinity.getSecond());
       FileNameMatcher matcher = trinity.getFirst();
@@ -940,39 +972,43 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static int getVersion(@NotNull Element node) {
-    final String verString = node.getAttributeValue(ATTRIBUTE_VERSION);
-    if (verString == null) return 0;
-    try {
-      return Integer.parseInt(verString);
-    }
-    catch (NumberFormatException e) {
-      return 0;
-    }
-  }
-
   @Nullable
   @Override
   public Element getState() {
     Element state = new Element("state");
-    state.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
 
-    String ignoredFilesList = getIgnoredFilesList();
-    if (!StringUtil.isEmpty(ignoredFilesList)) {
-      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoredFilesList));
+    Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
+    String ignoreFiles;
+    if (masks.isEmpty()) {
+      ignoreFiles = "";
+    }
+    else {
+      String[] strings = ArrayUtil.toStringArray(masks);
+      Arrays.sort(strings);
+      ignoreFiles = StringUtil.join(strings, ";") + ";";
+    }
+
+    if (!ignoreFiles.equalsIgnoreCase(DEFAULT_IGNORED)) {
+      // empty means empty list - we need to distinguish null and empty to apply or not to apply default value
+      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
     }
 
     Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
 
-    FileType[] fileTypes = getRegisteredFileTypes();
-    if (fileTypes.length > 0) {
-      Arrays.sort(fileTypes, new Comparator<FileType>() {
+    List<FileType> notExternalizableFileTypes = new ArrayList<FileType>();
+    for (FileType type : mySchemesManager.getAllSchemes()) {
+      if (!(type instanceof AbstractFileType)) {
+        notExternalizableFileTypes.add(type);
+      }
+    }
+    if (!notExternalizableFileTypes.isEmpty()) {
+      Collections.sort(notExternalizableFileTypes, new Comparator<FileType>() {
         @Override
         public int compare(@NotNull FileType o1, @NotNull FileType o2) {
           return o1.getName().compareTo(o2.getName());
         }
       });
-      for (FileType type : fileTypes) {
+      for (FileType type : notExternalizableFileTypes) {
         writeExtensionsMap(map, type, true);
       }
     }
@@ -998,9 +1034,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       state.addContent(map);
     }
 
-    int value = fileTypeChangedCount.get();
-    if (value != 0) {
-      JDOMExternalizer.write(state, "fileTypeChangedCounter", value);
+    if (!state.getChildren().isEmpty()) {
+      state.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
     }
     return state;
   }

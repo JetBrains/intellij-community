@@ -136,8 +136,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           }
         }
 
-        if (UIUtil.isCloseClick((MouseEvent)e)) {
-          hide();
+        if (UIUtil.isCloseClick(me)) {
+          if (isInsideBalloon(me)) {
+            hide();
+            me.consume();
+          }
           return;
         }
       }
@@ -202,7 +205,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (cmp == myCloseRec) return true;
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;
-    return myComp.contains(target.getScreenPoint().x, target.getScreenPoint().y);
+    Point point = target.getScreenPoint();
+    SwingUtilities.convertPointFromScreen(point, myComp);
+    return myComp.contains(point);
   }
 
   public boolean isMovingForward(RelativePoint target) {

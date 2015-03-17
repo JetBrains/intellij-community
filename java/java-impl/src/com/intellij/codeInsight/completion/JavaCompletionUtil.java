@@ -165,6 +165,10 @@ public class JavaCompletionUtil {
         return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalize(substitutor));
       }
 
+      @Override
+      public PsiType visitType(PsiType type) {
+        return type;
+      }
     }.mapType(type);
     if (result == null) {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
@@ -172,7 +176,6 @@ public class JavaCompletionUtil {
     return result;
   }
 
-  @Nullable
   private static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
     if (substitutor == null) return null;
 
@@ -549,6 +552,10 @@ public class JavaCompletionUtil {
                                                                          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
                                                                          Conditions.<PsiClass>alwaysTrue());
       }
+    }
+    
+    if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
+      return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);

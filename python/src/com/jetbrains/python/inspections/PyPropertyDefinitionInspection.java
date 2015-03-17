@@ -130,7 +130,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           else {
             // @property; we only check getter, others are checked by visitPyFunction
             // getter is always present with this form
-            final Callable callable = property.getGetter().valueOrNull();
+            final PyCallable callable = property.getGetter().valueOrNull();
             if (callable instanceof PyFunction) {
               checkGetter(callable, getFunctionMarkingElement((PyFunction)callable));
             }
@@ -142,12 +142,12 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkPropertyCallArgument(String paramName, PyExpression argument, PsiFile containingFile) {
       assert argument != null : "Parameter mapped to null argument";
-      Callable callable = null;
+      PyCallable callable = null;
       if (argument instanceof PyReferenceExpression) {
         final PsiPolyVariantReference reference = ((PyReferenceExpression)argument).getReference(getResolveContext());
         PsiElement resolved = reference.resolve();
-        if (resolved instanceof Callable) {
-          callable = (Callable)resolved;
+        if (resolved instanceof PyCallable) {
+          callable = (PyCallable)resolved;
         }
         else {
           reportNonCallableArg(resolved, argument);
@@ -246,14 +246,14 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     }
 
 
-    private void checkGetter(Callable callable, PsiElement beingChecked) {
+    private void checkGetter(PyCallable callable, PsiElement beingChecked) {
       if (callable != null) {
         checkOneParameter(callable, beingChecked, true);
         checkReturnValueAllowed(callable, beingChecked, true, PyBundle.message("INSP.getter.return.smth"));
       }
     }
 
-    private void checkSetter(Callable callable, PsiElement beingChecked) {
+    private void checkSetter(PyCallable callable, PsiElement beingChecked) {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList paramList = callable.getParameterList();
@@ -266,14 +266,14 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    private void checkDeleter(Callable callable, PsiElement beingChecked) {
+    private void checkDeleter(PyCallable callable, PsiElement beingChecked) {
       if (callable != null) {
         checkOneParameter(callable, beingChecked, false);
         checkReturnValueAllowed(callable, beingChecked, false, PyBundle.message("INSP.deleter.should.not.return"));
       }
     }
 
-    private void checkOneParameter(Callable callable, PsiElement beingChecked, boolean isGetter) {
+    private void checkOneParameter(PyCallable callable, PsiElement beingChecked, boolean isGetter) {
       final PyParameterList parameterList = callable.getParameterList();
       if (myOneParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myOneParamFunction, myTypeEvalContext)) {
         if (isGetter) {
@@ -299,7 +299,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    private void checkReturnValueAllowed(Callable callable, PsiElement beingChecked, boolean allowed, String message) {
+    private void checkReturnValueAllowed(PyCallable callable, PsiElement beingChecked, boolean allowed, String message) {
       // TODO: use a real flow analysis to check all exit points
       boolean hasReturns;
       if (callable instanceof PyFunction) {

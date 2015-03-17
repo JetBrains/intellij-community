@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,10 +320,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return className;
   }
 
-  public String toString() {
-    return getDescription();
-  }
-
   @Override
   public String getShortName() {
     return getDisplayInfoInternal(false, 30);
@@ -423,7 +419,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (printFullTrace) {
       builder.append(DebuggerBundle.message(
         "status.line.breakpoint.reached.full.trace",
-        location.declaringType().name() + "." + location.method().name())
+        DebuggerUtilsEx.getLocationMethodQName(location))
       );
       try {
         final List<StackFrame> frames = event.thread().frames();
@@ -436,7 +432,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     else {
       builder.append(DebuggerBundle.message(
         "status.line.breakpoint.reached",
-        location.declaringType().name() + "." + location.method().name(),
+        DebuggerUtilsEx.getLocationMethodQName(location),
         sourceName,
         getLineIndex() + 1
       ));

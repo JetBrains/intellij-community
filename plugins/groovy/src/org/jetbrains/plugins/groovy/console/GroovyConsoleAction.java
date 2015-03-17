@@ -15,20 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.console;
 
-import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 
 /**
  * Created by Max Medvedev on 9/20/13
  */
 public class GroovyConsoleAction extends GroovyShellActionBase implements DumbAware {
+
   @Override
   protected GroovyShellRunner getRunner(Module module) {
     return GroovyShellRunner.getAppropriateRunner(module);
@@ -40,13 +39,23 @@ public class GroovyConsoleAction extends GroovyShellActionBase implements DumbAw
   }
 
   @Override
-  protected LanguageConsoleImpl createConsole(Project project, String title) {
-    return new LanguageConsoleImpl(project, title, GroovyLanguage.INSTANCE) {
+  protected LanguageConsoleView createConsole(Project project, String title) {
+    return new GroovyConsoleImpl(project, title) {
+
+      @Override
+      protected boolean isShell() {
+        return false;
+      }
+
       @NotNull
       @Override
-      protected PsiFile createFile(@NotNull Project project,
-                                   @NotNull VirtualFile virtualFile) {
-        return new GroovyCodeFragment(getProject(), virtualFile);
+      protected String addToHistoryInner(@NotNull TextRange textRange,
+                                         @NotNull EditorEx editor,
+                                         boolean erase,
+                                         boolean preserveMarkup) {
+        final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
+        processCode();
+        return result;
       }
     };
   }

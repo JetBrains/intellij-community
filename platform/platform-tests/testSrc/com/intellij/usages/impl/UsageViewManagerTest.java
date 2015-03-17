@@ -25,6 +25,11 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 
 public class UsageViewManagerTest extends PlatformTestCase {
+
+  static {
+    initPlatformLangPrefix();
+  }
+
   public void testScopeCreatedForFindInDirectory() {
     VirtualFile dir = getProject().getBaseDir();
     FindModel findModel = new FindModel();
@@ -35,5 +40,15 @@ public class UsageViewManagerTest extends PlatformTestCase {
     UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(getProject());
     SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
     assertEquals(scope, GlobalSearchScopesCore.directoryScope(getProject(), dir, true));
+  }
+
+  public void testScopeCreatedForFindInModuleContent() {
+    FindModel findModel = new FindModel();
+    findModel.setModuleName(getModule().getName());
+    findModel.setProjectScope(false);
+    UsageTarget target = new FindInProjectUtil.StringUsageTarget(getProject(), findModel);
+    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(getProject());
+    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
+    assertEquals(scope, getModule().getModuleContentScope());
   }
 }

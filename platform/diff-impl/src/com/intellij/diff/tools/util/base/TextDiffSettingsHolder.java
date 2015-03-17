@@ -22,24 +22,24 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 @State(
   name = "TextDiffSettings",
-  storages = {@Storage(
-    file = DiffUtil.DIFF_CONFIG)})
+  storages = @Storage(file = DiffUtil.DIFF_CONFIG)
+)
 public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiffSettingsHolder.State> {
   public static final Key<TextDiffSettings> KEY = Key.create("TextDiffSettings");
 
   public static final int[] CONTEXT_RANGE_MODES = {1, 2, 4, 8, -1};
   public static final String[] CONTEXT_RANGE_MODE_LABELS = {"1", "2", "4", "8", "Disable"};
 
-  private static class SharedSettings {
+  private final static class SharedSettings {
     // Fragments settings
     public int CONTEXT_RANGE = 4;
   }
@@ -205,7 +205,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
   @NotNull
   public static Map<String, PlaceSettings> getDefaultPlaceSettings() {
-    HashMap<String, PlaceSettings> map = new HashMap<String, PlaceSettings>();
+    Map<String, PlaceSettings> map = new TreeMap<String, PlaceSettings>();
 
     PlaceSettings changes = new PlaceSettings();
     changes.EXPAND_BY_DEFAULT = false;

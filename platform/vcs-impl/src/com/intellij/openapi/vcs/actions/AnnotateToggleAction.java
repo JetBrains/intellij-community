@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -114,7 +115,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     Project project = context.getProject();
     if (project == null) return false;
-    
+
     for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(selectedFile)) {
       if (fileEditor instanceof TextEditor) {
         if (isAnnotated(((TextEditor)fileEditor).getEditor())) {
@@ -136,7 +137,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     Editor editor = context.getEditor();
     VirtualFile selectedFile = context.getSelectedFile();
     if (selectedFile == null) return;
-    
+
     if (!selected) {
       for (FileEditor fileEditor : FileEditorManager.getInstance(context.getProject()).getEditors(selectedFile)) {
         if (fileEditor instanceof TextEditor) {
@@ -262,7 +263,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       new AnnotationPresentation(fileAnnotation, switcher, editorGutter,
                                  additionalActions.toArray(new AnAction[additionalActions.size()]));
 
-    final Couple<Map<String, Color>> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
+    final Couple<Map<VcsRevisionNumber, Color>> bgColorMap =
+      Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
     final Map<String, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
 
     if (switcher != null) {
@@ -361,9 +363,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   @NotNull
-  private static Couple<Map<String, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation) {
-    final Map<String, Color> commitOrderColors = new HashMap<String, Color>();
-    final Map<String, Color> commitAuthorColors = new HashMap<String, Color>();
+  private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation) {
+    final Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<VcsRevisionNumber, Color>();
+    final Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<VcsRevisionNumber, Color>();
     final Map<String, Color> authorColors = new HashMap<String, Color>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
@@ -372,7 +374,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
       for (int i = 0; i < fileRevisionList.size(); i++) {
         VcsFileRevision revision = fileRevisionList.get(i);
-        final String number = revision.getRevisionNumber().asString();
+        final VcsRevisionNumber number = revision.getRevisionNumber();
         final String author = revision.getAuthor();
         if (number == null) continue;
 

@@ -529,6 +529,24 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[] { 0 };\n" + "    }\n" + "}");
   }
 
+  public void testEmptyArray() throws Exception {
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true;
+    settings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true;
+    settings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
+    doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
+               "class a {\n" + "    void f() {\n" + "        final int[] i = new int[] {};\n" + "    }\n" + "}");
+  }
+
+  public void testEmptyArrayIsntWrapped() throws Exception {
+    final CommonCodeStyleSettings settings = getSettings();
+    settings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
+    settings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
+    settings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = true;
+    doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
+               "class a {\n" + "    void f() {\n" + "        final int[] i = new int[]{ };\n" + "    }\n" + "}");
+  }
+
   public void testTwoJavaDocs() throws Exception {
     doTextTest("/**\n" + " * \n" + " */\n" + "        class Test {\n" + "    /**\n" + "     */\n" + "     public void foo();\n" + "}",
                "/**\n" + " *\n" + " */\n" + "class Test {\n" + "    /**\n" + "     */\n" + "    public void foo();\n" + "}");
@@ -1942,12 +1960,14 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testCommentAfterDeclaration() throws Exception {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
 
     int oldMargin = codeStyleSettings.getDefaultRightMargin();
+    int oldWrap = javaSettings.ASSIGNMENT_WRAP;
 
     try {
       codeStyleSettings.setDefaultRightMargin(20);
-      codeStyleSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+      javaSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
       doMethodTest(
         "int i=0; //comment comment",
         "int i =\n" +
@@ -1957,6 +1977,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     }
     finally {
       codeStyleSettings.setDefaultRightMargin(oldMargin);
+      javaSettings.ASSIGNMENT_WRAP = oldWrap;
     }
   }
 

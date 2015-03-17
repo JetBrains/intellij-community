@@ -32,7 +32,6 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -41,9 +40,9 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -332,11 +331,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException {
-    myProject.init();
-  }
-
-  @Override
   public VirtualFile getProjectFile() {
     return myProject.isDefault() ? null : ((FileBasedStorage)getProjectFileStorage()).getVirtualFile();
   }
@@ -451,7 +445,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  protected final void doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
+  protected final List<Throwable> doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles, @Nullable List<Throwable> errors) {
     ProjectImpl.UnableToSaveProjectNotification[] notifications =
       NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
     if (notifications.length > 0) {
@@ -460,7 +454,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     beforeSave(readonlyFiles);
 
-    super.doSave(saveSessions, readonlyFiles);
+    super.doSave(saveSessions, readonlyFiles, errors);
 
     if (!readonlyFiles.isEmpty()) {
       ReadonlyStatusHandler.OperationStatus status;
@@ -480,7 +474,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
         readonlyFiles.clear();
         for (Pair<SaveSession, VirtualFile> entry : oldList) {
-          executeSave(entry.first, readonlyFiles);
+          errors = executeSave(entry.first, readonlyFiles, errors);
+        }
+
+        if (errors != null) {
+          CompoundRuntimeException.doThrow(errors);
         }
 
         if (!readonlyFiles.isEmpty()) {
@@ -489,6 +487,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
       }
     }
+
+    return errors;
   }
 
   protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {
@@ -504,6 +504,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
+    @NotNull
     @Override
     public Storage[] selectStorages(@NotNull Storage[] storages, @NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
@@ -562,12 +563,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   @Override
-  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> persistentStateComponent,
+  protected <T> Storage[] getComponentStorageSpecs(@NotNull PersistentStateComponent<T> component,
                                                    @NotNull State stateSpec,
                                                    @NotNull StateStorageOperation operation) {
     // if we create project from default, component state written not to own storage file, but to project file,
     // we don't have time to fix it properly, so, ancient hack restored.
-    Storage[] result = super.getComponentStorageSpecs(persistentStateComponent, stateSpec, operation);
+    Storage[] result = super.getComponentStorageSpecs(component, stateSpec, operation);
     // don't add fake storage if project file storage already listed, otherwise data will be deleted on write (because of "deprecated")
     for (Storage storage : result) {
       if (storage.file().equals(StoragePathMacros.PROJECT_FILE)) {

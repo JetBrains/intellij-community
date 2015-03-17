@@ -1,10 +1,23 @@
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ArraysAsListWithZeroOrOneArgumentInspectionTest extends IGInspectionTestCase {
+public class ArraysAsListWithZeroOrOneArgumentInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/performance/arrays_as_list_with_one_argument", new ArraysAsListWithZeroOrOneArgumentInspection());
+  public void testArraysAsListWithZeroOrOneArgument() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ArraysAsListWithZeroOrOneArgumentInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/performance/arrays_as_list_with_one_argument";
   }
 }

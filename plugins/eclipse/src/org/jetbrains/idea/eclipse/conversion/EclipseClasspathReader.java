@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
@@ -53,33 +55,37 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   private final Project myProject;
   private ContentEntry myContentEntry;
 
-  public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots) {
+  public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots) {
     this(rootPath, project, currentRoots, null);
   }
 
-  public EclipseClasspathReader(final String rootPath, final Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
+  public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     super(rootPath, currentRoots, moduleNames);
+
     myProject = project;
   }
 
-  public void init(ModifiableRootModel model) {
+  public void init(@NotNull ModifiableRootModel model) {
     myContentEntry = model.addContentEntry(pathToUrl(myRootPath));
   }
 
   public static void collectVariables(Set<String> usedVariables, Element classpathElement, final String rootPath) {
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-      final Element element = (Element)o;
+    for (Element element : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
-      if (path == null) continue;
-      final String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
+      if (path == null) {
+        continue;
+      }
+
+      String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
       if (Comparing.strEqual(kind, EclipseXml.VAR_KIND)) {
-        createEPathVariable(usedVariables, path, 0);
-        final String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
+        createEPathVariable(path, 0);
+        String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
         if (srcPath != null) {
-          createEPathVariable(usedVariables, srcPath, srcVarStart(srcPath));
+          createEPathVariable(srcPath, srcVarStart(srcPath));
         }
-      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
-        final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
+      }
+      else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND) || Comparing.strEqual(kind, EclipseXml.OUTPUT_KIND)) {
+        EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
         if (linkedResource != null && linkedResource.containsPathVariable()) {
           usedVariables.add(linkedResource.getVariableName());
         }
@@ -87,10 +93,14 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     }
   }
 
-  public void readClasspath(ModifiableRootModel model,
-                            final Collection<String> unknownLibraries,
-                            Collection<String> unknownJdks,
-                            final Set<String> usedVariables,
+  public void readClasspath(@NotNull ModifiableRootModel model, @NotNull Element classpathElement) throws IOException, ConversionException {
+    Set<String> sink = new THashSet<String>();
+    readClasspath(model, sink, sink, sink, null, classpathElement);
+  }
+
+  public void readClasspath(@NotNull ModifiableRootModel model,
+                            @NotNull Collection<String> unknownLibraries,
+                            @NotNull Collection<String> unknownJdks,
                             Set<String> refsToModules,
                             final String testPattern,
                             Element classpathElement) throws IOException, ConversionException {
@@ -100,11 +110,11 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
       }
     }
     int idx = 0;
-    final EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
-    final HashSet<String> libs = new HashSet<String>();
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+    EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
+    Set<String> libs = new HashSet<String>();
+    for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o, idx++,
+        readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, o, idx++,
                            eclipseModuleManager,
                            ((BasePathMacroManager)PathMacroManager.getInstance(model.getModule())).getExpandMacroMap(), libs);
       }
@@ -223,8 +233,8 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     setOutputUrl(rootModel, path);
   }
 
-  public static void setOutputUrl(ModifiableRootModel rootModel, String path) {
-    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+  public static void setOutputUrl(@NotNull ModifiableRootModel rootModel, @NotNull String path) {
+    CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setCompilerOutputPath(pathToUrl(path));
     compilerModuleExtension.inheritCompilerOutputPath(false);
   }

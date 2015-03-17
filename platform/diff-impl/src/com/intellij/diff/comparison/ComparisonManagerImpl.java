@@ -41,7 +41,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   public List<LineFragment> compareLines(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
       return ByLine.compare(text1, text2, policy, indicator);
     }
@@ -54,7 +54,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
                                               @NotNull CharSequence text2,
                                               @NotNull ComparisonPolicy policy,
-                                              @NotNull ProgressIndicator indicator) {
+                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> fragments = compareLines(text1, text2, policy, indicator);
     return compareLinesInner(text1, text2, fragments, policy, indicator);
   }
@@ -64,7 +64,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull CharSequence text2,
                                               @NotNull List<LineFragment> lineFragments,
                                               @NotNull ComparisonPolicy policy,
-                                              @NotNull ProgressIndicator indicator) {
+                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> fineFragments = new ArrayList<LineFragment>(lineFragments.size());
     int tooBigChunksCount = 0;
 
@@ -128,7 +128,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   public List<DiffFragment> compareWords(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     return ByWord.compare(text1, text2, policy, indicator);
   }
 
@@ -136,7 +136,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   public List<DiffFragment> compareChars(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     if (policy == ComparisonPolicy.IGNORE_WHITESPACES) {
       return convertIntoFragments(ByChar.compareIgnoreWhitespaces(text1, text2, indicator));
     }

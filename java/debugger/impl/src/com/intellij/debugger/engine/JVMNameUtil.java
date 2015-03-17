@@ -248,7 +248,7 @@ public class JVMNameUtil {
     }
   }
                                
-  public static JVMName getJVMQualifiedName(PsiClass psiClass) {
+  public static JVMName getJVMQualifiedName(@NotNull PsiClass psiClass) {
     final String name = getNonAnonymousClassName(psiClass);
     if (name != null) {
       return getJVMRawText(name);

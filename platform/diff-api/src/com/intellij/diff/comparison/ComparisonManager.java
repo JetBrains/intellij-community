@@ -39,32 +39,32 @@ public abstract class ComparisonManager {
   public abstract List<LineFragment> compareLines(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
-                                                  @NotNull ProgressIndicator indicator);
+                                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   @NotNull
   public abstract List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
                                                        @NotNull CharSequence text2,
                                                        @NotNull ComparisonPolicy policy,
-                                                       @NotNull ProgressIndicator indicator);
+                                                       @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   @NotNull
   public abstract List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
                                                        @NotNull CharSequence text2,
                                                        @NotNull List<LineFragment> lineFragments,
                                                        @NotNull ComparisonPolicy policy,
-                                                       @NotNull ProgressIndicator indicator);
+                                                       @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   @NotNull
   public abstract List<DiffFragment> compareWords(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
-                                                  @NotNull ProgressIndicator indicator);
+                                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   @NotNull
   public abstract List<DiffFragment> compareChars(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
-                                                  @NotNull ProgressIndicator indicator);
+                                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   public abstract boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy);
 

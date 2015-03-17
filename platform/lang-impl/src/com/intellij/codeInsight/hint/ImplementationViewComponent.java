@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -49,6 +51,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usages.UsageView;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairFunction;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +63,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
@@ -138,7 +143,8 @@ public class ImplementationViewComponent extends JPanel {
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
-    ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
+    
+    setBackgroundColor(myEditor);
 
     final EditorSettings settings = myEditor.getSettings();
     settings.setAdditionalLinesCount(1);
@@ -170,7 +176,7 @@ public class ImplementationViewComponent extends JPanel {
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0);
     toolbarPanel.add(myToolbar.getComponent(), gc);
 
-    setPreferredSize(new Dimension(600, 400));
+    setPreferredSize(JBUI.size(600, 400));
 
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
@@ -239,6 +245,15 @@ public class ImplementationViewComponent extends JPanel {
         return true;
       }
     });
+  }
+
+  private static void setBackgroundColor(Editor editor) {
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
+    if (color == null) {
+      color = colorsScheme.getDefaultBackground();
+    }
+    ((EditorEx)editor).setBackgroundColor(color);
   }
 
   private void updateRenderer(final Project project) {

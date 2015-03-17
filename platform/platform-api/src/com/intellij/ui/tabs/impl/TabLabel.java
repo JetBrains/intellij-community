@@ -22,8 +22,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -34,6 +32,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -127,7 +126,7 @@ public class TabLabel extends JPanel {
 
       @Override
       protected void doPaint(Graphics2D g) {
-        if (!Registry.is("editor.use.compressible.tabs") || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
+        if (UISettings.getInstance().HIDE_TABS_IF_NEED || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
           super.doPaint(g);
           return;
         }
@@ -154,10 +153,17 @@ public class TabLabel extends JPanel {
           g.setClip(oldClip);
         }
       }
+
+      @Override
+      protected void applyAdditionalHints(@NotNull Graphics2D g) {
+        if (!SystemInfo.isJavaVersionAtLeast("1.7") && g.getComposite() instanceof AlphaComposite && (((AlphaComposite)g.getComposite()).getAlpha() < 1)) {
+          g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+        }
+      }
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (Registry.is("editor.use.compressible.tabs") ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(new Insets(0, 0, 0, 0));
 
@@ -167,17 +173,9 @@ public class TabLabel extends JPanel {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs()) {
-      if (!Registry.is("editor.use.compressible.tabs")) {
-        if (UISettings.getInstance().SHOW_CLOSE_BUTTON) insets.right = 3;
-      }
-      else {
-        insets.right = (UISettings.getInstance().SHOW_CLOSE_BUTTON || !UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) ? 3 : 6;
-        insets.left = 5;
-      }
-      return new Insets(insets.top, insets.left, insets.bottom, insets.right);
+    if (myTabs.isEditorTabs() && UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+        insets.right = 3;
     }
-
     return insets;
   }
 
@@ -359,16 +357,6 @@ public class TabLabel extends JPanel {
 
 
   public void setText(final SimpleColoredText text) {
-    myInfo.setTitleIsShortened(false);
-    if (text != null && text.getTexts().size() == 1 && Boolean.TRUE == getClientProperty(JBEditorTabs.TABS_SHORTEN_TITLE_IF_NEED)) {
-      String title = text.getTexts().get(0);
-      if (title.length() > UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT) {
-        SimpleTextAttributes attributes = text.getAttributes().get(0);
-        text.clear();
-        text.append(StringUtil.getShortened(title, UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT), attributes);
-        myInfo.setTitleIsShortened(true);
-      }
-    }
     myLabel.change(new Runnable() {
       public void run() {
         myLabel.clear();

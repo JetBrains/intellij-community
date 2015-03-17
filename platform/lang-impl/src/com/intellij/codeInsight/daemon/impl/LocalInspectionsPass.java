@@ -285,7 +285,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiElementVisitor visitor = InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, languages);
 
     synchronized (init) {
-      init.add(new InspectionContext(toolWrapper, holder, visitor, languages));
+      init.add(new InspectionContext(toolWrapper, holder, holder.getResultCount(), visitor, languages));
     }
     advanceProgress(1);
 
@@ -311,7 +311,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           context.tool.getTool().inspectionFinished(session, context.holder);
 
           if (context.holder.hasResults()) {
-            appendDescriptors(myFile, context.holder.getResults(), context.tool);
+            List<ProblemDescriptor> allProblems = context.holder.getResults();
+            List<ProblemDescriptor> restProblems = allProblems.subList(context.problemsSize, allProblems.size());
+            appendDescriptors(myFile, restProblems, context.tool);
           }
           return true;
         }
@@ -698,29 +700,32 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private static class InspectionResult {
-    @NotNull public final LocalInspectionToolWrapper tool;
-    @NotNull public final List<ProblemDescriptor> foundProblems;
+    @NotNull private final LocalInspectionToolWrapper tool;
+    @NotNull private final List<ProblemDescriptor> foundProblems;
 
     private InspectionResult(@NotNull LocalInspectionToolWrapper tool, @NotNull List<ProblemDescriptor> foundProblems) {
       this.tool = tool;
-      this.foundProblems = foundProblems;
+      this.foundProblems = new ArrayList<ProblemDescriptor>(foundProblems);
     }
   }
 
   private static class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                               @NotNull ProblemsHolder holder,
+                              int problemsSize, // need this to diff between found problems in visible part and the rest
                               @NotNull PsiElementVisitor visitor,
                               @Nullable Collection<String> languageIds) {
       this.tool = tool;
       this.holder = holder;
+      this.problemsSize = problemsSize;
       this.visitor = visitor;
       this.languageIds = languageIds;
     }
 
-    @NotNull final LocalInspectionToolWrapper tool;
-    @NotNull final ProblemsHolder holder;
-    @NotNull final PsiElementVisitor visitor;
-    @Nullable final Collection<String> languageIds;
+    @NotNull private final LocalInspectionToolWrapper tool;
+    @NotNull private final ProblemsHolder holder;
+    private final int problemsSize;
+    @NotNull private final PsiElementVisitor visitor;
+    @Nullable private final Collection<String> languageIds;
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,6 +33,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.*;
 
@@ -119,12 +119,6 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     }
 
     if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
-      ChangeListManager.getInstance(myProject).invokeAfterUpdate(new Runnable() {
-        @Override
-        public void run() {
-          refresh(); // TODO: this could cause diff init in 'hide' state
-        }
-      }, InvokeAfterUpdateMode.SILENT, "", ModalityState.current());
       return new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change));
     }
 
@@ -193,9 +187,17 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
       return;
     }
 
-    if (selectedChanges.contains(myCurrentChange)) return;
-    myCurrentChange = selectedChanges.get(0);
-    updateRequest();
+    Change selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
+    if (selectedChange == null) {
+      myCurrentChange = selectedChanges.get(0);
+      updateRequest();
+      return;
+    }
+
+    if (!ChangeDiffRequestProducer.isEquals(myCurrentChange, selectedChange)) {
+      myCurrentChange = selectedChange;
+      updateRequest();
+    }
   }
 
   @Override

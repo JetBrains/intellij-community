@@ -75,6 +75,11 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   }
 
   @Override
+  protected String getHelpId() {
+    return "Getter and Setter Templates Dialog";
+  }
+
+  @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
     final ClassMember[] allMembers = getAllOriginalMembers(aClass);
     if (allMembers == null) {

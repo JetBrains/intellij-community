@@ -46,7 +46,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   // todo remove once we don't need this for stub-ast mismatch debug info
-  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, false);
+  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, true);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 

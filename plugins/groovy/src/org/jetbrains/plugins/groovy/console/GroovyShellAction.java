@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.console;
 
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
@@ -38,7 +39,7 @@ public class GroovyShellAction extends GroovyShellActionBase {
   }
 
   @Override
-  protected GroovyShellConsoleImpl createConsole(Project project, String title) {
+  protected LanguageConsoleView createConsole(Project project, String title) {
     return new GroovyShellConsoleImpl(project, title);
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
+  private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
   private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
   private static final String GROOVY_EXTENSION = "groovy";
   private static final String GPP_EXTENSION = "gpp";
@@ -92,7 +94,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
-      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false);
+      Ref<Boolean> hasStubExcludes = Ref.create(false);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false, hasStubExcludes);
       if (toCompile.isEmpty()) {
         return hasFilesToCompileForNextRound(context) ? ExitCode.ADDITIONAL_PASS_REQUIRED : ExitCode.NOTHING_DONE;
       }
@@ -106,47 +109,17 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       start = System.currentTimeMillis();
-      final Set<String> toCompilePaths = getPathsToCompile(toCompile);
-
-      JpsSdk<JpsDummyElement> jdk = getJdk(chunk);
-      String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
-      boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
-      boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
-      boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
-
-      Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
-
-      final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
-      List<String> patchers = new ArrayList<String>();
-
-      for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
-        patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
-      }
 
       Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
 
-      Collection<String> classpath = generateClasspath(context, chunk);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Optimized class loading: " + optimizeClassLoading);
-        LOG.debug("Groovyc classpath: " + classpath);
-      }
-
-      final File tempFile = GroovycOutputParser.fillFileWithGroovycParameters(
-        compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
-        optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
-      );
-      GroovycFlavor groovyc =
-        inProcess ? new InProcessGroovyc(finalOutputs.values()) : new ForkedGroovyc(optimizeClassLoading, chunk);
-
-      GroovycOutputParser parser = new GroovycOutputParser(chunk, context);
-
-      groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
+      GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, settings, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
 
       Map<ModuleBuildTarget, Collection<GroovycOutputParser.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
 
       if (checkChunkRebuildNeeded(context, parser)) {
+        clearContinuation(context, chunk);
         return ExitCode.CHUNK_REBUILD_REQUIRED;
       }
 
@@ -174,6 +147,87 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (!myForStubs) {
         FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, null);
       }
+    }
+  }
+
+  @NotNull
+  private GroovycOutputParser runGroovycOrContinuation(CompileContext context,
+                                                       ModuleChunk chunk,
+                                                       JpsGroovySettings settings,
+                                                       Map<ModuleBuildTarget, String> finalOutputs,
+                                                       String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
+    GroovycContinuation continuation = takeContinuation(context, chunk);
+    if (continuation != null) {
+      if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+        LOG.info("using continuation for " + chunk);
+      }
+      return continuation.continueCompilation();
+    }
+
+    final Set<String> toCompilePaths = getPathsToCompile(toCompile);
+
+    JpsSdk<JpsDummyElement> jdk = getJdk(chunk);
+    String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
+    boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
+    boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
+    boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
+
+    Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
+
+    final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
+    List<String> patchers = new ArrayList<String>();
+
+    for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
+      patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
+    }
+
+
+    Collection<String> classpath = generateClasspath(context, chunk);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Optimized class loading: " + optimizeClassLoading);
+      LOG.debug("Groovyc classpath: " + classpath);
+    }
+
+    final File tempFile = GroovycOutputParser.fillFileWithGroovycParameters(
+      compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
+      optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
+    );
+    GroovycFlavor groovyc =
+      inProcess ? new InProcessGroovyc(finalOutputs.values(), hasStubExcludes) : new ForkedGroovyc(optimizeClassLoading, chunk);
+
+    GroovycOutputParser parser = new GroovycOutputParser(chunk, context);
+
+    continuation = groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
+    setContinuation(context, chunk, continuation);
+    return parser;
+  }
+
+  private static void clearContinuation(CompileContext context, ModuleChunk chunk) {
+    GroovycContinuation continuation = takeContinuation(context, chunk);
+    if (continuation != null) {
+      if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+        LOG.info("clearing continuation for " + chunk);
+      }
+      continuation.buildAborted();
+    }
+  }
+
+  @Nullable
+  private static GroovycContinuation takeContinuation(CompileContext context, ModuleChunk chunk) {
+    Map<ModuleChunk, GroovycContinuation> map = CONTINUATIONS.get(context);
+    return map == null ? null : map.remove(chunk);
+  }
+
+  private static void setContinuation(CompileContext context, ModuleChunk chunk, @Nullable GroovycContinuation continuation) {
+    clearContinuation(context, chunk);
+    if (continuation != null) {
+      if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+        LOG.info("registering continuation for " + chunk);
+      }
+
+      Map<ModuleChunk, GroovycContinuation> map = CONTINUATIONS.get(context);
+      if (map == null) CONTINUATIONS.set(context, map = ContainerUtil.newConcurrentMap());
+      map.put(chunk, continuation);
     }
   }
 
@@ -277,6 +331,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
+    clearContinuation(context, chunk);
     STUB_TO_SRC.set(context, null);
   }
 
@@ -302,7 +357,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Nullable
   public static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
-    Map<ModuleBuildTarget, String> finalOutputs = new HashMap<ModuleBuildTarget, String>();
+    Map<ModuleBuildTarget, String> finalOutputs = new LinkedHashMap<ModuleBuildTarget, String>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
@@ -348,7 +403,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   static List<File> collectChangedFiles(CompileContext context,
                                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                        final boolean forStubs, final boolean forEclipse)
+                                        final boolean forStubs, final boolean forEclipse, final Ref<Boolean> hasExcludes)
     throws IOException {
 
     final JpsJavaCompilerConfiguration configuration =
@@ -365,6 +420,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         if ((isGroovyFile(path) || forEclipse && path.endsWith(".java")) &&
             !configuration.isResourceFile(file, sourceRoot.root)) {
           if (forStubs && settings.isExcludedFromStubGeneration(file)) {
+            hasExcludes.set(true);
             return true;
           }
 

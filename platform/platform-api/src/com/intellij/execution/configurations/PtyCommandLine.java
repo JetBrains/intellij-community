@@ -15,8 +15,11 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.pty4j.PtyProcess;
@@ -40,6 +43,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
   public static final String RUN_PROCESSES_WITH_PTY = "run.processes.with.pty";
   private boolean myUseCygwinLaunch;
+  private boolean myConsoleMode = true;
 
   public PtyCommandLine() { }
 
@@ -51,10 +55,23 @@ public class PtyCommandLine extends GeneralCommandLine {
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
     try {
-      return startProcessWithPty(commands, true);
+      return startProcessWithPty(commands, myConsoleMode);
     }
     catch (Throwable e) {
-      LOG.error("Couldn't run process with PTY", e);
+      File logFile = getPtyLogFile();
+      if (ApplicationManager.getApplication().isEAP() && logFile.exists()) {
+        String logContent;
+        try {
+          logContent = FileUtil.loadFile(logFile);
+        } catch (Exception ignore) {
+          logContent = "Unable to retrieve log";
+        }
+
+        LOG.error("Couldn't run process with PTY", e, logContent);
+      }
+      else {
+        LOG.error("Couldn't run process with PTY", e);
+      }
     }
 
     return super.startProcess(commands);
@@ -62,6 +79,14 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public void setUseCygwinLaunch(boolean useCygwinLaunch) {
     myUseCygwinLaunch = useCygwinLaunch;
+  }
+
+  public void setConsoleMode(boolean consoleMode) {
+    myConsoleMode = consoleMode;
+  }
+
+  private static File getPtyLogFile() {
+    return new File(PathManager.getLogPath(), "pty.log");
   }
 
   @NotNull
@@ -74,7 +99,8 @@ public class PtyCommandLine extends GeneralCommandLine {
     }
 
     File workDirectory = getWorkDirectory();
-    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, console,
-                           myUseCygwinLaunch && SystemInfo.isWindows);
+    boolean cygwin = myUseCygwinLaunch && SystemInfo.isWindows;
+    return PtyProcess.exec(ArrayUtil.toStringArray(commands), env, workDirectory != null ? workDirectory.getPath() : null, console, cygwin,
+                           ApplicationManager.getApplication().isEAP() ? getPtyLogFile() : null);
   }
 }

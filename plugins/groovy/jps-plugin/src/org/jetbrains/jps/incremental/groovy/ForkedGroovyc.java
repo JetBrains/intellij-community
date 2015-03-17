@@ -52,11 +52,11 @@ class ForkedGroovyc implements GroovycFlavor {
   }
 
   @Override
-  public void runGroovyc(Collection<String> compilationClassPath,
-                         boolean forStubs,
-                         JpsGroovySettings settings,
-                         File tempFile,
-                         final GroovycOutputParser parser)
+  public GroovycContinuation runGroovyc(Collection<String> compilationClassPath,
+                                        boolean forStubs,
+                                        JpsGroovySettings settings,
+                                        File tempFile,
+                                        final GroovycOutputParser parser)
     throws Exception {
     List<String> classpath = new ArrayList<String>();
     if (myOptimizeClassLoading) {
@@ -72,6 +72,14 @@ class ForkedGroovyc implements GroovycFlavor {
     vmParams.add("-Xmx" + settings.heapSize + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+    
+    if ("false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
+      vmParams.add("-D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false");
+    }
+    String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
+    if (configScript != null) {
+      vmParams.add("-D" + GroovyRtConstants.GROOVYC_CONFIG_SCRIPT + "=" + configScript);
+    }
 
     String grapeRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);
     if (grapeRoot != null) {
@@ -101,6 +109,7 @@ class ForkedGroovyc implements GroovycFlavor {
     handler.startNotify();
     handler.waitFor();
     parser.notifyFinished(process.exitValue());
+    return null;
   }
 
   private List<String> getProgramParams(File tempFile, JpsGroovySettings settings, boolean forStubs) {

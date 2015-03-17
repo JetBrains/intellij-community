@@ -269,10 +269,14 @@ public class JpsGantProjectBuilder {
       info("Build scope: " + (allModules ? "all" : modulesSet.size()) + " modules, " + (includeTests ? "including tests" : "production only"));
       long compilationStart = System.currentTimeMillis();
       try {
+        myBuildInfoPrinter.printBlockOpenedMessage(this, "Compilation");
         Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
       }
       catch (Throwable e) {
         error(e);
+      }
+      finally {
+        myBuildInfoPrinter.printBlockClosedMessage(this, "Compilation");
       }
       if (messageHandler.myFailed) {
         error("Compilation failed");

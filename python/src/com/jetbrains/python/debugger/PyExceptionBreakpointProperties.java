@@ -31,6 +31,8 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public boolean myNotifyOnlyOnFirst;
   @Attribute("notifyOnTerminate")
   public boolean myNotifyOnTerminate;
+  @Attribute("ignoreLibraries")
+  public boolean myIgnoreLibraries;
 
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -40,6 +42,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public PyExceptionBreakpointProperties(@NotNull final String exception) {
     myException = exception;
     myNotifyOnTerminate = true;
+    myIgnoreLibraries = true;
   }
 
   @Override
@@ -53,6 +56,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myNotifyAlways = state.myNotifyAlways;
     myNotifyOnlyOnFirst = state.myNotifyOnlyOnFirst;
     myNotifyOnTerminate = state.myNotifyOnTerminate;
+    myIgnoreLibraries = state.myIgnoreLibraries;
   }
 
   public boolean isNotifyOnTerminate() {
@@ -79,6 +83,14 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myNotifyOnlyOnFirst = notifyOnlyOnFirst;
   }
 
+  public void setIgnoreLibraries(boolean ignoreLibraries) {
+    myIgnoreLibraries = ignoreLibraries;
+  }
+
+  public boolean isIgnoreLibraries() {
+    return myIgnoreLibraries;
+  }
+
   public String getExceptionBreakpointId() {
     return "python-" + myException;
   }
@@ -88,7 +100,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getExceptionBreakpointId(),
                                                                     new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
                                                                       isNotifyAlways(),
-                                                                      isNotifyOnTerminate(), isNotifyOnlyOnFirst()));
+                                                                      isNotifyOnTerminate(), isNotifyOnlyOnFirst(), isIgnoreLibraries()));
   }
 
   @Override

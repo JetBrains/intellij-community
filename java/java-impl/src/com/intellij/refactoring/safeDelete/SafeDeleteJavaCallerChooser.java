@@ -212,7 +212,9 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
           }
         });
       }
-      return super.computeCallers();
+      final List<PsiMethod> methods = super.computeCallers();
+      methods.remove(getTopMethod());
+      return methods;
     }
 
     @Override

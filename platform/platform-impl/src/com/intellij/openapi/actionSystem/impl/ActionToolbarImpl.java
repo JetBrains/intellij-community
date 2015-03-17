@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -47,6 +46,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -1000,7 +1000,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setMovable(true) // fit the screen automatically
-      .setMayBeParent(true) // a dialog-based popup is not always on top
       .setRequestFocus(false)
       .setTitle(null)
       .setCancelOnClickOutside(true)
@@ -1272,5 +1271,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void setAddSeparatorFirst(boolean addSeparatorFirst) {
     myAddSeparatorFirst = addSeparatorFirst;
     myUpdater.updateActions(false, true);
+  }
+
+  @TestOnly
+  public Presentation getPresentation(AnAction action) {
+    return myPresentationFactory.getPresentation(action);
   }
 }

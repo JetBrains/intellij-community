@@ -171,12 +171,22 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
 
   public void addRepoNodeListener(@NotNull RepositoryNodeListener<T> listener) {
     myListeners.add(listener);
+    myDestPushTargetPanelComponent.addTargetEditorListener(new PushTargetEditorListener() {
+
+      public void onTargetInEditModeChanged(@NotNull String value) {
+        for (RepositoryNodeListener listener : myListeners) {
+          listener.onTargetInEditMode(value);
+        }
+      }
+    });
   }
 
   public void fireOnChange() {
     myDestPushTargetPanelComponent.fireOnChange();
+    T target = myDestPushTargetPanelComponent.getValue();
+    if (target == null) return;
     for (RepositoryNodeListener<T> listener : myListeners) {
-      listener.onTargetChanged(myDestPushTargetPanelComponent.getValue());
+      listener.onTargetChanged(target);
     }
   }
 
@@ -223,6 +233,10 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
 
   public int getCheckBoxHeight() {
     return myCheckBoxHeight;
+  }
+
+  public boolean isEditable() {
+    return myDestPushTargetPanelComponent.getValue() != null;
   }
 }
 

@@ -262,20 +262,20 @@
                 </clientProperties>
                 <border type="none" title="Formatting"/>
                 <children>
-                  <component id="d393f" class="javax.swing.JCheckBox" binding="myShowOptimizeImportsDialogCheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Show &quot;Optimize Imports&quot; dialog"/>
-                    </properties>
-                  </component>
-                  <component id="5263" class="javax.swing.JCheckBox" binding="myShowReformatCodeDialogCheckBox" default-binding="true">
+                  <component id="5263" class="javax.swing.JCheckBox" binding="myShowNotificationAfterReformatCodeCheckBox" default-binding="true">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Show &quot;Reformat Code&quot; dialog "/>
+                      <text value="Show notification after reformat code action"/>
+                    </properties>
+                  </component>
+                  <component id="ee59b" class="javax.swing.JCheckBox" binding="myShowNotificationAfterOptimizeImportsCheckBox">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Show notification after optimize imports action"/>
                     </properties>
                   </component>
                 </children>

@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -89,7 +90,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>>();
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
-  private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+  private static class Holder {
+    private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+  }
 
   public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
@@ -130,7 +133,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (CHECK_ELEMENT_LEVEL) {
+    if (Holder.CHECK_ELEMENT_LEVEL) {
       ((CheckLevelHighlightInfoHolder)myHolder).enterLevel(element);
       element.accept(this);
       ((CheckLevelHighlightInfoHolder)myHolder).enterLevel(null);
@@ -158,7 +161,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          @NotNull final HighlightInfoHolder holder,
                          @NotNull final Runnable highlight) {
     myFile = file;
-    myHolder = CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
+    myHolder = Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
     boolean success = true;
     try {
       myLanguageLevel = PsiUtil.getLanguageLevel(file);
@@ -314,10 +317,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
           else {
             if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType) && !expression.hasFormalParameterTypes()) {
+              String description = InferenceSession.getInferenceErrorMessage(PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class));
+              if (description == null) {
+                description = "Cyclic inference";
+              }
               HighlightInfo result =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cyclic inference")
-                  .create();
-              myHolder.add(result); //todo[ann] append not inferred type params info
+                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+              myHolder.add(result);
             }
             else {
               final String incompatibleReturnTypesMessage = LambdaUtil

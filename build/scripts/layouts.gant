@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,9 +197,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 
-      fileset(dir: "$home/lib/src") {
-        include(name: "trove4j_changes.txt")
-        include(name: "trove4j_src.jar")
+      dir("src") {
+        fileset(dir: "$home/lib/src") {
+          include(name: "trove4j_src.jar")
+        }
       }
       fileset(dir: "$home/xml/relaxng/lib", includes: "*.jar")
 
@@ -262,7 +263,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
+    def simplePlugins = ["copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -706,6 +707,9 @@ def layoutAndroid(String androidHome) {
       jar("sdklib.jar") {
         module("sdklib")
       }
+      jar("sdk-common.jar") {
+        module("sdk-common")
+      }
       jar("layoutlib-api.jar") {
         module("layoutlib-api")
       }
@@ -720,7 +724,6 @@ def layoutAndroid(String androidHome) {
         module("lint-api")
         module("lint-checks")
         module("ninepatch")
-        module("sdk-common")
         module("perflib")
       }
       jar("androidAnnotations.jar") {

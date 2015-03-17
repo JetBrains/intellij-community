@@ -17,10 +17,12 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 
@@ -28,14 +30,15 @@ public class DiffSplitter extends Splitter {
   @Nullable private Painter myPainter;
 
   public DiffSplitter() {
-    setDividerWidth(30);
+    setDividerWidth(JBUI.scale(30));
   }
 
   @Override
   protected Divider createDivider() {
     return new DividerImpl() {
-      public void paint(Graphics g) {
-        super.paint(g);
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         if (myPainter != null) myPainter.paint(g, this);
       }
     };
@@ -51,6 +54,6 @@ public class DiffSplitter extends Splitter {
   }
 
   public interface Painter {
-    void paint(@NotNull Graphics g, @NotNull Component divider);
+    void paint(@NotNull Graphics g, @NotNull JComponent divider);
   }
 }

@@ -44,8 +44,10 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -439,6 +441,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @NotNull
   public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
     if (useProxy && PROXY_AUTHENTICATION) {
+      String ntlmUserPassword = PROXY_LOGIN.replace('\\', '/') + ":" + getPlainProxyPassword();
+      provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT, AuthScope.ANY_REALM, AuthSchemes.NTLM), new NTCredentials(ntlmUserPassword));
       provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT), new UsernamePasswordCredentials(PROXY_LOGIN, getPlainProxyPassword()));
     }
 

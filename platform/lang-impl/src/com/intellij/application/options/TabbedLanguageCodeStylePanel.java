@@ -119,7 +119,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     addTab(new MyWrappingAndBracesPanel(settings));
   }
 
-  private void ensureTabs() {
+  protected void ensureTabs() {
     if (myTabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());

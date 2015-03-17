@@ -37,6 +37,8 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
@@ -612,29 +614,44 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final Project project = operation.getProject();
     return new WriteCommandAction<PsiElement>(project, expression.getContainingFile()) {
       protected void run(@NotNull final Result<PsiElement> result) throws Throwable {
-        result.setResult(addDeclaration(operation, declaration));
+        try {
+          final RefactoringEventData afterData = new RefactoringEventData();
+          afterData.addElement(declaration);
+          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+            .refactoringStarted(getRefactoringId(), afterData);
 
-        PyExpression newExpression = createExpression(project, operation.getName(), declaration);
+          result.setResult(addDeclaration(operation, declaration));
 
-        if (operation.isReplaceAll()) {
-          List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
-          for (PsiElement occurrence : operation.getOccurrences()) {
-            final PsiElement replaced = replaceExpression(occurrence, newExpression, operation);
-            if (replaced != null) {
-              newOccurrences.add(replaced);
+          PyExpression newExpression = createExpression(project, operation.getName(), declaration);
+
+          if (operation.isReplaceAll()) {
+            List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
+            for (PsiElement occurrence : operation.getOccurrences()) {
+              final PsiElement replaced = replaceExpression(occurrence, newExpression, operation);
+              if (replaced != null) {
+                newOccurrences.add(replaced);
+              }
             }
+            operation.setOccurrences(newOccurrences);
           }
-          operation.setOccurrences(newOccurrences);
-        }
-        else {
-          final PsiElement replaced = replaceExpression(expression, newExpression, operation);
-          operation.setOccurrences(Collections.singletonList(replaced));
-        }
+          else {
+            final PsiElement replaced = replaceExpression(expression, newExpression, operation);
+            operation.setOccurrences(Collections.singletonList(replaced));
+          }
 
-        postRefactoring(operation.getElement());
+          postRefactoring(operation.getElement());
+        }
+        finally {
+          final RefactoringEventData afterData = new RefactoringEventData();
+          afterData.addElement(declaration);
+          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+            .refactoringDone(getRefactoringId(), afterData);
+        }
       }
     }.execute().getResultObject();
   }
+
+  protected abstract String getRefactoringId();
 
   @Nullable
   public PsiElement addDeclaration(IntroduceOperation operation, PsiElement declaration) {

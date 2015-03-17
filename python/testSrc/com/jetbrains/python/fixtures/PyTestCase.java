@@ -27,6 +27,7 @@ import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -355,6 +356,22 @@ public abstract class PyTestCase extends UsefulTestCase {
                                           @NotNull final Set<String> expected) {
     final Joiner joiner = Joiner.on("\n");
     Assert.assertEquals(message, joiner.join(new TreeSet<String>(actual)), joiner.join(new TreeSet<String>(expected)));
+  }
+
+
+  /**
+   * Clicks certain button in document on caret position
+   *
+   * @param action what button to click (const from {@link IdeActions}) (btw, there should be some way to express it using annotations)
+   * @see IdeActions
+   */
+  protected final void pressButton(@NotNull final String action) {
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myFixture.performEditorAction(action);
+      }
+    }, "", null);
   }
 }
 

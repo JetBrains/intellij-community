@@ -98,7 +98,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public PyType getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     return null;
   }
 
@@ -123,7 +123,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   @Nullable
   @Override
-  public PyType getCallableType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     return null;
   }
 

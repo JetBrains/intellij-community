@@ -24,6 +24,7 @@ import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ public class ByLine {
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
 
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
-    FairDiffIterable changes = correctChanges(lines1, lines2, iwChanges, indicator);
+    FairDiffIterable changes = correctChangesSecondStep(lines1, lines2, iwChanges);
     return convertIntoFragments(lines1, lines2, changes);
   }
 
@@ -82,7 +83,7 @@ public class ByLine {
     List<Line> iwLines2 = convertToIgnoreWhitespace(lines2);
 
     FairDiffIterable iwChanges = compareSmart(iwLines1, iwLines2, indicator);
-    return correctChanges(lines1, lines2, iwChanges, indicator);
+    return correctChangesSecondStep(lines1, lines2, iwChanges);
   }
 
   //
@@ -90,53 +91,175 @@ public class ByLine {
   //
 
   @NotNull
-  private static FairDiffIterable correctChanges(@NotNull final List<Line> lines1,
-                                                 @NotNull final List<Line> lines2,
-                                                 @NotNull final FairDiffIterable changes,
-                                                 @NotNull final ProgressIndicator indicator) {
-    return new Object() {
-      private final ChangeBuilder myBuilder = new ChangeBuilder(lines1.size(), lines2.size());
+  private static FairDiffIterable correctChangesSecondStep(@NotNull final List<Line> lines1,
+                                                           @NotNull final List<Line> lines2,
+                                                           @NotNull final FairDiffIterable changes) {
+    /*
+     * We want to fix invalid matching here:
+     *
+     * .{        ..{
+     * ..{   vs  ...{
+     * ...{
+     *
+     * first step will return matching (0,2)-(0,2). And we should adjust it to (1,3)-(0,2)
+     *
+     *
+     * From the other hand, we don't want to reduce number of IW-matched lines.
+     *
+     * .{         ...{
+     * ..{    vs  ..{
+     * ...{       .{
+     *
+     * first step will return (0,3)-(0,3) and 'correcting' it to (0,1)-(2,3) is wrong (and it will break ByWord highlighting).
+     *
+     *
+     * Idea:
+     * 1. lines are matched at first step and equal -> match them
+     * 2. lines are not matched at first step -> do not match them
+     * 3. lines are matched at first step and not equal ->
+     *   a. find all IW-equal lines in the same unmatched block
+     *   b. find a maximum matching between them, maximising amount of equal pairs in it
+     *   c. match equal lines using result of the previous step
+     */
 
-      @NotNull
-      public FairDiffIterable run() {
-        for (Range ch : changes.iterateUnchanged()) {
-          int count = ch.end1 - ch.start1;
-          for (int i = 0; i < count; i++) {
-            Line line1 = lines1.get(ch.start1 + i);
-            Line line2 = lines2.get(ch.start2 + i);
-            if (line1.equals(line2)) markEqual(ch.start1 + i, ch.start2 + i);
-          }
-        }
-
-        matchGap(last1 + 1, lines1.size(), last2 + 1, lines2.size());
-
-        return fair(myBuilder.finish());
-      }
-
+    final ChangeBuilder builder = new ChangeBuilder(lines1.size(), lines2.size());
+    new Object() {
+      private CharSequence sample = null;
       private int last1 = -1;
       private int last2 = -1;
 
-      private void markEqual(int index1, int index2) {
-        matchGap(last1 + 1, index1, last2 + 1, index2);
+      public void run() {
+        for (Range range : changes.iterateUnchanged()) {
+          int count = range.end1 - range.start1;
+          for (int i = 0; i < count; i++) {
+            int index1 = range.start1 + i;
+            int index2 = range.start2 + i;
+            Line line1 = lines1.get(index1);
+            Line line2 = lines2.get(index2);
 
-        myBuilder.markEqual(index1, index2);
-
-        last1 = index1;
-        last2 = index2;
+            if (line1.equals(line2)) {
+              flush(index1, index2);
+              builder.markEqual(index1, index2);
+            }
+            else {
+              if (!StringUtil.equalsIgnoreWhitespaces(sample, line1.getContent())) {
+                flush(index1, index2);
+                sample = line1.getContent();
+                last1 = index1;
+                last2 = index2;
+              }
+            }
+          }
+        }
+        flush(changes.getLength1(), changes.getLength2());
       }
 
-      private void matchGap(int start1, int end1, int start2, int end2) {
-        if (start1 >= end1 || start2 >= end2) return;
+      private void flush(int line1, int line2) {
+        if (sample == null) return;
 
-        List<Line> inner1 = lines1.subList(start1, end1);
-        List<Line> inner2 = lines2.subList(start2, end2);
-        FairDiffIterable innerChanges = diff(inner1, inner2, indicator);
+        TIntArrayList subLines1 = new TIntArrayList();
+        TIntArrayList subLines2 = new TIntArrayList();
+        for (int i = last1; i < line1; i++) {
+          if (StringUtil.equalsIgnoreWhitespaces(sample, lines1.get(i).getContent())) {
+            subLines1.add(i);
+          }
+        }
+        for (int i = last2; i < line2; i++) {
+          if (StringUtil.equalsIgnoreWhitespaces(sample, lines2.get(i).getContent())) {
+            subLines2.add(i);
+          }
+        }
 
-        for (Range chunk : innerChanges.iterateUnchanged()) {
-          myBuilder.markEqual(start1 + chunk.start1, start2 + chunk.start2, chunk.end1 - chunk.start1);
+        assert subLines1.size() > 0 && subLines2.size() > 0;
+        alignExactMatching(subLines1, subLines2);
+
+        sample = null;
+        last1 = -1;
+        last2 = -1;
+      }
+
+      private void alignExactMatching(TIntArrayList subLines1, TIntArrayList subLines2) {
+        if (subLines1.size() == subLines2.size()) return;
+
+        int n = Math.max(subLines1.size(), subLines2.size());
+        if (n > 10) return; // we use brute-force algorithm (C_n_k). This will limit search space by ~250 cases.
+
+        if (subLines1.size() < subLines2.size()) {
+          int[] matching = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2);
+          for (int i = 0; i < subLines1.size(); i++) {
+            int index1 = subLines1.get(i);
+            int index2 = subLines2.get(matching[i]);
+            if (lines1.get(index1).equals(lines2.get(index2))) {
+              builder.markEqual(index1, index2);
+            }
+          }
+        }
+        else {
+          int[] matching = getBestMatchingAlignment(subLines2, subLines1, lines2, lines1);
+          for (int i = 0; i < subLines2.size(); i++) {
+            int index1 = subLines1.get(matching[i]);
+            int index2 = subLines2.get(i);
+            if (lines1.get(index1).equals(lines2.get(index2))) {
+              builder.markEqual(index1, index2);
+            }
+          }
         }
       }
     }.run();
+
+    return fair(builder.finish());
+  }
+
+  @NotNull
+  private static int[] getBestMatchingAlignment(@NotNull final TIntArrayList subLines1,
+                                                @NotNull final TIntArrayList subLines2,
+                                                @NotNull final List<Line> lines1,
+                                                @NotNull final List<Line> lines2) {
+    assert subLines1.size() < subLines2.size();
+    final int size = subLines1.size();
+
+    final int[] comb = new int[size];
+    final int[] best = new int[size];
+    for (int i = 0; i < size; i++) {
+      best[i] = i;
+    }
+
+    // find a combination with maximum weight (maximum number of equal lines)
+    new Object() {
+      int bestWeight = 0;
+
+      public void run() {
+        combinations(0, subLines2.size() - 1, 0);
+      }
+
+      private void combinations(int start, int n, int k) {
+        if (k == size) {
+          processCombination();
+          return;
+        }
+
+        for (int i = start; i <= n; i++) {
+          comb[k] = i;
+          combinations(i + 1, n, k + 1);
+        }
+      }
+
+      private void processCombination() {
+        int weight = 0;
+        for (int i = 0; i < size; i++) {
+          int index1 = subLines1.get(i);
+          int index2 = subLines2.get(comb[i]);
+          if (lines1.get(index1).equals(lines2.get(index2))) weight++;
+        }
+
+        if (weight > bestWeight) {
+          bestWeight = weight;
+          System.arraycopy(comb, 0, best, 0, comb.length);
+        }
+      }
+    }.run();
+
+    return best;
   }
 
   @NotNull

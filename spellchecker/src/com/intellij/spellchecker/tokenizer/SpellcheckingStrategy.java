@@ -17,6 +17,8 @@ package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -61,7 +63,14 @@ public class SpellcheckingStrategy {
     }
     if (element instanceof XmlAttributeValue) return myXmlAttributeTokenizer;
     if (element instanceof XmlText) return myXmlTextTokenizer;
-    if (element instanceof PsiPlainText) return TEXT_TOKENIZER;
+    if (element instanceof PsiPlainText) {
+      PsiFile file = element.getContainingFile();
+      FileType fileType = file == null ? null : file.getFileType();
+      if (fileType instanceof CustomSyntaxTableFileType) {
+        return new CustomFileTypeTokenizer(((CustomSyntaxTableFileType)fileType).getSyntaxTable());
+      }
+      return TEXT_TOKENIZER;
+    }
     return EMPTY_TOKENIZER;
   }
 

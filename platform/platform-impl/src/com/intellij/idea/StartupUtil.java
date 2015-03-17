@@ -88,9 +88,15 @@ public class StartupUtil {
       newConfigFolder = !new File(PathManager.getConfigPath()).exists();
     }
 
-    boolean canStart = checkJdkVersion() && checkSystemFolders() && lockSystemFolders(args);  // note: uses config folder!
-    if (!canStart) {
-      System.exit(Main.STARTUP_IMPOSSIBLE);
+    if (!checkJdkVersion()) {
+      System.exit(Main.JDK_CHECK_FAILED);
+    }
+    // note: uses config folder!
+    if (!checkSystemFolders()) {
+      System.exit(Main.DIR_CHECK_FAILED);
+    }
+    if (!lockSystemFolders(args)) {
+      System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
     if (newConfigFolder) {

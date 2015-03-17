@@ -15,51 +15,47 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SideBorder;
-import com.intellij.util.*;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.FileContentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairFunction;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -68,20 +64,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
  * In case of REPL consider to use {@link LanguageConsoleBuilder}
  */
-public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
-  private static final int SEPARATOR_THICKNESS = 1;
+public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageConsoleView, DataProvider {
   private final Project myProject;
 
   private final EditorEx myConsoleEditor;
@@ -95,21 +88,17 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   private String myTitle;
   @Nullable
   private String myPrompt = "> ";
-  private TextAttributes myPromptAttributes = ConsoleViewContentType.USER_INPUT.getAttributes();
+  private ConsoleViewContentType myPromptAttributes = ConsoleViewContentType.USER_INPUT;
 
-  private final LightVirtualFile myHistoryFile;
-  private Editor myCurrentEditor;
-
-  private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
-  private final SingleAlarm myUpdateQueue;
-  private Runnable myUiUpdateRunnable;
-
-  private boolean myShowSeparatorLine = true;
+  private EditorEx myCurrentEditor;
 
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
     @Override
     public void focusGained(Editor editor) {
-      myCurrentEditor = editor;
+      myCurrentEditor = (EditorEx)editor;
+      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+        FileDocumentManager.getInstance().saveAllDocuments(); // PY-12487
+      }
     }
 
     @Override
@@ -118,27 +107,22 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   };
 
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language) {
-    this(project, title, language, true);
+    this(project, title, new LightVirtualFile(title, language, ""));
   }
 
-  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language, boolean initComponents) {
-    this(project, title, new LightVirtualFile(title, language, ""), initComponents);
-  }
-
-  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull VirtualFile virtualFile, boolean initComponents) {
-    this(project, title, virtualFile, initComponents, null);
+  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull VirtualFile virtualFile) {
+    this(project, title, virtualFile, null);
   }
 
   LanguageConsoleImpl(@NotNull Project project,
                       @NotNull String title,
                       @NotNull VirtualFile lightFile,
-                      boolean initComponents,
                       @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+    super(project, GlobalSearchScope.allScope(project), true, true);
     myProject = project;
     myTitle = title;
     myVirtualFile = lightFile;
     EditorFactory editorFactory = EditorFactory.getInstance();
-    myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = FileDocumentManager.getInstance().getDocument(lightFile);
     if (myEditorDocument == null) {
       throw new AssertionError("no document for: " + lightFile);
@@ -148,18 +132,6 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
-    myUpdateQueue = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        if (isConsoleEditorEnabled()) {
-          myPanel.revalidate();
-          myPanel.repaint();
-        }
-        if (myUiUpdateRunnable != null) {
-          myUiUpdateRunnable.run();
-        }
-      }
-    }, 300, this);
 
     // action shortcuts are not yet registered
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -168,33 +140,35 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
         installEditorFactoryListener();
       }
     }, myProject.getDisposed());
-
-    if (initComponents) {
-      initComponents();
-    }
   }
 
-  public void initComponents() {
+  @Override
+  protected EditorEx doCreateConsoleEditor() {
+    return myHistoryViewer;
+  }
+
+  @Override
+  protected void disposeEditor() {
+  }
+
+  @Override
+  protected JComponent createCenterComponent() {
+    initComponents();
+    return myPanel;
+  }
+
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return getConsoleEditor().getContentComponent();
+  }
+
+  private void initComponents() {
     setupComponents();
 
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleEditor.getComponent());
 
     DataManager.registerDataProvider(myPanel, this);
-
-    myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (myForceScrollToEnd.compareAndSet(true, false)) {
-          scrollHistoryToEnd();
-        }
-      }
-
-      @Override
-      public void componentShown(ComponentEvent e) {
-        componentResized(e);
-      }
-    });
     setPromptInner(myPrompt);
   }
 
@@ -203,67 +177,50 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
       return;
     }
 
+    myPanel.removeAll();
+
     if (consoleEditorEnabled) {
       FileEditorManager.getInstance(getProject()).closeFile(myVirtualFile);
-      myPanel.removeAll();
+
+      setHistoryScrollBarVisible(false);
       myPanel.add(myHistoryViewer.getComponent());
       myPanel.add(myConsoleEditor.getComponent());
 
-      myHistoryViewer.setHorizontalScrollbarVisible(false);
       myCurrentEditor = myConsoleEditor;
     }
     else {
-      myPanel.removeAll();
+      setHistoryScrollBarVisible(true);
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
-      myHistoryViewer.setHorizontalScrollbarVisible(true);
     }
   }
 
-  public void setShowSeparatorLine(boolean showSeparatorLine) {
-    myShowSeparatorLine = showSeparatorLine;
+  private void setHistoryScrollBarVisible(boolean visible) {
+    JScrollBar prev = myHistoryViewer.getScrollPane().getHorizontalScrollBar();
+    JScrollBar next;
+    if (visible) {
+      next = ((EmptyScrollBar)prev).original;
+    }
+    else {
+      next = new EmptyScrollBar(prev);
+    }
+    myHistoryViewer.getScrollPane().setHorizontalScrollBar(next);
   }
 
   private void setupComponents() {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
 
-    //noinspection ConstantConditions
-    if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
-      myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
-    }
     myHistoryViewer.getComponent().setMinimumSize(JBUI.emptySize());
     myHistoryViewer.getComponent().setPreferredSize(JBUI.emptySize());
     myHistoryViewer.setCaretEnabled(false);
 
-    myConsoleEditor.setHorizontalScrollbarVisible(true);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
-    myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
+    myConsoleEditor.setHighlighter(
+      EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
 
-    myConsoleEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        final int offset = myConsoleEditor.getScrollingModel().getHorizontalScrollOffset();
-        final ScrollingModel model = myHistoryViewer.getScrollingModel();
-        final int historyOffset = model.getHorizontalScrollOffset();
-        if (historyOffset != offset) {
-          try {
-            model.disableAnimation();
-            model.scrollHorizontally(offset);
-          }
-          finally {
-            model.enableAnimation();
-          }
-        }
-      }
-    });
-    final DocumentAdapter docListener = new DocumentAdapter() {
-      @Override
-      public void documentChanged(final DocumentEvent e) {
-        queueUiUpdate(false);
-      }
-    };
-    myEditorDocument.addDocumentListener(docListener, this);
-    myHistoryViewer.getDocument().addDocumentListener(docListener, this);
+    myConsoleEditor.getScrollPane().getHorizontalScrollBar().setModel(
+      myHistoryViewer.getScrollPane().getHorizontalScrollBar().getModel());
+    setHistoryScrollBarVisible(false);
 
     myHistoryViewer.getContentComponent().addKeyListener(new KeyAdapter() {
       @Override
@@ -275,10 +232,6 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
       }
     });
 
-    //noinspection deprecation
-    for (AnAction action : createActions()) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myConsoleEditor.getComponent());
-    }
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleEditor.getComponent());
   }
 
@@ -286,29 +239,10 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     return myPanel.getComponentCount() > 1;
   }
 
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated LanguageConsoleImpl is not intended to be extended
-   */
-  protected AnAction[] createActions() {
-    return AnAction.EMPTY_ARRAY;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated Use {@link #setInputText}
-   * to remove in IDEA 15
-   */
-  public void setTextToEditor(@NotNull String text) {
-    setInputText(text);
-  }
-
   protected void setupEditorDefault(@NotNull EditorEx editor) {
     ConsoleViewUtil.setupConsoleEditor(editor, false, false);
     editor.getContentComponent().setFocusCycleRoot(false);
-    editor.setHorizontalScrollbarVisible(false);
+    editor.setHorizontalScrollbarVisible(true);
     editor.setVerticalScrollbarVisible(true);
     editor.setBorder(null);
 
@@ -319,28 +253,17 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     editorSettings.setAdditionalColumnsCount(1);
   }
 
-  public void setUiUpdateRunnable(Runnable uiUpdateRunnable) {
-    assert myUiUpdateRunnable == null : "can be set only once";
-    myUiUpdateRunnable = uiUpdateRunnable;
-  }
-
-  public void flushAllUiUpdates() {
-    myUpdateQueue.flush();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  @Deprecated
-  public LightVirtualFile getHistoryFile() {
-    return myHistoryFile;
-  }
-
   @Nullable
   public String getPrompt() {
     return myPrompt;
   }
 
-  public void setPromptAttributes(@NotNull TextAttributes textAttributes) {
+  @Nullable
+  public ConsoleViewContentType getPromptAttributes() {
+    return myPromptAttributes;
+  }
+
+  public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
     myPromptAttributes = textAttributes;
   }
 
@@ -351,15 +274,10 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   }
 
   private void setPromptInner(@Nullable final String prompt) {
-    myUpdateQueue.checkDisposed();
-
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes);
-        if (myPanel.isVisible()) {
-          queueUiUpdate(false);
-        }
+        myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes.getAttributes());
       }
     });
   }
@@ -412,48 +330,13 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     myTitle = title;
   }
 
-  public void printToHistory(@NotNull CharSequence text, @NotNull TextAttributes attributes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    text = StringUtilRt.unifyLineSeparators(text);
-    final boolean scrollToEnd = shouldScrollHistoryToEnd();
-    addTextToHistory(text, attributes);
-    if (scrollToEnd) {
-      scrollHistoryToEnd();
-    }
-    queueUiUpdate(scrollToEnd);
-  }
-
-  protected void addTextToHistory(@Nullable CharSequence text, @Nullable TextAttributes attributes) {
-    if (StringUtil.isEmpty(text) || attributes == null) {
-      return;
-    }
-
-    Document history = myHistoryViewer.getDocument();
-    int offset = appendToHistoryDocument(history, text);
-    DocumentMarkupModel.forDocument(history, myProject, true).addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes,
-                                                                                  HighlighterTargetArea.EXACT_RANGE);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated Use {@link LanguageConsoleBuilder},
-   * {@link LanguageConsoleBuilder#registerExecuteAction)} or
-   * {@link ConsoleExecuteAction#prepareRunExecuteAction)}
-   *
-   * to remove in IDEA 15
-   */
-  public String addCurrentToHistory(@NotNull TextRange textRange, boolean erase, boolean preserveMarkup) {
-    return addToHistoryInner(textRange, myConsoleEditor, erase, preserveMarkup);
-  }
-
   public String addToHistory(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean preserveMarkup) {
     return addToHistoryInner(textRange, editor, false, preserveMarkup);
   }
 
   @NotNull
   public String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
-    Editor editor = getCurrentEditor();
+    EditorEx editor = getCurrentEditor();
     Document document = editor.getDocument();
     String text = document.getText();
     TextRange range = new TextRange(0, document.getTextLength());
@@ -462,7 +345,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
     }
 
     if (addToHistory) {
-      addToHistoryInner(range, myConsoleEditor, clearInput, preserveMarkup);
+      addToHistoryInner(range, editor, clearInput, preserveMarkup);
     }
     else if (clearInput) {
       setInputText("");
@@ -484,125 +367,90 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
       });
     }
     // always scroll to end on user input
-    scrollHistoryToEnd();
-    queueUiUpdate(true);
+    scrollToEnd();
     return result;
   }
 
-  public boolean shouldScrollHistoryToEnd() {
-    final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
-    final Dimension contentSize = myHistoryViewer.getContentSize();
-    return contentSize.getHeight() - visibleArea.getMaxY() < (getMinHistoryLineCount() * myHistoryViewer.getLineHeight());
-  }
-
-  private void scrollHistoryToEnd() {
-    if (myHistoryViewer.getDocument().getTextLength() != 0) {
-      EditorUtil.scrollToTheEnd(myHistoryViewer);
-    }
-  }
-
-  @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
-    doAddPromptToHistory();
-
-    final Document history = myHistoryViewer.getDocument();
-    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    final int localStartOffset = textRange.getStartOffset();
+  public static String printWithHighlighting(@NotNull LanguageConsoleView console, @NotNull Editor inputEditor, @NotNull TextRange textRange) {
     String text;
     EditorHighlighter highlighter;
     if (inputEditor instanceof EditorWindow) {
       PsiFile file = ((EditorWindow)inputEditor).getInjectedFile();
-      highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), getProject());
+      highlighter =
+        HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), console.getProject());
       String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
       highlighter.setText(fullText);
       text = textRange.substring(fullText);
     }
     else {
       text = inputEditor.getDocument().getText(textRange);
-      highlighter = inputEditor.getHighlighter();
+      highlighter = ((EditorEx)inputEditor).getHighlighter();
     }
-    //offset can be changed after text trimming after insert due to buffer constraints
-    int offset = appendToHistoryDocument(history, text);
-
-    final HighlighterIterator iterator = highlighter.createIterator(localStartOffset);
-    final int localEndOffset = textRange.getEndOffset();
-    while (!iterator.atEnd()) {
-      final int itStart = iterator.getStart();
-      if (itStart > localEndOffset) {
-        break;
-      }
-      final int itEnd = iterator.getEnd();
-      if (itEnd >= localStartOffset) {
-        final int start = Math.max(itStart, localStartOffset) - localStartOffset + offset;
-        final int end = Math.min(itEnd, localEndOffset) - localStartOffset + offset;
-        markupModel.addRangeHighlighter(start, end, HighlighterLayer.SYNTAX, iterator.getTextAttributes(),
-                                        HighlighterTargetArea.EXACT_RANGE);
-      }
-      iterator.advance();
+    SyntaxHighlighter syntax =
+      highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
+    ((LanguageConsoleImpl)console).doAddPromptToHistory();
+    if (syntax != null) {
+      ConsoleViewUtil.printWithHighlighting(console, text, syntax);
     }
-    if (preserveMarkup) {
-      duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(inputEditor.getDocument(), myProject, true), offset, textRange);
-      // don't copy editor markup model, i.e. brace matcher, spell checker, etc.
-      // duplicateHighlighters(markupModel, inputEditor.getMarkupModel(), offset, textRange);
+    else {
+      console.print(text, ConsoleViewContentType.USER_INPUT);
     }
-    if (!text.endsWith("\n")) {
-      appendToHistoryDocument(history, "\n");
-    }
+    console.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     return text;
   }
 
-  protected void doAddPromptToHistory() {
-    addTextToHistory(myPrompt, myPromptAttributes);
-  }
-
-  // returns the real (cyclic-buffer-aware) start offset of the inserted text
-  protected int appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    history.insertString(history.getTextLength(), text);
-    return history.getTextLength() - text.length();
-  }
-
-  private static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange) {
-    for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
-      if (!rangeHighlighter.isValid()) {
-        continue;
-      }
-      Object tooltip = rangeHighlighter.getErrorStripeTooltip();
-      HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
-      if (highlightInfo != null) {
-        if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
-          continue;
-        }
-        if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) {
-          continue;
-        }
-      }
-      final int localOffset = textRange.getStartOffset();
-      final int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
-      final int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
-      if (start > end) {
-        continue;
-      }
-      final RangeHighlighter h = to.addRangeHighlighter(start + offset, end + offset, rangeHighlighter.getLayer(), rangeHighlighter.getTextAttributes(), rangeHighlighter.getTargetArea());
-      ((RangeHighlighterEx)h).setAfterEndOfLine(((RangeHighlighterEx)rangeHighlighter).isAfterEndOfLine());
-    }
-  }
-
   @NotNull
-  public JComponent getComponent() {
-    return myPanel;
+  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
+    return printWithHighlighting(this, inputEditor, textRange);
+
+
+    //if (preserveMarkup) {
+    //  duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(inputEditor.getDocument(), myProject, true), offset, textRange);
+    //  // don't copy editor markup model, i.e. brace matcher, spell checker, etc.
+    //  // duplicateHighlighters(markupModel, inputEditor.getMarkupModel(), offset, textRange);
+    //}
   }
 
-  public void queueUiUpdate(boolean forceScrollToEnd) {
-    myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
-    if (myUpdateQueue.isDisposed()) {
-      return;
+  protected void doAddPromptToHistory() {
+    if (myPrompt != null) {
+      print(myPrompt, myPromptAttributes);
     }
-    myUpdateQueue.request();
   }
+
+
+  //private static void duplicateHighlighters(@NotNull MarkupModel to, @NotNull MarkupModel from, int offset, @NotNull TextRange textRange) {
+  //  for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
+  //    if (!rangeHighlighter.isValid()) {
+  //      continue;
+  //    }
+  //    Object tooltip = rangeHighlighter.getErrorStripeTooltip();
+  //    HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
+  //    if (highlightInfo != null) {
+  //      if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
+  //        continue;
+  //      }
+  //      if (highlightInfo.type.getAttributesKey() == EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES) {
+  //        continue;
+  //      }
+  //    }
+  //    int localOffset = textRange.getStartOffset();
+  //    int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
+  //    int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
+  //    if (start > end) {
+  //      continue;
+  //    }
+  //    RangeHighlighter h = to.addRangeHighlighter(start + offset, end + offset, rangeHighlighter.getLayer(),
+  //                                                rangeHighlighter.getTextAttributes(), rangeHighlighter.getTargetArea());
+  //    ((RangeHighlighterEx)h).setAfterEndOfLine(((RangeHighlighterEx)rangeHighlighter).isAfterEndOfLine());
+  //  }
+  //}
 
   @Override
   public void dispose() {
+    super.dispose();
+    // double dispose via RunContentDescriptor and ContentImpl
+    if (myHistoryViewer.isDisposed()) return;
+
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);
     editorFactory.releaseEditor(myHistoryViewer);
@@ -648,14 +496,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
             myCurrentEditor = editor;
           }
           EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
-          editor.getCaretModel().addCaretListener(new CaretAdapter() {
-            @Override
-            public void caretPositionChanged(CaretEvent e) {
-              queueUiUpdate(false);
-            }
-          });
         }
-        queueUiUpdate(false);
       }
 
       @Override
@@ -663,12 +504,10 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
         if (!Comparing.equal(file, myVirtualFile)) {
           return;
         }
-        if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
+        if (!Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           if (myCurrentEditor != null && myCurrentEditor.isDisposed()) {
             myCurrentEditor = null;
           }
-          if (!isValid()) return;
-          ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
     };
@@ -680,17 +519,13 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
   }
 
   @NotNull
-  public Editor getCurrentEditor() {
+  public EditorEx getCurrentEditor() {
     return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
   @NotNull
   public Language getLanguage() {
     return myFile.getLanguage();
-  }
-
-  public boolean isValid() {
-    return myVirtualFile.isValid() && myProject.isOpen();
   }
 
   public void setLanguage(@NotNull Language language) {
@@ -715,7 +550,16 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
 
   @NotNull
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    return ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(virtualFile));
+    PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
+    if (file == null) {
+      Language language = new SingleRootFileViewProvider(PsiManager.getInstance(project), virtualFile).getBaseLanguage();
+      throw new AssertionError(String.format("no PSI for '%s'\nfile valid=%s, fileType=%s, language=%s",
+                                             virtualFile.getName(),
+                                             virtualFile.isValid(),
+                                             virtualFile.getFileType(),
+                                             language));
+    }
+    return file;
   }
 
   boolean isHistoryViewerForceAdditionalColumnsUsage() {
@@ -767,7 +611,7 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
         historySize.height = 0;
       }
 
-      int minHistoryHeight = historySize.height > 0 ? (getMinHistoryLineCount() * history.getLineHeight() + (myShowSeparatorLine ? SEPARATOR_THICKNESS : 0)) : 0;
+      int minHistoryHeight = historySize.height > 0 ? getMinHistoryLineCount() * history.getLineHeight() : 0;
       int minInputHeight = input.isViewer() ? 0 : input.getLineHeight();
       final int inputPreferredHeight = input.isViewer() ? 0 : Math.max(minInputHeight, inputSize.height);
       final int historyPreferredHeight = Math.max(minHistoryHeight, historySize.height);
@@ -787,8 +631,41 @@ public class LanguageConsoleImpl implements LanguageConsole, DataProvider {
       int newHistoryHeight = panelSize.height - newInputHeight;
       // apply
       input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
-      myForceScrollToEnd.compareAndSet(false, shouldScrollHistoryToEnd());
       history.getComponent().setBounds(0, 0, panelSize.width, newHistoryHeight);
+    }
+  }
+
+  private static class EmptyScrollBar extends JBScrollBar {
+
+    final JScrollBar original;
+
+    public EmptyScrollBar(JScrollBar original) {
+      this.original = original;
+      setModel(original.getModel());
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return JBUI.emptySize();
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return JBUI.emptySize();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return JBUI.emptySize();
+    }
+
+    @Override
+    public Border getBorder() {
+      return null;
+    }
+
+    @Override
+    public void paint(Graphics g) {
     }
   }
 }

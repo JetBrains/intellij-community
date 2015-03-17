@@ -72,17 +72,8 @@ final class Stripe extends JPanel {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = ((JComponent)c).getInsets();
-
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(Gray._40);
-        drawBorder(g, x, y, width, height, insets);
-      }
-      else {
-        g.setColor(UIUtil.getPanelBackground());
-        drawBorder(g, x, y, width, height, insets);
-        g.setColor(Gray._155);
-        drawBorder(g, x, y, width, height, insets);
-      }
+      g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+      drawBorder(g, x, y, width, height, insets);
     }
 
     private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {

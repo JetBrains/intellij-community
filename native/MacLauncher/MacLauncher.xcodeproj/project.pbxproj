@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1A5645DB6F789D018FF4A4AF /* PropertyFileReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A5645FEAD4A0FF166644D97 /* PropertyFileReader.m */; };
 		1A564BCFE66693BF0B2DD4A9 /* VMOptionsReader.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A564EDDE28564EF1AEBCD13 /* VMOptionsReader.m */; };
 		1A564C27F0BA05F900F34907 /* utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A564EEF77B93DBD7FD23161 /* utils.m */; };
 		50E17738155444B900E97451 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 50E17737155444B900E97451 /* Cocoa.framework */; };
@@ -15,10 +16,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1A5645FEAD4A0FF166644D97 /* PropertyFileReader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PropertyFileReader.m; sourceTree = "<group>"; };
 		1A564A1031F4C91C464C1B75 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utils.h; sourceTree = "<group>"; };
 		1A564D7CEEAA02F14A6D4F20 /* VMOptionsReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VMOptionsReader.h; sourceTree = "<group>"; };
 		1A564EDDE28564EF1AEBCD13 /* VMOptionsReader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VMOptionsReader.m; sourceTree = "<group>"; };
 		1A564EEF77B93DBD7FD23161 /* utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = utils.m; sourceTree = "<group>"; };
+		1A564F6D5833A0B9CE6E2839 /* PropertyFileReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PropertyFileReader.h; sourceTree = "<group>"; };
 		50E17735155444B900E97451 /* Launcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Launcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50E17737155444B900E97451 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		50E1773F155444B900E97451 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -51,6 +54,8 @@
 				50E1773F155444B900E97451 /* Info.plist */,
 				C0B58A123544A15DA59B13CB /* Products */,
 				C0B58A123544A15DA59B13D6 /* Frameworks */,
+				1A5645FEAD4A0FF166644D97 /* PropertyFileReader.m */,
+				1A564F6D5833A0B9CE6E2839 /* PropertyFileReader.h */,
 				1A564EDDE28564EF1AEBCD13 /* VMOptionsReader.m */,
 				1A564D7CEEAA02F14A6D4F20 /* VMOptionsReader.h */,
 				1A564A1031F4C91C464C1B75 /* utils.h */,
@@ -137,6 +142,7 @@
 			files = (
 				C0B58A123544A15DA59B13E4 /* main.m in Sources */,
 				C0B58A123544A15DA59B13E5 /* Launcher.m in Sources */,
+				1A5645DB6F789D018FF4A4AF /* PropertyFileReader.m in Sources */,
 				1A564BCFE66693BF0B2DD4A9 /* VMOptionsReader.m in Sources */,
 				1A564C27F0BA05F900F34907 /* utils.m in Sources */,
 			);

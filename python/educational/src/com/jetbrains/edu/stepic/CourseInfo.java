@@ -15,14 +15,18 @@ public class CourseInfo {
   private String myName;
   @SerializedName("summary")
   private String myDescription;
+  @SerializedName("course_format")
+  //course type in format "pycharm <language>"
+  private String myType;
 
   private String myAuthor;
-  public static CourseInfo INVALID_COURSE = new CourseInfo("", "", "");
+  public static CourseInfo INVALID_COURSE = new CourseInfo("", "", "", "");
 
-  public CourseInfo(String name, String author, String description) {
+  public CourseInfo(String name, String author, String description, String type) {
     myName = name;
     myAuthor = author;
     myDescription = description;
+    myType = type;
   }
 
   public String getName() {
@@ -35,6 +39,10 @@ public class CourseInfo {
 
   public String getDescription() {
     return myDescription;
+  }
+
+  public String getType() {
+    return myType;
   }
 
   @Override

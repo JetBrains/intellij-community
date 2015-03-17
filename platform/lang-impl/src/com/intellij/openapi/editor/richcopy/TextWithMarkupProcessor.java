@@ -95,7 +95,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       logInitial(editor, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = editor.getDocument().getCharsSequence();
       EditorColorsScheme schemeToUse = settings.getColorsScheme(editor.getColorsScheme());
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
+      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getViewProvider().getVirtualFile(),
+                                                                           schemeToUse, file.getProject());
       highlighter.setText(text);
       MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), file.getProject(), false);
       Context context = new Context(text, schemeToUse, indentSymbolsToStrip);

@@ -198,12 +198,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
     List<TemplateImpl> originalGroup = collectTemplates(originalGroups);
     List<TemplateImpl> newGroup = collectTemplates(newGroups);
 
-    if (checkAreEqual(originalGroup, newGroup)) return false;
+    String msg = checkAreEqual(originalGroup, newGroup);
+    if (msg == null) return false;
 
     if (isTest) {
       //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("LiveTemplatesConfig: originalGroups="+originalGroups+"; collectTemplates(originalGroups)="+
-                         originalGroup +";\n newGroups="+newGroups+"; collectTemplates(newGroups)="+ newGroup);
+      System.err.println("LiveTemplatesConfig: " + msg);
     }
     return true;
   }
@@ -239,15 +239,26 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return result;
   }
 
-  private boolean checkAreEqual(List<TemplateImpl> originalGroup, List<TemplateImpl> newGroup) {
-    if (originalGroup.size() != newGroup.size()) return false;
+  private String checkAreEqual(List<TemplateImpl> originalGroup, List<TemplateImpl> newGroup) {
+    if (originalGroup.size() != newGroup.size()) return "different sizes";
 
     for (int i = 0; i < newGroup.size(); i++) {
-      if (templatesDiffer(newGroup.get(i), originalGroup.get(i))) {
-        return false;
+      TemplateImpl t1 = newGroup.get(i);
+      TemplateImpl t2 = originalGroup.get(i);
+      if (templatesDiffer(t1, t2)) {
+        if (isTest) {
+          return "Templates differ: new=" + t1 + "; original=" + t2 +
+                 "; equals=" + t1.equals(t2) +
+                 "; vars=" + t1.getVariables().equals(t2.getVariables()) +
+                 "; options=" + areOptionsEqual(t1, t2) +
+                 "; diff=" + getTemplateContext(t1).getDifference(t2.getTemplateContext()) +
+                 "\ncontext1=" + getTemplateContext(t1) +
+                 "\ncontext2=" + getTemplateContext(t2);
+        }
+        return "templates differ";
       }
     }
-    return true;
+    return null;
   }
 
   private boolean areOptionsEqual(final TemplateImpl newTemplate, final TemplateImpl originalTemplate) {

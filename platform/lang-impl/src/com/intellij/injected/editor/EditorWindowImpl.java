@@ -201,6 +201,11 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   }
 
   @Override
+  public void setViewer(boolean isViewer) {
+    myDelegate.setViewer(isViewer);
+  }
+
+  @Override
   public boolean isViewer() {
     return myDelegate.isViewer();
   }
@@ -706,11 +711,6 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public VirtualFile getVirtualFile() {
     return myDelegate.getVirtualFile();
-  }
-
-  @Override
-  public void stopOptimizedScrolling() {
-    myDelegate.stopOptimizedScrolling();
   }
 
   @Override

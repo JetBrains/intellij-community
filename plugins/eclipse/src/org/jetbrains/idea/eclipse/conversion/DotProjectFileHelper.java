@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jdom.Document;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.io.File;
@@ -43,21 +43,24 @@ public class DotProjectFileHelper {
   private DotProjectFileHelper() {
   }
 
-  public static void saveDotProjectFile(Module module, String storageRoot) throws IOException {
+  public static void saveDotProjectFile(@NotNull Module module, @NotNull String storageRoot) throws IOException {
     try {
-      final Document doc;
+      Document doc;
       if (ModuleType.get(module) instanceof JavaModuleType) {
         doc = JDOMUtil.loadDocument(DotProjectFileHelper.class.getResource("template.project.xml"));
-      } else {
+      }
+      else {
         doc = JDOMUtil.loadDocument(DotProjectFileHelper.class.getResource("template.empty.project.xml"));
       }
 
-      final Element nameElement = doc.getRootElement().getChild(EclipseXml.NAME_TAG);
-      nameElement.setText(module.getName());
+      doc.getRootElement().getChild(EclipseXml.NAME_TAG).setText(module.getName());
 
       final File projectFile = new File(storageRoot, EclipseXml.PROJECT_FILE);
-      if (!FileUtil.createIfDoesntExist(projectFile)) return;
-      EclipseJDOMUtil.output(doc, projectFile, module.getProject());
+      if (!FileUtil.createIfDoesntExist(projectFile)) {
+        return;
+      }
+
+      EclipseJDOMUtil.output(doc.getRootElement(), projectFile, module.getProject());
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectFile.getPath()));

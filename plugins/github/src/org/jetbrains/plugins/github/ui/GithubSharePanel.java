@@ -14,17 +14,21 @@ public class GithubSharePanel {
   private JTextField myRepositoryTextField;
   private JCheckBox myPrivateCheckBox;
   private JTextArea myDescriptionTextArea;
+  private JTextField myRemoteTextField;
   private final GithubShareDialog myGithubShareDialog;
 
   public GithubSharePanel(final GithubShareDialog githubShareDialog) {
     myGithubShareDialog = githubShareDialog;
-    myRepositoryTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myPrivateCheckBox.setSelected(false);
+
+    DocumentAdapter changeListener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         myGithubShareDialog.updateOkButton();
       }
-    });
-    myPrivateCheckBox.setSelected(false);
+    };
+    myRepositoryTextField.getDocument().addDocumentListener(changeListener);
+    myRemoteTextField.getDocument().addDocumentListener(changeListener);
   }
 
   public JPanel getPanel() {
@@ -41,6 +45,14 @@ public class GithubSharePanel {
 
   public void setRepositoryName(final String name) {
     myRepositoryTextField.setText(name);
+  }
+
+  public String getRemoteName() {
+    return myRemoteTextField.getText().trim();
+  }
+
+  public void setRemoteName(final String name) {
+    myRemoteTextField.setText(name);
   }
 
   public boolean isPrivate() {

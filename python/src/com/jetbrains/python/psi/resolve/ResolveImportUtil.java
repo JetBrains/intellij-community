@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -152,10 +153,11 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, QualifiedName qName) {
-    boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(from_import_statement);
-    PsiFile file = from_import_statement.getContainingFile();
-    return resolveModule(qName, file, absoluteImportEnabled, from_import_statement.getRelativeLevel());
+  public static List<PsiElement> resolveFromImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
+                                                                  @Nullable QualifiedName qName) {
+    final boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(fromImportStatement);
+    final PsiFile file = fromImportStatement.getContainingFile();
+    return resolveModule(qName, file, absoluteImportEnabled, fromImportStatement.getRelativeLevel());
   }
 
   /**
@@ -169,7 +171,7 @@ public class ResolveImportUtil {
    * @return list of possible candidates
    */
   @NotNull
-  public static List<PsiElement> resolveModule(@Nullable QualifiedName qualifiedName, PsiFile sourceFile,
+  public static List<PsiElement> resolveModule(@Nullable QualifiedName qualifiedName, @Nullable PsiFile sourceFile,
                                                boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();
@@ -215,6 +217,10 @@ public class ResolveImportUtil {
   @NotNull
   private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
                                                                   @NotNull QualifiedName qualifiedName) {
+    final VirtualFile virtualFile = foothold.getVirtualFile();
+    if (virtualFile == null) return Collections.emptyList();
+    final boolean inSource = FileIndexFacade.getInstance(foothold.getProject()).isInContent(virtualFile);
+    if (inSource) return Collections.emptyList();
     final PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (containingDirectory != null) {
       final QualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
@@ -267,15 +273,15 @@ public class ResolveImportUtil {
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
                                         @Nullable final PsiFile containingFile, boolean fileOnly, boolean checkForPackage) {
     PsiDirectory dir = null;
-    PsiElement ret = null;
-    PsiElement possible_ret = null;
+    PsiElement resultElement = null;
+    PsiElement possibleResult = null;
     final PyResolveContext resolveContext = PyResolveContext.defaultContext();
     if (parent instanceof PyFileImpl) {
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        possible_ret = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
+        possibleResult = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
       }
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
@@ -285,14 +291,14 @@ public class ResolveImportUtil {
                                                                                   resolveContext);
       final PsiElement moduleMember = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
       if (!fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
-        ret = moduleMember;
+        resultElement = moduleMember;
       }
-      if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
-          PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
-        return ret;
+      if (resultElement != null && !PyUtil.instanceOf(resultElement, PsiFile.class, PsiDirectory.class) &&
+          PsiTreeUtil.getStubOrPsiParentOfType(resultElement, PyExceptPart.class) == null) {
+        return resultElement;
       }
 
-      if (possible_ret != null) return possible_ret;
+      if (possibleResult != null) return possibleResult;
     }
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
@@ -313,14 +319,13 @@ public class ResolveImportUtil {
         return result;
       }
       if (parent instanceof PsiFile) {
-        final List<PsiElement> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
-                                                                       QualifiedName.fromComponents(referencedName));
-        if (!items.isEmpty()) {
-          return items.get(0);
+        final PsiElement element = new QualifiedNameResolverImpl(referencedName).fromElement(parent).withoutRoots().firstResult();
+        if (element != null) {
+          return element;
         }
       }
     }
-    return ret;
+    return resultElement;
   }
 
   @Nullable

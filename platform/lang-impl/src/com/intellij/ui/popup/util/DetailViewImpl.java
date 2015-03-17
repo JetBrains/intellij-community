@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +64,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JComponent myParentComponent;
   private final JLabel myLabel = new JLabel("", SwingConstants.CENTER);
 
+  private String myEmptyLabel = UIBundle.message("message.nothingToShow");
 
   public void setDoneRunnable(Runnable doneRunnable, JComponent parent) {
     myParentComponent = parent;
@@ -73,7 +76,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
-    setPreferredSize(new Dimension(600, 300));
+    setPreferredSize(JBUI.size(600, 300));
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
   }
 
@@ -192,9 +195,14 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   @Override
   public void setPropertiesPanel(@Nullable final JPanel panel) {
-    if (panel == myDetailPanel) return;
-
-    if (panel != null) {
+    if (panel == null) {
+      if (myDetailPanelWrapper != null) {
+        myDetailPanelWrapper.removeAll();
+      }
+      myLabel.setText(myEmptyLabel);
+      add(myLabel, BorderLayout.CENTER);
+    }
+    else if (panel != myDetailPanel) {
       if (myDetailPanelWrapper == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
         myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -206,13 +214,12 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         myDetailPanelWrapper.add(panel);
       }
     }
-    else {
-      myDetailPanelWrapper.removeAll();
-      myLabel.setText("Nothing to show");
-      add(myLabel, BorderLayout.CENTER);
-    }
     myDetailPanel = panel;
     revalidate();
+  }
+
+  public void setEmptyLabel(String text) {
+    myEmptyLabel = text;
   }
 
   final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();

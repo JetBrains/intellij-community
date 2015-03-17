@@ -37,11 +37,18 @@ import java.util.Map;
  * Created by Max Medvedev on 9/8/13
  */
 public class GroovyShellCodeFragment extends GroovyCodeFragment {
+
   private final Map<String, PsiVariable> myVariables = ContainerUtil.newHashMap();
   private final Map<String, GrTypeDefinition> myTypeDefinitions = ContainerUtil.newHashMap();
+  private final boolean myShell;
 
-  public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile) {
+  public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile, boolean isShell) {
     super(project, virtualFile);
+    myShell = isShell;
+  }
+
+  public boolean isShell() {
+    return myShell;
   }
 
   @Override
@@ -52,9 +59,11 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
     return clone;
   }
 
-
   public void addVariable(String name, GrExpression expr) {
-    myVariables.put(name, new GrLightVariable(getManager(), name, expr.getType(), this));
+    final PsiType type = expr.getType();
+    if (type != null) {
+      myVariables.put(name, new GrLightVariable(getManager(), name, type, this));
+    }
   }
 
   public void addVariable(String name, PsiType type) {

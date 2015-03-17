@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> implements SchemesManager<T, E> {
+public abstract class AbstractSchemesManager<T extends Scheme, E extends ExternalizableScheme> extends SchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance(AbstractSchemesManager.class);
 
   protected final List<T> mySchemes = new ArrayList<T>();

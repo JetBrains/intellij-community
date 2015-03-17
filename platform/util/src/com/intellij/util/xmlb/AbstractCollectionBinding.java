@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,34 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
+import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-abstract class AbstractCollectionBinding extends Binding implements MultiNodeBinding {
-  private Map<Class, Binding> myElementBindings;
+abstract class AbstractCollectionBinding extends Binding implements MultiNodeBinding, MainBinding {
+  private Map<Class<?>, Binding> itemBindings;
 
-  private final Class myElementType;
-  private final String myTagName;
-  private final AbstractCollection myAnnotation;
+  protected final Class<?> itemType;
+  private final AbstractCollection annotation;
 
-  public AbstractCollectionBinding(Class elementType, String tagName, @Nullable Accessor accessor) {
+  public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
 
-    myElementType = elementType;
-    myTagName = tagName;
-    myAnnotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
+    itemType = elementType;
+    annotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
   }
 
   @Override
@@ -49,62 +51,51 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   }
 
   @Override
-  public void init() {
-    if (myAnnotation != null) {
-      if (!myAnnotation.surroundWithTag()) {
-        if (myAnnotation.elementTag() == null) {
-          throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
-        }
+  public void init(@NotNull Type originalType) {
+    if (annotation == null || annotation.surroundWithTag()) {
+      return;
+    }
 
-        if (myAnnotation.elementTag().equals(Constants.OPTION)) {
-          for (Binding binding : getElementBindings().values()) {
-            if (binding instanceof TagBindingWrapper) {
-              throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
-            }
+    if (StringUtil.isEmpty(annotation.elementTag()) ||
+        (annotation.elementTag().equals(Constants.OPTION) && XmlSerializerImpl.getBinding(itemType) == null)) {
+      throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
+    }
+  }
+
+  @NotNull
+  private synchronized Map<Class<?>, Binding> getElementBindings() {
+    if (itemBindings == null) {
+      Binding binding = XmlSerializerImpl.getBinding(itemType);
+      if (annotation == null || annotation.elementTypes().length == 0) {
+        itemBindings = binding == null ? Collections.<Class<?>, Binding>emptyMap() : Collections.<Class<?>, Binding>singletonMap(itemType, binding);
+      }
+      else {
+        itemBindings = new THashMap<Class<?>, Binding>();
+        if (binding != null) {
+          itemBindings.put(itemType, binding);
+        }
+        for (Class aClass : annotation.elementTypes()) {
+          Binding b = XmlSerializerImpl.getBinding(aClass);
+          if (b != null) {
+            itemBindings.put(aClass, b);
           }
         }
-      }
-    }
-  }
-
-  protected Binding getElementBinding(@NotNull Class<?> elementClass) {
-    final Binding binding = getElementBindings().get(elementClass);
-    return binding == null ? XmlSerializerImpl.getBinding(elementClass) : binding;
-  }
-
-  private synchronized Map<Class, Binding> getElementBindings() {
-    if (myElementBindings == null) {
-      myElementBindings = new THashMap<Class, Binding>();
-      myElementBindings.put(myElementType, getBinding(myElementType));
-      if (myAnnotation != null) {
-        for (Class aClass : myAnnotation.elementTypes()) {
-          myElementBindings.put(aClass, getBinding(aClass));
+        if (itemBindings.isEmpty()) {
+          itemBindings = Collections.emptyMap();
         }
       }
     }
-
-    return myElementBindings;
+    return itemBindings;
   }
 
-  protected Binding getElementBinding(Object node) {
+  @Nullable
+  private Binding getElementBinding(@NotNull Element element) {
     for (Binding binding : getElementBindings().values()) {
-      if (binding.isBoundTo(node)) return binding;
+      if (binding.isBoundTo(element)) {
+        return binding;
+      }
     }
-    throw new XmlSerializationException("Node " + node + " is not bound");
-  }
-
-  private Binding getBinding(@NotNull Class type) {
-    Binding binding = XmlSerializerImpl.getBinding(type);
-    //noinspection unchecked
-    return binding.getBoundNodeType().isAssignableFrom(Element.class) ? binding : createElementTagWrapper(binding);
-  }
-
-  private Binding createElementTagWrapper(final Binding elementBinding) {
-    if (myAnnotation == null) return new TagBindingWrapper(elementBinding, Constants.OPTION, Constants.VALUE);
-
-    return new TagBindingWrapper(elementBinding,
-                                 myAnnotation.elementTag() != null ? myAnnotation.elementTag() : Constants.OPTION,
-                                 myAnnotation.elementValueAttribute() != null ? myAnnotation.elementValueAttribute() : Constants.VALUE);
+    return null;
   }
 
   abstract Object processResult(Collection result, Object target);
@@ -114,34 +105,28 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
 
   @Nullable
   @Override
-  public Object serialize(Object o, @Nullable Object context, SerializationFilter filter) {
-    Collection<Object> collection = o == null ? null : getIterable(o);
+  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+    Collection<Object> collection = getIterable(o);
 
-    final String tagName = getTagName(o);
-    if (tagName != null) {
-      Element result = new Element(tagName);
-      if (ContainerUtil.isEmpty(collection)) {
-        return new Element(tagName);
-      }
-      for (Object e : collection) {
-        if (e == null) {
-          throw new XmlSerializationException("Collection " + myAccessor + " contains 'null' object");
-        }
-        Content child = (Content)getElementBinding(e.getClass()).serialize(e, result, filter);
-        if (child != null) {
-          result.addContent(child);
+    String tagName = getTagName(o);
+    if (tagName == null) {
+      List<Object> result = new SmartList<Object>();
+      if (!ContainerUtil.isEmpty(collection)) {
+        for (Object item : collection) {
+          ContainerUtil.addAllNotNull(result, serializeItem(item, result, filter));
         }
       }
       return result;
     }
     else {
-      List<Object> result = new SmartList<Object>();
-      if (ContainerUtil.isEmpty(collection)) {
-        return result;
-      }
-
-      for (Object e : collection) {
-        ContainerUtil.addIfNotNull(result, getElementBinding(e.getClass()).serialize(e, result, filter));
+      Element result = new Element(tagName);
+      if (!ContainerUtil.isEmpty(collection)) {
+        for (Object item : collection) {
+          Content child = (Content)serializeItem(item, result, filter);
+          if (child != null) {
+            result.addContent(child);
+          }
+        }
       }
       return result;
     }
@@ -149,7 +134,7 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<?> nodes) {
+  public Object deserializeList(Object context, @NotNull List<Element> elements) {
     Collection result;
     if (getTagName(context) == null) {
       if (context instanceof Collection) {
@@ -159,11 +144,9 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       else {
         result = new SmartList();
       }
-      for (Object node : nodes) {
-        if (!XmlSerializerImpl.isIgnoredNode(node)) {
-          //noinspection unchecked
-          result.add(getElementBinding(node).deserialize(context, node));
-        }
+      for (Element node : elements) {
+        //noinspection unchecked
+        result.add(deserializeItem(node, context));
       }
 
       if (result == context) {
@@ -171,14 +154,60 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       }
     }
     else {
-      assert nodes.size() == 1;
-      result = processSingle(context, (Element)nodes.get(0));
+      assert elements.size() == 1;
+      result = deserializeSingle(context, elements.get(0));
     }
     return processResult(result, context);
   }
 
+
+  @Nullable
+  private Object serializeItem(@Nullable Object value, Object context, @NotNull SerializationFilter filter) {
+    if (value == null) {
+      LOG.warn("Collection " + myAccessor + " contains 'null' object");
+      return null;
+    }
+
+    Binding binding = XmlSerializerImpl.getBinding(value.getClass());
+    if (binding == null) {
+      Element serializedItem = new Element(annotation == null ? Constants.OPTION : annotation.elementTag());
+      String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
+      String serialized = XmlSerializerImpl.convertToString(value);
+      if (attributeName.isEmpty()) {
+        if (!serialized.isEmpty()) {
+          serializedItem.addContent(new Text(serialized));
+        }
+      }
+      else {
+        serializedItem.setAttribute(attributeName, serialized);
+      }
+      return serializedItem;
+    }
+    else {
+      return binding.serialize(value, context, filter);
+    }
+  }
+
+  private Object deserializeItem(@NotNull Element node, Object context) {
+    Binding binding = getElementBinding(node);
+    if (binding == null) {
+      String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
+      String value;
+      if (attributeName.isEmpty()) {
+        value = XmlSerializerImpl.getTextValue(node, "");
+      }
+      else {
+        value = node.getAttributeValue(attributeName);
+      }
+      return XmlSerializerImpl.convert(value, itemType);
+    }
+    else {
+      return binding.deserialize(context, node);
+    }
+  }
+
   @Override
-  public Object deserialize(Object context, @NotNull Object node) {
+  public Object deserialize(Object context, @NotNull Element element) {
     Collection result;
     if (getTagName(context) == null) {
       if (context instanceof Collection) {
@@ -188,29 +217,26 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
       else {
         result = new SmartList();
       }
-      if (!XmlSerializerImpl.isIgnoredNode(node)) {
-        //noinspection unchecked
-        result.add(getElementBinding(node).deserialize(context, node));
-      }
+
+      //noinspection unchecked
+      result.add(deserializeItem(element, context));
 
       if (result == context) {
         return result;
       }
     }
     else {
-      result = processSingle(context, (Element)node);
+      result = deserializeSingle(context, element);
     }
     return processResult(result, context);
   }
 
   @NotNull
-  private Collection processSingle(Object context, @NotNull Element node) {
+  private Collection deserializeSingle(Object context, @NotNull Element node) {
     Collection result = createCollection(node.getName());
-    for (Content child : node.getContent()) {
-      if (!XmlSerializerImpl.isIgnoredNode(child)) {
-        //noinspection unchecked
-        result.add(getElementBinding(child).deserialize(context, child));
-      }
+    for (Element child : node.getChildren()) {
+      //noinspection unchecked
+      result.add(deserializeItem(child, context));
     }
     return result;
   }
@@ -220,34 +246,25 @@ abstract class AbstractCollectionBinding extends Binding implements MultiNodeBin
   }
 
   @Override
-  public boolean isBoundTo(Object node) {
-    if (!(node instanceof Element)) return false;
-
-    final String tagName = getTagName(node);
+  public boolean isBoundTo(@NotNull Element element) {
+    String tagName = getTagName(element);
     if (tagName == null) {
-      for (Binding binding : getElementBindings().values()) {
-        if (binding.isBoundTo(node)) return true;
+      if (element.getName().equals(annotation == null ? Constants.OPTION : annotation.elementTag())) {
+        return true;
+      }
+
+      if (getElementBinding(element) != null) {
+        return true;
       }
     }
 
-    return ((Element)node).getName().equals(tagName);
-  }
-
-  @Override
-  public Class getBoundNodeType() {
-    return Element.class;
-  }
-
-  public Class getElementType() {
-    return myElementType;
+    return element.getName().equals(tagName);
   }
 
   @Nullable
-  private String getTagName(final Object target) {
-    return myAnnotation == null || myAnnotation.surroundWithTag() ? getCollectionTagName(target) : null;
+  private String getTagName(@Nullable Object target) {
+    return annotation == null || annotation.surroundWithTag() ? getCollectionTagName(target) : null;
   }
 
-  protected String getCollectionTagName(final Object target) {
-    return myTagName;
-  }
+  protected abstract String getCollectionTagName(@Nullable Object target);
 }

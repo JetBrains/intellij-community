@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
@@ -182,7 +183,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
       if (rollback) {
         final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
-        new RollbackWorker(myProject, operationName).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+        boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
+        new RollbackWorker(myProject, operationName, modalContext).
+          doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
       }
     }
     finally {

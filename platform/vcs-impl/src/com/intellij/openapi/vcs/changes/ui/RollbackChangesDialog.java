@@ -17,12 +17,14 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import gnu.trove.THashSet;
@@ -44,6 +46,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final boolean myRefreshSynchronously;
   private final Runnable myAfterVcsRefreshInAwt;
   private final MultipleChangeListBrowser myBrowser;
+  private final boolean myInvokedFromModalContext;
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
@@ -51,11 +54,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
-    rollbackChanges(project, changes, true);
-  }
-
-  public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously) {
-    rollbackChanges(project, changes, refreshSynchronously, null);
+    rollbackChanges(project, changes, true, null);
   }
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously,
@@ -73,14 +72,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
     lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
-    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt);
-  }
-
-  public static void rollback(final Project project,
-                              final List<LocalChangeList> changeLists,
-                              final List<Change> changes,
-                              final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
-    new RollbackChangesDialog(project, changeLists, changes, refreshSynchronously, afterVcsRefreshInAwt).show();
+    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt).show();
   }
 
   public RollbackChangesDialog(final Project project,
@@ -92,6 +84,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
     myAfterVcsRefreshInAwt = afterVcsRefreshInAwt;
+    myInvokedFromModalContext = LaterInvocator.isInModalContext();
 
     myInfoCalculator = new ChangeInfoCalculator();
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
@@ -102,6 +95,15 @@ public class RollbackChangesDialog extends DialogWrapper {
           myInfoCalculator.update(new ArrayList<Change>(myBrowser.getAllChanges()),
                                   new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
           myCommitLegendPanel.update();
+
+          Collection<Change> selected = myBrowser.getChangesIncludedInAllLists();
+          List<Change> visibleSelected = myBrowser.getCurrentIncludedChanges();
+          if (selected.size() != visibleSelected.size()) {
+            setErrorText("Selection contains changes from other changelist");
+          }
+          else {
+            setErrorText(null);
+          }
         }
       }
     };
@@ -156,9 +158,9 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    new RollbackWorker(myProject, myOperationName).doRollback(myBrowser.getChangesIncludedInAllLists(),
-                                                                     myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
-                                                                     myAfterVcsRefreshInAwt, null);
+    RollbackWorker worker = new RollbackWorker(myProject, myOperationName, myInvokedFromModalContext);
+    worker.doRollback(myBrowser.getChangesIncludedInAllLists(), myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
+                      myAfterVcsRefreshInAwt, null);
   }
 
   @Nullable

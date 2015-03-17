@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 public interface Accessor {
-  Object read(Object o);
-
-  void write(Object o, Object value);
-
-  @Deprecated
-  @NotNull
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  Annotation[] getAnnotations();
+  Object read(@NotNull Object o);
 
   <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass);
 
@@ -41,4 +32,9 @@ public interface Accessor {
   Type getGenericType();
 
   boolean isFinal();
+
+  /**
+   * @deprecated use {@link MutableAccessor#set(Object, Object)} instead
+   */
+  void write(Object o, Object value);
 }

@@ -189,7 +189,7 @@ public class TypeUtils {
         final PsiType[] parameters1 = classType1.getParameters();
         final PsiType[] parameters2 = classType2.getParameters();
         if (parameters1.length != parameters2.length) {
-          return false;
+          return ((PsiClassType)type1).isRaw() || ((PsiClassType)type2).isRaw();
         }
         for (int i = 0; i < parameters1.length; i++) {
           if (!areConvertible(parameters1[i], parameters2[i])) {

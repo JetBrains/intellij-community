@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.console;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.highlighting.PyHighlighter;
 
 /**
@@ -47,7 +49,7 @@ class PyConsoleSourceHighlighter {
     myLexer.start(text, 0, text.length(), getLexerState());
     while (hasNext()) {
       Pair<String, ConsoleViewContentType> pair = next();
-      myPythonConsoleView.printText(pair.first, pair.second);
+      myPythonConsoleView.print(pair.first, pair.second);
     }
   }
 
@@ -57,11 +59,10 @@ class PyConsoleSourceHighlighter {
 
   private Pair<String, ConsoleViewContentType> next() {
     myLexerState = myLexer.getState();
-
-    Pair<String, ConsoleViewContentType> res = Pair.create(myLexer.getTokenText(),
-                                                           new ConsoleViewContentType("", convertAttributes(
-                                                             myPyHighlighter.getTokenHighlights(
-                                                               myLexer.getTokenType()))));
+    IElementType tokenType = myLexer.getTokenType();
+    Pair<String, ConsoleViewContentType> res = Pair.create(
+      myLexer.getTokenText(),
+      tokenType == null ? ConsoleViewContentType.NORMAL_OUTPUT : ConsoleViewUtil.getContentTypeForToken(tokenType, myPyHighlighter));
     myLexer.advance();
 
     return res;

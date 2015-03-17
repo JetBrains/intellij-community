@@ -42,11 +42,12 @@ import java.util.regex.PatternSyntaxException;
  * @author max
  */
 public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
-  private static @NonNls final String HELP_ID = "editing.codeReformatting";
+  private static @NonNls final String HELP_ID = "Reformat Code on Directory Dialog";
 
   private final Project myProject;
   private final String  myText;
   private final boolean myEnableOnlyVCSChangedTextCb;
+  private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 
   private JLabel myTitle;
   protected JCheckBox myIncludeSubdirsCb;
@@ -75,6 +76,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
     myText = text;
     myProject = project;
     myEnableOnlyVCSChangedTextCb = enableOnlyVCSChangedTextCb;
+    myLastRunOptions = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
 
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle(title);
@@ -100,11 +102,11 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   private void restoreCbsStates() {
-    myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
-    myCbRearrangeEntries.setSelected(LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(myProject));
+    myCbOptimizeImports.setSelected(myLastRunOptions.getLastOptimizeImports());
+    myCbRearrangeEntries.setSelected(myLastRunOptions.getLastRearrangeCode());
     myCbOnlyVcsChangedRegions.setEnabled(myEnableOnlyVCSChangedTextCb);
     myCbOnlyVcsChangedRegions.setSelected(
-      myEnableOnlyVCSChangedTextCb && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
+      myEnableOnlyVCSChangedTextCb && myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
     );
   }
 
@@ -177,7 +179,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   @Override
-  public boolean isRearrangeEntries() {
+  public boolean isRearrangeCode() {
     return myCbRearrangeEntries.isSelected();
   }
 
@@ -189,19 +191,15 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
-    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
+    myLastRunOptions.saveOptimizeImportsState(isOptimizeImports());
+    myLastRunOptions.saveRearrangeCodeState(isRearrangeCode());
     if (myEnableOnlyVCSChangedTextCb) {
-      PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myCbOnlyVcsChangedRegions.isSelected()));
+      myLastRunOptions.saveProcessVcsChangedTextState(getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT);
     }
   }
 
   public boolean isOptimizeImports() {
     return myCbOptimizeImports.isSelected();
-  }
-
-  public boolean isProcessOnlyChangedText() {
-    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
   }
 
   @Nullable
@@ -232,4 +230,10 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
     return false;
   }
 
+  @Override
+  public TextRangeType getTextRangeType() {
+    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected()
+           ? TextRangeType.VCS_CHANGED_TEXT
+           : TextRangeType.WHOLE_FILE;
+  }
 }

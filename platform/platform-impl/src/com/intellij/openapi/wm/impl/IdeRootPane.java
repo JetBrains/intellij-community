@@ -35,6 +35,8 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
@@ -224,8 +226,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void createStatusBar(IdeFrame frame) {
-    myUISettings.addUISettingsListener(this, myApplication);
-
     myStatusBar = new IdeStatusBarImpl();
     myStatusBar.install(frame);
 
@@ -318,6 +318,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
       component.uiSettingsChanged(source);
     }
+    IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
+    BalloonLayout layout = frame != null ? frame.getBalloonLayout() : null;
+    if (layout instanceof BalloonLayoutImpl) ((BalloonLayoutImpl)layout).queueRelayout();
   }
 
   public boolean isOptimizedDrawingEnabled() {

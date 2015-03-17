@@ -18,12 +18,16 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -37,6 +41,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
@@ -45,7 +50,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,11 +76,13 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private final String myProgressText;
   private final String myCommandName;
-  private final Runnable myPostRunnable;
+  private Runnable myPostRunnable;
   private boolean myProcessChangedTextOnly;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
   private List<FileFilter> myFilters = ContainerUtil.newArrayList();
+
+  private LayoutCodeInfoCollector myInfoCollector;
 
   protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
@@ -96,6 +105,7 @@ public abstract class AbstractLayoutCodeProcessor {
     myCommandName = commandName;
     myPreviousCodeProcessor = previous;
     myFilters = previous.myFilters;
+    myInfoCollector = previous.myInfoCollector;
   }
 
   protected AbstractLayoutCodeProcessor(Project project,
@@ -171,10 +181,24 @@ public abstract class AbstractLayoutCodeProcessor {
     return list;
   }
 
+  public void setPostRunnable(Runnable postRunnable) {
+    myPostRunnable = postRunnable;
+  }
+
   @Nullable
   private FutureTask<Boolean> getPreviousProcessorTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     return myPreviousCodeProcessor != null ? myPreviousCodeProcessor.preprocessFile(file, processChangedTextOnly)
                                            : null;
+  }
+
+  public void setCollectInfo(boolean isCollectInfo) {
+    myInfoCollector = isCollectInfo ? new LayoutCodeInfoCollector() : null;
+
+    AbstractLayoutCodeProcessor current = this;
+    while (current.myPreviousCodeProcessor != null) {
+      current = current.myPreviousCodeProcessor;
+      current.myInfoCollector = myInfoCollector;
+    }
   }
 
   public void addFileFilter(@NotNull FileFilter filter) {
@@ -583,5 +607,38 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     return true;
+  }
+
+  protected static List<TextRange> getSelectedRanges(@NotNull SelectionModel selectionModel) {
+    final List<TextRange> ranges = new SmartList<TextRange>();
+    if (selectionModel.hasSelection()) {
+      TextRange range = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      ranges.add(range);
+    }
+    else if (selectionModel.hasBlockSelection()) {
+      int[] starts = selectionModel.getBlockSelectionStarts();
+      int[] ends = selectionModel.getBlockSelectionEnds();
+      for (int i = 0; i < starts.length; i++) {
+        ranges.add(TextRange.create(starts[i], ends[i]));
+      }
+    }
+
+    return ranges;
+  }
+
+  protected void handleFileTooBigException(Logger logger, FilesTooBigForDiffException e, @NotNull PsiFile file) {
+    logger.info("Error while calculating changed ranges for: " + file.getVirtualFile(), e);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      Notification notification = new Notification(ApplicationBundle.message("reformat.changed.text.file.too.big.notification.groupId"),
+                                                   ApplicationBundle.message("reformat.changed.text.file.too.big.notification.title"),
+                                                   ApplicationBundle.message("reformat.changed.text.file.too.big.notification.text", file.getName()),
+                                                   NotificationType.INFORMATION);
+      notification.notify(file.getProject());
+    }
+  }
+
+  @Nullable
+  public LayoutCodeInfoCollector getInfoCollector() {
+    return myInfoCollector;
   }
 }

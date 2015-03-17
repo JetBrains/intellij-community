@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -121,7 +122,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsList);
-    scrollPane.setPreferredSize(new Dimension(230, 60));
+    scrollPane.setPreferredSize(JBUI.size(230, 60));
     JPanel north = new JPanel(new BorderLayout());
     north.add(scrollPane, BorderLayout.CENTER);
     north.add(myOptionsPanel, BorderLayout.EAST);

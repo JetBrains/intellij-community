@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,7 @@ public class CodeStyleSchemesUIConfiguration implements PersistentStateComponent
     public static void setRecentImportFile(@NotNull VirtualFile recentFile) {
       CodeStyleSchemesUIConfiguration configuration = getInstance();
       if (configuration != null) {
-        URL url = VfsUtil.convertToURL(recentFile.getUrl());
+        URL url = VfsUtilCore.convertToURL(recentFile.getUrl());
         if (url != null) {
           configuration.RECENT_IMPORT_FILE_LOCATION = url.toString();
         }

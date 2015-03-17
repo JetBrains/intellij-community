@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
  */
 package org.jetbrains.idea.eclipse;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -31,7 +31,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestCase;
@@ -39,7 +42,8 @@ import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.eclipse.config.EclipseClasspathConverter;
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 
 import java.io.File;
@@ -67,37 +71,34 @@ public class EclipseEmlTest extends IdeaTestCase {
     checkModule(path, module);
   }
 
-  private static Module doLoadModule(final String path, final Project project) throws IOException, JDOMException, InvalidDataException {
-    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(project)
-          .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
-      }
-    });
+  private static Module doLoadModule(@NotNull String path, @NotNull Project project) throws IOException, JDOMException, InvalidDataException {
+    Module module;
+    AccessToken token = WriteAction.start();
+    try {
+      module = ModuleManager.getInstance(project).newModule(path + '/' + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
+    }
+    finally {
+      token.finish();
+    }
 
     replaceRoot(path, EclipseXml.DOT_CLASSPATH_EXT, project);
 
-
-    final EclipseClasspathStorageProvider.EclipseClasspathConverter converter =
-      new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-
-    final Element classpathElement =
-      JDOMUtil.loadDocument(FileUtil.loadFile(new File(path, EclipseXml.DOT_CLASSPATH_EXT))).getRootElement();
-    converter.getClasspath(rootModel, classpathElement);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    new EclipseClasspathConverter(module).readClasspath(rootModel);
+    token = WriteAction.start();
+    try {
+      rootModel.commit();
+    }
+    finally {
+      token.finish();
+    }
     return module;
   }
 
   protected static void checkModule(String path, Module module) throws WriteExternalException, IOException, JDOMException {
     ModuleRootModel rootModel = ModuleRootManager.getInstance(module);
     final Element root = new Element("component");
-    IdeaSpecificSettings.writeIDEASpecificClasspath(root, rootModel);
+    IdeaSpecificSettings.writeIdeaSpecificClasspath(root, rootModel);
 
     final String resulted = new String(JDOMUtil.printDocument(new Document(root), "\n"));
 

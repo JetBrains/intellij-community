@@ -16,27 +16,39 @@
 package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.util.Arrays;
 
 public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSeparatorRenderer {
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
 
-  // TODO: adjust width to line height?
+  // TODO: adjust width to line height / HiDPI ?
   private static final int X_STEP = 4;
   private static final int Y_STEP = 4;
-  private static final int Y_STEP_2 = 2;
+  private static final int Y_STEP_2 = 1;
+
+  private static final int JOIN_DX = 4;
+  private static final int JOIN_DY = 2;
+
+  // Background, 1-2-3 top pixels, bottom pixel
+  private static final Color[] LINE_COLORS = new Color[]{
+    new JBColor(Gray._217, Gray._35),
+    new JBColor(Gray._200, Gray._30),
+    new JBColor(Gray._208, Gray._32),
+    new JBColor(Gray._211, Gray._34),
+    new JBColor(Gray._217, Gray._34)};
 
   public DiffLineSeparatorRenderer(@NotNull Editor editor) {
     this(editor, BooleanGetter.TRUE);
@@ -48,8 +60,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
   }
 
   /*
- * Divider
- */
+   * Divider
+   */
   public static void drawConnectorLine(@NotNull Graphics2D g,
                                        int x1, int x2,
                                        int start1, int end1,
@@ -57,35 +69,26 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     int y1 = (start1 + end1) / 2;
     int y2 = (start2 + end2) / 2;
 
-    int[] xPoints1;
-    int[] yPoints1;
-    int[] xPoints2;
-    int[] yPoints2;
+    int[] xPoints;
+    int[] yPoints;
 
+    int step = Y_STEP - Y_STEP_2;
     if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
-      int dx = Y_STEP;
-      int dy = Y_STEP_2;
       if (y2 < y1) {
-        xPoints1 = new int[]{x1, x2 - dx, x2};
-        yPoints1 = new int[]{y1 - Y_STEP, y2 - Y_STEP + dy, y2 - Y_STEP};
-        xPoints2 = new int[]{x1, x1 + dx, x2};
-        yPoints2 = new int[]{y1 + Y_STEP, y1 + Y_STEP - dy, y2 + Y_STEP};
+        xPoints = new int[]{x1, x2 - JOIN_DX, x2, x2, x1 + JOIN_DX, x1};
+        yPoints = new int[]{y1 - step, y2 - step + JOIN_DY, y2 - step, y2 + step, y1 + step - JOIN_DY, y1 + step};
       }
       else {
-        xPoints1 = new int[]{x1, x1 + dx, x2};
-        yPoints1 = new int[]{y1 - Y_STEP, y1 - Y_STEP + dy, y2 - Y_STEP};
-        xPoints2 = new int[]{x1, x2 - dx, x2};
-        yPoints2 = new int[]{y1 + Y_STEP, y2 + Y_STEP - dy, y2 + Y_STEP};
+        xPoints = new int[]{x1, x1 + JOIN_DX, x2, x2, x2 - JOIN_DX, x1};
+        yPoints = new int[]{y1 - step, y1 - step + JOIN_DY, y2 - step, y2 + step, y2 + step - JOIN_DY, y1 + step};
       }
     }
     else {
-      xPoints1 = new int[]{x1, x2};
-      yPoints1 = new int[]{y1 - Y_STEP, y2 - Y_STEP};
-      xPoints2 = new int[]{x1, x2};
-      yPoints2 = new int[]{y1 + Y_STEP, y2 + Y_STEP};
+      xPoints = new int[]{x1, x2, x2, x1};
+      yPoints = new int[]{y1 - step, y2 - step, y2 + step, y1 + step};
     }
 
-    paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
+    paintLine(g, xPoints, yPoints);
   }
 
   /*
@@ -96,10 +99,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     if (!myCondition.get()) return;
 
     int y = r.y;
-    final int gutterWidth = ((EditorEx)editor).getGutterComponentEx().getWidth();
     int lineHeight = myEditor.getLineHeight();
 
-    draw(g, 0, gutterWidth, 0, y, lineHeight);
+    draw(g, 0, y, lineHeight);
   }
 
   /*
@@ -111,31 +113,36 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
 
     y++; // we want y to be line's top position
 
-    Rectangle clip = g.getClipBounds();
-    x2 = clip.x + clip.width;
-
     final int gutterWidth = ((EditorEx)myEditor).getGutterComponentEx().getWidth();
     int lineHeight = myEditor.getLineHeight();
+    int interval = 8;
 
-    draw(g, x1, x2, -gutterWidth, y, lineHeight);
+    int shiftX = -interval; // skip zero index painting
+    if (((EditorEx)myEditor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT) {
+      int contentWidth = ((EditorEx)myEditor).getScrollPane().getViewport().getWidth();
+      shiftX += contentWidth % interval - interval;
+      shiftX += gutterWidth % interval - interval;
+    }
+    else {
+      shiftX += -gutterWidth % interval - interval;
+    }
+
+    draw(g, shiftX, y, lineHeight);
   }
 
   private static void draw(@NotNull Graphics g,
-                           int x1,
-                           int x2,
                            int shiftX,
                            int shiftY,
                            int lineHeight) {
     int halfHeight = lineHeight / 2;
 
-    int count = ((x2 - x1) / X_STEP + 3);
+    Rectangle clip = g.getClipBounds();
+    int count = (clip.width / X_STEP + 3);
+    int shift = (clip.x - shiftX) / X_STEP;
 
-    int[] xPoints1 = new int[count];
-    int[] yPoints1 = new int[count];
-    int[] xPoints2 = new int[count];
-    int[] yPoints2 = new int[count];
+    int[] xPoints = new int[2 * count];
+    int[] yPoints = new int[2 * count];
 
-    int shift = Math.max(x1 - shiftX / X_STEP, 0);
     for (int index = 0; index < count; index++) {
       int absIndex = index + shift;
 
@@ -144,8 +151,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
       int yPos2;
 
       if (absIndex == 0) {
-        yPos1 = halfHeight + shiftY - Y_STEP;
-        yPos2 = halfHeight + shiftY + Y_STEP;
+        yPos1 = halfHeight + shiftY - Y_STEP + Y_STEP_2;
+        yPos2 = halfHeight + shiftY + Y_STEP - Y_STEP_2;
       }
       else if (absIndex % 2 == 0) {
         yPos1 = halfHeight + shiftY - Y_STEP_2;
@@ -156,59 +163,51 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
         yPos2 = halfHeight + shiftY + Y_STEP_2;
       }
 
-      xPoints1[index] = xPos;
-      yPoints1[index] = yPos1;
-      xPoints2[index] = xPos;
-      yPoints2[index] = yPos2;
+      xPoints[index] = xPos;
+      yPoints[index] = yPos1;
+      xPoints[2 * count - index - 1] = xPos;
+      yPoints[2 * count - index - 1] = yPos2;
     }
 
-    paintLine(g, xPoints1, yPoints1, xPoints2, yPoints2);
-  }
-
-  private static void paintLine(@NotNull Graphics g,
-                                @NotNull int[] xPoints1, @NotNull int[] yPoints1,
-                                @NotNull int[] xPoints2, @NotNull int[] yPoints2) {
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
-
     try {
-      Color innerColor = getInnerColor();
-      Color outerColor = getOuterColor();
-
-      if (innerColor != null) {
-        g.setColor(innerColor);
-        int[] xPoints = mergeReverse(xPoints1, xPoints2);
-        int[] yPoints = mergeReverse(yPoints1, yPoints2);
-
-        g.fillPolygon(xPoints, yPoints, xPoints.length);
-      }
-      if (outerColor != null) {
-        g.setColor(outerColor);
-        g.drawPolyline(xPoints1, yPoints1, xPoints1.length);
-        g.drawPolyline(xPoints2, yPoints2, xPoints2.length);
-      }
+      paintLine(g, xPoints, yPoints);
     }
     finally {
       config.restore();
     }
   }
 
-  @NotNull
-  private static int[] mergeReverse(@NotNull int[] a1, @NotNull int[] a2) {
-    int[] result = new int[a1.length + a2.length];
-    System.arraycopy(a1, 0, result, 0, a1.length);
-    for (int i = 0; i < a2.length; i++) {
-      result[result.length - i - 1] = a2[i];
-    }
-    return result;
-  }
+  private static void paintLine(@NotNull Graphics g,
+                                @NotNull int[] xPoints, @NotNull int[] yPoints) {
+    Graphics2D gg = ((Graphics2D)g);
 
-  @Nullable
-  public static Color getOuterColor() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
-  }
+    // background
+    gg.setColor(LINE_COLORS[0]);
+    gg.fillPolygon(xPoints, yPoints, xPoints.length);
+    gg.drawPolyline(xPoints, yPoints, xPoints.length);
 
-  @Nullable
-  public static Color getInnerColor() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+    // shade
+    AffineTransform oldTransform = gg.getTransform();
+
+    gg.setColor(LINE_COLORS[1]);
+    gg.drawPolyline(xPoints, yPoints, xPoints.length / 2);
+
+    gg.translate(0, 1);
+    gg.setColor(LINE_COLORS[2]);
+    gg.drawPolyline(xPoints, yPoints, xPoints.length / 2);
+
+    gg.translate(0, 1);
+    gg.setColor(LINE_COLORS[3]);
+    gg.drawPolyline(xPoints, yPoints, xPoints.length / 2);
+
+    gg.setTransform(oldTransform);
+
+    // bottom line
+    int[] xBottomPoints = Arrays.copyOfRange(xPoints, xPoints.length / 2, xPoints.length);
+    int[] yBottomPoints = Arrays.copyOfRange(yPoints, xPoints.length / 2, xPoints.length);
+
+    gg.setColor(LINE_COLORS[4]);
+    gg.drawPolyline(xBottomPoints, yBottomPoints, xPoints.length / 2);
   }
 }

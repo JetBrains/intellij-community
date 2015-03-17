@@ -289,7 +289,9 @@ public class Mappings {
             }
           }
 
-          acc.add(reflcass);
+          if (!acc.add(reflcass)) {
+            return; // SOE prevention
+          }
         }
 
         final TIntHashSet subclasses = myClassToSubclasses.get(reflcass);
@@ -354,7 +356,7 @@ public class Mappings {
       };
     }
 
-    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (m.name == myInitName) {
         return; // overriding is not defined for constructors
       }
@@ -362,6 +364,13 @@ public class Mappings {
       if (subClasses == null) {
         return;
       }
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+      }
+      if (!visitedClasses.add(fromClass.name)) {
+        return;
+      }
+      final TIntHashSet _visitedClasses = visitedClasses;
       subClasses.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int subClassName) {
@@ -377,7 +386,7 @@ public class Mappings {
               }
             }
             if (cont) {
-              addOverridingMethods(m, r, predicate, container);
+              addOverridingMethods(m, r, predicate, container, _visitedClasses);
             }
           }
           return true;
@@ -388,8 +397,8 @@ public class Mappings {
     private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
       final MethodRepr.Predicate predicate = lessSpecific(m);
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
-      addOverridenMethods(c, predicate, result);
-      addOverridingMethods(m, c, predicate, result);
+      addOverridenMethods(c, predicate, result, null);
+      addOverridingMethods(m, c, predicate, result, null);
       return result;
     }
 
@@ -398,13 +407,17 @@ public class Mappings {
         return Collections.emptySet(); // overriding is not defined for constructors
       }
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
-      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result);
+      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result, null);
       return result;
     }
 
-    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate) {
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int superName : fromClass.getSupers()) {
-        if (superName == myObjectClassName) {
+        if (!visitedClasses.add(superName) || superName == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(superName);
@@ -414,7 +427,7 @@ public class Mappings {
               return true;
             }
           }
-          if (hasOverriddenMethods(superClass, predicate)) {
+          if (hasOverriddenMethods(superClass, predicate, visitedClasses)) {
             return true;
           }
         }
@@ -422,21 +435,32 @@ public class Mappings {
       return false;
     }
 
-    private boolean extendsLibraryClass(final ClassRepr fromClass) {
+    private boolean extendsLibraryClass(final ClassRepr fromClass, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int superName : fromClass.getSupers()) {
-        if (superName == myObjectClassName) {
+        if (!visitedClasses.add(superName) || superName == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(superName);
-        if (superClass == null || extendsLibraryClass(superClass)) {
+        if (superClass == null || extendsLibraryClass(superClass, visitedClasses)) {
           return true;
         }
       }
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int superName : fromClass.getSupers()) {
+        if (!visitedClasses.add(superName)) {
+          continue;  // prevent SOE
+        }
         final ClassRepr superClass = reprByName(superName);
         if (superClass != null) {
           boolean cont = true;
@@ -448,7 +472,7 @@ public class Mappings {
             }
           }
           if (cont) {
-            addOverridenMethods(superClass, predicate, container);
+            addOverridenMethods(superClass, predicate, container, visitedClasses);
           }
         }
         else {
@@ -457,9 +481,13 @@ public class Mappings {
       }
     }
 
-    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
+    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int supername : fromClass.getSupers()) {
-        if (supername == myObjectClassName) {
+        if (!visitedClasses.add(supername) || supername == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(supername);
@@ -469,15 +497,19 @@ public class Mappings {
             container.add(Pair.create(ff, superClass));
           }
           else{
-            addOverriddenFields(f, superClass, container);
+            addOverriddenFields(f, superClass, container, visitedClasses);
           }
         }
       }
     }
 
-    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
+    boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass, TIntHashSet visitedClasses) {
+      if (visitedClasses == null) {
+        visitedClasses = new TIntHashSet();
+        visitedClasses.add(fromClass.name);
+      }
       for (int supername : fromClass.getSupers()) {
-        if (supername == myObjectClassName) {
+        if (!visitedClasses.add(supername) || supername == myObjectClassName) {
           continue;
         }
         final ClassRepr superClass = reprByName(supername);
@@ -486,7 +518,7 @@ public class Mappings {
           if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
             return true;
           }
-          final boolean found = hasOverriddenFields(f, superClass);
+          final boolean found = hasOverriddenFields(f, superClass, visitedClasses);
           if (found) {
             return true;
           }
@@ -509,7 +541,7 @@ public class Mappings {
     }
 
     @Nullable
-    private Boolean isInheritorOf(final int who, final int whom) {
+    private Boolean isInheritorOf(final int who, final int whom, TIntHashSet visitedClasses) {
       if (who == whom) {
         return Boolean.TRUE;
       }
@@ -517,8 +549,15 @@ public class Mappings {
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
+        if (visitedClasses == null) {
+          visitedClasses = new TIntHashSet();
+          visitedClasses.add(who);
+        }
         for (int s : repr.getSupers()) {
-          final Boolean inheritorOf = isInheritorOf(s, whom);
+          if (!visitedClasses.add(s)) {
+            continue;
+          }
+          final Boolean inheritorOf = isInheritorOf(s, whom, visitedClasses);
           if (inheritorOf != null && inheritorOf) {
             return inheritorOf;
           }
@@ -553,14 +592,14 @@ public class Mappings {
       }
 
       if (whom instanceof TypeRepr.ClassType) {
-        return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className);
+        return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className, null);
       }
 
       return Boolean.FALSE;
     }
 
     boolean isMethodVisible(final ClassRepr classRepr, final MethodRepr m) {
-      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m));
+      return classRepr.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0 || hasOverriddenMethods(classRepr, MethodRepr.equalByJavaRules(m), null);
     }
 
     boolean isFieldVisible(final int className, final FieldRepr field) {
@@ -568,21 +607,22 @@ public class Mappings {
       if (r == null || r.getFields().contains(field)) {
         return true;
       }
-      return hasOverriddenFields(field, r);
+      return hasOverriddenFields(field, r, null);
     }
 
-    void collectSupersRecursively(@NotNull final int className, @NotNull final TIntHashSet container) {
+    void collectSupersRecursively(final int className, @NotNull final TIntHashSet container) {
       final ClassRepr classRepr = reprByName(className);
       if (classRepr != null) {
         final int[] supers = classRepr.getSupers();
-        container.addAll(supers);
-        for (int aSuper : supers) {
-          collectSupersRecursively(aSuper, container);
+        if (container.addAll(supers)) {
+          for (int aSuper : supers) {
+            collectSupersRecursively(aSuper, container);
+          }
         }
       }
     }
 
-    void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages, final Collection<File> alreadyCompiledFiles) {
+    void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages, final Collection<File> alreadyCompiledFiles, TIntHashSet visitedClasses) {
       debug("Affecting subclasses of class: ", className);
 
       final Collection<File> allSources = myClassToSourceFile.get(className);
@@ -616,10 +656,17 @@ public class Mappings {
 
       final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
       if (directSubclasses != null) {
+        if (visitedClasses == null) {
+          visitedClasses = new TIntHashSet();
+          visitedClasses.add(className);
+        }
+        final TIntHashSet _visitedClasses = visitedClasses;
         directSubclasses.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int subClass) {
-            affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages, alreadyCompiledFiles);
+            if (_visitedClasses.add(subClass)) {
+              affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages, alreadyCompiledFiles, _visitedClasses);
+            }
             return true;
           }
         });
@@ -692,7 +739,7 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(final int residence) {
-        final Boolean inheritorOf = isInheritorOf(residence, rootClass);
+        final Boolean inheritorOf = isInheritorOf(residence, rootClass, null);
         return inheritorOf == null || !inheritorOf || super.checkResidence(residence);
       }
     }
@@ -779,17 +826,15 @@ public class Mappings {
   }
 
   private TIntHashSet addAllSubclasses(final int root, final TIntHashSet acc) {
+    if (!acc.add(root)) {
+      return acc;
+    }
     final TIntHashSet directSubclasses = myClassToSubclasses.get(root);
-
-    acc.add(root);
-
     if (directSubclasses != null) {
       directSubclasses.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int s) {
-          if (!acc.contains(s)) {
-            addAllSubclasses(s, acc);
-          }
+          addAllSubclasses(s, acc);
           return true;
         }
       });
@@ -866,18 +911,6 @@ public class Mappings {
   }
 
   public interface DependentFilesFilter {
-    DependentFilesFilter ALL_FILES = new DependentFilesFilter() {
-      @Override
-      public boolean accept(File file) {
-        return true;
-      }
-
-      @Override
-      public boolean belongsToCurrentTargetChunk(File file) {
-        return true;
-      }
-    };
-
     boolean accept(File file);
     
     boolean belongsToCurrentTargetChunk(File file);
@@ -1104,7 +1137,7 @@ public class Mappings {
         debug("Method: ", m.name);
         if (it.isInterface() || it.isAbstract() || m.isAbstract()) {
           debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
-          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles);
+          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
         }
 
         TIntHashSet propagated = null;
@@ -1115,7 +1148,7 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
+          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m), null)) {
             if (m.myArgumentTypes.length > 0) {
               propagated = myFuture.propagateMethodAccess(m, it.name);
               debug("Conservative case on overriding methods, affecting method usages");
@@ -1149,7 +1182,7 @@ public class Mappings {
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final Boolean inheritorOf = myPresent.isInheritorOf(methodClass.name, it.name);
+            final Boolean inheritorOf = myPresent.isInheritorOf(methodClass.name, it.name, null);
             final boolean isInheritor = inheritorOf != null && inheritorOf;
 
             debug("Method: ", method.name);
@@ -1202,7 +1235,7 @@ public class Mappings {
                 final int outerClass = r.getOuterClassName();
                 if (!isEmpty(outerClass)) {
                   final ClassRepr outerClassRepr = myFuture.reprByName(outerClass);
-                  if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr))) {
+                  if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr, null))) {
                     myAffectedFiles.addAll(sourceFileNames);
                     for (File sourceFileName : sourceFileNames) {
                       debug("Affecting file due to local overriding: ", sourceFileName);
@@ -1255,7 +1288,7 @@ public class Mappings {
 
         final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = new HashSet<Pair<MethodRepr, ClassRepr>>();
 
-        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final Collection<File> fNames = myClassToSourceFile.get(p.second.name);
@@ -1374,7 +1407,7 @@ public class Mappings {
 
               final List<Pair<MethodRepr, ClassRepr>> overridingMethods = new LinkedList<Pair<MethodRepr, ClassRepr>>();
 
-              myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+              myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods, null);
 
               for(final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
                 final ClassRepr aClass = p.getSecond();
@@ -1402,7 +1435,7 @@ public class Mappings {
 
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
                 debug("Added static specifier --- affecting subclasses");
-                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles);
+                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
             }
             else {
@@ -1410,7 +1443,7 @@ public class Mappings {
                   (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
                 debug("Added final, public or abstract specifier --- affecting subclasses");
-                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles);
+                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
@@ -1485,7 +1518,7 @@ public class Mappings {
         }
 
         final Collection<Pair<FieldRepr, ClassRepr>> overriddenFields = new HashSet<Pair<FieldRepr, ClassRepr>>();
-        myFuture.addOverriddenFields(f, classRepr, overriddenFields);
+        myFuture.addOverriddenFields(f, classRepr, overriddenFields, null);
 
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr ff = p.first;
@@ -1706,7 +1739,7 @@ public class Mappings {
             debug("Extends changed: ", extendsChanged);
             debug("Interfaces removed: ", interfacesRemoved);
 
-            myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged, myCompiledFiles);
+            myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged, myCompiledFiles, null);
 
             if (!changedClass.isAnonymous()) {
               final TIntHashSet parents = new TIntHashSet();

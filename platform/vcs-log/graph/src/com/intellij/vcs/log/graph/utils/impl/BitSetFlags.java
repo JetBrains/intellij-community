@@ -62,8 +62,8 @@ public class BitSetFlags implements Flags {
   }
 
   private void checkRange(int index) {
-    if (index < 0) throw new IndexOutOfBoundsException("index < 0:" + index);
-    if (index >= mySize) throw new IndexOutOfBoundsException("index: " + index + " >= mySize: " + mySize);
+    if (index < 0) throw new IndexOutOfBoundsException("index is " + index + " which is less then zero");
+    if (index >= mySize) throw new IndexOutOfBoundsException("index is " + index + " and set size is " + mySize);
   }
 
 

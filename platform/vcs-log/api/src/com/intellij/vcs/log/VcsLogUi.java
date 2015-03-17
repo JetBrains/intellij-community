@@ -43,4 +43,8 @@ public interface VcsLogUi {
   @NotNull PermanentGraph.SortType getBekType();
 
   void setShowRootNames(boolean showRootNames);
+
+  boolean isHighlightMyCommits();
+
+  void setHighlightMyCommits(boolean state);
 }

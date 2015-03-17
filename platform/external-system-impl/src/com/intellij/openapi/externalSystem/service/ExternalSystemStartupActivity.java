@@ -26,9 +26,10 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
 import com.intellij.openapi.externalSystem.service.vcs.ExternalSystemVcsRegistrar;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.util.DisposeAwareRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,8 +47,6 @@ public class ExternalSystemStartupActivity implements StartupActivity {
       @SuppressWarnings("unchecked")
       @Override
       public void run() {
-        ExternalProjectsManager.getInstance(project).init();
-
         for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
           if (manager instanceof StartupActivity) {
             ((StartupActivity)manager).runActivity(project);
@@ -75,11 +74,7 @@ public class ExternalSystemStartupActivity implements StartupActivity {
       }
     };
 
-    if (project.isInitialized()) {
-      task.run();
-    }
-    else {
-      StartupManager.getInstance(project).registerPostStartupActivity(task);
-    }
+    ExternalProjectsManager.getInstance(project).init();
+    DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(task, project));
   }
 }

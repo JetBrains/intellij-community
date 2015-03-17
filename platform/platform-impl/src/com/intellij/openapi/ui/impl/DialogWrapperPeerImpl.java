@@ -452,11 +452,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
 
-    if (myDialog.isModal() && !isProgressDialog()) {
-      if (appStarted) {
-        commandProcessor.enterModal();
-        LaterInvocator.enterModal(myDialog);
-      }
+    if (appStarted && myDialog.isModal() && !isProgressDialog()) {
+      commandProcessor.enterModal();
+      LaterInvocator.enterModal(myDialog);
     }
 
     if (appStarted) {
@@ -467,11 +465,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myDialog.show();
     }
     finally {
-      if (myDialog.isModal() && !isProgressDialog()) {
-        if (appStarted) {
-          commandProcessor.leaveModal();
-          LaterInvocator.leaveModal(myDialog);
-        }
+      if (appStarted && myDialog.isModal() && !isProgressDialog()) {
+        commandProcessor.leaveModal();
+        LaterInvocator.leaveModal(myDialog);
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(result.createSetDoneRunnable());

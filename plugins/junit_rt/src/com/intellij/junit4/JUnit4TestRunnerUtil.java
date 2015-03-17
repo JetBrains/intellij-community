@@ -33,7 +33,7 @@ import org.junit.runners.model.FrameworkMethod;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.*;
@@ -148,7 +148,7 @@ public class JUnit4TestRunnerUtil {
               //return simple method runner
             }
           } else {
-            final Request request = getParameterizedRequest(name, clazz, methodName, clazzAnnotation);
+            final Request request = getParameterizedRequest(name, methodName, clazz, clazzAnnotation);
             if (request != null) {
               return request;
             }
@@ -186,7 +186,7 @@ public class JUnit4TestRunnerUtil {
           final Class clazz = loadTestClass(suiteClassName);
           if (clazz != null) {
             final RunWith clazzAnnotation = (RunWith)clazz.getAnnotation(RunWith.class);
-            final Request request = getParameterizedRequest(name, clazz, null, clazzAnnotation);
+            final Request request = getParameterizedRequest(name, null, clazz, clazzAnnotation);
             if (request != null) {
               return request;
             }
@@ -211,14 +211,42 @@ public class JUnit4TestRunnerUtil {
     return Request.classes(getArrayOfClasses(result));
   }
 
-  private static Request getParameterizedRequest(String name, Class clazz, String methodName, RunWith clazzAnnotation) {
+  private static Request getParameterizedRequest(final String parameterString,
+                                                 final String methodName,
+                                                 Class clazz,
+                                                 RunWith clazzAnnotation) {
     if (clazzAnnotation == null) return null;
 
     final Class runnerClass = clazzAnnotation.value();
     if (Parameterized.class.isAssignableFrom(runnerClass)) {
       try {
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
-        return Request.runner(new SelectedParameterizedRunner(clazz, name, methodName, runnerClass));
+        final Constructor runnerConstructor = runnerClass.getConstructor(new Class[]{Class.class});
+        return Request.runner((Runner)runnerConstructor.newInstance(new Object[] {clazz})).filterWith(new Filter() {
+          public boolean shouldRun(Description description) {
+            final String descriptionMethodName = description.getMethodName();
+            //filter by params
+            if (parameterString != null && descriptionMethodName != null && !descriptionMethodName.endsWith(parameterString)) {
+              return false;
+            }
+
+            //filter only selected method
+            if (methodName != null && descriptionMethodName != null && !descriptionMethodName.startsWith(methodName)) {
+              return false;
+            }
+            return true;
+          }
+
+          public String describe() {
+            if (parameterString == null) {
+              return methodName + " with any parameter";
+            }
+            if (methodName == null) {
+              return "Parameter " + parameterString + " for any method";
+            }
+            return methodName + " with parameter " + parameterString;
+          }
+        });
       }
       catch (Throwable throwable) {
         //return simple method runner
@@ -321,87 +349,6 @@ public class JUnit4TestRunnerUtil {
       finally {
         eachNotifier.fireTestFinished();
       }
-    }
-  }
-
-  private static class SelectedParameterizedRunner extends Parameterized {
-    private final String myName;
-    private final String myMethodName;
-    private Parameterized myRunnerClass;
-
-    public SelectedParameterizedRunner(Class clazz, String name, String methodName, Class runnerClass) throws Throwable {
-      super(clazz);
-      myName = name;
-      myMethodName = methodName;
-      myRunnerClass = (Parameterized)runnerClass.getConstructor(new Class[] {Class.class}).newInstance(new Object[]{clazz});
-    }
-
-    protected List getChildren() {
-      List children;
-      try {
-        Method getChildren = Parameterized.class.getDeclaredMethod("getChildren", new Class[0]);
-        getChildren.setAccessible(true);
-        children = (List)getChildren.invoke(myRunnerClass, new Object[0]);
-      }
-      catch (Throwable e) {
-        children = super.getChildren();
-      }
-
-      //filter by params
-      if (myName != null) {
-        for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-          Object child = iterator.next();
-          try {
-            Class aClass = child.getClass();
-            Field f;
-            try {
-              f = aClass.getDeclaredField("fName");
-            }
-            catch (NoSuchFieldException e) {
-              try {
-                f = aClass.getDeclaredField("name");
-              }
-              catch (NoSuchFieldException e1) {
-                continue;
-              }
-            }
-            f.setAccessible(true);
-            String fName = (String)f.get(child);
-            if (!myName.equals(fName)) {
-              iterator.remove();
-            }
-          }
-          catch (Exception e) {
-           e.printStackTrace();
-          }
-        }
-        if (children.isEmpty()) {
-          System.err.println("No tests were found by passed name: " + myName);
-          System.exit(1);
-        }
-      }
-
-      //filter only selected method
-      if (myMethodName != null) {
-        for (int i = 0; i < children.size(); i++) {
-          try {
-            final BlockJUnit4ClassRunner child = (BlockJUnit4ClassRunner)children.get(i);
-            final Method getChildrenMethod = BlockJUnit4ClassRunner.class.getDeclaredMethod("getChildren", new Class[0]);
-            getChildrenMethod.setAccessible(true);
-            final List list = (List)getChildrenMethod.invoke(child, new Object[0]);
-            for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-              final FrameworkMethod description = (FrameworkMethod)iterator.next();
-              if (!description.getName().equals(myMethodName)) {
-                iterator.remove();
-              }
-            }
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      }
-      return children;
     }
   }
 }

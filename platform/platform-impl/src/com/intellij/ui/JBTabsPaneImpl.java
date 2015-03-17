@@ -22,7 +22,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,33 +45,13 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
       }
 
       @Override
-      protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-        super.doPaintBackground(g2d, clip);
-        if (getTabsPosition() == JBTabsPosition.top && isSingleRow()) {
-          int maxOffset = 0;
-          int maxLength = 0;
+      public boolean supportsCompression() {
+        return false;
+      }
 
-          for (int i = getVisibleInfos().size() - 1; i >= 0; i--) {
-            TabInfo visibleInfo = getVisibleInfos().get(i);
-            TabLabel tabLabel = myInfo2Label.get(visibleInfo);
-            Rectangle r = tabLabel.getBounds();
-            if (r.width == 0 || r.height == 0) continue;
-            maxOffset = r.x + r.width;
-            maxLength = r.height;
-            break;
-          }
-
-          maxOffset++;
-          g2d.setPaint(UIUtil.getPanelBackground());
-          if (getFirstTabOffset() > 0) {
-            g2d.fillRect(clip.x, clip.y, clip.x + getFirstTabOffset() - 1, clip.y + maxLength - getActiveTabUnderlineHeight());
-          }
-          g2d.fillRect(clip.x + maxOffset, clip.y, clip.width - maxOffset, clip.y + maxLength - getActiveTabUnderlineHeight());
-          g2d.setPaint(new JBColor(Gray._181, UIUtil.getPanelBackground()));
-          g2d.drawLine(clip.x + maxOffset, clip.y + maxLength - getActiveTabUnderlineHeight(), clip.x + clip.width, clip.y + maxLength - getActiveTabUnderlineHeight());
-          g2d.setPaint(UIUtil.getPanelBackground());
-          g2d.drawLine(clip.x, clip.y + maxLength, clip.width, clip.y + maxLength);
-        }
+      @Override
+      protected Color getEmptySpaceColor() {
+        return UIUtil.getBgFillColor(getParent());
       }
 
       @Override

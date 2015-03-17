@@ -479,7 +479,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private void disposeBuilders() {
-    final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
+    final Collection<HierarchyTreeBuilder> builders = new ArrayList<HierarchyTreeBuilder>(myBuilders.values());
     for (final HierarchyTreeBuilder builder : builders) {
       Disposer.dispose(builder);
     }

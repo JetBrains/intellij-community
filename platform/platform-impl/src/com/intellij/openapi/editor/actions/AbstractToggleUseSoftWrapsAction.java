@@ -17,12 +17,12 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since Aug 23, 2010 11:33:35 AM
  */
-public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
   private final boolean myGlobal;

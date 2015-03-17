@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class ThreeDiffSplitter extends JPanel {
     @Nullable private Painter myPainter;
 
     public Dimension getPreferredSize() {
-      return new Dimension(30, 1);
+      return JBUI.size(30, 1);
     }
 
     public void paint(Graphics g) {

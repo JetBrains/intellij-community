@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
@@ -63,6 +62,9 @@ public class EditorFragmentComponent extends JPanel {
     if (!showFolding) {
       foldingModel.setFoldingEnabled(false);
     }
+    
+    boolean isCaretRowShown = editor.getSettings().isCaretRowShown();
+    editor.getSettings().setCaretRowShown(false);
 
     Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
@@ -111,6 +113,8 @@ public class EditorFragmentComponent extends JPanel {
     if (wasVisible) {
       editor.setCaretVisible(true);
     }
+    
+    editor.getSettings().setCaretRowShown(isCaretRowShown);
 
     if (!showFolding) {
       foldingModel.setFoldingEnabled(isFoldingEnabled);
@@ -144,7 +148,7 @@ public class EditorFragmentComponent extends JPanel {
     final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
     Border outsideBorder = BorderFactory.createLineBorder(borderColor, 1);
-    Border insideBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    Border insideBorder = BorderFactory.createEmptyBorder(2, 0, 2, 2);
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
   }
 
@@ -184,19 +188,18 @@ public class EditorFragmentComponent extends JPanel {
     
     int endLine = Math.min(document.getLineNumber(range.getEndOffset()) + 1, document.getLineCount() - 1);
 
-    //if (editor.logicalPositionToXY(new LogicalPosition(startLine, 0)).y >= editor.logicalPositionToXY(new LogicalPosition(endLine, 0)).y) return null;
     if (startLine >= endLine) return null;
 
     EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true);
 
 
     if (showUpward) {
-      y -= fragmentComponent.getPreferredSize().height + 10;
+      y -= fragmentComponent.getPreferredSize().height;
       y  = Math.max(0,y);
     }
 
     final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(-1, 0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
@@ -210,15 +213,8 @@ public class EditorFragmentComponent extends JPanel {
                                                                       int startLine,
                                                                       int endLine,
                                                                       boolean showFolding, boolean showGutter) {
-    final EditorEx editorEx = (EditorEx)editor;
-    final Color old = editorEx.getBackgroundColor();
-    Color backColor = getBackgroundColor(editor);
-    editorEx.setBackgroundColor(backColor);
-    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine,
-                                                                            showFolding, showGutter);
-    fragmentComponent.setBackground(backColor);
-
-    editorEx.setBackgroundColor(old);
+    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent((EditorEx)editor, startLine, endLine, showFolding, showGutter);
+    fragmentComponent.setBackground(getBackgroundColor(editor));
     return fragmentComponent;
   }
 
@@ -234,12 +230,7 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   public static Color getBackgroundColor(Editor editor){
-    EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
-    if (color == null){
-      color = colorsScheme.getDefaultBackground();
-    }
-    return color;
+    return editor.getColorsScheme().getDefaultBackground();
   }
 
   private static class MyComponentHint extends LightweightHint {

@@ -289,11 +289,15 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
   @Override
   public void run(@NotNull final Editor editor, final boolean inline) {
-    final Template template = inline ? buildInlineTemplate() : buildTemplate();
-
-    editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
+    final Template template;
+    if (inline) {
+      template = buildInlineTemplate();
+    }
+    else {
+      template = buildTemplate();
+      editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
+    }
     editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());
-
     TemplateManager.getInstance(myFile.getProject()).startTemplate(editor, template);
   }
 

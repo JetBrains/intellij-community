@@ -23,11 +23,10 @@ public class MatchOptions implements JDOMExternalizable {
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
-  private FileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  private FileType myFileType = null;
   private Language myDialect = null;
 
   private SearchScope scope;
-  private SearchScope downUpMatchScope;
   private String searchCriteria = "";
   @Nullable private Map<String,MatchVariableConstraint> variableConstraints;
 
@@ -77,9 +76,9 @@ public class MatchOptions implements JDOMExternalizable {
     return null;
   }
 
-  public Iterator<String> getVariableConstraintNames() {
-    if (variableConstraints==null) return null;
-    return variableConstraints.keySet().iterator();
+  public Set<String> getVariableConstraintNames() {
+    if (variableConstraints==null) return Collections.emptySet();
+    return Collections.unmodifiableSet(variableConstraints.keySet());
   }
 
   public void setCaseSensitiveMatch(boolean caseSensitiveMatch) {
@@ -140,14 +139,6 @@ public class MatchOptions implements JDOMExternalizable {
     this.scope = scope;
   }
 
-  public SearchScope getDownUpMatchScope() {
-    return downUpMatchScope;
-  }
-
-  public void setDownUpMatchScope(final SearchScope downUpMatchScope) {
-    this.downUpMatchScope = downUpMatchScope;
-  }
-
   public void writeExternal(Element element) {
     element.setAttribute(TEXT_ATTRIBUTE_NAME, searchCriteria);
     if (!looseMatching) {
@@ -158,7 +149,9 @@ public class MatchOptions implements JDOMExternalizable {
 
     //@TODO serialize scope!
 
-    element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
+    if (myFileType != null) {
+      element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
+    }
 
     if (myDialect != null) {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());
@@ -268,8 +261,7 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public int hashCode() {
-    int result;
-    result = (looseMatching ? 1 : 0);
+    int result = (looseMatching ? 1 : 0);
     result = 29 * result + (recursiveSearch ? 1 : 0);
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     // @TODO support scope
@@ -285,6 +277,9 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public FileType getFileType() {
+    if (myFileType == null) {
+      myFileType =  StructuralSearchUtil.getDefaultFileType();
+    }
     return myFileType;
   }
 

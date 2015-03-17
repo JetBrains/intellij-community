@@ -27,17 +27,17 @@ public class DirDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return new DifDiffViewer(context, (ContentDiffRequest)request);
+    return new DirDiffViewer(context, (ContentDiffRequest)request);
   }
 
   @Override
   public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return DifDiffViewer.canShowRequest(context, request);
+    return DirDiffViewer.canShowRequest(context, request);
   }
 
   @NotNull
   @Override
   public String getName() {
-    return "Directory Viewer";
+    return "Directory viewer";
   }
 }

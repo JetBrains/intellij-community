@@ -18,7 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
@@ -152,25 +151,6 @@ public class EditorModificationUtil {
     }
 
     return offset;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.editor.EditorCopyPasteHelper} methods instead.
-   * (to remove in IDEA 15)
-   */
-  @Nullable
-  public static TextRange pasteTransferable(final Editor editor, @Nullable Producer<Transferable> producer) {
-    EditorCopyPasteHelper helper = EditorCopyPasteHelper.getInstance();
-    if (producer == null) {
-      TextRange[] ranges = helper.pasteFromClipboard(editor);
-      return ranges != null && ranges.length == 1 ? ranges[0] : null;
-    }
-    Transferable transferable = producer.produce();
-    if (transferable == null) {
-      return null;
-    }
-    TextRange[] ranges = helper.pasteTransferable(editor, transferable);
-    return ranges != null && ranges.length == 1 ? ranges[0] : null;
   }
 
   public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {

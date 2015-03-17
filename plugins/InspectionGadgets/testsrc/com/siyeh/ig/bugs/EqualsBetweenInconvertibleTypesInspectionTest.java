@@ -62,6 +62,17 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
       "  }" +
       "}");
   }
+  
+  public void testRaw() {
+    doTest(
+      "import java.util.Collection;" +
+      "class XXX {" +
+      "  interface A {}" +
+      "  boolean m(Collection c1, Collection<A> c2) {" +
+      "    return c2.equals(c1);" +
+      "  }" +
+      "}");
+  }
 
   @Override
   protected String[] getEnvironmentClasses() {

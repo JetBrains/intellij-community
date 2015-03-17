@@ -18,22 +18,19 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
 import java.util.Map;
 
 public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
   private static LogProvider ourLogger = new SimpleLogProvider();
-  private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area =
-    Collections.synchronizedMap(new THashMap<AreaInstance, ExtensionsAreaImpl>());
-  private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration =
-    Collections.synchronizedMap(new THashMap<String, AreaClassConfiguration>());
+  private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
+  private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();
 
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
 

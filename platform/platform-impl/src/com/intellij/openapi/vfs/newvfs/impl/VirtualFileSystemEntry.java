@@ -301,7 +301,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean exists() {
-    return ourPersistence.exists(this);
+    return VfsData.isFileValid(myId);
   }
 
   @Override

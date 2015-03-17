@@ -290,12 +290,16 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected BuildResult doBuild(CompileScopeTestBuilder scope) {
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myLogger));
     try {
-      myLogger.clear();
+      myLogger.clearFilesData();
       return doBuild(descriptor, scope);
     }
     finally {
       descriptor.release();
     }
+  }
+
+  protected void clearBuildLog() {
+    myLogger.clearLog();
   }
 
   public void assertCompiled(String builderName, String... paths) {

@@ -35,6 +35,7 @@ class StringToConstraintsTransformer {
   @NonNls private static final String CONTAINS = "contains";
   @NonNls private static final String WITHIN = "within";
 
+  @SuppressWarnings("AssignmentToForLoopParameter")
   static void transformOldPattern(MatchOptions options) {
       final String pattern = options.getSearchPattern();
 
@@ -42,13 +43,27 @@ class StringToConstraintsTransformer {
 
       StringBuilder miscBuffer = null;
       int anonymousTypedVarsCount = 0;
+      boolean targetFound = false;
 
-      for(int index=0;index < pattern.length();++index) {
+      final int length = pattern.length();
+      for(int index=0; index < length; ++index) {
         char ch = pattern.charAt(index);
 
-        if (ch=='\'') {
+        if (index == 0 && ch == '[') {
+          if (miscBuffer == null) miscBuffer = new StringBuilder();
+          else miscBuffer.setLength(0);
+          final MatchVariableConstraint constraint = new MatchVariableConstraint();
+          constraint.setName(Configuration.CONTEXT_VAR_NAME);
+          index = eatTypedVarCondition(0, pattern, miscBuffer, constraint);
+          options.addVariableConstraint(constraint);
+          if (index == length) break;
+          ch = pattern.charAt(index);
+        }
+        if (ch == '\\' && index + 1 < length) {
+          ch = pattern.charAt(++index);
+        }
+        else if (ch=='\'') {
           // doubling '
-          final int length = pattern.length();
           if (index + 1 < length &&
               pattern.charAt(index + 1)=='\''
              ) {
@@ -96,9 +111,8 @@ class StringToConstraintsTransformer {
               buf.append(ch);
             }
 
-            boolean anonymous = false;
-
             if (miscBuffer.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.character"));
+            boolean anonymous = false;
             if (miscBuffer.charAt(0)=='_')  {
               anonymous = true;
 
@@ -112,7 +126,6 @@ class StringToConstraintsTransformer {
                 miscBuffer.deleteCharAt(0);
               }
             }
-
 
             buf.append("$");
             String typedVar = miscBuffer.toString();
@@ -129,20 +142,19 @@ class StringToConstraintsTransformer {
             }
 
             // Check the number of occurrences for typed variable
+            final int savedIndex = index;
             if (index < length) {
-              char possibleQuantifier = pattern.charAt(index);
-
-              if (possibleQuantifier=='+') {
+              if (ch == '+') {
                 maxOccurs = Integer.MAX_VALUE;
                 ++index;
-              } else if (possibleQuantifier=='?') {
+              } else if (ch == '?') {
                 minOccurs = 0;
                 ++index;
-              } else if (possibleQuantifier=='*') {
+              } else if (ch == '*') {
                 minOccurs = 0;
                 maxOccurs = Integer.MAX_VALUE;
                 ++index;
-              } else if (possibleQuantifier=='{') {
+              } else if (ch == '{') {
                 ++index;
                 minOccurs = 0;
                 while (index < length && (ch = pattern.charAt(index)) >= '0' && ch <= '9') {
@@ -187,6 +199,13 @@ class StringToConstraintsTransformer {
               constraint.setMaxCount(maxOccurs);
               constraint.setGreedy(greedy);
               constraint.setPartOfSearchResults(!anonymous);
+              if (targetFound && !anonymous) {
+                throw new MalformedPatternException("Only one target allowed");
+              }
+              targetFound = !anonymous;
+            }
+            else if (savedIndex != index) {
+              throw new MalformedPatternException("Constraints only allowed on first of variable");
             }
 
             if (index < length && pattern.charAt(index) == ':') {
@@ -198,20 +217,21 @@ class StringToConstraintsTransformer {
                 buf.append(ch);
               }
               else {
+                if (!constraintCreated) {
+                  throw new MalformedPatternException("Constraints only allowed on first of variable");
+                }
                 index = eatTypedVarCondition(index, pattern, miscBuffer, constraint);
               }
             }
 
             if (constraintCreated) {
-              if (constraint.getWithinConstraint().length() > 0) {
-                constraint.setName(Configuration.CONTEXT_VAR_NAME);
-              }
               options.addVariableConstraint(constraint);
             }
 
             if (index == length) break;
-            // fall through to append white space
-            ch = pattern.charAt(index);
+            // rewind to process white space or unrelated symbol
+            index--;
+            continue;
           }
         }
 
@@ -248,7 +268,19 @@ class StringToConstraintsTransformer {
       // eat complete condition
 
       miscBuffer.setLength(0);
-      for(++index; index < length && ((ch = pattern.charAt(index))!=']' || pattern.charAt(index-1)=='\\'); ++index) {
+      for(++index; index < length && ((ch = pattern.charAt(index)) != ']' || pattern.charAt(index-1) == '\\'); ++index) {
+        if (ch == '"') {
+          miscBuffer.append(ch);
+          for (++index; index < length && (ch = pattern.charAt(index)) != '"'; ++index) {
+            if (ch == '\\') {
+              ++index;
+              if (index >= length) break;
+              ch = pattern.charAt(index);
+            }
+            miscBuffer.append(ch);
+          }
+          if (ch != '"') throw new MalformedPatternException(SSRBundle.message("error.expected.end.quote"));
+        }
         miscBuffer.append(ch);
       }
       if (ch != ']') throw new MalformedPatternException(SSRBundle.message("error.expected.condition.or.bracket"));
@@ -406,6 +438,9 @@ class StringToConstraintsTransformer {
                 constraint.setContainsConstraint(script );
                 consumed = true;
               } else if (option.equalsIgnoreCase(WITHIN)) {
+                if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
+                  throw new MalformedPatternException("Within constraint is only applicable to Complete Match");
+                }
                 if (hasNot) constraint.setInvertWithinConstraint(true);
                 String script = getSingleParameter(m, SSRBundle.message("script.should.be.delimited.with.spaces.error.message"));
 

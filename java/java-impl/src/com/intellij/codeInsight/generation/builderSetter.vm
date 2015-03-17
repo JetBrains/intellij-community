@@ -5,7 +5,7 @@ static void ##
 #else
   $classname ##
 #end
-set$StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($field.name))($field.type $paramName) {
+set$StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project)))($field.type $paramName) {
 #if ($field.name == $paramName)
   #if (!$field.modifierStatic)
   this.##

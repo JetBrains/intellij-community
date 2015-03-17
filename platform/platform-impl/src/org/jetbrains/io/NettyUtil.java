@@ -21,6 +21,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -45,6 +46,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
   public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
@@ -179,22 +181,24 @@ public final class NettyUtil {
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
   public static void closeAndReleaseFactory(@NotNull Channel channel) {
-    EventLoop channelFactory = channel.eventLoop();
+    EventLoop eventLoop = channel.eventLoop();
     try {
       channel.close().awaitUninterruptibly();
     }
     finally {
       // in our case it does nothing, we don't use ExecutorService, but we are aware of future changes
-      channelFactory.shutdownGracefully();
+      eventLoop.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
     }
   }
 
+  @NotNull
   public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
-    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
+    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(eventLoopGroup instanceof NioEventLoopGroup ? NioServerSocketChannel.class : EpollServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
   }
 
+  @NotNull
   public static Bootstrap oioClientBootstrap() {
     Bootstrap bootstrap = new Bootstrap().group(new OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
@@ -225,6 +229,7 @@ public final class NettyUtil {
                                                                        .allowCredentials()
                                                                        .allowNullOrigin()
                                                                        .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
+                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type")
                                                                        .build()));
   }
 

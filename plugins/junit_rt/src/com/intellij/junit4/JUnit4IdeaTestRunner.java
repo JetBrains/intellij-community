@@ -41,6 +41,10 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     final Runner testRunner = request.getRunner();
     try {
       Description description = testRunner.getDescription();
+      if (description == null) {
+        System.err.println("Nothing found to run. Runner " + testRunner.getClass().getName() + " provides no description.");
+        return -1;
+      }
       if (request instanceof ClassRequest) {
         description = getSuiteMethodDescription(request, description);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,11 +56,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -88,6 +88,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
@@ -113,7 +114,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected static final int STATE_DETACHED  = 3;
   protected final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
 
-  private ExecutionResult myExecutionResult;
+  private volatile ExecutionResult myExecutionResult;
   private RemoteConnection myConnection;
   private JavaDebugProcess myXDebugProcess;
 
@@ -914,9 +915,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private abstract class InvokeCommand <E extends Value> {
+    private final Method myMethod;
     private final List myArgs;
 
-    protected InvokeCommand(List args) {
+    protected InvokeCommand(@NotNull Method method, @NotNull List args) {
+      myMethod = method;
       if (!args.isEmpty()) {
         myArgs = new ArrayList(args);
       }
@@ -929,16 +932,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return "INVOKE: " + super.toString();
     }
 
-    protected abstract E invokeMethod(int invokePolicy, final List args) throws InvocationException,
+    protected abstract E invokeMethod(int invokePolicy, Method method, final List args) throws InvocationException,
                                                                                 ClassNotLoadedException,
                                                                                 IncompatibleThreadStateException,
                                                                                 InvalidTypeException;
 
 
-    E start(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate) throws EvaluateException {
+    E start(EvaluationContextImpl evaluationContext, boolean internalEvaluate) throws EvaluateException {
       while (true) {
         try {
-          return startInternal(evaluationContext, method, internalEvaluate);
+          return startInternal(evaluationContext, internalEvaluate);
         }
         catch (ClassNotLoadedException e) {
           ReferenceType loadedClass = null;
@@ -957,7 +960,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     }
 
-    E startInternal(EvaluationContextImpl evaluationContext, Method method, boolean internalEvaluate)
+    E startInternal(EvaluationContextImpl evaluationContext, boolean internalEvaluate)
       throws EvaluateException, ClassNotLoadedException {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
@@ -973,7 +976,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final ThreadReference invokeThreadRef = invokeThread.getThreadReference();
 
       myEvaluationDispatcher.getMulticaster().evaluationStarted(suspendContext);
-      beforeMethodInvocation(suspendContext, method, internalEvaluate);
+      beforeMethodInvocation(suspendContext, myMethod, internalEvaluate);
 
       Object resumeData = null;
       try {
@@ -1053,6 +1056,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 LOG.debug("Invoke in " + thread.name());
                 assertThreadSuspended(thread, context);
               }
+
+              if (myMethod.isVarArgs()) {
+                // See IDEA-63581
+                // if vararg parameter array is of interface type and Object[] is expected, JDI wrap it into another array,
+                // in this case we have to unroll the array manually and pass its elements to the method instead of array object
+                int lastIndex = myArgs.size() - 1;
+                if (lastIndex >= 0) {
+                  final Object lastArg = myArgs.get(lastIndex);
+                  if (lastArg instanceof ArrayReference) {
+                    final ArrayReference arrayRef = (ArrayReference)lastArg;
+                    if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
+                      List<String> argTypes = myMethod.argumentTypeNames();
+                      if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
+                        // unwrap array of interfaces for vararg param
+                        myArgs.remove(lastIndex);
+                        myArgs.addAll(arrayRef.getValues());
+                      }
+                    }
+                  }
+                }
+              }
+              
               if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
                 // ensure args are not collected
                 for (Object arg : myArgs) {
@@ -1061,7 +1086,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   }
                 }
               }
-              result[0] = invokeMethod(invokePolicy, myArgs);
+              result[0] = invokeMethod(invokePolicy, myMethod , myArgs);
             }
             finally {
               //  assertThreadSuspended(thread, context);
@@ -1098,7 +1123,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           throw (RuntimeException)exception[0];
         }
         else {
-          LOG.assertTrue(false);
+          LOG.error("Unexpected exception " + exception[0]);
         }
       }
 
@@ -1122,18 +1147,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public Value invokeInstanceMethod(@NotNull EvaluationContext evaluationContext, @NotNull final ObjectReference objRef, final Method method,
-                                    final List args, final int invocationOptions) throws EvaluateException {
+  public Value invokeInstanceMethod(@NotNull EvaluationContext evaluationContext,
+                                    @NotNull final ObjectReference objRef,
+                                    @NotNull Method method,
+                                    @NotNull List args,
+                                    final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(args) {
+    return new InvokeCommand<Value>(method, args) {
       @Override
-      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+      protected Value invokeMethod(int invokePolicy, Method method, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    }.start((EvaluationContextImpl)evaluationContext, method, false);
+    }.start((EvaluationContextImpl)evaluationContext, false);
   }
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
@@ -1153,13 +1181,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public Value invokeMethod(@NotNull EvaluationContext evaluationContext,
                             @NotNull final ClassType classType,
-                            @NotNull final Method method,
-                            final List args,
+                            @NotNull Method method,
+                            @NotNull List args,
                             boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(args) {
+    return new InvokeCommand<Value>(method, args) {
       @Override
-      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
+      protected Value invokeMethod(int invokePolicy, Method method, List args) throws InvocationException,
                                                                              ClassNotLoadedException,
                                                                              IncompatibleThreadStateException,
                                                                              InvalidTypeException {
@@ -1168,7 +1196,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         return classType.invokeMethod(thread, method, args, invokePolicy);
       }
-    }.start((EvaluationContextImpl)evaluationContext, method, internalEvaluate);
+    }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
   }
 
   @Override
@@ -1184,13 +1212,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public ObjectReference newInstance(final EvaluationContext evaluationContext, final ClassType classType,
-                                     final Method method,
-                                     final List args) throws EvaluateException {
+  public ObjectReference newInstance(@NotNull final EvaluationContext evaluationContext,
+                                     @NotNull final ClassType classType,
+                                     @NotNull Method method,
+                                     @NotNull List args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(args) {
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(method, args) {
       @Override
-      protected ObjectReference invokeMethod(int invokePolicy, final List args) throws InvocationException,
+      protected ObjectReference invokeMethod(int invokePolicy, Method method, List args) throws InvocationException,
                                                                                        ClassNotLoadedException,
                                                                                        IncompatibleThreadStateException,
                                                                                        InvalidTypeException {
@@ -1200,7 +1229,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return classType.newInstance(thread, method, args, invokePolicy);
       }
     };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method, false);
+    return invokeCommand.start((EvaluationContextImpl)evaluationContext, false);
   }
 
   public void clearCashes(int suspendPolicy) {
@@ -1823,7 +1852,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final Ref<Boolean> connectorIsReady = Ref.create(false);
+    final AtomicBoolean connectorIsReady = new AtomicBoolean(false);
     myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
       @Override
       public void connectorIsReady() {
@@ -1861,17 +1890,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               }
               else {
                 fail();
-                if (myExecutionResult != null || !connectorIsReady.get()) {
-                  // propagate exception only in case we succeeded to obtain execution result,
-                  // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
-                  // this problem to the user
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
+                DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+                  @Override
+                  public void run() {
+                    // propagate exception only in case we succeeded to obtain execution result,
+                    // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
+                    // this problem to the user
+                    if (myExecutionResult != null || !connectorIsReady.get()) {
                       ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                     }
-                  });
-                }
+                  }
+                });
                 break;
               }
             }

@@ -190,9 +190,11 @@ public class PositionManagerImpl implements PositionManager {
       return null;
     }
 
-    if (DumbService.getInstance(project).isDumb()) {
-      return null;
-    }
+    // We should find a class no matter what
+    // setAlternativeResolveEnabled is turned on here
+    //if (DumbService.getInstance(project).isDumb()) {
+    //  return null;
+    //}
 
     final String originalQName = refType.name();
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
@@ -206,7 +208,14 @@ public class PositionManagerImpl implements PositionManager {
     }
 
     if (psiClass != null) {
-      final PsiElement element = psiClass.getNavigationElement();
+      PsiElement element = psiClass.getNavigationElement();
+      // see IDEA-137167, prefer not compiled elements
+      if (element instanceof PsiCompiledElement) {
+        PsiElement fileElement = psiClass.getContainingFile().getNavigationElement();
+        if (!(fileElement instanceof PsiCompiledElement)) {
+          element = fileElement;
+        }
+      }
       return element.getContainingFile();
     }
     else {

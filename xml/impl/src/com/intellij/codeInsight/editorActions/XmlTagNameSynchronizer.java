@@ -29,18 +29,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -58,10 +63,12 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class XmlTagNameSynchronizer extends CommandAdapter implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
                                                                            XMLLanguage.INSTANCE.getID(),
                                                                            XHTMLLanguage.INSTANCE.getID(),
-                                                                           "JavaScript");
+                                                                           "JavaScript",
+                                                                           "ECMA Script Level 4");
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
@@ -76,14 +83,14 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        uninstallSynchronizer(event);
+        uninstallSynchronizer(event.getEditor());
       }
     }, ApplicationManager.getApplication());
     processor.addCommandListener(this);
   }
 
-  public void uninstallSynchronizer(@NotNull EditorFactoryEvent event) {
-    final Document document = event.getEditor().getDocument();
+  public void uninstallSynchronizer(final Editor editor) {
+    final Document document = editor.getDocument();
     final TagNameSynchronizer synchronizer = findSynchronizer(document);
     if (synchronizer != null) {
       synchronizer.clearMarkers();
@@ -91,7 +98,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     document.putUserData(SYNCHRONIZER_KEY, null);
   }
 
-  private void installSynchronizer(Editor editor) {
+  private void installSynchronizer(final Editor editor) {
     final Project project = editor.getProject();
     if (project == null) return;
 
@@ -102,7 +109,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
   }
 
   private static Language findXmlLikeLanguage(Project project, VirtualFile file) {
-    final PsiFile psiFile = file != null ? PsiManager.getInstance(project).findFile(file) : null;
+    final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
         if (SUPPORTED_LANGUAGES.contains(language.getID())) return language;
@@ -165,9 +172,10 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
     public void beforeDocumentChange(DocumentEvent event) {
       if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
 
-      if (myState == State.APPLYING) return;
-
       final Document document = event.getDocument();
+      if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress() ||
+          ((DocumentEx)document).isInBulkUpdate()) return;
+
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();
       final CharSequence fragment = event.getNewFragment();
@@ -265,12 +273,17 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       int start = -1;
       int end = -1;
       for (int i = offset - 1; i >= Math.max(0, offset - 50); i--) {
-        final char c = sequence.charAt(i);
-        if (c == '<' || (c == '/' && i > 0 && sequence.charAt(i - 1) == '<')) {
-          start = i + 1;
-          break;
+        try {
+          final char c = sequence.charAt(i);
+          if (c == '<' || (c == '/' && i > 0 && sequence.charAt(i - 1) == '<')) {
+            start = i + 1;
+            break;
+          }
+          if (!XmlUtil.isValidTagNameChar(c)) break;
+        } catch (IndexOutOfBoundsException e) {
+          LOG.error("incorrect offset:" + i + ", initial: " + offset, new Attachment("document.txt", sequence.toString()));
+          return null;
         }
-        if (!XmlUtil.isValidTagNameChar(c)) break;
       }
       if (start < 0) return null;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {
@@ -335,7 +348,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       if (element == null) return null;
       PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(element, false);
       support = support == null || element == support ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
-      return support;
+      return support != null && StringUtil.equals(element.getText(), support.getText()) ? support : null;
     }
   }
 }

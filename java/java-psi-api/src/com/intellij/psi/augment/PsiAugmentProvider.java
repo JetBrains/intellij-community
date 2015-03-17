@@ -18,6 +18,7 @@ package com.intellij.psi.augment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
@@ -73,6 +74,9 @@ public abstract class PsiAugmentProvider {
         if (type != null) {
           return type;
         }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error("provider: " + provider, e);

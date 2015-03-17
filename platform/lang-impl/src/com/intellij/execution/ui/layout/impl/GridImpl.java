@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.*;
 import java.util.List;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
-  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
   private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<PlaceInGrid, GridCellImpl>(PlaceInGrid.class);
@@ -79,6 +79,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     myTopSplit.setFirstComponent(left);
     myTopSplit.setInnerComponent(center);
     myTopSplit.setLastComponent(right);
+    myTopSplit.setMinSize(48);
     mySplitter.setFirstComponent(myTopSplit);
     mySplitter.setSecondComponent(bottom);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,13 @@ import java.util.EventListener;
  * Manages the relationship between documents and PSI trees.
  */
 public abstract class PsiDocumentManager {
+  /**
+   * Checks if the PSI tree for the specified document is up to date (its state reflects the latest changes made
+   * to the document content).
+   *
+   * @param document the document to check.
+   * @return true if the PSI tree for the document is up to date, false otherwise.
+   */
   public abstract boolean isCommitted(@NotNull Document document);
 
   /**
@@ -206,8 +213,22 @@ public abstract class PsiDocumentManager {
    */
   public abstract void removeListener(@NotNull Listener listener);
 
+  /**
+   * Checks if the PSI tree corresponding to the specified document has been modified and the changes have not
+   * yet been applied to the document. Documents in that state cannot be modified directly, because such changes
+   * would conflict with the pending PSI changes. Changes made through PSI are always applied in the end of a write action,
+   * and can be applied in the middle of a write action by calling {@link #doPostponedOperationsAndUnblockDocument}.
+   *
+   * @param doc the document to check.
+   * @return true if the corresponding PSI has changes that haven't been applied to the document.
+   */
   public abstract boolean isDocumentBlockedByPsi(@NotNull Document doc);
 
+  /**
+   * Applies pending changes made through the PSI to the specified document.
+   *
+   * @param doc the document to apply the changes to.
+   */
   public abstract void doPostponedOperationsAndUnblockDocument(@NotNull Document doc);
 
   /**

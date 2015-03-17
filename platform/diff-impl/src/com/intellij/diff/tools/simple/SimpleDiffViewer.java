@@ -15,9 +15,6 @@
  */
 package com.intellij.diff.tools.simple;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
@@ -31,6 +28,7 @@ import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
@@ -57,13 +55,15 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.*;
 import java.util.List;
 
@@ -95,10 +95,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
+    myModifierProvider.init();
   }
 
   @Override
   protected void onDisposeAwt() {
+    myModifierProvider.destroy();
     destroyChangedBlocks();
     super.onDisposeAwt();
   }
@@ -112,6 +114,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.add(new HighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
+    group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -489,16 +492,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
     @Override
-    public void notify(@NotNull String message) {
-      final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, getCurrentEditor(), HintManager.UNDER,
-                                                       HintManager.HIDE_BY_ANY_KEY |
-                                                       HintManager.HIDE_BY_TEXT_CHANGE |
-                                                       HintManager.HIDE_BY_SCROLLING,
-                                                       0, false);
-    }
-
-    @Override
     public boolean canGoNext() {
       if (myDiffChanges.isEmpty()) return false;
 
@@ -570,6 +563,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
+  private class MyReadOnlyLockAction extends ReadOnlyLockAction {
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
+      for (SimpleDiffChange change : myDiffChanges) {
+        change.updateGutterActions(true);
+      }
+    }
+  }
+
   //
   // Modification operations
   //
@@ -600,7 +603,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return;
       }
 
-      Editor modifiedEditor = side.other(myModifyOpposite).selectNotNull(myEditor1, myEditor2);
+      Editor modifiedEditor = side.other(myModifyOpposite).select(myEditor1, myEditor2);
       if (!DiffUtil.isEditable(modifiedEditor)) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -618,7 +621,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final Side side = Side.fromLeft(editor == myEditor1);
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
 
-      Editor modifiedEditor = side.other(myModifyOpposite).selectNotNull(myEditor1, myEditor2);
+      Editor modifiedEditor = side.other(myModifyOpposite).select(myEditor1, myEditor2);
       String title = e.getPresentation().getText() + " selected changes";
       DiffUtil.executeWriteCommand(modifiedEditor.getDocument(), e.getProject(), title, new Runnable() {
         @Override
@@ -712,14 +715,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
     @Override
-    public boolean isEnabled() {
-      return myFoldingModel != null;
-    }
-
-    @Override
     protected void expandAll(boolean expand) {
-      assert myFoldingModel != null;
-      myFoldingModel.expandAll(expand);
+      if (myFoldingModel != null) myFoldingModel.expandAll(expand);
     }
   }
 
@@ -844,9 +841,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
     @Override
-    public void paint(@NotNull Graphics g, @NotNull Component divider) {
+    public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       if (myEditor1 == null || myEditor2 == null) return;
       Graphics2D gg = getDividerGraphics(g, divider);
+
+      gg.setColor(DiffDrawUtil.getDividerColor(myEditor1));
+      gg.fill(gg.getClipBounds());
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), myEditor1, myEditor2, this);
@@ -911,28 +911,66 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private boolean myCtrlPressed;
     private boolean myAltPressed;
 
-    public ModifierProvider() {
+    private Window myWindow;
+
+    private final WindowFocusListener myWindowFocusListener = new WindowFocusListener() {
+      @Override
+      public void windowGainedFocus(WindowEvent e) {
+        resetState();
+      }
+
+      @Override
+      public void windowLostFocus(WindowEvent e) {
+        resetState();
+      }
+    };
+
+    public void init() {
+      // we can use KeyListener on Editors, but Ctrl+Click will not work with focus in other place.
+      // ex: commit dialog with focus in commit message
       IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
         @Override
         public boolean dispatch(AWTEvent e) {
           if (e instanceof KeyEvent) {
-            final int keyCode = ((KeyEvent)e).getKeyCode();
-            if (keyCode == KeyEvent.VK_SHIFT) {
-              myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;
-              updateActions();
-            }
-            if (keyCode == KeyEvent.VK_CONTROL) {
-              myCtrlPressed = e.getID() == KeyEvent.KEY_PRESSED;
-              updateActions();
-            }
-            if (keyCode == KeyEvent.VK_ALT) {
-              myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-              updateActions();
-            }
+            onKeyEvent((KeyEvent)e);
           }
           return false;
         }
       }, SimpleDiffViewer.this);
+
+      myWindow = UIUtil.getWindow(myPanel);
+      if (myWindow != null) {
+        myWindow.addWindowFocusListener(myWindowFocusListener);
+      }
+    }
+
+    public void destroy() {
+      if (myWindow != null) {
+        myWindow.removeWindowFocusListener(myWindowFocusListener);
+      }
+    }
+
+    private void onKeyEvent(KeyEvent e) {
+      final int keyCode = e.getKeyCode();
+      if (keyCode == KeyEvent.VK_SHIFT) {
+        myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        updateActions();
+      }
+      if (keyCode == KeyEvent.VK_CONTROL) {
+        myCtrlPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        updateActions();
+      }
+      if (keyCode == KeyEvent.VK_ALT) {
+        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        updateActions();
+      }
+    }
+
+    private void resetState() {
+      myShiftPressed = false;
+      myAltPressed = false;
+      myCtrlPressed = false;
+      updateActions();
     }
 
     public boolean isShiftPressed() {
@@ -949,7 +987,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public void updateActions() {
       for (SimpleDiffChange change : myDiffChanges) {
-        change.update();
+        change.updateGutterActions(false);
       }
     }
   }

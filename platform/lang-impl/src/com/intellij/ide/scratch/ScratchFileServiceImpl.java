@@ -235,11 +235,15 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Override
     @Nullable
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
-      if (project == null || file == null) return null;
+      if (project == null || file == null || !(fileType instanceof ScratchFileType)) return null;
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       if (rootType == null) return null;
       Language language = rootType.substituteLanguage(project, file);
-      return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      SyntaxHighlighter highlighter = language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      if (highlighter != null) return highlighter;
+      FileType originalFileType = RootType.getOriginalFileType(file);
+      highlighter = originalFileType == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(originalFileType, project, file);
+      return highlighter;
     }
   }
 
@@ -282,8 +286,8 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       if (virtualFile == null || !virtualFile.isValid()) return null;
       RootType rootType = ScratchFileService.getInstance().getRootType(virtualFile);
       if (rootType == null) return null;
-      if (virtualFile.isDirectory()) {
-        return additionalRoots(project).contains(virtualFile) ? rootType.getDisplayName() : null;
+      if (virtualFile.isDirectory() && additionalRoots(project).contains(virtualFile)) {
+        return rootType.getDisplayName();
       }
       return rootType.substituteName(project, virtualFile);
     }
@@ -302,7 +306,9 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   @Override
-  public VirtualFile findFile(@NotNull final RootType rootType, @NotNull final String pathName, Option option) throws IOException {
+  public VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
     String fullPath = getRootPath(rootType) + "/" + pathName;
     if (option != Option.create_new_always) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fullPath);

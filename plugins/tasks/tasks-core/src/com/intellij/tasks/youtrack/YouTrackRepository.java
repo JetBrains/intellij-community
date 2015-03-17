@@ -25,11 +25,10 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
@@ -43,14 +42,14 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -59,13 +58,6 @@ import java.util.Map;
 public class YouTrackRepository extends BaseRepositoryImpl {
 
   private String myDefaultSearch = "Assignee: me sort by: updated #Unresolved";
-  private Map<TaskState, String> myCustomStateNames = new EnumMap<TaskState, String>(TaskState.class);
-
-  // Default names for supported issues states
-  {
-    myCustomStateNames.put(TaskState.IN_PROGRESS, "In Progress");
-    myCustomStateNames.put(TaskState.RESOLVED, "Fixed");
-  }
 
   /**
    * for serialization
@@ -87,7 +79,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private YouTrackRepository(YouTrackRepository other) {
     super(other);
     myDefaultSearch = other.getDefaultSearch();
-    myCustomStateNames = new EnumMap<TaskState, String>(other.getCustomStateNames());
   }
 
   public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
@@ -98,39 +89,44 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     }
     String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&updatedAfter" + since;
     HttpMethod method = doREST(requestUrl, false);
-    InputStream stream = method.getResponseBodyAsStream();
-
-    // todo workaround for http://youtrack.jetbrains.net/issue/JT-7984
-    String s = StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
-    for (int i = 0; i < s.length(); i++) {
-      if (!XMLChar.isValid(s.charAt(i))) {
-        s = s.replace(s.charAt(i), ' ');
-      }
-    }
-
-    Element element;
     try {
-      //InputSource source = new InputSource(stream);
-      //source.setEncoding("UTF-8");
-      //element = new SAXBuilder(false).build(source).getRootElement();
-      element = new SAXBuilder(false).build(new StringReader(s)).getRootElement();
-    }
-    catch (JDOMException e) {
-      LOG.error("Can't parse YouTrack response for " + requestUrl, e);
-      throw e;
-    }
-    if ("error".equals(element.getName())) {
-      throw new Exception("Error from YouTrack for " + requestUrl + ": '" + element.getText() + "'");
-    }
+      InputStream stream = method.getResponseBodyAsStream();
 
-    List<Element> children = element.getChildren("issue");
-
-    final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Element, Task>() {
-      public Task fun(Element o) {
-        return createIssue(o);
+      // todo workaround for http://youtrack.jetbrains.net/issue/JT-7984
+      String s = StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
+      for (int i = 0; i < s.length(); i++) {
+        if (!XMLChar.isValid(s.charAt(i))) {
+          s = s.replace(s.charAt(i), ' ');
+        }
       }
-    });
-    return tasks.toArray(new Task[tasks.size()]);
+
+      Element element;
+      try {
+        //InputSource source = new InputSource(stream);
+        //source.setEncoding("UTF-8");
+        //element = new SAXBuilder(false).build(source).getRootElement();
+        element = new SAXBuilder(false).build(new StringReader(s)).getRootElement();
+      }
+      catch (JDOMException e) {
+        LOG.error("Can't parse YouTrack response for " + requestUrl, e);
+        throw e;
+      }
+      if ("error".equals(element.getName())) {
+        throw new Exception("Error from YouTrack for " + requestUrl + ": '" + element.getText() + "'");
+      }
+
+      List<Element> children = element.getChildren("issue");
+
+      final List<Task> tasks = ContainerUtil.mapNotNull(children, new NullableFunction<Element, Task>() {
+        public Task fun(Element o) {
+          return createIssue(o);
+        }
+      });
+      return tasks.toArray(new Task[tasks.size()]);
+    }
+    finally {
+      method.releaseConnection();
+    }
   }
 
   @Nullable
@@ -153,10 +149,16 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     method.addParameter("password", getPassword());
     client.getParams().setContentCharset("UTF-8");
     client.executeMethod(method);
-    if (method.getStatusCode() != 200) {
-      throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
+    String response;
+    try {
+      if (method.getStatusCode() != 200) {
+        throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
+      }
+      response = method.getResponseBodyAsString(1000);
     }
-    String response = method.getResponseBodyAsString(1000);
+    finally {
+      method.releaseConnection();
+    }
     if (response == null) {
       throw new NullPointerException();
     }
@@ -173,10 +175,21 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   @Nullable
   public Task findTask(@NotNull String id) throws Exception {
-    HttpMethod method = doREST("/rest/issue/byid/" + id, false);
-    InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
+    final Element element = fetchRequestAsElement(id);
     return element.getName().equals("issue") ? createIssue(element) : null;
+  }
+
+  @TestOnly
+  @NotNull
+  public Element fetchRequestAsElement(@NotNull String id) throws Exception {
+    final HttpMethod method = doREST("/rest/issue/byid/" + id, false);
+    try {
+      final InputStream stream = method.getResponseBodyAsStream();
+      return new SAXBuilder(false).build(stream).getRootElement();
+    }
+    finally {
+      method.releaseConnection();
+    }
   }
 
 
@@ -198,12 +211,28 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    String s = myCustomStateNames.get(state);
-    if (StringUtil.isEmpty(s)) {
-      s = state.name();
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    doREST("/rest/issue/execute/" + task.getId() + "?command=" + encodeUrl("state " + state.getId()), true).releaseConnection();
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    final HttpMethod method = doREST("/rest/issue/" + task.getId() + "/execute/intellisense?command=" + encodeUrl("state "), false);
+    try {
+      final InputStream stream = method.getResponseBodyAsStream();
+      final Element element = new SAXBuilder(false).build(stream).getRootElement();
+      return ContainerUtil.map2Set(element.getChild("suggest").getChildren("item"), new Function<Element, CustomTaskState>() {
+        @Override
+        public CustomTaskState fun(Element element) {
+          final String stateName = element.getChildText("option");
+          return new CustomTaskState(stateName, stateName);
+        }
+      });
     }
-    doREST("/rest/issue/execute/" + task.getId() + "?command=" + encodeUrl("state " + s), true);
+    finally {
+      method.releaseConnection();
+    }
   }
 
   @Nullable
@@ -315,9 +344,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
     YouTrackRepository repository = (YouTrackRepository)o;
-    if (!Comparing.equal(repository.getDefaultSearch(), getDefaultSearch())) return false;
-    if (!Comparing.equal(repository.getCustomStateNames(), getCustomStateNames())) return false;
-    return true;
+    return Comparing.equal(repository.getDefaultSearch(), getDefaultSearch());
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
@@ -326,47 +353,35 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     checkVersion();
     final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpent.replaceAll(" ", "+") + "+" + comment, true);
-    if (method.getStatusCode() != 200) {
-      InputStream stream = method.getResponseBodyAsStream();
-      String message = new SAXBuilder(false).build(stream).getRootElement().getText();
-      throw new Exception(message);
+    try {
+      if (method.getStatusCode() != 200) {
+        InputStream stream = method.getResponseBodyAsStream();
+        String message = new SAXBuilder(false).build(stream).getRootElement().getText();
+        throw new Exception(message);
+      }
+    }
+    finally {
+      method.releaseConnection();
     }
   }
 
   private void checkVersion() throws Exception {
     HttpMethod method = doREST("/rest/workflow/version", false);
-    InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
-    final boolean timeTrackingAvailable = element.getName().equals("version") && VersionComparatorUtil.compare(element.getChildText("version"), "4.1") >= 0;
-    if (!timeTrackingAvailable) {
-      throw new Exception("This version of Youtrack the time tracking is not supported");
+    try {
+      InputStream stream = method.getResponseBodyAsStream();
+      Element element = new SAXBuilder(false).build(stream).getRootElement();
+      final boolean timeTrackingAvailable = element.getName().equals("version") && VersionComparatorUtil.compare(element.getChildText("version"), "4.1") >= 0;
+      if (!timeTrackingAvailable) {
+        throw new Exception("This version of Youtrack the time tracking is not supported");
+      }
+    }
+    finally {
+      method.releaseConnection();
     }
   }
 
   @Override
   protected int getFeatures() {
     return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
-  }
-
-  public void setCustomStateNames(Map<TaskState, String> customStateNames) {
-    myCustomStateNames.putAll(customStateNames);
-  }
-
-  @Tag("customStates")
-  @Property(surroundWithTag = false)
-  @MapAnnotation(
-    surroundWithTag = false,
-    keyAttributeName = "state",
-    valueAttributeName = "name",
-    surroundKeyWithTag = false,
-    surroundValueWithTag = false
-  )
-
-  public Map<TaskState, String> getCustomStateNames() {
-    return myCustomStateNames;
-  }
-
-  public void setCustomStateName(TaskState state, String name) {
-    myCustomStateNames.put(state, name);
   }
 }

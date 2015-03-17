@@ -25,6 +25,8 @@ import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public final class TextViewer extends EditorTextField {
   private final boolean myEmbeddedIntoDialogWrapper;
   private final boolean myUseSoftWraps;
@@ -63,7 +65,7 @@ public final class TextViewer extends EditorTextField {
     final EditorEx editor = super.createEditor();
     editor.setHorizontalScrollbarVisible(true);
     editor.setCaretEnabled(true);
-    editor.setVerticalScrollbarVisible(true);
+    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
     editor.getComponent().setPreferredSize(null);
     editor.getSettings().setUseSoftWraps(myUseSoftWraps);

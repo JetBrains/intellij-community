@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
@@ -85,7 +84,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private final Element myElement;
     private Element mySavedElement;
 
-    public MyXmlElementStorage(Element element) throws StateStorageException {
+    public MyXmlElementStorage(Element element) {
       super("", RoamingType.PER_USER, new MyPathMacroManager(), "root", null);
       myElement = element;
     }
@@ -95,6 +94,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
       return myElement;
     }
 
+    @NotNull
     @Override
     protected XmlElementStorageSaveSession createSaveSession(@NotNull StorageData storageData) {
       return new XmlElementStorageSaveSession(storageData) {

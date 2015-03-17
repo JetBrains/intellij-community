@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,10 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.FileContentUtil;
 import gnu.trove.THashSet;
 import org.junit.Assert;
@@ -53,6 +52,7 @@ import java.util.Collections;
 import java.util.Set;
 
 @PlatformTestCase.WrapInCommand
+@SkipSlowTestLocally
 public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   private VirtualFile myRoot;
 
@@ -161,7 +161,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testPsiChangesWithLazyPointers() throws Exception {
-    PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
+    PsiClass aClass = myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
     final SmartPsiElementPointer<PsiIdentifier> pointer =
@@ -512,6 +512,58 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(newSelect);
     assertEquals("select", newSelect.getName());
   }
+
+  public void testInXml2() {
+    final PsiFile file = configureByText(HtmlFileType.INSTANCE,
+                                         "<!DOCTYPE html>\n" +
+                                         "<html>\n" +
+                                         "<head>\n" +
+                                         "    <title></title>\n" +
+                                         "</head>\n" +
+                                         "<body>\n" +
+                                         "<div class=\"cls\">\n" +
+                                         "    <ul class=\"dropdown-menu\">\n" +
+                                         "        <li><a href=\"#\">Action</a></li>\n" +
+                                         "        <li><a href=\"#\">Another action</a></li>\n" +
+                                         "        <li><a href=\"#\">Something else here</a></li>\n" +
+                                         "        <li class=\"divider\"></li>\n" +
+                                         "        <li class=\"dropdown-header\">Nav header</li>\n" +
+                                         "        <li><a href=\"#\">Separated link</a></li>\n" +
+                                         "        <li><a href=\"#\">One more separated link</a></li>\n" +
+                                         "    </ul>\n" +
+                                         "<caret>\n" +
+                                         "</div>\n" +
+                                         "</body>\n" +
+                                         "</html>"
+    );
+
+    final XmlTag ul = PsiTreeUtil.getParentOfType(file.findElementAt(file.getText().indexOf("ul")), XmlTag.class);
+    assertNotNull(ul);
+    assertEquals("ul", ul.getName());
+    assertEquals("dropdown-menu", ul.getAttributeValue("class"));
+
+    final SmartPsiElementPointer<XmlTag> ulPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(
+      ul);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        getEditor().getDocument().insertString(getEditor().getCaretModel().getOffset(), "    <ul class=\"nav navbar-nav navbar-right\">\n" +
+                                                                                        "        <li><a href=\"../navbar/\">Default</a></li>\n" +
+                                                                                        "        <li class=\"active\"><a href=\"./\">Static top</a></li>\n" +
+                                                                                        "        <li><a href=\"../navbar-fixed-top/\">Fixed top</a></li>\n" +
+                                                                                        "    </ul>\n");
+      }
+    });
+
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    final XmlTag newUl = ulPointer.getElement();
+    assertNotNull(newUl);
+    assertEquals("ul", newUl.getName());
+    assertEquals("dropdown-menu", newUl.getAttributeValue("class"));
+  }
+
   public void testInsertImport() {
     final PsiFile file = configureByText(JavaFileType.INSTANCE,
                                          "class S {\n" +
@@ -530,5 +582,45 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     PsiClass aClass2 = ((PsiJavaFile)file).getClasses()[0];
     assertSame(aClass, aClass2);
+  }
+
+  public void testEqualPointerRangesWhenCreatedFromStubAndAST() {
+    final PsiFile file = configureByText(JavaFileType.INSTANCE,
+                                         "class S {\n" +
+                                         "}");
+
+    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+    assertNotNull(((PsiFileImpl)file).getStubTree());
+
+    final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    final SmartPsiElementPointer<PsiClass> pointer1 = manager.createSmartPsiElementPointer(aClass);
+    Segment range1 = pointer1.getRange();
+    manager.removePointer(pointer1);
+
+    final FileASTNode node = file.getNode();
+    final SmartPsiElementPointer<PsiClass> pointer2 = manager.createSmartPsiElementPointer(aClass);
+    assertEquals(range1, pointer2.getRange());
+    assertNotNull(node);
+  }
+  
+  public void testEqualPointersWhenCreatedFromStubAndAST() {
+    final PsiFile file = configureByText(JavaFileType.INSTANCE,
+                                         "class S {\n" +
+                                         "}");
+
+
+    final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    int hash1 = ((PsiJavaFile)file).getClasses()[0].hashCode();
+    final SmartPsiElementPointer<PsiClass> pointer1 = manager.createSmartPsiElementPointer(((PsiJavaFile)file).getClasses()[0]);
+    assertNotNull(((PsiFileImpl)file).getStubTree());
+    
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+
+    final FileASTNode node = file.getNode();
+    final SmartPsiElementPointer<PsiClass> pointer2 = manager.createSmartPsiElementPointer(((PsiJavaFile)file).getClasses()[0]);
+    assertFalse(hash1 == ((PsiJavaFile)file).getClasses()[0].hashCode());
+    assertEquals(pointer1, pointer2);
+    assertEquals(pointer1.getRange(), pointer2.getRange());
+    assertNotNull(node);
   }
 }

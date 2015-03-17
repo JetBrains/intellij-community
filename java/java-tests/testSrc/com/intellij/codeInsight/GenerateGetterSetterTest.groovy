@@ -20,6 +20,9 @@ import com.intellij.codeInsight.generation.GenerateSetterHandler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -70,6 +73,34 @@ class Foo {
 '''
   }
 
+  public void "test strip field prefix"() {
+    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings
+    String oldPrefix = settings.FIELD_NAME_PREFIX
+    try {
+      settings.FIELD_NAME_PREFIX = "my"
+      myFixture.configureByText 'a.java', '''
+  class Foo {
+      String myName;
+
+      <caret>
+  }
+  '''
+      generateGetter()
+      myFixture.checkResult '''
+  class Foo {
+      String myName;
+
+      public String getName() {
+          return myName;
+      }
+  }
+  '''
+    }
+    finally {
+      settings.FIELD_NAME_PREFIX = oldPrefix
+    }
+  }
+
   public void "test qualified this"() {
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
     myFixture.configureByText 'a.java', '''
@@ -86,6 +117,38 @@ class Foo {
 
     public boolean isStateForceMailField() {
         return this.isStateForceMailField;
+    }
+}
+'''
+  }
+
+  public void "test nullable stuff"() {
+    myFixture.addClass("package org.jetbrains.annotations;\n" +
+                       "public @interface NotNull {}")
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    @org.jetbrains.annotations.NotNull
+    private String myName;
+
+    <caret>
+}
+'''
+    generateGetter()
+    generateSetter()
+    myFixture.checkResult '''import org.jetbrains.annotations.NotNull;
+
+class Foo {
+    @org.jetbrains.annotations.NotNull
+    private String myName;
+
+    public void setMyName(@NotNull String myName) {
+        this.myName = myName;
+    }
+
+    @NotNull
+    public String getMyName() {
+    
+        return myName;
     }
 }
 '''

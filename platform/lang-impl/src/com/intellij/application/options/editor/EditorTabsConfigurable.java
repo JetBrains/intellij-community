@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -45,8 +47,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JCheckBox myShowCloseButtonOnCheckBox;
   private JCheckBox myShowDirectoryInTabCheckBox;
   private JRadioButton myActivateRightNeighbouringTabRadioButton;
-  private JTextField myTabTitleLimitField;
-  private JLabel myTabTitleLimitLabel;
+  private JCheckBox myHideTabsCheckbox;
 
   public EditorTabsConfigurable() {
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
@@ -65,6 +66,12 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     });
 
     revalidateSingleRowCheckbox();
+    myScrollTabLayoutInEditorCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent event) {
+        myHideTabsCheckbox.setEnabled(myScrollTabLayoutInEditorCheckBox.isSelected());
+      }
+    });
   }
 
   private void revalidateSingleRowCheckbox() {
@@ -77,8 +84,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myShowTabsTooltipsCheckBox.setEnabled(!none);
     myShowCloseButtonOnCheckBox.setEnabled(!none);
     myShowDirectoryInTabCheckBox.setEnabled(!none);
-    myTabTitleLimitField.setEnabled(!none);
-    myTabTitleLimitLabel.setEnabled(!none);
 
     if (SwingConstants.TOP == i) {
       myScrollTabLayoutInEditorCheckBox.setEnabled(true);
@@ -111,11 +116,11 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myCbModifiedTabsMarkedWithAsterisk.setSelected(uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     myShowTabsTooltipsCheckBox.setSelected(uiSettings.SHOW_TABS_TOOLTIPS);
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
+    myHideTabsCheckbox.setSelected(uiSettings.HIDE_TABS_IF_NEED);
     myEditorTabPlacement.setSelectedItem(uiSettings.EDITOR_TAB_PLACEMENT);
     myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES);
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
-    myTabTitleLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_TITLE_LIMIT));
     myShowCloseButtonOnCheckBox.setSelected(uiSettings.SHOW_CLOSE_BUTTON);
 
     if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
@@ -148,6 +153,9 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR)) uiSettingsChanged = true;
     uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR = myScrollTabLayoutInEditorCheckBox.isSelected();
 
+    if (isModified(myHideTabsCheckbox, uiSettings.HIDE_TABS_IF_NEED)) uiSettingsChanged = true;
+    uiSettings.HIDE_TABS_IF_NEED = myHideTabsCheckbox.isSelected();
+
     if (isModified(myShowCloseButtonOnCheckBox, uiSettings.SHOW_CLOSE_BUTTON)) uiSettingsChanged = true;
     uiSettings.SHOW_CLOSE_BUTTON = myShowCloseButtonOnCheckBox.isSelected();
 
@@ -179,19 +187,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       catch (NumberFormatException ignored) {
       }
     }
-    temp = myTabTitleLimitField.getText();
-    if (temp.trim().length() > 0) {
-      try {
-        int newTabTitleLimit = Integer.parseInt(temp);
-        newTabTitleLimit = Math.max(25, Math.min(100, newTabTitleLimit));
-        if (newTabTitleLimit != uiSettings.EDITOR_TAB_TITLE_LIMIT){
-          uiSettings.EDITOR_TAB_TITLE_LIMIT = newTabTitleLimit;
-          uiSettingsChanged = true;
-        }
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
     if(uiSettingsChanged){
       uiSettings.fireUISettingsChanged();
     }
@@ -203,13 +198,13 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     isModified |= isModified(myShowTabsTooltipsCheckBox, uiSettings.SHOW_TABS_TOOLTIPS);
     isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
-    isModified |= isModified(myTabTitleLimitField, uiSettings.EDITOR_TAB_TITLE_LIMIT);
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
     isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;
     isModified |= myShowDirectoryInTabCheckBox.isSelected() != uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES;
 
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
+    isModified |= myHideTabsCheckbox.isSelected() != uiSettings.HIDE_TABS_IF_NEED;
     isModified |= myShowCloseButtonOnCheckBox.isSelected() != uiSettings.SHOW_CLOSE_BUTTON;
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);

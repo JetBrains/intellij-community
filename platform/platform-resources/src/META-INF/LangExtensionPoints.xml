@@ -471,6 +471,9 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
+    <extensionPoint name="completion.preselectionBehaviourProvider"
+                    interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider"/>
+
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>

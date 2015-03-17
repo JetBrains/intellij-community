@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.execution.console.LanguageConsole;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
@@ -33,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
@@ -82,6 +82,8 @@ public class XValueHint extends AbstractValueHint {
   private final ExpressionInfo myExpressionInfo;
   private Disposable myDisposable;
 
+  private static final Key<XValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
+
   public XValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
                     @NotNull ExpressionInfo expressionInfo, @NotNull XDebuggerEvaluator evaluator,
                     @NotNull XDebugSession session) {
@@ -96,7 +98,7 @@ public class XValueHint extends AbstractValueHint {
     VirtualFile file;
     ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
     if (consoleView instanceof LanguageConsoleView) {
-      LanguageConsole console = ((LanguageConsoleView)consoleView).getConsole();
+      LanguageConsoleView console = ((LanguageConsoleView)consoleView);
       file = console.getHistoryViewer() == editor ? console.getVirtualFile() : null;
     }
     else {
@@ -126,12 +128,23 @@ public class XValueHint extends AbstractValueHint {
         }
       }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
     }
+    if (result) {
+      XValueHint prev = getEditor().getUserData(HINT_KEY);
+      if (prev != null) {
+        prev.hideHint();
+      }
+      getEditor().putUserData(HINT_KEY, this);
+    }
     return result;
   }
 
   @Override
   protected void onHintHidden() {
     super.onHintHidden();
+    XValueHint prev = getEditor().getUserData(HINT_KEY);
+    if (prev == this) {
+      getEditor().putUserData(HINT_KEY, null);
+    }
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;

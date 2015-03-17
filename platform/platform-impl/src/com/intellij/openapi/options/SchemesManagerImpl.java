@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -41,7 +41,10 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -55,6 +58,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.*;
 
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
@@ -69,7 +73,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private VirtualFile myDir;
 
   private String mySchemeExtension = DirectoryStorageData.DEFAULT_EXT;
-  private boolean myUpgradeExtension;
+  private boolean myUpdateExtension;
 
   private final Set<String> myFilesToDelete = new THashSet<String>();
 
@@ -85,7 +89,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myIoDir = baseDir;
     if (processor instanceof SchemeExtensionProvider) {
       mySchemeExtension = ((SchemeExtensionProvider)processor).getSchemeExtension();
-      myUpgradeExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
+      myUpdateExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
     }
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
@@ -126,46 +130,101 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
         @Override
         public void fileCreated(@NotNull VirtualFileEvent event) {
-          if (event.getRequestor() == null && isMy(event)) {
-            E readScheme = readSchemeFromFile(event.getFile(), true, false);
-            if (readScheme != null) {
-              myProcessor.initScheme(readScheme);
-              myProcessor.onSchemeAdded(readScheme);
+          if (event.getRequestor() == null) {
+            if (event.getFile().isDirectory()) {
+              VirtualFile dir = getVirtualDir();
+              if (event.getFile().equals(dir)) {
+                for (VirtualFile file : dir.getChildren()) {
+                  if (isMy(file)) {
+                    schemeCreatedExternally(file);
+                  }
+                }
+              }
             }
+            else if (isMy(event)) {
+              schemeCreatedExternally(event.getFile());
+            }
+          }
+        }
+
+        private void schemeCreatedExternally(@NotNull VirtualFile file) {
+          E readScheme = readSchemeFromFile(file, true, false);
+          if (readScheme != null) {
+            myProcessor.initScheme(readScheme);
+            myProcessor.onSchemeAdded(readScheme);
           }
         }
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          if (event.getRequestor() == null && isMy(event)) {
-            E scheme = findSchemeFor(event.getFile().getName());
-            T oldCurrentScheme = null;
-            if (scheme != null) {
-              oldCurrentScheme = getCurrentScheme();
-              //noinspection unchecked
-              removeScheme((T)scheme);
-              myProcessor.onSchemeDeleted(scheme);
-            }
-
-            T newCurrentScheme = getCurrentScheme();
-            if (oldCurrentScheme != null && newCurrentScheme == null) {
-              if (!mySchemes.isEmpty()) {
-                setCurrentSchemeName(mySchemes.get(0).getName());
-                newCurrentScheme = getCurrentScheme();
+          if (event.getRequestor() == null) {
+            if (event.getFile().isDirectory()) {
+              VirtualFile dir = myDir;
+              if (event.getFile().equals(dir)) {
+                myDir = null;
+                for (VirtualFile file : dir.getChildren()) {
+                  if (isMy(file)) {
+                    schemeDeletedExternally(file);
+                  }
+                }
               }
             }
-
-            if (oldCurrentScheme != newCurrentScheme) {
-              myProcessor.onCurrentSchemeChanged(oldCurrentScheme);
+            else if (isMy(event)) {
+              schemeDeletedExternally(event.getFile());
             }
+          }
+        }
+
+        private void schemeDeletedExternally(@NotNull VirtualFile file) {
+          E scheme = findSchemeFor(file.getName());
+          T oldCurrentScheme = null;
+          if (scheme != null) {
+            oldCurrentScheme = getCurrentScheme();
+            //noinspection unchecked
+            removeScheme((T)scheme);
+            myProcessor.onSchemeDeleted(scheme);
+          }
+
+          T newCurrentScheme = getCurrentScheme();
+          if (oldCurrentScheme != null && newCurrentScheme == null) {
+            if (!mySchemes.isEmpty()) {
+              setCurrentSchemeName(mySchemes.get(0).getName());
+              newCurrentScheme = getCurrentScheme();
+            }
+          }
+
+          if (oldCurrentScheme != newCurrentScheme) {
+            myProcessor.onCurrentSchemeChanged(oldCurrentScheme);
           }
         }
       }, false, ApplicationManager.getApplication());
     }
   }
 
+  @Override
+  public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
+    try {
+      URL url = requestor instanceof AbstractExtensionPointBean
+                ? (((AbstractExtensionPointBean)requestor).getLoaderForClass().getResource(resourceName))
+                : DecodeDefaultsUtil.getDefaults(requestor, resourceName);
+      if (url == null) {
+        // Error shouldn't occur during this operation thus we report error instead of info
+        LOG.error("Cannot read scheme from " + resourceName);
+        return;
+      }
+      addNewScheme(convertor.convert(JDOMUtil.load(URLUtil.openStream(url))), false);
+    }
+    catch (Throwable e) {
+      LOG.error("Cannot read scheme from " + resourceName, e);
+    }
+  }
+
   private boolean isMy(@NotNull VirtualFileEvent event) {
-    return StringUtilRt.endsWithIgnoreCase(event.getFile().getNameSequence(), mySchemeExtension);
+    return isMy(event.getFile());
+  }
+
+  private boolean isMy(@NotNull VirtualFile file) {
+    return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension);
   }
 
   @Override
@@ -316,15 +375,17 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private boolean canRead(@NotNull VirtualFile file) {
-    if (!file.isDirectory()) {
-      if (myUpgradeExtension && !DirectoryStorageData.DEFAULT_EXT.equals(mySchemeExtension) && DirectoryStorageData.isStorageFile(file)) {
-        return myDir.findChild(file.getNameSequence() + mySchemeExtension) == null;
-      }
-      else if (StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension)) {
-        return true;
-      }
+    if (file.isDirectory()) {
+      return false;
     }
-    return false;
+
+    if (myUpdateExtension && !DirectoryStorageData.DEFAULT_EXT.equals(mySchemeExtension) && DirectoryStorageData.isStorageFile(file)) {
+      // read file.DEFAULT_EXT only if file.CUSTOM_EXT doesn't exists
+      return myDir.findChild(file.getNameSequence() + mySchemeExtension) == null;
+    }
+    else {
+      return StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension);
+    }
   }
 
   @Nullable
@@ -442,6 +503,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
 
+    List<Throwable> errors = null;
     VirtualFile dir = getVirtualDir();
     if (!hasSchemes) {
       myFilesToDelete.clear();
@@ -449,34 +511,29 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         try {
           StorageUtil.deleteFile(this, dir);
         }
-        catch (IOException e) {
-          throw new StateStorageException(e);
+        catch (Throwable e) {
+          errors = new SmartList<Throwable>();
+          errors.add(e);
         }
       }
       return;
     }
 
-    for (final E scheme : schemesToSave) {
+    for (E scheme : schemesToSave) {
       try {
         saveScheme(scheme, nameGenerator);
       }
-      catch (final Exception e) {
-        Application app = ApplicationManager.getApplication();
-        if (app.isUnitTestMode() || app.isCommandLine()) {
-          LOG.error("Cannot write scheme " + scheme.getName() + " in '" + myFileSpec + "': " + e.getLocalizedMessage(), e);
+      catch (Throwable e) {
+        if (errors == null) {
+          errors = new SmartList<Throwable>();
         }
-        else {
-          app.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog("Cannot save scheme '" + scheme.getName() + ": " + e.getMessage(), "Save Settings");
-            }
-          });
-        }
+        errors.add(e);
       }
     }
 
-    deleteFiles(dir);
+    errors = deleteFiles(dir, errors);
+
+    CompoundRuntimeException.doThrow(errors);
   }
 
   private void saveScheme(@NotNull E scheme, @NotNull UniqueNameGenerator nameGenerator) throws WriteExternalException, IOException {
@@ -564,9 +621,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return !scheme.getName().equals(scheme.getExternalInfo().getPreviouslySavedName());
   }
 
-  private void deleteFiles(@Nullable VirtualFile dir) {
+  @Nullable
+  private List<Throwable> deleteFiles(@Nullable VirtualFile dir, List<Throwable> errors) {
     if (myFilesToDelete.isEmpty()) {
-      return;
+      return errors;
     }
 
     if (myProvider != null && myProvider.isEnabled()) {
@@ -583,7 +641,15 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       try {
         for (VirtualFile file : dir.getChildren()) {
           if (myFilesToDelete.contains(file.getNameWithoutExtension())) {
-            DirectoryBasedStorage.deleteFile(file, this);
+            try {
+              file.delete(this);
+            }
+            catch (IOException e) {
+              if (errors == null) {
+                errors = new SmartList<Throwable>();
+              }
+              errors.add(e);
+            }
           }
         }
         myFilesToDelete.clear();
@@ -592,6 +658,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         token.finish();
       }
     }
+    return errors;
   }
 
   @Nullable

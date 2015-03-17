@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
+import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +33,9 @@ import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
@@ -43,7 +45,8 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import javax.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
 * @author egor
@@ -75,24 +78,13 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
 
-    ClassLoaderReference classLoader;
-    try {
-      classLoader = getClassLoader(evaluationContext, process);
-    }
-    catch (Exception e) {
-      throw new EvaluateException("Error creating evaluation class loader: " + e, e);
-    }
+    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, process);
 
     String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
     JavaSdkVersion sdkVersion = JdkVersionUtil.getVersion(version);
     Collection<OutputFileObject> classes = compile(sdkVersion != null ? sdkVersion.getDescription() : null);
 
-    try {
-      defineClasses(classes, evaluationContext, process, classLoader);
-    }
-    catch (Exception e) {
-      throw new EvaluateException("Error during classes definition " + e, e);
-    }
+    defineClasses(classes, evaluationContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
@@ -122,40 +114,14 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process)
-    throws EvaluateException, InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
-    // TODO: cache
-    ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
-    Method ctorMethod = loaderClass.concreteMethodByName("<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
-    ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod, Arrays.asList(createURLArray(context), context.getClassLoader()));
-    keep(reference, context);
-    return reference;
-  }
-
-  private static void keep(ObjectReference reference, EvaluationContext context) {
-    ((SuspendContextImpl)context.getSuspendContext()).keep(reference);
-  }
-
   private ClassType defineClasses(Collection<OutputFileObject> classes,
                                   EvaluationContext context,
                                   DebugProcess process,
-                                  ClassLoaderReference classLoader)
-    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
-
-    VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
+                                  ClassLoaderReference classLoader) throws EvaluateException {
     for (OutputFileObject cls : classes) {
       if (cls.getName().contains(GEN_CLASS_NAME)) {
-        Method defineMethod =
-          ((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
         byte[] bytes = changeSuperToMagicAccessor(cls.toByteArray());
-        ArrayList<Value> args = new ArrayList<Value>();
-        StringReference name = proxy.mirrorOf(cls.myOrigName);
-        keep(name, context);
-        args.add(name);
-        args.add(mirrorOf(bytes, context, process));
-        args.add(proxy.mirrorOf(0));
-        args.add(proxy.mirrorOf(bytes.length));
-        process.invokeMethod(context, classLoader, defineMethod, args);
+        ClassLoadingUtils.defineClass(cls.myOrigName, bytes, context, process, classLoader);
       }
     }
     return (ClassType)process.findClass(context, getGenClassQName(), classLoader);
@@ -176,17 +142,6 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     return classWriter.toByteArray();
   }
 
-  private static ArrayReference mirrorOf(byte[] bytes, EvaluationContext context, DebugProcess process)
-    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
-    ArrayType arrayClass = (ArrayType)process.findClass(context, "byte[]", context.getClassLoader());
-    ArrayReference reference = process.newInstance(arrayClass, bytes.length);
-    keep(reference, context);
-    for (int i = 0; i < bytes.length; i++) {
-      reference.setValue(i, ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(bytes[i]));
-    }
-    return reference;
-  }
-
   public static String getGeneratedClassName() {
     return GEN_CLASS_NAME;
   }
@@ -204,23 +159,6 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
         return JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass());
       }
     });
-  }
-
-  private static ArrayReference createURLArray(EvaluationContext context)
-    throws EvaluateException, InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
-    DebugProcess process = context.getDebugProcess();
-    ArrayType arrayType = (ArrayType)process.findClass(context, "java.net.URL[]", context.getClassLoader());
-    ArrayReference arrayRef = arrayType.newInstance(1);
-    keep(arrayRef, context);
-    ClassType classType = (ClassType)process.findClass(context, "java.net.URL", context.getClassLoader());
-    VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
-    StringReference url = proxy.mirrorOf("file:a");
-    keep(url, context);
-    ObjectReference reference = process.newInstance(context, classType, classType.concreteMethodByName("<init>", "(Ljava/lang/String;)V"),
-                                                    Collections.singletonList(url));
-    keep(reference, context);
-    arrayRef.setValues(Collections.singletonList(reference));
-    return arrayRef;
   }
 
   ///////////////// Compiler stuff

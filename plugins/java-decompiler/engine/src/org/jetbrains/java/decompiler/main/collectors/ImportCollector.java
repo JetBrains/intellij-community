@@ -89,9 +89,13 @@ public class ImportCollector {
 
     StructContext context = DecompilerContext.getStructContext();
 
+    // check for another class which could 'shadow' this one. Two cases:
+    // 1) class with the same short name in the current package
+    // 2) class with the same short name in the default package
     boolean existsDefaultClass = (context.getClass(currentPackageSlash + nshort) != null
                                   && !npackage.equals(currentPackagePoint)) // current package
-                                 || (context.getClass(nshort) != null);  // default package
+                                 || (context.getClass(nshort) != null 
+                                  && !currentPackagePoint.isEmpty());  // default package
 
     if (existsDefaultClass ||
         (mapSimpleNames.containsKey(nshort) && !npackage.equals(mapSimpleNames.get(nshort)))) {

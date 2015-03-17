@@ -15,9 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
@@ -62,7 +59,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
@@ -92,7 +88,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
   @NotNull private final MyFoldingModel myFoldingModel;
 
-  @NotNull protected Side myMasterSide = Side.LEFT;
+  @NotNull protected Side myMasterSide = Side.RIGHT;
 
   @Nullable private ChangedBlockData myChangedBlockData;
 
@@ -158,6 +154,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
+    group.add(new ReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -572,23 +569,25 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
     assert myActualContent1 != null || myActualContent2 != null;
     if (myActualContent2 == null) {
-      OpenFileDescriptor descriptor = myActualContent1.getOpenFileDescriptor(offset);
-      if (descriptor != null) return descriptor;
+      return myActualContent1.getOpenFileDescriptor(offset);
     }
-    else if (myActualContent1 == null) {
-      OpenFileDescriptor descriptor = myActualContent2.getOpenFileDescriptor(offset);
-      if (descriptor != null) return descriptor;
-    }
-    else {
-      Pair<int[], Side> pair = transferLineFromOneside(myEditor.offsetToLogicalPosition(offset).line);
-      OpenFileDescriptor descriptor1 = myActualContent1.getOpenFileDescriptor(offset);
-      OpenFileDescriptor descriptor2 = myActualContent2.getOpenFileDescriptor(offset);
-      if (descriptor1 == null) return descriptor2;
-      if (descriptor2 == null) return descriptor1;
-      pair.second.select(descriptor1, descriptor2);
+    if (myActualContent1 == null) {
+      return myActualContent2.getOpenFileDescriptor(offset);
     }
 
-    return null;
+    LogicalPosition position = myEditor.offsetToLogicalPosition(offset);
+    Pair<int[], Side> pair = transferLineFromOneside(position.line);
+    int offset1 = DiffUtil.getOffset(myActualContent1.getDocument(), pair.first[0], position.column);
+    int offset2 = DiffUtil.getOffset(myActualContent2.getDocument(), pair.first[1], position.column);
+
+    // TODO: issue: non-optimal GoToSource position with caret on deleted block for "Compare with local"
+    //       we should transfer using calculated diff, not jump to "somehow related" position from old content's descriptor
+
+    OpenFileDescriptor descriptor1 = myActualContent1.getOpenFileDescriptor(offset1);
+    OpenFileDescriptor descriptor2 = myActualContent2.getOpenFileDescriptor(offset2);
+    if (descriptor1 == null) return descriptor2;
+    if (descriptor2 == null) return descriptor1;
+    return pair.second.select(descriptor1, descriptor2);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -600,14 +599,6 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
-    @Override
-    public void notify(@NotNull String message) {
-      final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, myEditor, HintManager.UNDER, HintManager.HIDE_BY_ANY_KEY |
-                                                                                          HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                                          HintManager.HIDE_BY_SCROLLING, 0, false);
-    }
-
     @Override
     public boolean canGoNext() {
       List<OnesideDiffChange> diffChanges = getDiffChanges();
@@ -810,6 +801,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
+    }
+    else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
+      return myEditor;
     }
     else {
       return super.getData(dataId);

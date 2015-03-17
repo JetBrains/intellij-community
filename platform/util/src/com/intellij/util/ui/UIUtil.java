@@ -229,6 +229,7 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
+  public static final Color CONTRAST_BORDER_COLOR = new JBColor(0x9b9b9b, 0x282828);
   public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
@@ -293,6 +294,8 @@ public class UIUtil {
      * value that has been got on AppKit previously.
      */
     private static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
+
+      if (SystemInfo.isAppleJvm) return false;
 
       Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
 
@@ -1773,8 +1776,8 @@ public class UIUtil {
   }
 
   private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
-  private static int BEST_DARK_LCD_CONTRAST = 100;
-  private static int BEST_LIGHT_LCD_CONTRAST = 200;
+  private static int BEST_DARK_LCD_CONTRAST = 250;
+  private static int BEST_LIGHT_LCD_CONTRAST = 100;
 
 
   public static void setHintingForLCDText(Graphics2D g2d) {
@@ -2040,13 +2043,13 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Color getBgFillColor(@NotNull JComponent c) {
+  public static Color getBgFillColor(@NotNull Component c) {
     final Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
   @Nullable
-  public static Component findNearestOpaque(JComponent c) {
+  public static Component findNearestOpaque(Component c) {
     return findParentByCondition(c, new Condition<Component>() {
       @Override
       public boolean value(Component component) {

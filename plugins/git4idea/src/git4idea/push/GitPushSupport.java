@@ -152,7 +152,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @NotNull
   @Override
   public PushTargetPanel<GitPushTarget> createTargetPanel(@NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
-    return new GitPushTargetPanel(repository, defaultTarget);
+    return new GitPushTargetPanel(this, repository, defaultTarget);
   }
 
   @Override
@@ -186,5 +186,10 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public void saveSilentForcePushTarget(@NotNull GitPushTarget target) {
     myCommonPushSettings.addForcePushTarget(target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
+  }
+
+  @Override
+  public boolean mayChangeTargetsSync() {
+    return true;
   }
 }

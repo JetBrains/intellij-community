@@ -8,6 +8,7 @@ import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.redmine.model.RedmineProject;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Stack;
@@ -27,6 +28,7 @@ import java.util.List;
 public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineRepository> {
   private ComboBox myProjectCombo;
   private JTextField myAPIKey;
+  private JCheckBox myAllAssigneesCheckBox;
   private JBLabel myProjectLabel;
   private JBLabel myAPIKeyLabel;
 
@@ -35,9 +37,11 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
 
     myTestButton.setEnabled(myRepository.isConfigured());
     myAPIKey.setText(repository.getAPIKey());
+    myAllAssigneesCheckBox.setSelected(!repository.isAssignedToMe());
 
     installListener(myProjectCombo);
     installListener(myAPIKey);
+    installListener(myAllAssigneesCheckBox);
 
     toggleCredentialsVisibility();
 
@@ -75,6 +79,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     RedmineProjectItem selected = (RedmineProjectItem)myProjectCombo.getSelectedItem();
     myRepository.setCurrentProject(selected != null ? selected.myProject : null);
     myRepository.setAPIKey(myAPIKey.getText().trim());
+    myRepository.setAssignedToMe(!myAllAssigneesCheckBox.isSelected());
     myTestButton.setEnabled(myRepository.isConfigured());
     toggleCredentialsVisibility();
   }
@@ -119,9 +124,12 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
 
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myAPIKey = new JPasswordField();
+
+    myAllAssigneesCheckBox = new JBCheckBox("Include issues not assigned to me");
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myAPIKeyLabel, myAPIKey)
       .addLabeledComponent(myProjectLabel, myProjectCombo)
+      .addComponentToRightColumn(myAllAssigneesCheckBox)
       .getPanel();
   }
 

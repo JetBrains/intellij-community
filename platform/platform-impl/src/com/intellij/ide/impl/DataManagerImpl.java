@@ -61,7 +61,7 @@ public class DataManagerImpl extends DataManager {
   @Nullable
   private Object getData(@NotNull String dataId, final Component focusedComponent) {
     for (Component c = focusedComponent; c != null; c = c.getParent()) {
-      final DataProvider dataProvider = getDataProvider(c);
+      final DataProvider dataProvider = getDataProviderEx(c);
       if (dataProvider == null) continue;
       Object data = getDataFromProvider(dataProvider, dataId, null);
       if (data != null) return data;
@@ -100,7 +100,7 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private static DataProvider getDataProvider(Object component) {
+  public static DataProvider getDataProviderEx(Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;

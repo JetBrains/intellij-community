@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
@@ -492,6 +493,54 @@ public class GitImpl implements Git {
           h.addParameters("--prune");
         }
         addListeners(h, listeners);
+        return h;
+      }
+    });
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("add", name, url);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult lsRemote(@NotNull final Project project,
+                                   @NotNull final File workingDir,
+                                   @NotNull final String url) {
+    return doLsRemote(project, workingDir, url, url);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult lsRemote(@NotNull Project project,
+                                   @NotNull VirtualFile workingDir,
+                                   @NotNull GitRemote remote,
+                                   String... additionalParameters) {
+    return doLsRemote(project, VfsUtilCore.virtualToIoFile(workingDir), remote.getName(), remote.getFirstUrl(), additionalParameters);
+  }
+
+  @NotNull
+  private GitCommandResult doLsRemote(@NotNull final Project project,
+                                      @NotNull final File workingDir,
+                                      @NotNull final String remoteId,
+                                      @Nullable final String authenticationUrl,
+                                      final String... additionalParameters) {
+    return run(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        GitLineHandler h = new GitLineHandler(project, workingDir, GitCommand.LS_REMOTE);
+        h.addParameters(additionalParameters);
+        h.addParameters(remoteId);
+        if (authenticationUrl != null) {
+          h.setUrl(authenticationUrl);
+        }
+        else {
+          LOG.error("No valid URLs for remote " + remoteId);
+        }
         return h;
       }
     });

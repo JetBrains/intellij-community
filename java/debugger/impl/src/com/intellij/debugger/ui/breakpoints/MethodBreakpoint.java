@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   public String getEventMessage(@NotNull LocatableEvent event) {
     final Location location = event.location();
-    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName = "";
     try {
       locationFileName = location.sourceName();
@@ -375,10 +375,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
     } catch (Exception e) {
     }
-  }
-
-  public String toString() {
-    return getDescription();
   }
 
   public boolean isBodyAt(@NotNull Document document, int offset) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +137,7 @@ public class AnalyzeStacktraceUtil {
     settings.setRightMarginShown(false);
 
     StacktraceEditorPanel editorPanel = new StacktraceEditorPanel(project, editor);
-    editorPanel.setPreferredSize(new Dimension(600, 400));
+    editorPanel.setPreferredSize(JBUI.size(600, 400));
     Disposer.register(parentDisposable, editorPanel);
     return editorPanel;
   }

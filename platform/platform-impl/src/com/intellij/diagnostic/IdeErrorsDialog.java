@@ -227,7 +227,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private class ForwardAction extends AnAction implements DumbAware {
     public ForwardAction() {
       super("Next", null, AllIcons.Actions.Forward);
-      AnAction forward = ActionManager.getInstance().getAction("Forward");
+      AnAction forward = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (forward != null) {
         registerCustomShortcutSet(forward.getShortcutSet(), getRootPane(), getDisposable());
       }
@@ -247,7 +247,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private class BackAction extends AnAction implements DumbAware {
     public BackAction() {
       super("Previous", null, AllIcons.Actions.Back);
-      AnAction back = ActionManager.getInstance().getAction("Back");
+      AnAction back = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (back != null) {
         registerCustomShortcutSet(back.getShortcutSet(), getRootPane(), getDisposable());
       }

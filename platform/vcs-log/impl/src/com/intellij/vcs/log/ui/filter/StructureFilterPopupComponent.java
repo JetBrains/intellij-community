@@ -33,7 +33,6 @@ import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.VcsStructureChooser;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

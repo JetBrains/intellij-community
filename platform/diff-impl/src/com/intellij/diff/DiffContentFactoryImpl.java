@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.BinaryLightVirtualFile;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +145,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
                                                @NotNull String prefix,
                                                @NotNull String suffix,
                                                @NotNull byte[] content) throws IOException {
-    File tempFile = FileUtil.createTempFile(prefix + "_", "_" + suffix, true);
+    File tempFile = FileUtil.createTempFile(PathUtil.suggestFileName(prefix + "_", true, false),
+                                            PathUtil.suggestFileName("_" + suffix, true, false), true);
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }

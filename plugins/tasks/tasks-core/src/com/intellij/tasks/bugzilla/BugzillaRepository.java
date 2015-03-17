@@ -110,7 +110,13 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    Hashtable<String, Object> response;
+    final Hashtable<String, Object> table = findBugInfoById(id);
+    return table != null ? new BugzillaTask(table, this) : null;
+  }
+
+  @Nullable
+  private Hashtable<String, Object> findBugInfoById(@NotNull String id) throws Exception {
+    final Hashtable<String, Object> response;
     try {
       // In Bugzilla 3.0 this method is called "get_bugs".
       response = new BugzillaXmlRpcRequest("Bug.get").requireAuthentication(true).withParameter("ids", newVector(id)).execute();
@@ -121,11 +127,11 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       }
       throw e;
     }
-    Vector<Hashtable<String, Object>> bugs = (Vector<Hashtable<String, Object>>)response.get("bugs");
+    final Vector<Hashtable<String, Object>> bugs = (Vector<Hashtable<String, Object>>)response.get("bugs");
     if (bugs == null || bugs.isEmpty()) {
       return null;
     }
-    return new BugzillaTask(bugs.get(0), this);
+    return bugs.get(0);
   }
 
   private void ensureVersionDiscovered() throws Exception {
@@ -157,23 +163,93 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    final BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
       .requireAuthentication(true)
       .withParameter("ids", newVector(task.getId()));
 
-    switch (state) {
-      case IN_PROGRESS:
-        request.withParameter("status", "IN_PROGRESS");
-        break;
-      case RESOLVED:
-        request.withParameter("status", "RESOLVED").withParameter("resolution", "FIXED");
-        break;
-      default:
-        return;
+    if (state.getId().contains(":")) {
+      final String[] parts = state.getId().split(":", 2);
+      request.withParameter("status", parts[0]).withParameter("resolution", parts[1]);
+    }
+    else {
+      request.withParameter("status", state.getId());
+    }
+    request.execute();
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    final Hashtable<String, ?> response = new BugzillaXmlRpcRequest("Bug.fields")
+      .withParameter("names", newVector("bug_status", "resolution"))
+      .requireAuthentication(true)
+      .execute();
+    final Vector<Hashtable<String, ?>> fields = (Vector<Hashtable<String, ?>>)response.get("fields");
+    final Hashtable<String, ?> statusesInfo = fields.get(0);
+    final Hashtable<String, ?> resolutionsInfo = fields.get(1);
+    final List<String> resolutions = extractNotEmptyNames((Vector<Hashtable<String, ?>>)resolutionsInfo.get("values"));
+
+    class Status {
+      final boolean isOpen;
+      final String name;
+      final Iterable<String> canChangeTo;
+
+      public Status(String name, boolean isOpen, Iterable<String> canChangeTo) {
+        this.isOpen = isOpen;
+        this.name = name;
+        this.canChangeTo = canChangeTo;
+      }
     }
 
-    request.execute();
+    final Map<String, Status> statuses = new HashMap<String, Status>();
+    for (Hashtable<String, ?> statusInfo : (Vector<Hashtable<String, ?>>)statusesInfo.get("values")) {
+      final String name = (String)statusInfo.get("name");
+      if (StringUtil.isEmpty(name)) {
+        continue;
+      }
+
+      final List<String> targetStateNames = extractNotEmptyNames((Vector<Hashtable<String, ?>>)statusInfo.get("can_change_to"));
+      statuses.put(name, new Status(name, (Boolean)statusInfo.get("is_open"), targetStateNames));
+    }
+    final String currentState = getCustomStateName(task);
+    if (currentState != null) {
+      final Status status = statuses.get(currentState);
+      if (status != null) {
+        final Set<CustomTaskState> result = new HashSet<CustomTaskState>();
+        for (String targetStatusName : status.canChangeTo) {
+          final Status targetStatus = statuses.get(targetStatusName);
+          if (targetStatus != null) {
+            if (targetStatus.isOpen) {
+              result.add(new CustomTaskState(targetStatusName, targetStatusName));
+            }
+            else {
+              for (String resolution : resolutions) {
+                result.add(new CustomTaskState(targetStatusName + ":" + resolution, targetStatusName + " (" + resolution + ")"));
+              }
+            }
+          }
+        }
+        return result;
+      }
+    }
+    return Collections.emptySet();
+  }
+
+  @Nullable
+  private String getCustomStateName(@NotNull Task task) throws Exception {
+    final Hashtable<String, Object> found = findBugInfoById(task.getId());
+    return found != null ? (String)found.get("status") : null;
+  }
+
+  @NotNull
+  private static List<String> extractNotEmptyNames(@NotNull Vector<Hashtable<String, ?>> vector) {
+    return ContainerUtil.mapNotNull(vector, new Function<Hashtable<String, ?>, String>() {
+      @Override
+      public String fun(Hashtable<String, ?> table) {
+        return StringUtil.nullize((String)table.get("name"));
+      }
+    });
   }
 
   @Override

@@ -34,7 +34,7 @@ class HistoryIdColumn extends AnnotationFieldGutter {
   HistoryIdColumn(FileAnnotation annotation,
                   final Editor editor,
                   final TextAnnotationPresentation presentation,
-                  Couple<Map<String, Color>> colorScheme,
+                  Couple<Map<VcsRevisionNumber, Color>> colorScheme,
                   Map<String, Integer> ids) {
     super(annotation, editor, null, presentation, colorScheme);
     myHistoryIds = ids;

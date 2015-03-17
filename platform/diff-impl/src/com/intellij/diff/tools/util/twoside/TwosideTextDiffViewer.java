@@ -23,6 +23,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
@@ -48,6 +49,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -404,6 +406,15 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   // Helpers
   //
 
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
+      return getCurrentEditor();
+    }
+    return super.getData(dataId);
+  }
+
   @NotNull
   protected Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider) {
     assert myEditor1 != null && myEditor2 != null;
@@ -484,6 +495,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     }
 
     public void onRediff() {
+      if (DiffUtil.wasScrolled(getEditors())) myShouldScroll = false;
       if (myShouldScroll && myScrollToChange != null) {
         myShouldScroll = !doScrollToChange(myScrollToChange);
       }
@@ -529,7 +541,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (myScrollToLine == null) return false;
       Side side = myScrollToLine.first;
       Integer line = myScrollToLine.second;
-      if (side.select(getEditors()) == null) return false;
+      if (side.select(myEditor1, myEditor2) == null) return false;
 
       myCurrentSide = side;
       DiffUtil.scrollEditor(getCurrentEditor(), line);

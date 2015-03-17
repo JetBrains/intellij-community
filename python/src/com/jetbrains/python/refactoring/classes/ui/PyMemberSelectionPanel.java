@@ -57,11 +57,10 @@ public class PyMemberSelectionPanel extends JPanel {
    * @param memberInfo list of members
    * @param model      model
    */
-  public PyMemberSelectionPanel(
-    String title,
-    List<PyMemberInfo<PyElement>> memberInfo,
-    final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
-    final boolean supportAbstract) {
+  public PyMemberSelectionPanel(String title,
+                                List<PyMemberInfo<PyElement>> memberInfo,
+                                final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
+                                final boolean supportAbstract) {
     Border titledBorder = IdeBorderFactory.createTitledBorder(title, false);
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);

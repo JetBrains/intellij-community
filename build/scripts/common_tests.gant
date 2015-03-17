@@ -27,9 +27,12 @@ target(compile: "Compile project") {
   }
 
   loadProject()
-  projectBuilder.targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
-  projectBuilder.cleanOutput()
-  projectBuilder.buildAll()
+  prepareOutputFolder()
+
+  if (!isDefined("avoid.project.rebuild")) {
+    projectBuilder.cleanOutput()
+    projectBuilder.buildAll()
+  }
 }
 
 private pass(String prop) {

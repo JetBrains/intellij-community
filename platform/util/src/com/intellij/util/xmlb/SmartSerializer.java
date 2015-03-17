@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.util.ThreeState;
 import gnu.trove.TObjectFloatHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
@@ -40,11 +39,11 @@ public final class SmartSerializer {
                             } :
                             new SkipDefaultValuesSerializationFilters() {
                               @Override
-                              protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+                              public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
                                 if (mySerializedAccessorNameTracker != null && mySerializedAccessorNameTracker.contains(accessor.getName())) {
                                   return true;
                                 }
-                                return super.accepts(accessor, bean, beanValue);
+                                return super.accepts(accessor, bean);
                               }
                             };
   }

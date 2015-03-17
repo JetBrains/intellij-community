@@ -52,6 +52,7 @@ public class ClassWrapper {
 
   public void init() throws IOException {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
     // collect field names

@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -56,10 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TableModelEvent;
+import javax.swing.event.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -84,6 +82,15 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private final VcsLogDataHolder myLogDataHolder;
   private final GraphCommitCellRender myGraphCommitCellRender;
   private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
+  @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
+  private final TableModelListener myColumnSizeInitializer = new TableModelListener() {
+    @Override
+    public void tableChanged(TableModelEvent e) {
+      if (initColumnSize()) {
+        getModel().removeTableModelListener(this);
+      }
+    }
+  };
 
   private boolean myColumnsSizeInitialized = false;
 
@@ -130,14 +137,24 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   @Override
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
-    // initialize sizes once, when the real non-empty model is set
-    if (!myColumnsSizeInitialized && model.getRowCount() > 0) {
+    if (getModel().getRowCount() > 0) {
+      initColumnSize();
+    }
+    else {
+      model.addTableModelListener(myColumnSizeInitializer);
+    }
+  }
+
+  private boolean initColumnSize() {
+    if (!myColumnsSizeInitialized && getModel().getRowCount() > 0) {
       myColumnsSizeInitialized = true;
       setColumnPreferredSize();
       setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
 
       getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).setHeaderRenderer(new RootHeaderRenderer());
+      return true;
     }
+    return false;
   }
 
   private void setColumnPreferredSize() {
@@ -299,19 +316,37 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myHighlighters.clear();
   }
 
-  public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
-    RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
-    boolean fgUpdated = false;
-    for (VcsLogHighlighter highlighter : myHighlighters) {
-      Color color = highlighter.getForeground(rowInfo.getCommit(), selected);
-      if (color != null) {
-        rendererComponent.setForeground(color);
-        fgUpdated = true;
-      }
-    }
-    if (!fgUpdated) { // reset highlighting if no-one wants to change it
-      rendererComponent.setForeground(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : UIUtil.getTableForeground(selected));
-    }
+  public void applyHighlighters(@NotNull Component rendererComponent,
+                                int row,
+                                int column,
+                                String text,
+                                boolean hasFocus,
+                                final boolean selected) {
+    VcsLogHighlighter.VcsCommitStyle style = getStyle(row, column, text, hasFocus, selected);
+
+    assert style.getBackground() != null && style.getForeground() != null;
+
+    rendererComponent.setBackground(style.getBackground());
+    rendererComponent.setForeground(style.getForeground());
+  }
+
+  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
+    final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
+
+    Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+    VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory.createStyle(
+      rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
+      dummyRendererComponent.getBackground());
+
+    List<VcsLogHighlighter.VcsCommitStyle> styles =
+      ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
+        @Override
+        public VcsLogHighlighter.VcsCommitStyle fun(VcsLogHighlighter highlighter) {
+          return highlighter.getStyle(rowInfo.getCommit(), selected);
+        }
+      });
+
+    return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
   public void viewportSet(JViewport viewport) {
@@ -399,23 +434,25 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull
   public Selection getSelection() {
-    return new Selection();
+    return new Selection(this);
   }
 
-  public class Selection {
+  public static class Selection {
     private final TIntHashSet myCommits;
+    private final VcsLogGraphTable myTable;
 
-    public Selection() {
-      myCommits = getCommitsAtRows(myDataPack.getVisibleGraph(), getSelectedRows());
+    public Selection(@NotNull VcsLogGraphTable table) {
+      myTable = table;
+      myCommits = getCommitsAtRows(myTable.myDataPack.getVisibleGraph(), myTable.getSelectedRows());
     }
 
     public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph) {
-      TIntHashSet rowsToSelect = findNewRowsToSelect(getGraphTableModel(), newVisibleGraph, myCommits);
+      TIntHashSet rowsToSelect = findNewRowsToSelect(myTable.getGraphTableModel(), newVisibleGraph, myCommits);
       if (!rowsToSelect.isEmpty()) {
         rowsToSelect.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int row) {
-            addRowSelectionInterval(row, row);
+            myTable.addRowSelectionInterval(row, row);
             return true;
           }
         });
@@ -563,7 +600,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @NotNull private Color myColor = UIUtil.getTableBackground();
     @NotNull private Color myBorderColor = UIUtil.getTableBackground();
     private boolean isNarrow = true;
-    @NotNull private TableCellRenderer myRenderer = new DefaultTableCellRenderer();
 
     RootCellRenderer(@NotNull VcsLogUiImpl ui) {
       super("", CENTER);
@@ -614,7 +650,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
 
       myColor = color;
-      myBorderColor = myRenderer.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column).getBackground();
+      Color background = ((VcsLogGraphTable)table).getStyle(row, column, text, hasFocus, isSelected).getBackground();
+      assert background != null;
+      myBorderColor = background;
       setForeground(UIUtil.getTableForeground(false));
 
       if (myUi.isShowRootNames()) {
@@ -627,6 +665,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
 
       return this;
+    }
+
+    @Override
+    public void setBackground(Color bg) {
+      myBorderColor = bg;
     }
   }
 
@@ -643,8 +686,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       if (value == null) {
         return;
       }
-      append(value.toString());
-      applyHighlighters(this, row, selected);
+      String text = value.toString();
+      append(text);
+      applyHighlighters(this, row, column, text, hasFocus, selected);
       setBorder(null);
     }
 

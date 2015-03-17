@@ -28,11 +28,10 @@ import com.intellij.util.config.StringProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 @State(
   name = "ExternalDiffSettings",
-  storages = {@Storage(
-    file = DiffUtil.DIFF_CONFIG)})
+  storages = @Storage(file = DiffUtil.DIFF_CONFIG)
+)
 public class ExternalDiffSettings implements PersistentStateComponent<ExternalDiffSettings.State> {
   private State myState = new State();
 

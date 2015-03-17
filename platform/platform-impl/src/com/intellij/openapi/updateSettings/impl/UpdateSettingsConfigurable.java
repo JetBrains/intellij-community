@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -64,6 +65,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     return "preferences.updates";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
@@ -79,9 +81,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   public void apply() throws ConfigurationException {
     UpdateSettings settings = UpdateSettings.getInstance();
 
-    boolean wasEnabled = settings.CHECK_NEEDED;
-    settings.CHECK_NEEDED = myUpdatesSettingsPanel.myCheckForUpdates.isSelected();
-    if (wasEnabled != settings.CHECK_NEEDED) {
+    boolean wasEnabled = settings.isCheckNeeded();
+    settings.setCheckNeeded(myUpdatesSettingsPanel.myCheckForUpdates.isSelected());
+    if (wasEnabled != settings.isCheckNeeded()) {
       UpdateCheckerComponent checker = ApplicationManager.getApplication().getComponent(UpdateCheckerComponent.class);
       if (checker != null) {
         if (wasEnabled) {
@@ -93,27 +95,33 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
 
-    settings.UPDATE_CHANNEL_TYPE = myUpdatesSettingsPanel.getSelectedChannelType().getCode();
-    settings.SECURE_CONNECTION = myUpdatesSettingsPanel.myUseSecureConnection.isSelected();
+    settings.setUpdateChannelType(myUpdatesSettingsPanel.getSelectedChannelType().getCode());
+    settings.setSecureConnection(myUpdatesSettingsPanel.myUseSecureConnection.isSelected());
   }
 
   @Override
   public void reset() {
     UpdateSettings settings = UpdateSettings.getInstance();
-    myUpdatesSettingsPanel.myCheckForUpdates.setSelected(settings.CHECK_NEEDED);
-    myUpdatesSettingsPanel.myUseSecureConnection.setSelected(settings.SECURE_CONNECTION);
+    myUpdatesSettingsPanel.myCheckForUpdates.setSelected(settings.isCheckNeeded());
+    myUpdatesSettingsPanel.myUseSecureConnection.setSelected(settings.isSecureConnection());
     myUpdatesSettingsPanel.updateLastCheckedLabel();
-    myUpdatesSettingsPanel.setSelectedChannelType(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE));
+    myUpdatesSettingsPanel.setSelectedChannelType(ChannelStatus.fromCode(settings.getUpdateChannelType()));
   }
 
   @Override
   public boolean isModified() {
-    if (myUpdatesSettingsPanel == null) return false;
+    if (myUpdatesSettingsPanel == null) {
+      return false;
+    }
+
     UpdateSettings settings = UpdateSettings.getInstance();
-    if (settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCheckForUpdates.isSelected()) return true;
-    if (settings.SECURE_CONNECTION != myUpdatesSettingsPanel.myUseSecureConnection.isSelected()) return true;
+    if (settings.isCheckNeeded() != myUpdatesSettingsPanel.myCheckForUpdates.isSelected() ||
+        settings.isSecureConnection() != myUpdatesSettingsPanel.myUseSecureConnection.isSelected()) {
+      return true;
+    }
+
     Object channel = myUpdatesSettingsPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE));
+    return channel != null && !channel.equals(ChannelStatus.fromCode(settings.getUpdateChannelType()));
   }
 
   @Override
@@ -148,12 +156,13 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       myBuildNumber.setText(appInfo.getBuild().asString());
 
       myCheckNow.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
           UpdateSettings settings = new UpdateSettings();
           settings.loadState(UpdateSettings.getInstance().getState());
-          settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();
-          settings.SECURE_CONNECTION = myUseSecureConnection.isSelected();
+          settings.setUpdateChannelType(getSelectedChannelType().getCode());
+          settings.setSecureConnection(myUseSecureConnection.isSelected());
           UpdateChecker.updateAndShowResult(project, settings);
           updateLastCheckedLabel();
         }
@@ -163,16 +172,18 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       UpdateSettings settings = UpdateSettings.getInstance();
       //noinspection unchecked
-      myUpdateChannels.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.UPDATE_CHANNEL_TYPE)));
+      myUpdateChannels.setModel(new CollectionComboBoxModel(ChannelStatus.all(), ChannelStatus.fromCode(settings.getUpdateChannelType())));
 
       if (!NetUtils.isSniEnabled()) {
         myUseSecureConnection.setEnabled(false);
-        myUseSecureConnection.setToolTipText(IdeBundle.message("update.sni.disabled.notification"));
+        boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
+        String message = IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification");
+        myUseSecureConnection.setToolTipText(message);
       }
     }
 
     private void updateLastCheckedLabel() {
-      long time = UpdateSettings.getInstance().LAST_TIME_CHECKED;
+      long time = UpdateSettings.getInstance().getLastTimeChecked();
       myLastCheckedDate.setText(time == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(time));
     }
 

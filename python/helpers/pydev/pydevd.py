@@ -1,6 +1,5 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from __future__ import nested_scopes # Jython 2.1 support
-from pydevd_constants import * # @UnusedWildImport
 
 import pydev_monkey_qt
 from pydevd_utils import save_main_module
@@ -28,8 +27,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_STEP_INTO, \
                          CMD_STEP_OVER, \
                          CMD_STEP_RETURN, \
-                         CMD_THREAD_CREATE, \
-                         CMD_THREAD_KILL, \
+    CMD_THREAD_KILL, \
                          CMD_THREAD_RUN, \
                          CMD_THREAD_SUSPEND, \
                          CMD_RUN_TO_LINE, \
@@ -52,8 +50,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalTerminateThread, \
                          InternalRunThread, \
                          InternalStepThread, \
-                         NetCommand, \
-                         NetCommandFactory, \
+    NetCommandFactory, \
                          PyDBDaemonThread, \
                          _queue, \
                          ReaderThread, \
@@ -65,8 +62,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          StartServer, \
                          InternalSetNextStatementThread, \
                          ReloadCodeCommand, \
-                         ID_TO_MEANING,\
-                         CMD_SET_PY_EXCEPTION, \
+    CMD_SET_PY_EXCEPTION, \
                          CMD_IGNORE_THROWN_EXCEPTION_AT,\
                          InternalGetBreakpointException, \
                          InternalSendCurrExceptionTrace,\
@@ -346,6 +342,7 @@ class PyDB:
         self.SetTrace = pydevd_tracing.SetTrace
         self.break_on_exceptions_thrown_in_same_context = False
         self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
+        self.project_roots = None
 
         # Suspend debugger even if breakpoint condition raises an exception
         SUSPEND_ON_BREAKPOINT_EXCEPTION = True
@@ -379,19 +376,28 @@ class PyDB:
             self.plugin = PluginManager(self)
         return self.plugin
 
+    def not_in_scope(self, filename):
+        if self.project_roots is None:
+            return False
+        filename = os.path.normcase(filename)
+        for root in self.project_roots:
+            root = os.path.normcase(root)
+            if filename.startswith(root):
+                return False
+        return True
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if isinstance(t, PyDBDaemonThread):
-                pydev_log.error_once(
-                    'Error in debugger: Found PyDBDaemonThread through threading.enumerate().\n')
-                
             if getattr(t, 'is_pydev_daemon_thread', False):
                 #Important: Jython 2.5rc4 has a bug where a thread created with thread.start_new_thread won't be
                 #set as a daemon thread, so, we also have to check for the 'is_pydev_daemon_thread' flag.
                 #See: https://github.com/fabioz/PyDev.Debugger/issues/11
                 continue
-            
+
+            if isinstance(t, PyDBDaemonThread):
+                pydev_log.error_once(
+                    'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+
             if isThreadAlive(t) and not t.isDaemon():
                 return True
 
@@ -495,7 +501,7 @@ class PyDB:
             _DebugConsoleHelper._return_control_osc = not _DebugConsoleHelper._return_control_osc
             return _DebugConsoleHelper._return_control_osc
 
-        from pydev_ipython.inputhook import get_inputhook, set_return_control_callback
+        from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(return_control)
 
         from pydev_import_hook import import_hook_manager
@@ -526,12 +532,11 @@ class PyDB:
                 for t in all_threads:
                     thread_id = GetThreadId(t)
 
-                    if isinstance(t, PyDBDaemonThread):
-                        pydev_log.error_once('Found PyDBDaemonThread in threading.enumerate.')
-                        
-                    elif getattr(t, 'is_pydev_daemon_thread', False):
+                    if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
-                        
+                    elif isinstance(t, PyDBDaemonThread):
+                        pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+
                     elif isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
@@ -637,6 +642,7 @@ class PyDB:
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
+        ignore_libraries
         ):
         try:
             eb = ExceptionBreakpoint(
@@ -644,6 +650,7 @@ class PyDB:
                 notify_always,
                 notify_on_terminate,
                 notify_on_first_raise_only,
+                ignore_libraries
             )
         except ImportError:
             pydev_log.error("Error unable to add break on exception for: %s (exception could not be imported)\n" % (exception,))
@@ -1121,9 +1128,12 @@ class PyDB:
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     if text.find('\t') != -1:
-                        exception, notify_always, notify_on_terminate = text.split('\t', 2)
+                        exception, notify_always, notify_on_terminate, ignore_libraries = text.split('\t', 3)
                     else:
-                        exception, notify_always, notify_on_terminate = text, 0, 0
+                        exception, notify_always, notify_on_terminate, ignore_libraries = text, 0, 0, 0
+
+                    if int(ignore_libraries) > 0 and self.project_roots is None:
+                        self.project_roots = os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
 
                     if exception.find('-') != -1:
                         type, exception = exception.split('-')
@@ -1135,7 +1145,8 @@ class PyDB:
                             exception,
                             notify_always=int(notify_always) > 0,
                             notify_on_terminate = int(notify_on_terminate) == 1,
-                            notify_on_first_raise_only=int(notify_always) == 2
+                            notify_on_first_raise_only=int(notify_always) == 2,
+                            ignore_libraries=int(ignore_libraries) > 0
                         )
 
                         if exception_breakpoint is not None:

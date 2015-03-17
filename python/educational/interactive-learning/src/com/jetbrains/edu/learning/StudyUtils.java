@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -12,7 +11,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -21,7 +19,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -118,12 +115,6 @@ public class StudyUtils {
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
     factory.createToolWindowContent(project, ToolWindowManager.getInstance(project).
       getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
-  }
-
-  public static void synchronize() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    SaveAndSyncHandlerImpl.refreshOpenFiles();
-    VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 
   public static void deleteFile(@NotNull final VirtualFile file) {

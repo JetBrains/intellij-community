@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,16 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertVisitedPaths(mainDir,
                        subDir.getPath(), link2Home.getPath(), link2.getPath(), link2.getPath() + "/" + link1Home.getName(),
                        link2.getPath() + "/" + link1Home.getName() + "/" + link1.getName());
+  }
+
+  public void testVisitAllNonRecursiveLinks() throws Exception {
+    File target = createTestDir(myTempDir, "target");
+    File child = createTestDir(target, "child");
+    File link1 = createSymLink(target.getPath(), myTempDir.getPath() + "/link1");
+    File link2 = createSymLink(target.getPath(), myTempDir.getPath() + "/link2");
+    assertVisitedPaths(target.getPath(), child.getPath(),
+                       link1.getPath(), link1.getPath() + "/child",
+                       link2.getPath(), link2.getPath() + "/child");
   }
 
   public void testTargetIsWritable() throws Exception {
@@ -366,14 +376,13 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     VirtualFile vDir = refreshAndFind(from);
     assertNotNull(vDir);
 
-    Set<String> expectedSet = new HashSet<String>(expected.length + 1, 1);
-    ContainerUtil.addAll(expectedSet, vDir.getPath());
-    ContainerUtil.addAll(expectedSet, ContainerUtil.map(expected, new Function<String, String>() {
+    Set<String> expectedSet = ContainerUtil.map2Set(expected, new Function<String, String>() {
       @Override
       public String fun(String path) {
         return FileUtil.toSystemIndependentName(path);
       }
-    }));
+    });
+    expectedSet.add(vDir.getPath());
 
     final Set<String> actualSet = new HashSet<String>();
     VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor() {

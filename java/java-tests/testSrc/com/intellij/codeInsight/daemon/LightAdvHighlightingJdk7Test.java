@@ -188,4 +188,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA111450() { doTest(true, false); }
   public void testExternalizable() { doTest(true, false); }
   public void testAccessToStaticMethodsFromInterfaces() { doTest(true, false); }
+
+  public void testUncheckedExtendedWarnings() throws Exception {
+    doTest(true, false);
+  }
 }

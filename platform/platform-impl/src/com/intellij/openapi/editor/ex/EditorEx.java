@@ -65,6 +65,11 @@ public interface EditorEx extends Editor {
 
   JComponent getPermanentHeaderComponent();
 
+  /**
+   * shouldn't be called during Document update
+   */
+  void setViewer(boolean isViewer);
+
   void setPermanentHeaderComponent(JComponent component);
 
   void setHighlighter(@NotNull EditorHighlighter highlighter);
@@ -108,11 +113,6 @@ public interface EditorEx extends Editor {
   void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   int getMaxWidthInRange(int startOffset, int endOffset);
-
-  /**
-   * @deprecated Does nothing currently. To be removed in IDEA 15.
-   */
-  void stopOptimizedScrolling();
 
   boolean setCaretVisible(boolean b);
 

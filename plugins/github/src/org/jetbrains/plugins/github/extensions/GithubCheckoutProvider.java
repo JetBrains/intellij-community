@@ -33,6 +33,7 @@ import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.File;
@@ -88,7 +89,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     // Add predefined repositories to history
     dialog.prependToHistory("-----------------------------------------------");
     for (int i = availableRepos.size() - 1; i >= 0; i--) {
-      dialog.prependToHistory(availableRepos.get(i).getCloneUrl());
+      dialog.prependToHistory(GithubUrlUtil.getCloneUrl(availableRepos.get(i).getFullPath()));
     }
     if (!dialog.showAndGet()) {
       return;

@@ -23,7 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -71,7 +71,7 @@ public class PyUserSkeletonsUtil {
   public static VirtualFile getUserSkeletonsDirectory() {
     if (ourUserSkeletonsDirectory == null) {
       for (String path : getPossibleUserSkeletonsPaths()) {
-        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().findFileByPath(path);
+        ourUserSkeletonsDirectory = StandardFileSystems.local().findFileByPath(path);
         if (ourUserSkeletonsDirectory != null) {
           break;
         }

@@ -20,28 +20,25 @@ import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Set;
 
 public class QuickListsManager implements ExportableApplicationComponent {
-  private static final Logger LOG = Logger.getInstance(QuickListsManager.class);
   static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/quicklists";
 
   private static final String LIST_TAG = "list";
@@ -101,25 +98,17 @@ public class QuickListsManager implements ExportableApplicationComponent {
   @Override
   public void initComponent() {
     for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
-      for (String path : provider.getBundledListsRelativePaths()) {
-        try {
-          InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, path);
-          if (inputStream == null) {
-            // Error shouldn't occur during this operation thus we report error instead of info
-            LOG.error("Cannot read quick list from " +  path);
-          }
-          else {
-            Element element = JDOMUtil.load(inputStream);
+      for (final String path : provider.getBundledListsRelativePaths()) {
+        mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
+          @Override
+          public QuickList convert(Element element) throws Throwable {
             QuickList item = createItem(element);
             item.getExternalInfo().setHash(JDOMUtil.getTreeHash(element, true));
             item.getExternalInfo().setPreviouslySavedName(item.getName());
             item.getExternalInfo().setCurrentFileName(PathUtilRt.getFileName(path));
-            mySchemesManager.addNewScheme(item, false);
+            return item;
           }
-        }
-        catch (Exception e) {
-          LOG.error("Cannot read quick list from " + path + ": " + e.getMessage(), e);
-        }
+        });
       }
     }
     mySchemesManager.loadSchemes();

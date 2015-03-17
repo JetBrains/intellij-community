@@ -2,7 +2,6 @@ package org.jetbrains.debugger;
 
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.ConsumerFunction;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.Value;
 import org.jetbrains.io.JsonUtil;
@@ -16,10 +15,11 @@ public final class ValueModifierUtil {
 
   @NotNull
   public static Promise<Void> setValue(@NotNull final Variable variable, String newValue, @NotNull final EvaluateContext evaluateContext, @NotNull final ValueModifier modifier) {
-    return evaluateContext.evaluate(newValue).then(new ConsumerFunction<EvaluateResult>() {
+    return evaluateContext.evaluate(newValue).then(new Function<EvaluateResult, Void>() {
       @Override
-      public void consume(EvaluateResult result) {
+      public Void fun(EvaluateResult result) {
         modifier.setValue(variable, result.value, evaluateContext);
+        return null;
       }
     });
   }

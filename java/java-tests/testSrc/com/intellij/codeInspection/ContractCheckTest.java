@@ -42,4 +42,5 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testSignatureIssues() { doTest(); }
   public void testVarargInferred() { doTest(); }
   public void testDoubleParameter() { doTest(); }
+  public void testReturnPrimitiveArray() { doTest(); }
 }

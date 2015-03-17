@@ -49,10 +49,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-public class DumbServiceImpl extends DumbService implements Disposable {
+public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private volatile boolean myDumb = false;
   private final DumbModeListener myPublisher;
+  private long myModificationCount;
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<DumbModeTask>(5);
 
   /**
@@ -63,7 +64,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
-  private ThreadLocal<Boolean> myAlternativeResolution = new ThreadLocal<Boolean>();
+  private ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<Integer>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -107,13 +108,20 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   @Override
   public boolean isAlternativeResolveEnabled() {
-    return Boolean.TRUE.equals(myAlternativeResolution.get());
+    return myAlternativeResolution.get() != null;
   }
 
   @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
-    assert isAlternativeResolveEnabled() != enabled : "Nested alternative resolution mode is not supported";
-    myAlternativeResolution.set(enabled);
+    Integer oldValue = myAlternativeResolution.get();
+    int newValue = (oldValue == null ? 0 : oldValue) + (enabled ? 1 : -1);
+    assert newValue >= 0 : "Non-paired alternative resolution mode";
+    myAlternativeResolution.set(newValue == 0 ? null : newValue);
+  }
+
+  @Override
+  public ModificationTracker getModificationTracker() {
+    return this;
   }
 
   @Override
@@ -209,6 +217,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
               @Override
               public Boolean compute() {
                 myDumb = true;
+                myModificationCount++;
                 try {
                   myPublisher.enteredDumbMode();
                 }
@@ -236,6 +245,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   private void updateFinished() {
     myDumb = false;
+    myModificationCount++;
     if (myProject.isDisposed()) return;
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
@@ -298,7 +308,12 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         semaphore.up();
       }
     });
-    semaphore.waitFor();
+    while (true) {
+      if (semaphore.waitFor(50)) {
+        return;
+      }
+      ProgressManager.checkCanceled();
+    }
   }
 
   @Override
@@ -438,6 +453,11 @@ public class DumbServiceImpl extends DumbService implements Disposable {
       }
     });
     return result.get();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModificationCount;
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {

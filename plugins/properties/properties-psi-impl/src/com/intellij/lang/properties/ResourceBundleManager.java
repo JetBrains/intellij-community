@@ -47,7 +47,7 @@ import java.util.regex.Matcher;
   })
 public class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
-  private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
+  public final static Locale DEFAULT_LOCALE = new Locale("", "", "");
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
@@ -172,7 +172,11 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       name = name.substring(customResourceBundleName.length());
     }
 
-    final Matcher matcher = PropertiesUtil.LOCALE_PATTERN.matcher(name);
+    return extractLocale(name);
+  }
+
+  public static Locale extractLocale(final String suffix) {
+    final Matcher matcher = PropertiesUtil.LOCALE_PATTERN.matcher(suffix);
     if (matcher.find()) {
       final String rawLocale = matcher.group(1);
       final String[] splittedRawLocale = rawLocale.split("_");

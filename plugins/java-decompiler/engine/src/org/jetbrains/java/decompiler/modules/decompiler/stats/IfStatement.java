@@ -22,10 +22,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 
 public class IfStatement extends Statement {
@@ -421,4 +426,42 @@ public class IfStatement extends Statement {
   public StatEdge getElseEdge() {
     return elseedge;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public IMatchable findObject(MatchNode matchNode, int index) {
+
+    IMatchable object = super.findObject(matchNode, index);
+    if(object != null) {
+      return object;
+    }
+    
+    if(matchNode.getType() == MatchNode.MATCHNODE_EXPRENT) {
+      String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+      if("head".equals(position)) {
+        return getHeadexprent();
+      }
+    }
+
+    return null;
+  }
+
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+
+    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
+    if(type != null) {
+      if(this.iftype != type.intValue()) {
+        return false;
+      }
+    }
+        
+    return true;
+  }
+  
 }

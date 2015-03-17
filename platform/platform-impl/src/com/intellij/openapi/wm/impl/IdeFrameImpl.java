@@ -164,7 +164,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
       for (IdeFrame frame : projectFrames) {
         if (frame == this) continue;
         if (((IdeFrameImpl)frame).isInFullScreen() && ScreenUtil.getScreenDevice(((IdeFrameImpl)frame).getBounds()) == device) {
-          Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(device.getDefaultConfiguration());
+          Insets insets = ScreenUtil.getScreenInsets(device.getDefaultConfiguration());
           int mask = SideBorder.NONE;
           if (insets.top != 0) mask |= SideBorder.TOP;
           if (insets.left != 0) mask |= SideBorder.LEFT;
@@ -463,7 +463,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     WelcomeFrame.notifyFrameClosed(this);
 
     if (myRootPane != null) {
+      // clear both our and swing hard refs
       myRootPane = null;
+      setRootPane(null);
     }
 
     if (myFrameDecorator != null) {

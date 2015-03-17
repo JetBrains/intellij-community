@@ -1380,7 +1380,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     public MyChangeProcessor(@NotNull Project project) {
       super(project);
 
-      putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
+      putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
       putContextUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.COMMIT_DIALOG);
     }
 

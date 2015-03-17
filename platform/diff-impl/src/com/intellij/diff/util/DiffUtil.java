@@ -34,6 +34,7 @@ import com.intellij.diff.tools.util.LineFragmentCache.PolicyData;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -57,6 +58,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -68,8 +70,10 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +82,7 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
 public class DiffUtil {
@@ -247,6 +252,16 @@ public class DiffUtil {
     return carets;
   }
 
+  public static boolean wasScrolled(@NotNull List<? extends Editor> editors) {
+    for (Editor editor : editors) {
+      if (editor == null) continue;
+      if (editor.getCaretModel().getOffset() != 0) return true;
+      if (editor.getScrollingModel().getVerticalScrollOffset() != 0) return true;
+      if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) return true;
+    }
+    return false;
+  }
+
   public static class EditorsVisiblePositions {
     public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
 
@@ -287,12 +302,17 @@ public class DiffUtil {
 
   @NotNull
   public static Pair<JPanel, JLabel> createMessagePanel() {
-    final JLabel label = new JLabel();
+    JLabel label = new JLabel();
     label.setForeground(UIUtil.getInactiveTextColor());
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(label,
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0));
+    JPanel wrapper = createMessagePanel(label);
     return Pair.create(wrapper, label);
+  }
+
+  @NotNull
+  public static JPanel createMessagePanel(@NotNull JComponent comp) {
+    JPanel wrapper = new JPanel(new GridBagLayout());
+    wrapper.add(comp, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(1), 0, 0));
+    return wrapper;
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -349,8 +369,12 @@ public class DiffUtil {
 
     List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
+    if (equalCharsets && equalSeparators && ContainerUtil.find(titles, Condition.NOT_NULL) == null) {
+      return Collections.nCopies(titles.size(), null);
+    }
+
     for (int i = 0; i < contents.size(); i++) {
-      result.add(createTitle(titles.get(i), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
+      result.add(createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
     }
 
     return result;
@@ -682,6 +706,15 @@ public class DiffUtil {
     }
   }
 
+  public static int getOffset(@NotNull Document document, int line, int column) {
+    if (line < 0) return 0;
+    if (line >= getLineCount(document)) return document.getTextLength();
+
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
+    return Math.min(start + column, end);
+  }
+
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
   }
@@ -842,6 +875,23 @@ public class DiffUtil {
     }
     if (request != null) {
       T data = request.getUserData(key);
+      if (data != null) return data;
+    }
+    return null;
+  }
+
+  //
+  // DataProvider
+  //
+
+  @Nullable
+  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {
+    if (provider != null) {
+      Object data = provider.getData(dataId);
+      if (data != null) return data;
+    }
+    if (fallbackProvider != null) {
+      Object data = fallbackProvider.getData(dataId);
       if (data != null) return data;
     }
     return null;

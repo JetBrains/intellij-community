@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
+ *
+ * @see com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer
  */
 public interface IndexPatternBuilder {
   ExtensionPointName<IndexPatternBuilder> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternBuilder");

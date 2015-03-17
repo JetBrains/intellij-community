@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,34 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.WeakReference;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 /**
+ * Allow to reuse equal strings to avoid memory being wasted on them. Strings are cached on weak references
+ * and garbage-collected when not needed anymore.
+ *
+ * @see WeakInterner
  * @author peter
  */
 public class WeakStringInterner extends StringInterner {
-  private final ConcurrentMap<String, WeakReference<String>> myMap = ContainerUtil.createConcurrentWeakMap();
+  private final WeakInterner<String> myDelegate = new WeakInterner<String>();
   
   @NotNull
   @Override
   public String intern(@NotNull String name) {
-    WeakReference<String> key = new WeakReference<String>(name);
-    String interned = SoftReference.dereference(ConcurrencyUtil.cacheOrGet(myMap, name, key));
-    if (interned != null) return interned;
-
-    myMap.put(name, key);
-    return name;
+    return myDelegate.intern(name);
   }
 
   @Override
   public void clear() {
-    myMap.clear();
+    myDelegate.clear();
   }
 
   @NotNull
   @Override
   public Set<String> getValues() {
-    HashSet<String> result = ContainerUtil.newHashSet();
-    for (WeakReference<String> value : myMap.values()) {
-      ContainerUtil.addIfNotNull(result, value.get());
-    }
-    return result;
+    return myDelegate.getValues();
   }
 }

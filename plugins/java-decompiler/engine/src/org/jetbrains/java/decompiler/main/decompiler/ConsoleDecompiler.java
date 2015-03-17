@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
       String arg = args[i];
 
-      if (isOption && arg.startsWith("-") &&
-          arg.length() > 5 && arg.charAt(4) == '=') {
-        String value = arg.substring(5).toUpperCase(Locale.US);
-        if ("TRUE".equals(value)) {
+      if (isOption && arg.length() > 5 && arg.charAt(0) == '-' && arg.charAt(4) == '=') {
+        String value = arg.substring(5);
+        if ("true".equalsIgnoreCase(value)) {
           value = "1";
         }
-        else if ("FALSE".equals(value)) {
+        else if ("false".equalsIgnoreCase(value)) {
           value = "0";
         }
 
