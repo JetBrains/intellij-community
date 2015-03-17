@@ -11,10 +11,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -167,7 +169,14 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   @Override
   protected void doAction() {
-    close(OK_EXIT_CODE);
+    if (getSelectedTopLevelSymbols().isEmpty()) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"),
+                                             RefactoringBundle.message("no.members.selected"),
+                                             PyMoveModuleMembersProcessor.REFACTORING_ID, myProject);
+    }
+    else {
+      close(OK_EXIT_CODE);
+    }
   }
 
   @Override
