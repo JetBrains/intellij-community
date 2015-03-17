@@ -135,11 +135,13 @@ public abstract class DiffActionExecutor {
           if (inverted) {
             SimpleDiffRequest request = new SimpleDiffRequest(title, content2, content1, title2, title1);
             if (line != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.LEFT, line));
+            request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.LEFT);
             requestRef.set(request);
           }
           else {
             SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
             if (line != null) request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, line));
+            request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.RIGHT);
             requestRef.set(request);
           }
         }

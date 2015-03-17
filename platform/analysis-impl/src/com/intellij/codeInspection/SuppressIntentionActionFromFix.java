@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -67,8 +66,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
   }
 
   public PsiElement getContainer(PsiElement element) {
-    return myFix instanceof AbstractBatchSuppressByNoInspectionCommentFix
-           ? ((AbstractBatchSuppressByNoInspectionCommentFix)myFix).getContainer(element) : null;
+    return myFix instanceof ContainerBasedSuppressQuickFix ? ((ContainerBasedSuppressQuickFix)myFix).getContainer(element) : null;
   }
 
   @Override

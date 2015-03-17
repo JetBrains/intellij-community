@@ -729,6 +729,10 @@ public class PyUtil {
     return currentElement;
   }
 
+  /**
+   * Note that returned list may contain {@code null} items, e.g. for unresolved import elements, originally wrapped
+   * in {@link com.jetbrains.python.psi.resolve.ImportedResolveResult}.
+   */
   @NotNull
   public static List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
     if (element instanceof PyReferenceOwner) {

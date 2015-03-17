@@ -7,6 +7,7 @@
 
 #import "Launcher.h"
 #import "VMOptionsReader.h"
+#import "PropertyFileReader.h"
 #import "utils.h"
 #import <dlfcn.h>
 @class NSAlert;
@@ -162,12 +163,19 @@ void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
 
 NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
+
+    // search java info in user's idea.properties
+    NSDictionary *inConfig = [PropertyFileReader readFile:getPropertiesFilePath()];
+    NSString* userJavaVersion = [inConfig objectForKey:@"JVMVersion"];
+    if (userJavaVersion != nil) JVMVersion = userJavaVersion;
+    NSString *required = requiredJvmVersions();
+
     if (! jvmBundlePaths.count > 0 ) {
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
         appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
-        if (jvmBundlePaths.count > 0) return jvmBundlePaths;
+        if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
         appendJvmBundlesAt(@"/Library/Java/JavaVirtualMachines", jvmBundlePaths);
@@ -184,7 +192,7 @@ NSString *jvmVersion(NSBundle *bundle) {
 }
 
 NSString *requiredJvmVersions() {
-    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
+    return (JVMVersion != NULL) ? JVMVersion : [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
@@ -306,6 +314,11 @@ NSString *getExecutable() {
 NSString *getBundleName() {
     return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
 }
+
+NSString *getPropertiesFilePath() {
+    return [getPreferencesFolderPath() stringByAppendingString:@"/idea.properties"];
+}
+
 
 NSString *getPreferencesFolderPath() {
     return [NSString stringWithFormat:@"%@/Library/Preferences/%@", NSHomeDirectory(), getSelector()];

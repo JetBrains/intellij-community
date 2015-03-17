@@ -92,7 +92,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
       if (language != null) {
         final List<InspectionSuppressor> suppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(language);
         for (InspectionSuppressor suppressor : suppressors) {
-          final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, tool.getShortName());
+          final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, toolWrapper.getID());
           Collections.addAll(actions, suppressActions);
         }
       }

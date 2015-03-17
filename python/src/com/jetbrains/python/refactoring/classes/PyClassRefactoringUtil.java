@@ -133,7 +133,7 @@ public final class PyClassRefactoringUtil {
       rememberNamedReferences(e);
     }
     final PyFunction[] elements = methods.toArray(new PyFunction[methods.size()]);
-    return addMethods(superClass, skipIfExist,  elements);
+    return addMethods(superClass, skipIfExist, elements);
   }
 
   /**
@@ -220,11 +220,17 @@ public final class PyClassRefactoringUtil {
   }
 
   public static void restoreNamedReferences(@NotNull final PsiElement newElement, @Nullable final PsiElement oldElement) {
+    restoreNamedReferences(newElement, oldElement, PsiElement.EMPTY_ARRAY);
+  }
+
+  public static void restoreNamedReferences(@NotNull final PsiElement newElement,
+                                            @Nullable final PsiElement oldElement,
+                                            @NotNull final PsiElement[] otherMovedElements) {
     newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
-        restoreReference(node);
+        restoreReference(node, otherMovedElements);
       }
 
       @Override
@@ -240,7 +246,7 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  private static void restoreReference(final PyReferenceExpression node) {
+  private static void restoreReference(final PyReferenceExpression node, PsiElement[] otherMovedElements) {
     PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
     final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
     final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
@@ -256,6 +262,7 @@ public final class PyClassRefactoringUtil {
     }
     if (target == null) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
+    if (ArrayUtil.contains(target, otherMovedElements)) return;
     if (target instanceof PyFile || target instanceof PsiDirectory) {
       insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
     }

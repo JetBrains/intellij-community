@@ -96,14 +96,16 @@ public abstract class DebuggerSessionTabBase extends RunTab {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-            .getToolWindowByDescriptor(myRunContentDescriptor);
-          if (toolWindow != null) {
-            if (!toolWindow.isVisible()) {
-              toolWindow.show(onShowCallback);
+          if (myRunContentDescriptor != null) {
+            ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+              .getToolWindowByDescriptor(myRunContentDescriptor);
+            if (toolWindow != null) {
+              if (!toolWindow.isVisible()) {
+                toolWindow.show(onShowCallback);
+              }
+              //noinspection ConstantConditions
+              toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
             }
-            //noinspection ConstantConditions
-            toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
           }
         }
       });

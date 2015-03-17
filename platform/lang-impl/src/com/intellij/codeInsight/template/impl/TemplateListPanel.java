@@ -251,7 +251,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
                  "; equals=" + t1.equals(t2) +
                  "; vars=" + t1.getVariables().equals(t2.getVariables()) +
                  "; options=" + areOptionsEqual(t1, t2) +
-                 "; diff=" + getTemplateContext(t1).getDifference(t2.getTemplateContext());
+                 "; diff=" + getTemplateContext(t1).getDifference(t2.getTemplateContext()) +
+                 "\ncontext1=" + getTemplateContext(t1) +
+                 "\ncontext2=" + getTemplateContext(t2);
         }
         return "templates differ";
       }
