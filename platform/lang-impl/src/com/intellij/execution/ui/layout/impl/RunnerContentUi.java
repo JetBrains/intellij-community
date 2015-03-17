@@ -1382,7 +1382,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     public MyComponent() {
       setOpaque(true);
       setFocusCycleRoot(true);
-      setBorder(new ToolWindow.Border(true, false, true, true));
+      setBorder(new ToolWindow.Border(true, false, false, false));
     }
 
     @Override
