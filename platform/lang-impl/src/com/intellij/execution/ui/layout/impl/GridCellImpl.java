@@ -69,7 +69,12 @@ public class GridCellImpl implements GridCell {
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
     myTabs = new JBEditorTabs(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
-
+      {
+        //noinspection UseJBColor
+        myDefaultPainter.setDefaultTabColor(new Color(0xC6CFDF));
+        //noinspection UseJBColor
+        myDarkPainter.setDefaultTabColor(new Color(0x424D5F));
+      }
       @Override
       public boolean useSmallLabels() {
         return true;
