@@ -126,4 +126,9 @@ public class TemplateContext {
       element.addContent(optionElement);
     }
   }
+
+  @Override
+  public String toString() {
+    return myContextStates.toString();
+  }
 }
