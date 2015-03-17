@@ -68,8 +68,6 @@ public class JBRunnerTabs extends JBEditorTabs {
       return super.layout(c, bounds);
     }
     if (c instanceof GridImpl) {
-      bounds.x -= 1;
-      bounds.width += 1;
       if (!isHideTabs()) {
         bounds.y -= 1;
         bounds.height += 1;
