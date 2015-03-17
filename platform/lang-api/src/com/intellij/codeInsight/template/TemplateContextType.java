@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class TemplateContextType {
   public static final ExtensionPointName<TemplateContextType> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateContext");
 
+  @NotNull
   private final String myContextId;
+  @NotNull
   private final String myPresentableName;
   private final Class<? extends TemplateContextType> myBaseContextType;
 
@@ -48,10 +50,12 @@ public abstract class TemplateContextType {
     myBaseContextType = baseContextType;
   }
 
+  @NotNull
   public String getPresentableName() {
     return myPresentableName;
   }
 
+  @NotNull
   public String getContextId() {
     return myContextId;
   }
