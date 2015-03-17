@@ -148,7 +148,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     return REFACTORING_NAME;
   }
 
-  private static void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
+  private void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
     final PsiFile file = element.getContainingFile();
     final PsiElement oldElementBody = PyMoveModuleMemberUtil.expandNamedElementBody(element);
     if (oldElementBody != null) {
@@ -162,7 +162,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
           updateUsage(usageElement, element, newElement);
         }
       }
-      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, element);
+      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, element, myElements);
       // TODO: Remove extra empty lines after the removed element
       oldElementBody.delete();
       if (file != null) {
