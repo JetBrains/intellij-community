@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
@@ -77,8 +79,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     this(false);
   }
 
-
   public ThreeComponentsSplitter(boolean vertical) {
+    this(vertical, false);
+  }
+
+  public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers) {
     myVerticalSplit = vertical;
     myShowDividerControls = false;
     myFirstDivider = new Divider(true);
@@ -86,7 +91,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     myLastDivider = new Divider(false);
     Disposer.register(this, myLastDivider);
 
-    myDividerWidth = 7;
+    myDividerWidth = onePixelDividers ? 1 : 7;
+    if (onePixelDividers) {
+      final JBColor bg = new JBColor(Gray.xCA, Gray.x37);
+      myFirstDivider.setBackground(bg);
+      myLastDivider.setBackground(bg);
+    }
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);

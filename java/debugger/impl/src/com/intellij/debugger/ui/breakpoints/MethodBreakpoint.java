@@ -180,7 +180,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   public String getEventMessage(@NotNull LocatableEvent event) {
     final Location location = event.location();
-    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName = "";
     try {
       locationFileName = location.sourceName();
