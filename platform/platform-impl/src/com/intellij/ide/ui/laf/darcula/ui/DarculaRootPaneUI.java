@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.Gray;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -376,7 +377,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     Rectangle screenBounds = gc.getBounds();
     screenBounds.x = 0;
     screenBounds.y = 0;
-    Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+    Insets screenInsets = ScreenUtil.getScreenInsets(gc);
     Rectangle maxBounds = new Rectangle(
       (screenBounds.x + screenInsets.left),
       (screenBounds.y + screenInsets.top), screenBounds.width
