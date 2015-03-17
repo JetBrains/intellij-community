@@ -262,13 +262,18 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       MethodContract.ValueConstraint constraint = contract.arguments[i];
       DfaConstValue expectedValue = constraint.getComparisonValue(factory);
       if (expectedValue == null) continue;
-      
+
+      boolean nullContract = expectedValue == constFactory.getNull();
       boolean invertCondition = constraint.shouldUseNonEqComparison();
       DfaValue condition = factory.getRelationFactory().createRelation(argValue, expectedValue, EQEQ, invertCondition);
       if (condition == null) {
         if (!(argValue instanceof DfaConstValue)) {
           for (DfaMemoryState state : states) {
-            falseStates.add(state.createCopy());
+            DfaMemoryState falseCopy = state.createCopy();
+            if (nullContract) {
+              (invertCondition ? falseCopy : state).markEphemeral();
+            }
+            falseStates.add(falseCopy);
           }
           continue;
         }
@@ -277,7 +282,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       LinkedHashSet<DfaMemoryState> nextStates = ContainerUtil.newLinkedHashSet();
       for (DfaMemoryState state : states) {
-        boolean unknownVsNull = expectedValue == constFactory.getNull() &&
+        boolean unknownVsNull = nullContract &&
                                 argValue instanceof DfaVariableValue &&
                                 ((DfaMemoryStateImpl)state).getVariableState((DfaVariableValue)argValue).getNullability() == Nullness.UNKNOWN;
         DfaMemoryState falseCopy = state.createCopy();
