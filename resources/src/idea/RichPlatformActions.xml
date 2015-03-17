@@ -133,6 +133,7 @@
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
                 text="Dump All Comments In Project"/>
+        <action id="DumpScreenConfiguration" text="Dump Screen Configuration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       </group>
 
       <separator/>
