@@ -16,8 +16,6 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -69,11 +67,5 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   protected Color getInactiveMaskColor() {
     return ColorUtil.withAlpha(new Color(0x262626), .2);
-  }
-
-
-  @Override
-  public Color getEmptySpaceColor() {
-    return new JBColor(Gray.xC8, UIUtil.getPanelBackground());
   }
 }
