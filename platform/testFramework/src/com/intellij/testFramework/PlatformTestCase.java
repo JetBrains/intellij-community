@@ -515,8 +515,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
               Collection<Project> projectsStillOpen = projectManager.closeTestProject(myProject);
               if (!projectsStillOpen.isEmpty()) {
                 Project project = projectsStillOpen.iterator().next();
-                projectsStillOpen.clear();
-                throw new AssertionError("Test project is not disposed: " + project+";\n created in: "+getCreationPlace(project));
+                String message = "Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project);
+                try {
+                  projectManager.closeTestProject(project);
+                  Disposer.dispose(project);
+                }
+                catch (Exception e) {
+                  // ignore, we already have somthing to throw
+                }
+                throw new AssertionError(message);
               }
             }
           }
@@ -908,6 +915,27 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         vFile1.rename(this, newName);
       }
     }.execute().throwException();
+  }
+
+  protected static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        vFile1.move(this, newFile);
+      }
+    }.execute().throwException();
+  }
+
+  protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
+    final VirtualFile[] copy = new VirtualFile[1];
+
+    new WriteCommandAction.Simple(null) {
+      @Override
+      protected void run() throws Throwable {
+        copy[0] = file.copy(this, newParent, copyName);
+      }
+    }.execute().throwException();
+    return copy[0];
   }
 
   public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {

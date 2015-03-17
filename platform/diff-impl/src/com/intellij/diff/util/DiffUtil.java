@@ -706,6 +706,15 @@ public class DiffUtil {
     }
   }
 
+  public static int getOffset(@NotNull Document document, int line, int column) {
+    if (line < 0) return 0;
+    if (line >= getLineCount(document)) return document.getTextLength();
+
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
+    return Math.min(start + column, end);
+  }
+
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
   }

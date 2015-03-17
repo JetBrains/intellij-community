@@ -35,7 +35,7 @@ public class PyDependentModuleMembersCollector extends DependentMembersCollector
         @Override
         public void visitElement(PsiElement element) {
           for (PsiElement result : PyUtil.multiResolveTopPriority(element, resolveContext)) {
-            if (isValidSameModuleDependency(result) && result != member) {
+            if (result != null && isValidSameModuleDependency(result) && result != member) {
               myCollection.add((PsiNamedElement)result);
             }
           }

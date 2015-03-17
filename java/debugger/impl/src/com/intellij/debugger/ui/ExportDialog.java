@@ -235,7 +235,7 @@ public class ExportDialog extends DialogWrapper {
     }
     return DebuggerBundle.message(
         "export.threads.stackframe.format",
-        location.declaringType().name() + "." + location.method().name(), 
+        DebuggerUtilsEx.getLocationMethodQName(location),
         sourceName, 
         location.lineNumber()
     );

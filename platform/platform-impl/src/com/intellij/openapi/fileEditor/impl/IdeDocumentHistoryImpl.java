@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -143,8 +144,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCmdProcessor.addCommandListener(myCommandListener,myProject);
   }
 
-  public static class RecentlyChangedFilesState {
-    public List<String> CHANGED_PATHS = new ArrayList<String>();
+  static class RecentlyChangedFilesState {
+    private List<String> CHANGED_PATHS = new ArrayList<String>();
 
     public void register(VirtualFile file) {
       final String path = file.getPath();
@@ -171,7 +172,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myRecentlyChangedFiles = state;
   }
 
-  public final void onFileDeleted() {
+  final void onFileDeleted() {
     removeInvalidFilesFromStacks();
   }
 
@@ -197,7 +198,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
   }
 
-  public final void onCommandStarted() {
+  final void onCommandStarted() {
     myCommandStartPlace = getCurrentPlaceInfo();
     myCurrentCommandIsNavigation = false;
     myCurrentCommandHasChanges = false;
@@ -213,7 +214,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return null;
   }
 
-  public final void onCommandFinished(Object commandGroupId) {
+  final void onCommandFinished(Object commandGroupId) {
     if (myCommandStartPlace != null) {
       if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
         if (!myBackInProgress) {
@@ -304,9 +305,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   @Override
   public final void clearHistory() {
-    clearPlaceList(myBackPlaces);
-    clearPlaceList(myForwardPlaces);
-    clearPlaceList(myChangePlaces);
+    myBackPlaces.clear();
+    myForwardPlaces.clear();
+    myChangePlaces.clear();
 
     myLastGroupId = null;
 
@@ -489,10 +490,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), myEditorManager.getCurrentWindow());
   }
 
-  private static void clearPlaceList(@NotNull List<PlaceInfo> list) {
-    list.clear();
-  }
-
 
   @Override
   @NotNull
@@ -540,7 +537,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
 
     @NotNull
-    public FileEditorState getNavigationState() {
+    private FileEditorState getNavigationState() {
       return myNavigationState;
     }
 
@@ -562,7 +559,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   @NotNull
-  public List<PlaceInfo> getBackPlaces() {
+  @TestOnly
+  List<PlaceInfo> getBackPlaces() {
     return myBackPlaces;
   }
 

@@ -21,13 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 public interface InspectionSuppressor {
   /**
-   * @see com.intellij.codeInspection.CustomSuppressableInspectionTool#isSuppressedFor(com.intellij.psi.PsiElement)
+   * @see CustomSuppressableInspectionTool#isSuppressedFor(PsiElement)
    */
   boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId);
 
   /**
-   * @see com.intellij.codeInspection.BatchSuppressableTool#getBatchSuppressActions(com.intellij.psi.PsiElement)
+   * @see BatchSuppressableTool#getBatchSuppressActions(PsiElement)
    */
   @NotNull
-  SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolShortName);
+  SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId);
 }

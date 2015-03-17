@@ -168,7 +168,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
   public String getEventMessage(LocatableEvent event) {
     final Location location = event.location();
-    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName = "";
     try {
       locationFileName = location.sourceName();

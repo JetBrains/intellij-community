@@ -28,6 +28,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -215,7 +216,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   @Override
   public String getEventMessage(final LocatableEvent event) {
     final Location location = event.location();
-    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName;
     try {
       locationFileName = location.sourceName();

@@ -31,7 +31,7 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
   @NotNull private static final String DEFAULT_DESCRIPTION = "Turn IntelliSort On/Off";
 
   public IntelliSortChooserToggleAction() {
-    super(DEFAULT_TEXT, DEFAULT_DESCRIPTION, IconUtil.flip(VcsLogIcons.Branch, false));
+    super(DEFAULT_TEXT, DEFAULT_DESCRIPTION, VcsLogIcons.IntelliSort);
   }
 
   @Override
