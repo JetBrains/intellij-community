@@ -11,8 +11,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyMoveModuleMemberUtil {
-  private PyMoveModuleMemberUtil() {
+public class PyMoveModuleMembersHelper {
+  private PyMoveModuleMembersHelper() {
     // Utility class
   }
 

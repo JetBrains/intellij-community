@@ -29,7 +29,7 @@ public class PyDependentModuleMembersCollector extends DependentMembersCollector
   public void collect(final PsiNamedElement member) {
     if (member.getContainingFile() == myModule) {
       final PyResolveContext resolveContext = PyResolveContext.defaultContext();
-      final PsiElement memberBody = PyMoveModuleMemberUtil.expandNamedElementBody(member);
+      final PsiElement memberBody = PyMoveModuleMembersHelper.expandNamedElementBody(member);
       assert memberBody != null;
       memberBody.accept(new PyRecursiveElementVisitor() {
         @Override
@@ -46,6 +46,6 @@ public class PyDependentModuleMembersCollector extends DependentMembersCollector
   }
 
   private boolean isValidSameModuleDependency(@NotNull PsiElement element) {
-    return PyMoveModuleMemberUtil.isMovableModuleMember(element) && element.getContainingFile() == myModule;
+    return PyMoveModuleMembersHelper.isMovableModuleMember(element) && element.getContainingFile() == myModule;
   }
 }

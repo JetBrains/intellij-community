@@ -150,11 +150,11 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
   private void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
     final PsiFile file = element.getContainingFile();
-    final PsiElement oldElementBody = PyMoveModuleMemberUtil.expandNamedElementBody(element);
+    final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(element);
     if (oldElementBody != null) {
       PyClassRefactoringUtil.rememberNamedReferences(oldElementBody);
       final PsiElement newElementBody = addToFile(oldElementBody, destination, usages);
-      final PsiNamedElement newElement = PyMoveModuleMemberUtil.extractNamedElement(newElementBody);
+      final PsiNamedElement newElement = PyMoveModuleMembersHelper.extractNamedElement(newElementBody);
       assert newElement != null;
       for (UsageInfo usage : usages) {
         final PsiElement usageElement = usage.getElement();
