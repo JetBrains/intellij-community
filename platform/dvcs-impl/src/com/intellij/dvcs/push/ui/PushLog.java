@@ -64,8 +64,11 @@ public class PushLog extends JPanel implements DataProvider {
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private String mySyncRenderedText;
+  private final boolean myAllowSyncStrategy;
+
 
   public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+    myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
@@ -210,7 +213,7 @@ public class PushLog extends JPanel implements DataProvider {
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
-    final JComponent syncStrategyPanel = allowSyncStrategy ? createStrategyPanel() : null;
+    final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
     myScrollPane = new JBScrollPane(myTree) {
 
       @Override
@@ -392,7 +395,7 @@ public class PushLog extends JPanel implements DataProvider {
       }
       return true;
     }
-    if (e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
+    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
       mySyncStrategy = true;
       DefaultMutableTreeNode node = getFirstNodeToEdit();
       if (node != null) {
