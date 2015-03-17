@@ -27,6 +27,9 @@ class DarculaEditorTabsPainter extends DefaultEditorTabsPainter {
 
   @Override
   protected Color getDefaultTabColor() {
+    if (myDefaultTabColor != null) {
+      return myDefaultTabColor;
+    }
     return new Color(0x515658);
   }
 
