@@ -50,7 +50,6 @@ import static com.jetbrains.python.psi.impl.PyImportStatementNavigator.getImport
  * @author vlan
  */
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
-  public static final String REFACTORING_ID = "py.refactoring.move.module.members";
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
 
   private final PsiNamedElement[] myElements;

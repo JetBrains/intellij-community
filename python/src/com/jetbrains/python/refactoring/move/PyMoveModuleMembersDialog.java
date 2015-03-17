@@ -11,12 +11,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -34,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import java.util.Collection;
 import java.util.List;
 
@@ -118,6 +118,12 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     myModuleMemberModel.memberInfoChanged(new MemberInfoChange<PyElement, PyModuleMemberInfo>(symbolsInfos));
     myMemberSelectionTable = new TopLevelSymbolsSelectionTable(symbolsInfos, myModuleMemberModel);
     myMemberSelectionTable.addMemberInfoChangeListener(myModuleMemberModel);
+    myMemberSelectionTable.getModel().addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        validateButtons();
+      }
+    });
     // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
     final boolean tableIsVisible = PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
     final String description;
@@ -152,6 +158,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     };
     decorator.setOn(tableIsVisible);
     decorator.setContentComponent(ScrollPaneFactory.createScrollPane(myMemberSelectionTable));
+    validateButtons();
     init();
   }
 
@@ -169,14 +176,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   @Override
   protected void doAction() {
-    if (getSelectedTopLevelSymbols().isEmpty()) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"),
-                                             RefactoringBundle.message("no.members.selected"),
-                                             PyMoveModuleMembersProcessor.REFACTORING_ID, myProject);
-    }
-    else {
-      close(OK_EXIT_CODE);
-    }
+    close(OK_EXIT_CODE);
   }
 
   @Override
@@ -187,6 +187,11 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myBrowseFieldWithButton.getTextField();
+  }
+
+  @Override
+  protected boolean areButtonsValid() {
+    return !myMemberSelectionTable.getSelectedMemberInfos().isEmpty();
   }
 
   @NotNull
