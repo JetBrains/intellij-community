@@ -88,7 +88,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @NotNull private final MyScrollToLineHelper myScrollToLineHelper = new MyScrollToLineHelper();
   @NotNull private final MyFoldingModel myFoldingModel;
 
-  @NotNull protected Side myMasterSide = Side.LEFT;
+  @NotNull protected Side myMasterSide = Side.RIGHT;
 
   @Nullable private ChangedBlockData myChangedBlockData;
 
