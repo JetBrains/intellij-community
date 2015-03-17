@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.idea.vfilefinder;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder;
@@ -25,15 +24,8 @@ import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory;
 public class IDEVirtualFileFinderFactory implements VirtualFileFinderFactory {
 
     @NotNull
-    private final Project project;
-
-    public IDEVirtualFileFinderFactory(@NotNull Project project) {
-        this.project = project;
-    }
-
-    @NotNull
     @Override
     public VirtualFileFinder create(@NotNull GlobalSearchScope scope) {
-        return new IDEVirtualFileFinder(project, scope);
+        return new IDEVirtualFileFinder(scope);
     }
 }
