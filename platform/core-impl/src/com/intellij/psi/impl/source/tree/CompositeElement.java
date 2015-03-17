@@ -160,6 +160,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public LeafElement findLeafElementAt(int offset) {
     TreeElement element = this;
+    if (element.getTreeParent() == null && offset >= element.getTextLength()) return null;
     startFind:
     while (true) {
       TreeElement child = element.getFirstChildNode();
