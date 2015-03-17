@@ -44,7 +44,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if (!PyMoveModuleMemberUtil.isMovableModuleMember(element)) {
+      if (!PyMoveModuleMembersHelper.isMovableModuleMember(element)) {
         return false;
       }
     }
@@ -94,7 +94,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
                            @Nullable PsiReference reference,
                            @Nullable Editor editor) {
     final PsiNamedElement e = getElementToMove(element);
-    if (e != null && PyMoveModuleMemberUtil.isMovableElement(e)) {
+    if (e != null && PyMoveModuleMembersHelper.isMovableElement(e)) {
       if (PyUtil.isTopLevel(e)) {
         PsiElement targetContainer = null;
         if (editor != null) {

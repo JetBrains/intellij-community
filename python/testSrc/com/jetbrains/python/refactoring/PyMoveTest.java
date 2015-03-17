@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 
-import static com.jetbrains.python.refactoring.move.PyMoveModuleMemberUtil.isMovableModuleMember;
+import static com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper.isMovableModuleMember;
 
 /**
  * @author vlan
