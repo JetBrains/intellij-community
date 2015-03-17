@@ -755,7 +755,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       Rectangle bounds = new Rectangle(x, y, w, h);
       g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
       drawLine(bounds, selectedBounds, g, 0);
-      if (UIUtil.isUnderDarcula()) {
+      if (UIUtil.isUnderDarcula() || true) { //remove shadow for all for awhile
         return;
       }
       g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .5));
