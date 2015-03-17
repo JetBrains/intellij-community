@@ -50,10 +50,11 @@ import static com.jetbrains.python.psi.impl.PyImportStatementNavigator.getImport
  * @author vlan
  */
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
+  public static final String REFACTORING_ID = "py.refactoring.move.module.members";
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
 
-  private PsiNamedElement[] myElements;
-  private String myDestination;
+  private final PsiNamedElement[] myElements;
+  private final String myDestination;
 
   public PyMoveModuleMembersProcessor(Project project, PsiNamedElement[] elements, String destination, boolean previewUsages) {
     super(project);
@@ -197,7 +198,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         @Override
         public int compare(PsiElement e1, PsiElement e2) {
           return PsiUtilCore.compareElementsByPosition(e1, e2);
-        };
+        }
       });
       final PsiElement firstUsage = topLevelAtDestination.get(0);
       return destination.addBefore(element, firstUsage);
