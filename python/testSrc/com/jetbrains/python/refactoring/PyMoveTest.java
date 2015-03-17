@@ -23,8 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -36,6 +38,7 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.refactoring.move.PyMoveModuleMembersProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -69,6 +72,7 @@ public class PyMoveTest extends PyTestCase {
   // PY-11923
   public void testMovableTopLevelAssignmentDetection() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @SuppressWarnings("ConstantConditions")
       public void run() {
         myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
         assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
@@ -298,6 +302,11 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
+  // PY-15324
+  public void testInterdependentSymbols() {
+    doMoveSymbolsTest("b.py", "f", "A");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName)  {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
@@ -330,22 +339,28 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
-  private void doMoveSymbolTest(String symbolName, String toFileName) {
+  private void doMoveSymbolsTest(@NotNull String toFileName, String... symbolNames) {
     String root = "/refactoring/move/" + getTestName(true);
     String rootBefore = root + "/before/src";
     String rootAfter = root + "/after/src";
     VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    PsiNamedElement element = findFirstNamedElement(symbolName);
-    assertNotNull(element);
+    final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, new Function<String, PsiNamedElement>() {
+      @Override
+      public PsiNamedElement fun(String name) {
+        final PsiNamedElement found = findFirstNamedElement(name);
+        assertNotNull(found);
+        return found;
+      }
+    });
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
     String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
     new PyMoveModuleMembersProcessor(myFixture.getProject(),
-                                       new PsiNamedElement[] {element},
-                                       path,
-                                       false).run();
+                                     symbols,
+                                     path,
+                                     false).run();
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
@@ -354,6 +369,11 @@ public class PyMoveTest extends PyTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+
+  private void doMoveSymbolTest(String symbolName, String toFileName) {
+    doMoveSymbolsTest(toFileName, symbolName);
   }
 
   @Nullable
