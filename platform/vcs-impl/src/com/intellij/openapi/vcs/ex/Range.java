@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.diff.Diff;
@@ -249,12 +250,6 @@ public class Range {
    * Check, if caret at <line> is corresponds to the current range
    */
   public boolean isSelectedByLine(int line) {
-    if (getType() == DELETED && line == myLine1) {
-      return true;
-    }
-    else if (line >= myLine1 && line < myLine2) {
-      return true;
-    }
-    return false;
+    return DiffUtil.isSelectedByLine(line, myLine1, myLine2);
   }
 }
