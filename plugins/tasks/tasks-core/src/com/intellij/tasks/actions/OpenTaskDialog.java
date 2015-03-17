@@ -274,9 +274,10 @@ public class OpenTaskDialog extends DialogWrapper {
     else if (myCreateChangelist.isSelected()) {
       return myChangelistName;
     }
-    else {
+    else if (myTaskStateCombo.isVisible()){
       return myTaskStateCombo.getComboBox();
     }
+    return null;
   }
 
   protected JComponent createCenterPanel() {
