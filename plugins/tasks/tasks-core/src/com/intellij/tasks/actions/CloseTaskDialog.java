@@ -95,7 +95,7 @@ public class CloseTaskDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myStateCombo.getComboBox();
+    return myStateCombo.isVisible() ? myStateCombo.getComboBox() : null;
   }
 
   @Nullable
