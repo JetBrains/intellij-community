@@ -113,15 +113,18 @@ public class PushLog extends JPanel implements DataProvider {
         if (myShouldRepaint) {
           refreshNode(root);
         }
+        restoreSelection(node);
         return result;
       }
 
       @Override
       public void cancelEditing() {
+        DefaultMutableTreeNode lastSelectedPathComponent = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
         super.cancelEditing();
         if (myShouldRepaint) {
           refreshNode(root);
         }
+        restoreSelection(lastSelectedPathComponent);
       }
     };
     myTree.setUI(new MyTreeUi());
@@ -239,6 +242,12 @@ public class PushLog extends JPanel implements DataProvider {
     add(splitter);
     myTree.setMinimumSize(new Dimension(200, myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
+  }
+
+  private void restoreSelection(@Nullable DefaultMutableTreeNode node) {
+    if (node != null) {
+      TreeUtil.selectNode(myTree, node);
+    }
   }
 
   private JComponent createStrategyPanel() {
