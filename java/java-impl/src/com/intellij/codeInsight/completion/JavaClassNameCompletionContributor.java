@@ -39,6 +39,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -121,12 +122,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
       @Override
       public void consume(PsiClass psiClass) {
-        processClass(psiClass, ContainerUtil.<PsiClass>newHashSet(), "");
+        processClass(psiClass, null, "");
       }
 
-      private void processClass(PsiClass psiClass, Set<PsiClass> visited, String prefix) {
-        if (!visited.add(psiClass)) return;
-
+      private void processClass(PsiClass psiClass, @Nullable Set<PsiClass> visited, String prefix) {
         boolean isInnerClass = StringUtil.isNotEmpty(prefix);
         if (isInnerClass && isProcessedIndependently(psiClass)) {
           return;
@@ -153,8 +152,15 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         } else {
           String name = psiClass.getName();
           if (name != null) {
-            for (PsiClass innerClass : psiClass.getInnerClasses()) {
-              processClass(innerClass, visited, prefix + name + ".");
+            PsiClass[] innerClasses = psiClass.getInnerClasses();
+            if (innerClasses.length > 0) {
+              if (visited == null) visited = ContainerUtil.newHashSet();
+
+              for (PsiClass innerClass : innerClasses) {
+                if (visited.add(innerClass)) {
+                  processClass(innerClass, visited, prefix + name + ".");
+                }
+              }
             }
           }
         }
