@@ -42,7 +42,11 @@ public class DiffDrawUtil {
 
   @NotNull
   public static Color getDividerColor(@Nullable Editor editor) {
-    EditorColorsScheme scheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    return getDividerColorFromScheme(editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme());
+  }
+
+  @NotNull
+  public static Color getDividerColorFromScheme(@NotNull EditorColorsScheme scheme) {
     Color gutterBackground = scheme.getColor(EditorColors.GUTTER_BACKGROUND);
     if (gutterBackground == null) {
       gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
