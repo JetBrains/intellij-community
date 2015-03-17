@@ -62,6 +62,9 @@ public class EditorFragmentComponent extends JPanel {
     if (!showFolding) {
       foldingModel.setFoldingEnabled(false);
     }
+    
+    boolean isCaretRowShown = editor.getSettings().isCaretRowShown();
+    editor.getSettings().setCaretRowShown(false);
 
     Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
@@ -110,6 +113,8 @@ public class EditorFragmentComponent extends JPanel {
     if (wasVisible) {
       editor.setCaretVisible(true);
     }
+    
+    editor.getSettings().setCaretRowShown(isCaretRowShown);
 
     if (!showFolding) {
       foldingModel.setFoldingEnabled(isFoldingEnabled);
