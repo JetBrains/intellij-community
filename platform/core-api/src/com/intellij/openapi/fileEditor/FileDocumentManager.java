@@ -77,7 +77,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * (due to 'Strip trailing spaces on Save' functionality). When saving, <code>\n</code> line separators are converted into 
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    * 
-   * Should be invoked on Swing thread.
+   * Should be invoked on the event dispatch thread.
    */
   public abstract void saveAllDocuments();
 
@@ -86,7 +86,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * trailing spaces on Save' functionality). When saving, <code>\n</code> line separators are converted into 
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    * 
-   * Should be invoked on Swing thread.
+   * Should be invoked on the event dispatch thread.
    * @param document the document to save.
    */
   public abstract void saveDocument(@NotNull Document document);
@@ -94,7 +94,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
   /**
    * Saves the document without stripping the trailing spaces or adding a blank line in the end of the file.<p/>
    * 
-   * Should be invoked on Swing thread.
+   * Should be invoked on the event dispatch thread.
    * 
    * @param document the document to save.
    */
