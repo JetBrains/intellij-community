@@ -20,6 +20,8 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -97,19 +99,24 @@ public class DfaPsiUtil {
     return Nullness.UNKNOWN;
   }
 
-  public static boolean isInitializedNotNull(PsiField field) {
-    PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) return false;
+  public static boolean isInitializedNotNull(final PsiField field) {
+    return !Boolean.FALSE.equals(RecursionManager.doPreventingRecursion(field, true, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        PsiClass containingClass = field.getContainingClass();
+        if (containingClass == null) return false;
 
-    PsiMethod[] constructors = containingClass.getConstructors();
-    if (constructors.length == 0) return false;
-    
-    for (PsiMethod method : constructors) {
-      if (!getNotNullInitializedFields(method, containingClass).contains(field)) {
-        return false;
+        PsiMethod[] constructors = containingClass.getConstructors();
+        if (constructors.length == 0) return false;
+
+        for (PsiMethod method : constructors) {
+          if (!getNotNullInitializedFields(method, containingClass).contains(field)) {
+            return false;
+          }
+        }
+        return true;
       }
-    }
-    return true;
+    }));
   }
 
   private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, final PsiClass containingClass) {

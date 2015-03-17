@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
@@ -159,7 +160,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testNoAlignForMethodArguments() {  // PY-3995
-    settings().getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
     doTest();
   }
 
@@ -316,7 +317,7 @@ public class PyFormatterTest extends PyTestCase {
   public void testIfConditionContinuation() {  // PY-8195
     doTest();
   }
-  
+
   public void _testIndentInNestedCall() {  // PY-11919 TODO: required changes in formatter to be able to make indent relative to block or alignment
     doTest();
   }
@@ -430,6 +431,36 @@ public class PyFormatterTest extends PyTestCase {
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
 
+  // PY-14838
+  public void testNoAlignmentAfterDictHangingIndentInFunctionCall() {
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest();
+  }
+
+  // PY-13955
+  public void testNoAlignmentAfterDictHangingIndentInFunctionCallOnTyping() {
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    final String testName = "formatter/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        myFixture.type("\n(");
+      }
+    });
+    myFixture.checkResultByFile(testName + "_after.py");
+  }
+
+  // PY-12145
+  public void testAlignmentOfClosingBraceInDictLiteralWhenNoHangingIndent() {
+    doTest();
+  }
+
+  // PY-13004
+  public void testAlignmentOfClosingParenthesisOfArgumentListWhenNoHangingIndent() {
+    doTest();
+  }
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.
@@ -450,7 +481,11 @@ public class PyFormatterTest extends PyTestCase {
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
 
+  private CommonCodeStyleSettings getCommonSettings() {
+    return settings().getCommonSettings(PythonLanguage.getInstance());
+  }
+
   private CodeStyleSettings settings() {
-    return CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject());
+    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
   }
 }

@@ -111,4 +111,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testAttributesOfUnresolvedTypeFile() {
     doTest();
   }
+
+  // PY-15017
+  public void testClassLevelReferenceInMethodAnnotation() {
+    doTest();
+  }
 }

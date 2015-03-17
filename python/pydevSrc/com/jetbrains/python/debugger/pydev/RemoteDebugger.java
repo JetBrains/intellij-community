@@ -55,6 +55,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private Socket mySocket;
   private volatile boolean myConnected = false;
   private int mySequence = -1;
+  private final Object mySequenceObject = new Object(); // for synchronization on mySequence
   private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<String, PyThreadInfo>();
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
@@ -97,7 +98,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
     if (myConnected) {
       try {
-        myDebuggerReader = createReader(mySocket);
+        myDebuggerReader = createReader();
       }
       catch (Exception e) {
         synchronized (mySocketObject) {
@@ -230,7 +231,9 @@ public class RemoteDebugger implements ProcessDebugger {
   private void cleanUp() {
     myThreads.clear();
     myResponseQueue.clear();
-    mySequence = -1;
+    synchronized (mySequenceObject) {
+      mySequence = -1;
+    }
     myTempVars.clear();
   }
 
@@ -285,8 +288,10 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   int getNextSequence() {
-    mySequence += 2;
-    return mySequence;
+    synchronized (mySequenceObject) {
+      mySequence += 2;
+      return mySequence;
+    }
   }
 
   void placeResponse(final int sequence, final ProtocolFrame response) {
@@ -474,10 +479,10 @@ public class RemoteDebugger implements ProcessDebugger {
     execute(command);
   }
 
-  public DebuggerReader createReader(@NotNull Socket socket) throws IOException {
+  private DebuggerReader createReader() throws IOException {
     synchronized (mySocketObject) {
       //noinspection IOResourceOpenedButNotSafelyClosed
-      return new DebuggerReader(socket.getInputStream());
+      return new DebuggerReader(mySocket.getInputStream());
     }
   }
 

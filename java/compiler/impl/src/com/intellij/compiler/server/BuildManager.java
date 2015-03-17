@@ -131,7 +131,8 @@ public class BuildManager implements ApplicationComponent{
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+  // do not make static in order not to access application on class load
+  private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
   private static final String IDEA_PROJECT_DIR_PATTERN = "/.idea/";
@@ -216,6 +217,7 @@ public class BuildManager implements ApplicationComponent{
 
   public BuildManager(final ProjectManager projectManager) {
     final Application application = ApplicationManager.getApplication();
+    IS_UNIT_TEST_MODE = application.isUnitTestMode();
     myProjectManager = projectManager;
     mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
     final String systemPath = PathManager.getSystemPath();
@@ -754,7 +756,7 @@ public class BuildManager implements ApplicationComponent{
                 myBuildsInProgress.remove(projectPath);
                 notifySessionTerminationIfNeeded(sessionId, execFailure);
 
-                if (isProcessPreloadingEnabled() && !project.isDisposed()) {
+                if (isProcessPreloadingEnabled(project)) {
                   runCommand(new Runnable() {
                     public void run() {
                       if (!myPreloadedBuilds.containsKey(projectPath)) {
@@ -783,9 +785,20 @@ public class BuildManager implements ApplicationComponent{
     return _future;
   }
 
-  private static boolean isProcessPreloadingEnabled() {
+  private boolean isProcessPreloadingEnabled(Project project) {
     // automatically disable process preloading when debugging or testing
-    return !IS_UNIT_TEST_MODE && Registry.is("compiler.process.preload") && Registry.intValue("compiler.process.debug.port") <= 0;
+    if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || Registry.intValue("compiler.process.debug.port") > 0) {
+      return false;
+    }
+    if (project.isDisposed()) {
+      return true;
+    }
+    for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
+      if (!provider.isProcessPreloadingEnabled()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {

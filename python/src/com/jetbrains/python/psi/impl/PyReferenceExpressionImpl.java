@@ -420,7 +420,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                      @Nullable PsiElement anchor) {
     for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType result = provider.getReferenceType(target, context, anchor);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
 
     return null;

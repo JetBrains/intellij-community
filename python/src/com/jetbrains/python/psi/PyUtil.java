@@ -1002,7 +1002,28 @@ public class PyUtil {
     return target;
   }
 
+  /**
+   * @see #isPackage(PsiDirectory, boolean, PsiElement)
+   */
   public static boolean isPackage(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
+    return isPackage(directory, true, anchor);
+  }
+
+  /**
+   * Checks that given PsiDirectory can be treated as Python package, i.e. it's either contains __init__.py or it's a namespace package
+   * (effectively any directory in Python 3.3 and above). Setuptools namespace packages can be checked as well, but it requires access to
+   * {@link PySetuptoolsNamespaceIndex} and may slow things down during update of project indexes.
+   * Also note that this method does not check that directory itself and its parents have valid importable names,
+   * use {@link PyNames#isIdentifier(String)} for this purpose.
+   *
+   * @param directory PSI directory to check
+   * @param checkSetupToolsPackages whether setuptools namespace packages should be considered as well
+   * @param anchor    optional anchor element to determine language level
+   * @return whether given directory is Python package
+   *
+   * @see PyNames#isIdentifier(String)
+   */
+  public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
@@ -1012,7 +1033,7 @@ public class PyUtil {
     if (level.isAtLeast(LanguageLevel.PYTHON33)) {
       return true;
     }
-    return isSetuptoolsNamespacePackage(directory);
+    return checkSetupToolsPackages && isSetuptoolsNamespacePackage(directory);
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {

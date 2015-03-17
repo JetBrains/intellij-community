@@ -181,7 +181,7 @@ public class TypeEvalContext {
         }
       }
       final PyType type = element.getType(this, Key.INSTANCE);
-      assertValid(type, element);
+       assertValid(type, element);
       synchronized (myEvaluated) {
         myEvaluated.put(element, type);
       }
