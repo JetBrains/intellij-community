@@ -394,11 +394,11 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   new File("$path/bin/idea.properties").text = effectiveProperties.toString()
-  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops"
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions
+  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
