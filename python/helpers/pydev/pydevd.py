@@ -642,7 +642,7 @@ class PyDB:
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
-        ignore_libraries
+        ignore_libraries=False
         ):
         try:
             eb = ExceptionBreakpoint(

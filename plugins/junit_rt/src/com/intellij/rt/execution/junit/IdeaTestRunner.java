@@ -28,7 +28,7 @@ import java.util.List;
 
 public interface IdeaTestRunner {
 
-  int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree);
+  int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree);
   void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx);
 
   Object getTestToStart(String[] args, String name);

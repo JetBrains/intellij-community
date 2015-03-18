@@ -129,6 +129,7 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
         append(sb.append("\n"), device);
       }
       LOG.warn(sb.toString());
+      super.doOKAction();
     }
   }
 

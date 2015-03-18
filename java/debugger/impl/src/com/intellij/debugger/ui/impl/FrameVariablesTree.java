@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,11 +396,10 @@ public class FrameVariablesTree extends DebuggerTree {
   private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {
     final int offset = doc.getLineStartOffset(line);
     if (offset > 0) {
-      for (PsiElement elem = file.findElementAt(offset); elem != null; elem = elem.getParent()) {
-        if (elem instanceof PsiMethod) {
-          final TextRange elemRange = elem.getTextRange();
-          return new TextRange(doc.getLineNumber(elemRange.getStartOffset()), doc.getLineNumber(elemRange.getEndOffset()));
-        }
+      PsiMethod method = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiMethod.class, false);
+      if (method != null) {
+        final TextRange elemRange = method.getTextRange();
+        return new TextRange(doc.getLineNumber(elemRange.getStartOffset()), doc.getLineNumber(elemRange.getEndOffset()));
       }
     }
     return new TextRange(0, doc.getLineCount() - 1);

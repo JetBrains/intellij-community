@@ -62,6 +62,9 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
   }
 
   protected Color getDefaultTabColor() {
+    if (myDefaultTabColor != null) {
+      return myDefaultTabColor;
+    }
     return Color.WHITE;
   }
 

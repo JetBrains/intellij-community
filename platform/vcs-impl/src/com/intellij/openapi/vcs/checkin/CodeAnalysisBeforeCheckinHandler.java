@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -32,11 +33,13 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -126,10 +129,9 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   public ReturnResult beforeCheckin(CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       if (DumbService.getInstance(myProject).isDumb()) {
-        if (Messages.showOkCancelDialog(myProject,
-                                "Code analysis can't be performed while IntelliJ IDEA updates the indices in background.\n" +
-                                "You can commit the changes without running inspections, or you can wait until indices are built.",
-                                "Code analysis is not possible right now",
+        if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
+                                                                     ApplicationNamesInfo.getInstance().getProductName()),
+                                VcsBundle.message("code.smells.error.indexing"),
                                 "&Wait", "&Commit", null) == Messages.OK) {
           return ReturnResult.CANCEL;
         }
