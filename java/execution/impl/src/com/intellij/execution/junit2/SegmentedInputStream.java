@@ -94,6 +94,7 @@ public class SegmentedInputStream extends InputStream {
       while (nextRead != ' ' && nextRead != SegmentedStream.SPECIAL_SYMBOL) {
         buffer.append((char)nextRead);
         nextRead = readNext();
+        if (nextRead == -1) return new char[0];
       }
       return readNext(Integer.valueOf(buffer.toString()).intValue());
     }

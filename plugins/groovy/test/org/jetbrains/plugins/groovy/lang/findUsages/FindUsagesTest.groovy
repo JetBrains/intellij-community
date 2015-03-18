@@ -151,6 +151,10 @@ public class FindUsagesTest extends LightGroovyTestCase {
     doTestImpl("DynamicUsages.groovy", 2);
   }
 
+  public void testDynamicCallExpressionUsages() {
+    doTestImpl("DynamicCallExpressionUsages.groovy", 2);
+  }
+
   public void testAnnotatedMemberSearch() throws Throwable {
 
     final PsiReference ref = myFixture.getReferenceAtCaretPosition("A.groovy");

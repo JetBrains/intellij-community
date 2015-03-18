@@ -18,7 +18,6 @@ package com.intellij.rt.execution.junit;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.io.*;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -38,6 +37,7 @@ public class JUnitStarter {
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
+  private static int    ourCount = 1;
   public static boolean SM_RUNNER = System.getProperty("idea.junit.sm_runner") != null;
 
   public static void main(String[] args) throws IOException {
@@ -124,6 +124,13 @@ public class JUnitStarter {
 
           continue;
         }
+
+        final int count = RepeatCount.getCount(arg);
+        if (count != 0) {
+          ourCount = count;
+          continue;
+        }
+
         result.addElement(arg);
       }
     }
@@ -209,7 +216,7 @@ public class JUnitStarter {
       }
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err, 0);
-      return testRunner.startRunnerWithArgs(args, listeners, name, !SM_RUNNER);
+      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, !SM_RUNNER);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
