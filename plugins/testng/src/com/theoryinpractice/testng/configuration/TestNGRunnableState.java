@@ -146,7 +146,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         if (config.isSaveOutputToFile()) {
           unboundOutputRoot.setOutputFilePath(config.getOutputFilePath());
         }
-        client.prepareListening(listener, port);
+        client.prepareListening(listener, config.getProject(), port);
         myStarted = true;
         mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
