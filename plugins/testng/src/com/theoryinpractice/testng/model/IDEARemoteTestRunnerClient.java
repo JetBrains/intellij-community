@@ -17,6 +17,8 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import org.testng.remote.strprotocol.*;
@@ -31,6 +33,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
   private TestNGRemoteListener myListener;
   private int myPort;
+  private Project myProject;
 
   public synchronized void startListening(TestNGConfiguration config) {
       final IMessageSender messageSender = TestNGRunnableState.supportSerializationProtocol(config)
@@ -61,7 +64,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifyStart(final GenericMessage genericMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
           public void run() {
             for (final IRemoteSuiteListener listener : m_suiteListeners) {
               listener.onInitialization(genericMessage);
@@ -72,7 +75,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifySuiteEvents(final SuiteMessage suiteMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
           public void run() {
             for (final IRemoteSuiteListener listener : m_suiteListeners) {
               if (suiteMessage.isMessageOnStart()) {
@@ -88,7 +91,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifyTestEvents(final TestMessage testMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
           public void run() {
             for (final IRemoteTestListener listener : m_testListeners) {
               if (testMessage.isMessageOnStart()) {
@@ -104,7 +107,7 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 
     @Override
     protected void notifyResultEvents(final TestResultMessage testResultMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
           public void run() {
             for (final IRemoteTestListener listener : m_testListeners) {
               switch (testResultMessage.getResult()) {
@@ -129,8 +132,11 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
         }, ModalityState.NON_MODAL);
     }
 
-  public void prepareListening(TestNGRemoteListener listener, int port) {
+  public void prepareListening(TestNGRemoteListener listener,
+                               Project project,
+                               int port) {
     myListener = listener;
+    myProject = project;
     myPort = port;
   }
 
