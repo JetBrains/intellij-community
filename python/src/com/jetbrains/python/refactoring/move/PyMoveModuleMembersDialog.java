@@ -113,7 +113,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     final PyFile pyFile = (PyFile)firstElement.getContainingFile();
     myModuleMemberModel = new PyModuleMemberInfoModel(pyFile);
 
-    final List<PyModuleMemberInfo> symbolsInfos = myModuleMemberModel.collectTopLevelSymbolsInfo();
+    final List<PyModuleMemberInfo> symbolsInfos = collectModuleMemberInfos(myModuleMemberModel.myPyFile);
     for (PyModuleMemberInfo info : symbolsInfos) {
       info.setChecked(elements.contains(info.getMember()));
     }
@@ -217,6 +217,17 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       @Override
       public int compare(PyElement e1, PyElement e2) {
         return PyPsiUtils.isBefore(e1, e2) ? -1 : 1;
+      }
+    });
+  }
+
+  @NotNull
+  private static List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
+    final List<PyElement> moduleMembers = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
+    return ContainerUtil.mapNotNull(moduleMembers, new Function<PyElement, PyModuleMemberInfo>() {
+      @Override
+      public PyModuleMemberInfo fun(PyElement element) {
+        return new PyModuleMemberInfo(element);
       }
     });
   }

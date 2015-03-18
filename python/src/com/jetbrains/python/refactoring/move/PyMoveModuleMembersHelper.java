@@ -6,6 +6,9 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -50,6 +53,18 @@ public class PyMoveModuleMembersHelper {
   }
 
   /**
+   * Collects all top-level variables, classes and functions (in this order) as returned by {@link PyFile#getTopLevelAttributes()},
+   * {@link PyFile#getTopLevelClasses()} and {@link PyFile#getTopLevelFunctions()}.
+   */
+  public static List<PyElement> getTopLevelModuleMembers(@NotNull PyFile pyFile) {
+    final List<PyElement> result = new ArrayList<PyElement>();
+    result.addAll(pyFile.getTopLevelAttributes());
+    result.addAll(pyFile.getTopLevelClasses());
+    result.addAll(pyFile.getTopLevelFunctions());
+    return result;
+  }
+
+  /**
    * Expands given named element to the closet parent suitable for "Move" refactoring. In particular for target expression
    * it returns parental assignment statement if any and element itself for functions and classes.
    *
@@ -74,7 +89,7 @@ public class PyMoveModuleMembersHelper {
    */
   @Nullable
   public static PsiNamedElement extractNamedElement(@NotNull PsiElement element) {
-    if (element instanceof PyClass || element instanceof PyFunction) {
+    if (element instanceof PyClass || element instanceof PyFunction || element instanceof PyTargetExpression) {
       return (PsiNamedElement)element;
     }
     final PyAssignmentStatement assignment = as(element, PyAssignmentStatement.class);
