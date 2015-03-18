@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -99,14 +100,14 @@ public class LowMemoryWatcher {
    * @return a LowMemoryWatcher instance holding the runnable. This instance should be kept in memory while the
    * low memory notification functionality is needed. As soon as it's garbage-collected, the runnable won't receive any further notifications.
    */
-  public static LowMemoryWatcher register(Runnable runnable) {
+  public static LowMemoryWatcher register(@NotNull Runnable runnable) {
     return new LowMemoryWatcher(runnable);
   }
 
   /**
    * Registers a runnable to run on low memory events. The notifications will be issued until parentDisposable is disposed.
    */
-  public static void register(Runnable runnable, Disposable parentDisposable) {
+  public static void register(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
     final Ref<LowMemoryWatcher> watcher = Ref.create(new LowMemoryWatcher(runnable));
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -117,7 +118,7 @@ public class LowMemoryWatcher {
     });
   }
 
-  private LowMemoryWatcher(Runnable runnable) {
+  private LowMemoryWatcher(@NotNull Runnable runnable) {
     myRunnable = runnable;
     ourInstances.add(this);
   }
