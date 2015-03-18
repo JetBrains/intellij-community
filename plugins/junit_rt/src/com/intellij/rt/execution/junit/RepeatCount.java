@@ -48,9 +48,10 @@ public abstract class RepeatCount {
       return -2;
     }
 
-    if (countString.startsWith("@" + N)) {
+    final String prefix = "@" + N;
+    if (countString.startsWith(prefix)) {
       try {
-        return Integer.parseInt(countString.substring(2));
+        return Integer.parseInt(countString.substring(prefix.length()));
       }
       catch (NumberFormatException ignore) {}
     }
