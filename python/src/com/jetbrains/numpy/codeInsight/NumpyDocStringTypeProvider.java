@@ -62,6 +62,10 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.Callable");
     // 3 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float or complex");
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("dtype", "numpy.core.multiarray.dtype");
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.Iterable");
   }
 
   @Nullable
@@ -154,7 +158,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private PyType getParameterType(@NotNull PyFunction function, @NotNull String parameterName) {
+  private static PyType getParameterType(@NotNull PyFunction function, @NotNull String parameterName) {
     final NumPyDocString docString = NumPyDocString.forFunction(function, function);
     if (docString != null) {
       NumPyDocStringParameter parameter = docString.getNamedParameter(parameterName);
