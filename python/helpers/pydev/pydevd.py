@@ -104,66 +104,69 @@ try:
 except:
     pass
 
+LIB_FILE = 0
+PYDEV_FILE = 1
+
 DONT_TRACE = {
               # commonly used things from the stdlib that we don't want to trace
-              'Queue.py':1,
-              'queue.py':1,
-              'socket.py':1,
-              'weakref.py':1,
-              '_weakrefset.py':1,
-              'linecache.py':1,
-              'threading.py':1,
+              'Queue.py':LIB_FILE,
+              'queue.py':LIB_FILE,
+              'socket.py':LIB_FILE,
+              'weakref.py':LIB_FILE,
+              '_weakrefset.py':LIB_FILE,
+              'linecache.py':LIB_FILE,
+              'threading.py':LIB_FILE,
 
               # thirs party libs that we don't want to trace
-              '_pydev_pluginbase.py':1,
-              '_pydev_pkgutil_old.py':1,
-              '_pydev_uuid_old.py':1,
+              '_pydev_pluginbase.py':PYDEV_FILE,
+              '_pydev_pkgutil_old.py':PYDEV_FILE,
+              '_pydev_uuid_old.py':PYDEV_FILE,
 
               #things from pydev that we don't want to trace
-              '_pydev_execfile.py':1,
-              '_pydev_jython_execfile.py':1,
-              '_pydev_threading':1,
-              '_pydev_Queue':1,
-              'django_debug.py':1,
-              'jinja2_debug.py':1,
-              'pydev_log.py':1,
-              'pydev_monkey.py':1 ,
-              'pydev_monkey_qt.py':1 ,
-              'pydevd.py':1 ,
-              'pydevd_additional_thread_info.py':1,
-              'pydevd_comm.py':1,
-              'pydevd_console.py':1 ,
-              'pydevd_constants.py':1,
-              'pydevd_custom_frames.py':1,
-              'pydevd_dont_trace.py':1,
-              'pydevd_exec.py':1,
-              'pydevd_exec2.py':1,
-              'pydevd_file_utils.py':1,
-              'pydevd_frame.py':1,
-              'pydevd_import_class.py':1 ,
-              'pydevd_io.py':1 ,
-              'pydevd_psyco_stub.py':1,
-              'pydevd_referrers.py':1 ,
-              'pydevd_reload.py':1 ,
-              'pydevd_resolver.py':1 ,
-              'pydevd_save_locals.py':1 ,
-              'pydevd_signature.py':1,
-              'pydevd_stackless.py':1 ,
-              'pydevd_traceproperty.py':1,
-              'pydevd_tracing.py':1 ,
-              'pydevd_utils.py':1,
-              'pydevd_vars.py':1,
-              'pydevd_vm_type.py':1,
-              'pydevd_xml.py':1,
+              '_pydev_execfile.py':PYDEV_FILE,
+              '_pydev_jython_execfile.py':PYDEV_FILE,
+              '_pydev_threading':PYDEV_FILE,
+              '_pydev_Queue':PYDEV_FILE,
+              'django_debug.py':PYDEV_FILE,
+              'jinja2_debug.py':PYDEV_FILE,
+              'pydev_log.py':PYDEV_FILE,
+              'pydev_monkey.py':PYDEV_FILE,
+              'pydev_monkey_qt.py':PYDEV_FILE,
+              'pydevd.py':PYDEV_FILE,
+              'pydevd_additional_thread_info.py':PYDEV_FILE,
+              'pydevd_comm.py':PYDEV_FILE,
+              'pydevd_console.py':PYDEV_FILE,
+              'pydevd_constants.py':PYDEV_FILE,
+              'pydevd_custom_frames.py':PYDEV_FILE,
+              'pydevd_dont_trace.py':PYDEV_FILE,
+              'pydevd_exec.py':PYDEV_FILE,
+              'pydevd_exec2.py':PYDEV_FILE,
+              'pydevd_file_utils.py':PYDEV_FILE,
+              'pydevd_frame.py':PYDEV_FILE,
+              'pydevd_import_class.py':PYDEV_FILE,
+              'pydevd_io.py':PYDEV_FILE,
+              'pydevd_psyco_stub.py':PYDEV_FILE,
+              'pydevd_referrers.py':PYDEV_FILE,
+              'pydevd_reload.py':PYDEV_FILE,
+              'pydevd_resolver.py':PYDEV_FILE,
+              'pydevd_save_locals.py':PYDEV_FILE,
+              'pydevd_signature.py':PYDEV_FILE,
+              'pydevd_stackless.py':PYDEV_FILE,
+              'pydevd_traceproperty.py':PYDEV_FILE,
+              'pydevd_tracing.py':PYDEV_FILE,
+              'pydevd_utils.py':PYDEV_FILE,
+              'pydevd_vars.py':PYDEV_FILE,
+              'pydevd_vm_type.py':PYDEV_FILE,
+              'pydevd_xml.py':PYDEV_FILE,
             }
 
 if IS_PY3K:
     # if we try to trace io.py it seems it can get halted (see http://bugs.python.org/issue4716)
-    DONT_TRACE['io.py'] = 1
+    DONT_TRACE['io.py'] = LIB_FILE
 
     # Don't trace common encodings too
-    DONT_TRACE['cp1252.py'] = 1
-    DONT_TRACE['utf_8.py'] = 1
+    DONT_TRACE['cp1252.py'] = LIB_FILE
+    DONT_TRACE['utf_8.py'] = LIB_FILE
 
 
 connected = False
@@ -375,6 +378,11 @@ class PyDB:
         if self.plugin is None and SUPPORT_PLUGINS:
             self.plugin = PluginManager(self)
         return self.plugin
+
+    def get_project_roots(self):
+        roots = os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
+        pydev_log.debug("PYCHARM_PROJECT_ROOTS %s\n" % roots)
+        return roots
 
     def not_in_scope(self, filename):
         if self.project_roots is None:
@@ -1133,7 +1141,7 @@ class PyDB:
                         exception, notify_always, notify_on_terminate, ignore_libraries = text, 0, 0, 0
 
                     if int(ignore_libraries) > 0 and self.project_roots is None:
-                        self.project_roots = os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
+                        self.project_roots = self.get_project_roots()
 
                     if exception.find('-') != -1:
                         type, exception = exception.split('-')
@@ -1536,7 +1544,13 @@ class PyDB:
 
             #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
             if is_file_to_ignore:
-                return None
+                if DONT_TRACE[base] == LIB_FILE:
+                    if self.project_roots is None:
+                        self.project_roots = self.get_project_roots()
+                    if self.not_in_scope(filename):
+                        return None
+                else:
+                    return None
 
             try:
                 #this shouldn't give an exception, but it could happen... (python bug)
