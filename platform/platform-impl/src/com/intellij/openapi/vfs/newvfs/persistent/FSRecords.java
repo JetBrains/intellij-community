@@ -489,7 +489,8 @@ public class FSRecords implements Forceable {
     private static RuntimeException handleError(final Throwable e) {
       if (!ourIsDisposed) {
         // No need to forcibly mark VFS corrupted if it is already shut down
-        if (!myCorrupted) {
+        if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
+          w.unlock();
           createBrokenMarkerFile(e);
           myCorrupted = true;
           force();
@@ -1042,7 +1043,7 @@ public class FSRecords implements Forceable {
       r.lock();
       try {
         final int nameId = getRecordInt(id, NAME_OFFSET);
-        return nameId != 0 ? getNames().valueOf(nameId) : "";
+        return nameId != 0 ? FileNameCache.getVFileName(nameId).toString() : "";
       }
       finally {
         r.unlock();
