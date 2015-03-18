@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ public interface EditorEx extends Editor {
 
   void reinitSettings();
 
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
   void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   void removePropertyChangeListener(@NotNull PropertyChangeListener listener);

@@ -1154,6 +1154,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
+  @Override
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    addPropertyChangeListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removePropertyChangeListener(listener);
+      }
+    });
+  }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
