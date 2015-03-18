@@ -21,45 +21,47 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 
-public class ToggleDockModeAction extends ToggleAction implements DumbAware {
+public class ToggleWindowedModeAction extends ToggleAction implements DumbAware {
 
-  public boolean isSelected(AnActionEvent event){
+  public boolean isSelected(AnActionEvent event) {
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       return false;
     }
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    String id=windowManager.getActiveToolWindowId();
-    if(id==null){
+    String id = windowManager.getActiveToolWindowId();
+    if (id == null) {
       return false;
     }
-    return ToolWindowType.DOCKED==windowManager.getToolWindow(id).getType();
+    return ToolWindowType.WINDOWED == windowManager.getToolWindow(id).getType();
   }
 
-  public void setSelected(AnActionEvent event,boolean flag){
+  public void setSelected(AnActionEvent event, boolean flag) {
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       return;
     }
-    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    String id=windowManager.getActiveToolWindowId();
-    if(id==null){
+    String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
+    if (id == null) {
       return;
     }
-    ToolWindow toolWindow=windowManager.getToolWindow(id);
-    ToolWindowType type=toolWindow.getType();
-    if(ToolWindowType.DOCKED==type){
-      toolWindow.setType(ToolWindowType.SLIDING, null);
-    } else if(ToolWindowType.SLIDING==type){
-      toolWindow.setType(ToolWindowType.DOCKED, null);
+    ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
+    ToolWindowEx toolWindow = (ToolWindowEx)mgr.getToolWindow(id);
+    ToolWindowType type = toolWindow.getType();
+    if (ToolWindowType.WINDOWED == type) {
+      toolWindow.setType(toolWindow.getInternalType(), null);
+    }
+    else {
+      toolWindow.setType(ToolWindowType.WINDOWED, null);
     }
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
@@ -67,13 +69,8 @@ public class ToggleDockModeAction extends ToggleAction implements DumbAware {
       presentation.setEnabled(false);
       return;
     }
-    ToolWindowManager mgr=ToolWindowManager.getInstance(project);
-    String id=mgr.getActiveToolWindowId();
-    if(id==null){
-      presentation.setEnabled(false);
-      return;
-    }
-    ToolWindow toolWindow=mgr.getToolWindow(id);
-    presentation.setEnabled(toolWindow.isAvailable()&&ToolWindowType.FLOATING!=toolWindow.getType()&&ToolWindowType.WINDOWED!=toolWindow.getType());
+    ToolWindowManager mgr = ToolWindowManager.getInstance(project);
+    String id = mgr.getActiveToolWindowId();
+    presentation.setEnabled(id != null && mgr.getToolWindow(id).isAvailable());
   }
 }
