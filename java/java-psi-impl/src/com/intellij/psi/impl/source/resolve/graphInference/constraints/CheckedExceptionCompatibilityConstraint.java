@@ -103,51 +103,24 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       }
       
       final List<PsiType> thrownTypes = new ArrayList<PsiType>();
-      if (myExpression instanceof PsiLambdaExpression) {
-        final PsiElement body = ((PsiLambdaExpression)myExpression).getBody();
-        if (body != null) {
-          final List<PsiClassType> exceptions = ExceptionUtil.ourThrowsGuard.doPreventingRecursion(myExpression, false, new Computable<List<PsiClassType>>() {
+      final PsiElement body = myExpression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)myExpression).getBody() : myExpression;
+      if (body != null) {
+        final List<PsiClassType> exceptions = ExceptionUtil.ourThrowsGuard.doPreventingRecursion(myExpression, false, new Computable<List<PsiClassType>>() {
+          @Override
+          public List<PsiClassType> compute() {
+            return ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
+          }
+        });
+        if (exceptions != null) {
+          thrownTypes.addAll(ContainerUtil.filter(exceptions, new Condition<PsiClassType>() {
             @Override
-            public List<PsiClassType> compute() {
-              return ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
+            public boolean value(PsiClassType type) {
+              return !ExceptionUtil.isUncheckedException(type);
             }
-          });
-          if (exceptions != null) {
-            thrownTypes.addAll(ContainerUtil.filter(exceptions, new Condition<PsiClassType>() {
-              @Override
-              public boolean value(PsiClassType type) {
-                return !ExceptionUtil.isUncheckedException(type);
-              }
-            }));
-          }
-        }
-      } else {
-
-        final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult((PsiMethodReferenceExpression)myExpression);
-        final PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
-        final PsiMethod method;
-        if (((PsiMethodReferenceExpression)myExpression).isExact()) {
-          final PsiElement resolve = ((PsiMethodReferenceExpression)myExpression).getPotentiallyApplicableMember();
-          if (resolve instanceof PsiMethod) {
-            method = (PsiMethod)resolve;
-          } else {
-            method = null;
-          }
-        }
-        else {
-          method = interfaceMethod;
-        }
-
-        if (method != null) {
-          for (PsiType type : method.getThrowsList().getReferencedTypes()) {
-            type = psiSubstitutor.substitute(type);
-            if (type instanceof PsiClassType && !ExceptionUtil.isUncheckedException((PsiClassType)type)) {
-              thrownTypes.add(substitutor.substitute(type));
-            }
-          }
+          }));
         }
       }
-      
+
       if (expectedNonProperThrownTypes.isEmpty()) {
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedThrownTypes, thrownType)) return false;
