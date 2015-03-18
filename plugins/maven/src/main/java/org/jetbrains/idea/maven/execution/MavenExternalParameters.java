@@ -57,6 +57,7 @@ import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -121,8 +122,13 @@ public class MavenExternalParameters {
     params.setJdk(getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
+    final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
 
     params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
+      params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
+                                               MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
+    }
 
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
@@ -133,7 +139,7 @@ public class MavenExternalParameters {
 
     if (project != null && parameters.isResolveToWorkspace()) {
       try {
-        String resolverJar = getArtifactResolverJar(MavenUtil.getMavenVersion(mavenHome));
+        String resolverJar = getArtifactResolverJar(mavenVersion);
         confFile = patchConfFile(confFile, resolverJar);
 
         File modulesPathsFile = dumpModulesPaths(project);
