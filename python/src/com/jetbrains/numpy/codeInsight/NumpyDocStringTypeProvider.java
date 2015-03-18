@@ -21,6 +21,8 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.numpy.documentation.NumPyDocString;
 import com.jetbrains.numpy.documentation.NumPyDocStringParameter;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -141,7 +143,31 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
         return type;
       }
     }
-    return facade.parseTypeAnnotation(typeString, anchor);
+    final PyType type = facade.parseTypeAnnotation(typeString, anchor);
+    if (type != null) {
+      return type;
+    }
+    return getNominalType(anchor, typeString);
+  }
+
+  /**
+   * Converts literal into type, e.g. -1 -> int, 'fro' -> str
+   */
+  @Nullable
+  private static PyType getNominalType(@NotNull PsiElement anchor, @NotNull String typeString) {
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", typeString, false);
+    final PsiElement element = codeFragment.getFirstChild();
+    if (element instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)element).getExpression();
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+      if (expression instanceof PyStringLiteralExpression) {
+        return builtinCache.getStrType();
+      }
+      if (expression instanceof PyNumericLiteralExpression) {
+        return builtinCache.getIntType();
+      }
+    }
+    return null;
   }
 
   @Nullable
