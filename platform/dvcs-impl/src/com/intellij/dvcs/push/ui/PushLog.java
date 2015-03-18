@@ -48,6 +48,8 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
@@ -258,13 +260,24 @@ public class PushLog extends JPanel implements DataProvider {
     linkLabel.setListener(new LinkListener<String>() {
       @Override
       public void linkSelected(LinkLabel aSource, String aLinkData) {
-        mySyncStrategy = true;
-        DefaultMutableTreeNode nodeToEdit = getFirstNodeToEdit();
-        if (nodeToEdit != null) {
-          myTree.startEditingAtPath(TreeUtil.getPathFromRoot(nodeToEdit));
+        if (linkLabel.isEnabled()) {
+          mySyncStrategy = true;
+          DefaultMutableTreeNode nodeToEdit = getFirstNodeToEdit();
+          if (nodeToEdit != null) {
+            myTree.startEditingAtPath(TreeUtil.getPathFromRoot(nodeToEdit));
+          }
         }
       }
     }, null);
+    myTree.addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        Boolean editMode = (Boolean)evt.getNewValue();
+        linkLabel.setEnabled(!editMode);
+        linkLabel.setPaintUnderline(!editMode);
+        linkLabel.repaint();
+      }
+    });
     labelPanel.add(linkLabel, BorderLayout.EAST);
     return labelPanel;
   }
