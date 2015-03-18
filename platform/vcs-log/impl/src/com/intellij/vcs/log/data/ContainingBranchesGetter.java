@@ -44,12 +44,14 @@ public class ContainingBranchesGetter implements VcsLogListener {
 
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
   @NotNull private final VcsLogDataHolder myDataHolder;
-  @NotNull private volatile SLRUMap<Hash, List<String>> myCache = createCache();
-  @Nullable private Runnable myLoadingFinishedListener; // access only from EDT
+
+  // other fields accessed only from EDT
+  @NotNull private SLRUMap<Hash, List<String>> myCache = createCache();
+  @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
+  @Nullable private Runnable myLoadingFinishedListener;
   private int myCurrentBranchesChecksum;
   @Nullable private VcsLogRefs myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
-  @NotNull private volatile Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
 
   ContainingBranchesGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Disposable parentDisposable) {
     myDataHolder = dataHolder;
@@ -72,6 +74,7 @@ public class ContainingBranchesGetter implements VcsLogListener {
 
   @Override
   public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
     if (refreshHappened) {
       myRefs = dataPack.getRefs();
       Collection<VcsRef> currentBranches = myRefs.getBranches();
@@ -122,20 +125,17 @@ public class ContainingBranchesGetter implements VcsLogListener {
    */
   @Nullable
   public List<String> requestContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
-    List<String> refs = getContainingBranchesIfAvailable(hash);
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    List<String> refs = myCache.get(hash);
     if (refs == null) {
       myTaskExecutor.queue(new Task(root, hash, myCache, myGraph, myRefs));
     }
     return refs;
   }
 
-  @Nullable
-  public List<String> getContainingBranchesIfAvailable(@NotNull Hash hash) {
-    return myCache.get(hash);
-  }
-
   @NotNull
   public Condition<Hash> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
     if (myRefs == null || myGraph == null) return Conditions.alwaysFalse();
     VcsRef branchRef = ContainerUtil.find(myRefs.getBranches(), new Condition<VcsRef>() {
       @Override
