@@ -58,7 +58,7 @@ public class JUnitForkedStarter {
       IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
       //noinspection IOResourceOpenedButNotSafelyClosed
       testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
-      System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, false));
+      System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, 1, false));
     }
     finally {
       System.setOut(oldOut);

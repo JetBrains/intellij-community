@@ -34,7 +34,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private RunListener myTestsListener;
   private OutputObjectRegistry myRegistry;
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
 
     final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
     if (request == null) return -1;
@@ -75,11 +75,38 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         });
       }
       long startTime = System.currentTimeMillis();
-      Result result = runner.run(testRunner/*.sortWith(new Comparator() {
-        public int compare(Object d1, Object d2) {
-          return ((Description)d1).getDisplayName().compareTo(((Description)d2).getDisplayName());
+      Result result;
+      if (count == 1) {
+        result = runner.run(testRunner);
+      }
+      else {
+        if (count > 0) {
+          boolean success = true;
+          int i = 0;
+          while (i++ < count) {
+            result = runner.run(testRunner);
+            success &= result.wasSuccessful();
+          }
+          long endTime = System.currentTimeMillis();
+          long runTime = endTime - startTime;
+          if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
+
+          return success ? 0 : -1;
         }
-      })*/);
+        else {
+          boolean success = true;
+          while (true) {
+            result = runner.run(testRunner);
+            success &= result.wasSuccessful();
+            if (count == -2 && !success) {
+              long endTime = System.currentTimeMillis();
+              long runTime = endTime - startTime;
+              if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
+              return -1;
+            }
+          }
+        }
+      }
       long endTime = System.currentTimeMillis();
       long runTime = endTime - startTime;
       if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
