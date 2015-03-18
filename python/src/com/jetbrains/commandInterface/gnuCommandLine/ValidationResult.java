@@ -15,7 +15,9 @@
  */
 package com.jetbrains.commandInterface.gnuCommandLine;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.command.Option;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineArgument;
 import org.jetbrains.annotations.NotNull;
@@ -59,4 +61,10 @@ public interface ValidationResult {
    */
   @Nullable
   Collection<String> getPossibleArgumentValues(@NotNull CommandLineArgument argument);
+
+  /**
+   * @return next argument for command in format [is_required, argument] or null if no argument allowed here
+   */
+  @Nullable
+  Pair<Boolean, Argument> getNextArg();
 }

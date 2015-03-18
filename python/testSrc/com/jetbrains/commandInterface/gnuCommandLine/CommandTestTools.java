@@ -18,7 +18,9 @@ package com.jetbrains.commandInterface.gnuCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.commandInterface.command.*;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import com.jetbrains.python.PythonTestUtil;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,7 @@ import java.util.List;
 
 /**
  * Shared tools to testing command line
+ *
  * @author Ilya.Kazakevich
  */
 final class CommandTestTools {
@@ -41,6 +44,7 @@ final class CommandTestTools {
 
   /**
    * <pre>command --available-option=available_argument --option-no-argument positional_argument</pre>
+   *
    * @return list cosists of fake command with opts and arguments
    */
   @TestOnly
@@ -87,5 +91,20 @@ final class CommandTestTools {
         FileTypeManager.getInstance().associateExtension(CommandLineFileType.INSTANCE, CommandLineFileType.EXTENSION);
       }
     });
+  }
+
+  /**
+   * Creates command file by text and  {@link #createCommands() fills it with commands}
+   * @param testFixture fixture
+   * @param text command text
+   * @return command file
+   * @see #createCommands()
+   */
+  @NotNull
+  static CommandLineFile createFileByText(@NotNull final CodeInsightTestFixture testFixture, @NotNull final String text) {
+    final CommandLineFile file =
+      (CommandLineFile)testFixture.configureByText(CommandLineFileType.INSTANCE, text);
+    file.setCommands(createCommands());
+    return file;
   }
 }

@@ -75,7 +75,7 @@ public final class CommandLineConsole {
 
     final ContentManager contentManager = window.getContentManager();
     contentManager.removeAllContents(true);
-    final LanguageConsoleView console = new LanguageConsoleImpl(project, "", CommandLineLanguage.INSTANCE);
+    final LanguageConsoleImpl console = new LanguageConsoleImpl(project, "", CommandLineLanguage.INSTANCE);
     console.setPrompt(consoleName + " > ");
     console.setEditable(true);
 
@@ -90,6 +90,7 @@ public final class CommandLineConsole {
     contentManager.addContent(content);
 
     showHiddenCommandWorkAround(console);
+    MissingArgumentDisplayer.attach(console); // Display [arguments]
     return console;
   }
 

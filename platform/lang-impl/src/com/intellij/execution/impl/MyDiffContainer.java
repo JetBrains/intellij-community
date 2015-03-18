@@ -74,8 +74,12 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
   private class MyOverlayLayout extends AbstractLayoutManager {
     @Override
     public void layoutContainer(Container parent) {
-      myContent.setBounds(0, 0, getWidth(), getHeight());
-      myLoadingPanel.setBounds(0, 0, getWidth(), getHeight());
+      /**
+       * Propogate bound to all children
+       */
+      for(int i = 0; i< getComponentCount(); i++) {
+        getComponent(i).setBounds(0, 0, getWidth(), getHeight());
+      }
     }
 
     @Override
