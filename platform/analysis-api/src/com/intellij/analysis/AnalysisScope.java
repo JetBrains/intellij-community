@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectUtilCore;
@@ -419,19 +420,38 @@ public class AnalysisScope {
       accessToken.finish();
     }
 
-    if (needReadAction) {
-      PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
-        @Override
-        public void run() {
-          doProcessFile(visitor, psiManager, file);
-        }
-      });
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        doProcessFile(visitor, psiManager, file);
+      }
+    };
+    if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
+      commitAndRunInSmartMode(runnable, psiManager.getProject());
     }
     else {
-      doProcessFile(visitor, psiManager, file);
+      runnable.run();
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
+  }
+
+  private static void commitAndRunInSmartMode(final Runnable runnable, final Project project) {
+    while (true) {
+      final DumbService dumbService = DumbService.getInstance(project);
+      dumbService.waitForSmartMode();
+      boolean passed = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (dumbService.isDumb()) return false;
+          runnable.run();
+          return true;
+        }
+      });
+      if (passed) {
+        break;
+      }
+    }
   }
 
   protected static boolean shouldHighlightFile(@NotNull PsiFile file) {
