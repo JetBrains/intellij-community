@@ -1824,8 +1824,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void appendUpdateToolWindowsPaneCmd(final List<FinalizableCommand> commandsList) {
     final JRootPane rootPane = myFrame.getRootPane();
-    final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
-    commandsList.add(command);
+    if (rootPane != null) {
+      final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
+      commandsList.add(command);
+    }
   }
 
   private EditorsSplitters getSplittersToFocus() {

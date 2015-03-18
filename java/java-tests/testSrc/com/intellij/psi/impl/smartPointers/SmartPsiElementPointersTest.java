@@ -584,7 +584,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertSame(aClass, aClass2);
   }
 
-  public void _testEqualPointerRangesWhenCreatedFromStubAndAST() {
+  public void testEqualPointerRangesWhenCreatedFromStubAndAST() {
     final PsiFile file = configureByText(JavaFileType.INSTANCE,
                                          "class S {\n" +
                                          "}");
@@ -603,7 +603,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotNull(node);
   }
   
-  public void _testEqualPointersWhenCreatedFromStubAndAST() {
+  public void testEqualPointersWhenCreatedFromStubAndAST() {
     final PsiFile file = configureByText(JavaFileType.INSTANCE,
                                          "class S {\n" +
                                          "}");
