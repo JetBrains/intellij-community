@@ -29,7 +29,7 @@ import java.nio.charset.CoderResult;
 
 class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private static final char INVALID_CHAR = (char)-1;
-  private final StringBuilder myOutBuffer = new StringBuilder();
+  private StringBuilder myOutBuffer = new StringBuilder();
   private final Charset myBaseCharset;
 
   Native2AsciiCharsetDecoder(final Native2AsciiCharset charset) {
@@ -40,7 +40,7 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
   @Override
   protected void implReset() {
     super.implReset();
-    myOutBuffer.setLength(0);
+    myOutBuffer = new StringBuilder();
   }
 
   @Override
