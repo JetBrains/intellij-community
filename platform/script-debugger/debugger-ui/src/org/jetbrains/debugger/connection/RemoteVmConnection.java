@@ -1,8 +1,24 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger.connection;
 
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
@@ -37,10 +53,10 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
   public abstract Bootstrap createBootstrap(@NotNull InetSocketAddress address, @NotNull AsyncPromise<Vm> promise);
 
   public void open(@NotNull InetSocketAddress address) {
-    open(address, false);
+    open(address, null);
   }
 
-  public void open(@NotNull final InetSocketAddress address, final boolean waitForever) {
+  public void open(@NotNull final InetSocketAddress address, final Condition<Void> stopCondition) {
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to " + address.getHostName() + ":" + address.getPort());
     final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
@@ -58,7 +74,7 @@ public abstract class RemoteVmConnection extends VmConnection<Vm> {
         });
 
         AsyncPromise<Void> connectionPromise = new AsyncPromise<Void>();
-        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, waitForever ? -1 : NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT);
+        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, stopCondition == null ? NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT : -1, stopCondition);
         connectionPromise.rejected(new Consumer<Throwable>() {
           @Override
           public void consume(Throwable error) {
