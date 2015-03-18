@@ -128,6 +128,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control alt DOWN",   "VcsShowNextChangeMarker", "HtmlTableCellNavigateDown"},
     { "shift control alt UP",     "VcsShowPrevChangeMarker", "HtmlTableCellNavigateUp"},
+    { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
     { "control E",                "RecentFiles", "Vcs.ShowMessageHistory"},
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},

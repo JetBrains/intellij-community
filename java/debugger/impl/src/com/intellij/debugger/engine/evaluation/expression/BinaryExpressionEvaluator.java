@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 class BinaryExpressionEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.BinaryExpressionEvaluator");
@@ -39,7 +40,10 @@ class BinaryExpressionEvaluator implements Evaluator {
   private final IElementType myOpType;
   private final String myExpectedType; // a result of PsiType.getCanonicalText()
 
-  public BinaryExpressionEvaluator(Evaluator leftOperand, Evaluator rightOperand, IElementType opType, String expectedType) {
+  public BinaryExpressionEvaluator(@NotNull Evaluator leftOperand,
+                                   @NotNull Evaluator rightOperand,
+                                   @NotNull IElementType opType,
+                                   String expectedType) {
     myLeftOperand = new DisableGC(leftOperand);
     myRightOperand = new DisableGC(rightOperand);
     myOpType = opType;

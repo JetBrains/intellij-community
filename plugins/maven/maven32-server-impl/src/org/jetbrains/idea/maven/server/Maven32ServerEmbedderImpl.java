@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -50,10 +51,7 @@ import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
-import org.apache.maven.settings.building.SettingsBuilder;
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.apache.maven.settings.building.SettingsBuildingRequest;
+import org.apache.maven.settings.building.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
@@ -69,7 +67,6 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.LocalRepositoryManager;
-import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,12 +137,21 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
     };
 
+    SettingsBuilder settingsBuilder = null;
     Class cliRequestClass;
     try {
       cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.MavenCli$CliRequest");
     }
     catch (ClassNotFoundException e) {
-      throw new RuntimeException("Class \"org.apache.maven.cli.MavenCli$CliRequest\" not found");
+      try {
+        cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.CliRequest");
+        // initialize maven.multiModuleProjectDirectory property to avoid failure in org.apache.maven.cli.MavenCli#initialize method
+        System.setProperty("maven.multiModuleProjectDirectory", new File("").getPath());
+        settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
+      }
+      catch (ClassNotFoundException e1) {
+        throw new RuntimeException("unable to find maven CliRequest class");
+      }
     }
 
     Object cliRequest;
@@ -183,15 +189,18 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
-    mySystemProperties = FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties");
+    mySystemProperties = FieldAccessor.get(cliRequestClass, cliRequest, "systemProperties");
 
     if (settings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", settings.getProjectJdk());
     }
 
-    myMavenSettings =
-      buildSettings(FieldAccessor.<SettingsBuilder>get(MavenCli.class, cli, "settingsBuilder"), settings, mySystemProperties,
-                    FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
+    if (settingsBuilder == null) {
+      settingsBuilder = FieldAccessor.get(MavenCli.class, cli, "settingsBuilder");
+    }
+
+    myMavenSettings = buildSettings(settingsBuilder, settings, mySystemProperties,
+                                    FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
 
     myLocalRepository = createLocalRepository();
   }
@@ -618,6 +627,17 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       result.setInactiveProfiles(inactiveProfiles);
 
       result.setStartTime(myBuildStartTime);
+
+      final Method setMultiModuleProjectDirectoryMethod =
+        ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(result.getClass()), "setMultiModuleProjectDirectory", File.class);
+      if (setMultiModuleProjectDirectoryMethod != null) {
+        try {
+          setMultiModuleProjectDirectoryMethod.invoke(result, MavenServerUtil.findMavenBasedir(file));
+        }
+        catch (Exception e) {
+          Maven3ServerGlobals.getLogger().error(e);
+        }
+      }
 
       return result;
     }

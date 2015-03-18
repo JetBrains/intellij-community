@@ -2512,6 +2512,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     IndexingStamp.flushCaches();
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
+
+    for (VirtualFile file : myChangedFilesCollector.getAllFilesToUpdate()) {
+      if (getIndexableSetForFile(file) == null) {
+        myChangedFilesCollector.myFilesToUpdate.remove(file);
+      }
+    }
   }
 
   @Override

@@ -601,6 +601,17 @@ public class Mock {
 
     @NotNull
     @Override
+    public ToolWindow registerToolWindow(@NotNull String id,
+                                         boolean canCloseContent,
+                                         @NotNull ToolWindowAnchor anchor,
+                                         Disposable parentDisposable,
+                                         boolean canWorkInDumbMode,
+                                         boolean secondary) {
+      throw new RuntimeException();
+    }
+
+    @NotNull
+    @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor, final boolean secondary) {
       throw new RuntimeException();
     }

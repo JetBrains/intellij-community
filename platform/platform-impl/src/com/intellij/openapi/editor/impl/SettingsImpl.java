@@ -429,9 +429,7 @@ public class SettingsImpl implements EditorSettings {
     final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
     if (newValue.equals(myCaretRowShown)) return;
     myCaretRowShown = newValue;
-    if (myEditor instanceof EditorImpl) {
-      ((EditorImpl)myEditor).getCaretModel().reinitSettings();
-    }
+    fireEditorRefresh();
   }
 
   @Override
