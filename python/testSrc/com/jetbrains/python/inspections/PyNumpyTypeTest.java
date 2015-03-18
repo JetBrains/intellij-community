@@ -25,7 +25,12 @@ public class PyNumpyTypeTest extends PyTestCase {
     myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
   }
+
   public void testNominalType() {
+    doTest();
+  }
+
+  public void testDtype() {
     doTest();
   }
 }
