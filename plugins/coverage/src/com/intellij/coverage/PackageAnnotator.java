@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
@@ -309,8 +310,9 @@ public class PackageAnnotator {
           final String toplevelClassSrcFQName = getSourceToplevelFQName(classFqVMName);
           final Ref<VirtualFile> containingFileRef = new Ref<VirtualFile>();
           final Ref<PsiClass> psiClassRef = new Ref<PsiClass>();
-          final Boolean isInSource = myCoverageManager.doInReadActionIfProjectOpen(new Computable<Boolean>() {
+          final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Boolean>() {
             public Boolean compute() {
+              if (myProject.isDisposed()) return null;
               final PsiClass aClass =
                 JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
               if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
