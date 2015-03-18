@@ -1,17 +1,13 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -53,7 +49,7 @@ class GitTest {
   private val remoteRepository: Repository
     get() = testHelper.repository!!
 
-  default object {
+  companion object {
     private var ICS_DIR: File? = null
 
     init {
