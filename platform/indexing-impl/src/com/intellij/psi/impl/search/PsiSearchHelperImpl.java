@@ -162,7 +162,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                            @NotNull final String text,
                                                            final short searchContext,
                                                            final boolean caseSensitively) {
-    boolean result = processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively, shouldProcessInjectedPsi(searchScope));
+    boolean result = processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively,
+                                             shouldProcessInjectedPsi(searchScope));
     return AsyncUtil.wrapBoolean(result);
   }
 
@@ -576,7 +577,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       refProcessor = second;
     }
 
-    boolean uniteWith(@NotNull final RequestWithProcessor another) {
+    private boolean uniteWith(@NotNull final RequestWithProcessor another) {
       if (request.equals(another.request)) {
         final Processor<PsiReference> myProcessor = refProcessor;
         if (myProcessor != another.refProcessor) {
@@ -891,11 +892,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(locals, primitive, processor);
         }
         else {
-          final List<String> words = getWordsToSearch(primitive.word);
-          final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
-          for (String word : words) {
-            key.add(new IdIndexEntry(word, primitive.caseSensitive));
-          }
+          Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(getWordEntries(primitive.word, primitive.caseSensitive));
           registerRequest(singles.getModifiable(key), primitive, processor);
         }
       }
@@ -921,18 +918,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         localProcessors.put(singleRequest, localProcessor);
       }
     }
-  }
-
-  private static List<String> getWordsToSearch(String word) {
-    List<String> words = StringUtil.getWordsInStringLongestFirst(word);
-    if (!words.isEmpty()) {
-      return words;
-    }
-    String trimmed = word.trim();
-    if (StringUtil.isNotEmpty(trimmed)) {
-      return Collections.singletonList(trimmed);
-    }
-    return Collections.emptyList();
   }
 
   private static void registerRequest(@NotNull Collection<RequestWithProcessor> collection,
@@ -1006,14 +991,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
-    List<String> words = getWordsToSearch(name);
-    if (words.isEmpty()) return Collections.emptyList();
-    List<IdIndexEntry> keys = new ArrayList<IdIndexEntry>(words.size());
-    for (String word : words) {
-      keys.add(new IdIndexEntry(word, caseSensitively));
+  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+    List<String> words = StringUtil.getWordsInStringLongestFirst(name);
+    if (words.isEmpty()) {
+      String trimmed = name.trim();
+      if (StringUtil.isNotEmpty(trimmed)) {
+        words = Collections.singletonList(trimmed);
+      }
     }
-    return keys;
+    if (words.isEmpty()) return Collections.emptyList();
+    return ContainerUtil.map2List(words, new Function<String, IdIndexEntry>() {
+      @Override
+      public IdIndexEntry fun(String word) {
+        return new IdIndexEntry(word, caseSensitively);
+      }
+    });
   }
 
   public static boolean processTextOccurrences(@NotNull final PsiElement element,
