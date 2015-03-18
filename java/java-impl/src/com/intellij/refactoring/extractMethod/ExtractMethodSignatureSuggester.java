@@ -33,6 +33,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.Util;
@@ -149,11 +150,11 @@ public class ExtractMethodSignatureSuggester {
 
     if (duplicates != null && !duplicates.isEmpty()) {
       restoreRenamedParams(copies);
-      inlineSameArguments(method, copies, variables, duplicates);
       if (!myMethodCall.isValid()) {
         return null;
       }
       myMethodCall = (PsiMethodCallExpression)myMethodCall.copy();
+      inlineSameArguments(method, copies, variables, duplicates);
       for (PsiExpression expression : copies) {
         myMethodCall.getArgumentList().add(expression);
       }
@@ -187,6 +188,24 @@ public class ExtractMethodSignatureSuggester {
       copies.removeAll(toInline.values());
       inlineArgumentsInMethodBody(toInline);
       removeRedundantParametersFromMethodSignature(toInline);
+    }
+
+    removeUnusedStongParams(strongParamsCound);
+  }
+
+  private void removeUnusedStongParams(int strongParamsCound) {
+    final PsiExpression[] expressions = myMethodCall.getArgumentList().getExpressions();
+    final PsiParameter[] parameters = myExtractedMethod.getParameterList().getParameters();
+    final PsiCodeBlock body = myExtractedMethod.getBody();
+    if (body != null) {
+      final LocalSearchScope scope = new LocalSearchScope(body);
+      for(int i = strongParamsCound - 1; i >= 0; i--) {
+        final PsiParameter parameter = parameters[i];
+        if (ReferencesSearch.search(parameter, scope).findFirst() == null) {
+          parameter.delete();
+          expressions[i].delete();
+        }
+      }
     }
   }
 
