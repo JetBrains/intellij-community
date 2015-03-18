@@ -50,6 +50,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     // an instance of 'numpy.core.multiarray.dtype', however the type checker isn't able to check it.
     // 30 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("data-type", "object");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("dtype", "object");
     // 16 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex");
     // 10 occurrences
@@ -65,8 +66,6 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.Callable");
     // 3 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float or complex");
-
-    NUMPY_ALIAS_TO_REAL_TYPE.put("dtype", "numpy.core.multiarray.dtype");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.Iterable");
   }
