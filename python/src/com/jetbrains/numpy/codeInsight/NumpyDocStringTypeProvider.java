@@ -15,6 +15,7 @@
  */
 package com.jetbrains.numpy.codeInsight;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -117,6 +118,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   private static boolean isInsideNumPy(@NotNull PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     final PsiFile file = element.getContainingFile();
     if (file != null) {
       final PyPsiFacade facade = getPsiFacade(element);
