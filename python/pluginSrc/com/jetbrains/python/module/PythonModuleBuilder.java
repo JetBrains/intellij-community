@@ -59,7 +59,7 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
       }
     }) {
       @Override
-      protected void OnSdkSelected(Sdk sdk) {
+      protected void onSdkSelected(Sdk sdk) {
         setSdk(sdk);
       }
     };

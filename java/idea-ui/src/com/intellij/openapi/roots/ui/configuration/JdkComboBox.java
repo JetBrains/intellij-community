@@ -213,8 +213,12 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
 
   @Nullable
   public Sdk getSelectedJdk() {
-    final JdkComboBoxItem selectedItem = (JdkComboBoxItem)super.getSelectedItem();
+    final JdkComboBoxItem selectedItem = getSelectedItem();
     return selectedItem != null? selectedItem.getJdk() : null;
+  }
+
+  public boolean isProjectJdkSelected() {
+    return getSelectedItem() instanceof ProjectJdkComboBoxItem;
   }
 
   public void setSelectedJdk(Sdk jdk) {
