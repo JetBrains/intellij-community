@@ -15,7 +15,9 @@
  */
 package org.jetbrains.groovy.compiler.rt;
 
+import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
+import groovy.lang.GroovyShell;
 import groovyjarjarasm.asm.Opcodes;
 import org.codehaus.groovy.ast.*;
 import org.codehaus.groovy.ast.expr.ConstantExpression;
@@ -24,6 +26,7 @@ import org.codehaus.groovy.ast.expr.ListExpression;
 import org.codehaus.groovy.ast.expr.MethodCallExpression;
 import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
+import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 import org.codehaus.groovy.tools.javac.JavaCompiler;
@@ -72,6 +75,24 @@ public class DependentGroovycRunner {
       }
     }
 
+    try {
+      if (!"false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY))) {
+        config.getOptimizationOptions().put("asmResolving", true);
+        config.getOptimizationOptions().put("classLoaderResolving", false);
+      }
+    }
+    catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
+    }
+
+    String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
+    if (configScript != null) {
+      try {
+        applyConfigurationScript(new File(configScript), config);
+      }
+      catch (LinkageError ignored) {
+      }
+    }
+
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
     renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
 
@@ -117,6 +138,24 @@ public class DependentGroovycRunner {
     return false;
   }
 
+  // adapted from https://github.com/gradle/gradle/blob/c4fdfb57d336b1a0f1b27354c758c61c0a586942/subprojects/language-groovy/src/main/java/org/gradle/api/internal/tasks/compile/ApiGroovyCompiler.java
+  private static void applyConfigurationScript(File configScript, CompilerConfiguration configuration) {
+    Binding binding = new Binding();
+    binding.setVariable("configuration", configuration);
+
+    CompilerConfiguration configuratorConfig = new CompilerConfiguration();
+    ImportCustomizer customizer = new ImportCustomizer();
+    customizer.addStaticStars("org.codehaus.groovy.control.customizers.builder.CompilerCustomizationBuilder");
+    configuratorConfig.addCompilationCustomizers(customizer);
+
+    try {
+      new GroovyShell(binding, configuratorConfig).evaluate(configScript);
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
   private static void renameResources(String[] finalOutputs, String removeSuffix, String addSuffix) {
     for (String output : finalOutputs) {
       for (String res : RESOURCES_TO_MASK) {
