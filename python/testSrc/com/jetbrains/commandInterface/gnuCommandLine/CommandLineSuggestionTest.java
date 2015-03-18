@@ -17,12 +17,10 @@ package com.jetbrains.commandInterface.gnuCommandLine;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.util.containers.HashSet;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-
 
 import java.util.Set;
 
@@ -38,9 +36,7 @@ public final class CommandLineSuggestionTest extends PyTestCase {
    */
   public void testSuggestions() throws Exception {
     CommandTestTools.initFileType();
-    final CommandLineFile file =
-      (CommandLineFile)myFixture.configureByText(CommandLineFileType.INSTANCE, "command positional_ar --a");
-    file.setCommands(CommandTestTools.createCommands());
+    CommandTestTools.createFileByText(myFixture, "command positional_ar --a");
 
     ensureSuggestions("command", "command");
     ensureSuggestions("positional_ar", "positional_argument", "--option-no-argument", "--available-option");

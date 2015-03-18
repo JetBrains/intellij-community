@@ -212,4 +212,10 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
       myBadValues.add(o); //No such option available
     }
   }
+
+  @Nullable
+  @Override
+  public Pair<Boolean, Argument> getNextArg() {
+    return myCommand.getArgumentsInfo().getArgument(myCurrentPositionArgument);
+  }
 }
