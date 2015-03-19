@@ -150,7 +150,11 @@ public class StubSerializationHelper {
     final int id = DataInputOutputUtil.readINT(stream);
     final ObjectStubSerializer serializer = getClassById(id);
     if (serializer == null) {
-      throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
+      String externalId = null;
+      try {
+        externalId = myNameStorage.valueOf(id);
+      } catch (Throwable ignore) {}
+      throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + ", externalId:" + externalId + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
     }
 
     Stub stub = serializer.deserialize(stream, parentStub);

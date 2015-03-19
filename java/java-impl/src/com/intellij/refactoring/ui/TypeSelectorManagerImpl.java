@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -333,19 +334,24 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     typeSelected(type, getDefaultType());
   }
 
-  public static void typeSelected(final PsiType type, final PsiType defaultType) {
+  public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
+    if (defaultType == null) return;
     StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
   }
 
   private String getStatsKey() {
-    return getStatsKey(getDefaultType());
+    final PsiType defaultType = getDefaultType();
+    if (defaultType == null) {
+      return "IntroduceVariable##";
+    }
+    return getStatsKey(defaultType);
   }
 
   private static String getStatsKey(final PsiType defaultType) {
     return "IntroduceVariable##" + serialize(defaultType);
   }
 
-  private static String serialize(PsiType type) {
+  private static String serialize(@NotNull PsiType type) {
     if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return type.getCanonicalText();
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }

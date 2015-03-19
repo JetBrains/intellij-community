@@ -44,13 +44,13 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     if (height > 2) {
       g.setColor(color);
       g.fillRect(x, y, width, height);
-      DiffDrawUtil.drawShadowedLine(g2, x, x + width, y - 1, color);
-      DiffDrawUtil.drawShadowedLine(g2, x, x + width, y + height - 1, color);
+      DiffDrawUtil.drawChunkBorderLine(g2, x, x + width, y - 1, color);
+      DiffDrawUtil.drawChunkBorderLine(g2, x, x + width, y + height - 1, color);
     }
     else {
       // range is empty - insertion or deletion
       // Draw 2 pixel line in that case
-      DiffDrawUtil.drawDoubleShadowedLine(g2, x, x + width, y - 1, color);
+      DiffDrawUtil.drawDoubleChunkBorderLine(g2, x, x + width, y - 1, color);
     }
   }
 }

@@ -48,6 +48,8 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
@@ -64,8 +66,11 @@ public class PushLog extends JPanel implements DataProvider {
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private String mySyncRenderedText;
+  private final boolean myAllowSyncStrategy;
+
 
   public PushLog(Project project, final CheckedTreeNode root, final boolean allowSyncStrategy) {
+    myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
@@ -110,15 +115,18 @@ public class PushLog extends JPanel implements DataProvider {
         if (myShouldRepaint) {
           refreshNode(root);
         }
+        restoreSelection(node);
         return result;
       }
 
       @Override
       public void cancelEditing() {
+        DefaultMutableTreeNode lastSelectedPathComponent = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
         super.cancelEditing();
         if (myShouldRepaint) {
           refreshNode(root);
         }
+        restoreSelection(lastSelectedPathComponent);
       }
     };
     myTree.setUI(new MyTreeUi());
@@ -210,7 +218,7 @@ public class PushLog extends JPanel implements DataProvider {
     setDefaultEmptyText();
 
     Splitter splitter = new Splitter(false, 0.7f);
-    final JComponent syncStrategyPanel = allowSyncStrategy ? createStrategyPanel() : null;
+    final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
     myScrollPane = new JBScrollPane(myTree) {
 
       @Override
@@ -238,6 +246,12 @@ public class PushLog extends JPanel implements DataProvider {
     myTree.setRowHeight(0);
   }
 
+  private void restoreSelection(@Nullable DefaultMutableTreeNode node) {
+    if (node != null) {
+      TreeUtil.selectNode(myTree, node);
+    }
+  }
+
   private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBackground(myTree.getBackground());
@@ -246,13 +260,24 @@ public class PushLog extends JPanel implements DataProvider {
     linkLabel.setListener(new LinkListener<String>() {
       @Override
       public void linkSelected(LinkLabel aSource, String aLinkData) {
-        mySyncStrategy = true;
-        DefaultMutableTreeNode nodeToEdit = getFirstNodeToEdit();
-        if (nodeToEdit != null) {
-          myTree.startEditingAtPath(TreeUtil.getPathFromRoot(nodeToEdit));
+        if (linkLabel.isEnabled()) {
+          mySyncStrategy = true;
+          DefaultMutableTreeNode nodeToEdit = getFirstNodeToEdit();
+          if (nodeToEdit != null) {
+            myTree.startEditingAtPath(TreeUtil.getPathFromRoot(nodeToEdit));
+          }
         }
       }
     }, null);
+    myTree.addPropertyChangeListener(PushLogTreeUtil.EDIT_MODE_PROP, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        Boolean editMode = (Boolean)evt.getNewValue();
+        linkLabel.setEnabled(!editMode);
+        linkLabel.setPaintUnderline(!editMode);
+        linkLabel.repaint();
+      }
+    });
     labelPanel.add(linkLabel, BorderLayout.EAST);
     return labelPanel;
   }
@@ -392,7 +417,7 @@ public class PushLog extends JPanel implements DataProvider {
       }
       return true;
     }
-    if (e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
+    if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {
       mySyncStrategy = true;
       DefaultMutableTreeNode node = getFirstNodeToEdit();
       if (node != null) {

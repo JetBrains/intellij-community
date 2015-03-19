@@ -71,6 +71,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
@@ -423,6 +424,14 @@ public abstract class TestObject implements JavaCommandLine {
 
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
+    final String repeatMode = myConfiguration.getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      final int repeatCount = myConfiguration.getRepeatCount();
+      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
+                                 ? RepeatCount.getCountString(repeatCount) 
+                                 : repeatMode;
+      myJavaParameters.getProgramParametersList().add(countString);
+    }
     return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myEnvironment.getProject(), true));
   }
 

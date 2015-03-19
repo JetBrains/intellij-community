@@ -88,7 +88,7 @@ public class Splash extends JDialog implements StartupProgress {
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
     if (SystemInfo.isWindows) {
-      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
+      Insets insets = ScreenUtil.getScreenInsets(getGraphicsConfiguration());
       int x = insets.left + (bounds.width - insets.left - insets.right - getWidth()) / 2;
       int y = insets.top + (bounds.height - insets.top - insets.bottom - getHeight()) / 2;
       setLocation(x, y);

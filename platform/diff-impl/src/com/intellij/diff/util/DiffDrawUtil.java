@@ -42,7 +42,11 @@ public class DiffDrawUtil {
 
   @NotNull
   public static Color getDividerColor(@Nullable Editor editor) {
-    EditorColorsScheme scheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    return getDividerColorFromScheme(editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme());
+  }
+
+  @NotNull
+  public static Color getDividerColorFromScheme(@NotNull EditorColorsScheme scheme) {
     Color gutterBackground = scheme.getColor(EditorColors.GUTTER_BACKGROUND);
     if (gutterBackground == null) {
       gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
@@ -57,13 +61,13 @@ public class DiffDrawUtil {
     DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, end1, start2, end2);
   }
 
-  public static void drawDoubleShadowedLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
-    UIUtil.drawLine(g, x1, y, x2, y, null, getFramingColor(color));
+  public static void drawDoubleChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
+    UIUtil.drawLine(g, x1, y, x2, y, null, color);
     UIUtil.drawLine(g, x1, y + 1, x2, y + 1, null, color);
   }
 
-  public static void drawShadowedLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
-    UIUtil.drawLine(g, x1, y, x2, y, null, getFramingColor(color));
+  public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
+    UIUtil.drawLine(g, x1, y, x2, y, null, color);
   }
 
   public static void drawTrapezium(@NotNull Graphics2D g,
@@ -71,7 +75,7 @@ public class DiffDrawUtil {
                                    int start1, int end1,
                                    int start2, int end2,
                                    @NotNull Color color) {
-    drawTrapezium(g, x1, x2, start1, end1, start2, end2, color, getFramingColor(color));
+    drawTrapezium(g, x1, x2, start1, end1, start2, end2, color, null);
   }
 
   public static void drawTrapezium(@NotNull Graphics2D g,
@@ -80,10 +84,10 @@ public class DiffDrawUtil {
                                    int start2, int end2,
                                    @Nullable Color fillColor,
                                    @Nullable Color borderColor) {
-    final int[] xPoints = new int[]{x1, x2, x2, x1};
-    final int[] yPoints = new int[]{start1, start2, end2, end1};
-
     if (fillColor != null) {
+      final int[] xPoints = new int[]{x1, x2, x2, x1};
+      final int[] yPoints = new int[]{start1, start2, end2 + 1, end1 + 1};
+
       g.setColor(fillColor);
       g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
@@ -100,7 +104,7 @@ public class DiffDrawUtil {
                                         int start1, int end1,
                                         int start2, int end2,
                                         @NotNull Color color) {
-    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, getFramingColor(color));
+    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, null);
   }
 
   public static void drawCurveTrapezium(@NotNull Graphics2D g,
@@ -108,23 +112,24 @@ public class DiffDrawUtil {
                                         int start1, int end1,
                                         int start2, int end2,
                                         @Nullable Color fillColor,
-                                        @Nullable Color frameColor) {
+                                        @Nullable Color borderColor) {
     Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
-    Shape lowerCurve = makeCurve(x1, x2, end1, end2, false);
-
-    Path2D path = new Path2D.Double();
-    path.append(upperCurve, true);
-    path.append(lowerCurve, true);
+    Shape lowerCurve = makeCurve(x1, x2, end1 + 1, end2 + 1, false);
+    Shape lowerCurveBorder = makeCurve(x1, x2, end1, end2, false);
 
     if (fillColor != null) {
+      Path2D path = new Path2D.Double();
+      path.append(upperCurve, true);
+      path.append(lowerCurve, true);
+
       g.setColor(fillColor);
       g.fill(path);
     }
 
-    if (frameColor != null) {
-      g.setColor(frameColor);
+    if (borderColor != null) {
+      g.setColor(borderColor);
       g.draw(upperCurve);
-      g.draw(lowerCurve);
+      g.draw(lowerCurveBorder);
     }
   }
 
@@ -149,11 +154,6 @@ public class DiffDrawUtil {
   //
   // Colors
   //
-
-  @NotNull
-  public static Color getFramingColor(@NotNull Color backgroundColor) {
-    return backgroundColor.darker();
-  }
 
   @NotNull
   public static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
@@ -257,10 +257,10 @@ public class DiffDrawUtil {
         Rectangle clip = g.getClipBounds();
         x2 = clip.x + clip.width;
         if (doubleLine) {
-          drawDoubleShadowedLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
+          drawDoubleChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
         }
         else {
-          drawShadowedLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
+          drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
         }
       }
     };

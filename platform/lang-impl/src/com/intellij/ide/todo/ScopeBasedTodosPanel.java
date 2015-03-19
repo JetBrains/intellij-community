@@ -49,7 +49,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
 
   public ScopeBasedTodosPanel(final Project project, TodoPanelSettings settings, Content content){
     super(project,settings,false,content);
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     myScopes.getChildComponent().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

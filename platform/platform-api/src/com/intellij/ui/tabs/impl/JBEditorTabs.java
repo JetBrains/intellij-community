@@ -43,8 +43,8 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  private JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
-  private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
+  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
+  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
@@ -166,7 +166,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return hasUnderline() ? super.getActiveTabUnderlineHeight() : 1;
   }
 
-  JBEditorTabsPainter getPainter() {
+  protected JBEditorTabsPainter getPainter() {
     return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
   }
 

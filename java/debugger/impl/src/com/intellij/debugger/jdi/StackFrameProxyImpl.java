@@ -231,6 +231,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         LOG.info("Exception while getting this object", e);
       }
     }
+    catch (IllegalArgumentException e) {
+        LOG.info("Exception while getting this object", e);
+    }
     return myThisReference;
   }
 

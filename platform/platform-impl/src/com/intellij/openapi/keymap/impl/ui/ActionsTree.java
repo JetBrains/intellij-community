@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ import java.util.Set;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-  private static final Icon OPEN_ICON = new DefaultTreeCellRenderer().getOpenIcon();
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
 
   private final JTree myTree;
@@ -161,6 +160,7 @@ public class ActionsTree {
     Object userObject = getSelectedObject();
     if (userObject instanceof String) return (String)userObject;
     if (userObject instanceof QuickList) return ((QuickList)userObject).getActionId();
+    if (userObject instanceof Group) return ((Group)userObject).getId();
     return null;
   }
 
@@ -322,7 +322,8 @@ public class ActionsTree {
         }
       }
     }
-    return false;
+
+    return isActionChanged(group.getId(), oldKeymap, newKeymap);
   }
 
   public void selectAction(String actionId) {
@@ -473,7 +474,8 @@ public class ActionsTree {
 
   private class KeymapsRenderer extends ColoredTreeCellRenderer {
     // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
-    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final boolean showIcons = UISettings.getInstance().SHOW_ICONS_IN_MENUS;
       Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
       Icon icon = null;
@@ -531,7 +533,7 @@ public class ActionsTree {
         }
 
         if (showIcons) {
-          setIcon(ActionsTree.getEvenIcon(icon));
+          setIcon(getEvenIcon(icon));
         }
 
         Color foreground;
@@ -556,6 +558,7 @@ public class ActionsTree {
     }
   }
 
+  @SuppressWarnings("UseJBColor")
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
     Shortcut[] shortcuts = null;
     Set<String> abbreviations = null;
@@ -566,6 +569,9 @@ public class ActionsTree {
     }
     else if (data instanceof QuickList) {
       shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
+    }
+    else if (data instanceof Group) {
+      shortcuts = myKeymap.getShortcuts(((Group)data).getId());
     }
 
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);

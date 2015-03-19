@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -52,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -395,7 +393,34 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     processMethods(shapeProcessor);
     GroovyResolveResult[] candidates = shapeProcessor.getCandidates();
     assertAllAreValid(candidates);
+
+    if (hasMemberPointer()) {
+      candidates = collapseReflectedMethods(candidates);
+    }
+
     return Pair.create(shapeProcessor.hasApplicableCandidates(), candidates);
+  }
+
+  @NotNull
+  private static GroovyResolveResult[] collapseReflectedMethods(GroovyResolveResult[] candidates) {
+    List<GroovyResolveResult> filtered = ContainerUtil.filter(candidates, new Condition<GroovyResolveResult>() {
+      @Override
+      public boolean value(GroovyResolveResult result) {
+        PsiElement element = result.getElement();
+        return !(element instanceof GrReflectedMethod && hasMoreCompleteOverload((GrReflectedMethod)element));
+      }
+
+      private boolean hasMoreCompleteOverload(GrReflectedMethod element) {
+        final int skipped = element.getSkippedParameters().length;
+        return ContainerUtil.or(element.getBaseMethod().getReflectedMethods(), new Condition<GrReflectedMethod>() {
+          @Override
+          public boolean value(GrReflectedMethod method) {
+            return method.getSkippedParameters().length > skipped;
+          }
+        });
+      }
+    });
+    return filtered.toArray(new GroovyResolveResult[filtered.size()]);
   }
 
   private static void assertAllAreValid(@NotNull GroovyResolveResult[] candidates) {
@@ -839,7 +864,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   private Kind getKind() {
-    if (getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
+    if (hasMemberPointer()) return Kind.METHOD_OR_PROPERTY;
 
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {

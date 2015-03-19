@@ -143,6 +143,17 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return doRegisterToolWindow(id, parentDisposable);
   }
 
+  @NotNull
+  @Override
+  public ToolWindow registerToolWindow(@NotNull String id,
+                                       boolean canCloseContent,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode,
+                                       boolean secondary) {
+    return doRegisterToolWindow(id, parentDisposable);
+  }
+
   @Override
   public void unregisterToolWindow(@NotNull String id) {
     myToolWindows.remove(id);

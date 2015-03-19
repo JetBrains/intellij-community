@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +45,6 @@ public class PerformanceWatcher implements ApplicationComponent {
   private final Semaphore myShutdownSemaphore = new Semaphore(1);
   private ThreadMXBean myThreadMXBean;
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
-  //private DateFormat myPrintDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private File mySessionLogDir;
   private int myUnresponsiveDuration = 0;
   private File myCurHangLogDir;
@@ -209,40 +209,35 @@ public class PerformanceWatcher implements ApplicationComponent {
   public void dumpThreads(String pathPrefix, boolean millis) {
     if (shallNotWatch()) return;
 
-    final String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
-    myCurHangLogDir.mkdirs();
+    String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
+    File file = new File(myCurHangLogDir, pathPrefix + "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
 
-    File f = new File(myCurHangLogDir, pathPrefix + "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
-    FileOutputStream fos;
-    try {
-      fos = new FileOutputStream(f);
-    }
-    catch (FileNotFoundException e) {
+    File dir = file.getParentFile();
+    if (!(dir.isDirectory() || dir.mkdirs())) {
       return;
     }
-    OutputStreamWriter writer = new OutputStreamWriter(fos);
+
     try {
-      final StackTraceElement[] edtStack = ThreadDumper.dumpThreadsToFile(myThreadMXBean, writer);
-      if (edtStack != null) {
-        if (myStacktraceCommonPart == null) {
-          myStacktraceCommonPart = new ArrayList<StackTraceElement>();
-          Collections.addAll(myStacktraceCommonPart, edtStack);
-        }
-        else {
-          updateStacktraceCommonPart(edtStack);
+      OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file));
+      try {
+        StackTraceElement[] edtStack = ThreadDumper.dumpThreadsToFile(myThreadMXBean, writer);
+        if (edtStack != null) {
+          if (myStacktraceCommonPart == null) {
+            myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+          }
+          else {
+            updateStacktraceCommonPart(edtStack);
+          }
         }
       }
-    }
-    finally {
-      try {
+      finally {
         writer.close();
       }
-      catch (IOException e) {
-        // ignore
-      }
     }
+    catch (IOException ignored) { }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void dumpThreadsToConsole(String message) {
     OutputStreamWriter writer = new OutputStreamWriter(System.err);
     try {

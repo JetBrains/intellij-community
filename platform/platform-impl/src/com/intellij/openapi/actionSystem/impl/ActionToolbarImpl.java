@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Computable;
@@ -44,6 +43,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -54,6 +54,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -794,6 +796,32 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  private static class ToolbarReference extends WeakReference<ActionToolbarImpl> {
+    private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<ActionToolbarImpl>();
+    private volatile Disposable myDisposable;
+    
+    ToolbarReference(ActionToolbarImpl toolbar) {
+      super(toolbar, ourQueue);
+      processQueue();
+    }
+
+    private static void processQueue() {
+      while (true) {
+        ToolbarReference ref = (ToolbarReference)ourQueue.poll();
+        if (ref == null) break;
+        ref.disposeReference();
+      }
+    }
+
+    private void disposeReference() {
+      Disposable disposable = myDisposable;
+      if (disposable != null) {
+        myDisposable = null;
+        Disposer.dispose(disposable);
+      }
+    }
+  }
+
   private final class MySeparator extends JComponent {
     private final Dimension mySize;
 
@@ -923,13 +951,27 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myTargetComponent = component;
 
     if (myTargetComponent != null) {
-      UiNotifyConnector.doWhenFirstShown(myTargetComponent, new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          myUpdater.updateActions(false, false);
-        }
-      });
+      updateWhenFirstShown(myTargetComponent, new ToolbarReference(this));
     }
+  }
+
+  private static void updateWhenFirstShown(JComponent targetComponent, final ToolbarReference ref) {
+    Activatable activatable = new Activatable.Adapter() {
+      public void showNotify() {
+        ActionToolbarImpl toolbar = ref.get();
+        if (toolbar != null) {
+          toolbar.myUpdater.updateActions(false, false);
+        }
+      }
+    };
+
+    ref.myDisposable = new UiNotifyConnector(targetComponent, activatable) {
+      @Override
+      protected void showNotify() {
+        super.showNotify();
+        ref.disposeReference();
+      }
+    };
   }
 
   @Override

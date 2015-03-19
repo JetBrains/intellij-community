@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lex
@@ -28,7 +29,7 @@ public class AssignmentEvaluator implements Evaluator{
   private final Evaluator myLeftEvaluator;
   private final Evaluator myRightEvaluator;
 
-  public AssignmentEvaluator(Evaluator leftEvaluator, Evaluator rightEvaluator) {
+  public AssignmentEvaluator(@NotNull Evaluator leftEvaluator, @NotNull Evaluator rightEvaluator) {
     myLeftEvaluator = leftEvaluator;
     myRightEvaluator = new DisableGC(rightEvaluator);
   }

@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -41,7 +42,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
@@ -49,7 +50,12 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
 
     final CodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.GOTO_SUPER.forLanguage(language);
     if (codeInsightActionHandler != null) {
-      codeInsightActionHandler.invoke(project, editor, file);
+      DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+        @Override
+        public void run() {
+          codeInsightActionHandler.invoke(project, editor, file);
+        }
+      });
     }
   }
 

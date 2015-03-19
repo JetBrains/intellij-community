@@ -469,6 +469,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAttachmentWarning(final AbstractMessage message) {
+    if (message == null) return;
     final List<Attachment> includedAttachments = ContainerUtil.filter(message.getAttachments(), new Condition<Attachment>() {
       public boolean value(final Attachment attachment) {
         return attachment.isIncluded();

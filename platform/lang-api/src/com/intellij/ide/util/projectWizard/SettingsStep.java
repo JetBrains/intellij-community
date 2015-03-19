@@ -26,7 +26,6 @@ import javax.swing.*;
  */
 public interface SettingsStep {
 
-  @Nullable
   WizardContext getContext();
 
   void addSettingsField(@NotNull String label, @NotNull JComponent field);

@@ -66,11 +66,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  public String getAlternativeID() {
-    return "rawtypes";
-  }
-
-  @Override
   public boolean shouldInspect(PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }

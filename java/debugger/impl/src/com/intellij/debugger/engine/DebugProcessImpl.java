@@ -1077,7 +1077,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   }
                 }
               }
-              
+
               if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
                 // ensure args are not collected
                 for (Object arg : myArgs) {
@@ -1086,7 +1086,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   }
                 }
               }
-              result[0] = invokeMethod(invokePolicy, myMethod , myArgs);
+              result[0] = invokeMethod(invokePolicy, myMethod, myArgs);
             }
             finally {
               //  assertThreadSuspended(thread, context);
@@ -1123,7 +1123,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           throw (RuntimeException)exception[0];
         }
         else {
-          LOG.error("Unexpected exception " + exception[0]);
+          LOG.error("Unexpected exception", new Throwable().initCause(exception[0]));
         }
       }
 

@@ -33,7 +33,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -154,7 +153,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
     final Ref<Language> refErrorLanguage = new Ref<Language>();
     final Ref<Boolean> refProcessCanceled = new Ref<Boolean>();
-    final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
     final Ref<Boolean> anyException = new Ref<Boolean>();
 
     final Runnable findUsagesRunnable = new Runnable() {
@@ -174,9 +172,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         catch (ProcessCanceledException e) {
           refProcessCanceled.set(Boolean.TRUE);
         }
-        catch (IndexNotReadyException e) {
-          dumbModeOccurred.set(Boolean.TRUE);
-        }
         catch (Throwable e) {
           anyException.set(Boolean.TRUE);
           LOG.error(e);
@@ -193,8 +188,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
-    if (!dumbModeOccurred.isNull()) {
-      DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
+    if (DumbService.isDumb(myProject)) {
+      DumbService.getInstance(myProject).showDumbModeNotification("Refactoring is not available until indices are ready");
       return;
     }
     if (!refProcessCanceled.isNull()) {

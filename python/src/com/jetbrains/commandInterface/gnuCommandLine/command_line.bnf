@@ -5,10 +5,10 @@
 // Generate flex first, then generate lexer by flex, and then generate PSI and parser
 
 {
-   // All 3 elements should implement this class
-   mixin("command")="com.jetbrains.commandInterface.gnuCommandLine.CommandLineElement"
-   mixin("argument")="com.jetbrains.commandInterface.gnuCommandLine.CommandLineElement"
-   mixin("option")="com.jetbrains.commandInterface.gnuCommandLine.CommandLineElement"
+   // All 3 elements should extend this class
+   mixin("option|argument|command")="com.jetbrains.commandInterface.gnuCommandLine.CommandLineElement"
+   // And implement this interface
+   implements("option|argument|command")="com.jetbrains.commandInterface.gnuCommandLine.CommandLinePart"
 
    parserClass = 'com.jetbrains.commandInterface.gnuCommandLine.CommandLineParser'
    parserUtilClass="com.jetbrains.commandInterface.gnuCommandLine.CommandLineParserUtil"
@@ -36,9 +36,11 @@
 root ::= command (argument | option ) *  <<eof>>
 command ::= LITERAL_STARTS_FROM_LETTER
 option ::= (short_option_name <<bound_argument>> ? | long_option_name <<bound_argument>> ?)  {
-methods=[ getOptionName isLong ]
+methods=[ getOptionName isLong findRealOption ]
 }
 private short_option_name ::= SHORT_OPTION_NAME_TOKEN
 private long_option_name ::= LONG_OPTION_NAME_TOKEN
-argument ::= LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT
+argument ::= LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT {
+methods=[ findOptionForOptionArgument findRealArgument findBestHelpText ]
+}
 

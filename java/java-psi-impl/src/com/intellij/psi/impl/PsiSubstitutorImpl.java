@@ -141,6 +141,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     @Override
+    public PsiType visitType(PsiType type) {
+      return null;
+    }
+
+    @Override
     public PsiType visitWildcardType(PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       if (bound == null) {

@@ -138,24 +138,21 @@ public class SrcFileAnnotator implements Disposable {
     }
   }
 
-  private static
   @NotNull
-  String[] getCoveredLines(@NotNull byte[] oldContent, VirtualFile vFile) {
+  private static String[] getCoveredLines(@NotNull byte[] oldContent, VirtualFile vFile) {
     final String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, vFile, false, false).toString();
     return LineTokenizer.tokenize(text, false);
   }
 
-  private
-  @NotNull
-  String[] getUpToDateLines() {
+  @NotNull private static String[] getUpToDateLines(final Document document) {
     final Ref<String[]> linesRef = new Ref<String[]>();
     final Runnable runnable = new Runnable() {
       public void run() {
-        final int lineCount = myDocument.getLineCount();
+        final int lineCount = document.getLineCount();
         final String[] lines = new String[lineCount];
-        final CharSequence chars = myDocument.getCharsSequence();
+        final CharSequence chars = document.getCharsSequence();
         for (int i = 0; i < lineCount; i++) {
-          lines[i] = chars.subSequence(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i)).toString();
+          lines[i] = chars.subSequence(document.getLineStartOffset(i), document.getLineEndOffset(i)).toString();
         }
         linesRef.set(lines);
       }
@@ -230,7 +227,9 @@ public class SrcFileAnnotator implements Disposable {
 
     if (oldContent == null) return null;
     String[] coveredLines = getCoveredLines(oldContent, f);
-    String[] currentLines = getUpToDateLines();
+    final Document document = myDocument;
+    if (document == null) return null;
+    String[] currentLines = getUpToDateLines(document);
 
     String[] oldLines = oldToNew ? coveredLines : currentLines;
     String[] newLines = oldToNew ? currentLines : coveredLines;
@@ -285,8 +284,9 @@ public class SrcFileAnnotator implements Disposable {
     // Store the values of myFile and myEditor in local variables to avoid an NPE after dispose() has been called in the EDT.
     final PsiFile psiFile = myFile;
     final Editor editor = myEditor;
-    if (editor == null || psiFile == null) return;
-    final MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
+    final Document document = myDocument;
+    if (editor == null || psiFile == null || document == null) return;
+    final MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     final ProjectData data = suite.getCoverageData();
     if (data == null) {
@@ -386,7 +386,7 @@ public class SrcFileAnnotator implements Disposable {
                   // use id mapping
                   lineNumberInCurrent = line;
                 }
-                LOG.assertTrue(lineNumberInCurrent < myDocument.getLineCount());
+                LOG.assertTrue(lineNumberInCurrent < document.getLineCount());
                 executableLines.put(line, (LineData)lineData);
   
                 classLines.put(line, postProcessedLines);
@@ -394,7 +394,7 @@ public class SrcFileAnnotator implements Disposable {
   
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
-                    if (myDocument == null || lineNumberInCurrent >= myDocument.getLineCount()) return;
+                    if (lineNumberInCurrent >= document.getLineCount()) return;
                     final RangeHighlighter highlighter =
                       createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
                                              qualifiedName, line, lineNumberInCurrent, suite, postProcessedLines);
@@ -443,10 +443,10 @@ public class SrcFileAnnotator implements Disposable {
         List<RangeHighlighter> rangeHighlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
         if (rangeHighlighters == null) rangeHighlighters = new ArrayList<RangeHighlighter>();
         int offset = e.getOffset();
-        final int lineNumber = myDocument.getLineNumber(offset);
-        final int lastLineNumber = myDocument.getLineNumber(offset + e.getNewLength());
+        final int lineNumber = document.getLineNumber(offset);
+        final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
         final TextRange changeRange =
-          new TextRange(myDocument.getLineStartOffset(lineNumber), myDocument.getLineEndOffset(lastLineNumber));
+          new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lastLineNumber));
         for (Iterator<RangeHighlighter> it = rangeHighlighters.iterator(); it.hasNext(); ) {
           final RangeHighlighter highlighter = it.next();
           if (!highlighter.isValid() || TextRange.create(highlighter).intersects(changeRange)) {
@@ -464,7 +464,7 @@ public class SrcFileAnnotator implements Disposable {
               if (newToOldLineMapping != null) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
-                    if (myEditor == null) return;
+                    if (editor.isDisposed()) return;
                     for (int line = lineNumber; line <= lastLineNumber; line++) {
                       final int oldLineNumber = newToOldLineMapping.get(line);
                       final LineData lineData = executableLines.get(oldLineNumber);
@@ -485,7 +485,7 @@ public class SrcFileAnnotator implements Disposable {
         }
       }
     };
-    myDocument.addDocumentListener(documentListener);
+    document.addDocumentListener(documentListener);
     editor.putUserData(COVERAGE_DOCUMENT_LISTENER, documentListener);
   }
 

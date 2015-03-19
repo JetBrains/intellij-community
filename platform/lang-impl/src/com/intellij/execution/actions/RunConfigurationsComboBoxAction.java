@@ -23,7 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SizedIcon;
@@ -66,18 +66,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         presentation.setEnabled(false);
       }
       else {
-        if (DumbService.getInstance(project).isDumb()) {
-          presentation.setEnabled(false);
-          presentation.setText("");
-          presentation.setIcon(null);
-        }
-        else {
-          updateButton(ExecutionTargetManager.getActiveTarget(project),
-                       RunManagerEx.getInstanceEx(project).getSelectedConfiguration(),
-                       project,
-                       presentation);
-          presentation.setEnabled(true);
-        }
+        updateButton(ExecutionTargetManager.getActiveTarget(project),
+                     RunManagerEx.getInstanceEx(project).getSelectedConfiguration(),
+                     project,
+                     presentation);
+        presentation.setEnabled(true);
       }
     }
     catch (IndexNotReadyException e1) {
@@ -168,7 +161,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return allActionsGroup;
   }
 
-  private static class SaveTemporaryAction extends AnAction {
+  private static class SaveTemporaryAction extends DumbAwareAction {
 
     public SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
@@ -250,7 +243,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static class SelectConfigAction extends AnAction {
+  private static class SelectConfigAction extends DumbAwareAction {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
 

@@ -22,6 +22,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.commandInterface.gnuCommandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.gnuCommandLine.CommandLinePart;
 import com.jetbrains.commandInterface.gnuCommandLine.ValidationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineFile extends PsiFileBase {
+public final class CommandLineFile extends PsiFileBase implements CommandLinePart {
   private static final Key<List<Command>> COMMANDS = Key.create("COMMANDS");
 
   public CommandLineFile(final FileViewProvider provider) {
@@ -47,6 +48,12 @@ public final class CommandLineFile extends PsiFileBase {
   public FileType getFileType() {
 
     return getViewProvider().getVirtualFile().getFileType();
+  }
+
+  @Nullable
+  @Override
+  public CommandLineFile getCommandLineFile() {
+    return this;
   }
 
   /**
@@ -73,6 +80,7 @@ public final class CommandLineFile extends PsiFileBase {
    *
    * @return Command if found and available, or null if command can't be parsed or bad command.
    */
+  @Override
   @Nullable
   public Command findRealCommand() {
     final String command = getCommand();
