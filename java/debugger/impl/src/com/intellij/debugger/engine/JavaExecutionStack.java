@@ -58,7 +58,7 @@ public class JavaExecutionStack extends XExecutionStack {
     if (current) {
       return AllIcons.Debugger.ThreadCurrent;
     }
-    else if (threadProxy.getThreadReference().isAtBreakpoint()) {
+    else if (threadProxy.isAtBreakpoint()) {
       return AllIcons.Debugger.ThreadAtBreakpoint;
     }
     else if (threadProxy.isSuspended()) {
