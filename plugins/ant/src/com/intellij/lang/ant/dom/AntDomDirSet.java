@@ -62,7 +62,7 @@ public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
     }
 
     if (singleFile != null && singleFile.isDirectory()) {
-      Collections.singletonList(singleFile);
+      return Collections.singletonList(singleFile);
     }
 
     return Collections.emptyList();
