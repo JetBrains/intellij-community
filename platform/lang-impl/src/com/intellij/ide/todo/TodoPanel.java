@@ -66,7 +66,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
@@ -424,11 +426,18 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     alarm.addRequest(new Runnable() {
       @Override
       public void run() {
+        final Set<VirtualFile> files = new HashSet<VirtualFile>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
             try {
-              myTodoTreeBuilder.rebuildCache();
+              myTodoTreeBuilder.collectFiles(new Processor<VirtualFile>() {
+                @Override
+                public boolean process(VirtualFile virtualFile) {
+                  files.add(virtualFile);
+                  return true;
+                }
+              });
             }
             catch (IndexNotReadyException ignore) {
             }
@@ -437,6 +446,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         final Runnable runnable = new Runnable() {
           @Override
           public void run() {
+            myTodoTreeBuilder.rebuildCache(files);
             updateTree();
           }
         };
