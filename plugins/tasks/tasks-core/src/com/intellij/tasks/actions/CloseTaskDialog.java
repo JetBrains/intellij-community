@@ -66,8 +66,9 @@ public class CloseTaskDialog extends DialogWrapper {
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
 
     if (myTaskManager.isVcsEnabled()) {
-      myCommitChanges.setEnabled(!task.getChangeLists().isEmpty());
-      myCommitChanges.setSelected(myTaskManager.getState().commitChanges);
+      boolean hasChanges = !task.getChangeLists().isEmpty();
+      myCommitChanges.setEnabled(hasChanges);
+      myCommitChanges.setSelected(hasChanges && myTaskManager.getState().commitChanges);
       if (myTaskManager.getActiveVcs().getType() == VcsType.distributed) {
         boolean enabled = !task.getBranches(true).isEmpty() && !task.getBranches(false).isEmpty();
         myMergeBranches.setEnabled(enabled);
