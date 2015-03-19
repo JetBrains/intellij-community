@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.*;
 import com.jetbrains.commandInterface.command.Option;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,9 @@ public final class CommandLineArgumentReference extends CommandLineElementRefere
       return EMPTY_ARRAY;
     }
     final Collection<LookupElement> result = new ArrayList<LookupElement>();
-    final Collection<String> argumentValues = validationResult.getPossibleArgumentValues(getElement());
+    final Argument argument = validationResult.getArgument(getElement());
+
+    final Collection<String> argumentValues = (argument != null ? argument.getAvailableValues() : null);
 
     // priority is used to display args before options
     if (argumentValues != null) {
@@ -62,7 +65,7 @@ public final class CommandLineArgumentReference extends CommandLineElementRefere
     }
 
 
-    if (!validationResult.isOptionArgument(getElement())) {
+    if (validationResult.getOptionForOptionArgument(getElement()) == null) { // If not option argument
       for (final Option option : validationResult.getUnusedOptions()) {
         for (final String value : option.getAllNames()) {
           result.add(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(value).withTailText(" :" + option.getHelp()), 0));

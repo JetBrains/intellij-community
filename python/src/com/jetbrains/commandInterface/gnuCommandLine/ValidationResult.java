@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * TODO: This is not validation result, but actually parsing result. So, it has to be renamed
  * Result of command line validation
  *
  * @author Ilya.Kazakevich
@@ -50,14 +51,18 @@ public interface ValidationResult {
   Collection<Option> getUnusedOptions();
 
   /**
+   * Returns option for argument if argument is option argument. Returns null otherwise (for positional arguments etc)
    * @param argument argument to check
-   * @return true if argument is option argument (position argument otherwise)
+   * @return option or null if no option associated with this argument
    */
-  boolean isOptionArgument(@NotNull CommandLineArgument argument);
+  @Nullable
+  Option getOptionForOptionArgument(@NotNull CommandLineArgument argument);
+
 
   /**
-   * @param argument argument to check
-   * @return list of available argument values or null if unknown
+   * Returns real command argument by psi element
+   * @param commandLineArgument psi element
+   * @return real argument (positional or optional) or null if can't be find
    */
   @Nullable
   Collection<String> getPossibleArgumentValues(@NotNull CommandLineArgument argument);
@@ -67,4 +72,5 @@ public interface ValidationResult {
    */
   @Nullable
   Pair<Boolean, Argument> getNextArg();
+  Argument getArgument(@NotNull CommandLineArgument commandLineArgument);
 }

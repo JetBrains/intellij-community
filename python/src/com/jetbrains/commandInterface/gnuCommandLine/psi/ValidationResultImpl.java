@@ -67,15 +67,15 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   @NotNull
   private final Collection<CommandLineArgument> myExcessArguments = new ArrayList<CommandLineArgument>();
   /**
-   * Possible values for argument
+   * Map of arguments known to be option arguments [PSI argument -> option]
    */
   @NotNull
-  private final Map<CommandLineArgument, List<String>> myPossibleValues = new HashMap<CommandLineArgument, List<String>>();
+  private final Map<CommandLineArgument, Option> myOptionArguments = new HashMap<CommandLineArgument, Option>();
   /**
-   * List of arguments known to be option arguments
+   * PSI argument -> argument map
    */
   @NotNull
-  private final Collection<CommandLineArgument> myOptionArguments = new ArrayList<CommandLineArgument>();
+  private final Map<CommandLineArgument, Argument> myArguments = new HashMap<CommandLineArgument, Argument>();
 
   private ValidationResultImpl(@NotNull final Command command) {
     for (final Option option : command.getOptions()) {
@@ -104,14 +104,15 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
 
 
   @Override
-  public boolean isOptionArgument(@NotNull final CommandLineArgument argument) {
-    return myOptionArguments.contains(argument);
+  @Nullable
+  public Option getOptionForOptionArgument(@NotNull final CommandLineArgument argument) {
+    return myOptionArguments.get(argument);
   }
 
-  @Override
   @Nullable
-  public Collection<String> getPossibleArgumentValues(@NotNull final CommandLineArgument argument) {
-    return myPossibleValues.get(argument);
+  @Override
+  public Argument getArgument(final @NotNull CommandLineArgument commandLineArgument) {
+    return myArguments.get(commandLineArgument);
   }
 
   /**
@@ -162,7 +163,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
       final Argument argumentInfo = argumentAndQuantity.getSecond();
       processArgument(o, argumentInfo);
 
-      myOptionArguments.add(o);
+      myOptionArguments.put(o, myCurrentOptionAndArgsLeft.first);
     }
     else if (myCurrentOptionAndArgsLeft.second == 0) {
       myCurrentOptionAndArgsLeft = null;
@@ -171,10 +172,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   }
 
   private void processArgument(@NotNull final CommandLineArgument o, final Argument argumentInfo) {
-    final List<String> availableValues = argumentInfo.getAvailableValues();
-    if (availableValues != null) {
-      myPossibleValues.put(o, availableValues);
-    }
+    myArguments.put(o, argumentInfo);
     if (!argumentInfo.isValid(o.getText())) {
       myBadValues.add(o);
     }
