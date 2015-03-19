@@ -144,6 +144,9 @@ class ExportToHTMLManager {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
+        if (!psiFile.isValid()) {
+          return;
+        }
         TreeMap<Integer, PsiReference> refMap = null;
         for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
           final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
@@ -185,12 +188,17 @@ class ExportToHTMLManager {
                                        ArrayList<PsiFile> filesList,
                                        boolean isRecursive,
                                        final String outputDirectoryName) throws FileNotFoundException {
+    if (!psiDirectory.isValid()) {
+      return;
+    }
     PsiFile[] files = psiDirectory.getFiles();
     for (PsiFile file : files) {
-      filesList.add(file);
+      if (file.isValid()) {
+        filesList.add(file);
+      }
     }
     generateIndexHtml(psiDirectory, isRecursive, outputDirectoryName);
-    if(isRecursive) {
+    if (isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
       for (PsiDirectory directory : directories) {
         addToPsiFileList(directory, filesList, isRecursive, outputDirectoryName);
