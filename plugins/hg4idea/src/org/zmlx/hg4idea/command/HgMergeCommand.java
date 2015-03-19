@@ -29,6 +29,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.lang.reflect.InvocationTargetException;
@@ -108,7 +109,13 @@ public class HgMergeCommand {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          hgMergeCommand.merge();
+          HgCommandResult result = hgMergeCommand.merge();
+          if (HgErrorUtil.isAncestorMergeError(result)) {
+            //skip and notify
+            VcsNotifier.getInstance(project).notifyMinorWarning("Merging is skipped for " + repositoryRoot.getPresentableName(),
+                                                                "Merging with a working directory ancestor has no effect");
+            return;
+          }
           new HgConflictResolver(project, updatedFiles).resolve(repositoryRoot);
           if (HgConflictResolver.findConflicts(project, repositoryRoot).isEmpty() && onSuccessHandler != null) {
             onSuccessHandler.run();    // for example commit changes
