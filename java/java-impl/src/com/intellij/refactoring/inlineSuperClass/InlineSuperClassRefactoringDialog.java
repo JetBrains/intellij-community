@@ -30,6 +30,7 @@ import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,6 +64,12 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
   @Override
   protected JComponent createNorthPanel() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "Inline_Super_Class";
   }
 
   protected JComponent createCenterPanel() {
