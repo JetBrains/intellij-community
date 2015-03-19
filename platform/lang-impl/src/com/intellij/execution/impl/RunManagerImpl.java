@@ -25,7 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -705,6 +705,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       RunnerAndConfigurationSettings configurationSettings;
       try {
         configurationSettings = loadConfiguration(element, false);
+      }
+      catch (ProcessCanceledException e) {
+        configurationSettings = null;
       }
       catch (Throwable e) {
         LOG.error(e);
