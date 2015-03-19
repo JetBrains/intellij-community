@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.TreeMap;
 
 class ExportToHTMLManager {
@@ -192,11 +193,7 @@ class ExportToHTMLManager {
       return;
     }
     PsiFile[] files = psiDirectory.getFiles();
-    for (PsiFile file : files) {
-      if (file.isValid()) {
-        filesList.add(file);
-      }
-    }
+    Collections.addAll(filesList, files);
     generateIndexHtml(psiDirectory, isRecursive, outputDirectoryName);
     if (isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
