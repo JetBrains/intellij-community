@@ -102,7 +102,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
     if (editor != null) {
       final Document document = editor.getDocument();
       targetContainer = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (targetContainer instanceof PyFile) {
+      if (targetContainer instanceof PyFile && selectionSpansMultipleLines(editor)) {
         final List<PyElement> moduleMembers = collectAllMovableElementsInSelection(editor, (PyFile)targetContainer);
         if (moduleMembers.isEmpty()) {
           showBadSelectionErrorHint(project, editor);
@@ -134,6 +134,12 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
                                         RefactoringBundle.message("error.title"), null);
   }
 
+  private static boolean selectionSpansMultipleLines(@NotNull Editor editor) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final Document document = editor.getDocument();
+    return document.getLineNumber(selectionModel.getSelectionStart()) != document.getLineNumber(selectionModel.getSelectionEnd());
+  }
+
   @NotNull
   private static List<PyElement> collectAllMovableElementsInSelection(@NotNull Editor editor, @NotNull PyFile pyFile) {
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -143,7 +149,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
       @Override
       public boolean value(PyElement member) {
         final PsiElement body = PyMoveModuleMembersHelper.expandNamedElementBody(((PsiNamedElement)member));
-        return body != null && body.getTextRange().intersects(selectionRange);
+        return body != null && selectionRange.contains(body.getTextRange());
       }
     });
   }
