@@ -15,6 +15,7 @@
  */
 package com.jetbrains.commandInterface.gnuCommandLine;
 
+import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Ilya.Kazakevich
  */
-public interface CommandLinePart {
+public interface CommandLinePart extends PsiElement {
   /**
    * @return command associated with this command line (if any)
    */
@@ -34,6 +35,7 @@ public interface CommandLinePart {
   /**
    * @return command line file where this part sits
    */
+  @SuppressWarnings("ClassReferencesSubclass") // Although referencing child is bad idea, this hierarchy is coupled tightly and considered to be solid part
   @Nullable
   CommandLineFile getCommandLineFile();
 }

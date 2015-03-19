@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.jetbrains.commandInterface.gnuCommandLine.CommandLineElementTypes.*;
 import com.jetbrains.commandInterface.gnuCommandLine.CommandLineElement;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.*;
+import com.jetbrains.commandInterface.command.Option;
 
 public class CommandLineOptionImpl extends CommandLineElement implements CommandLineOption {
 
@@ -42,6 +43,11 @@ public class CommandLineOptionImpl extends CommandLineElement implements Command
 
   public boolean isLong() {
     return CommandLinePsiImplUtils.isLong(this);
+  }
+
+  @Nullable
+  public Option findRealOption() {
+    return CommandLinePsiImplUtils.findRealOption(this);
   }
 
 }

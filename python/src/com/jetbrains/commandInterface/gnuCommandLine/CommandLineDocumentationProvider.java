@@ -58,54 +58,11 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
       return null;
     }
 
-    final Ref<String> resultText = new Ref<String>();
 
-    commandLineElement.accept(new CommandLineVisitor() {
-      @Override
-      public void visitArgument(@NotNull CommandLineArgument o) {
-        super.visitArgument(o);
-        final CommandLineFile commandLineFile = commandLinePart.getCommandLineFile();
-        if (commandLineFile == null) {
-          return;
-        }
-        // Get argument by argument
-        final ValidationResult validationResult = commandLineFile.getValidationResult();
-        if (validationResult == null) {
-          return;
-        }
+    final MyCommandHelpObtainer helpObtainer = new MyCommandHelpObtainer(realCommand);
+    commandLineElement.accept(helpObtainer);
 
-        final Option option = validationResult.getOptionForOptionArgument(o);
-        if (option != null) {
-          // Option argument should be documented by option
-          resultText.set(option.getHelp());
-          return;
-        }
-
-        // Probably positional
-        final Argument argument = validationResult.getArgument(o);
-        if (argument != null) {
-          resultText.set(argument.getHelpText());
-        }
-      }
-
-      @Override
-      public void visitCommand(@NotNull CommandLineCommand o) {
-        super.visitCommand(o);
-        resultText.set(realCommand.getHelp(false));
-      }
-
-      @Override
-      public void visitOption(@NotNull CommandLineOption o) {
-        super.visitOption(o);
-        for (Option option : realCommand.getOptions()) {
-          if (option.getAllNames().contains(o.getOptionName())) {
-            resultText.set(option.getHelp());
-            return;
-          }
-        }
-      }
-    });
-    final String help = resultText.get();
+    final String help = helpObtainer.myResultText;
     // For some reason we can't return empty sting (leads to "fetchig doc" string)
     return (StringUtil.isEmptyOrSpaces(help) ? null : help);
   }
@@ -113,13 +70,47 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
 
   @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
-                                                  @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+  public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
+                                                  @NotNull final PsiFile file,
+                                                  @Nullable final PsiElement contextElement) {
     final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(contextElement, CommandLineElement.class);
     if (commandLineElement != null) {
       return commandLineElement;
     }
     return PyUtil.as(file, CommandLineFile.class);
+  }
+
+  /**
+   * Fetches text from command line part as visitor
+   */
+  private static final class MyCommandHelpObtainer extends CommandLineVisitor {
+    private String myResultText;
+    private final Command myRealCommand;
+
+    private MyCommandHelpObtainer(@NotNull final Command realCommand) {
+      myRealCommand = realCommand;
+    }
+
+    @Override
+    public void visitArgument(@NotNull final CommandLineArgument o) {
+      super.visitArgument(o);
+      myResultText = o.findBestHelpText();
+    }
+
+    @Override
+    public void visitCommand(@NotNull final CommandLineCommand o) {
+      super.visitCommand(o);
+      myResultText = myRealCommand.getHelp(false);
+    }
+
+    @Override
+    public void visitOption(@NotNull final CommandLineOption o) {
+      super.visitOption(o);
+      final Option option = o.findRealOption();
+      if (option == null) {
+        return;
+      }
+      myResultText = option.getHelp();
+    }
   }
 }
