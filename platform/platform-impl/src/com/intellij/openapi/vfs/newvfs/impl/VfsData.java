@@ -288,6 +288,10 @@ public class VfsData {
       return myAdoptedNames == null ? Collections.<String>emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
     }
 
+    void clearAdoptedNames() {
+      myAdoptedNames = null;
+    }
+
     @Override
     public String toString() {
       return "DirectoryData{" +
