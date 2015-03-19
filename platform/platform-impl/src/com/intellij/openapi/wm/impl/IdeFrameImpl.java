@@ -260,7 +260,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   }
 
   public StatusBar getStatusBar() {
-    return ((IdeRootPane)getRootPane()).getStatusBar();
+    return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
   public void setTitle(final String title) {
