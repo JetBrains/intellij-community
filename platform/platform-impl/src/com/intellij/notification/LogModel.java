@@ -53,13 +53,13 @@ public class LogModel implements Disposable {
   void addNotification(Notification notification) {
     long stamp = System.currentTimeMillis();
     NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
+    myStamps.put(notification, stamp);
+    myStatuses.put(notification, EventLog.formatForLog(notification, "").status);
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
         myNotifications.add(notification);
       }
     }
-    myStamps.put(notification, stamp);
-    myStatuses.put(notification, EventLog.formatForLog(notification, "").status);
     setStatusMessage(notification, stamp);
     fireModelChanged();
   }
