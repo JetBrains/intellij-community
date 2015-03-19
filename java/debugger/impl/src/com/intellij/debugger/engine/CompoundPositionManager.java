@@ -71,7 +71,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       }
       catch (NoDataException ignored) {}
       catch (VMDisconnectedException e) {throw e;}
-      catch (InternalException ignored) {}
+      catch (InternalException e) {LOG.info(e);}
       catch (ProcessCanceledException ignored) {}
       catch (Exception e) {LOG.error(e);}
       catch (AssertionError e) {LOG.error(e);}
