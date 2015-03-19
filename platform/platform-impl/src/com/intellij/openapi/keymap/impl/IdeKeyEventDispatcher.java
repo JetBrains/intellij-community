@@ -575,9 +575,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
 
-      if (action instanceof ActionGroup) {
+      DataContext ctx = actionEvent.getDataContext();
+      if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
         ActionGroup group = (ActionGroup)action;
-        DataContext ctx = actionEvent.getDataContext();
         JBPopupFactory.getInstance()
           .createActionGroupPopup(group.getTemplatePresentation().getText(), group, ctx, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
           .showInBestPositionFor(ctx);
