@@ -50,7 +50,7 @@ public class CloseTaskAction extends BaseTaskAction {
           repository.setPreferredCloseTaskState(taskState);
         }
         catch (Exception e1) {
-          Messages.showErrorDialog(project, e1.getMessage(), "Cannot Resolve Issue");
+          Messages.showErrorDialog(project, e1.getMessage(), "Cannot Set State For Issue");
         }
       }
       if (dialog.isCommitChanges()) {

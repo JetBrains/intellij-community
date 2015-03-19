@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -172,6 +173,7 @@ public abstract class SourcePosition implements Navigatable{
           document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file.getOriginalFile());
         }
       }
+      catch (ProcessCanceledException ignored) {}
       catch (Throwable e) {
         LOG.error(e);
       }

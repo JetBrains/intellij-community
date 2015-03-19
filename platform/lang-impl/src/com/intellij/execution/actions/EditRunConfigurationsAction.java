@@ -25,7 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
 
-public class EditRunConfigurationsAction extends AnAction{
+public class EditRunConfigurationsAction extends AnAction {
   public EditRunConfigurationsAction() {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(AllIcons.Actions.EditSource,0,2,2);

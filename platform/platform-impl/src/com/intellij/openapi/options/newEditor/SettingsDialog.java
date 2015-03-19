@@ -123,7 +123,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     if (reset != null && myResetButtonNeeded) {
       actions.add(reset);
     }
-    actions.add(getHelpAction());
+    String topic = myEditor.getHelpTopic();
+    if (topic != null) {
+      actions.add(getHelpAction());
+    }
     return actions.toArray(new Action[actions.size()]);
   }
 

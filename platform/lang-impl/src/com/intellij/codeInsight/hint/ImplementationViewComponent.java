@@ -24,8 +24,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -143,8 +141,7 @@ public class ImplementationViewComponent extends JPanel {
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
-    
-    setBackgroundColor(myEditor);
+    ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
 
     final EditorSettings settings = myEditor.getSettings();
     settings.setAdditionalLinesCount(1);
@@ -245,15 +242,6 @@ public class ImplementationViewComponent extends JPanel {
         return true;
       }
     });
-  }
-
-  private static void setBackgroundColor(Editor editor) {
-    EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
-    if (color == null) {
-      color = colorsScheme.getDefaultBackground();
-    }
-    ((EditorEx)editor).setBackgroundColor(color);
   }
 
   private void updateRenderer(final Project project) {

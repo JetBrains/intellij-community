@@ -204,9 +204,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         addToResults(new Place(shreds), null);
         return;
       }
-      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-      //todo restore
-      //assert !documentManager.getUncommittedDocumentsUnsafe().contains(myHostDocument) : "document is uncommitted: "+myHostDocument;
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
       Place place = new Place(shreds);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);

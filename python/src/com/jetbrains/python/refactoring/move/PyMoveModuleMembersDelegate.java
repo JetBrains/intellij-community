@@ -19,7 +19,10 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -31,6 +34,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +49,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer) {
     for (PsiElement element : elements) {
-      if (!PyMoveModuleMemberUtil.isMovableModuleMember(element)) {
+      if (!PyMoveModuleMembersHelper.isMovableModuleMember(element)) {
         return false;
       }
     }
@@ -58,7 +63,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
                      @Nullable MoveCallback callback) {
     final List<PsiNamedElement> initialElements = Lists.newArrayList();
     for (PsiElement element : elements) {
-      final PsiNamedElement e = getElementToMove(element);
+      final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
       if (e == null) {
         return;
       }
@@ -93,30 +98,59 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
                            @Nullable DataContext dataContext,
                            @Nullable PsiReference reference,
                            @Nullable Editor editor) {
-    final PsiNamedElement e = getElementToMove(element);
-    if (e != null && PyMoveModuleMemberUtil.isMovableElement(e)) {
-      if (PyUtil.isTopLevel(e)) {
-        PsiElement targetContainer = null;
-        if (editor != null) {
-          final Document document = editor.getDocument();
-          targetContainer = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile targetContainer = null;
+    if (editor != null) {
+      final Document document = editor.getDocument();
+      targetContainer = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (targetContainer instanceof PyFile && selectionSpansMultipleLines(editor)) {
+        final List<PyElement> moduleMembers = collectAllMovableElementsInSelection(editor, (PyFile)targetContainer);
+        if (moduleMembers.isEmpty()) {
+          showBadSelectionErrorHint(project, editor);
         }
-        doMove(project, new PsiElement[] {e}, targetContainer, null);
+        else {
+          doMove(project, ContainerUtil.findAllAsArray(moduleMembers, PsiNamedElement.class), targetContainer, null);
+        }
+        return true;
+      }
+    }
+
+    // Fallback to the old way to select single element to move
+    final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
+    if (e != null && PyMoveModuleMembersHelper.isMovableElement(e)) {
+      if (PyUtil.isTopLevel(e)) {
+        doMove(project, new PsiElement[]{e}, targetContainer, null);
       }
       else {
-        CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.move.module.members.error.selection"),
-                                            RefactoringBundle.message("error.title"), null);
+        showBadSelectionErrorHint(project, editor);
       }
       return true;
     }
     return false;
   }
 
-  @Nullable
-  public static PsiNamedElement getElementToMove(@NotNull PsiElement element) {
-    if (element instanceof PsiNamedElement) {
-      return (PsiNamedElement)element;
-    }
-    return null;
+  private static void showBadSelectionErrorHint(@NotNull Project project, @Nullable Editor editor) {
+    CommonRefactoringUtil.showErrorHint(project, editor,
+                                        PyBundle.message("refactoring.move.module.members.error.selection"),
+                                        RefactoringBundle.message("error.title"), null);
+  }
+
+  private static boolean selectionSpansMultipleLines(@NotNull Editor editor) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final Document document = editor.getDocument();
+    return document.getLineNumber(selectionModel.getSelectionStart()) != document.getLineNumber(selectionModel.getSelectionEnd());
+  }
+
+  @NotNull
+  private static List<PyElement> collectAllMovableElementsInSelection(@NotNull Editor editor, @NotNull PyFile pyFile) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
+    return ContainerUtil.filter(members, new Condition<PyElement>() {
+      @Override
+      public boolean value(PyElement member) {
+        final PsiElement body = PyMoveModuleMembersHelper.expandNamedElementBody(((PsiNamedElement)member));
+        return body != null && selectionRange.contains(body.getTextRange());
+      }
+    });
   }
 }

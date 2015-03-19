@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,8 +242,6 @@ class DesignDropTargetListener implements DropTargetListener {
 
   private boolean processDrop(final DraggedComponentList dcl, final Point dropPoint, final int dropAction) {
     myEditor.getActiveDecorationLayer().removeFeedback();
-    final int dropX = dropPoint.x;
-    final int dropY = dropPoint.y;
     final ArrayList<RadComponent> dclComponents = dcl.getComponents();
     final int componentCount = dclComponents.size();
     ComponentDropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), dropPoint);
@@ -279,14 +277,6 @@ class DesignDropTargetListener implements DropTargetListener {
         originalParents [i].removeComponent(dclComponents.get(i));
       }
       droppedComponents = dclComponents;
-    }
-
-    final int[] dx = new int[componentCount];
-    final int[] dy = new int[componentCount];
-    for (int i = 0; i < componentCount; i++) {
-      final RadComponent component = myDraggedComponentsCopy.get(i);
-      dx[i] = component.getX() - dropX;
-      dy[i] = component.getY() - dropY;
     }
 
     final RadComponent[] components = droppedComponents.toArray(new RadComponent[componentCount]);

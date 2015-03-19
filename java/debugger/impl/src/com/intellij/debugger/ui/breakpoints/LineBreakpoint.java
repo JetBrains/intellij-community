@@ -419,7 +419,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (printFullTrace) {
       builder.append(DebuggerBundle.message(
         "status.line.breakpoint.reached.full.trace",
-        location.declaringType().name() + "." + location.method().name())
+        DebuggerUtilsEx.getLocationMethodQName(location))
       );
       try {
         final List<StackFrame> frames = event.thread().frames();
@@ -432,7 +432,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     else {
       builder.append(DebuggerBundle.message(
         "status.line.breakpoint.reached",
-        location.declaringType().name() + "." + location.method().name(),
+        DebuggerUtilsEx.getLocationMethodQName(location),
         sourceName,
         getLineIndex() + 1
       ));

@@ -41,6 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -330,6 +331,19 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         setForkMode(mode);
       }
     }
+    final String count = element.getAttributeValue("repeat_count");
+    if (count != null) {
+      try {
+        setRepeatCount(Integer.parseInt(count));
+      }
+      catch (NumberFormatException e) {
+        setRepeatCount(1);
+      }
+    }
+    final String repeatMode = element.getAttributeValue("repeat_mode");
+    if (repeatMode != null) {
+      setRepeatMode(repeatMode);
+    }
     final Element dirNameElement = element.getChild("dir");
     if (dirNameElement != null) {
       final String dirName = dirNameElement.getAttributeValue("value");
@@ -377,6 +391,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       final Element forkModeElement = new Element("fork_mode");
       forkModeElement.setAttribute("value", forkMode);
       element.addContent(forkModeElement);
+    }
+    if (getRepeatCount() != 1) {
+      element.setAttribute("repeat_count", String.valueOf(getRepeatCount()));
+    }
+    final String repeatMode = getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      element.setAttribute("repeat_mode", repeatMode);
     }
     element.addContent(patternsElement);
   }
@@ -430,6 +451,22 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     setGeneratedName();
   }
 
+  public void setRepeatCount(int repeatCount) {
+    myData.REPEAT_COUNT = repeatCount;
+  }
+
+  public int getRepeatCount() {
+    return myData.REPEAT_COUNT;
+  }
+
+  public void setRepeatMode(String repeatMode) {
+    myData.REPEAT_MODE = repeatMode;
+  }
+
+  public String getRepeatMode() {
+    return myData.REPEAT_MODE;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     private String DIR_NAME;
@@ -441,6 +478,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
     private String FORK_MODE = "none";
+    private int REPEAT_COUNT = 1;
+    private String REPEAT_MODE = RepeatCount.ONCE;
 
     private LinkedHashSet<String> myPattern = new LinkedHashSet<String>();
     //iws/ipr compatibility
@@ -463,7 +502,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(myPattern, second.myPattern) &&
              Comparing.equal(FORK_MODE, second.FORK_MODE) &&
              Comparing.equal(DIR_NAME, second.DIR_NAME) &&
-             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME);
+             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
+             Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
+             REPEAT_COUNT == second.REPEAT_COUNT;
     }
 
     public int hashCode() {
@@ -477,7 +518,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(myPattern) ^
              Comparing.hashcode(FORK_MODE) ^
              Comparing.hashcode(DIR_NAME) ^
-             Comparing.hashcode(CATEGORY_NAME);
+             Comparing.hashcode(CATEGORY_NAME) ^
+             Comparing.hashcode(REPEAT_MODE) ^
+             Comparing.hashcode(REPEAT_COUNT);
     }
 
     public TestSearchScope getScope() {

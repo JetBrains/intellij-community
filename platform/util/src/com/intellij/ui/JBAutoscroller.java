@@ -278,10 +278,8 @@ public class JBAutoscroller implements ActionListener {
     public void valueChanged(ListSelectionEvent e) {
       if (e.getValueIsAdjusting() || getInstance().isRunningOn(myTable)) return;
 
-      ListSelectionModel rsm = getRowSelectionModel();
-      int row = rsm != null ? rsm.getLeadSelectionIndex() : -1;
-      ListSelectionModel csm = getColumnSelectionModel();
-      int col = csm != null ? csm.getLeadSelectionIndex() : -1;
+      int row = getLeadSelectionIndexIfSelectionIsNotEmpty(getRowSelectionModel());
+      int col = getLeadSelectionIndexIfSelectionIsNotEmpty(getColumnSelectionModel());
 
       if (row >= 0 && row < myTable.getRowCount() && col >= 0 && col < myTable.getColumnCount()) {
         myTable.scrollRectToVisible(myTable.getCellRect(row, col, false));
@@ -328,6 +326,10 @@ public class JBAutoscroller implements ActionListener {
       if (to != null) {
         to.addListSelectionListener(this);
       }
+    }
+
+    private static int getLeadSelectionIndexIfSelectionIsNotEmpty(ListSelectionModel lsm) {
+      return lsm != null && !lsm.isSelectionEmpty() ? lsm.getLeadSelectionIndex() : -1;
     }
   }
 }

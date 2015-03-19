@@ -454,6 +454,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
   private void setChildrenLoaded() {
     setFlagInt(CHILDREN_CACHED, true);
+    myData.clearAdoptedNames();
   }
 
   @NotNull

@@ -93,7 +93,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
                       psiElement,
                       XmlBundle.message("unescaped.xml.character"),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                      createFix(psiFile, psiElement, offsetInElement)
+                      createFix(psiElement, offsetInElement)
                     );
 
                     int endOfElementInScriptTag = elementRange.getEndOffset() - valueStart;
@@ -112,7 +112,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
     };
   }
 
-  protected LocalQuickFix createFix(PsiFile psiFile, PsiElement psiElement, int offsetInElement) {
+  protected LocalQuickFix createFix(PsiElement psiElement, int offsetInElement) {
     return null;
   }
 

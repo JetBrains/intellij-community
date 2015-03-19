@@ -23,7 +23,9 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-abstract class JBEditorTabsPainter {
+public abstract class JBEditorTabsPainter {
+  protected Color myDefaultTabColor;
+
   public abstract void doPaintInactive(Graphics2D g2d,
                        Rectangle effectiveBounds,
                        int x,
@@ -93,5 +95,9 @@ abstract class JBEditorTabsPainter {
 
   public Color getEmptySpaceColor() {
     return UIUtil.isUnderAquaLookAndFeel() ? Gray.xC8 : UIUtil.getPanelBackground();
+  }
+
+  public void setDefaultTabColor(Color color) {
+    myDefaultTabColor = color;
   }
 }

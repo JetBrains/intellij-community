@@ -33,10 +33,22 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
     return PluginPathManager.getPluginHomePath("properties") + "/testData/insertManager/";
   }
 
+  public void testIsAlphaSorted() {
+    myFixture.configureByFile(getTestName(true) + "/p.properties");
+    myFixture.configureByFile(getTestName(true) + "/p_en.properties");
+    myFixture.configureByFile(getTestName(true) + "/p_fr.properties");
+    final PsiFile file = myFixture.configureByFile(getTestName(true) + "/p_ru.properties");
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+    final ResourceBundlePropertiesInsertManager manager = ResourceBundlePropertiesInsertManagerImpl.create(propertiesFile.getResourceBundle());
+    manager.reload();
+    assertTrue(((ResourceBundlePropertiesInsertManagerImpl)manager).isAlphaSorted());
+  }
+
   public void testAddToAlphaOrdered() {
     doTest(new TestAction() {
       @Override
-      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManager manager) {
+      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager) {
+        assertTrue(manager.isAlphaSorted());
         manager.insertNewProperty("l", "v");
         manager.insertTranslation("d", "v", baseFile);
         manager.insertTranslation("r", "v", translationFile);
@@ -54,7 +66,8 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
   public void testAddToOrdered() {
     doTest(new TestAction() {
       @Override
-      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManager manager) {
+      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager) {
+        assertFalse(manager.isAlphaSorted());
         manager.insertNewProperty("bnm", "v");
         manager.insertNewProperty("uio", "v");
         manager.insertTranslation("uio", "v", translationFile);
@@ -67,7 +80,8 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
   public void testAddToUnordered() {
     doTest(new TestAction() {
       @Override
-      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManager manager) {
+      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager) {
+        assertFalse(manager.isAlphaSorted());
         manager.insertTranslation("bnm", "v", translationFile);
         manager.insertNewProperty("ghj", "v");
         manager.insertTranslation("ghj", "v", translationFile);
@@ -85,12 +99,13 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
     final ResourceBundle bundle = basePropertiesFile.getResourceBundle();
     final ResourceBundlePropertiesInsertManager manager = ResourceBundlePropertiesInsertManagerImpl.create(bundle);
     assertInstanceOf(manager, ResourceBundlePropertiesInsertManagerImpl.class);
-    testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile), manager);
+    testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile),
+                            (ResourceBundlePropertiesInsertManagerImpl)manager);
     myFixture.checkResultByFile(getTestName(true) + "/p.properties", getTestName(true) + "/p-after.properties", true);
     myFixture.checkResultByFile(getTestName(true) + "/p_en.properties", getTestName(true) + "/p-after_en.properties",true);
   }
 
   private interface TestAction {
-    void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManager manager);
+    void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager);
   }
 }

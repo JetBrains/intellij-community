@@ -18,6 +18,8 @@ package com.intellij.diff.requests;
 import org.jetbrains.annotations.Nullable;
 
 public class NoDiffRequest extends MessageDiffRequest {
+  public static NoDiffRequest INSTANCE = new NoDiffRequest();
+
   public NoDiffRequest(@Nullable String title) {
     super(title, "Nothing to show");
   }

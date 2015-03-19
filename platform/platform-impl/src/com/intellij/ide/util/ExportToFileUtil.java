@@ -123,7 +123,6 @@ public class ExportToFileUtil {
       myTfFile = new TextFieldWithBrowseButton();
       myTfFile.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
 
-      setHorizontalStretch(1.5f);
       setTitle(IdeBundle.message("title.export.preview"));
       setOKButtonText(IdeBundle.message("button.save"));
       setButtonsMargin(null);
@@ -166,6 +165,7 @@ public class ExportToFileUtil {
       settings.setAdditionalColumnsCount(0);
       settings.setAdditionalPageAtBottom(false);
       ((EditorEx)myTextArea).setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
+      myTextArea.getComponent().setPreferredSize(new Dimension(700, 400));
       return myTextArea.getComponent();
     }
 

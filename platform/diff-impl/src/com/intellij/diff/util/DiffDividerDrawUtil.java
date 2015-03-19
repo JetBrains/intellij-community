@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -232,18 +231,25 @@ public class DiffDividerDrawUtil {
       myColor = color;
     }
 
-    private void paint(Graphics2D g, int width, boolean paintBorder, boolean curve) {
-      Color borderColor = paintBorder ? DiffDrawUtil.getFramingColor(myColor) : myColor;
+    public void paint(Graphics2D g, int width, boolean paintBorder, boolean curve) {
       // we need this shift, because editor background highlight is painted in range "Y(line) - 1 .. Y(line + 1) - 1"
+      int startY1 = myStart1 - 1;
+      int endY1 = myEnd1 - 1;
+      int startY2 = myStart2 - 1;
+      int endY2 = myEnd2 - 1;
+
+      if (endY1 - startY1 < 2) endY1 = startY1 + 1;
+      if (endY2 - startY2 < 2) endY2 = startY2 + 1;
+
       if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor, borderColor);
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myColor, null);
       }
       else {
-        DiffDrawUtil.drawTrapezium(g, 0, width, myStart1 - 1, myEnd1 - 1, myStart2 - 1, myEnd2 - 1, myColor, borderColor);
+        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myColor, null);
       }
     }
 
-    private void paintOnScrollbar(Graphics2D g, int width) {
+    public void paintOnScrollbar(Graphics2D g, int width) {
       int startY = myStart1 - 1;
       int endY = myEnd1 - 1;
       int height = endY - startY;
@@ -255,12 +261,11 @@ public class DiffDividerDrawUtil {
       if (height > 2) {
         g.fillRect(startX, startY, width, height);
 
-        Color framingColor = DiffDrawUtil.getFramingColor(myColor);
-        UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
-        UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
+        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, startY, myColor);
+        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, endY, myColor);
       }
       else {
-        DiffDrawUtil.drawDoubleShadowedLine(g, startX, endX, startY, myColor);
+        DiffDrawUtil.drawDoubleChunkBorderLine(g, startX, endX, startY, myColor);
       }
     }
 
@@ -283,11 +288,11 @@ public class DiffDividerDrawUtil {
       myEnd2 = end2;
     }
 
-    private void paint(Graphics2D g, int width) {
+    public void paint(Graphics2D g, int width) {
       DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2);
     }
 
-    private void paintOnScrollbar(Graphics2D g, int width) {
+    public void paintOnScrollbar(Graphics2D g, int width) {
       DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart1, myEnd1);
     }
 
@@ -296,7 +301,7 @@ public class DiffDividerDrawUtil {
     }
   }
 
-  private static class Interval {
+  public static class Interval {
     public final int startLine;
     public final int endLine;
 

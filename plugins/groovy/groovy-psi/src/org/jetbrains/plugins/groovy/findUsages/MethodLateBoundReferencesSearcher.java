@@ -21,12 +21,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -46,9 +51,8 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
-    SearchScope searchScope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()).intersectWith(getUseScope(method));
-    PsiClass aClass = method.getContainingClass();
-    String className = aClass == null ? null : aClass.getName();
+    SearchScope searchScope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()).intersectWith(
+      getUseScope(method));
     orderSearching(searchScope, method.getName(), method, queryParameters.getOptimizer(), method.getParameterList().getParametersCount());
 
     final String propName = PropertyUtil.getPropertyName(method);
@@ -85,16 +89,29 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
         }
 
         final GrReferenceExpression ref = (GrReferenceExpression)element;
-        if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref) || ref.resolve() != null) {
+        if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref)) {
           return true;
         }
 
         PsiElement parent = ref.getParent();
-        if (parent instanceof GrMethodCall) {
-          if (!argumentsMatch((GrMethodCall)parent, paramCount)) {
-            return true;
-          }
-        } else if (ResolveUtil.isKeyOfMap(ref)) {
+        if (parent instanceof GrCommandArgumentList) {
+          parent = parent.getParent();
+        }
+        if (paramCount >= 0 && !ref.hasMemberPointer() &&
+            (!(parent instanceof GrMethodCall) || !argumentsMatch((GrMethodCall)parent, paramCount))) {
+          return true;
+        }
+
+        GrExpression qualifier = ref.getQualifierExpression();
+        if (qualifier == null || qualifier.getType() != null) {
+          return true;
+        }
+
+        if (ref.resolve() != null) {
+          return true;
+        }
+
+        if (ResolveUtil.isKeyOfMap(ref)) {
           return true;
         }
 
@@ -104,7 +121,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   }
 
   private static boolean argumentsMatch(GrMethodCall call, int paramCount) {
-    int argCount = call.getExpressionArguments().length;
+    int argCount = call.getExpressionArguments().length + call.getClosureArguments().length;
     if (PsiImplUtil.hasNamedArguments(call.getArgumentList())) {
       argCount++;
     }

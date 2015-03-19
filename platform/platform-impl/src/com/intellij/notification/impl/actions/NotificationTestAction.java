@@ -21,59 +21,78 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 
 /**
  * @author spleaner
+ * @author Sergey.Malenkov
  */
 public class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
 
-  public NotificationTestAction() {
-    super("Add Test Notification");
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    new NotificationDialog(event.getProject()).show();
   }
 
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    final MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+  private static final class NotificationDialog extends DialogWrapper {
+    private final JTextField myTitle = new JTextField(50);
+    private final JTextArea myMessage = new JTextArea(10, 50);
+    private final JComboBox myType = new JComboBox(NotificationType.values());
+    private final MessageBus myMessageBus;
 
-    final long l = System.currentTimeMillis();
-    final NotificationType type;
-    if (l % 3 == 0) {
-      type = NotificationType.ERROR;
-    } else if (l % 5 == 0) {
-      type = NotificationType.WARNING;
-    } else {
-      type = NotificationType.INFORMATION;
+    private NotificationDialog(Project project) {
+      super(project, true, IdeModalityType.MODELESS);
+      myMessageBus = project != null ? project.getMessageBus() : ApplicationManager.getApplication().getMessageBus();
+      init();
+      setOKButtonText("Notify");
+      setTitle("Test Notification");
+      myMessage.setText("You can close<br>\n" +
+                        "this very very very very long notification\n" +
+                        "by clicking <a href=\"close\">this link</a>.\n" +
+                        "<p>Long long long long. It should be long. Very long. Too long. And even longer.");
     }
 
-    final NotificationListener listener = new NotificationListener() {
-      public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent e) {
-        n.expire();
-      }
-    };
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel panel = new JPanel(new BorderLayout(10, 10));
+      panel.add(BorderLayout.NORTH, myTitle);
+      panel.add(BorderLayout.CENTER, new JScrollPane(myMessage));
+      panel.add(BorderLayout.SOUTH, myType);
+      return panel;
+    }
 
-    final String message =
-      "You can<br> close this very<p> very very very long notification by clicking <a href=\"close\">this link</a>. " +
-      "Long long long long. It should be long. Very long. Too long. " +
-      //StringUtil.repeat("line", 100) +
-      //StringUtil.repeat("<br>line", 100) +
-      "And even longer.";
-    final Notification notification = new Notification(TEST_GROUP_ID, "This is a test notification", message, type, listener);
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      return new Action[]{getOKAction(), getCancelAction()};
+    }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        //DebugUtil.sleep(1000);
-        messageBus.syncPublisher(Notifications.TOPIC).notify(notification);
-      }
-    });
+    @Override
+    protected void doOKAction() {
+      String title = myTitle.getText();
+      String message = myMessage.getText();
+      Object value = myType.getSelectedItem();
+      NotificationType type = value instanceof NotificationType ? (NotificationType)value : NotificationType.ERROR;
+      final Notification notification = new Notification(TEST_GROUP_ID, title, message, type, new NotificationListener() {
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          notification.expire();
+        }
+      });
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification);
+        }
+      });
+    }
   }
 }

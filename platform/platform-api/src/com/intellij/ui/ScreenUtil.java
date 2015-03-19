@@ -206,7 +206,16 @@ public class ScreenUtil {
    * @return a visible area rectangle
    */
   private static Rectangle getScreenRectangle(GraphicsDevice device) {
-    GraphicsConfiguration configuration = device.getDefaultConfiguration();
+    return getScreenRectangle(device.getDefaultConfiguration());
+  }
+
+  /**
+   * Returns a visible area for the specified graphics configuration.
+   *
+   * @param configuration one of available configurations
+   * @return a visible area rectangle
+   */
+  public static Rectangle getScreenRectangle(GraphicsConfiguration configuration) {
     return applyInsets(configuration.getBounds(), getScreenInsets(configuration));
   }
 
