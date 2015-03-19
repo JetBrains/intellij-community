@@ -56,13 +56,9 @@ import java.util.EventListener;
 public final class SwingCleanuper implements ApplicationComponent{
   private final Alarm myAlarm;
 
-  /** Invoked by reflection
-   * @param projectManager   */
-  SwingCleanuper(ProjectManager projectManager){
-    myAlarm=new Alarm();
-
-    projectManager.addProjectManagerListener(
-      new ProjectManagerAdapter(){
+  public SwingCleanuper(Application application, ProjectManager projectManager) {
+    myAlarm = new Alarm(application);
+    projectManager.addProjectManagerListener(new ProjectManagerAdapter(){
         public void projectOpened(final Project project) {
           myAlarm.cancelAllRequests();
         }
