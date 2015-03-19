@@ -16,6 +16,7 @@
 package com.jetbrains.commandInterface.gnuCommandLine;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.command.Option;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineArgument;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * TODO: This is not validation result, but actually parsing result. So, it has to be renamed
  * Result of command line validation
  *
  * @author Ilya.Kazakevich
@@ -48,15 +50,19 @@ public interface ValidationResult {
   Collection<Option> getUnusedOptions();
 
   /**
+   * Returns option for argument if argument is option argument. Returns null otherwise (for positional arguments etc)
    * @param argument argument to check
-   * @return true if argument is option argument (position argument otherwise)
-   */
-  boolean isOptionArgument(@NotNull CommandLineArgument argument);
-
-  /**
-   * @param argument argument to check
-   * @return list of available argument values or null if unknown
+   * @return option or null if no option associated with this argument
    */
   @Nullable
-  Collection<String> getPossibleArgumentValues(@NotNull CommandLineArgument argument);
+  Option getOptionForOptionArgument(@NotNull CommandLineArgument argument);
+
+
+  /**
+   * Returns real command argument by psi element
+   * @param commandLineArgument psi element
+   * @return real argument (positional or optional) or null if can't be find
+   */
+  @Nullable
+  Argument getArgument(@NotNull CommandLineArgument commandLineArgument);
 }
