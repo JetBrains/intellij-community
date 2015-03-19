@@ -66,9 +66,6 @@ public class PositionManagerImpl implements PositionManager {
     }
     catch (AbsentInformationException ignored) {
     }
-    catch (InternalException e) {
-      LOG.info(e);
-    }
     return Collections.emptyList();
   }
 
