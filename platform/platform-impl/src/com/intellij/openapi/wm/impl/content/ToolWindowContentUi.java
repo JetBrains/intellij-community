@@ -284,7 +284,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout().getNextContentActionName();
   }
 
-  static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
+  public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
     if (c.getClientProperty(ui) != null) return;
 
 
@@ -298,19 +298,18 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
         if (window instanceof IdeFrame) return;
 
-        final Rectangle oldBounds = window.getBounds();
-        final Point newPoint = e.getPoint();
-        SwingUtilities.convertPointToScreen(newPoint, c);
-        final Point offset = new Point(newPoint.x - myLastPoint[0].x, newPoint.y - myLastPoint[0].y);
-        window.setLocation(oldBounds.x + offset.x, oldBounds.y + offset.y);
+        final Point windowLocation = window.getLocationOnScreen();
+        final Point newPoint = MouseInfo.getPointerInfo().getLocation();
+        Point p = myLastPoint[0];
+        windowLocation.translate(newPoint.x - p.x, newPoint.y - p.y);
+        window.setLocation(windowLocation);
         myLastPoint[0] = newPoint;
       }
     });
 
     c.addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        myLastPoint[0] = e.getPoint();
-        SwingUtilities.convertPointToScreen(myLastPoint[0], c);
+        myLastPoint[0] = MouseInfo.getPointerInfo().getLocation();
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
             ui.myWindow.fireActivated();
