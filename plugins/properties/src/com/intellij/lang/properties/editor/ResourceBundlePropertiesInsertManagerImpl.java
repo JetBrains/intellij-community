@@ -30,6 +30,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -111,23 +112,23 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
 
   @Override
   public void reload() {
-    final List<String> keysOrder = keysOrder(myResourceBundle);
+    final Pair<List<String>, Boolean> keysOrder = keysOrder(myResourceBundle);
     myOrdered = keysOrder != null;
     if (myOrdered) {
-      Collections.reverse(keysOrder);
-      myAlphaSorted = isAlphaSorted(keysOrder);
-      myKeysOrder = myAlphaSorted ? null : keysOrder;
+      myAlphaSorted = keysOrder.getSecond();
+      myKeysOrder = myAlphaSorted ? null : keysOrder.getFirst();
     } else {
       myKeysOrder = null;
     }
   }
 
   @Nullable
-  private static List<String> keysOrder(final ResourceBundle resourceBundle) {
+  private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
+    final boolean[] isEdgesProperlyDirection = new boolean[]{true};
     final GraphGenerator<String> generator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
-        final Set<String> nodes = new TreeSet<String>();
+        final Set<String> nodes = new LinkedHashSet<String>();
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.getProperties()) {
             final String key = property.getKey();
@@ -141,7 +142,7 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
 
       @Override
       public Iterator<String> getIn(String n) {
-        final Collection<String> siblings = new TreeSet<String>(Collections.reverseOrder());
+        final Collection<String> siblings = new LinkedHashSet<String>();
         for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
           for (IProperty property : propertiesFile.findPropertiesByKey(n)) {
             PsiElement sibling = property.getPsiElement().getNextSibling();
@@ -151,6 +152,9 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
             if (sibling instanceof IProperty) {
               final String key = ((IProperty)sibling).getKey();
               if (key != null) {
+                if (isEdgesProperlyDirection[0] && n.compareTo(key) > 0) {
+                  isEdgesProperlyDirection[0] = false;
+                }
                 siblings.add(key);
               }
             }
@@ -160,19 +164,26 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
         return siblings.iterator();
       }
     }));
-    DFSTBuilder <String> dfstBuilder = new DFSTBuilder<String>(generator);
+    DFSTBuilder<String> dfstBuilder = new DFSTBuilder<String>(generator);
     final boolean acyclic = dfstBuilder.isAcyclic();
-    return acyclic ? dfstBuilder.getSortedNodes() : null;
+    if (acyclic) {
+      if (isEdgesProperlyDirection[0]) {
+        final List<String> sortedNodes = new ArrayList<String>(generator.getNodes());
+        Collections.sort(sortedNodes);
+        return Pair.create(sortedNodes, true);
+      } else {
+        final List<String> dfsNodes = dfstBuilder.getSortedNodes();
+        Collections.reverse(dfsNodes);
+        return Pair.create(dfsNodes, false);
+      }
+    }
+    else {
+      return null;
+    }
   }
 
-  private static boolean isAlphaSorted(final List<String> keys) {
-    String prevKey = null;
-    for (String key : keys) {
-      if (prevKey != null && prevKey.compareTo(key) > 0) {
-        return false;
-      }
-      prevKey = key;
-    }
-    return true;
+  @TestOnly
+  public boolean isAlphaSorted() {
+    return myAlphaSorted;
   }
 }
