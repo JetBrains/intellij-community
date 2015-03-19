@@ -197,6 +197,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
           myFrameCount = 0;
         }
       }
+      catch (InternalException e) {
+        LOG.info(e);
+        myFrameCount = 0;
+      }
     }
     return myFrameCount;
   }
