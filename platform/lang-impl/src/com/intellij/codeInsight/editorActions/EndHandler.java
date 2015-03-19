@@ -41,11 +41,11 @@ public class EndHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(final Editor editor, DataContext dataContext) {
+  protected void doExecute(final Editor editor, Caret caret, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
@@ -53,7 +53,7 @@ public class EndHandler extends EditorActionHandler {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
@@ -62,17 +62,15 @@ public class EndHandler extends EditorActionHandler {
 
     if (file == null) {
       if (myOriginalHandler != null){
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
 
     final EditorNavigationDelegate[] extensions = EditorNavigationDelegate.EP_NAME.getExtensions();
-    if (extensions != null) {
-      for (EditorNavigationDelegate delegate : extensions) {
-        if (delegate.navigateToLineEnd(editor, dataContext) == EditorNavigationDelegate.Result.STOP) {
-          return;
-        }
+    for (EditorNavigationDelegate delegate : extensions) {
+      if (delegate.navigateToLineEnd(editor, dataContext) == EditorNavigationDelegate.Result.STOP) {
+        return;
       }
     }
 
@@ -136,7 +134,7 @@ public class EndHandler extends EditorActionHandler {
     }
 
     if (myOriginalHandler != null){
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 }
