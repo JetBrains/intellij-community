@@ -254,7 +254,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             if (file instanceof PsiJavaFile) {
               PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
                 public PsiClass[] compute() {
-                  return ((PsiJavaFile) file).getClasses();
+                  return file.isValid() ? ((PsiJavaFile) file).getClasses() : PsiClass.EMPTY_ARRAY;
                 }
               });
               if (classes.length > 0) {
@@ -291,7 +291,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
     return myAnnotator.getClassCoverageInfo(ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
       public String compute() {
-        return aClass.getQualifiedName();
+        return aClass.isValid() ? aClass.getQualifiedName() : null;
       }
     }));
   }

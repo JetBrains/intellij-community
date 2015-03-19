@@ -30,19 +30,18 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper;
 import com.jetbrains.python.refactoring.move.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 import static com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper.isMovableModuleMember;
 
@@ -85,6 +84,19 @@ public class PyMoveTest extends PyTestCase {
         assertTrue(isMovableModuleMember(findFirstNamedElement("X8")));
       }
     });
+  }
+
+  // PY-15348
+  public void testCollectMovableModuleMembers() {
+    myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
+    final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers((PyFile)myFixture.getFile());
+    final List<String> names = ContainerUtil.map(members, new Function<PyElement, String>() {
+      @Override
+      public String fun(PyElement element) {
+        return element.getName();
+      }
+    });
+    assertSameElements(names, "CONST", "C", "outer_func");
   }
 
   // PY-3929
