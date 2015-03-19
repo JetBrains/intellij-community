@@ -4,8 +4,10 @@ package com.jetbrains.commandInterface.gnuCommandLine.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.commandInterface.gnuCommandLine.CommandLinePart;
+import com.jetbrains.commandInterface.command.Option;
 
-public interface CommandLineOption extends PsiElement {
+public interface CommandLineOption extends CommandLinePart {
 
   @Nullable
   PsiElement getLongOptionNameToken();
@@ -18,5 +20,8 @@ public interface CommandLineOption extends PsiElement {
   String getOptionName();
 
   boolean isLong();
+
+  @Nullable
+  Option findRealOption();
 
 }

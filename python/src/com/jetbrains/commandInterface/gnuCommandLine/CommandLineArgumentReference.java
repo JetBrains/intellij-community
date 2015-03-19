@@ -15,22 +15,19 @@
  */
 package com.jetbrains.commandInterface.gnuCommandLine;
 
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.commandInterface.command.Argument;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.*;
 import com.jetbrains.commandInterface.command.Option;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineArgument;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * Ref to be injected in command line argument
+ *
  * @author Ilya.Kazakevich
  */
 public final class CommandLineArgumentReference extends CommandLineElementReference<CommandLineArgument> {
@@ -48,30 +45,31 @@ public final class CommandLineArgumentReference extends CommandLineElementRefere
   @NotNull
   @Override
   public Object[] getVariants() {
-    final ValidationResult validationResult = getValidationResult();
-    if (validationResult == null) {
-      return EMPTY_ARRAY;
-    }
-    final Collection<LookupElement> result = new ArrayList<LookupElement>();
-    final Argument argument = validationResult.getArgument(getElement());
-
+    final LookupWithIndentsBuilder builder = new LookupWithIndentsBuilder();
+    final Argument argument = getElement().findRealArgument();
+    final Option argumentOption = getElement().findOptionForOptionArgument();
     final Collection<String> argumentValues = (argument != null ? argument.getAvailableValues() : null);
 
     // priority is used to display args before options
     if (argumentValues != null) {
       for (final String value : argumentValues) {
-        result.add(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(value).withBoldness(true), 1));
+        builder.addElement(LookupElementBuilder.create(value).withBoldness(true), getElement().findBestHelpText(), 1);
       }
     }
 
 
-    if (validationResult.getOptionForOptionArgument(getElement()) == null) { // If not option argument
+    final ValidationResult validationResult = getValidationResult();
+    if (validationResult == null) {
+      return EMPTY_ARRAY;
+    }
+
+    if (argumentOption == null) { // If not option argument
       for (final Option option : validationResult.getUnusedOptions()) {
         for (final String value : option.getAllNames()) {
-          result.add(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(value).withTailText(" :" + option.getHelp()), 0));
+          builder.addElement(LookupElementBuilder.create(value), option.getHelp(), 0);
         }
       }
     }
-    return ArrayUtil.toObjectArray(result);
+    return builder.getResult();
   }
 }

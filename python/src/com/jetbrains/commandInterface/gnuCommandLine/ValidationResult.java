@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.command.Option;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineArgument;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,4 +74,12 @@ public interface ValidationResult {
   @Nullable
   Pair<Boolean, Argument> getNextArg();
   Argument getArgument(@NotNull CommandLineArgument commandLineArgument);
+
+  /**
+   * Returns real option argument by psi element
+   * @param option psi option
+   * @return real option or null if can't be find
+   */
+  @Nullable
+  Option getOption(@NotNull CommandLineOption option);
 }

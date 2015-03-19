@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,10 +36,15 @@ import java.util.Map;
  */
 final class ValidationResultImpl extends CommandLineVisitor implements ValidationResult {
   /**
-   * List of options with names
+   * All options [name -> option]
    */
   @NotNull
-  private final HashMap<String, Option> myOptions = new HashMap<String, Option>();
+  private final Map<String, Option> myOptions = new HashMap<String, Option>();
+  /**
+   * Available, but unused options [name -> option]
+   */
+  @NotNull
+  private final Map<String, Option> myUnusedOptions = new HashMap<String, Option>();
   /**
    * We always need command to validate args
    */
@@ -83,6 +87,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
         myOptions.put(optionName, option);
       }
     }
+    myUnusedOptions.putAll(myOptions);;
     myCommand = command;
   }
 
@@ -99,7 +104,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   @Override
   @NotNull
   public Collection<Option> getUnusedOptions() {
-    return myOptions.values();
+    return myUnusedOptions.values();
   }
 
 
@@ -113,6 +118,12 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   @Override
   public Argument getArgument(final @NotNull CommandLineArgument commandLineArgument) {
     return myArguments.get(commandLineArgument);
+  }
+
+  @Override
+  @Nullable
+  public Option getOption(final @NotNull CommandLineOption option) {
+    return myOptions.get(option.getOptionName());
   }
 
   /**
@@ -191,11 +202,11 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   @Override
   public void visitOption(@NotNull final CommandLineOption o) {
     super.visitOption(o);
-    if (myOptions.containsKey(o.getOptionName())) {
+    if (myUnusedOptions.containsKey(o.getOptionName())) {
       // Remove from list of available options
-      final Option option = myOptions.remove(o.getOptionName());
+      final Option option = myUnusedOptions.remove(o.getOptionName());
       for (final String optionName : option.getAllNames()) {
-        myOptions.remove(optionName);
+        myUnusedOptions.remove(optionName);
       }
 
       final Pair<Integer, Argument> argumentAndQuantity = option.getArgumentAndQuantity();

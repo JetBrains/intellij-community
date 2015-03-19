@@ -15,19 +15,14 @@
  */
 package com.jetbrains.commandInterface.gnuCommandLine;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineCommand;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineCommand;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -59,18 +54,15 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
       return EMPTY_ARRAY;
     }
 
-    final Collection<LookupElement> commandNames = new ArrayList<LookupElement>();
+    final LookupWithIndentsBuilder result = new LookupWithIndentsBuilder();
 
     for (final Command command : commands) {
-      LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(command.getName());
+      final LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(command.getName());
       final String help = command.getHelp(true);
-      if (!StringUtil.isEmpty(help)) {
-        lookupElementBuilder = lookupElementBuilder.withTailText(" :" + help);
-      }
-      commandNames.add(lookupElementBuilder);
+      result.addElement(lookupElementBuilder, help);
     }
 
 
-    return ArrayUtil.toObjectArray(commandNames);
+    return result.getResult();
   }
 }

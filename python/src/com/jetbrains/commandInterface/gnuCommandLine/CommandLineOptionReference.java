@@ -15,18 +15,18 @@
  */
 package com.jetbrains.commandInterface.gnuCommandLine;
 
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineOption;
 import com.jetbrains.commandInterface.command.Option;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Ref to be injected into command line option
+ *
  * @author Ilya.Kazakevich
  */
 public final class CommandLineOptionReference extends CommandLineElementReference<CommandLineOption> {
@@ -44,17 +44,21 @@ public final class CommandLineOptionReference extends CommandLineElementReferenc
   @NotNull
   @Override
   public Object[] getVariants() {
+    final LookupWithIndentsBuilder builder = new LookupWithIndentsBuilder();
+
     final ValidationResult validationResult = getValidationResult();
     if (validationResult == null) {
       return EMPTY_ARRAY;
     }
-    final Collection<String> result = new ArrayList<String>();
 
     for (final Option option : validationResult.getUnusedOptions()) {
       // Suggest long options for -- and short for -
-      result.addAll((getElement().isLong() ? option.getLongNames() : option.getShortNames()));
+      final List<String> names = getElement().isLong() ? option.getLongNames() : option.getShortNames();
+      for (final String optionName : names) {
+        builder.addElement(LookupElementBuilder.create(optionName), option.getHelp());
+      }
     }
 
-    return ArrayUtil.toStringArray(result);
+    return builder.getResult();
   }
 }
