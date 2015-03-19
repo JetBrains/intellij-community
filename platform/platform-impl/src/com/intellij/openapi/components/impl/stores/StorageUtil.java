@@ -35,7 +35,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,10 +42,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.LineSeparator;
-import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -129,7 +125,7 @@ public class StorageUtil {
                                       @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
     final VirtualFile result;
     if (file != null && (virtualFile == null || !virtualFile.isValid())) {
-      result = getOrCreateVirtualFile(requestor, file);
+      result = getOrCreateVirtualFile(requestor, file.getAbsolutePath());
     }
     else {
       result = virtualFile;
@@ -252,25 +248,31 @@ public class StorageUtil {
   }
 
   @NotNull
-  public static VirtualFile getOrCreateVirtualFile(@Nullable final Object requestor, @NotNull final File ioFile) throws IOException {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-    if (virtualFile == null) {
-      File parentFile = ioFile.getParentFile();
-      // need refresh if the directory has just been created
-      final VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
-      if (parentVirtualFile == null) {
-        throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile == null ? "" : parentFile.getPath()));
-      }
-      boolean underWriteAction = ApplicationManager.getApplication().isWriteAccessAllowed();
-      virtualFile = underWriteAction ? parentVirtualFile.createChildData(requestor, ioFile.getName()) :
-                    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-                      @Override
-                      public VirtualFile compute() throws IOException {
-                        return parentVirtualFile.createChildData(requestor, ioFile.getName());
-                      }
-                    });
+  public static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull String path) throws IOException {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    if (virtualFile != null) {
+      return virtualFile;
     }
-    return virtualFile;
+
+    String parentFile = PathUtilRt.getParentPath(path);
+    // need refresh if the directory has just been created
+    VirtualFile parentVirtualFile = StringUtil.isEmpty(parentFile) ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile);
+    if (parentVirtualFile == null) {
+      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+    }
+
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      return parentVirtualFile.createChildData(requestor, PathUtilRt.getFileName(path));
+    }
+    else {
+      AccessToken token = WriteAction.start();
+      try {
+        return parentVirtualFile.createChildData(requestor, PathUtilRt.getFileName(path));
+      }
+      finally {
+        token.finish();
+      }
+    }
   }
 
   /**
