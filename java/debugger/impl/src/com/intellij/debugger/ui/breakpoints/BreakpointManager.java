@@ -632,6 +632,9 @@ public class BreakpointManager {
             catch (InternalException e) {
               LOG.info(e);
             }
+            catch (InvalidRequestStateException e) {
+              LOG.info(e);
+            }
           }
         }
         protected abstract void addFilter(final T request, final ThreadReference thread);
