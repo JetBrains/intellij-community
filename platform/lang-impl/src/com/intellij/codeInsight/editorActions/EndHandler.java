@@ -82,7 +82,7 @@ public class EndHandler extends EditorActionHandler {
     if (caretOffset < length) {
       final int offset1 = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t");
       if (offset1 < 0 || chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r') {
-        int offset2 = CharArrayUtil.shiftForward(chars, offset1 + 1, " \t");
+        final int offset2 = CharArrayUtil.shiftForward(chars, offset1 + 1, " \t");
         boolean isEmptyLine = offset2 >= length || chars.charAt(offset2) == '\n' || chars.charAt(offset2) == '\r';
         if (isEmptyLine) {
 
@@ -106,7 +106,7 @@ public class EndHandler extends EditorActionHandler {
                     return;
                   }
                   editor.getSelectionModel().removeSelection();
-                  EditorModificationUtil.insertStringAtCaret(editor, lineIndent);
+                  document.replaceString(offset1 + 1, offset2, lineIndent);
                 }
               }
               else {
