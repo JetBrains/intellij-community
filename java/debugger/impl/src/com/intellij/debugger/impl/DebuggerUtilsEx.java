@@ -446,6 +446,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static void keep(Value value, EvaluationContext context) {
+    if (value instanceof ObjectReference) {
+      ((SuspendContextImpl)context.getSuspendContext()).keep((ObjectReference)value);
+    }
+  }
+
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
