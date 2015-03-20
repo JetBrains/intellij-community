@@ -43,6 +43,8 @@ import java.awt.event.WindowEvent;
 public final class FloatingDecorator extends JDialog {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.FloatingDecorator");
 
+  static final int DIVIDER_WIDTH = 3;
+
   private static final int ANCHOR_TOP=1;
   private static final int ANCHOR_LEFT=2;
   private static final int ANCHOR_BOTTOM=4;
@@ -201,7 +203,6 @@ public final class FloatingDecorator extends JDialog {
   }
 
   private final class BorderItem extends JPanel{
-    private static final int DIVIDER_WIDTH=3;
     private static final int RESIZER_WIDTH=10;
 
     private final int myAnchor;
