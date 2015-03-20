@@ -124,8 +124,8 @@ public class StudyRefreshTaskFileAction extends DumbAwareAction {
     taskFile.setTrackChanges(false);
     clearDocument(document);
     Task task = taskFile.getTask();
-    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex() + 1);
-    String taskDir = EduNames.TASK + String.valueOf(task.getIndex() + 1);
+    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
+    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
     File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {

@@ -16,6 +16,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.psi.PsiFile;
 
 /**
  * @author Dennis.Ushakov
@@ -110,6 +115,16 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     doTestCompletion("<html><body></body><bertran></bertran><b<caret>></b><html>", "e",
                      "<html><body></body><bertran></bertran><be></be><html>");
     assertNotNull(myFixture.getLookup());
+  }
+
+  public void testSave() {
+    doTest("<div>     \n    \n</div><caret>", "\n", "<div>     \n    \n</div>\n");
+    final PsiFile file = myFixture.getFile();
+    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getDocument(file).getTextLength() - 2);
+    file.getVirtualFile().putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
+                                                     EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    FileDocumentManager.getInstance().saveDocument(myFixture.getDocument(file));
+    myFixture.checkResult("<div>\n\n</div>\n");
   }
 
   public void testUndo() {

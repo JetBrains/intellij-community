@@ -228,9 +228,6 @@ public class StudyProjectGenerator {
     }
   }
 
-  /**
-   * @return courses from memory or from cash file or parses course directory
-   */
   public List<CourseInfo> getCourses() {
     if (!myCourses.isEmpty()) {
       return myCourses;

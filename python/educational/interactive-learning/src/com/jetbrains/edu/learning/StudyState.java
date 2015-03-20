@@ -33,7 +33,6 @@ public class StudyState {
     return myTaskFile;
   }
 
-  @Nullable
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
