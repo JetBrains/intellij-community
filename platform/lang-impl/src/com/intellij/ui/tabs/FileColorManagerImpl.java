@@ -54,12 +54,12 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
 
   private static final Map<String, Color> ourDefaultColors = ContainerUtil.<String, Color>immutableMapBuilder()
-    .put("Blue", new JBColor(new Color(0xdcf0ff), new Color(0x2B3557)))
-    .put("Green", new JBColor(new Color(231, 250, 219), new Color(0x2A3B2C)))
-    .put("Orange", new JBColor(new Color(246, 224, 202), new Color(0x823B1C)))
-    .put("Rose", new JBColor(new Color(242, 206, 202), new Color(0x542F3A)))
-    .put("Violet", new JBColor(new Color(222, 213, 241), new Color(0x4f4056)))
-    .put("Yellow", new JBColor(new Color(255, 255, 228), new Color(0x494539)))
+    .put("Blue", new JBColor(new Color(0xdcf0ff), new Color(0x3C476B)))
+    .put("Green", new JBColor(new Color(231, 250, 219), new Color(0x425444)))
+    .put("Orange", new JBColor(new Color(246, 224, 202), new Color(0x804A33)))
+    .put("Rose", new JBColor(new Color(242, 206, 202), new Color(0x6E414E)))
+    .put("Violet", new JBColor(new Color(222, 213, 241), new Color(0x504157)))
+    .put("Yellow", new JBColor(new Color(255, 255, 228), new Color(0x4F4838)))
     .build();
 
   public FileColorManagerImpl(@NotNull final Project project) {

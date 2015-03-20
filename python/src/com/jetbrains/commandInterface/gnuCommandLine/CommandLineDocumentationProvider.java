@@ -15,53 +15,102 @@
  */
 package com.jetbrains.commandInterface.gnuCommandLine;
 
-import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProviderEx;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
+import com.jetbrains.commandInterface.command.Option;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.*;
+import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Provides quick help for arguments
+ *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineDocumentationProvider implements DocumentationProvider {
-  @Nullable
-  @Override
-  public String getQuickNavigateInfo(final PsiElement element, final PsiElement originalElement) {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
-    return null;
-  }
-
+public final class CommandLineDocumentationProvider extends DocumentationProviderEx {
   @Nullable
   @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
-    if (element instanceof CommandLineFile) {
-      final Command command = ((CommandLineFile)element).findRealCommand();
-      if (command != null) {
-        return command.getHelp(false); // We do not need arguments info in help text
-      }
+    if (!(element instanceof CommandLinePart)) {
+      return null;
     }
-    return null;
+
+    final CommandLinePart commandLinePart = (CommandLinePart)element;
+    final Command realCommand = commandLinePart.findRealCommand();
+    if (realCommand == null) {
+      return null;
+    }
+
+    if (element instanceof CommandLineFile) {
+      return realCommand.getHelp(false); // We do not need arguments info in help text
+    }
+
+    final CommandLineElement commandLineElement = PyUtil.as(element, CommandLineElement.class);
+    if (commandLineElement == null) {
+      return null;
+    }
+
+
+    final MyCommandHelpObtainer helpObtainer = new MyCommandHelpObtainer(realCommand);
+    commandLineElement.accept(helpObtainer);
+
+    final String help = helpObtainer.myResultText;
+    // For some reason we can't return empty sting (leads to "fetchig doc" string)
+    return (StringUtil.isEmptyOrSpaces(help) ? null : help);
   }
+
 
   @Nullable
   @Override
-  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
-    return null;
+  public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
+                                                  @NotNull final PsiFile file,
+                                                  @Nullable final PsiElement contextElement) {
+    final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(contextElement, CommandLineElement.class);
+    if (commandLineElement != null) {
+      return commandLineElement;
+    }
+    return PyUtil.as(file, CommandLineFile.class);
   }
 
-  @Nullable
-  @Override
-  public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
-    return null;
+  /**
+   * Fetches text from command line part as visitor
+   */
+  private static final class MyCommandHelpObtainer extends CommandLineVisitor {
+    private String myResultText;
+    private final Command myRealCommand;
+
+    private MyCommandHelpObtainer(@NotNull final Command realCommand) {
+      myRealCommand = realCommand;
+    }
+
+    @Override
+    public void visitArgument(@NotNull final CommandLineArgument o) {
+      super.visitArgument(o);
+      myResultText = o.findBestHelpText();
+    }
+
+    @Override
+    public void visitCommand(@NotNull final CommandLineCommand o) {
+      super.visitCommand(o);
+      myResultText = myRealCommand.getHelp(false);
+    }
+
+    @Override
+    public void visitOption(@NotNull final CommandLineOption o) {
+      super.visitOption(o);
+      final Option option = o.findRealOption();
+      if (option == null) {
+        return;
+      }
+      myResultText = option.getHelp();
+    }
   }
 }

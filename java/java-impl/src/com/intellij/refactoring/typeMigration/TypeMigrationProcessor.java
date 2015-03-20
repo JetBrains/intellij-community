@@ -159,6 +159,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     }
     catch (TypeMigrationLabeler.MigrateException e) {
       setPreviewUsages(true);
+      myLabeler.clearStopException();
       return myLabeler.getMigratedUsages(false, myRoot);
     }
   }

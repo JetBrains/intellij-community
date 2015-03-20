@@ -172,6 +172,12 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       }
       list = (PsiReferenceList) element.getParent();
     }
+
+    //nothing was changed
+    if (!add && !alreadyExtends) {
+      return list;
+    }
+    
     return (PsiReferenceList)JavaCodeStyleManager.getInstance(extendsList.getProject()).shortenClassReferences(list);
   }
 }

@@ -10,6 +10,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.jetbrains.commandInterface.gnuCommandLine.CommandLineElementTypes.*;
 import com.jetbrains.commandInterface.gnuCommandLine.CommandLineElement;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.*;
+import com.jetbrains.commandInterface.command.Argument;
+import com.jetbrains.commandInterface.command.Option;
 
 public class CommandLineArgumentImpl extends CommandLineElement implements CommandLineArgument {
 
@@ -32,6 +34,21 @@ public class CommandLineArgumentImpl extends CommandLineElement implements Comma
   @Nullable
   public PsiElement getLiteralStartsFromLetter() {
     return findChildByType(LITERAL_STARTS_FROM_LETTER);
+  }
+
+  @Nullable
+  public Option findOptionForOptionArgument() {
+    return CommandLinePsiImplUtils.findOptionForOptionArgument(this);
+  }
+
+  @Nullable
+  public Argument findRealArgument() {
+    return CommandLinePsiImplUtils.findRealArgument(this);
+  }
+
+  @Nullable
+  public String findBestHelpText() {
+    return CommandLinePsiImplUtils.findBestHelpText(this);
   }
 
 }

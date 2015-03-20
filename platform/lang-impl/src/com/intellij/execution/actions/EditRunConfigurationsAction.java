@@ -20,13 +20,12 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
 
-public class EditRunConfigurationsAction extends DumbAwareAction {
+public class EditRunConfigurationsAction extends AnAction {
   public EditRunConfigurationsAction() {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(AllIcons.Actions.EditSource,0,2,2);

@@ -1,7 +1,7 @@
 package x;
 
 class S {
-  @SuppressWarnings("rawtypes")
+  @SuppressWarnings("RawUseOfParameterized")
   public String get(final Class cls)
   {
     return "";
