@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdePanePanel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -893,7 +894,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           public void run() {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(false);
-            Splitter splitter = new Splitter(orientation, proportion, 0.1f, 0.9f);
+            Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
             panel.add(splitter, BorderLayout.CENTER);
             splitter.setFirstComponent(firstComponent);
             splitter.setSecondComponent(secondComponent);

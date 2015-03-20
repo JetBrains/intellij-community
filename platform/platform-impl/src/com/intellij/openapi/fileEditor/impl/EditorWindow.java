@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -54,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -114,7 +114,6 @@ public class EditorWindow {
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
-    myPanel.setBorder(new AdaptiveBorder());
     myPanel.setOpaque(false);
 
     myTabbedPane = null;
@@ -153,115 +152,6 @@ public class EditorWindow {
       if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
         closeFile(file);
       }
-    }
-  }
-
-  private static class AdaptiveBorder implements Border {
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      Insets insets = ((JComponent)c).getInsets();
-      g.setColor(UIUtil.getPanelBackground());
-      paintBorder(g, x, y, width, height, insets);
-      g.setColor(new Color(0, 0, 0, 90));
-      paintBorder(g, x, y, width, height, insets);
-    }
-
-    private static void paintBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.left == 1) {
-        g.drawLine(x, y, x, y + height);
-      }
-
-      if (insets.right == 1) {
-        g.drawLine(x + width - 1, y, x + width - 1, y + height);
-      }
-
-      if (insets.bottom == 1) {
-        g.drawLine(x, y + height - 1, x + width, y + height - 1);
-      }
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      Container parent = c.getParent();
-      if (parent instanceof Splitter) {
-        boolean editorToTheLeft = false;
-        boolean editorToTheRight = false;
-        boolean editorToTheDown = false;
-
-        Splitter splitter = (Splitter)parent;
-
-        boolean vertical = splitter.getOrientation();
-        if (vertical && splitter.getFirstComponent() == c) {
-          editorToTheDown = true;
-        } else if (!vertical) {
-          if (splitter.getFirstComponent() == c) {
-            editorToTheRight = true;
-          }
-          if (splitter.getSecondComponent() == c) editorToTheLeft = true;
-        }
-
-
-        //Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, c);
-        //if (frame instanceof IdeFrame) {
-        //  Project project = ((IdeFrame)frame).getProject();
-        //  ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
-        //  if (!editorToTheLeft) {
-        //    List<String> left = toolWindowManager.getIdsOn(ToolWindowAnchor.LEFT);
-        //    if (left.size() > 0) {
-        //      for (String lid : left) {
-        //        ToolWindow window = toolWindowManager.getToolWindow(lid);
-        //        editorToTheLeft = window != null && window.isVisible() && window.getType() == ToolWindowType.DOCKED;
-        //        if (editorToTheLeft) break;
-        //      }
-        //    }
-        //  }
-        //
-        //  if (!editorToTheRight) {
-        //    List<String> right = toolWindowManager.getIdsOn(ToolWindowAnchor.RIGHT);
-        //    if (right.size() > 0) {
-        //      for (String lid : right) {
-        //        ToolWindow window = toolWindowManager.getToolWindow(lid);
-        //        editorToTheRight = window != null && window.isVisible() && window.getType() == ToolWindowType.DOCKED;
-        //        if (editorToTheRight) break;
-        //      }
-        //    }
-        //  }
-        //}
-
-        Splitter outer = nextOuterSplitter(splitter);
-        if (outer != null) {
-          boolean outerVertical = outer.getOrientation();
-          if (!outerVertical) {
-            if (splitter.getParent() == outer.getFirstComponent()) editorToTheRight = true;
-            if (splitter.getParent() == outer.getSecondComponent()) editorToTheLeft = true;
-          } else {
-            if (splitter.getParent() == outer.getFirstComponent()) {
-              editorToTheDown = true;
-            }
-          }
-        }
-
-        int left = editorToTheLeft ? 1 : 0;
-        int right = editorToTheRight ? 1 : 0;
-        int bottom = editorToTheDown ? 1 : 0;
-        return new Insets(0, left, bottom, right);
-      }
-
-      return new Insets(0, 0, 0, 0);
-    }
-
-    @Nullable
-    private static Splitter nextOuterSplitter(Component c) {
-      Container parent = c.getParent();
-      if (parent == null) return null;
-      Container grandParent = parent.getParent();
-      if (grandParent instanceof Splitter) return (Splitter)grandParent;
-      return null;
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
     }
   }
 
@@ -798,10 +688,8 @@ public class EditorWindow {
         final EditorWithProviderComposite firstEC = getEditorAt(0);
         myPanel = new JPanel(new BorderLayout());
         myPanel.setOpaque(false);
-        myPanel.setBorder(new AdaptiveBorder());
-        myPanel.setOpaque(false);
 
-        final Splitter splitter = new Splitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
+        final Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
         final EditorWindow res = new EditorWindow(myOwner);
         if (myTabbedPane != null) {
           final EditorWithProviderComposite selectedEditor = getSelectedEditor();
