@@ -47,18 +47,21 @@ public class EduStepicConnector {
   private EduStepicConnector() {
   }
 
+  private static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
+    return HttpRequests.request(stepicApiUrl + link).connect(new HttpRequests.RequestProcessor<T>() {
+      @Override
+      public T process(@NotNull HttpRequests.Request request) throws IOException {
+        final BufferedReader reader = request.getReader();
+        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        return gson.fromJson(reader, container);
+      }
+    });
+  }
+
   @NotNull
   public static List<CourseInfo> getCourses() {
     try {
-      return HttpRequests.request(stepicApiUrl + "courses/99").connect(new HttpRequests.RequestProcessor<List<CourseInfo>>() {
-
-        @Override
-        public List<CourseInfo> process(@NotNull HttpRequests.Request request) throws IOException {
-          final BufferedReader reader = request.getReader();
-          Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-          return gson.fromJson(reader, CoursesContainer.class).courses;
-        }
-      });
+      return getFromStepic("courses/99", CoursesContainer.class).courses;
     }
     catch (IOException e) {
       LOG.error("IOException " + e.getMessage());
@@ -102,74 +105,47 @@ public class EduStepicConnector {
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
+    final SectionWrapper sectionWrapper = getFromStepic("sections/" + String.valueOf(sectionId), SectionWrapper.class);
+    List<Integer> unitIds = sectionWrapper.sections.get(0).units;
+    final List<Lesson> lessons = new ArrayList<Lesson>();
+    for (Integer unitId : unitIds) {
+      UnitWrapper unit = getFromStepic("units/" + String.valueOf(unitId), UnitWrapper.class);
+      int lessonID = unit.units.get(0).lesson;
+      LessonContainer lesson = getFromStepic("lessons/" + String.valueOf(lessonID), LessonContainer.class);
+      Lesson realLesson = lesson.lessons.get(0);
+      lessons.add(realLesson);
+    }
 
-    final SectionWrapper sectionWrapper = HttpRequests.request(stepicApiUrl + "sections/" + String.valueOf(sectionId))
-      .connect(new HttpRequests.RequestProcessor<SectionWrapper>() {
-
-        @Override
-        public SectionWrapper process(@NotNull HttpRequests.Request request) throws IOException {
-          final BufferedReader reader = request.getReader();
-          Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-          return gson.fromJson(reader, SectionWrapper.class);
-        }
-      });
-    final List<Lesson> lessons = getSortedLessons(sectionWrapper);
     for (Lesson lesson : lessons) {
       lesson.taskList = new ArrayList<Task>();
       for (Integer s : lesson.steps) {
-        final Step step = getStep(s);
-        final Task task = new Task();
-        task.setName(step.name);
-        task.setText(step.text);
-        for (TestFileWrapper wrapper : step.options.test) {
-          task.setTestsTexts(wrapper.name, wrapper.text);
-        }
-
-        task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
-        if (step.options.files != null) {
-          for (TaskFile taskFile : step.options.files) {
-            task.taskFiles.put(taskFile.name, taskFile);
-          }
-        }
-        lesson.taskList.add(task);
+        createTask(lesson, s);
       }
     }
     return lessons;
   }
 
-  @NotNull
-  private static List<Lesson> getSortedLessons(SectionWrapper sectionWrapper) {
-    final List<Lesson> lessons = sectionWrapper.lessons;
-
-    final List<Integer> units = sectionWrapper.sections.get(0).units;
-    final List<SectionWrapper.Unit> wrapperUnits = sectionWrapper.units;
-
-    final HashMap<Integer, Integer> unitsMap = new HashMap<Integer, Integer>();
-    for (SectionWrapper.Unit unit : wrapperUnits) {
-      unitsMap.put(unit.lesson, unit.id);
+  private static void createTask(Lesson lesson, Integer s) throws IOException {
+    final Step step = getStep(s);
+    final Task task = new Task();
+    task.setName(step.name);
+    task.setText(step.text);
+    for (TestFileWrapper wrapper : step.options.test) {
+      task.setTestsTexts(wrapper.name, wrapper.text);
     }
-    Collections.sort(lessons, new Comparator<Lesson>() {
-      @Override
-      public int compare(Lesson l1, Lesson l2) {
 
-        return units.indexOf(unitsMap.get(l1.id)) - units.indexOf(unitsMap.get(l2.id));
+    task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
+    if (step.options.files != null) {
+      for (TaskFile taskFile : step.options.files) {
+        task.taskFiles.put(taskFile.name, taskFile);
       }
-    });
-    return lessons;
+    }
+    lesson.taskList.add(task);
   }
 
   public static Step getStep(Integer step) throws IOException {
-    return HttpRequests.request(stepicApiUrl + "steps/" + String.valueOf(step)).connect(new HttpRequests.RequestProcessor<Step>() {
-
-      @Override
-      public Step process(@NotNull HttpRequests.Request request) throws IOException {
-        final BufferedReader reader = request.getReader();
-        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        return gson.fromJson(reader, StepContainer.class).steps.get(0).block;
-      }
-    });
+    return getFromStepic("steps/" + String.valueOf(step), StepContainer.class).steps.get(0).block;
   }
-
 
 
   public static boolean postLesson(Project project, @NotNull final Lesson lesson) {
@@ -324,6 +300,10 @@ public class EduStepicConnector {
     }
   }
 
+  static class LessonContainer {
+    List<Lesson> lessons;
+  }
+
   static class StepSource {
     @Expose Step block;
     @Expose int position = 0;
@@ -360,6 +340,13 @@ public class EduStepicConnector {
     }
 
     List<Unit> units;
+  }
 
+  static class UnitWrapper {
+    static class Unit {
+      int lesson;
+    }
+
+    List<Unit> units;
   }
 }
