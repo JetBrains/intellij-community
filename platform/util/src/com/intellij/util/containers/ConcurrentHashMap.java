@@ -1210,6 +1210,8 @@ public final class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
    */
   @Override
   public void clear() {
+    if (isEmpty()) return;
+    
     long delta = 0L; // negative number of deletions
     int i = 0;
     Node<K, V>[] tab = table;
