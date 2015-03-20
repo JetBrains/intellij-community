@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -542,65 +542,60 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return;
     }
-    CommandProcessor.getInstance().executeCommand(myPsiManager.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final XmlDocument document = xmlFile.getDocument();
-          if (document != null) {
-            final XmlTag rootTag = document.getRootTag();
-            final String externalName = getExternalName(listOwner, false);
-            if (externalName == null) {
-              LOG.info("member without external name: " + listOwner);
-            }
-            if (rootTag != null && externalName != null) {
-              XmlTag anchor = null;
-              for (XmlTag item : rootTag.getSubTags()) {
-                int compare = Comparing.compare(externalName, StringUtil.unescapeXml(item.getAttributeValue("name")));
+    try {
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag rootTag = document.getRootTag();
+        final String externalName = getExternalName(listOwner, false);
+        if (externalName == null) {
+          LOG.info("member without external name: " + listOwner);
+        }
+        if (rootTag != null && externalName != null) {
+          XmlTag anchor = null;
+          for (XmlTag item : rootTag.getSubTags()) {
+            int compare = Comparing.compare(externalName, StringUtil.unescapeXml(item.getAttributeValue("name")));
+            if (compare == 0) {
+              anchor = null;
+              for (XmlTag annotation : item.getSubTags()) {
+                compare = Comparing.compare(annotationFQName, annotation.getAttributeValue("name"));
                 if (compare == 0) {
-                  anchor = null;
-                  for (XmlTag annotation : item.getSubTags()) {
-                    compare = Comparing.compare(annotationFQName, annotation.getAttributeValue("name"));
-                    if (compare == 0) {
-                      annotation.delete();
-                      break;
-                    }
-                    anchor = annotation;
-                  }
-                  XmlTag newTag = XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
-                    createAnnotationTag(annotationFQName, values));
-                  item.addAfter(newTag, anchor);
-                  commitChanges(xmlFile);
-                  notifyAfterAnnotationChanging(listOwner, annotationFQName, true);
-                  return;
+                  annotation.delete();
+                  break;
                 }
-                if (compare < 0) break;
-                anchor = item;
+                anchor = annotation;
               }
-              @NonNls String text =
-                "<item name=\'" + StringUtil.escapeXml(externalName) + "\'>\n";
-              text += createAnnotationTag(annotationFQName, values);
-              text += "</item>";
-              rootTag.addAfter(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(text), anchor);
+              XmlTag newTag = XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
+                createAnnotationTag(annotationFQName, values));
+              item.addAfter(newTag, anchor);
               commitChanges(xmlFile);
               notifyAfterAnnotationChanging(listOwner, annotationFQName, true);
               return;
             }
+            if (compare < 0) break;
+            anchor = item;
           }
-          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-        }
-        finally {
-          dropCache();
-          if (codeUsageFile.getVirtualFile().isInLocalFileSystem()) {
-            UndoUtil.markPsiFileForUndo(codeUsageFile);
-          }
+          @NonNls String text =
+            "<item name=\'" + StringUtil.escapeXml(externalName) + "\'>\n";
+          text += createAnnotationTag(annotationFQName, values);
+          text += "</item>";
+          rootTag.addAfter(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(text), anchor);
+          commitChanges(xmlFile);
+          notifyAfterAnnotationChanging(listOwner, annotationFQName, true);
+          return;
         }
       }
-    }, ExternalAnnotationsManagerImpl.class.getName(), null);
+      notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+    }
+    finally {
+      dropCache();
+      if (codeUsageFile.getVirtualFile().isInLocalFileSystem()) {
+        UndoUtil.markPsiFileForUndo(codeUsageFile);
+      }
+    }
   }
 
   private static void sortItems(@NotNull XmlFile xmlFile) {
