@@ -80,7 +80,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       for (int k = markers.size() - 1; k > i; k--) {
         MergeableLineMarkerInfo current = markers.get(k);
         if (marker.canMergeWith(current)) {
-          toMerge.add(current);
+          toMerge.add(0, current);
           markers.remove(k);
         }
       }
@@ -88,7 +88,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         result.add(marker);
       }
       else {
-        toMerge.add(marker);
+        toMerge.add(0, marker);
         result.add(new MyLineMarkerInfo(toMerge));
       }
     }
