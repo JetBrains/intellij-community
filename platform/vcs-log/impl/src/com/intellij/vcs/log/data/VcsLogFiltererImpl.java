@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -98,7 +99,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   private class MyTask extends Task.Backgroundable {
 
     public MyTask(@Nullable Project project, @NotNull String title) {
-      super(project, title);
+      super(project, title, false);
     }
 
     @Override
@@ -108,6 +109,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       while (!(requests = myTaskController.popRequests()).isEmpty()) {
         try {
           visiblePack = getVisiblePack(visiblePack, requests);
+        }
+        catch (ProcessCanceledException ignored) {
+          return;
         }
         catch (Throwable t) {
           LOG.error("Error while filtering log", t);
