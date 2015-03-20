@@ -242,7 +242,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     IdRunnable task = new IdRunnable(this) {
       @Override
       public void run() {
-        if (myApplyData == null) return;
+        if (myApplyData == null || myDisposed) return;
         doApplyRequest(myApplyData.request, myApplyData.force, myApplyData.scrollToChangePolicy);
         myApplyData = null;
       }
