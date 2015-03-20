@@ -52,6 +52,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -69,8 +70,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
+  private volatile boolean myForceCompilationInTests;
 
-  ExecutionManagerImpl(@NotNull Project project) {
+  protected ExecutionManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
@@ -159,19 +161,25 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
               return;
             }
           }
-          // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
-          // and execution of startRunnable could be skipped if modality state check fails
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myProject.isDisposed()) {
-                DumbService.getInstance(myProject).runWhenSmart(startRunnable);
-              }
-            }
-          });
+
+          doRun(environment, startRunnable);
         }
       });
     }
+  }
+
+  protected void doRun(@NotNull final ExecutionEnvironment environment, @NotNull final Runnable startRunnable) {
+    // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
+    // and execution of startRunnable could be skipped if modality state check fails
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (!myProject.isDisposed()) {
+          DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+        }
+      }
+    });
   }
 
   @Override
@@ -236,7 +244,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !myForceCompilationInTests) {
       startRunnable.run();
     }
     else {
@@ -368,6 +376,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         start(environment);
       }
     }, 50);
+  }
+
+  @TestOnly
+  public void setForceCompilationInTests(boolean forceCompilationInTests) {
+    myForceCompilationInTests = forceCompilationInTests;
   }
 
   private static void start(@NotNull ExecutionEnvironment environment) {
