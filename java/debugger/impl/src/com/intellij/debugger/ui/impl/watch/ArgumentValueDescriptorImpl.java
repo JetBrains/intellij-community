@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,9 +161,15 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     }
 
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
-      appendName("<monitor>");
-      myCurrentSlotIndex++;
-      super.visitSynchronizedStatement(statement);
+      myIndexStack.push(myCurrentSlotIndex);
+      try {
+        appendName("<monitor>");
+        myCurrentSlotIndex++;
+        super.visitSynchronizedStatement(statement);
+      }
+      finally {
+        myCurrentSlotIndex = myIndexStack.pop();
+      }
     }
 
     private void appendName(String varName) {
