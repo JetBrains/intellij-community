@@ -93,6 +93,10 @@ public class MovablePopup {
     }
   }
 
+  public void setBounds(@NotNull Rectangle bounds) {
+    setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+  }
+
   public void setBounds(int x, int y, int width, int height) {
     if (myViewBounds != null) {
       myViewBounds.setBounds(x, y, width, height);
@@ -102,6 +106,10 @@ public class MovablePopup {
     }
   }
 
+  public void setLocation(@NotNull Point location) {
+    setLocation(location.x, location.y);
+  }
+
   public void setLocation(int x, int y) {
     if (myViewBounds != null) {
       myViewBounds.setLocation(x, y);
@@ -109,6 +117,10 @@ public class MovablePopup {
     else {
       setBounds(new Point(x, y), null);
     }
+  }
+
+  public void setSize(@NotNull Dimension size) {
+    setSize(size.width, size.height);
   }
 
   public void setSize(int width, int height) {
