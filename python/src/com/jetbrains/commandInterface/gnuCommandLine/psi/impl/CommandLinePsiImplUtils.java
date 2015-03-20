@@ -16,6 +16,12 @@
 package com.jetbrains.commandInterface.gnuCommandLine.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.commandInterface.command.Argument;
+import com.jetbrains.commandInterface.command.Option;
+import com.jetbrains.commandInterface.gnuCommandLine.CommandLinePart;
+import com.jetbrains.commandInterface.gnuCommandLine.ValidationResult;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineArgument;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineOption;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Ilya.Kazakevich
  */
+@SuppressWarnings("StaticMethodOnlyUsedInOneClass") // This class was created to store functions for grammar kit
 final class CommandLinePsiImplUtils {
 
 
@@ -40,6 +47,89 @@ final class CommandLinePsiImplUtils {
    */
   static boolean isLong(@NotNull final CommandLineOption o) {
     return o.getLongOptionNameToken() != null;
+  }
+
+  /**
+   * Finds real option based on psi opton
+   *
+   * @param option psi option
+   * @return real option (if any)
+   */
+  @Nullable
+  static Option findRealOption(@NotNull final CommandLineOption option) {
+    final ValidationResult validationResult = getValidationResult(option);
+    if (validationResult == null) {
+      return null;
+    }
+    return validationResult.getOption(option);
+  }
+
+
+  /**
+   * Tries to find appropriate help text for argument. It can be argument help string for positional argument or option help
+   * for option argument.
+   *
+   * @param argument argument to search help for
+   * @return help string for argument or null if not found
+   */
+  @Nullable
+  static String findBestHelpText(@NotNull final CommandLineArgument argument) {
+    final Option option = argument.findOptionForOptionArgument();
+    if (option != null) {
+      return option.getHelp();
+    }
+    final Argument realArgument = argument.findRealArgument();
+    return (realArgument != null ? realArgument.getHelpText() : null);
+  }
+
+
+  /**
+   * Finds real argument based on psi argument
+   *
+   * @param argument psi argument
+   * @return real argument (if any)
+   */
+  @Nullable
+  static Argument findRealArgument(@NotNull final CommandLineArgument argument) {
+    final ValidationResult validationResult = getValidationResult(argument);
+    if (validationResult == null) {
+      return null;
+    }
+    return validationResult.getArgument(argument);
+  }
+
+  /**
+   * Finds option if argument is option argument
+   *
+   * @param argument argument to check
+   * @return option (if option argument) or null if not
+   */
+  @Nullable
+  static Option findOptionForOptionArgument(@NotNull final CommandLineArgument argument) {
+    final ValidationResult validationResult = getValidationResult(argument);
+    if (validationResult == null) {
+      return null;
+    }
+    return validationResult.getOptionForOptionArgument(argument);
+  }
+
+  /**
+   * Searches for validation result for command line
+   *
+   * @param commandLinePart command line part
+   * @return validation result (if any)
+   */
+  @Nullable
+  private static ValidationResult getValidationResult(@NotNull final CommandLinePart commandLinePart) {
+    final CommandLineFile commandLineFile = commandLinePart.getCommandLineFile();
+    if (commandLineFile == null) {
+      return null;
+    }
+    final ValidationResult validationResult = commandLineFile.getValidationResult();
+    if (validationResult == null) {
+      return null;
+    }
+    return validationResult;
   }
 
   /**

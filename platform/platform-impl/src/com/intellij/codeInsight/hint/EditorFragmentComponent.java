@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
@@ -62,9 +63,6 @@ public class EditorFragmentComponent extends JPanel {
     if (!showFolding) {
       foldingModel.setFoldingEnabled(false);
     }
-    
-    boolean isCaretRowShown = editor.getSettings().isCaretRowShown();
-    editor.getSettings().setCaretRowShown(false);
 
     Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
@@ -113,8 +111,6 @@ public class EditorFragmentComponent extends JPanel {
     if (wasVisible) {
       editor.setCaretVisible(true);
     }
-    
-    editor.getSettings().setCaretRowShown(isCaretRowShown);
 
     if (!showFolding) {
       foldingModel.setFoldingEnabled(isFoldingEnabled);
@@ -148,7 +144,7 @@ public class EditorFragmentComponent extends JPanel {
     final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
     Border outsideBorder = BorderFactory.createLineBorder(borderColor, 1);
-    Border insideBorder = BorderFactory.createEmptyBorder(2, 0, 2, 2);
+    Border insideBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
   }
 
@@ -163,6 +159,21 @@ public class EditorFragmentComponent extends JPanel {
                                                          boolean showUpward,
                                                          boolean showFolding,
                                                          boolean hideByAnyKey) {
+    return showEditorFragmentHintAt(editor, range, y, showUpward, showFolding, hideByAnyKey, true);
+  }
+  
+  /**
+   * @param y <code>y</code> coordinate in layered pane coordinate system.
+   * @param hideByAnyKey
+   */
+  @Nullable
+  public static LightweightHint showEditorFragmentHintAt(Editor editor,
+                                                         TextRange range,
+                                                         int y,
+                                                         boolean showUpward,
+                                                         boolean showFolding,
+                                                         boolean hideByAnyKey,
+                                                         boolean useCaretRowBackground) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     Document document = editor.getDocument();
 
@@ -190,8 +201,8 @@ public class EditorFragmentComponent extends JPanel {
 
     if (startLine >= endLine) return null;
 
-    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true);
-
+    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true, 
+                                                                              useCaretRowBackground);
 
     if (showUpward) {
       y -= fragmentComponent.getPreferredSize().height;
@@ -199,7 +210,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(-1, 0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
@@ -213,8 +224,23 @@ public class EditorFragmentComponent extends JPanel {
                                                                       int startLine,
                                                                       int endLine,
                                                                       boolean showFolding, boolean showGutter) {
-    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent((EditorEx)editor, startLine, endLine, showFolding, showGutter);
-    fragmentComponent.setBackground(getBackgroundColor(editor));
+    return createEditorFragmentComponent(editor, startLine, endLine, showFolding, showGutter, true);
+  }
+  
+  public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
+                                                                      int startLine,
+                                                                      int endLine,
+                                                                      boolean showFolding, boolean showGutter,
+                                                                      boolean useCaretRowBackground) {
+    final EditorEx editorEx = (EditorEx)editor;
+    final Color old = editorEx.getBackgroundColor();
+    Color backColor = getBackgroundColor(editor, useCaretRowBackground);
+    editorEx.setBackgroundColor(backColor);
+    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine,
+                                                                            showFolding, showGutter);
+    fragmentComponent.setBackground(backColor);
+
+    editorEx.setBackgroundColor(old);
     return fragmentComponent;
   }
 
@@ -226,11 +252,20 @@ public class EditorFragmentComponent extends JPanel {
     if (rootPane == null) return null;
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point point = SwingUtilities.convertPoint(editorComponent, -2, 0, layeredPane);
-    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey);
+    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, false);
   }
 
   public static Color getBackgroundColor(Editor editor){
-    return editor.getColorsScheme().getDefaultBackground();
+    return getBackgroundColor(editor, true);
+  }
+  
+  public static Color getBackgroundColor(Editor editor, boolean useCaretRowBackground){
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
+    if (!useCaretRowBackground || color == null){
+      color = colorsScheme.getDefaultBackground();
+    }
+    return color;
   }
 
   private static class MyComponentHint extends LightweightHint {

@@ -37,7 +37,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
     myListeners = listeners;
     mySendTree = sendTree;
     if (sendTree) {

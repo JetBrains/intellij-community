@@ -25,6 +25,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -705,6 +707,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       try {
         configurationSettings = loadConfiguration(element, false);
       }
+      catch (ProcessCanceledException e) {
+        configurationSettings = null;
+      }
       catch (Throwable e) {
         LOG.error(e);
         continue;
@@ -1093,12 +1098,21 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
                                                   long startTime = System.currentTimeMillis();
 
                                                   Icon icon;
-                                                  try {
-                                                    settings.checkSettings();
-                                                    icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
+                                                  if (DumbService.isDumb(myProject)) {
+                                                    icon =
+                                                      IconLoader.getDisabledIcon(ProgramRunnerUtil.getRawIcon(settings));
+                                                    if (settings.isTemporary()) {
+                                                      icon = ProgramRunnerUtil.getTemporaryIcon(icon);
+                                                    }
                                                   }
-                                                  catch (RuntimeConfigurationException ignored) {
-                                                    icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
+                                                  else {
+                                                    try {
+                                                      settings.checkSettings();
+                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, false);
+                                                    }
+                                                    catch (RuntimeConfigurationException ignored) {
+                                                      icon = ProgramRunnerUtil.getConfigurationIcon(settings, true);
+                                                    }
                                                   }
                                                   myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
                                                   return icon;

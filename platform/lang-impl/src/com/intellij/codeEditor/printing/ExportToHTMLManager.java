@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.TreeMap;
 
 class ExportToHTMLManager {
@@ -144,6 +145,9 @@ class ExportToHTMLManager {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
+        if (!psiFile.isValid()) {
+          return;
+        }
         TreeMap<Integer, PsiReference> refMap = null;
         for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
           final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
@@ -185,12 +189,13 @@ class ExportToHTMLManager {
                                        ArrayList<PsiFile> filesList,
                                        boolean isRecursive,
                                        final String outputDirectoryName) throws FileNotFoundException {
-    PsiFile[] files = psiDirectory.getFiles();
-    for (PsiFile file : files) {
-      filesList.add(file);
+    if (!psiDirectory.isValid()) {
+      return;
     }
+    PsiFile[] files = psiDirectory.getFiles();
+    Collections.addAll(filesList, files);
     generateIndexHtml(psiDirectory, isRecursive, outputDirectoryName);
-    if(isRecursive) {
+    if (isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
       for (PsiDirectory directory : directories) {
         addToPsiFileList(directory, filesList, isRecursive, outputDirectoryName);

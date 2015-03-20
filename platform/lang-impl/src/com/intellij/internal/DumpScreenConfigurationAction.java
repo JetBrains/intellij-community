@@ -230,12 +230,13 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
         g.fillRect(x, y, bounds.width, bounds.height);
 
         String id = String.valueOf(i + 1);
+        int size = Math.min(bounds.width << 1, bounds.height);
         g.setColor(JBColor.WHITE);
-        g.setFont(new Font("Monospaced", Font.BOLD, Math.min(bounds.width, bounds.height)));
+        g.setFont(new Font("Monospaced", Font.BOLD, size));
         FontMetrics fm = g.getFontMetrics();
         x += (bounds.width - fm.stringWidth(id)) / 2;
         y += (bounds.height - fm.getHeight()) / 2;
-        g.drawString(id, x, y + bounds.height);
+        g.drawString(id, x, y + size);
       }
       g.dispose();
     }

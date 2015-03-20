@@ -64,7 +64,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
-  private ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<Integer>();
+  private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<Integer>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;

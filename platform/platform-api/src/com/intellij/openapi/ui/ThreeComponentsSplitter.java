@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
@@ -86,9 +87,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers) {
     myVerticalSplit = vertical;
     myShowDividerControls = false;
-    myFirstDivider = new Divider(true);
+    myFirstDivider = new Divider(true, onePixelDividers);
     Disposer.register(this, myFirstDivider);
-    myLastDivider = new Divider(false);
+    myLastDivider = new Divider(false, onePixelDividers);
     Disposer.register(this, myLastDivider);
 
     myDividerWidth = onePixelDividers ? 1 : 7;
@@ -457,9 +458,15 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   private class Divider extends JPanel implements Disposable {
+    private final boolean myIsOnePixel;
     protected boolean myDragging;
     protected Point myPoint;
     private final boolean myIsFirst;
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+    }
 
     private IdeGlassPane myGlassPane;
 
@@ -523,8 +530,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private boolean myWasPressedOnMe;
 
-    public Divider(boolean isFirst) {
+    public Divider(boolean isFirst, boolean isOnePixel) {
       super(new GridBagLayout());
+      myIsOnePixel = isOnePixel;
       setFocusable(false);
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
       myIsFirst = isFirst;
@@ -541,10 +549,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     private boolean isInside(Point p) {
       if (!isVisible()) return false;
 
+      int dndOff = myIsOnePixel ? Registry.intValue("ide.splitter.mouseZone") / 2 : 0;
       if (myVerticalSplit) {
         if (p.x >= 0 && p.x < getWidth()) {
           if (getHeight() > 0) {
-            return p.y >= 0 && p.y < getHeight();
+            return p.y >= -dndOff && p.y < getHeight() + dndOff;
           }
           else {
             return p.y >= -myDividerZone / 2 && p.y <= myDividerZone / 2;
@@ -554,7 +563,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       else {
         if (p.y >= 0 && p.y < getHeight()) {
           if (getWidth() > 0) {
-            return p.x >= 0 && p.x < getWidth();
+            return p.x >= -dndOff && p.x < getWidth() + dndOff;
           }
           else {
             return p.x >= -myDividerZone / 2 && p.x <= myDividerZone / 2;

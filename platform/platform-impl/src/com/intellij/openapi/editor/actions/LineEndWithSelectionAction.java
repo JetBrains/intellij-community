@@ -25,8 +25,10 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 
 public class LineEndWithSelectionAction extends TextComponentEditorAction {
   public LineEndWithSelectionAction() {
@@ -39,8 +41,8 @@ public class LineEndWithSelectionAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretToLineEnd(editor, true);
+    protected void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+      EditorActionUtil.moveCaretToLineEnd(editor, true, !(editor instanceof TextComponentEditor));
     }
   }
 }

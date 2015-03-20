@@ -35,6 +35,8 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
+import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,6 +80,11 @@ public class GridCellImpl implements GridCell {
       @Override
       public boolean useSmallLabels() {
         return true;
+      }
+
+      @Override
+      protected SingleRowLayout createSingleRowLayout() {
+        return new CompressibleSingleRowLayout(this);
       }
 
       @Override

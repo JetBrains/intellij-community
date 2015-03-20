@@ -45,7 +45,7 @@ public class DataNode<T> implements Serializable {
   private static final Logger LOG = Logger.getInstance(DataNode.class);
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
-  @NotNull private final List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
+  @NotNull private transient List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
 
   @NotNull private final Key<T> myKey;
   private transient T myData;
@@ -239,6 +239,12 @@ public class DataNode<T> implements Serializable {
       throw e;
     }
     out.defaultWriteObject();
+  }
+
+  private void readObject(ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    myChildrenView = Collections.unmodifiableList(myChildren);
   }
 
   public byte[] getDataBytes() throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,6 +197,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
           myFrameCount = 0;
         }
       }
+      catch (InternalException e) {
+        LOG.info(e);
+        myFrameCount = 0;
+      }
     }
     return myFrameCount;
   }
@@ -302,5 +306,14 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       LOG.info(e);
       return false;
     }
+  }
+
+  public boolean isAtBreakpoint() {
+    try {
+      return getThreadReference().isAtBreakpoint();
+    } catch (InternalException e) {
+      LOG.info(e);
+    }
+    return false;
   }
 }

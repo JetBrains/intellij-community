@@ -19,16 +19,37 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Parent of all command line elements (enables reference injection, see {@link #getReferences()})
  *
  * @author Ilya.Kazakevich
  */
-public class CommandLineElement extends ASTWrapperPsiElement {
+public class CommandLineElement extends ASTWrapperPsiElement implements CommandLinePart {
   protected CommandLineElement(@NotNull final ASTNode node) {
     super(node);
+  }
+
+
+  @Nullable
+  @Override
+  public final CommandLineFile getCommandLineFile() {
+    return PsiTreeUtil.getParentOfType(this, CommandLineFile.class);
+  }
+
+  @Nullable
+  @Override
+  public final Command findRealCommand() {
+    final CommandLineFile commandLineFile = getCommandLineFile();
+    if (commandLineFile != null) {
+      return commandLineFile.findRealCommand();
+    }
+    return null;
   }
 
   @NotNull

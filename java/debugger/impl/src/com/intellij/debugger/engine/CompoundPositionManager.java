@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -59,62 +60,55 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
 
   private Cache<Location, SourcePosition> mySourcePositionCache = new Cache<Location, SourcePosition>();
 
+  private interface Processor<T> {
+    T process(PositionManager positionManager) throws NoDataException;
+  }
+
+  private <T> T iterate(Processor<T> processor, T defaultValue) {
+    for (PositionManager positionManager : myPositionManagers) {
+      try {
+        return processor.process(positionManager);
+      }
+      catch (NoDataException ignored) {}
+      catch (VMDisconnectedException e) {throw e;}
+      catch (InternalException e) {LOG.info(e);}
+      catch (ProcessCanceledException ignored) {}
+      catch (Exception e) {LOG.error(e);}
+      catch (AssertionError e) {LOG.error(e);}
+    }
+    return defaultValue;
+  }
+
   @Override
-  public SourcePosition getSourcePosition(Location location) {
+  public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
     SourcePosition res = mySourcePositionCache.get(location);
     if (res != null) return res;
 
-    for (PositionManager positionManager : myPositionManagers) {
-      try {
-        res = positionManager.getSourcePosition(location);
+    return iterate(new Processor<SourcePosition>() {
+      @Override
+      public SourcePosition process(PositionManager positionManager) throws NoDataException {
+        SourcePosition res = positionManager.getSourcePosition(location);
         mySourcePositionCache.put(location, res);
         return res;
       }
-      catch (NoDataException ignored) {
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (InternalException ignored) {
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      catch (AssertionError e) {
-        LOG.error(e);
-      }
-    }
-    return null;
+    }, null);
   }
 
   @Override
   @NotNull
-  public List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) {
-    for (PositionManager positionManager : myPositionManagers) {
-      try {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
+    return iterate(new Processor<List<ReferenceType>>() {
+      @Override
+      public List<ReferenceType> process(PositionManager positionManager) throws NoDataException {
         return positionManager.getAllClasses(classPosition);
       }
-      catch (NoDataException ignored) {
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (InternalException ignored) {
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      catch (AssertionError e) {
-        LOG.error(e);
-      }
-    }
-    return Collections.emptyList();
+    }, Collections.<ReferenceType>emptyList());
   }
 
   @Override
   @NotNull
-  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) {
+  public List<Location> locationsOfLine(@NotNull final ReferenceType type, @NotNull SourcePosition position) {
     VirtualFile file = position.getFile().getVirtualFile();
     if (file != null) {
       LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
@@ -126,54 +120,31 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       }
     }
 
-    for (PositionManager positionManager : myPositionManagers) {
-      try {
-        return positionManager.locationsOfLine(type, position);
+    final SourcePosition finalPosition = position;
+    return iterate(new Processor<List<Location>>() {
+      @Override
+      public List<Location> process(PositionManager positionManager) throws NoDataException {
+        return positionManager.locationsOfLine(type, finalPosition);
       }
-      catch (NoDataException ignored) {
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (InternalException ignored) {
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      catch (AssertionError e) {
-        LOG.error(e);
-      }
-    }
-    return Collections.emptyList();
+    }, Collections.<Location>emptyList());
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) {
-    for (PositionManager positionManager : myPositionManagers) {
-      try {
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
+    return iterate(new Processor<ClassPrepareRequest>() {
+      @Override
+      public ClassPrepareRequest process(PositionManager positionManager) throws NoDataException {
         return positionManager.createPrepareRequest(requestor, position);
       }
-      catch (NoDataException ignored) {
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      catch (AssertionError e) {
-        LOG.error(e);
-      }
-    }
-
-    return null;
+    }, null);
   }
 
   @NotNull
   @Override
-  public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) {
-    for (PositionManager positionManager : myPositionManagers) {
-      try {
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
+    return iterate(new Processor<List<ClassPrepareRequest>>() {
+      @Override
+      public List<ClassPrepareRequest> process(PositionManager positionManager) throws NoDataException {
         if (positionManager instanceof MultiRequestPositionManager) {
           return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
         }
@@ -185,20 +156,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
           return Collections.singletonList(prepareRequest);
         }
       }
-      catch (NoDataException ignored) {
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      catch (AssertionError e) {
-        LOG.error(e);
-      }
-    }
-
-    return Collections.emptyList();
+    }, Collections.<ClassPrepareRequest>emptyList());
   }
 
   @Nullable
