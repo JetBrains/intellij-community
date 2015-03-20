@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
@@ -34,6 +35,7 @@ import java.util.Set;
  */
 
 class ClassfileAnalyzer {
+  public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private final DependencyContext myContext;
 
   ClassfileAnalyzer(DependencyContext context) {
@@ -390,11 +392,11 @@ class ClassfileAnalyzer {
     }
 
     @Override
-    public FieldVisitor visitField(int access, String n, String desc, String signature, Object value) {
+    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
       processSignature(signature);
 
       if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
-        myFields.add(new FieldRepr(myContext, access, myContext.get(n), myContext.get(desc), myContext.get(signature), value));
+        myFields.add(new FieldRepr(myContext, access, myContext.get(name), myContext.get(desc), myContext.get(signature), value));
       }
 
       return new FieldVisitor(Opcodes.ASM5) {
@@ -504,32 +506,116 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-          final int fieldName = myContext.get(name);
-          final int fieldOwner = myContext.get(owner);
-          final int descr = myContext.get(desc);
-
-          if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
-            myUsages.add(UsageRepr.createFieldAssignUsage(myContext, fieldName, fieldOwner, descr));
-          }
-
-          if (opcode == Opcodes.GETFIELD || opcode == Opcodes.GETSTATIC) {
-            addClassUsage(TypeRepr.getType(myContext, descr));
-          }
-
-          myUsages.add(UsageRepr.createFieldUsage(myContext, fieldName, fieldOwner, descr));
+          registerFieldUsage(opcode, owner, name, desc);
           super.visitFieldInsn(opcode, owner, name, desc);
         }
 
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-          final int methodName = myContext.get(name);
-          final int methodOwner = myContext.get(owner);
-
-          myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, methodOwner, desc));
-          myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner));
-          addClassUsage(TypeRepr.getType(myContext, Type.getReturnType(desc)));
-
+          registerMethodUsage(owner, name, desc);
           super.visitMethodInsn(opcode, owner, name, desc, itf);
+        }
+
+        @Override
+        public void visitInvokeDynamicInsn(String methodName, String desc, Handle bsm, Object... bsmArgs) {
+          final Type returnType = Type.getReturnType(desc);
+          addClassUsage(TypeRepr.getType(myContext, returnType));
+          
+          // common args processing 
+          for (Object arg : bsmArgs) {
+            if (arg instanceof Type) {
+              final Type type = (Type)arg;
+              if (type.getSort() == Type.METHOD) {
+                for (Type argType : type.getArgumentTypes()) {
+                  addClassUsage(TypeRepr.getType(myContext, argType));
+                }
+                addClassUsage(TypeRepr.getType(myContext, type.getReturnType()));
+              }
+              else {
+                addClassUsage(TypeRepr.getType(myContext, type));
+              }
+            }
+            else if (arg instanceof Handle) {
+              processMethodHandle((Handle)arg);
+            }
+          }
+          
+          if (LAMBDA_FACTORY_CLASS.equals(bsm.getOwner())) {
+            // This invokeDynamic implements a lambda or method reference usage.
+            // Need to register method usage for the corresponding SAM-type.  
+            // First three arguments to the bootstrap methods are provided automatically by VM.
+            // Arguments in args array are expected to be as following:
+            // [0]: Type: Signature and return type of method to be implemented by the function object.
+            // [1]: Handle: implementation method handle
+            // [2]: Type: The signature and return type that should be enforced dynamically at invocation time. May be the same as samMethodType, or may be a specialization of it
+            // [...]: optional additional arguments
+            
+            if (returnType.getSort() == Type.OBJECT && bsmArgs.length >= 3) {
+              if (bsmArgs[0] instanceof Type) {
+                final Type samMethodType = (Type)bsmArgs[0];
+                if (samMethodType.getSort() == Type.METHOD) {
+                  registerMethodUsage(returnType.getInternalName(), methodName, samMethodType.getDescriptor());
+                }
+              }
+            }
+          }
+
+          super.visitInvokeDynamicInsn(methodName, desc, bsm, bsmArgs);
+        }
+
+        private void processMethodHandle(Handle handle) {
+          final String memberOwner = handle.getOwner();
+          if (myContext.get(memberOwner) != myName) {
+            // do not register access to own class members
+            final String memberName = handle.getName();
+            final String memberDescriptor = handle.getDesc();
+            if (isFieldAccessHandle(handle)) {
+              final int tag = handle.getTag();
+              int opCode;
+              if (tag == Opcodes.H_GETFIELD) {
+                opCode = Opcodes.GETFIELD;
+              }
+              else if (tag == Opcodes.H_GETSTATIC) {
+                opCode = Opcodes.GETSTATIC;
+              }
+              else if (tag == Opcodes.H_PUTFIELD) {
+                opCode = Opcodes.PUTFIELD;
+              }
+              else if (tag == Opcodes.H_PUTSTATIC) {
+                opCode = Opcodes.PUTSTATIC;
+              }
+              else {
+                opCode = Opcodes.H_GETFIELD;
+              }
+              registerFieldUsage(opCode, memberOwner, memberName, memberDescriptor);
+            }
+            else {
+              registerMethodUsage(memberOwner, memberName, memberDescriptor);
+            }
+          }
+        }
+
+        private void registerFieldUsage(int opcode, String owner, String fName, String desc) {
+          final int fieldName = myContext.get(fName);
+          final int fieldOwner = myContext.get(owner);
+          final int descr = myContext.get(desc);
+          if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
+            myUsages.add(UsageRepr.createFieldAssignUsage(myContext, fieldName, fieldOwner, descr));
+          }
+          if (opcode == Opcodes.GETFIELD || opcode == Opcodes.GETSTATIC) {
+            addClassUsage(TypeRepr.getType(myContext, descr));
+          }
+          myUsages.add(UsageRepr.createFieldUsage(myContext, fieldName, fieldOwner, descr));
+        }
+
+        private void registerMethodUsage(String owner, String name, @Nullable String desc) {
+          final int methodOwner = myContext.get(owner);
+          final int methodName = myContext.get(name);
+          myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner));
+          if (desc != null) {
+            myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, methodOwner, desc));
+            addClassUsage(TypeRepr.getType(myContext, Type.getReturnType(desc)));
+          }
         }
 
         private void addClassUsage(final TypeRepr.AbstractType type) {
@@ -549,6 +635,11 @@ class ClassfileAnalyzer {
         }
 
       };
+    }
+
+    private boolean isFieldAccessHandle(Handle handle) {
+      final int tag = handle.getTag();
+      return tag == Opcodes.H_GETFIELD || tag == Opcodes.H_GETSTATIC || tag == Opcodes.H_PUTFIELD || tag == Opcodes.H_PUTSTATIC;
     }
 
     @Override
