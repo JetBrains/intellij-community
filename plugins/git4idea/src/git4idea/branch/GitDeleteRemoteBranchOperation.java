@@ -121,20 +121,37 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   }
 
   private boolean doDeleteRemote(@NotNull String branchName, @NotNull Collection<GitRepository> repositories) {
+    Couple<String> pair = splitNameOfRemoteBranch(branchName);
+    String remoteName = pair.getFirst();
+    String branch = pair.getSecond();
+
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {
-      Couple<String> pair = splitNameOfRemoteBranch(branchName);
-      String remote = pair.getFirst();
-      String branch = pair.getSecond();
-      GitCommandResult res = pushDeletion(repository, remote, branch);
+      GitCommandResult res;
+      GitRemote remote = getRemoteByName(repository, remoteName);
+      if (remote == null) {
+        String error = "Couldn't find remote by name: " + remoteName;
+        LOG.error(error);
+        res = GitCommandResult.error(error);
+      }
+      else {
+        res = pushDeletion(repository, remote, branch);
+        if (!res.success() && isAlreadyDeletedError(res.getErrorOutputAsJoinedString())) {
+          res = myGit.remotePrune(repository, remote);
+        }
+      }
       result.append(repository, res);
       repository.update();
     }
     if (!result.totalSuccess()) {
       VcsNotifier.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
-                                                     result.getErrorOutputWithReposIndication());
+                                                       result.getErrorOutputWithReposIndication());
     }
     return result.totalSuccess();
+  }
+
+  private static boolean isAlreadyDeletedError(@NotNull String errorOutput) {
+    return errorOutput.contains("remote ref does not exist");
   }
 
   /**
@@ -149,26 +166,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String branchName) {
-    GitRemote remote = getRemoteByName(repository, remoteName);
-    if (remote == null) {
-      String error = "Couldn't find remote by name: " + remoteName;
-      LOG.error(error);
-      return GitCommandResult.error(error);
-    }
-
-    String remoteUrl = remote.getFirstUrl();
-    if (remoteUrl == null) {
-      LOG.warn("No urls are defined for remote: " + remote);
-      return GitCommandResult.error("There is no urls defined for remote " + remote.getName());
-    }
-    return pushDeletionNatively(repository, remoteName, remoteUrl, branchName);
-  }
-
-  @NotNull
-  private GitCommandResult pushDeletionNatively(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String url,
-                                                @NotNull String branchName) {
-    return myGit.push(repository, remoteName, url,":" + branchName);
+  private GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String branchName) {
+    return myGit.push(repository, remote, ":" + branchName, false, false, null);
   }
 
   @Nullable

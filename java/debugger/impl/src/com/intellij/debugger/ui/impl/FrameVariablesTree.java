@@ -242,9 +242,8 @@ public class FrameVariablesTree extends DebuggerTree {
       final byte[] bytecodes = method.bytecodes();
       if (bytecodes != null && bytecodes.length > 0) {
         final int firstLocalVariableSlot = ArgumentValueDescriptorImpl.getFirstLocalsSlot(method);
-        final long instructionIndex = location.codeIndex();
         final TIntObjectHashMap<DecompiledLocalVariable> usedVars = new TIntObjectHashMap<DecompiledLocalVariable>();
-        new InstructionParser(bytecodes, instructionIndex) {
+        new InstructionParser(bytecodes, location.codeIndex()) {
           @Override
           protected void localVariableInstructionFound(int opcode, int slot, String typeSignature) {
             if (slot >= firstLocalVariableSlot) {

@@ -735,7 +735,12 @@ public class ControlFlowUtil {
             if (lastInstruction instanceof GoToInstruction &&
                 ((GoToInstruction)lastInstruction).role == BranchingInstruction.Role.END &&
                 !((GoToInstruction)lastInstruction).isReturn) {
-              lastOffset--;
+              if (((GoToInstruction)lastInstruction).offset == startOffset) {
+                lastOffset = -1;
+              } 
+              else {
+                lastOffset--;
+              }
             }
 
             if (lastOffset >= 0) {

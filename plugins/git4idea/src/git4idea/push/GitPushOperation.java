@@ -368,7 +368,9 @@ public class GitPushOperation {
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
     boolean setUpstream = pushSpec.getTarget().isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
-    GitCommandResult res = myGit.push(repository, sourceBranch, targetBranch, myForce, setUpstream, tagMode, progressListener);
+
+    String spec = sourceBranch.getFullName() + ":" + targetBranch.getNameForRemoteOperations();
+    GitCommandResult res = myGit.push(repository, targetBranch.getRemote(), spec, myForce, setUpstream, tagMode, progressListener);
     return new ResultWithOutput(res);
   }
 

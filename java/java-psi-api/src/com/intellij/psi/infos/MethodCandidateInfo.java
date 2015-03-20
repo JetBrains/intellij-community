@@ -115,34 +115,23 @@ public class MethodCandidateInfo extends CandidateInfo{
     if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
       return getApplicabilityLevel();
     }
-    @ApplicabilityLevelConstant int level;
     final PsiSubstitutor substitutor = getSubstitutor(false);
-    Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
-    if (map == null) {
-      map = ContainerUtil.createConcurrentWeakMap();
-      CURRENT_CANDIDATE.set(map);
-    }
     final PsiMethod method = getElement();
-    final CurrentCandidateProperties properties = new CurrentCandidateProperties(method, substitutor, isVarargs(), true);
-    final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(), properties);
-    try {
-      PsiType[] argumentTypes = getArgumentTypes();
-      if (argumentTypes == null) {
-        return ApplicabilityLevel.NOT_APPLICABLE;
-      }
+    @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(new Computable<Integer>() {
+      @Override
+      public Integer compute() {
+        PsiType[] argumentTypes = getArgumentTypes();
+        if (argumentTypes == null) {
+          return ApplicabilityLevel.NOT_APPLICABLE;
+        }
 
-      level = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
-      if (!isVarargs() && level < ApplicabilityLevel.FIXED_ARITY) {
-        return ApplicabilityLevel.NOT_APPLICABLE;
+        int level = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
+        if (!isVarargs() && level < ApplicabilityLevel.FIXED_ARITY) {
+          return ApplicabilityLevel.NOT_APPLICABLE;
+        }
+        return level;
       }
-    }
-    finally {
-      if (alreadyThere == null) {
-        map.remove(getMarkerList());
-      } else {
-        map.put(getMarkerList(), alreadyThere);
-      }
-    }
+    }, substitutor);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
@@ -152,6 +141,34 @@ public class MethodCandidateInfo extends CandidateInfo{
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
+  }
+
+  public PsiType[] getPertinentArgumentTypes() {
+    return computeForOverloadedCandidate(new Computable<PsiType[]>() {
+      public PsiType[] compute() {
+        return getArgumentTypes();
+      }
+    }, getSubstitutor(false));
+  }
+
+  private <T> T computeForOverloadedCandidate(final Computable<T> computable, final PsiSubstitutor substitutor) {
+    Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
+    if (map == null) {
+      map = ContainerUtil.createConcurrentWeakMap();
+      CURRENT_CANDIDATE.set(map);
+    }
+    final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(),
+                                                            new CurrentCandidateProperties(getElement(), substitutor, isVarargs(), true));
+    try {
+      return computable.compute();
+    }
+    finally {
+      if (alreadyThere == null) {
+        map.remove(getMarkerList());
+      } else {
+        map.put(getMarkerList(), alreadyThere);
+      }
+    }
   }
 
   @NotNull

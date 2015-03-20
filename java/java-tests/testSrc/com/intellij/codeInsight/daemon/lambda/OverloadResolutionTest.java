@@ -98,6 +98,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     }).assertTiming();
   }
 
+  public void testMultipleOverloadsWithNestedGeneric() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

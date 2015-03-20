@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -57,9 +58,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
   private static final Class<GitHttpAuthenticator> PASS_REQUESTER = GitHttpAuthenticator.class;
 
-  @NotNull  private final Project myProject;
-  @NotNull  private final String myTitle;
-  @NotNull private final String myUrlFromCommand;
+  @NotNull private final Project myProject;
+  @NotNull private final String myTitle;
+  @NotNull private final Collection<String> myUrlsFromCommand;
 
   @Nullable private String myPassword;
   @Nullable private String myPasswordKey;
@@ -69,10 +70,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull String url) {
+  GitHttpGuiAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull Collection<String> url) {
     myProject = project;
     myTitle = "Git " + StringUtil.capitalize(command.name());
-    myUrlFromCommand = url;
+    myUrlsFromCommand = url;
   }
 
   @Override
@@ -195,18 +196,25 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (StringUtil.isEmptyOrSpaces(url)) {
       // if Git doesn't specify the URL in the username/password query, we use the url from the Git command
       // We only take the host, to avoid entering the same password for different repositories on the same host.
-      return adjustHttpUrl(getHost(myUrlFromCommand));
+      return adjustHttpUrl(getHost(myUrlsFromCommand));
     }
     return adjustHttpUrl(url);
   }
 
   @NotNull
-  private static String getHost(@NotNull String url) {
-    Couple<String> split = UriUtil.splitScheme(url);
-    String scheme = split.getFirst();
-    String urlItself = split.getSecond();
-    int pathStart = urlItself.indexOf("/");
-    return scheme + URLUtil.SCHEME_SEPARATOR + urlItself.substring(0, pathStart);
+  private static String getHost(@NotNull Collection<String> urls) {
+    String host = "unknown";
+    for (String url : urls) {
+      Couple<String> split = UriUtil.splitScheme(url);
+      String scheme = split.getFirst();
+      String urlItself = split.getSecond();
+      int pathStart = urlItself.indexOf("/");
+      host = scheme + URLUtil.SCHEME_SEPARATOR + urlItself.substring(0, pathStart);
+      if (scheme.startsWith("http")) {
+        return host;
+      }
+    }
+    return host;
   }
 
   /**

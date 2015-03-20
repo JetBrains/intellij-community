@@ -47,11 +47,7 @@ public final class HgErrorUtil {
   }
 
   public static boolean isAbort(@Nullable HgCommandResult result) {
-    if (result == null) {
-      return true;
-    }
-    if (getAbortLine(result) != null) return true;
-    return false;
+    return result == null || getAbortLine(result) != null;
   }
 
   @Nullable

@@ -21,6 +21,8 @@ import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -30,23 +32,21 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
     @NotNull
     @Override
     public String askPassword(@NotNull String url) {
-      throw new IllegalStateException("Authenticator was not registered");
+      return "";
     }
 
     @NotNull
     @Override
     public String askUsername(@NotNull String url) {
-      throw new IllegalStateException("Authenticator was not registered");
+      return "";
     }
 
     @Override
     public void saveAuthData() {
-      throw new IllegalStateException("Authenticator was not registered");
     }
 
     @Override
     public void forgetPassword() {
-      throw new IllegalStateException("Authenticator was not registered");
     }
 
     @Override
@@ -59,7 +59,7 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
 
   @NotNull
   @Override
-  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull String url) {
+  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull Collection<String> urls) {
     return myAuthenticator;
   }
 

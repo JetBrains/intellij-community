@@ -19,8 +19,7 @@ import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
@@ -73,8 +72,7 @@ public abstract class DiffWindowBase {
       public void actionPerformed(final AnActionEvent e) {
         myWrapper.close();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
-                                myProcessor.getComponent());
+    }.registerCustomShortcutSet(CommonShortcuts.getCloseActiveWindow(), myProcessor.getComponent());
   }
 
   public void show() {

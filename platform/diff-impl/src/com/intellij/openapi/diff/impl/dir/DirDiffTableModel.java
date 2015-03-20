@@ -82,7 +82,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public static final String EMPTY_STRING = "                                                  ";
   private DirDiffPanel myPanel;
 
-  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
+  public DirDiffTableModel(@NotNull Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
     myProject = project;
     mySettings = settings;
     mySrc = src;

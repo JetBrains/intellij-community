@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.singleton;
+
 /**
  * Easy-to-use wrapper of common native Git commands.
  * Most of them return result as {@link GitCommandResult}.
@@ -374,29 +376,47 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
-                               boolean updateTracking, @NotNull GitLineHandlerListener... listeners) {
-    return doPush(repository, remote, url, spec, false, updateTracking, null, listeners);
+  public GitCommandResult push(@NotNull GitRepository repository,
+                               @NotNull String remote,
+                               @Nullable String url,
+                               @NotNull String spec,
+                               boolean updateTracking,
+                               @NotNull GitLineHandlerListener... listeners) {
+    return doPush(repository, remote, singleton(url), spec, false, updateTracking, null, listeners);
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult push(@NotNull GitRepository repository,
+                               @NotNull GitRemote remote,
+                               @NotNull String spec,
+                               boolean force,
+                               boolean updateTracking,
+                               @Nullable String tagMode,
+                               GitLineHandlerListener... listeners) {
+    return doPush(repository, remote.getName(), remote.getPushUrls(), spec, force, updateTracking, tagMode, listeners);
   }
 
   @NotNull
-  private GitCommandResult doPush(@NotNull final GitRepository repository, @NotNull final String remote, @Nullable final String url,
-                               @NotNull final String spec, final boolean force, final boolean updateTracking,
-                               @Nullable final String tagMode,
-                               @NotNull final GitLineHandlerListener... listeners) {
+  private GitCommandResult doPush(@NotNull final GitRepository repository,
+                                  @NotNull final String remoteName,
+                                  @NotNull final Collection<String> remoteUrls,
+                                  @NotNull final String spec,
+                                  final boolean force,
+                                  final boolean updateTracking,
+                                  @Nullable final String tagMode,
+                                  @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
         final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.PUSH);
-        if (url != null) {
-          h.setUrl(url);
-        }
+        h.setUrls(remoteUrls);
         h.setSilent(false);
         h.setStdoutSuppressed(false);
         addListeners(h, listeners);
         h.addProgressParameter();
         h.addParameters("--porcelain");
-        h.addParameters(remote);
+        h.addParameters(remoteName);
         h.addParameters(spec);
         if (updateTracking) {
           h.addParameters("--set-upstream");
@@ -410,31 +430,6 @@ public class GitImpl implements Git {
         return h;
       }
     });
-  }
-
-  @Override
-  @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
-                               @NotNull GitLineHandlerListener... listeners) {
-    return push(repository, remote, url, spec, false, listeners);
-  }
-
-  @Override
-  @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitLocalBranch source, @NotNull GitRemoteBranch target,
-                               boolean force, boolean updateTracking, @Nullable String tagMode, GitLineHandlerListener... listeners) {
-    GitRemote remote = target.getRemote();
-    Collection<String> pushUrls = remote.getPushUrls(); // TODO handle the case with multiple pushurls with different protocols
-    String url;
-    if (pushUrls.isEmpty()) {
-      LOG.error("No urls or pushUrls are defined for " + remote);
-      url = null;
-    }
-    else {
-      url = pushUrls.iterator().next();
-    }
-    String spec = source.getFullName() + ":" + target.getNameForRemoteOperations();
-    return doPush(repository, remote.getName(), url, spec, force, updateTracking, tagMode, listeners);
   }
 
   @NotNull
@@ -476,16 +471,18 @@ public class GitImpl implements Git {
    */
   @Override
   @NotNull
-  public GitCommandResult fetch(@NotNull final GitRepository repository, @NotNull final String url, @NotNull final String remote,
-                                @NotNull final List<GitLineHandlerListener> listeners, final String... params) {
+  public GitCommandResult fetch(@NotNull final GitRepository repository,
+                                @NotNull final GitRemote remote,
+                                @NotNull final List<GitLineHandlerListener> listeners,
+                                final String... params) {
     return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
         final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
         h.setSilent(false);
         h.setStdoutSuppressed(false);
-        h.setUrl(url);
-        h.addParameters(remote);
+        h.setUrls(remote.getUrls());
+        h.addParameters(remote.getName());
         h.addParameters(params);
         h.addProgressParameter();
         GitVcs vcs = GitVcs.getInstance(repository.getProject());
@@ -511,7 +508,7 @@ public class GitImpl implements Git {
   public GitCommandResult lsRemote(@NotNull final Project project,
                                    @NotNull final File workingDir,
                                    @NotNull final String url) {
-    return doLsRemote(project, workingDir, url, url);
+    return doLsRemote(project, workingDir, url, singleton(url));
   }
 
   @NotNull
@@ -520,27 +517,38 @@ public class GitImpl implements Git {
                                    @NotNull VirtualFile workingDir,
                                    @NotNull GitRemote remote,
                                    String... additionalParameters) {
-    return doLsRemote(project, VfsUtilCore.virtualToIoFile(workingDir), remote.getName(), remote.getFirstUrl(), additionalParameters);
+    return doLsRemote(project, VfsUtilCore.virtualToIoFile(workingDir), remote.getName(), remote.getUrls(), additionalParameters);
   }
 
   @NotNull
-  private GitCommandResult doLsRemote(@NotNull final Project project,
-                                      @NotNull final File workingDir,
-                                      @NotNull final String remoteId,
-                                      @Nullable final String authenticationUrl,
-                                      final String... additionalParameters) {
+  @Override
+  public GitCommandResult remotePrune(@NotNull final GitRepository repository, @NotNull final GitRemote remote) {
+    return run(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE.writeLockingCommand());
+        h.setStdoutSuppressed(false);
+        h.addParameters("prune");
+        h.addParameters(remote.getName());
+        h.setUrls(remote.getUrls());
+        return h;
+      }
+    });
+  }
+
+  @NotNull
+  private static GitCommandResult doLsRemote(@NotNull final Project project,
+                                             @NotNull final File workingDir,
+                                             @NotNull final String remoteId,
+                                             @NotNull final Collection<String> authenticationUrls,
+                                             final String... additionalParameters) {
     return run(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
         GitLineHandler h = new GitLineHandler(project, workingDir, GitCommand.LS_REMOTE);
         h.addParameters(additionalParameters);
         h.addParameters(remoteId);
-        if (authenticationUrl != null) {
-          h.setUrl(authenticationUrl);
-        }
-        else {
-          LOG.error("No valid URLs for remote " + remoteId);
-        }
+        h.setUrls(authenticationUrls);
         return h;
       }
     });

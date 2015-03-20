@@ -34,6 +34,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -242,7 +243,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     IdRunnable task = new IdRunnable(this) {
       @Override
       public void run() {
-        if (myApplyData == null) return;
+        if (myApplyData == null || myDisposed) return;
         doApplyRequest(myApplyData.request, myApplyData.force, myApplyData.scrollToChangePolicy);
         myApplyData = null;
       }
@@ -429,7 +430,9 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
-    toolbar.setTargetComponent(myMainPanel);
+
+    DataManager.registerDataProvider(toolbar.getComponent(), myMainPanel);
+    toolbar.setTargetComponent(toolbar.getComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
