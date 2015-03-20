@@ -16,5 +16,5 @@
 package com.intellij.openapi.wm;
 
 public enum ToolWindowType {
-  DOCKED, FLOATING, SLIDING
+  DOCKED, FLOATING, SLIDING, WINDOWED
 }

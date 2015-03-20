@@ -5275,6 +5275,7 @@ com/intellij/ide/actions/NextTabAction.class:/lib/idea.jar
 com/intellij/ide/actions/TabNavigationActionBase.class:/lib/idea.jar
 com/intellij/ide/actions/PreviousTabAction.class:/lib/idea.jar
 com/intellij/openapi/wm/impl/InternalDecorator$ToggleFloatingModeAction.class:/lib/idea.jar
+com/intellij/openapi/wm/impl/InternalDecorator$ToggleWindowedModeAction.class:/lib/idea.jar
 com/intellij/openapi/wm/impl/InternalDecorator$ToggleDockModeAction.class:/lib/idea.jar
 com/intellij/openapi/wm/impl/InternalDecorator$TogglePinnedModeAction.class:/lib/idea.jar
 com/intellij/openapi/wm/impl/InternalDecorator$HideAction.class:/lib/idea.jar
@@ -5312,6 +5313,7 @@ general/separator.png:/lib/icons.jar
 general/inactiveSeparator.png:/lib/icons.jar
 com/intellij/openapi/wm/impl/TitlePanel$MyAnimator.class:/lib/idea.jar
 com/intellij/ide/actions/ToggleFloatingModeAction.class:/lib/idea.jar
+com/intellij/ide/actions/ToggleWindowedModeAction.class:/lib/idea.jar
 com/intellij/ide/actions/ToggleSideModeAction.class:/lib/idea.jar
 general/separator.png:/lib/icons.jar
 general/inactiveSeparator.png:/lib/icons.jar
