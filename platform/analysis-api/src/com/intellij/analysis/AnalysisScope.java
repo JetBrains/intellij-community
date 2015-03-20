@@ -177,6 +177,9 @@ public class AnalysisScope {
   protected PsiElementVisitor createFileSearcher() {
     final FileIndex fileIndex = getFileIndex();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
+    }
 
     return new PsiElementVisitor() {
       @Override
@@ -191,12 +194,6 @@ public class AnalysisScope {
           }
           if (!shouldHighlightFile(file)) return;
           myFilesSet.add(virtualFile);
-          if (indicator != null) {
-            indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
-            Project project = file.getProject();
-            String text = displayProjectRelativePath(virtualFile, project);
-            indicator.setText2(text);
-          }
         }
       }
     };
