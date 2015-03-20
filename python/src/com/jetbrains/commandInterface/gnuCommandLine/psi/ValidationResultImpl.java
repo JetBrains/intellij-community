@@ -225,6 +225,13 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
   @Nullable
   @Override
   public Pair<Boolean, Argument> getNextArg() {
+    if (myCurrentOptionAndArgsLeft != null && myCurrentOptionAndArgsLeft.second > 0) { // Next arg is option arg
+      final Pair<Integer, Argument> argumentAndQuantity = myCurrentOptionAndArgsLeft.first.getArgumentAndQuantity();
+      if (argumentAndQuantity != null) {
+        // Option argument is always mandatory: https://docs.python.org/2/library/optparse.html#terminology
+        return Pair.create(true, argumentAndQuantity.second);
+      }
+    }
     return myCommand.getArgumentsInfo().getArgument(myCurrentPositionArgument);
   }
 }
