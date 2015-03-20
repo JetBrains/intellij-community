@@ -16,10 +16,13 @@
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
+import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.LookAheadLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.TokenSet;
+
+import java.io.Reader;
 
 /**
  * @author ilyas
@@ -35,6 +38,6 @@ public class GroovyLexer extends LookAheadLexer {
   );
 
   public GroovyLexer() {
-    super(new MergingLexerAdapter(new GroovyFlexLexer(), tokensToMerge));
+    super(new MergingLexerAdapter(new FlexAdapter(new _GroovyLexer((Reader) null)), tokensToMerge));
   }
 }
