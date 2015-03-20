@@ -22,8 +22,8 @@ public class StudyNavigator {
   public static Task nextTask(@NotNull final Task task) {
     Lesson currentLesson = task.getLesson();
     List<Task> taskList = currentLesson.getTaskList();
-    if (task.getIndex() + 1 < taskList.size()) {
-      return taskList.get(task.getIndex() + 1);
+    if (task.getIndex() < taskList.size()) {
+      return taskList.get(task.getIndex());
     }
     Lesson nextLesson = nextLesson(currentLesson);
     if (nextLesson == null) {
@@ -34,8 +34,9 @@ public class StudyNavigator {
 
   public static Task previousTask(@NotNull final Task task) {
     Lesson currentLesson = task.getLesson();
-    if (task.getIndex() - 1 >= 0) {
-      return currentLesson.getTaskList().get(task.getIndex() - 1);
+    int prevTaskIndex = task.getIndex() - 2;
+    if (prevTaskIndex >= 0) {
+      return currentLesson.getTaskList().get(prevTaskIndex);
     }
     Lesson prevLesson = previousLesson(currentLesson);
     if (prevLesson == null) {
@@ -47,17 +48,19 @@ public class StudyNavigator {
 
   public static  Lesson nextLesson(@NotNull final Lesson lesson) {
     List<Lesson> lessons = lesson.getCourse().getLessons();
-    if (lesson.getIndex() + 1 >= lessons.size()) {
+    int nextLessonIndex = lesson.getIndex();
+    if (nextLessonIndex >= lessons.size()) {
       return null;
     }
-    return lessons.get(lesson.getIndex() + 1);
+    return lessons.get(nextLessonIndex);
   }
 
   public static  Lesson previousLesson(@NotNull final Lesson lesson) {
-    if (lesson.getIndex() - 1 < 0) {
+    int prevLessonIndex = lesson.getIndex() - 2;
+    if (prevLessonIndex < 0) {
       return null;
     }
-    return lesson.getCourse().getLessons().get(lesson.getIndex() - 1);
+    return lesson.getCourse().getLessons().get(prevLessonIndex);
   }
 
   public static void navigateToFirstFailedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {

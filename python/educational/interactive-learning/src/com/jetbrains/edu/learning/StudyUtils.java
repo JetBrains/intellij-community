@@ -132,7 +132,7 @@ public class StudyUtils {
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final Course course = taskManager.getCourse();
     int taskNum = task.getIndex() + 1;
-    int lessonNum = task.getLesson().getIndex() + 1;
+    int lessonNum = task.getLesson().getIndex();
     assert course != null;
     final String pathToResource = FileUtil.join(course.getCourseDirectory(), EduNames.LESSON + lessonNum, EduNames.TASK + taskNum);
     final File resourceFile = new File(pathToResource, copyName);
