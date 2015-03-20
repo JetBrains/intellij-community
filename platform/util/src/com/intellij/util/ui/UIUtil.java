@@ -1791,7 +1791,7 @@ public class UIUtil {
 
     if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getContrastForColor(color));
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, getContrastForColor(color));
     }
   }
 
