@@ -219,6 +219,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         @Override
         public void hierarchyChanged(HierarchyEvent e) {
           hideHint();
+          myPopup.dispose();
         }
       }
     );

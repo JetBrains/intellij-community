@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.popup;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ import java.awt.*;
 /**
  * @author Sergey Malenkov
  */
-public class MovablePopup implements Disposable {
+public class MovablePopup {
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -46,7 +45,6 @@ public class MovablePopup implements Disposable {
     myHeavyWeight = true;
   }
 
-  @Override
   public void dispose() {
     disposeAndUpdate(false);
   }
