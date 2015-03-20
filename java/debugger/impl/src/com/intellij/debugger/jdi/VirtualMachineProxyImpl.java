@@ -638,7 +638,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public static boolean isCollected(ObjectReference reference) {
-    return !isJ2ME(reference.virtualMachine()) && reference.isCollected();
+    try {
+      return !isJ2ME(reference.virtualMachine()) && reference.isCollected();
+    }
+    catch (UnsupportedOperationException e) {
+      LOG.info(e);
+    }
+    return false;
   }
 
   public String getResumeStack() {
