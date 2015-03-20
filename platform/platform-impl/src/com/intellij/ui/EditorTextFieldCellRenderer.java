@@ -101,10 +101,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     editor.getColorsScheme().setEditorFontSize(table.getFont().getSize());
     String text = getText(table, value, row, column);
     TextAttributes textAttributes = getTextAttributes(table, value, selected, focused, row, column);
-    panel.setText(text, textAttributes);
+    panel.setText(text, textAttributes, selected);
 
-    ((EditorImpl)editor).setPaintSelection(selected);
-    editor.getSelectionModel().setSelection(0, selected ? editor.getDocument().getTextLength() : 0);
     editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
     editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
     editor.setBackgroundColor(getCellBackground(table, value, selected, focused, row, column));
@@ -165,6 +163,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private Dimension myPreferredSize;
     private String myRawText;
     private TextAttributes myTextAttributes;
+    private boolean mySelected;
 
     public MyPanel(EditorEx editor) {
       add(editor.getContentComponent());
@@ -178,9 +177,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       }
     }
 
-    public void setText(String text, @Nullable TextAttributes textAttributes) {
+    public void setText(String text, @Nullable TextAttributes textAttributes, boolean selected) {
       myRawText = text;
       myTextAttributes = textAttributes;
+      mySelected = selected;
       recalculatePreferredSize();
     }
 
@@ -277,8 +277,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
       ((EditorImpl)myEditor).resetSizes();
 
+      ((EditorImpl)myEditor).setPaintSelection(mySelected);
       SelectionModel selectionModel = myEditor.getSelectionModel();
-      selectionModel.setSelection(0, selectionModel.hasSelection() ? myEditor.getDocument().getTextLength() : 0);
+      selectionModel.setSelection(0, mySelected ? myEditor.getDocument().getTextLength() : 0);
     }
 
     private static void appendAbbreviated(StringBuilder to, String text, int start, int end,
