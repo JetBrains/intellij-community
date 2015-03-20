@@ -43,6 +43,17 @@ import java.awt.*;
 final class MissingArgumentDisplayer extends JPanel implements Listener {
 
   /**
+   * Braces for mandatory args are [] according to GNU/POSIX recommendations
+   */
+  @NotNull
+  private static final Pair<String, String> MANDATORY_ARG_BRACES = Pair.create("[", "]");
+  /**
+   * Braces for optional args are &lt;&gt; according to GNU/POSIX recommendations
+   */
+  @NotNull
+  private static final Pair<String, String> OPTIONAL_ARG_BRACES = Pair.create("<", ">");
+
+  /**
    * Number of places after end of line before argument place
    */
   private static final int SPACES_BEFORE_ARG = 1;
@@ -134,7 +145,23 @@ final class MissingArgumentDisplayer extends JPanel implements Listener {
     final boolean required = nextArg.first;
     final String argumentText = nextArg.second.getHelpText();
     g.setColor((required ? JBColor.red : JBColor.gray));
-    g.drawString((StringUtil.isEmpty(argumentText) ? PyBundle.message("commandLine.missingArgument.defaultName") : argumentText), x, y);
+    final String textToShow = StringUtil.isEmpty(argumentText) ? PyBundle.message("commandLine.missingArgument.defaultName") : argumentText;
+    g.drawString(wrapBracesIfNeeded(required, textToShow), x, y);
+  }
+
+  /**
+   * Adds appropriate braces to argument help text if needed
+   * @param required is argument required
+   * @param textToShow arg help text
+   * @return text to show
+   */
+  @NotNull
+  private static String wrapBracesIfNeeded(final boolean required, @NotNull final String textToShow) {
+    if (textToShow.startsWith(MANDATORY_ARG_BRACES.first) || textToShow.startsWith(OPTIONAL_ARG_BRACES.first)) {
+      return textToShow;
+    }
+    final Pair<String, String> braces = (required ? MANDATORY_ARG_BRACES :  OPTIONAL_ARG_BRACES);
+    return String.format("%s%s%s", braces.first, textToShow, braces.second);
   }
 
 

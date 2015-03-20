@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 
@@ -33,13 +34,15 @@ public final class CommandLineArgsTest extends PyTestCase {
    */
   public void testArgsRequired() throws Exception {
     CommandTestTools.initFileType();
-    final CommandLineFile file = CommandTestTools.createFileByText(myFixture, "command");
-    final ValidationResult validationResult = file.getValidationResult();
-    assert validationResult != null : "validation failed";
-    final Pair<Boolean, Argument> arg = validationResult.getNextArg();
-    Assert.assertNotNull("No argument returned, but should", arg);
-    Assert.assertTrue("Required argument is not marked as required", arg.first);
-    Assert.assertEquals("Wrong argument text", "positional_argument", arg.second.getHelpText());
+    validateNextArgument("command", "positional_argument");
+  }
+
+  /**
+   * Ensures option argument is returned if exists
+   */
+  public void testOptionArgsRequired() throws Exception {
+    CommandTestTools.initFileType();
+    validateNextArgument("command positional_argument --available-option", "option argument");
   }
 
   /**
@@ -51,5 +54,21 @@ public final class CommandLineArgsTest extends PyTestCase {
     final ValidationResult validationResult = file.getValidationResult();
     assert validationResult != null : "validation failed";
     Assert.assertNull("Argument returned while should not", validationResult.getNextArg());
+  }
+
+
+  /**
+   * Runs commands and checks argument is required after it
+   * @param commandText command text to run
+   * @param expectedArgumentText expected next argument help text
+   */
+  private void validateNextArgument(@NotNull final String commandText, @NotNull final String expectedArgumentText) {
+    final CommandLineFile file = CommandTestTools.createFileByText(myFixture, commandText);
+    final ValidationResult validationResult = file.getValidationResult();
+    assert validationResult != null : "validation failed";
+    final Pair<Boolean, Argument> arg = validationResult.getNextArg();
+    Assert.assertNotNull("No argument returned, but should", arg);
+    Assert.assertTrue("Required argument is not marked as required", arg.first);
+    Assert.assertEquals("Wrong argument text", expectedArgumentText, arg.second.getHelpText());
   }
 }

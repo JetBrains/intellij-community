@@ -58,7 +58,7 @@ final class CommandTestTools {
     final List<Option> options = new ArrayList<Option>();
 
 
-    options.add(new Option(Pair.create(1, new Argument(Collections.singletonList("available_argument"))), "",
+    options.add(new Option(Pair.create(1, new Argument("option argument", Collections.singletonList("available_argument"))), "",
                            Collections.<String>emptyList(),
                            Collections.singletonList("--available-option")));
 
