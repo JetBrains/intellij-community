@@ -157,7 +157,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    */
   @Override
   public Rectangle getFloatingBounds(){
-    return new Rectangle(myFloatingBounds);
+    return myFloatingBounds != null ? new Rectangle(myFloatingBounds) : null;
   }
 
   /**
