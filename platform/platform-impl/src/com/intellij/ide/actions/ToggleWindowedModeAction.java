@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -64,6 +65,10 @@ public class ToggleWindowedModeAction extends ToggleAction implements DumbAware 
   public void update(AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();
+    if (SystemInfo.isMac) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
     Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
