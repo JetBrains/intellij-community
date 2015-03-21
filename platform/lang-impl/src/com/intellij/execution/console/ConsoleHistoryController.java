@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
@@ -279,7 +280,7 @@ public class ConsoleHistoryController {
     return start;
   }
 
-  private class MyAction extends AnAction {
+  private class MyAction extends DumbAwareAction {
     private final boolean myNext;
 
     @NotNull
@@ -341,7 +342,7 @@ public class ConsoleHistoryController {
 
 
 
-  private class MyBrowseAction extends AnAction {
+  private class MyBrowseAction extends DumbAwareAction {
 
     @Override
     public void update(AnActionEvent e) {
