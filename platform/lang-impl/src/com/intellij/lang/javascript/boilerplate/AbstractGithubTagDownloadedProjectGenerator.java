@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,12 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     );
     LOG.info("Content of " + url + " has been successfully downloaded to " + zipArchiveFile.getAbsolutePath()
              + ", size " + zipArchiveFile.length() + " bytes");
-    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
+    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, getPathConvertor(), true);
+  }
+
+  @Nullable
+  protected NullableFunction<String, String> getPathConvertor() {
+    return null;
   }
 
   @Nullable
