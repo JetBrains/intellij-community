@@ -37,7 +37,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -151,6 +150,10 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, forceReadOnly[i], true);
       DiffUtil.configureEditor(editor, content, myProject);
       editors.add(editor);
+
+      if (Registry.is("diff.divider.repainting.disable.blitting")) {
+        editor.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+      }
     }
 
     editors.get(0).setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);

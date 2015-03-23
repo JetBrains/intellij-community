@@ -176,6 +176,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     if (editor1 != null && editor2 != null) {
       editor1.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
     }
+    if (Registry.is("diff.divider.repainting.disable.blitting")) {
+      if (editor1 != null) editor1.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+      if (editor2 != null) editor2.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+    }
+
     return ContainerUtil.newArrayList(editor1, editor2);
   }
 
