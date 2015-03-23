@@ -29,6 +29,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -517,7 +519,7 @@ public class JavaDocInfoGenerator {
   }
 
   // not a javadoc in fact..
-  private static void generateVariableJavaDoc(@NonNls StringBuilder buffer, PsiVariable variable, boolean generatePrologueAndEpilogue) {
+  private void generateVariableJavaDoc(@NonNls StringBuilder buffer, PsiVariable variable, boolean generatePrologueAndEpilogue) {
     if (generatePrologueAndEpilogue)
       generatePrologue(buffer);
 
@@ -543,7 +545,7 @@ public class JavaDocInfoGenerator {
   }
 
   // not a javadoc in fact..
-  private static void generateFileJavaDoc(StringBuilder buffer, PsiFile file, boolean generatePrologueAndEpilogue) {
+  private void generateFileJavaDoc(StringBuilder buffer, PsiFile file, boolean generatePrologueAndEpilogue) {
     if (generatePrologueAndEpilogue)
       generatePrologue(buffer);
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -1062,10 +1064,13 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void generatePrologue(StringBuilder buffer) {
-    buffer.append("<html><head>" +
-                  "    <style type=\"text/css\">" +
+  private void generatePrologue(StringBuilder buffer) {
+    URL baseUrl = getBaseUrl();
+    buffer.append("<html><head>");
+    if (baseUrl != null) {
+      buffer.append("<base href=\"").append(baseUrl).append("\">");
+    }
+    buffer.append("    <style type=\"text/css\">" +
                   "        #error {" +
                   "            background-color: #eeeeee;" +
                   "            margin-bottom: 10px;" +
@@ -1075,6 +1080,17 @@ public class JavaDocInfoGenerator {
                   "        }" +
                   "    </style>" +
                   "</head><body>");
+  }
+  
+  private URL getBaseUrl() {
+    if (myElement == null) return null;
+    PsiElement element = myElement.getNavigationElement();
+    if (element == null) return null;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return null;
+    return VfsUtilCore.convertToURL(vFile.getUrl());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

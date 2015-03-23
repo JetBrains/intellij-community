@@ -17,6 +17,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -89,12 +90,10 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
         return
           (JavaPsiFacade.getInstance(myProject).findClass(classRef, GlobalSearchScope.allScope(myProject)) != null)
-          ? DocumentationManager.PSI_ELEMENT_PROTOCOL + elementRef
+          ? DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + elementRef
           : DOC_ELEMENT_PROTOCOL + doAnnihilate(nakedRoot + href);
       }
-    },
-
-    myIMGConvertor
+    }
   };
 
   public JavaDocExternalFilter(Project project) {

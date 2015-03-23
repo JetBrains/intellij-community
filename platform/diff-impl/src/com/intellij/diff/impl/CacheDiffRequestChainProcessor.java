@@ -66,7 +66,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
     int index = myRequestChain.getIndex();
     if (index < 0 || index >= requests.size()) {
-      applyRequest(new NoDiffRequest(), force, scrollToChangePolicy);
+      applyRequest(NoDiffRequest.INSTANCE, force, scrollToChangePolicy);
       return;
     }
 

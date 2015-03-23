@@ -424,7 +424,7 @@ public class EnterHandler extends BaseEnterHandler {
           myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
           psiDocumentManager.commitAllDocuments();
           
-          if (!StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
+          if (commentContext.docAsterisk && !StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
             myOffset += indentInsideJavadoc.length();
             docIndentApplied = true;

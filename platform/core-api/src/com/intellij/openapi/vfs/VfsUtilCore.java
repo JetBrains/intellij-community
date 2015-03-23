@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,8 @@ import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
 public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+
+  @NonNls private static final String MAILTO = "mailto";
 
   public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
@@ -463,6 +466,57 @@ public class VfsUtilCore {
 
     path = URLUtil.unescapePercentSequences(path);
     return protocol + "://" + path;
+  }
+
+  /**
+   * Converts VsfUrl info {@link URL}.
+   *
+   * @param vfsUrl VFS url (as constructed by {@link VirtualFile#getUrl()}
+   * @return converted URL or null if error has occurred.
+   */
+  @Nullable
+  public static URL convertToURL(@NotNull String vfsUrl) {
+    if (vfsUrl.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
+      try {
+        return new URL("jar:file:///" + vfsUrl.substring(StandardFileSystems.JAR_PROTOCOL_PREFIX.length()));
+      }
+      catch (MalformedURLException e) {
+        return null;
+      }
+    }
+
+    // [stathik] for supporting mail URLs in Plugin Manager
+    if (vfsUrl.startsWith(MAILTO)) {
+      try {
+        return new URL (vfsUrl);
+      }
+      catch (MalformedURLException e) {
+        return null;
+      }
+    }
+
+    String[] split = vfsUrl.split("://");
+
+    if (split.length != 2) {
+      LOG.debug("Malformed VFS URL: " + vfsUrl);
+      return null;
+    }
+
+    String protocol = split[0];
+    String path = split[1];
+
+    try {
+      if (protocol.equals(StandardFileSystems.FILE_PROTOCOL)) {
+        return new URL(StandardFileSystems.FILE_PROTOCOL, "", path);
+      }
+      else {
+        return UrlClassLoader.internProtocol(new URL(vfsUrl));
+      }
+    }
+    catch (MalformedURLException e) {
+      LOG.debug("MalformedURLException occurred:" + e.getMessage());
+      return null;
+    }
   }
 
   @NotNull

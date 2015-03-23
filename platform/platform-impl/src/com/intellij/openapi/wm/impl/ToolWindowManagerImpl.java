@@ -1146,7 +1146,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull final ToolWindowAnchor anchor,
                                        @NotNull final Disposable parentDisposable,
                                        final boolean canWorkInDumbMode) {
-    ToolWindow window = registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode);
+    return registerToolWindow(id, canCloseContent, anchor, parentDisposable, canWorkInDumbMode, false);
+  }
+
+  @NotNull
+  @Override
+  public ToolWindow registerToolWindow(@NotNull String id,
+                                       boolean canCloseContent,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode,
+                                       boolean secondary) {
+    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode);
     return registerDisposable(id, parentDisposable, window);
   }
 

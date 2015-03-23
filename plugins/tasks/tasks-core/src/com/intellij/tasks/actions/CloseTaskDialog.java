@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsType;
@@ -31,12 +32,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
  */
 public class CloseTaskDialog extends DialogWrapper {
+  private static final String UPDATE_STATE_ENABLED = "tasks.close.task.update.state.enabled";
+
   private final Project myProject;
   private final LocalTask myTask;
   private JCheckBox myCommitChanges;
@@ -46,6 +51,7 @@ public class CloseTaskDialog extends DialogWrapper {
   private JPanel myVcsPanel;
   private JLabel myStateComboBoxLabel;
   private TaskStateCombo myStateCombo;
+  private JBCheckBox myUpdateState;
   private final TaskManagerImpl myTaskManager;
 
   public CloseTaskDialog(Project project, final LocalTask task) {
@@ -57,11 +63,24 @@ public class CloseTaskDialog extends DialogWrapper {
     myTaskLabel.setText(TaskUtil.getTrimmedSummary(task));
     myTaskLabel.setIcon(task.getIcon());
 
-    myStateComboBoxLabel.setLabelFor(myStateCombo);
-    if (!TaskStateCombo.isStateSupportedFor(task)) {
-      myStateComboBoxLabel.setVisible(false);
+    if (!TaskStateCombo.stateUpdatesSupportedFor(task)) {
       myStateCombo.setVisible(false);
     }
+
+    final boolean stateUpdatesEnabled = PropertiesComponent.getInstance(myProject).getBoolean(UPDATE_STATE_ENABLED, false);
+    myUpdateState.setSelected(stateUpdatesEnabled);
+    myStateCombo.setEnabled(stateUpdatesEnabled);
+    myUpdateState.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean selected = myUpdateState.isSelected();
+        myStateCombo.setEnabled(selected);
+        PropertiesComponent.getInstance(myProject).setValue(UPDATE_STATE_ENABLED, String.valueOf(selected));
+        if (selected) {
+          myStateCombo.scheduleUpdateOnce();
+        }
+      }
+    });
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
 
@@ -84,7 +103,9 @@ public class CloseTaskDialog extends DialogWrapper {
     if (preferredFocusedComponent != null) {
       myStateCombo.registerUpDownAction(preferredFocusedComponent);
     }
-    myStateCombo.scheduleUpdate();
+    if (myUpdateState.isSelected()) {
+      myStateCombo.scheduleUpdateOnce();
+    }
     init();
   }
 
@@ -95,12 +116,12 @@ public class CloseTaskDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myStateCombo.getComboBox();
+    return myStateCombo.isVisible() && myUpdateState.isSelected() ? myStateCombo.getComboBox() : null;
   }
 
   @Nullable
   CustomTaskState getCloseIssueState() {
-    return myStateCombo.getSelectedState();
+    return myUpdateState.isSelected() ? myStateCombo.getSelectedState() : null;
   }
 
   boolean isCommitChanges() {

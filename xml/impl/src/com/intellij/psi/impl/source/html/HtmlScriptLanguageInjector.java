@@ -44,7 +44,7 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
     String mimeType = scriptTag.getAttributeValue("type");
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    Language language = !languages.isEmpty() ? languages.iterator().next() : StdLanguages.TEXT;
+    Language language = !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
     if (LanguageUtil.isInjectableLanguage(language)) {
       registrar
         .startInjecting(language)

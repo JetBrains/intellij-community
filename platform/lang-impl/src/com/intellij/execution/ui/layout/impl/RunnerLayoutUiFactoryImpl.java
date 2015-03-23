@@ -16,6 +16,7 @@
 
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -24,8 +25,9 @@ import org.jetbrains.annotations.NotNull;
 public class RunnerLayoutUiFactoryImpl extends RunnerLayoutUi.Factory {
   private final Project myProject;
 
-  public RunnerLayoutUiFactoryImpl(Project project) {
+  public RunnerLayoutUiFactoryImpl(Project project, ExecutionManager executionManager) {
     myProject = project;
+    executionManager.getContentManager(); // ensure dockFactory is registered
   }
 
   @NotNull

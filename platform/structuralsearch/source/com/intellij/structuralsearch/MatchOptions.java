@@ -158,7 +158,9 @@ public class MatchOptions implements JDOMExternalizable {
 
     //@TODO serialize scope!
 
-    element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
+    if (myFileType != null) {
+      element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
+    }
 
     if (myDialect != null) {
       element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());

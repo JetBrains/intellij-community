@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -127,9 +128,14 @@ public class ArrangementEngine {
       documentEx = null;
     }
 
-    final Context<? extends ArrangementEntry> context = Context.from(
-      rearranger, document, file, ranges, arrangementSettings, settings
-    );
+    final Context<? extends ArrangementEntry> context;
+    DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(true);
+    try {
+      context = Context.from(rearranger, document, file, ranges, arrangementSettings, settings);
+    }
+    finally {
+      DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(false);
+    }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

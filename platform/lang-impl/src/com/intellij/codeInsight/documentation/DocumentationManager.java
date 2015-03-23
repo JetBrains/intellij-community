@@ -71,6 +71,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,6 +102,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
   private boolean myCloseOnSneeze;
+  
+  private ActionCallback myLastAction;
 
   @Override
   protected String getToolwindowId() {
@@ -642,7 +645,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
-    if (hint == null || !hint.isVisible()) {
+    if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       myDocInfoHintRef = null;
       return null;
     }
@@ -671,6 +674,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests, final boolean clearHistory) {
     final ActionCallback callback = new ActionCallback();
+    myLastAction = callback;
     boolean wasEmpty = component.isEmpty();
     component.startWait();
     if (cancelRequests) {
@@ -1029,6 +1033,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     return null;
+  }
+  
+  @TestOnly
+  public ActionCallback getLastAction() {
+    return myLastAction;
   }
 
   private interface DocumentationCollector {

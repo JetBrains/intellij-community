@@ -108,7 +108,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @Nullable
   @Contract("null -> !null")
   protected DiffRequest loadRequestFast(@Nullable Change change) {
-    if (change == null) return new NoDiffRequest();
+    if (change == null) return NoDiffRequest.INSTANCE;
 
     Pair<Change, DiffRequest> pair = myRequestCache.get(change);
     if (pair != null) {

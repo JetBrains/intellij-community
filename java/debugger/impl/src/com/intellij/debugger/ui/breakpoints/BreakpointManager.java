@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -638,27 +638,28 @@ public class BreakpointManager {
       }
 
       final EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
+      if (eventRequestManager != null) {
+        new FilterSetter<BreakpointRequest>() {
+          @Override
+          protected void addFilter(@NotNull final BreakpointRequest request, final ThreadReference thread) {
+            request.addThreadFilter(thread);
+          }
+        }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
 
-      new FilterSetter<BreakpointRequest>() {
-        @Override
-        protected void addFilter(@NotNull final BreakpointRequest request, final ThreadReference thread) {
-          request.addThreadFilter(thread);
-        }
-      }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
+        new FilterSetter<MethodEntryRequest>() {
+          @Override
+          protected void addFilter(@NotNull final MethodEntryRequest request, final ThreadReference thread) {
+            request.addThreadFilter(thread);
+          }
+        }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
 
-      new FilterSetter<MethodEntryRequest>() {
-        @Override
-        protected void addFilter(@NotNull final MethodEntryRequest request, final ThreadReference thread) {
-          request.addThreadFilter(thread);
-        }
-      }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
-
-      new FilterSetter<MethodExitRequest>() {
-        @Override
-        protected void addFilter(@NotNull final MethodExitRequest request, final ThreadReference thread) {
-          request.addThreadFilter(thread);
-        }
-      }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
+        new FilterSetter<MethodExitRequest>() {
+          @Override
+          protected void addFilter(@NotNull final MethodExitRequest request, final ThreadReference thread) {
+            request.addThreadFilter(thread);
+          }
+        }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
+      }
     }
   }
 

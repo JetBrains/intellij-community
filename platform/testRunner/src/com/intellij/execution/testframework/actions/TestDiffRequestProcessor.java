@@ -45,7 +45,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
 
   @NotNull
   private DiffRequest loadRequest() {
-    if (myIndex < 0 || myIndex >= myRequests.size()) return new NoDiffRequest();
+    if (myIndex < 0 || myIndex >= myRequests.size()) return NoDiffRequest.INSTANCE;
     DiffHyperlink hyperlink = myRequests.get(myIndex);
     try {
       String title = hyperlink.getDiffTitle();

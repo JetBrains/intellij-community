@@ -542,6 +542,18 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToLineEnd(@NotNull Editor editor, boolean isWithSelection) {
+    moveCaretToLineEnd(editor, isWithSelection, true);
+  }
+
+  /**
+   * Moves caret to visual line end.
+   * 
+   * @param editor target editor
+   * @param isWithSelection whether selection should be set from original caret position to its target position
+   * @param ignoreTrailingWhitespace if <code>true</code>, line end will be determined while ignoring trailing whitespace, unless caret is
+   *                                 already at so-determined target position, in which case trailing whitespace will be taken into account
+   */
+  public static void moveCaretToLineEnd(@NotNull Editor editor, boolean isWithSelection, boolean ignoreTrailingWhitespace) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -604,7 +616,7 @@ public class EditorActionUtil {
 
     // Move to the calculated end of visual line if caret is located on a last non-white space symbols on a line and there are
     // remaining white space symbols.
-    if (newOffset == offset || newOffset == caretModel.getOffset()) {
+    if (newOffset == offset || newOffset == caretModel.getOffset() || !ignoreTrailingWhitespace) {
       caretModel.moveToVisualPosition(visualEndOfLineWithCaret);
     }
     else {

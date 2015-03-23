@@ -26,8 +26,10 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl.ModuleRootManagerState;
 import com.intellij.openapi.roots.impl.RootModelImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -172,7 +174,7 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
 
   @NotNull
   public static String getModuleDir(@NotNull Module module) {
-    return PathUtil.getParentPath(module.getModuleFilePath());
+    return PathUtil.getParentPath(FileUtilRt.toSystemIndependentName(module.getModuleFilePath()));
   }
 
   @NotNull
@@ -184,7 +186,12 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     }
 
     storageRef = FileUtil.toSystemIndependentName(storageRef);
-    return storageRef.charAt(0) == '/' ? storageRef : moduleRoot + '/' + storageRef;
+    if (SystemInfo.isWindows ? FileUtil.isAbsolutePlatformIndependent(storageRef) : FileUtil.isUnixAbsolutePath(storageRef)) {
+      return storageRef;
+    }
+    else {
+      return moduleRoot + '/' + storageRef;
+    }
   }
 
   public static void setStorageType(@NotNull ModuleRootModel model, @NotNull String storageId) {

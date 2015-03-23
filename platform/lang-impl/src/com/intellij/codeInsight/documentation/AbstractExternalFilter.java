@@ -20,15 +20,14 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,19 +36,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.util.Locale;
-import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
 
 public abstract class AbstractExternalFilter {
   private static final Logger LOG = Logger.getInstance(AbstractExternalFilter.class);
-
-  private static final boolean EXTRACT_IMAGES_FROM_JARS = SystemProperties.getBooleanProperty("extract.doc.images", true);
-
-  @NotNull
-  @NonNls
-  public static final String QUICK_DOC_DIR_NAME = "quickdoc";
 
   private static final Pattern ourClassDataStartPattern = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
   private static final Pattern ourClassDataEndPattern = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
@@ -59,12 +50,6 @@ public abstract class AbstractExternalFilter {
   protected static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
   protected static @NonNls final Pattern ourHtmlFileSuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
   private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
-  private static @NonNls final Pattern ourImgSelector =
-    Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*?)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-  private static @NonNls final Pattern ourPathInsideJarPattern = Pattern.compile(
-    String.format("%s(.+\\.jar)!/(.+?)[^/]+", JarFileSystem.PROTOCOL_PREFIX),
-    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-  );
   private static @NonNls final String JAR_PROTOCOL = "jar:";
   @NonNls private static final String HR = "<HR>";
   @NonNls private static final String P = "<P>";
@@ -117,78 +102,6 @@ public abstract class AbstractExternalFilter {
       return ready.toString();
     }
   }
-
-  protected final RefConvertor myIMGConvertor = new RefConvertor(ourImgSelector) {
-    @Override
-    protected String convertReference(String root, String href) {
-      if (StringUtil.startsWithChar(href, '#')) {
-        return DocumentationManagerProtocol.DOC_ELEMENT_PROTOCOL + root + href;
-      }
-
-      String protocol = VirtualFileManager.extractProtocol(root);
-      if (EXTRACT_IMAGES_FROM_JARS && Comparing.strEqual(protocol, JarFileSystem.PROTOCOL)) {
-        Matcher matcher = ourPathInsideJarPattern.matcher(root);
-        if (matcher.matches()) {
-          // There is a possible case that javadoc jar is assembled with images inside. However, our standard quick doc
-          // renderer (JEditorPane) doesn't know how to reference images from such jars. That's why we unpack them to temp
-          // directory if necessary and substitute that 'inside jar path' to usual file url.
-          String jarPath = matcher.group(1);
-          String jarName = jarPath;
-          int i = jarName.lastIndexOf(File.separatorChar);
-          if (i >= 0 && i < jarName.length() - 1) {
-            jarName = jarName.substring(i + 1);
-          }
-          jarName = jarName.substring(0, jarName.length() - ".jar".length());
-          String basePath = matcher.group(2);
-          String imgPath = FileUtil.toCanonicalPath(basePath + href);
-          File unpackedImagesRoot = new File(FileUtilRt.getTempDirectory(), QUICK_DOC_DIR_NAME);
-          File unpackedJarImagesRoot = new File(unpackedImagesRoot, jarName);
-          File unpackedImage = new File(unpackedJarImagesRoot, imgPath);
-          boolean referenceUnpackedImage = true;
-          if (!unpackedImage.isFile()) {
-            referenceUnpackedImage = false;
-            try {
-              JarFile jarFile = new JarFile(jarPath);
-              try {
-                ZipEntry entry = jarFile.getEntry(imgPath);
-                if (entry != null) {
-                  FileUtilRt.createIfNotExists(unpackedImage);
-                  FileOutputStream fOut = new FileOutputStream(unpackedImage);
-                  try {
-                    // Don't bother with wrapping file output stream into buffered stream in assumption that FileUtil operates
-                    // on NIO channels.
-                    FileUtilRt.copy(jarFile.getInputStream(entry), fOut);
-                    referenceUnpackedImage = true;
-                  }
-                  finally {
-                    fOut.close();
-                  }
-                }
-                unpackedImage.deleteOnExit();
-              }
-              finally {
-                jarFile.close();
-              }
-            }
-            catch (IOException e) {
-              LOG.debug(e);
-            }
-          }
-          if (referenceUnpackedImage) {
-            return LocalFileSystem.PROTOCOL_PREFIX + unpackedImage.getAbsolutePath();
-          }
-        }
-      }
-
-      if (Comparing.strEqual(protocol, LocalFileSystem.PROTOCOL)) {
-        final String path = VirtualFileManager.extractPath(root);
-        if (!path.startsWith("/")) {//skip host for local file system files (format - file://host_name/path)
-          root = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, "/" + path);
-        }
-      }
-      return ourHtmlFileSuffix.matcher(root).replaceAll("/") + href;
-    }
-  };
 
   protected static String doAnnihilate(String path) {
     int len = path.length();
@@ -269,6 +182,10 @@ public abstract class AbstractExternalFilter {
     @NonNls String greatestEndSection = "<!-- ========= END OF CLASS DATA ========= -->";
 
     data.append(HTML);
+    URL baseUrl = VfsUtilCore.convertToURL(url);
+    if (baseUrl != null) {
+      data.append("<base href=\"").append(baseUrl).append("\">");
+    }
     data.append("<style type=\"text/css\">" +
                 "  ul.inheritance {\n" +
                 "      margin:0;\n" +

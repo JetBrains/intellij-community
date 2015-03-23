@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -571,9 +572,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     @Override
-    public void performAction(final InputEvent e, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
+    public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
-      action.actionPerformed(actionEvent);
+
+      DataContext ctx = actionEvent.getDataContext();
+      if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
+        ActionGroup group = (ActionGroup)action;
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(group.getTemplatePresentation().getText(), group, ctx, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+          .showInBestPositionFor(ctx);
+      }
+      else {
+        action.actionPerformed(actionEvent);
+      }
+
       if (Registry.is("actionSystem.fixLostTyping")) {
         IdeEventQueue.getInstance().doWhenReady(new Runnable() {
           @Override
