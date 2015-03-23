@@ -272,6 +272,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testDefaultMethodBody() { doTest(); }
   public void testStaticInterfaceMethodBody() { doTest(); }
+  public void testPrivateInterfaceMethodBody() { doTest(); }
 
   public void testArrayInitializerRBracket() throws Exception { doTest(); }
   
