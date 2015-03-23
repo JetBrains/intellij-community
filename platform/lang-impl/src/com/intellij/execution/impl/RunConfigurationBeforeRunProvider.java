@@ -183,9 +183,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (builder == null) {
       return false;
     }
-    final ExecutionEnvironment environment = builder.build();
+    final ExecutionEnvironment environment = builder.target(env.getExecutionTarget()).build();
     environment.setExecutionId(env.getExecutionId());
-    if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+    if (!ExecutionTargetManager.canRun(settings, environment.getExecutionTarget())) {
       return false;
     }
 
