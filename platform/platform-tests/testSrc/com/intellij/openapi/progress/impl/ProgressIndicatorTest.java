@@ -28,7 +28,10 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -46,18 +49,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author yole
  */
 public class ProgressIndicatorTest extends LightPlatformTestCase {
-  public void testCheckCanceledHasNoStackFrame() {
-    ProgressIndicatorBase pib = new ProgressIndicatorBase();
+  public void testCheckCanceledHasStackFrame() {
+    ProgressIndicator pib = new ProgressIndicatorBase();
     pib.cancel();
     try {
       pib.checkCanceled();
       fail("Please restore ProgressIndicatorBase.checkCanceled() check!");
     }
     catch(ProcessCanceledException ex) {
-      boolean isInternal = SystemProperties.getBooleanProperty("idea.is.internal", false);
-      boolean isTest = SystemProperties.getBooleanProperty("idea.is.unit.test", false);
       boolean hasStackFrame = ex.getStackTrace().length != 0;
-      assertTrue("Should have no stackframe", (isInternal || isTest) == hasStackFrame);
+      assertTrue("Should have stackframe", hasStackFrame);
     }
   }
 
