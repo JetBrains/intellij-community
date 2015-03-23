@@ -99,10 +99,8 @@ public class CloseTaskDialog extends DialogWrapper {
     else {
       myVcsPanel.setVisible(false);
     }
-    final JComponent preferredFocusedComponent = getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      myStateCombo.registerUpDownAction(preferredFocusedComponent);
-    }
+
+    myStateCombo.showHintLabel(false);
     if (myUpdateState.isSelected()) {
       myStateCombo.scheduleUpdateOnce();
     }

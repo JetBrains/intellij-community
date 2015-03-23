@@ -178,10 +178,8 @@ public class OpenTaskDialog extends DialogWrapper {
       myChangelistName.setText(taskManager.getChangelistName(task));
     }
     updateFields(true);
-    final JComponent preferredFocusedComponent = getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      myTaskStateCombo.registerUpDownAction(preferredFocusedComponent);
-    }
+    myTaskStateCombo.registerUpDownAction(myBranchName);
+    myTaskStateCombo.registerUpDownAction(myChangelistName);
     if (myUpdateState.isSelected()) {
       myTaskStateCombo.scheduleUpdateOnce();
     }
