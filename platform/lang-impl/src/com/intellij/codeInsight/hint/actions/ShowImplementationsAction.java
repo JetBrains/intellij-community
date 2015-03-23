@@ -148,6 +148,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
 
+    //check attached sources if any
+    if (element instanceof PsiCompiledElement) {
+      element = element.getNavigationElement();
+    }
+
     String text = "";
     PsiElement[] impls = new PsiElement[0];
     if (element != null) {
