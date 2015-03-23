@@ -27,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.autodetect.IndentOptionsInDocumentKeeper;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
@@ -622,8 +623,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (file != null && file.isValid() && file.isWritable()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {
-        IndentOptions docOptions = IndentOptions.retrieveFromAssociatedDocument(file);
-        if (docOptions != null) return docOptions;
+        Pair<IndentOptions, FileIndentOptionsProvider> pair = IndentOptionsInDocumentKeeper.retrieveFromUnderlyingDocument(file);
+        IndentOptions indentOptions = pair != null ? pair.first : null;
+        if (indentOptions != null) {
+          FileIndentOptionsProvider indentProvider = pair.second;
+          if (indentProvider != null && providerProcessor != null) {
+            providerProcessor.process(indentProvider);
+          }
+          return indentOptions;
+        }
       }
       FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
       for (FileIndentOptionsProvider provider : providers) {
