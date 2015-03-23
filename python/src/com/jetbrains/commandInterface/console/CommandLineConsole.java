@@ -90,7 +90,7 @@ public final class CommandLineConsole {
     contentManager.addContent(content);
 
     showHiddenCommandWorkAround(console);
-    MissingArgumentDisplayer.attach(console); // Display [arguments]
+    ArgumentHintLayer.attach(console); // Display [arguments]
     return console;
   }
 

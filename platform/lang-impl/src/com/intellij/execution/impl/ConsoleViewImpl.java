@@ -509,7 +509,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    *
    * @param component component to add
    */
-  public final void addWaterMark(@NotNull final JComponent component) {
+  public final void addLayerToPane(@NotNull final JComponent component) {
     getComponent(); // Make sure component exists
     component.setOpaque(false);
     component.setVisible(true);
