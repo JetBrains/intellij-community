@@ -36,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,8 +115,8 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
 
     // Fallback to the old way to select single element to move
     final PsiNamedElement e = PyMoveModuleMembersHelper.extractNamedElement(element);
-    if (e != null && PyMoveModuleMembersHelper.isMovableElement(e)) {
-      if (PyUtil.isTopLevel(e)) {
+    if (e != null && PyMoveModuleMembersHelper.hasMovableElementType(e)) {
+      if (PyMoveModuleMembersHelper.isMovableModuleMember(e)) {
         doMove(project, new PsiElement[]{e}, targetContainer, null);
       }
       else {
