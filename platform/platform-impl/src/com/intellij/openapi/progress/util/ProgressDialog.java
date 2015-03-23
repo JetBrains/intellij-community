@@ -44,7 +44,7 @@ import java.io.File;
 
 
 class ProgressDialog implements Disposable {
-  private ProgressWindow myProgressWindow;
+  private final ProgressWindow myProgressWindow;
   private long myLastTimeDrawn = -1;
   private volatile boolean myShouldShowBackground;
   private final Alarm myUpdateAlarm = new Alarm(this);
@@ -261,14 +261,16 @@ class ProgressDialog implements Disposable {
       }
       else {
         // later to avoid concurrent dispose/addRequest
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-              myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
+        if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
+                myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
+              }
             }
-          }
-        });
+          });
+        }
       }
     }
   }

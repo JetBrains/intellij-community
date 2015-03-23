@@ -19,6 +19,7 @@ import com.intellij.dvcs.push.PushSpec;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,6 +44,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static git4idea.push.GitPushRepoResult.Type.*;
 import static git4idea.test.GitExecutor.*;
@@ -248,6 +250,48 @@ public class GitPushOperationSingleRepoTest extends GitPushOperationBaseTest {
     String history = git("log --all --pretty=%H ");
     assertFalse(history.contains(lostHash));
     assertEquals(hash, StringUtil.splitByLines(history)[0]);
+  }
+
+  public void test_dont_propose_to_update_if_force_push_is_rejected() throws IOException {
+    final Ref<Boolean> dialogShown = Ref.create(false);
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog.class, new TestDialogHandler<GitRejectedPushUpdateDialog>() {
+      @Override
+      public int handleDialog(GitRejectedPushUpdateDialog dialog) {
+        dialogShown.set(true);
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+
+    Pair<String, GitPushResult> remoteTipAndPushResult = forcePushWithReject();
+    assertResult(REJECTED, -1, "master", "origin/master", remoteTipAndPushResult.second);
+    assertFalse("Rejected push dialog should not be shown", dialogShown.get());
+    cd(myParentRepo.getPath());
+    assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last());
+  }
+
+  public void test_dont_silently_update_if_force_push_is_rejected() throws IOException {
+    myGitSettings.setUpdateType(UpdateMethod.REBASE);
+    myGitSettings.setAutoUpdateIfPushRejected(true);
+
+    Pair<String, GitPushResult> remoteTipAndPushResult = forcePushWithReject();
+
+    assertResult(REJECTED, -1, "master", "origin/master", remoteTipAndPushResult.second);
+    cd(myParentRepo.getPath());
+    assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last());
+  }
+
+  @NotNull
+  private Pair<String, GitPushResult> forcePushWithReject() throws IOException {
+    String pushedHash = pushCommitFromBro();
+    cd(myParentRepo);
+    git("config receive.denyNonFastForwards true");
+    cd(myRepository);
+    makeCommit("anyfile.txt");
+
+    Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> map = singletonMap(myRepository,
+                                                                                  makePushSpec(myRepository, "master", "origin/master"));
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, map, null, true).execute();
+    return Pair.create(pushedHash, result);
   }
 
   public void test_merge_after_rejected_push() throws IOException {

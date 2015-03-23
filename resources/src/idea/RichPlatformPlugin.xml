@@ -219,11 +219,6 @@
     <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
 
-
-    <projectService serviceInterface="com.intellij.debugger.ui.DebuggerRecents"
-                    serviceImplementation="com.intellij.debugger.ui.DebuggerRecents"/>
-
-
     <!-- Project Configurables -->
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>

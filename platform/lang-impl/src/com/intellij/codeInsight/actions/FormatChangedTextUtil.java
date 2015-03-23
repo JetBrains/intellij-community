@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -51,7 +49,8 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 public class FormatChangedTextUtil {
   public static final Key<CharSequence> TEST_REVISION_CONTENT = Key.create("test.revision.content");
@@ -156,52 +155,6 @@ public class FormatChangedTextUtil {
     finally {
       moduleModel.dispose();
     }
-  }
-
-  /**
-   * Allows to ask for the changed text of the given file (in comparison with VCS).
-   * 
-   * @param file  target file
-   * @return      collection of changed regions for the given file
-   */
-  @NotNull
-  public static Collection<TextRange> getChanges(@NotNull PsiFile file) {
-    final Set<TextRange> defaultResult = Collections.singleton(file.getTextRange());
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-      final Change change = ChangeListManager.getInstance(file.getProject()).getChange(virtualFile);
-      if (change != null && change.getType() == Change.Type.NEW) {
-        return defaultResult;
-      }
-    }
-
-    final LineStatusTrackerManagerI manager = LineStatusTrackerManager.getInstance(file.getProject());
-    if (manager == null) {
-      return defaultResult;
-    }
-    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null) {
-      return defaultResult;
-    }
-    final LineStatusTracker lineStatusTracker = manager.getLineStatusTracker(document);
-    if (lineStatusTracker == null) {
-      return defaultResult;
-    }
-    final List<Range> ranges = lineStatusTracker.getRanges();
-    if (ranges == null || ranges.isEmpty()) {
-      return defaultResult;
-    }
-    
-    List<TextRange> result = new ArrayList<TextRange>();
-    for (Range range : ranges) {
-      if (range.getType() != Range.DELETED) {
-        final RangeHighlighter highlighter = range.getHighlighter();
-        if (highlighter != null) {
-          result.add(new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()));
-        }
-      }
-    }
-    return result;
   }
 
   @NotNull

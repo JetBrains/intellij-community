@@ -33,7 +33,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
           final PsiDirectory nodeValue = (PsiDirectory)node.getValue();
-          if (!nodeValue.getName().contains(EduNames.USER_TESTS)) {
+          if (!nodeValue.getName().contains(EduNames.USER_TESTS) && !nodeValue.getName().equals(".idea")) {
             StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
             nodes.add(newNode);
           }

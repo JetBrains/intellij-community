@@ -30,6 +30,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -49,6 +50,7 @@ import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
@@ -138,10 +140,16 @@ public class StorageUtil {
       return result;
     }
     else {
+      if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
+        DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
+      }
       doWrite(requestor, result, virtualFile, content, lineSeparatorIfPrependXmlProlog);
       return result;
     }
   }
+
+  @TestOnly
+  public static String DEBUG_LOG = "";
 
   private static void doWrite(@NotNull final Object requestor,
                               @NotNull final VirtualFile file,

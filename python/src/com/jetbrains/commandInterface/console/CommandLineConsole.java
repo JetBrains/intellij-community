@@ -31,8 +31,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.gnuCommandLine.CommandLineLanguage;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
+import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +75,7 @@ public final class CommandLineConsole {
 
     final ContentManager contentManager = window.getContentManager();
     contentManager.removeAllContents(true);
-    final LanguageConsoleView console = new LanguageConsoleImpl(project, "", CommandLineLanguage.INSTANCE);
+    final LanguageConsoleImpl console = new LanguageConsoleImpl(project, "", CommandLineLanguage.INSTANCE);
     console.setPrompt(consoleName + " > ");
     console.setEditable(true);
 
@@ -90,6 +90,7 @@ public final class CommandLineConsole {
     contentManager.addContent(content);
 
     showHiddenCommandWorkAround(console);
+    ArgumentHintLayer.attach(console); // Display [arguments]
     return console;
   }
 

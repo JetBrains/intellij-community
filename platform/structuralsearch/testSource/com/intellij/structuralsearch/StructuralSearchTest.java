@@ -552,20 +552,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s9 = "int a[] = new int[] { 1,2,3,4};\n" +
                 "int b[] = { 2,3,4,5 };\n" +
                 "Object[] c = new Object[] { \"\", null};";
-    String s10 = "new '_ []{ '_* }";
-    String s10_2 = "new int []{ '_* }";
 
-    assertEquals(
-      "Find array instatiation",
-      3,
-      findMatchesCount(s9,s10)
-    );
-
-    assertEquals(
-      "Find array instatiation, 2",
-      2,
-      findMatchesCount(s9,s10_2)
-    );
+    assertEquals("Find array instantiation 1", 2, findMatchesCount(s9, "new '_ []{ '_* }"));
+    assertEquals("Find array instantiation 2", 2, findMatchesCount(s9, "new int []{ '_* }"));
+    assertEquals("Find array instantiation 3", 2, findMatchesCount(s9, "new 'a?:int [] { '_* }"));
+    assertEquals("Find array instantiation 4", 3, findMatchesCount(s9, "new '_? []{ '_* }"));
+    assertEquals("Find array instantiation 5", 1, findMatchesCount(s9, "new Object[] { '_* }"));
   }
 
   public void testLiteral() {

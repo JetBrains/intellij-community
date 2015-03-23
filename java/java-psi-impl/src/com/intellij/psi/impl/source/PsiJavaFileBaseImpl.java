@@ -50,6 +50,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -314,7 +315,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           final PsiElement resolved = statement.resolve();
           if (resolved instanceof PsiClass) {
             processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, statement);
-            if (!processor.execute(resolved, state)) return false;
+            final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
+            if (containingClass != null && containingClass.hasTypeParameters()) {
+              if (!processor.execute(resolved, state.put(PsiSubstitutor.KEY,
+                                                         createRawSubstitutor(containingClass)))) return false;
+            } 
+            else if (!processor.execute(resolved, state)) return false;
           }
         }
       }
@@ -385,6 +391,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
+  @NotNull
+  private static PsiSubstitutor createRawSubstitutor(PsiClass containingClass) {
+    return JavaPsiFacade.getElementFactory(containingClass.getProject()).createRawSubstitutor(containingClass);
+  }
+
   private static boolean processOnDemandTarget(PsiElement target, PsiScopeProcessor processor, ResolveState substitutor, PsiElement place) {
     if (target instanceof PsiPackage) {
       if (!target.processDeclarations(processor, substitutor, null, place)) {
@@ -393,6 +404,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
     else if (target instanceof PsiClass) {
       PsiClass[] inners = ((PsiClass)target).getInnerClasses();
+      if (((PsiClass)target).hasTypeParameters()) {
+        substitutor = substitutor.put(PsiSubstitutor.KEY, createRawSubstitutor((PsiClass)target));
+      }
+
       for (PsiClass inner : inners) {
         if (!processor.execute(inner, substitutor)) return false;
       }
@@ -494,8 +509,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     @Override
     public boolean process(SymbolCollectingProcessor.ResultWithContext result) {
-      myProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, result.getFileContext());
-      return myProcessor.execute(result.getElement(), myState);
+      final PsiElement context = result.getFileContext();
+      myProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, context);
+      final PsiNamedElement element = result.getElement();
+
+      if (element instanceof PsiClass && context instanceof PsiImportStatement) {
+        final PsiClass containingClass = ((PsiClass)element).getContainingClass();
+        if (containingClass != null && containingClass.hasTypeParameters()) {
+          return myProcessor.execute(element, myState.put(PsiSubstitutor.KEY, createRawSubstitutor(containingClass)));
+        }
+      }
+
+      return myProcessor.execute(element, myState);
     }
   }
 }

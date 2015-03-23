@@ -22,11 +22,8 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +34,8 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
   private static DumbProgressIndicator INDICATOR = DumbProgressIndicator.INSTANCE;
   private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
 
-  private static int CHAR_COUNT = 12;
-  private static Map<Integer, Character> CHAR_TABLE = initCharMap();
+  private static final int CHAR_COUNT = 12;
+  private static final Map<Integer, Character> CHAR_TABLE = initCharMap();
 
   private boolean myOldRegistryValue;
 
@@ -173,8 +170,8 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
         System.out.println("Policy: " + policy);
         System.out.println("I: " + i);
         System.out.println("Current seed: " + getLastSeed());
-        System.out.println("Text1: " + normalize(text1));
-        System.out.println("Text2: " + normalize(text2));
+        System.out.println("Text1: " + textToReadableFormat(text1));
+        System.out.println("Text2: " + textToReadableFormat(text2));
         System.out.println("Debug Data: " + debugData.get());
         if (e instanceof Error) throw (Error)e;
         if (e instanceof Exception) throw (Exception)e;
@@ -320,41 +317,14 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
       CharSequence chunk1 = text1.subSequence(last1, fragment.getStartOffset1());
       CharSequence chunk2 = text2.subSequence(last2, fragment.getStartOffset2());
 
-      check(chunk1, chunk2, ignoreSpaces, skipNewline);
+      assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline);
 
       last1 = fragment.getEndOffset1();
       last2 = fragment.getEndOffset2();
     }
     CharSequence chunk1 = text1.subSequence(last1, text1.length());
     CharSequence chunk2 = text2.subSequence(last2, text2.length());
-    check(chunk1, chunk2, ignoreSpaces, skipNewline);
-  }
-
-  private static void check(@NotNull CharSequence chunk1, @NotNull CharSequence chunk2,
-                            boolean ignoreSpaces, boolean skipNewline) {
-    if (ignoreSpaces) {
-      assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2));
-    }
-    else {
-      if (skipNewline) {
-        CharSequence chunk12 = StringUtil.endsWithChar(chunk1, '\n') ? trimLastChar(chunk1) : null;
-        CharSequence chunk22 = StringUtil.endsWithChar(chunk2, '\n') ? trimLastChar(chunk2) : null;
-
-        if (StringUtil.equals(chunk1, chunk2)) return;
-        if (StringUtil.equals(chunk12, chunk2)) return;
-        if (StringUtil.equals(chunk1, chunk22)) return;
-
-        assertTrue(false);
-      }
-      else {
-        assertTrue(StringUtil.equals(chunk1, chunk2));
-      }
-    }
-  }
-
-  @NotNull
-  private static CharSequence trimLastChar(@NotNull CharSequence text) {
-    return new CharSequenceSubSequence(text, 0, text.length() - 1);
+    assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline);
   }
 
   @NotNull
@@ -381,12 +351,6 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     }
 
     return map;
-  }
-
-  @NotNull
-  private static String normalize(@Nullable Document text) {
-    if (text == null) return "null";
-    return "'" + text.getCharsSequence().toString().replace('\n', '*').replace('\t', '+') + "'";
   }
 
   @NotNull

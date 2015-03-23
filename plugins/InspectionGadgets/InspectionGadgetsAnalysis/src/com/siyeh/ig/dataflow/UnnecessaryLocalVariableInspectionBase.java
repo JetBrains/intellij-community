@@ -160,13 +160,26 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
         return false;
       }
 
-      if (!initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
-          PsiUtil.isLanguageLevel8OrHigher(initialization) && !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) && HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null)) {
-        for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
-          final PsiElement element = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(containingScope.getProject()).getResolveHelper();
+      final String initializationName = initialization.getName();
+
+      final boolean finalVariableIntroduction = 
+        !initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
+        PsiUtil.isLanguageLevel8OrHigher(initialization) &&
+        !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) && 
+        HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
+
+      for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
+        final PsiElement refElement = ref.getElement();
+        if (finalVariableIntroduction) {
+          final PsiElement element = PsiTreeUtil.getParentOfType(refElement, PsiClass.class, PsiLambdaExpression.class);
           if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
             return false;
           }
+        }
+
+        if (resolveHelper.resolveReferencedVariable(initializationName, refElement) != initialization) {
+          return false;
         }
       }
 

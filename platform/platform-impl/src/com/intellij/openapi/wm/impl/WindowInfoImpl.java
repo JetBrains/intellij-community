@@ -157,7 +157,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    */
   @Override
   public Rectangle getFloatingBounds(){
-    return myFloatingBounds;
+    return myFloatingBounds != null ? new Rectangle(myFloatingBounds) : null;
   }
 
   /**
@@ -230,6 +230,11 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   }
 
   @Override
+  public boolean isWindowed(){
+    return ToolWindowType.WINDOWED==myType;
+  }
+
+  @Override
   public boolean isSliding(){
     return ToolWindowType.SLIDING==myType;
   }
@@ -250,6 +255,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   private static ToolWindowType parseToolWindowType(final String text) {
     if (ToolWindowType.DOCKED.toString().equalsIgnoreCase(text)) {
       return ToolWindowType.DOCKED;
+    }
+    if (ToolWindowType.WINDOWED.toString().equalsIgnoreCase(text)) {
+      return ToolWindowType.WINDOWED;
     }
     if (ToolWindowType.FLOATING.toString().equalsIgnoreCase(text)) {
       return ToolWindowType.FLOATING;

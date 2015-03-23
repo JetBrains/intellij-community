@@ -141,7 +141,7 @@ public class GitPushOperation {
         // propose to update if rejected
         if (!result.rejected.isEmpty()) {
           boolean shouldUpdate = true;
-          if (pushingToNotTrackedBranch(result.rejected)) {
+          if (myForce || pushingToNotTrackedBranch(result.rejected)) {
             shouldUpdate = false;
           }
           else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {

@@ -422,27 +422,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
            (method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement ? 0 : 1);
   }
 
-  @NotNull
-  private PsiType[] getActualParameterTypes() {
-    PsiType[] types = myActualParameterTypes;
-    if (types == null) {
-      LOG.assertTrue(myArgumentsList instanceof PsiExpressionList, myArgumentsList);
-      myActualParameterTypes = types = getArgumentTypes();
-    }
-    return types;
-  }
-
   private int getActualParametersLength() {
     if (myActualParameterTypes == null) {
       LOG.assertTrue(myArgumentsList instanceof PsiExpressionList, myArgumentsList);
       return ((PsiExpressionList)myArgumentsList).getExpressions().length;
     }
     return myActualParameterTypes.length;
-  }
-
-  @NotNull
-  protected PsiType[] getArgumentTypes() {
-    return ((PsiExpressionList)myArgumentsList).getExpressionTypes();
   }
 
   private enum Specifics {
@@ -509,20 +494,23 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     boolean sameBoxing = true;
     int[] boxingHappened = new int[2];
+    final PsiType[] argTypes1 = myActualParameterTypes != null ? myActualParameterTypes : info1.getPertinentArgumentTypes();
+    final PsiType[] argTypes2 = myActualParameterTypes != null ? myActualParameterTypes : info2.getPertinentArgumentTypes();
     for (int i = 0; i < types1.length; i++) {
       ProgressManager.checkCanceled();
       PsiType type1 = classSubstitutor1.substitute(types1[i]);
       PsiType type2 = classSubstitutor2.substitute(types2[i]);
-      PsiType argType = i < getActualParameterTypes().length ? getActualParameterTypes()[i] : null;
+      final PsiType argType1 = i < getActualParametersLength() ? argTypes1[i] : null;
+      final PsiType argType2 = i < getActualParametersLength() ? argTypes2[i] : null;
 
       boolean boxingInFirst = false;
-      if (isBoxingHappened(argType, type1, languageLevel)) {
+      if (isBoxingHappened(argType1, type1, languageLevel)) {
         boxingHappened[0] += 1;
         boxingInFirst = true;
       }
 
       boolean boxingInSecond = false;
-      if (isBoxingHappened(argType, type2, languageLevel)) {
+      if (isBoxingHappened(argType2, type2, languageLevel)) {
         boxingHappened[1] += 1;
         boxingInSecond = true;
       }

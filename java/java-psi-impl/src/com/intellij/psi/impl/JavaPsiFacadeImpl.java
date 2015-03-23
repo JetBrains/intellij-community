@@ -35,11 +35,11 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -95,9 +95,14 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return null;
     }
 
-    for (PsiElementFinder finder : finders()) {
+    PsiElementFinder[] finders = finders();
+    Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+
+    for (PsiElementFinder finder : finders) {
       PsiClass aClass = finder.findClass(qualifiedName, scope);
-      if (aClass != null) return aClass;
+      if (aClass != null && (classesFilter == null || classesFilter.value(aClass))) {
+        return aClass;
+      }
     }
 
     return null;
@@ -131,13 +136,30 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return findClassesInDumbMode(qualifiedName, scope);
     }
 
-    List<PsiClass> classes = new SmartList<PsiClass>();
-    for (PsiElementFinder finder : finders()) {
+    PsiElementFinder[] finders = finders();
+    Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+
+    List<PsiClass> result = null;
+    for (PsiElementFinder finder : finders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
-      ContainerUtil.addAll(classes, finderClasses);
+      if (finderClasses.length != 0) {
+        if (result == null) result = new ArrayList<PsiClass>(finderClasses.length);
+        filterClassesAndAppend(classesFilter, finderClasses, result);
+      }
     }
 
-    return classes.toArray(new PsiClass[classes.size()]);
+    return result == null || result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+  }
+
+  private static Condition<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull PsiElementFinder[] finders) {
+    Condition<PsiClass> filter = null;
+    for (PsiElementFinder finder : finders) {
+      Condition<PsiClass> finderFilter = finder.getClassesFilter(scope);
+      if (finderFilter != null) {
+        filter = filter == null ? finderFilter : Conditions.and(filter, finderFilter);
+      }
+    }
+    return filter;
   }
 
   private boolean shouldUseSlowResolve() {
@@ -231,15 +253,33 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    PsiElementFinder[] finders = filteredFinders();
+    Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+
     List<PsiClass> result = null;
-    for (PsiElementFinder finder : filteredFinders()) {
+    for (PsiElementFinder finder : finders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
       if (classes.length == 0) continue;
-      if (result == null) result = new ArrayList<PsiClass>();
-      ContainerUtil.addAll(result, classes);
+      if (result == null) result = new ArrayList<PsiClass>(classes.length);
+      filterClassesAndAppend(classesFilter, classes, result);
     }
 
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+  }
+
+  private static void filterClassesAndAppend(@Nullable Condition<PsiClass> classesFilter,
+                                             @NotNull PsiClass[] classes,
+                                             @NotNull List<PsiClass> result) {
+    if (classesFilter == null) {
+      ContainerUtil.addAll(result, classes);
+    }
+    else {
+      for (PsiClass psiClass : classes) {
+        if (classesFilter.value(psiClass)) {
+          result.add(psiClass);
+        }
+      }
+    }
   }
 
   @NotNull

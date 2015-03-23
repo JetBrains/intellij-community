@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -183,9 +184,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (builder == null) {
       return false;
     }
-    final ExecutionEnvironment environment = builder.build();
+    final ExecutionEnvironment environment = builder.target(env.getExecutionTarget()).build();
     environment.setExecutionId(env.getExecutionId());
-    if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+    if (!ExecutionTargetManager.canRun(settings, environment.getExecutionTarget())) {
       return false;
     }
 
@@ -193,6 +194,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return false;
     }
     else {
+      beforeRun(environment);
+
       final Semaphore targetDone = new Semaphore();
       final Ref<Boolean> result = new Ref<Boolean>(false);
       final Disposable disposable = Disposer.newDisposable();
@@ -208,6 +211,10 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         @Override
         public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
           if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
+            if (skipRun != null && skipRun) {
+              result.set(true);
+            }
             targetDone.up();
           }
         }
@@ -255,7 +262,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
   }
 
-  class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
+  private static void beforeRun(@NotNull ExecutionEnvironment environment) {
+    for (RunConfigurationBeforeRunProviderDelegate delegate : Extensions.getExtensions(RunConfigurationBeforeRunProviderDelegate.EP_NAME)) {
+      delegate.beforeRun(environment);
+    }
+  }
+
+  public class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
     private String myConfigurationName;
     private String myConfigurationType;
     private boolean myInitialized = false;
@@ -305,7 +318,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       }
     }
 
-    void setSettings(RunnerAndConfigurationSettings settings) {
+    public void setSettings(RunnerAndConfigurationSettings settings) {
       mySettings = settings;
       myInitialized = true;
     }
