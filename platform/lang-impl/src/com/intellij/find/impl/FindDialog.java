@@ -582,7 +582,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private boolean haveResultsPreview() {
-    return ApplicationManager.getApplication().isInternal() && Registry.is("ide.find.show.preview") && myModel.isMultipleFiles();
+    return Registry.is("ide.find.show.preview") && myModel.isMultipleFiles();
   }
 
   private JPanel createResultsOptionPanel(JPanel optionsPanel, GridBagConstraints gbConstraints) {

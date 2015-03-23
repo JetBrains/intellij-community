@@ -1779,6 +1779,21 @@ public class UIUtil {
   private static int BEST_DARK_LCD_CONTRAST = 250;
   private static int BEST_LIGHT_LCD_CONTRAST = 100;
 
+  public static int getContrastForColor (Color color) {
+    // YIQ
+    int yiqValue = ((color.getRed() * 299) + (color.getGreen() * 587) + (color.getBlue() * 114)) / 1000;
+    return yiqValue * 150/255 + 100;
+  }
+
+
+  public static void updateLCDContrastBasingOnForegroundColor(Graphics g, Color color) {
+    Graphics2D g2d = (Graphics2D)g;
+
+    if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, getContrastForColor(color));
+    }
+  }
 
   public static void setHintingForLCDText(Graphics2D g2d) {
     if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {

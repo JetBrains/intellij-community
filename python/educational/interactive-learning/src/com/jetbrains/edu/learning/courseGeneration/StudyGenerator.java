@@ -52,7 +52,7 @@ public class StudyGenerator {
    */
   public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot,
                                 @NotNull final Project project) throws IOException {
-    VirtualFile taskDir = lessonDir.createChildDirectory(project, EduNames.TASK + Integer.toString(task.getIndex() + 1));
+    VirtualFile taskDir = lessonDir.createChildDirectory(project, EduNames.TASK + Integer.toString(task.getIndex()));
     EduUtils.markDirAsSourceRoot(taskDir, project);
     File newResourceRoot = new File(resourceRoot, taskDir.getName());
     int i = 0;
@@ -84,11 +84,11 @@ public class StudyGenerator {
    */
   public static void createLesson(@NotNull final Lesson lesson, @NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
                                   @NotNull final Project project) throws IOException {
-    String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex() + 1);
+    String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex());
     VirtualFile lessonDir = courseDir.createChildDirectory(project, lessonDirName);
     final List<Task> taskList = lesson.getTaskList();
-    for (int i = 0; i < taskList.size(); i++) {
-      Task task = taskList.get(i);
+    for (int i = 1; i <= taskList.size(); i++) {
+      Task task = taskList.get(i - 1);
       task.setIndex(i);
       createTask(task, lessonDir, new File(resourceRoot, lessonDir.getName()), project);
     }
@@ -105,8 +105,8 @@ public class StudyGenerator {
 
               try {
                 final List<Lesson> lessons = course.getLessons();
-                for (int i = 0; i < lessons.size(); i++) {
-                  Lesson lesson = lessons.get(i);
+                for (int i = 1; i <= lessons.size(); i++) {
+                  Lesson lesson = lessons.get(i - 1);
                   lesson.setIndex(i);
                   createLesson(lesson, baseDir, resourceRoot, project);
                 }

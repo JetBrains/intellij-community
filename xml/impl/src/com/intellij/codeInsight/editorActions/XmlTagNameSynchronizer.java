@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -174,7 +175,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       final Document document = event.getDocument();
       if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress() ||
-          ((DocumentEx)document).isInBulkUpdate()) return;
+          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) return;
 
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();

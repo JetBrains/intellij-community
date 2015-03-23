@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,19 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreUncompilable = false;
 
   @SuppressWarnings("PublicField") public boolean ignoreParametersOfOverridingMethods = false;
+
+  @Pattern(VALID_ID_PATTERN)
+  @NotNull
+  @Override
+  public String getID() {
+    return "rawtypes";
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "RawUseOfParameterized";
+  }
 
   @Override
   @NotNull

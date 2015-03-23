@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
@@ -104,6 +105,8 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     final ExpressionEvaluator evaluator = myChildrenExpression.getEvaluator(context.getProject());
 
     Value value = evaluator.evaluate(context);
+    DebuggerUtilsEx.keep(value, context);
+
     descriptor.putUserData(EXPRESSION_VALUE, value);
     return value;
   }

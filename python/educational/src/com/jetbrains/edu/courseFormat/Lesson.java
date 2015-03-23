@@ -28,6 +28,8 @@ public class Lesson {
 
   @Transient
   private Course myCourse = null;
+
+  // index is visible to user number of lesson from 1 to lesson number
   private int myIndex = -1;
 
   public void initLesson(final Course course, boolean isRestarted) {

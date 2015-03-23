@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,7 +322,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void dispose() {
-    myVirtualMachine.dispose();
+    try {
+      myVirtualMachine.dispose();
+    }
+    catch (UnsupportedOperationException e) {
+      LOG.info(e);
+    }
   }
 
   public void exit(int i) {
@@ -633,7 +638,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public static boolean isCollected(ObjectReference reference) {
-    return !isJ2ME(reference.virtualMachine()) && reference.isCollected();
+    try {
+      return !isJ2ME(reference.virtualMachine()) && reference.isCollected();
+    }
+    catch (UnsupportedOperationException e) {
+      LOG.info(e);
+    }
+    return false;
   }
 
   public String getResumeStack() {
