@@ -479,6 +479,7 @@ public class HighlightUtil extends HighlightUtilBase {
     HighlightInfo highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end), 0);
     if (highlightInfo != null) {
       registerChangeVariableTypeFixes(variable, rType, variable.getInitializer(), highlightInfo);
+      registerChangeVariableTypeFixes(initializer, lType, null, highlightInfo);
     }
     return highlightInfo;
   }
@@ -2730,11 +2731,6 @@ public class HighlightUtil extends HighlightUtilBase {
       if (method != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, PriorityActionWrapper
           .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true)));
-      }
-    } else if (expr instanceof PsiReferenceExpression) {
-      final PsiElement resolve = ((PsiReferenceExpression)expr).resolve();
-      if (resolve instanceof PsiVariable) {
-        registerChangeVariableTypeFixes((PsiVariable)resolve, parameter.getType(), null, highlightInfo);
       }
     }
   }
