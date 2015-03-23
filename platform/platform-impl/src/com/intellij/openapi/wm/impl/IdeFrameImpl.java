@@ -422,7 +422,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     final LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
     statusBar.addWidget(lineSeparatorPanel, "before " + encodingPanel.ID());
 
-    final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
+    final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel(project);
 
     final InsertOverwritePanel insertOverwritePanel = new InsertOverwritePanel(project);
     statusBar.addWidget(insertOverwritePanel, "after Encoding");
