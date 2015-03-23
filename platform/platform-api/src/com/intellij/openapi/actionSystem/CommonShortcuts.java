@@ -106,8 +106,7 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getDiff() {
-    return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? InputEvent.META_DOWN_MASK
-                                                                                        : InputEvent.CTRL_DOWN_MASK));
+    return shortcutsById(IdeActions.ACTION_SHOW_DIFF);
   }
 
   public static ShortcutSet getFind() {
