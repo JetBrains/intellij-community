@@ -30,6 +30,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -140,7 +141,7 @@ public class StorageUtil {
     }
     else {
       if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
-        DEBUG_LOG = result.getPath() + ": " + content;
+        DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
       }
       doWrite(requestor, result, virtualFile, content, lineSeparatorIfPrependXmlProlog);
       return result;
