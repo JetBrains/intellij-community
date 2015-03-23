@@ -16,12 +16,16 @@
 package com.jetbrains.commandInterface.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiModificationTracker.Listener;
-import com.intellij.ui.JBColor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.gnuCommandLine.ValidationResult;
@@ -34,13 +38,15 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Displays missing argument (if required).
+ * Displays argument hint (if required).
  * It tracks PSI changes, obtains validation info, and draws itself.
- * Will be added as {@link LanguageConsoleImpl#addWaterMark(JComponent) watermark}
+ * Will be added as {@link LanguageConsoleImpl#addLayerToPane(JComponent) layer}
  *
  * @author Ilya.Kazakevich
  */
-final class MissingArgumentDisplayer extends JPanel implements Listener {
+@SuppressWarnings({"InstanceVariableMayNotBeInitialized", "NonSerializableFieldInSerializableClass", "DeserializableClassInSecureContext",
+  "SerializableClassInSecureContext"}) // Nobody would serialize this class
+final class ArgumentHintLayer extends JPanel implements Listener {
 
   /**
    * Braces for mandatory args are [] according to GNU/POSIX recommendations
@@ -72,6 +78,16 @@ final class MissingArgumentDisplayer extends JPanel implements Listener {
   @NotNull
   private final LanguageConsoleImpl myConsole;
   /**
+   * Color to be used for required arguments
+   */
+  @NotNull
+  private final Color myRequiredColor;
+  /**
+   * Color to be used for optional arguments
+   */
+  @NotNull
+  private final Color myOptionalColor;
+  /**
    * Number of chars in current document
    */
   private volatile int myDocumentLengthInChars;
@@ -89,7 +105,7 @@ final class MissingArgumentDisplayer extends JPanel implements Listener {
   /**
    * @param console console to wrap
    */
-  private MissingArgumentDisplayer(@NotNull final LanguageConsoleImpl console) {
+  private ArgumentHintLayer(@NotNull final LanguageConsoleImpl console) {
     final FontMetrics metrics = console.getFontMetrics(console.getFont());
     myCharWidthPx = metrics.charWidth('A'); // Should be monospace
     myLineHeightPx = metrics.getHeight();
@@ -98,11 +114,17 @@ final class MissingArgumentDisplayer extends JPanel implements Listener {
     myConsole = console;
     myDocumentLengthInChars = console.getEditorDocument().getTextLength();
     myLastText = console.getFile().getText();
+
+
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myRequiredColor = scheme.getAttributes(ConsoleViewContentType.ERROR_OUTPUT_KEY).getForegroundColor();
+    myOptionalColor = scheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES).getForegroundColor();
   }
 
 
   @Override
   public void modificationCountChanged() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final String newText = myConsole.getFile().getText();
     if (newText.equals(myLastText)) { // If text did not changed from last time, we do nothing
       return;
@@ -138,20 +160,24 @@ final class MissingArgumentDisplayer extends JPanel implements Listener {
     }
 
 
+    @SuppressWarnings("NumericCastThatLosesPrecision") // Y will never be > Integer.MAX_VALUE
     final int y = ((int)Math.round(myConsole.getCurrentEditor().getComponent().getLocation().getY())) + myLineHeightPx;
     final int spaceToRight = myCharWidthPx * SPACES_BEFORE_ARG; // Space after line end to placeholder
     final int x = (myPromptWidthPx + (myCharWidthPx * myDocumentLengthInChars)) + spaceToRight;
 
     final boolean required = nextArg.first;
     final String argumentText = nextArg.second.getHelpText();
-    g.setColor((required ? JBColor.red : JBColor.gray));
-    final String textToShow = StringUtil.isEmpty(argumentText) ? PyBundle.message("commandLine.missingArgument.defaultName") : argumentText;
+
+
+    g.setColor(required ? myRequiredColor : myOptionalColor);
+    final String textToShow = StringUtil.isEmpty(argumentText) ? PyBundle.message("commandLine.argumentHint.defaultName") : argumentText;
     g.drawString(wrapBracesIfNeeded(required, textToShow), x, y);
   }
 
   /**
    * Adds appropriate braces to argument help text if needed
-   * @param required is argument required
+   *
+   * @param required   is argument required
    * @param textToShow arg help text
    * @return text to show
    */
@@ -160,19 +186,27 @@ final class MissingArgumentDisplayer extends JPanel implements Listener {
     if (textToShow.startsWith(MANDATORY_ARG_BRACES.first) || textToShow.startsWith(OPTIONAL_ARG_BRACES.first)) {
       return textToShow;
     }
-    final Pair<String, String> braces = (required ? MANDATORY_ARG_BRACES :  OPTIONAL_ARG_BRACES);
+    final Pair<String, String> braces = (required ? MANDATORY_ARG_BRACES : OPTIONAL_ARG_BRACES);
     return String.format("%s%s%s", braces.first, textToShow, braces.second);
   }
 
 
   /**
-   * Attaches argument displayer to console. Be sure your console has commands
+   * Attaches argument displaying layer to console. Be sure your console has commands.
+   * For now, <strong>only {@link CommandLineFile} is supported for now!</strong>
+   *
    * @param console console to attach
+   * @throws IllegalArgumentException is passed argument is not {@link CommandLineFile}
    */
   static void attach(@NotNull final LanguageConsoleImpl console) {
-    final MissingArgumentDisplayer missingArgumentDisplayer = new MissingArgumentDisplayer(console);
+    final PsiFile consoleFile = console.getFile();
+    if (!(consoleFile instanceof CommandLineFile)) {
+      throw new IllegalArgumentException(
+        String.format("Passed argument is %s, but has to be %s", consoleFile.getClass(), CommandLineFile.class));
+    }
+    final ArgumentHintLayer argumentHintLayer = new ArgumentHintLayer(console);
     final MessageBusConnection connection = console.getProject().getMessageBus().connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, missingArgumentDisplayer);
-    console.addWaterMark(missingArgumentDisplayer);
+    connection.subscribe(PsiModificationTracker.TOPIC, argumentHintLayer);
+    console.addLayerToPane(argumentHintLayer);
   }
 }
