@@ -30,7 +30,10 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
     if (!UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project)) {
       return null;
     }
-    final String uniqueName = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
+    // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
+    final String uniqueName = UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE ? 
+                              UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file) : 
+                              UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
     return uniqueName.equals(file.getName()) ? null : uniqueName;
   }
 }

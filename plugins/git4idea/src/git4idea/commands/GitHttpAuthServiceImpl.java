@@ -18,6 +18,8 @@ package git4idea.commands;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -25,8 +27,8 @@ class GitHttpAuthServiceImpl extends GitHttpAuthService {
 
   @Override
   @NotNull
-  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull String url) {
-    return new GitHttpGuiAuthenticator(project, command, url);
+  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @NotNull GitCommand command, @NotNull Collection<String> urls) {
+    return new GitHttpGuiAuthenticator(project, command, urls);
   }
 
 }

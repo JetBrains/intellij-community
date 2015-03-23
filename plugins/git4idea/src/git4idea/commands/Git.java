@@ -20,8 +20,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -107,13 +105,9 @@ public interface Git {
                         boolean updateTracking, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
-                        @NotNull GitLineHandlerListener... listeners);
-
-  @NotNull
   GitCommandResult push(@NotNull GitRepository repository,
-                        @NotNull GitLocalBranch source,
-                        @NotNull GitRemoteBranch target,
+                        @NotNull GitRemote remote,
+                        @NotNull String spec,
                         boolean force,
                         boolean updateTracking,
                         @Nullable String tagMode,
@@ -143,8 +137,10 @@ public interface Git {
   List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
 
   @NotNull
-  GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote,
-                         @NotNull List<GitLineHandlerListener> listeners, String... params);
+  GitCommandResult fetch(@NotNull GitRepository repository,
+                         @NotNull GitRemote remote,
+                         @NotNull List<GitLineHandlerListener> listeners,
+                         String... params);
 
   @NotNull
   GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url);
@@ -157,4 +153,7 @@ public interface Git {
                             @NotNull VirtualFile workingDir,
                             @NotNull GitRemote remote,
                             String... additionalParameters);
+
+  @NotNull
+  GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);
 }

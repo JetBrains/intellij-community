@@ -32,6 +32,42 @@ public class MethodPropertyTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testChangeMethodRefReturnType() throws Exception {
+    if (isRunningOnAtLeastJava(8)) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
+  public void testChangeLambdaTargetReturnType() throws Exception {
+    if (isRunningOnAtLeastJava(8)) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
+  public void testChangeSAMMethodSignature() throws Exception {
+    if (isRunningOnAtLeastJava(8)) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
+  public void testChangeLambdaSAMMethodSignature() throws Exception {
+    if (isRunningOnAtLeastJava(8)) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
   public void testChangeReturnType1() throws Exception {
     doTest();
   }

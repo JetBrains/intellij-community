@@ -466,7 +466,11 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+    Object data = super.getData(dataId);
+    if (data != null) {
+      return data;
+    }
+    else if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       return myConsoleEditor;
     }
     else if (getProject().isInitialized()) {

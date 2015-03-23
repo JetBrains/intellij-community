@@ -69,6 +69,7 @@ public class LightToolWindow extends JPanel {
   private final TogglePinnedModeAction myToggleAutoHideModeAction = new TogglePinnedModeAction();
   private final ToggleDockModeAction myToggleDockModeAction = new ToggleDockModeAction();
   private final ToggleFloatingModeAction myToggleFloatingModeAction = new ToggleFloatingModeAction();
+  private final ToggleWindowedModeAction myToggleWindowedModeAction = new ToggleWindowedModeAction();
   private final ToggleSideModeAction myToggleSideModeAction = new ToggleSideModeAction();
 
   private final ComponentListener myWidthListener = new ComponentAdapter() {
@@ -331,15 +332,18 @@ public class LightToolWindow extends JPanel {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleWindowedModeAction);
       group.add(myToggleSideModeAction);
     }
-    else if (type == ToolWindowType.FLOATING) {
+    else if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleWindowedModeAction);
     }
     else if (type == ToolWindowType.SLIDING) {
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleWindowedModeAction);
     }
 
     return group;
@@ -411,14 +415,9 @@ public class LightToolWindow extends JPanel {
     }
   }
 
-  private class ToggleDockModeAction extends ToggleAction {
+  private class ToggleDockModeAction extends ToggleTypeModeAction {
     public ToggleDockModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(InternalDecorator.TOGGLE_DOCK_MODE_ACTION_ID));
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myManager.getToolWindow().getType() == ToolWindowType.DOCKED;
+      super(ToolWindowType.DOCKED, InternalDecorator.TOGGLE_DOCK_MODE_ACTION_ID);
     }
 
     @Override
@@ -435,25 +434,45 @@ public class LightToolWindow extends JPanel {
     }
   }
 
-  private class ToggleFloatingModeAction extends ToggleAction {
+  private class ToggleFloatingModeAction extends ToggleTypeModeAction {
     public ToggleFloatingModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(InternalDecorator.TOGGLE_FLOATING_MODE_ACTION_ID));
+      super(ToolWindowType.FLOATING, InternalDecorator.TOGGLE_FLOATING_MODE_ACTION_ID);
+    }
+  }
+
+  private class ToggleWindowedModeAction extends ToggleTypeModeAction {
+    public ToggleWindowedModeAction() {
+      super(ToolWindowType.WINDOWED, InternalDecorator.TOGGLE_WINDOWED_MODE_ACTION_ID);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(!SystemInfo.isMac);
+    }
+  }
+
+  private class ToggleTypeModeAction extends ToggleAction {
+    private final ToolWindowType myType;
+
+    public ToggleTypeModeAction(ToolWindowType type, String id) {
+      myType = type;
+      copyFrom(ActionManager.getInstance().getAction(id));
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myManager.getToolWindow().getType() == ToolWindowType.FLOATING;
+      return myManager.getToolWindow().getType() == myType;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       ToolWindowType type = window.getType();
-      if (type == ToolWindowType.FLOATING) {
+      if (type == myType) {
         window.setType(((ToolWindowEx)window).getInternalType(), null);
       }
       else {
-        window.setType(ToolWindowType.FLOATING, null);
+        window.setType(myType, null);
       }
       myManager.setEditorMode(null);
     }

@@ -402,7 +402,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   protected void push(@NotNull CloudGitApplication application, @NotNull GitRepository repository, @NotNull String remote)
     throws ServerRuntimeException {
     GitCommandResult gitPushResult
-      = getGit().push(repository, remote, application.getGitUrl(), "master:master", createGitLineHandlerListener());
+      = getGit().push(repository, remote, application.getGitUrl(), "master:master", false, createGitLineHandlerListener());
     checkGitResult(gitPushResult);
   }
 

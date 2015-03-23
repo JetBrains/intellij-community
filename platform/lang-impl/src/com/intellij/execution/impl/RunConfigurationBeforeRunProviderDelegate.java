@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang
+package com.intellij.execution.impl;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Max Medvedev on 28/05/14
- */
-enum GrCreateClassKind implements ClassKind {
-  CLASS     ("class"),
-  INTERFACE ("interface"),
-  TRAIT     ("trait"),
-  ENUM      ("enum"),
-  ANNOTATION("annotation");
+public interface RunConfigurationBeforeRunProviderDelegate {
+  ExtensionPointName<RunConfigurationBeforeRunProviderDelegate> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationBeforeRunProviderDelegate");
 
-  private final String myDescription;
-
-  public GrCreateClassKind(final String description) {
-    myDescription = description;
-  }
-
-  public String getDescription() {
-    return myDescription;
-  }
+  void beforeRun(@NotNull ExecutionEnvironment environment);
 }

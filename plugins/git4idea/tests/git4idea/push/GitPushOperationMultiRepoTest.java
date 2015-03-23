@@ -19,12 +19,11 @@ import com.intellij.dvcs.push.PushSpec;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitImpl;
 import git4idea.commands.GitLineHandlerListener;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestUtil;
 import git4idea.update.GitUpdateResult;
@@ -80,20 +79,20 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
   private static class FailingPushGit extends GitImpl {
     private Condition<GitRepository> myPushShouldFail;
 
-    @NotNull
     @Override
+    @NotNull
     public GitCommandResult push(@NotNull GitRepository repository,
-                                 @NotNull GitLocalBranch source,
-                                 @NotNull GitRemoteBranch target,
+                                 @NotNull GitRemote remote,
+                                 @NotNull String spec,
                                  boolean force,
                                  boolean updateTracking,
                                  @Nullable String tagMode,
                                  GitLineHandlerListener... listeners) {
       if (myPushShouldFail.value(repository)) {
-        return new GitCommandResult(false, 128, Collections.singletonList("Failed to push to " + target.getName()),
+        return new GitCommandResult(false, 128, Collections.singletonList("Failed to push to " + remote.getName()),
                                     Collections.<String>emptyList(), null);
       }
-      return super.push(repository, source, target, force, updateTracking, tagMode, listeners);
+      return super.push(repository, remote, spec, force, updateTracking, tagMode, listeners);
     }
   }
 
@@ -123,7 +122,7 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     GitPushRepoResult result2 = result.getResults().get(myCommunity);
 
     assertResult(GitPushRepoResult.Type.ERROR, -1, "master", "origin/master", null, result1);
-    assertEquals("Error text is incorrect", "Failed to push to origin/master", result1.getError());
+    assertEquals("Error text is incorrect", "Failed to push to origin", result1.getError());
     assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2);
   }
 

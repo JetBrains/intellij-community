@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,18 @@ public class GlobalSearchScopesCore {
   @NotNull
   public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
     return new DirectoryScope(project, directory, withSubdirectories);
+  }
+
+  @NotNull
+  public static GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, @NotNull VirtualFile... directories) {
+    if (directories.length ==1) {
+      return directoryScope(project, directories[0], withSubdirectories);
+    }
+    BitSet withSubdirectoriesBS = new BitSet(directories.length);
+    if (withSubdirectories) {
+      withSubdirectoriesBS.set(0, directories.length-1);
+    }
+    return new DirectoriesScope(project, directories, withSubdirectoriesBS);
   }
 
   public static GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {

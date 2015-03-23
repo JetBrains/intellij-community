@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   /**
    * Holds name of JVM property which presence should trigger debug-aware soft wraps processing.
    */
-  public static final String DEBUG_PROPERTY_NAME = "idea.editor.wrap.soft.debug";
+  private static final String DEBUG_PROPERTY_NAME = "idea.editor.wrap.soft.debug";
 
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapModelImpl.class.getName());
 
@@ -153,7 +153,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
     
-    editor.addPropertyChangeListener(this);
+    editor.addPropertyChangeListener(this, this);
 
     myApplianceManager.addListener(myDataMapper);
   }
@@ -789,7 +789,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private class LogicalToVisualTask implements SoftWrapAwareTask {
 
     public LogicalPosition input;
-    public VisualPosition  defaultOutput;
+    private VisualPosition defaultOutput;
     public VisualPosition  output;
 
     @Override

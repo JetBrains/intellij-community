@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +50,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
           myEditor.getCaretModel().moveToOffset(offset);
           myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
           myEditor.getSelectionModel().removeSelection();
+          IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
           super.doOKAction();
         }
         return;
@@ -65,6 +67,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
     myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(Math.max(0, lineNumber - 1), Math.max(0, columnNumber - 1)));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     myEditor.getSelectionModel().removeSelection();
+    IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
     super.doOKAction();
   }
 

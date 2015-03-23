@@ -65,7 +65,10 @@ import javax.swing.text.Position;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -324,14 +327,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       }
       if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
       if (myExpanded) {
-        int rowCount = (int) Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
+        int rowCount = (int)Math.ceil((double)myBranches.size() / BRANCHES_TABLE_COLUMN_COUNT);
         HtmlTableBuilder builder = new HtmlTableBuilder();
 
         for (int i = 0; i < rowCount; i++) {
           builder.startRow();
           if (i == 0) {
             builder.append("<i>In " + myBranches.size() + " branches, </i><a href=\"" + SHOW_OR_HIDE_BRANCHES + "\"><i>hide</i></a>: ");
-          } else {
+          }
+          else {
             builder.append("");
           }
 
@@ -339,9 +343,11 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
             int index = rowCount * j + i;
             if (index >= myBranches.size()) {
               builder.append("");
-            } else if (index != myBranches.size() - 1)  {
+            }
+            else if (index != myBranches.size() - 1) {
               builder.append(myBranches.get(index) + "," + StringUtil.repeat("&nbsp;", 20), LEFT_ALIGN);
-            } else {
+            }
+            else {
               builder.append(myBranches.get(index), LEFT_ALIGN);
             }
           }
@@ -401,21 +407,29 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
 
     private static String getAuthorText(VcsFullCommitDetails commit) {
-      String authorText = commit.getAuthor().getName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
+      long authorTime = commit.getAuthorTime();
+      long commitTime = commit.getCommitTime();
+
+      String authorText = commit.getAuthor().getName() + formatDateTime(authorTime);
       if (!commit.getAuthor().equals(commit.getCommitter())) {
-        String commitTime;
-        if (commit.getAuthorTime() != commit.getCommitTime()) {
-          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
+        String commitTimeText;
+        if (authorTime != commitTime) {
+          commitTimeText = formatDateTime(commitTime);
         }
         else {
-          commitTime = "";
+          commitTimeText = "";
         }
-        authorText += " (committed by " + commit.getCommitter().getName() + commitTime + ")";
+        authorText += " (committed by " + commit.getCommitter().getName() + commitTimeText + ")";
       }
-      else if (commit.getAuthorTime() != commit.getCommitTime()) {
-        authorText += " (committed at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
+      else if (authorTime != commitTime) {
+        authorText += " (committed " + formatDateTime(commitTime) + ")";
       }
       return authorText;
+    }
+
+    @NotNull
+    private static String formatDateTime(long time) {
+      return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
     }
 
     @Override
