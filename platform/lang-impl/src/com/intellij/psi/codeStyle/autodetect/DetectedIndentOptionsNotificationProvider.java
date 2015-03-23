@@ -34,7 +34,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 
 /**
  * @author Rustam Vishnyakov
@@ -42,6 +42,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
 public class DetectedIndentOptionsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
   private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
+  protected static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
 
   @NotNull
   @Override
@@ -93,6 +94,9 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
               };
               panel.createActionLabel(actionLabelData.label, onClickAction);
             }
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              file.putUserData(DETECT_INDENT_NOTIFICATION_SHOWN_KEY, Boolean.TRUE);
+            }
             return panel;
           }
         }
@@ -102,7 +106,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   }
 
   public static void updateIndentNotification(@NotNull PsiFile file, boolean enforce) {
-    if (!(ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
       FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(file.getVirtualFile());
       if (fileEditor != null) {
         Boolean notifiedFlag = fileEditor.getUserData(NOTIFIED_FLAG);

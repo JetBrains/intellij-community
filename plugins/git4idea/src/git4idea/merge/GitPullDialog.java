@@ -178,11 +178,11 @@ public class GitPullDialog extends DialogWrapper {
     setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
   }
 
-  public GitLineHandler makeHandler(@NotNull String url) {
+  public GitLineHandler makeHandler(@NotNull List<String> urls) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
-    h.setUrl(url);
+    h.setUrls(urls);
     h.addProgressParameter();
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {

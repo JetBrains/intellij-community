@@ -69,7 +69,7 @@ public class OnesideFragmentBuilder {
       processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1);
       processChanged(fragment);
     }
-    processEquals(getLineCount(myDocument1) - 1, getLineCount(myDocument1) - 2);
+    processEquals(getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
   }
 
   private void processEquals(int endLine1, int endLine2) {

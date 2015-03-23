@@ -1154,6 +1154,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
+  @Override
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    addPropertyChangeListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removePropertyChangeListener(listener);
+      }
+    });
+  }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
@@ -3076,8 +3086,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Color currentColor = null;
         for (int i = 0; i < myCount; i++) {
           if (!Comparing.equal(color[i], currentColor)) {
-            currentColor = color[i];
-            g.setColor(currentColor != null ? currentColor : JBColor.black);
+            currentColor = color[i] != null ? color[i] : JBColor.black;
+
+            UIUtil.updateLCDContrastBasingOnForegroundColor(g, currentColor);
+
+            g.setColor(currentColor);
           }
 
           drawChars(g, data[i], starts[i], ends[i], x[i], y[i], whitespaceShown[i]);

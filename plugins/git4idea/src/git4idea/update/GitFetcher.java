@@ -102,11 +102,7 @@ public class GitFetcher {
     if (remote == null) {
       return logError("Couldn't find remote with the name " + remoteName, null);
     }
-    String url = remote.getFirstUrl();
-    if (url == null) {
-      return logError("URL is null for remote " + remote.getName(), null);
-    }
-    return fetchRemote(repository, remote, url, branch);
+    return fetchRemote(repository, remote, branch);
   }
 
   private static GitFetchResult logError(@NotNull String message, @Nullable String additionalInfo) {
@@ -123,16 +119,14 @@ public class GitFetcher {
     }
 
     GitRemote remote = fetchParams.getRemote();
-    String url = fetchParams.getUrl();
-    return fetchRemote(repository, remote, url, null);
+    return fetchRemote(repository, remote, null);
   }
 
   @NotNull
   private GitFetchResult fetchRemote(@NotNull GitRepository repository,
                                      @NotNull GitRemote remote,
-                                     @NotNull String url,
                                      @Nullable String branch) {
-    return fetchNatively(repository, remote, url, branch);
+    return fetchNatively(repository, remote, branch);
   }
 
   // leaving this unused method, because the wanted behavior can change again
@@ -146,8 +140,7 @@ public class GitFetcher {
 
     GitRemote remote = fetchParams.getRemote();
     String remoteBranch = fetchParams.getRemoteBranch().getNameForRemoteOperations();
-    String url = fetchParams.getUrl();
-    return fetchNatively(repository, remote, url, remoteBranch);
+    return fetchNatively(repository, remote, remoteBranch);
   }
 
   @NotNull
@@ -167,14 +160,7 @@ public class GitFetcher {
     }
 
     GitRemote remote = trackInfo.getRemote();
-    String url = remote.getFirstUrl();
-    if (url == null) {
-      String message = "URL is null for remote " + remote.getName();
-      LOG.error(message);
-      return new FetchParams(GitFetchResult.error(new Exception(message)));
-    }
-
-    return new FetchParams(remote, trackInfo.getRemoteBranch(), url);
+    return new FetchParams(remote, trackInfo.getRemoteBranch());
   }
 
   @NotNull
@@ -185,7 +171,7 @@ public class GitFetcher {
         LOG.error("URL is null for remote " + remote.getName());
         continue;
       }
-      GitFetchResult res = fetchNatively(repository, remote, url, null);
+      GitFetchResult res = fetchNatively(repository, remote, null);
       res.addPruneInfo(fetchResult.getPrunedRefs());
       fetchResult = res;
       if (!fetchResult.isSuccess()) {
@@ -196,16 +182,15 @@ public class GitFetcher {
   }
 
   @NotNull
-  private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String url,
-                                              @Nullable String branch) {
+  private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @Nullable String branch) {
     Git git = ServiceManager.getService(Git.class);
     String[] additionalParams = branch != null ?
                                 new String[]{ getFetchSpecForBranch(branch, remote.getName()) } :
                                 ArrayUtil.EMPTY_STRING_ARRAY;
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
-    GitCommandResult result =
-      git.fetch(repository, url, remote.getName(), Collections.<GitLineHandlerListener>singletonList(pruneDetector), additionalParams);
+    GitCommandResult result = git.fetch(repository, remote,
+                                        Collections.<GitLineHandlerListener>singletonList(pruneDetector), additionalParams);
 
     GitFetchResult fetchResult;
     if (result.success()) {
@@ -347,16 +332,14 @@ public class GitFetcher {
     private GitRemote myRemote;
     private GitRemoteBranch myRemoteBranch;
     private GitFetchResult myError;
-    private String myUrl;
 
     FetchParams(GitFetchResult error) {
       myError = error;
     }
 
-    FetchParams(GitRemote remote, GitRemoteBranch remoteBranch, String url) {
+    FetchParams(GitRemote remote, GitRemoteBranch remoteBranch) {
       myRemote = remote;
       myRemoteBranch = remoteBranch;
-      myUrl = url;
     }
 
     boolean isError() {
@@ -373,10 +356,6 @@ public class GitFetcher {
 
     public GitRemoteBranch getRemoteBranch() {
       return myRemoteBranch;
-    }
-
-    public String getUrl() {
-      return myUrl;
     }
   }
 }

@@ -37,7 +37,9 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 
 /**
  * @author db
@@ -210,6 +212,20 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   protected void addTestRoot(JpsModule module, final String testRootRelativePath) {
     module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
+  }
+
+  protected static boolean isRunningOnAtLeastJava(int javaVersion) {
+    final String versionString = System.getProperty("java.version");
+    final String prefix = "1.";
+    final int startIndex = versionString.startsWith(prefix) ? prefix.length() : 0;
+    final int dotIndex = versionString.indexOf('.', startIndex);
+    try {
+      int version = Integer.parseInt(versionString.substring(startIndex, dotIndex > startIndex? dotIndex : versionString.length()));
+      return version >= javaVersion;
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return false;
   }
 
   private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {

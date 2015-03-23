@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,12 +119,7 @@ class EventLogConsole {
     Document document = editor.getDocument();
     boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset() || !editor.getContentComponent().hasFocus();
 
-    Long notificationTime = myProjectModel.getNotificationTime(notification);
-    if (notificationTime == null) {
-      return;
-    }
-
-    String date = DateFormatUtil.formatTimeWithSeconds(notificationTime) + " ";
+    String date = DateFormatUtil.formatTimeWithSeconds(notification.getTimestamp()) + " ";
     append(document, date);
 
     int startLine = document.getLineCount() - 1;

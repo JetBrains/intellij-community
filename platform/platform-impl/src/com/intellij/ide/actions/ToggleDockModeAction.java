@@ -74,6 +74,8 @@ public class ToggleDockModeAction extends ToggleAction implements DumbAware {
       return;
     }
     ToolWindow toolWindow=mgr.getToolWindow(id);
-    presentation.setEnabled(toolWindow.isAvailable()&&ToolWindowType.FLOATING!=toolWindow.getType());
+    presentation.setEnabled(toolWindow.isAvailable()
+      && toolWindow.getType() != ToolWindowType.FLOATING
+      && toolWindow.getType() != ToolWindowType.WINDOWED);
   }
 }

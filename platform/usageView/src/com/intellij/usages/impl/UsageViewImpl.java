@@ -89,6 +89,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private final UsageNodeTreeBuilder myBuilder;
   private final MyPanel myRootPanel;
+  @NotNull
   private final JTree myTree;
   private Content myContent;
 

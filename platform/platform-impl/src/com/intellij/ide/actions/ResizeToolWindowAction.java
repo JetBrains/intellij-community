@@ -99,7 +99,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
         window = mgr.getToolWindow(mgr.getActiveToolWindowId());
       }
 
-      if (window == null || !window.isAvailable() || !window.isVisible() || window.getType() == ToolWindowType.FLOATING || !window.isActive()) {
+      if (window == null || !window.isAvailable() || !window.isVisible() || window.getType() == ToolWindowType.FLOATING || window.getType() == ToolWindowType.WINDOWED || !window.isActive()) {
         setDisabled(e);
         return;
       }

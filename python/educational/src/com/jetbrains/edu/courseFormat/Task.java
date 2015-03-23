@@ -20,6 +20,8 @@ import java.util.Map;
 public class Task {
   @Expose
   private String name;
+
+  // index is visible to user number of task from 1 to task number
   private int myIndex;
   @Expose
   @SerializedName("task_files")

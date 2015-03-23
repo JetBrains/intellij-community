@@ -591,6 +591,7 @@
         <action id="TogglePinnedMode" class="xcom.intellij.ide.actions.TogglePinnedModeAction" text="_Pinned Mode" description="Pin/unpin active tool window"/>
         <action id="ToggleDockMode" class="xcom.intellij.ide.actions.ToggleDockModeAction" text="Dock_ed Mode" description="Dock/undock active tool window"/>
         <action id="ToggleFloatingMode" class="xcom.intellij.ide.actions.ToggleFloatingModeAction" text="_Floating Mode" description="Float/unfloat active tool window"/>
+        <action id="ToggleWindowedMode" class="xcom.intellij.ide.actions.ToggleWindowedModeAction" text="_Windowed Mode" description="Window/unwindow active tool window"/>
         <separator/>
         <action id="NextTab" class="xcom.intellij.ide.actions.NextTabAction" text="Select _Next Tab" description="Activate next tab"/>
         <action id="PreviousTab" class="xcom.intellij.ide.actions.PreviousTabAction" text="Select Previ_ous Tab" description="Activate previous tab"/>

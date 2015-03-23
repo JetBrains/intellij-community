@@ -49,6 +49,7 @@ import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
@@ -138,10 +139,16 @@ public class StorageUtil {
       return result;
     }
     else {
+      if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
+        DEBUG_LOG = result.getPath() + ": " + content;
+      }
       doWrite(requestor, result, virtualFile, content, lineSeparatorIfPrependXmlProlog);
       return result;
     }
   }
+
+  @TestOnly
+  public static String DEBUG_LOG = "";
 
   private static void doWrite(@NotNull final Object requestor,
                               @NotNull final VirtualFile file,

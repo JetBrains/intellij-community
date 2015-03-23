@@ -58,7 +58,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
                     mySettingsPanel.getAuthor(), mySettingsPanel.getDescription());
   }
 
-  private static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                                      @NotNull final String name, @NotNull final String author,
                                      @NotNull final String description) {
 

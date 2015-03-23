@@ -16,6 +16,7 @@
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ToggleWindowedModeAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -69,6 +70,7 @@ public class LightToolWindow extends JPanel {
   private final TogglePinnedModeAction myToggleAutoHideModeAction = new TogglePinnedModeAction();
   private final ToggleDockModeAction myToggleDockModeAction = new ToggleDockModeAction();
   private final ToggleFloatingModeAction myToggleFloatingModeAction = new ToggleFloatingModeAction();
+  private final ToggleWindowedModeAction myToggleWindowedModeAction = new ToggleWindowedModeAction();
   private final ToggleSideModeAction myToggleSideModeAction = new ToggleSideModeAction();
 
   private final ComponentListener myWidthListener = new ComponentAdapter() {
@@ -331,15 +333,18 @@ public class LightToolWindow extends JPanel {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleWindowedModeAction);
       group.add(myToggleSideModeAction);
     }
-    else if (type == ToolWindowType.FLOATING) {
+    else if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
       group.add(myToggleAutoHideModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleWindowedModeAction);
     }
     else if (type == ToolWindowType.SLIDING) {
       group.add(myToggleDockModeAction);
       group.add(myToggleFloatingModeAction);
+      group.add(myToggleWindowedModeAction);
     }
 
     return group;

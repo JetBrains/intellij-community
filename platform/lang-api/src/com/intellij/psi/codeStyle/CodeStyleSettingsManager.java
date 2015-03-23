@@ -20,12 +20,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.autodetect.IndentOptionsInDocumentKeeper;
+import com.intellij.util.Processor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,8 +141,16 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       if (documentManager != null) {
         PsiFile file = documentManager.getPsiFile(document);
         if (file != null) {
-          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(project).getIndentOptionsByFile(file, null, true, null);
-          indentOptions.associateWithDocument(document);
+          final Ref<FileIndentOptionsProvider> providerRef = new Ref<FileIndentOptionsProvider>();
+          CommonCodeStyleSettings.IndentOptions indentOptions =
+            getSettings(project).getIndentOptionsByFile(file, null, true, new Processor<FileIndentOptionsProvider>() {
+              @Override
+              public boolean process(FileIndentOptionsProvider provider) {
+                providerRef.set(provider);
+                return true;
+              }
+            });
+          IndentOptionsInDocumentKeeper.storeIntoDocument(document, indentOptions, providerRef.get());
         }
       }
     }

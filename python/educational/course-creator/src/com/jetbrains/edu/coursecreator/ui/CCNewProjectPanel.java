@@ -68,4 +68,16 @@ public class CCNewProjectPanel {
       }
     }
   }
+
+  public JTextField getAuthorField() {
+    return myAuthorField;
+  }
+
+  public JTextArea getDescriptionField() {
+    return myDescription;
+  }
+
+  public JTextField getNameField() {
+    return myName;
+  }
 }

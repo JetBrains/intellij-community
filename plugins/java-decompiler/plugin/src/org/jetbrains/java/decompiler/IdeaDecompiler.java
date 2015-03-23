@@ -62,7 +62,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 import java.util.jar.Manifest;
 
@@ -76,24 +76,25 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   private static final String LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted";
 
   private final IFernflowerLogger myLogger = new IdeaLogger();
-  private final Map<String, Object> myOptions = new HashMap<String, Object>();
-  private boolean myLegalNoticeAccepted;
+  private final Map<String, Object> myOptions;
   private final Map<VirtualFile, ProgressIndicator> myProgress = ContainerUtil.newConcurrentMap();
+  private boolean myLegalNoticeAccepted;
 
   public IdeaDecompiler() {
-    myOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
-    myOptions.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
-    myOptions.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
-    myOptions.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
-    myOptions.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
-    myOptions.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
-    myOptions.put(IFernflowerPreferences.BANNER, BANNER);
-    myOptions.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 60);
+    Map<String, Object> options = ContainerUtil.newHashMap();
+    options.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
+    options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
+    options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
+    options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
+    options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
+    options.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
+    options.put(IFernflowerPreferences.BANNER, BANNER);
+    options.put(IFernflowerPreferences.MAX_PROCESSING_METHOD, 60);
 
     Project project = DefaultProjectFactory.getInstance().getDefaultProject();
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
-    myOptions.put(IFernflowerPreferences.INDENT_STRING, StringUtil.repeat(" ", options.INDENT_SIZE));
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+    options.put(IFernflowerPreferences.INDENT_STRING, StringUtil.repeat(" ", indentOptions.INDENT_SIZE));
 
     Application app = ApplicationManager.getApplication();
     myLegalNoticeAccepted = app.isUnitTestMode() || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY);
@@ -116,8 +117,10 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     }
 
     if (app.isUnitTestMode()) {
-      myOptions.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
+      options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
     }
+
+    myOptions = Collections.unmodifiableMap(options);
   }
 
   private void showLegalNotice(final Project project, final VirtualFile file) {
@@ -161,24 +164,24 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       MyBytecodeProvider provider = new MyBytecodeProvider(files);
       MyResultSaver saver = new MyResultSaver();
 
+      Map<String, Object> options = ContainerUtil.newHashMap(myOptions);
       if (Registry.is("decompiler.use.line.mapping")) {
-        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
-        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
+        options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
+        options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
       }
       else if (Registry.is("decompiler.use.line.table")) {
-        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
-        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
+        options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
+        options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
       }
       else {
-        myOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
-        myOptions.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
+        options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0");
+        options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0");
       }
-
       if (Registry.is("decompiler.dump.original.lines")) {
-        myOptions.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+        options.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
       }
 
-      BaseDecompiler decompiler = new BaseDecompiler(provider, saver, myOptions, myLogger);
+      BaseDecompiler decompiler = new BaseDecompiler(provider, saver, options, myLogger);
       for (String path : files.keySet()) {
         decompiler.addSpace(new File(path), true);
       }

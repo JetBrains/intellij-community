@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,17 @@ public abstract class PsiElementFinder {
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
+  }
+
+  /**
+   * Returns the filter to exclude classes, for example derived classes.
+   *
+   * @param scope the scope in which classes are searched.
+   * @return the filter to use, or null if no additional filtering is necessary
+   */
+  @Nullable
+  public Condition<PsiClass> getClassesFilter(@NotNull GlobalSearchScope scope) {
+    return null;
   }
 
   /**

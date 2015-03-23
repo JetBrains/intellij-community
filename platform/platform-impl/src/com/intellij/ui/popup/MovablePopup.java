@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.popup;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ import java.awt.*;
 /**
  * @author Sergey Malenkov
  */
-public class MovablePopup implements Disposable {
+public class MovablePopup {
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -46,7 +45,6 @@ public class MovablePopup implements Disposable {
     myHeavyWeight = true;
   }
 
-  @Override
   public void dispose() {
     disposeAndUpdate(false);
   }
@@ -95,6 +93,10 @@ public class MovablePopup implements Disposable {
     }
   }
 
+  public void setBounds(@NotNull Rectangle bounds) {
+    setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+  }
+
   public void setBounds(int x, int y, int width, int height) {
     if (myViewBounds != null) {
       myViewBounds.setBounds(x, y, width, height);
@@ -104,6 +106,10 @@ public class MovablePopup implements Disposable {
     }
   }
 
+  public void setLocation(@NotNull Point location) {
+    setLocation(location.x, location.y);
+  }
+
   public void setLocation(int x, int y) {
     if (myViewBounds != null) {
       myViewBounds.setLocation(x, y);
@@ -111,6 +117,10 @@ public class MovablePopup implements Disposable {
     else {
       setBounds(new Point(x, y), null);
     }
+  }
+
+  public void setSize(@NotNull Dimension size) {
+    setSize(size.width, size.height);
   }
 
   public void setSize(int width, int height) {

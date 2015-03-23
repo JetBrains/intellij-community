@@ -219,6 +219,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         @Override
         public void hierarchyChanged(HierarchyEvent e) {
           hideHint();
+          myPopup.dispose();
         }
       }
     );
@@ -303,12 +304,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       hideHint();
     }
     else {
-      Dimension size = myTipComponent.getPreferredSize();
-      myPopup.setBounds(location.x, location.y, size.width, size.height);
-      myPopup.setHeavyWeight(hasOwnedWindows());
-      if (!myPopup.isVisible()) {
-        myPopup.setVisible(true);
-      }
+      Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
+      myPopup.setBounds(bounds);
+      myPopup.setVisible(noIntersections(bounds));
       repaintKeyItem();
     }
   }
@@ -330,11 +328,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return false;
   }
 
-  private boolean hasOwnedWindows() {
+  private boolean noIntersections(Rectangle bounds) {
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
     for (Window other : owner.getOwnedWindows()) {
-      if (popup != other && other.isVisible()) {
+      if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {
         return false;
       }
     }
