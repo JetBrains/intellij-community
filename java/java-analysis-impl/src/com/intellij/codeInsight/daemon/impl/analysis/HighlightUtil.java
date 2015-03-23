@@ -154,11 +154,15 @@ public class HighlightUtil extends HighlightUtilBase {
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
     final boolean level8OrHigher = PsiUtil.isLanguageLevel8OrHigher(modifierList);
+    final boolean level9OrHigher = PsiUtil.isLanguageLevel9OrHigher(modifierList);
     for (@PsiModifier.ModifierConstant String incompatible : incompatibles) {
       if (level8OrHigher) {
         if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.ABSTRACT)){
           continue;
         }
+      }
+      if (level9OrHigher && modifier.equals(PsiModifier.PRIVATE) && incompatible.equals(PsiModifier.PUBLIC)) {
+        continue;
       }
       if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.FINAL)) {
         final PsiElement parent = modifierList.getParent();
@@ -883,7 +887,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
       if (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
           PsiModifier.STRICTFP.equals(modifier) || PsiModifier.SYNCHRONIZED.equals(modifier)) {
-        isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
+        isAllowed &= modifierOwnerParent instanceof PsiClass && 
+                     (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner));
       }
 
       if (containingClass != null && containingClass.isAnnotationType()) {
