@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,20 +50,8 @@ import java.util.Collection;
  */
 public class JavaDebuggerSupport extends DebuggerSupport {
   private final JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
-  //private final StepOverActionHandler myStepOverActionHandler = new StepOverActionHandler();
-  //private final StepIntoActionHandler myStepIntoActionHandler = new StepIntoActionHandler();
-  //private final StepOutActionHandler myStepOutActionHandler = new StepOutActionHandler();
-  //private final ForceStepOverActionHandler myForceStepOverActionHandler = new ForceStepOverActionHandler();
-  //private final ForceStepIntoActionHandler myForceStepIntoActionHandler = new ForceStepIntoActionHandler();
-  //private final RunToCursorActionHandler myRunToCursorActionHandler = new RunToCursorActionHandler();
-  //private final ForceRunToCursorActionHandler myForceRunToCursorActionHandler = new ForceRunToCursorActionHandler();
-  //private final ResumeActionHandler myResumeActionHandler = new ResumeActionHandler();
-  //private final PauseActionHandler myPauseActionHandler = new PauseActionHandler();
-  //private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
-  //private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
   //private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
   private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
-  //private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
 
   @Override
