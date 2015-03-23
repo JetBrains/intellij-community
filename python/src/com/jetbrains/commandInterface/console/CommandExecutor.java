@@ -19,8 +19,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.gnuCommandLine.CommandLineLanguage;
-import com.jetbrains.commandInterface.gnuCommandLine.psi.CommandLineFile;
+import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
