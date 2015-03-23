@@ -98,8 +98,12 @@ public class JdkUtil {
     return null;
   }
 
+  public static boolean checkForJdk(@NotNull String homePath) {
+    return checkForJdk(new File(FileUtil.toSystemDependentName(homePath)));
+  }
+
   public static boolean checkForJdk(@NotNull File homePath) {
-    File binPath = new File(homePath.getAbsolutePath() + File.separator + "bin");
+    File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
     FileFilter fileFilter = new FileFilter() {
@@ -117,8 +121,11 @@ public class JdkUtil {
   }
 
   public static boolean checkForJre(@NotNull String homePath) {
-    homePath = new File(FileUtil.toSystemDependentName(homePath)).getAbsolutePath();
-    File binPath = new File(homePath + File.separator + "bin");
+    return checkForJre(new File(FileUtil.toSystemDependentName(homePath)));
+  }
+
+  public static boolean checkForJre(@NotNull File homePath) {
+    File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
     FileFilter fileFilter = new FileFilter() {
@@ -130,7 +137,7 @@ public class JdkUtil {
     File[] children = binPath.listFiles(fileFilter);
 
     return children != null && children.length >= 1 &&
-           checkForRuntime(homePath);
+           checkForRuntime(homePath.getAbsolutePath());
   }
 
   public static boolean checkForRuntime(@NotNull String homePath) {
