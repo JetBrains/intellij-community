@@ -57,6 +57,10 @@ public class BrowserUtil {
   public static boolean isAbsoluteURL(String url) {
     return ourExternalPrefix.matcher(url.toLowerCase(Locale.ENGLISH)).find();
   }
+  
+  public static boolean canBeBrowsed(String url) {
+    return url != null && !url.startsWith("jar:");
+  }
 
   public static String getDocURL(String url) {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
