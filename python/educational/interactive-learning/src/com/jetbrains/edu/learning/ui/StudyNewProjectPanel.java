@@ -26,6 +26,7 @@ public class StudyNewProjectPanel{
   private JLabel myAuthorLabel;
   private JLabel myDescriptionLabel;
   private JLabel myLabel;
+  private JPanel myInfoPanel;
   private final StudyProjectGenerator myGenerator;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
@@ -133,4 +134,11 @@ public class StudyNewProjectPanel{
     }
   }
 
+  public JComboBox getCoursesComboBox() {
+    return myCoursesComboBox;
+  }
+
+  public JPanel getInfoPanel() {
+    return myInfoPanel;
+  }
 }

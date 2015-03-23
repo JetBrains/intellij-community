@@ -1,0 +1,38 @@
+<!--suppress XmlUnboundNsPrefix -->
+<idea-plugin version="2">
+  <id>com.jetbrains.edu.interactivelearning.intellij.python</id>
+  <name>Educational plugin for Intellij Python</name>
+  <version>2.0</version>
+
+  <description><![CDATA[
+      Educational plugin core for students. 
+      ]]></description>
+
+  <change-notes><![CDATA[
+
+      ]]>
+  </change-notes>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.python</depends>
+  <depends>com.jetbrains.edu.interactivelearning</depends>
+  <depends>com.jetbrains.python.edu.interactivelearning.python</depends>
+  <depends>com.jetbrains.edu.interactivelearning.intellij</depends>
+
+  <project-components>
+
+  </project-components>
+
+  <application-components>
+
+  </application-components>
+
+  <actions>
+
+  </actions>
+
+  <extensions defaultExtensionNs="com.jetbrains.edu.interactivelearning.intellij">
+    <EduProjectTemplate implementation="PyEduProjectTemplate"/>
+  </extensions>
+
+</idea-plugin>
