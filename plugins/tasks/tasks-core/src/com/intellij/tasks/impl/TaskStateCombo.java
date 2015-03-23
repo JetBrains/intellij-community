@@ -26,6 +26,8 @@ import java.util.List;
  */
 public abstract class TaskStateCombo extends JPanel {
 
+  private final JBLabel myHintLabel;
+
   public static boolean stateUpdatesSupportedFor(@Nullable Task task) {
     if (task == null || !task.isIssue()) {
       return false;
@@ -49,14 +51,14 @@ public abstract class TaskStateCombo extends JPanel {
     myProject = project;
     myTask = task;
 
-    final JBLabel hintLabel = new JBLabel();
-    hintLabel.setIcon(PlatformIcons.UP_DOWN_ARROWS);
-    hintLabel.setToolTipText("Pressing Up or Down arrows while in editor changes the state");
+    myHintLabel = new JBLabel();
+    myHintLabel.setIcon(PlatformIcons.UP_DOWN_ARROWS);
+    myHintLabel.setToolTipText("Pressing Up or Down arrows while in editor changes the state");
     final JComboBox comboBox = myKindCombo.getComboBox();
     comboBox.setPreferredSize(new Dimension(300, UIUtil.fixComboBoxHeight(comboBox.getPreferredSize().height)));
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     add(myKindCombo);
-    add(hintLabel);
+    add(myHintLabel);
   }
 
   /**
@@ -92,6 +94,10 @@ public abstract class TaskStateCombo extends JPanel {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myKindCombo.setEnabled(enabled);
+  }
+
+  public void showHintLabel(boolean show) {
+    myHintLabel.setVisible(show);
   }
 
   /**
