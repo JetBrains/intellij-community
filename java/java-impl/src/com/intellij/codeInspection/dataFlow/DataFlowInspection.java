@@ -26,6 +26,7 @@ import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.refactoring.util.RefactoringUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -59,8 +60,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected AddAssertStatementFix createAssertFix(PsiBinaryExpression binary) {
-    return new AddAssertStatementFix(binary);
+  protected AddAssertStatementFix createAssertFix(PsiBinaryExpression binary, PsiExpression expression) {
+    return RefactoringUtil.getParentStatement(expression, false) == null ? null : new AddAssertStatementFix(binary);
   }
 
   private class OptionsPanel extends JPanel {
