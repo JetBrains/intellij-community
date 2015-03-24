@@ -88,7 +88,7 @@ public class VcsUserImpl implements VcsUser {
   }
 
   @Nullable
-  private static Pair<String, String> getFirstAndLastName(@NotNull String name) {
+  public static Pair<String, String> getFirstAndLastName(@NotNull String name) {
     Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
     if (nameWithDotMatcher.matches()) {
       return Pair.create(nameWithDotMatcher.group(1), nameWithDotMatcher.group(2));
@@ -98,19 +98,5 @@ public class VcsUserImpl implements VcsUser {
       return Pair.create(nameWithSpaceMatcher.group(1), nameWithSpaceMatcher.group(2));
     }
     return null;
-  }
-
-  @NotNull
-  public static Set<String> getVariants(@NotNull String name) {
-    Set<String> result = ContainerUtil.newHashSet(name);
-
-    Pair<String, String> firstAndLastName = getFirstAndLastName(name);
-    if (firstAndLastName != null) {
-      result.add(firstAndLastName.first + " " + firstAndLastName.second);
-      result.add(firstAndLastName.first + "." + firstAndLastName.second);
-      result.add(firstAndLastName.first + firstAndLastName.second);
-    }
-
-    return result;
   }
 }

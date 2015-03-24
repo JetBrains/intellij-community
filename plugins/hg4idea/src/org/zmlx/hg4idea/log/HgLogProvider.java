@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
@@ -205,16 +204,7 @@ public class HgLogProvider implements VcsLogProvider {
     if (filterCollection.getUserFilter() != null) {
       filterParameters.add("-r");
       String authorFilter =
-        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return "^" +
-                   s +
-                   "( <.*>)?$|^<" +
-                   s +
-                   "@.*>$"; // either exact user name with any email or no name with exact email (on any domain)
-          }
-        }), "|");
+        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.INSTANCE), "|");
       filterParameters.add("user('re:" + authorFilter + "')");
     }
 
