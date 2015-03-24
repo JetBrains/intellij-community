@@ -108,6 +108,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .between(FROM_KEYWORD, DOT).spaces(1)
       .between(DOT, IMPORT_KEYWORD).spaces(1)
       .around(DOT).spaces(0)
+      .aroundInside(AT, DECORATOR_CALL).none()
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
