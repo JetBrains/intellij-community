@@ -2149,8 +2149,8 @@
     <localInspection groupPath="Java" language="JAVA" shortName="CustomSecurityManager" bundle="com.siyeh.InspectionGadgetsBundle" key="custom.security.manager.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.CustomSecurityManagerInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="DeserializableClassInSecureContext" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="deserializable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="DeserializableClassInSecureContext" alternativeId="serial"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="deserializable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.security.DeserializableClassInSecureContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DesignForExtension" bundle="com.siyeh.InspectionGadgetsBundle" key="design.for.extension.display.name"
@@ -2187,8 +2187,8 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="runtime.exec.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.RuntimeExecWithNonConstantStringInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SerializableClassInSecureContext" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="serializable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="SerializableClassInSecureContext" alternativeId="serial"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="serializable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.security.SerializableClassInSecureContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToSystemSetSecurityManager" shortName="SystemSetSecurityManager"
@@ -2216,8 +2216,8 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="externalizable.with.serialization.methods.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.serialization.ExternalizableWithSerializationMethodsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NonSerializableFieldInSerializableClass" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="non.serializable.field.in.serializable.class.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="NonSerializableFieldInSerializableClass" alternativeId="serial"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="non.serializable.field.in.serializable.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.NonSerializableFieldInSerializableClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonSerializableObjectBoundToHttpSession" bundle="com.siyeh.InspectionGadgetsBundle"
@@ -2256,21 +2256,21 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="serialversionuid.private.static.final.long.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.serialization.SerialVersionUIDNotStaticFinalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="serial" shortName="SerializableHasSerialVersionUIDField" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="serializable.class.without.serialversionuid.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" suppressId="serial" shortName="SerializableHasSerialVersionUIDField" alternativeId="serial" 
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="serializable.class.without.serialversionuid.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.SerializableHasSerialVersionUIDFieldInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SerializableHasSerializationMethods" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="serializable.has.serialization.methods.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="SerializableHasSerializationMethods" alternativeId="serial" 
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="serializable.has.serialization.methods.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.SerializableHasSerializationMethodsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="SerializableNonStaticInnerClassWithoutSerialVersionUID"
+    <localInspection groupPath="Java" language="JAVA" suppressId="SerializableNonStaticInnerClassWithoutSerialVersionUID" alternativeId="serial"
                      shortName="SerializableInnerClassHasSerialVersionUIDField" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="serializable.inner.class.has.serial.version.uid.field.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.SerializableInnerClassHasSerialVersionUIDFieldInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SerializableInnerClassWithNonSerializableOuterClass" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="serializable.inner.class.with.non.serializable.outer.class.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="SerializableInnerClassWithNonSerializableOuterClass" alternativeId="serial" 
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="serializable.inner.class.with.non.serializable.outer.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.SerializableInnerClassWithNonSerializableOuterClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SerializableStoresNonSerializable" bundle="com.siyeh.InspectionGadgetsBundle"
