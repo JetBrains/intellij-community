@@ -112,7 +112,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
         String srcUrl = pathToUrl(myRootPath + "/" + path);
         boolean isTestFolder;
         try {
-          isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
+          isTestFolder = !StringUtil.isEmpty(testPattern) && path.matches(testPattern);
         }
         catch (PatternSyntaxException e) {
           isTestFolder = false;
@@ -253,9 +253,13 @@ public abstract class AbstractEclipseClasspathReader<T> {
 
   @NotNull
   protected static String getPresentableName(@NotNull String path, Set<String> names) {
-    final String pathComponent = getLastPathComponent(path);
-    if (pathComponent != null && names != null && !names.add(pathComponent)) return path;
-    return pathComponent != null ? pathComponent : path;
+    String pathComponent = getLastPathComponent(path);
+    if (pathComponent != null && names != null && !names.add(pathComponent)) {
+      return path;
+    }
+    else {
+      return pathComponent == null ? path : pathComponent;
+    }
   }
 
   @Nullable
