@@ -29,6 +29,7 @@ import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
@@ -105,7 +106,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
-    if (context == null) return false;
+    if (context == null || context.getContainingFile() instanceof GroovyFile) return false;
     PsiElement parent = context.getParent();
 
     //don't try to inplace rename aliased imported references

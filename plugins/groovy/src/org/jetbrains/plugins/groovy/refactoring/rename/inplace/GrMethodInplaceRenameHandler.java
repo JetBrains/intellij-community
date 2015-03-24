@@ -22,6 +22,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
@@ -31,8 +32,7 @@ public class GrMethodInplaceRenameHandler extends MemberInplaceRenameHandler {
   @Override
   protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
     if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;
-
-    return element instanceof GrMethod;
+    return element instanceof GrMethod && file instanceof GroovyFile;
   }
 
   @NotNull
