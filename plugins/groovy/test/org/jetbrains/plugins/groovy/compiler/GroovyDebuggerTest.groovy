@@ -101,6 +101,10 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     try {
       cl.call()
     }
+    catch (Throwable t) {
+      t.printStackTrace()
+      throw t
+    }
     finally {
       def handler = debugProcess.processHandler
       resume()
