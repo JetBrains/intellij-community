@@ -42,6 +42,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
@@ -328,8 +329,22 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       if (!(entry instanceof LibraryOrderEntry)) continue;
 
       Element element = new Element("lib");
-      element.setAttribute("name", entry.getPresentableName());
       LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+
+      String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
+      if (libraryName == null) {
+        final String[] urls = libraryEntry.getRootUrls(OrderRootType.CLASSES);
+        if (urls.length > 0) {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(urls[0]);
+          file = JarFileSystem.getInstance().getVirtualFileForJar(file);
+          libraryName = file != null ? file.getName() : null;
+        }
+        if (libraryName == null) {
+          libraryName = libraryEntry.getPresentableName();
+        }
+      }
+
+      element.setAttribute("name", libraryName);
       DependencyScope scope = libraryEntry.getScope();
       element.setAttribute("scope", scope.name());
       if (libraryEntry.isModuleLevel()) {
