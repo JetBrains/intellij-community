@@ -95,18 +95,25 @@ def _excepthook(exctype, value, tb):
         return
 
     frames = []
+    debugger = GetGlobalDebugger()
+    user_frames = []
 
     while tb:
+        frame = tb.tb_frame
+        if exception_breakpoint.ignore_libraries and not debugger.not_in_scope(frame.f_code.co_filename):
+            user_frames.append(tb.tb_frame)
         frames.append(tb.tb_frame)
         tb = tb.tb_next
 
     thread = threadingCurrentThread()
     frames_byid = dict([(id(frame),frame) for frame in frames])
-    frame = frames[-1]
+    if exception_breakpoint.ignore_libraries:
+        frame = user_frames[-1]
+    else:
+        frame = frames[-1]
     thread.additionalInfo.exception = (exctype, value, tb)
     thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
     thread.additionalInfo.message = exception_breakpoint.qname
-    debugger = GetGlobalDebugger()
 
     pydevd_tracing.SetTrace(None) #no tracing from here
 
