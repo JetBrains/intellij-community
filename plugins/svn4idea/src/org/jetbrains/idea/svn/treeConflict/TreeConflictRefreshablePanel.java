@@ -280,7 +280,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                                             true) {
             @Override
             protected void process(TreeConflictDescription d) throws VcsException {
-              new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectTheirsFull(d);
+              new SvnTreeConflictResolver(myVcs, paths.myMainPath, paths.myAdditionalPath).resolveSelectTheirsFull();
             }
 
             @Override
@@ -337,7 +337,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                                             true) {
             @Override
             protected void process(TreeConflictDescription d) throws VcsException {
-              new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectMineFull(d);
+              new SvnTreeConflictResolver(myVcs, paths.myMainPath, paths.myAdditionalPath).resolveSelectMineFull();
             }
 
             @Override
