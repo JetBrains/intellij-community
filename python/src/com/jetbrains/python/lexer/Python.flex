@@ -160,6 +160,7 @@ return PyTokenTypes.DOCSTRING; }
 "-="                  { return PyTokenTypes.MINUSEQ; }
 "**="                 { return PyTokenTypes.EXPEQ; }
 "*="                  { return PyTokenTypes.MULTEQ; }
+"@="                  { return PyTokenTypes.ATEQ; }
 "//="                 { return PyTokenTypes.FLOORDIVEQ; }
 "/="                  { return PyTokenTypes.DIVEQ; }
 "%="                  { return PyTokenTypes.PERCEQ; }
