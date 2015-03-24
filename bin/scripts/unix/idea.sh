@@ -44,10 +44,12 @@ OS_TYPE=`"$UNAME" -s`
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
+elif [ -x "`dirname $0`/../jre/bin/java" ]; then
+  JDK="`dirname $0`/../jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
 elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
