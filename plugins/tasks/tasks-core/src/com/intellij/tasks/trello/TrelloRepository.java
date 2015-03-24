@@ -28,9 +28,9 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
-import com.intellij.tasks.impl.httpclient.ResponseUtil;
-import com.intellij.tasks.impl.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
-import com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloList;
@@ -346,7 +346,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       final Header header = response.getFirstHeader("Content-Type");
       if (header != null && header.getValue().startsWith("text/plain")) {
-        final String entityContent = ResponseUtil.getResponseContentAsString(response);
+        final String entityContent = TaskResponseUtil.getResponseContentAsString(response);
         throw new Exception(TaskBundle.message("failure.server.message", StringUtil.capitalize(entityContent)));
       }
       throw new Exception(TaskBundle.message("failure.http.error", statusLine.getStatusCode(), statusLine.getStatusCode()));

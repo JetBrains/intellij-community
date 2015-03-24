@@ -8,7 +8,7 @@ import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 
 import java.util.Collections;
 
@@ -17,7 +17,7 @@ import java.util.Collections;
  * @author Mikhail Golubev
  */
 public class GitlabIntegrationTest extends TaskManagerTestCase {
-  private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   private GitlabRepository myRepository;
 
   public void testCommitMessageFormat() throws Exception {

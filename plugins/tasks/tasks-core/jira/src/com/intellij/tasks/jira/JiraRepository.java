@@ -27,7 +27,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.ArrayUtil;
@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
-  public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   private final static Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 

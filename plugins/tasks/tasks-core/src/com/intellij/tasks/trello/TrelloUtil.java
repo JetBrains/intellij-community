@@ -18,7 +18,7 @@ package com.intellij.tasks.trello;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloCommentAction;
@@ -44,7 +44,7 @@ public class TrelloUtil {
   public static final TypeToken<List<TrelloCommentAction>> LIST_OF_COMMENTS_TYPE = new TypeToken<List<TrelloCommentAction>>() { /* empty */ };
 
   private static Gson buildGson() {
-    final GsonBuilder gson = GsonUtil.createDefaultBuilder();
+    final GsonBuilder gson = TaskGsonUtil.createDefaultBuilder();
     gson.registerTypeAdapter(LabelColor.class, new LabelColorDeserializer());
     return gson.create();
   }
