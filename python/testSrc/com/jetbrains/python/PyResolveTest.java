@@ -571,4 +571,14 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testResolveAttributesUsingOldStyleMROWhenUnresolvedAncestorsAndC3Fails() {
     assertResolvesTo(PyFunction.class, "foo");
   }
+
+  // PY-15390
+  public void testMatMul() {
+    assertResolvesTo(PyFunction.class, "__matmul__");
+  }
+
+  // PY-15390
+  public void testRMatMul() {
+    assertResolvesTo(PyFunction.class, "__rmatmul__");
+  }
 }

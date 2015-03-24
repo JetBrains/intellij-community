@@ -118,7 +118,7 @@ public class PyTokenTypes {
   public static final PyElementType RBRACKET = new PyElementType("RBRACKET");// ]
   public static final PyElementType LBRACE = new PyElementType("LBRACE");// {
   public static final PyElementType RBRACE = new PyElementType("RBRACE");// }
-  public static final PyElementType AT = new PyElementType("AT");// @
+  public static final PyElementType AT = new PyElementType("AT", "__matmul__");// @
   public static final PyElementType COMMA = new PyElementType("COMMA");// ,
   public static final PyElementType COLON = new PyElementType("COLON");// :
   public static final PyElementType DOT = new PyElementType("DOT");// .
