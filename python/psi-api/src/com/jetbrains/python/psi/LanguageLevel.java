@@ -35,7 +35,7 @@ public enum LanguageLevel {
   PYTHON34(34, true, false, true, true);
 
   private static LanguageLevel DEFAULT2 = PYTHON27;
-  private static LanguageLevel DEFAULT3 = PYTHON33;
+  private static LanguageLevel DEFAULT3 = PYTHON34;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
