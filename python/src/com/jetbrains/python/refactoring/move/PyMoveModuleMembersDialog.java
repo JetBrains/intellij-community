@@ -17,8 +17,8 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RowIcon;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -36,6 +36,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import java.awt.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
@@ -117,6 +118,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
     final List<PyModuleMemberInfo> symbolsInfos = collectModuleMemberInfos(myModuleMemberModel.myPyFile);
     for (PyModuleMemberInfo info : symbolsInfos) {
+      //noinspection SuspiciousMethodCalls
       info.setChecked(elements.contains(info.getMember()));
     }
     myModuleMemberModel.memberInfoChanged(new MemberInfoChange<PyElement, PyModuleMemberInfo>(symbolsInfos));
@@ -161,7 +163,13 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       }
     };
     decorator.setOn(tableIsVisible);
-    decorator.setContentComponent(ScrollPaneFactory.createScrollPane(myMemberSelectionTable));
+    decorator.setContentComponent(new JBScrollPane(myMemberSelectionTable) {
+      @Override
+      public Dimension getMinimumSize() {
+        // Prevent growth of the dialog after several expand/collapse actions
+        return new Dimension((int)super.getMinimumSize().getWidth(), 0);
+      }
+    });
 
     UiNotifyConnector.doWhenFirstShown(myCenterPanel, new Runnable() {
       @Override
