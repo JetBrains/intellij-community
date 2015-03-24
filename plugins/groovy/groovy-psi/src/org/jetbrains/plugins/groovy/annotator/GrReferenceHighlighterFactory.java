@@ -37,7 +37,6 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!(file instanceof GroovyFileBase)) return null;
     if (!GrFileIndexUtil.isGroovySourceFile(file)) return null;
     return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)file);
   }
