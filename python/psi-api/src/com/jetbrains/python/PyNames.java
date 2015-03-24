@@ -357,8 +357,23 @@ public class PyNames {
     .put("__round__", new BuiltinDescription("(self, n=None)"))
     .build();
 
+  public static ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(PY3_BUILTIN_METHODS)
+    .put("__imatmul__", _self_other_descr)
+    .put("__matmul__", _self_other_descr)
+    .put("__rmatmul__", _self_other_descr)
+    .build();
+
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
-    return level.isPy3K() ? PY3_BUILTIN_METHODS : PY2_BUILTIN_METHODS;
+    if (level.isAtLeast(LanguageLevel.PYTHON35)) {
+      return PY35_BUILTIN_METHODS;
+    }
+    else if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+      return PY3_BUILTIN_METHODS;
+    }
+    else {
+      return PY2_BUILTIN_METHODS;
+    }
   }
 
   // canonical names, not forced by interpreter
