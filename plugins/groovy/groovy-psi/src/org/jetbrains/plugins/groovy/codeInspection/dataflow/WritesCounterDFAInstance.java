@@ -36,13 +36,7 @@ public class WritesCounterDFAInstance implements DfaInstance<TObjectIntHashMap<G
     final GrVariable variable;
     if (instructionElement instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)instructionElement).resolve();
-      if (resolved == null) {
-        variable = null;
-      }
-      else {
-        assert resolved instanceof GrVariable;
-        variable = (GrVariable)resolved;
-      }
+      variable = resolved instanceof GrVariable ? (GrVariable)resolved : null;
     }
     else if (instructionElement instanceof GrVariable) {
       variable = (GrVariable)instructionElement;
