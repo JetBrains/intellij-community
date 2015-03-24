@@ -26,6 +26,7 @@ import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,11 +80,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     if (filter == null) {
       return Collections.emptySet();
     }
-    Set<String> result = ContainerUtil.newHashSet();
-    for (VirtualFile root : myFilterModel.getDataPack().getLogProviders().keySet()) {
-      result.addAll(filter.getUserNames(root));
-    }
-    return result;
+    return ContainerUtil.newHashSet(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
   }
 
   @NotNull
@@ -127,16 +124,24 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     @NotNull
     @Override
     public Collection<String> getUserNames(@NotNull final VirtualFile root) {
-      return ContainerUtil.mapNotNull(myUsers, new Function<String, String>() {
-        @Override
-        public String fun(String user) {
-          if (ME.equals(user)) {
-            VcsUser vcsUser = myData.get(root);
-            return vcsUser == null ? null : vcsUser.getName();
+      Set<String> result = ContainerUtil.newHashSet();
+      for (String user : myUsers) {
+        if (ME.equals(user)) {
+          VcsUser vcsUser = myData.get(root);
+          if (vcsUser != null) {
+            result.addAll(VcsUserImpl.getVariants(vcsUser.getName()));
           }
-          return user;
         }
-      });
+        else {
+          result.addAll(VcsUserImpl.getVariants(user));
+        }
+      }
+      return result;
+    }
+
+    @NotNull
+    public Collection<String> getUserNamesForPresentation() {
+      return myUsers;
     }
 
     @Override
@@ -146,8 +151,8 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
         @Override
         public boolean value(String user) {
           String lowerUser = user.toLowerCase();
-          return commit.getAuthor().getName().toLowerCase().contains(lowerUser) ||
-                 commit.getAuthor().getEmail().toLowerCase().contains(lowerUser);
+          return commit.getAuthor().getName().toLowerCase().equals(lowerUser) ||
+                 commit.getAuthor().getEmail().toLowerCase().startsWith(lowerUser + "@");
         }
       });
     }

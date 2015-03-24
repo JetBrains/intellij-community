@@ -424,8 +424,15 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getUserFilter() != null) {
-      String authorFilter = StringUtil.join(filterCollection.getUserFilter().getUserNames(root), "|");
-      filterParameters.add(prepareParameter("author", StringUtil.escapeChar(StringUtil.escapeBackSlashes(authorFilter), '|')));
+      String authorFilter =
+        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return "(^" + s + "( <.*>)?$)|(^<" + s + "@.*>$)"; // either exact user name with any email or no name with exact email (on any domain)
+          }
+        }), "|");
+      filterParameters
+        .add(prepareParameter("author", StringUtil.escapeChar(StringUtil.escapeBackSlashes(authorFilter), '|', '(', ')', '?')));
     }
 
     if (filterCollection.getDateFilter() != null) {
