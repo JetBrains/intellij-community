@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -63,13 +64,15 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     PsiFile file = myFixture.getFile();
     VirtualFile vFile = file.getVirtualFile();
 
-    Boolean notificationShown = vFile.getUserData(DetectedIndentOptionsNotificationProvider.DETECT_INDENT_NOTIFICATION_SHOWN_KEY);
-    assert notificationShown == null;
-
-    myFixture.type('\n');
-
-    notificationShown = vFile.getUserData(DetectedIndentOptionsNotificationProvider.DETECT_INDENT_NOTIFICATION_SHOWN_KEY);
-    assert notificationShown != null && notificationShown;
+    try {
+      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, Boolean.TRUE);
+      assert !isNotificationShown(vFile);
+      myFixture.type('\n');
+      assert isNotificationShown(vFile);
+    }
+    finally {
+      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, null);
+    }
   }
 
   public void testNoNotification_WhenNothingDetected() throws Exception {
@@ -84,13 +87,18 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     PsiFile file = myFixture.getFile();
     VirtualFile vFile = file.getVirtualFile();
 
-    Boolean notificationShown = vFile.getUserData(DetectedIndentOptionsNotificationProvider.DETECT_INDENT_NOTIFICATION_SHOWN_KEY);
-    assert notificationShown == null;
-
-    myFixture.type('\n');
-
-    notificationShown = vFile.getUserData(DetectedIndentOptionsNotificationProvider.DETECT_INDENT_NOTIFICATION_SHOWN_KEY);
-    assert notificationShown == null;
+    try {
+      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, Boolean.TRUE);
+      assert !isNotificationShown(vFile);
+      myFixture.type('\n');
+      assert !isNotificationShown(vFile);
+    }
+    finally {
+      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, null);
+    }
   }
 
+  private boolean isNotificationShown(@NotNull VirtualFile vFile) {
+    return vFile.getUserData(DetectedIndentOptionsNotificationProvider.DETECT_INDENT_NOTIFICATION_SHOWN_KEY) != null;
+  }
 }
