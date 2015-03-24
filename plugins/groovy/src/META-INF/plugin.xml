@@ -490,7 +490,7 @@
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
-    <compileServer.plugin classpath="groovy-jps-plugin.jar"/>
+    <compileServer.plugin classpath="groovy-jps-plugin.jar;groovy-rt-constants.jar"/>
 
     <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>
     <todoIndexer filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyTodoIndexer"/>

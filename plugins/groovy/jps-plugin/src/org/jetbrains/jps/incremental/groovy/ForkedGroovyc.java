@@ -60,7 +60,7 @@ class ForkedGroovyc implements GroovycFlavor {
     throws Exception {
     List<String> classpath = new ArrayList<String>();
     if (myOptimizeClassLoading) {
-      classpath.add(GroovyBuilder.getGroovyRtRoot().getPath());
+      classpath.addAll(GroovyBuilder.getGroovyRtRoots());
       classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
       classpath.add(ClasspathBootstrap.getResourcePath(UrlClassLoader.class));
       classpath.add(ClasspathBootstrap.getResourceFile(THashMap.class).getPath());
