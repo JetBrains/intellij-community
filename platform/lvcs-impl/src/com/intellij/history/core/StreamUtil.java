@@ -20,8 +20,6 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,7 @@ import java.io.IOException;
 
 public class StreamUtil {
   public static Entry readEntry(DataInput in) throws IOException {
-    int type = DataInputOutputUtil.readINT(in);
+    int type = in.readInt();
     switch (type) {
       case 0:
         return new FileEntry(in, true);
@@ -50,12 +48,12 @@ public class StreamUtil {
 
     if (id == -1) throw new IOException("unexpected entry type: " + c);
 
-    DataInputOutputUtil.writeINT(out, id);
+    out.writeInt(id);
     e.write(out);
   }
 
   public static Change readChange(DataInput in) throws IOException {
-    int type = DataInputOutputUtil.readINT(in);
+    int type = in.readInt();
     switch (type) {
       case 1:
         return new CreateFileChange(in);
@@ -95,17 +93,17 @@ public class StreamUtil {
 
     if (id == -1) throw new IOException("unexpected change type: " + c);
 
-    DataInputOutputUtil.writeINT(out, id);
+    out.writeInt(id);
     change.write(out);
   }
 
   @NotNull
   public static String readString(DataInput in) throws IOException {
-    return IOUtil.readUTF(in);
+    return in.readUTF();
   }
 
   public static void writeString(DataOutput out, @NotNull String s) throws IOException {
-    IOUtil.writeUTF(out, s);
+    out.writeUTF(s);
   }
 
   @Nullable

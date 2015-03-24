@@ -22,7 +22,6 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.Producer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,11 +47,11 @@ public class ChangeSet {
   }
 
   public ChangeSet(DataInput in) throws IOException {
-    myId = DataInputOutputUtil.readLONG(in);
+    myId = in.readLong();
     myName = StreamUtil.readStringOrNull(in);
-    myTimestamp = DataInputOutputUtil.readTIME(in);
+    myTimestamp = in.readLong();
 
-    int count = DataInputOutputUtil.readINT(in);
+    int count = in.readInt();
     List<Change> changes = new ArrayList<Change>(count);
     while (count-- > 0) {
       changes.add(StreamUtil.readChange(in));
@@ -63,11 +62,11 @@ public class ChangeSet {
 
   public void write(DataOutput out) throws IOException {
     LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
-    DataInputOutputUtil.writeLONG(out, myId);
+    out.writeLong(myId);
     StreamUtil.writeStringOrNull(out, myName);
-    DataInputOutputUtil.writeTIME(out, myTimestamp);
+    out.writeLong(myTimestamp);
 
-    DataInputOutputUtil.writeINT(out, myChanges.size());
+    out.writeInt(myChanges.size());
     for (Change c : myChanges) {
       StreamUtil.writeChange(out, c);
     }

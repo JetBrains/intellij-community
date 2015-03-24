@@ -19,7 +19,6 @@ package com.intellij.history.core;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInput;
@@ -59,17 +58,17 @@ public class StoredContent extends Content {
   }
 
   public StoredContent(DataInput in) throws IOException {
-    myContentId = DataInputOutputUtil.readINT(in);
+    myContentId = in.readInt();
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    DataInputOutputUtil.writeINT(out, myContentId);
+    out.writeInt(myContentId);
   }
 
   @Override
   public byte[] getBytes() {
-    //todo handle unavailable content 
+    //todo handle unavailable content
     //if (!isAvailable()) throw new RuntimeException("content is not available");
     try {
       if (myContentId == UNAVAILABLE) return ArrayUtil.EMPTY_BYTE_ARRAY;
