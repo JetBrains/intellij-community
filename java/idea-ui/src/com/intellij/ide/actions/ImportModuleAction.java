@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 10/31/12
@@ -55,21 +57,31 @@ public class ImportModuleAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = getEventProject(e);
-    doImport(project);
+    doImport(getEventProject(e));
   }
 
-  public static List<Module> doImport(Project project) {
+  @Override
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(getEventProject(e) != null);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  public static List<Module> doImport(@Nullable Project project) {
     AddModuleWizard wizard = selectFileAndCreateWizard(project, null);
-    if (wizard == null) {
+
+    if (wizard == null || wizard.getStepCount() > 0 && !wizard.showAndGet()) {
       return Collections.emptyList();
     }
-    if (wizard.getStepCount() > 0 && !wizard.showAndGet()) return Collections.emptyList();
 
     return createFromWizard(project, wizard);
   }
 
-  public static List<Module> createFromWizard(Project project, AbstractProjectWizard wizard) {
+  public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
     if (project == null && wizard.getStepCount() > 0) {
       Project newProject = NewProjectUtil.createFromWizard(wizard, null);
       return newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
@@ -82,6 +94,7 @@ public class ImportModuleAction extends AnAction {
         return Collections.singletonList(module);
       }
       else {
+        assert project != null;
         return projectBuilder.commit(project);
       }
     }
@@ -93,23 +106,21 @@ public class ImportModuleAction extends AnAction {
   }
 
   @Nullable
-  public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
+  public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project, @Nullable Component dialogParent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     descriptor.setHideIgnored(false);
     descriptor.setTitle("Select File or Directory to Import");
-    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
-    String description = getFileChooserDescription(project);
+    List<ProjectImportProvider> providers = getProviders(project);
+    String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
-
-    return selectFileAndCreateWizard(project, dialogParent, descriptor, providers);
+    return selectFileAndCreateWizard(project, dialogParent, descriptor, toObjectArray(providers, ProjectImportProvider.class));
   }
 
   @Nullable
-  public static AddModuleWizard selectFileAndCreateWizard(final Project project,
+  public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project,
                                                           @Nullable Component dialogParent,
                                                           @NotNull FileChooserDescriptor descriptor,
-                                                          ProjectImportProvider[] providers)
-  {
+                                                          ProjectImportProvider[] providers) {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
     VirtualFile toSelect = null;
     String lastLocation = PropertiesComponent.getInstance().getValue(LAST_IMPORTED_LOCATION);
@@ -126,18 +137,17 @@ public class ImportModuleAction extends AnAction {
     return createImportWizard(project, dialogParent, file, providers);
   }
 
-  public static String getFileChooserDescription(final Project project) {
-    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
-    List<ProjectImportProvider> list = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
-      @Override
-      public boolean value(ProjectImportProvider provider) {
-        return project != null || provider.canCreateNewProject();
-      }
-    });
+  /** @deprecated to be removed in IDEA 16 */
+  @SuppressWarnings("unused")
+  public static String getFileChooserDescription(@Nullable final Project project) {
+    return getFileChooserDescription(getProviders(project));
+  }
+
+  private static String getFileChooserDescription(List<ProjectImportProvider> providers) {
     StringBuilder builder = new StringBuilder("<html>Select ");
     boolean first = true;
-    if (list.size() > 0) {
-      for (ProjectImportProvider provider : list) {
+    if (providers.size() > 0) {
+      for (ProjectImportProvider provider : providers) {
         String sample = provider.getFileSample();
         if (sample != null) {
           if (!first) {
@@ -154,8 +164,19 @@ public class ImportModuleAction extends AnAction {
     return builder.toString();
   }
 
+  @NotNull
+  public static List<ProjectImportProvider> getProviders(@Nullable final Project project) {
+    ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
+    return ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {
+      @Override
+      public boolean value(ProjectImportProvider provider) {
+        return project == null ? provider.canCreateNewProject() : provider.canImportModule();
+      }
+    });
+  }
+
   @Nullable
-  public static AddModuleWizard createImportWizard(final Project project,
+  public static AddModuleWizard createImportWizard(@Nullable final Project project,
                                                    @Nullable Component dialogParent,
                                                    final VirtualFile file,
                                                    ProjectImportProvider... providers) {
@@ -180,18 +201,8 @@ public class ImportModuleAction extends AnAction {
 
     ProjectImportProvider[] availableProviders = available.toArray(new ProjectImportProvider[available.size()]);
 
-    return dialogParent == null ? new AddModuleWizard(project, path, availableProviders) : new AddModuleWizard(project, dialogParent, path, availableProviders);
-  }
-
-
-  @Override
-  public void update(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    presentation.setEnabled(getEventProject(e) != null);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return true;
+    return dialogParent == null
+           ? new AddModuleWizard(project, path, availableProviders)
+           : new AddModuleWizard(project, dialogParent, path, availableProviders);
   }
 }
