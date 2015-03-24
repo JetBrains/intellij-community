@@ -762,7 +762,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
-    return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement);
+    return CompositeDocumentationProvider.hasBrowsableUrlsFor(this, element, originalElement);
   }
 
   @Override
