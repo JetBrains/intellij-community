@@ -50,9 +50,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON31, Sets.newHashSet("R", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON32, Sets.newHashSet("R", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON33, Sets.newHashSet("R", "U", "B", "BR", "RB"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON34, Sets.newHashSet("R", "U", "B", "BR", "RB"));
   }
+
+  private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet(Sets.newHashSet("R", "U", "B", "BR", "RB"));
 
   public CompatibilityVisitor(List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -254,7 +254,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         final LanguageLevel languageLevel = myVersionsToProcess.get(i);
         if (prefix.isEmpty()) continue;
 
-        final Set<String> prefixes = AVAILABLE_PREFIXES.get(languageLevel);
+        final Set<String> prefixesForLanguageLevel = AVAILABLE_PREFIXES.get(languageLevel);
+        final Set<String> prefixes = prefixesForLanguageLevel != null ? prefixesForLanguageLevel : DEFAULT_PREFIXES;
         if (!prefixes.contains(prefix))
           len = appendLanguageLevel(message, len, languageLevel);
       }
