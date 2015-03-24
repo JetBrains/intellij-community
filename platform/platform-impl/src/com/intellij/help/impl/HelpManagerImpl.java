@@ -29,6 +29,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,19 @@ public class HelpManagerImpl extends HelpManager {
     }
 
     if (myHelpSet == null) {
-      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
+      ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+      String url = info.getWebHelpUrl() + "?";
+      if (PlatformUtils.isCLion()) {
+        url += "Keyword=" + id;
+        url += "&ProductVersion=" + info.getMajorVersion() + "." + info.getMinorVersion();
+        
+        if (info.isEAP()) {
+          url += "&EAP"; 
+        }
+      } else {
+        url += id;
+      }
+      BrowserUtil.browse(url);
       return;
     }
 
