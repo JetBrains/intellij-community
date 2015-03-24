@@ -78,7 +78,7 @@ public class ExternalJavaDocAction extends AnAction {
       return;
     }
 
-    final List<String> urls = provider.getUrlFor(element, originalElement);
+    final List<String> urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
     if (urls != null && !urls.isEmpty()) {
       showExternalJavadoc(urls, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     }
@@ -126,7 +126,7 @@ public class ExternalJavaDocAction extends AnAction {
       enabled = edProvider.hasDocumentationFor(element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {
-      final List<String> urls = provider.getUrlFor(element, originalElement);
+      final List<String> urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
       enabled = urls != null && !urls.isEmpty();
     }
     if (editor != null) {

@@ -21,10 +21,12 @@ import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +54,13 @@ public class BrowserUtil {
   private static final Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
   private static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
 
+  private static final Condition<String> BROWSABLE_URL = new Condition<String>() {
+    @Override
+    public boolean value(String s) {
+      return canBeBrowsed(s);
+    }
+  };
+
   private BrowserUtil() { }
 
   public static boolean isAbsoluteURL(String url) {
@@ -61,6 +70,12 @@ public class BrowserUtil {
   public static boolean canBeBrowsed(String url) {
     return url != null && !url.startsWith("jar:");
   }
+
+  @Nullable
+  public static List<String> retainBrowsableUrls(@Nullable List<String> urls) {
+    return urls == null ? null : ContainerUtil.filter(urls, BROWSABLE_URL);
+  }
+
 
   public static String getDocURL(String url) {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);

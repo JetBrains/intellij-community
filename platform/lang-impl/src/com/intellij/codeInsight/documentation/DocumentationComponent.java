@@ -28,6 +28,7 @@ import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -39,7 +40,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +55,6 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -698,13 +697,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private static final Condition<String> BROWSABLE_URL = new Condition<String>() {
-    @Override
-    public boolean value(String s) {
-      return BrowserUtil.canBeBrowsed(s);
-    }
-  };
-
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ExternalDocAction() {
       super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
@@ -730,10 +722,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         if (!processed) {
           final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
           final List<String> urls;
-          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl) && BROWSABLE_URL.value(myEffectiveExternalUrl)) {
+          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl) && BrowserUtil.canBeBrowsed(myEffectiveExternalUrl)) {
             urls = Collections.singletonList(myEffectiveExternalUrl);
           } else {
-            urls = getBrowsableUrls(provider.getUrlFor(element, originalElement));
+            urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
             assert urls != null : provider;
             assert !urls.isEmpty() : provider;
           }
@@ -750,14 +742,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         final PsiElement element = myElement.getElement();
         final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
         final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-        List<String> urls = getBrowsableUrls(provider.getUrlFor(element, originalElement));
-        presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
+        if (provider instanceof ExternalDocumentationProvider) {
+          presentation.setEnabled(element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement));
+        }
+        else {
+          List<String> urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
+          presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
+        }
       }
-    }
-    
-    @Nullable
-    private List<String> getBrowsableUrls(@Nullable List<String> urls) {
-      return urls == null ? null : ContainerUtil.filter(urls, BROWSABLE_URL);
     }
   }
 
