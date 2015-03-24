@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
@@ -194,6 +195,22 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         }
       }
       commonRegisterProblem(message, " not support <>, use != instead.", len, node, new ReplaceNotEqOperatorQuickFix());
+    }
+    else if (node.isOperator("@")) {
+      checkMatrixMultiplicationOperator(node.getPsiOperator());
+    }
+  }
+
+  private void checkMatrixMultiplicationOperator(PsiElement node) {
+    boolean problem = false;
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+        problem = true;
+        break;
+      }
+    }
+    if (problem) {
+      registerProblem(node, "Python versions < 3.5 do not support matrix multiplication operators");
     }
   }
 
@@ -539,6 +556,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         return;
       }
       registerProblem(node, "Python versions < 3.0 do not support '...' outside of sequence slicings.");
+    }
+  }
+
+  @Override
+  public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+    super.visitPyAugAssignmentStatement(node);
+    final PsiElement operation = node.getOperation();
+    if (operation != null) {
+      final IElementType operationType = operation.getNode().getElementType();
+      if (PyTokenTypes.ATEQ.equals(operationType)) {
+        checkMatrixMultiplicationOperator(operation);
+      }
     }
   }
 
