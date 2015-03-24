@@ -469,7 +469,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myProvider.appendToolNodeContent(myGlobalInspectionContext, toolNode, parentNode, showStructure);
     InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(toolWrapper);
     toolNode = presentation.createToolNode(myGlobalInspectionContext, toolNode, myProvider, parentNode, showStructure);
-    ((DefaultInspectionToolPresentation)presentation).myToolNode = toolNode;
+    ((DefaultInspectionToolPresentation)presentation).setToolNode(toolNode);
 
     registerActionShortcuts(presentation);
     return toolNode;
