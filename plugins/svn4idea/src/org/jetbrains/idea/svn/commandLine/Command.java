@@ -1,10 +1,12 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -13,6 +15,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,11 +33,16 @@ public class Command {
   @Nullable private LineCommandListener myResultBuilder;
   @Nullable private volatile SVNURL myRepositoryUrl;
   @NotNull private SvnTarget myTarget;
+  @Nullable private Collection<File> myTargets;
 
   @Nullable private ProgressTracker myCanceller;
 
   public Command(@NotNull SvnCommandName name) {
     myName = name;
+  }
+
+  public void put(@Nullable Depth depth) {
+    CommandUtil.put(myParameters, depth, false);
   }
 
   public void put(@NonNls @NotNull String... parameters) {
@@ -92,6 +100,16 @@ public class Command {
     return myTarget;
   }
 
+  @Nullable
+  public List<String> getTargetsPaths() {
+    return ContainerUtil.isEmpty(myTargets) ? null : ContainerUtil.map(myTargets, new Function<File, String>() {
+      @Override
+      public String fun(File file) {
+        return file.getAbsolutePath();
+      }
+    });
+  }
+
   @NotNull
   public SvnCommandName getName() {
     return myName;
@@ -117,6 +135,10 @@ public class Command {
     myTarget = target;
   }
 
+  public void setTargets(@Nullable Collection<File> targets) {
+    myTargets = targets;
+  }
+
   // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
   // TODO: - so we could determine if parameter should be logged by the parameter itself.
   public void saveOriginalParameters() {
@@ -138,6 +160,11 @@ public class Command {
     }
     data.add(myName.getName());
     data.addAll(myOriginalParameters);
+
+    List<String> targetsPaths = getTargetsPaths();
+    if (!ContainerUtil.isEmpty(targetsPaths)) {
+      data.addAll(targetsPaths);
+    }
 
     return StringUtil.join(data, " ");
   }
