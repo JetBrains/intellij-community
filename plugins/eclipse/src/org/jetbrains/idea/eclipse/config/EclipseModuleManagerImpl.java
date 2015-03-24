@@ -16,10 +16,7 @@
 
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
@@ -41,7 +38,7 @@ import java.util.Set;
   name = "EclipseModuleManager",
   storages = @Storage(file = StoragePathMacros.MODULE_FILE)
 )
-public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element> {
+public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
   @NonNls private static final String VALUE_ATTR = "value";
   @NonNls private static final String VARELEMENT = "varelement";
   @NonNls private static final String VAR_ATTRIBUTE = "var";
@@ -180,13 +177,23 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
     return myEclipseUrls.contains(url);
   }
 
+  @NotNull
   @Override
-  public Element getState() {
-    if (isEclipseStorage(myModule) ||
-        myEclipseUrls.isEmpty() && myEclipseVariablePaths.isEmpty() && !myForceConfigureJDK && myUnknownCons.isEmpty()) {
-      return null;
+  public Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
+    if (operation == StateStorageOperation.READ) {
+      return Resolution.DO;
     }
 
+    if (isEclipseStorage(myModule) || (myEclipseUrls.isEmpty() && myEclipseVariablePaths.isEmpty() && !myForceConfigureJDK && myUnknownCons.isEmpty())) {
+      return Resolution.CLEAR;
+    }
+    else {
+      return Resolution.DO;
+    }
+  }
+
+  @Override
+  public Element getState() {
     Element root = new Element("EclipseModuleSettings");
 
     for (String eclipseUrl : myEclipseUrls) {
