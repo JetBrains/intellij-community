@@ -15,9 +15,13 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,14 +80,37 @@ public class VcsUserImpl implements VcsUser {
 
   @NotNull
   private static String getNameInStandardForm(@NotNull String name) {
+    Pair<String, String> firstAndLastName = getFirstAndLastName(name);
+    if (firstAndLastName != null) {
+      return firstAndLastName.first.toLowerCase() + " " + firstAndLastName.second.toLowerCase();
+    }
+    return name.toLowerCase();
+  }
+
+  @Nullable
+  private static Pair<String, String> getFirstAndLastName(@NotNull String name) {
     Matcher nameWithDotMatcher = NAME_WITH_DOT.matcher(name);
     if (nameWithDotMatcher.matches()) {
-      return nameWithDotMatcher.group(1).toLowerCase() + " " + nameWithDotMatcher.group(2).toLowerCase();
+      return Pair.create(nameWithDotMatcher.group(1), nameWithDotMatcher.group(2));
     }
     Matcher nameWithSpaceMatcher = NAME_WITH_SPACE.matcher(name);
     if (nameWithSpaceMatcher.matches()) {
-      return nameWithSpaceMatcher.group(1).toLowerCase() + " " + nameWithSpaceMatcher.group(2).toLowerCase();
+      return Pair.create(nameWithSpaceMatcher.group(1), nameWithSpaceMatcher.group(2));
     }
-    return name.toLowerCase();
+    return null;
+  }
+
+  @NotNull
+  public static Set<String> getVariants(@NotNull String name) {
+    Set<String> result = ContainerUtil.newHashSet(name);
+
+    Pair<String, String> firstAndLastName = getFirstAndLastName(name);
+    if (firstAndLastName != null) {
+      result.add(firstAndLastName.first + " " + firstAndLastName.second);
+      result.add(firstAndLastName.first + "." + firstAndLastName.second);
+      result.add(firstAndLastName.first + firstAndLastName.second);
+    }
+
+    return result;
   }
 }

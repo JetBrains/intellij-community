@@ -19,11 +19,13 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
@@ -201,9 +203,19 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getUserFilter() != null) {
-      for (String authorName : filterCollection.getUserFilter().getUserNames(root)) {
-        filterParameters.add(HgHistoryUtil.prepareParameter("user", authorName));
-      }
+      filterParameters.add("-r");
+      String authorFilter =
+        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return "^" +
+                   s +
+                   "( <.*>)?$|^<" +
+                   s +
+                   "@.*>$"; // either exact user name with any email or no name with exact email (on any domain)
+          }
+        }), "|");
+      filterParameters.add("user('re:" + authorFilter + "')");
     }
 
     if (filterCollection.getDateFilter() != null) {
