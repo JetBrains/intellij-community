@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,6 +56,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
   private final PyModuleMemberInfoModel myModuleMemberModel;
+  private final boolean mySeveralElementsSelected;
   private JPanel myCenterPanel;
   private JPanel myTablePanel;
   private TextFieldWithBrowseButton myBrowseFieldWithButton;
@@ -91,7 +93,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
    * @param elements elements to move
    * @param destination destination where elements have to be moved
    */
-  protected PyMoveModuleMembersDialog(@NotNull Project project, @NotNull List<PsiNamedElement> elements, @Nullable String destination) {
+  protected PyMoveModuleMembersDialog(@NotNull Project project, @NotNull final List<PsiNamedElement> elements, @Nullable String destination) {
     super(project, true);
 
     assert !elements.isEmpty();
@@ -130,8 +132,8 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
-    final boolean tableIsVisible = PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
+    mySeveralElementsSelected = elements.size() > 1;
+    final boolean tableIsVisible = mySeveralElementsSelected || PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
     final String description;
     if (!tableIsVisible && elements.size() == 1) {
       if (firstElement instanceof PyFunction) {
@@ -174,10 +176,22 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     UiNotifyConnector.doWhenFirstShown(myCenterPanel, new Runnable() {
       @Override
       public void run() {
+        enlargeDialogHeightIfNecessary();
         preselectLastPathComponent(myBrowseFieldWithButton.getTextField());
       }
     });
     init();
+  }
+
+  private void enlargeDialogHeightIfNecessary() {
+    if (mySeveralElementsSelected && !PropertiesComponent.getInstance(getProject()).getBoolean(BULK_MOVE_TABLE_VISIBLE, false)) {
+      final DialogWrapperPeer peer = getPeer();
+      final Dimension realSize = peer.getSize();
+      final double preferredHeight = peer.getPreferredSize().getHeight();
+      if (realSize.getHeight() < preferredHeight) {
+        peer.setSize((int)realSize.getWidth(), (int)preferredHeight);
+      }
+    }
   }
 
   private static void preselectLastPathComponent(@NotNull JTextField field) {
