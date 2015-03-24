@@ -58,7 +58,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   @NotNull
   @Override
-  public CommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String message) throws VcsException {
+  public CommitInfo[] commit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
     // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
     // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
     // there at least some child-parent relationships in passed paths
@@ -102,7 +102,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return revision;
   }
 
-  private Collection<File> filterCommittables(@NotNull Collection<File> committables) throws SvnBindException {
+  private List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
     final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
     new AbstractFilterChildren<File>() {
       @Override
