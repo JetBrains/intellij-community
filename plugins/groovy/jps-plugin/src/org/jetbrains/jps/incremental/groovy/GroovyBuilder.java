@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -485,7 +486,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final Set<String> cp = new LinkedHashSet<String>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
-    cp.add(getGroovyRtRoot().getPath());
+    cp.addAll(getGroovyRtRoots());
 
     for (File file : ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
@@ -498,12 +499,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return cp;
   }
 
-  static File getGroovyRtRoot() {
-    File root = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
-    if (root.isFile()) {
-      return new File(root.getParentFile(), "groovy_rt.jar");
-    }
-    return new File(root.getParentFile(), "groovy_rt");
+  static List<String> getGroovyRtRoots() {
+    File rt = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
+    File constants = ClasspathBootstrap.getResourceFile(GroovyRtConstants.class);
+    return Arrays.asList(new File(rt.getParentFile(), rt.isFile() ? "groovy_rt.jar" : "groovy_rt").getPath(), 
+                         new File(constants.getParentFile(), constants.isFile() ? "groovy-rt-constants.jar" : "groovy-rt-constants").getPath());
   }
 
   public static boolean isGroovyFile(String path) {
