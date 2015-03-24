@@ -134,7 +134,7 @@ public class ResponseUtil {
         if (LOG.isDebugEnabled()) {
           String content = getResponseContentAsString(response);
           TaskUtil.prettyFormatJsonToLog(LOG, content);
-            return myGson.fromJson(content, myClass);
+          return myGson.fromJson(content, myClass);
         }
         else {
           return myGson.fromJson(getResponseContentAsReader(response), myClass);
@@ -143,10 +143,6 @@ public class ResponseUtil {
       catch (JsonSyntaxException e) {
         LOG.warn("Malformed server response", e);
         return null;
-      }
-      catch (NumberFormatException e) {
-        LOG.error("NFE in response: " + getResponseContentAsString(response), e);
-        throw new RequestFailedException("Malformed response");
       }
     }
   }
