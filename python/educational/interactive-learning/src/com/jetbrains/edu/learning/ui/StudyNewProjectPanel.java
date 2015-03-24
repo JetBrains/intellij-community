@@ -34,7 +34,7 @@ public class StudyNewProjectPanel{
 
   public StudyNewProjectPanel(StudyProjectGenerator generator) {
     myGenerator = generator;
-    myAvailableCourses = myGenerator.getCourses();
+    myAvailableCourses = myGenerator.getCourses(false);
     if (myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
@@ -92,7 +92,7 @@ public class StudyNewProjectPanel{
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      final List<CourseInfo> courses = myGenerator.getCourses();
+      final List<CourseInfo> courses = myGenerator.getCourses(true);
       if (courses.isEmpty()) {
         setError(CONNECTION_ERROR);
         return;

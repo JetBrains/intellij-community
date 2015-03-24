@@ -228,12 +228,12 @@ public class StudyProjectGenerator {
     }
   }
 
-  public List<CourseInfo> getCourses() {
-    if (!myCourses.isEmpty()) {
+  public List<CourseInfo> getCourses(boolean force) {
+    if (force || myCourses.isEmpty()) {
+      myCourses = EduStepicConnector.getCourses();
       return myCourses;
     }
     else {
-      myCourses = EduStepicConnector.getCourses();
       return myCourses;
     }
   }
