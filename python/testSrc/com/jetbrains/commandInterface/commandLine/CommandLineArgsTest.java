@@ -69,6 +69,6 @@ public final class CommandLineArgsTest extends PyTestCase {
     final Pair<Boolean, Argument> arg = validationResult.getNextArg();
     Assert.assertNotNull("No argument returned, but should", arg);
     Assert.assertTrue("Required argument is not marked as required", arg.first);
-    Assert.assertEquals("Wrong argument text", expectedArgumentText, arg.second.getHelpText());
+    Assert.assertEquals("Wrong argument text", expectedArgumentText, arg.second.getHelp().getHelpString());
   }
 }

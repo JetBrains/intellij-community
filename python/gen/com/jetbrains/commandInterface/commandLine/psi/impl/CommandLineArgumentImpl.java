@@ -11,6 +11,7 @@ import static com.jetbrains.commandInterface.commandLine.CommandLineElementTypes
 import com.jetbrains.commandInterface.commandLine.CommandLineElement;
 import com.jetbrains.commandInterface.commandLine.psi.*;
 import com.jetbrains.commandInterface.command.Argument;
+import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
 
 public class CommandLineArgumentImpl extends CommandLineElement implements CommandLineArgument {
@@ -47,8 +48,8 @@ public class CommandLineArgumentImpl extends CommandLineElement implements Comma
   }
 
   @Nullable
-  public String findBestHelpText() {
-    return CommandLinePsiImplUtils.findBestHelpText(this);
+  public Help findBestHelp() {
+    return CommandLinePsiImplUtils.findBestHelp(this);
   }
 
 }

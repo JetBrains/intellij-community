@@ -39,10 +39,10 @@ public interface Command {
    * @param tryCutOutArguments Try to remove information about arguments from help text (i.e. "[file] removes file" -> "removes file").
    *                           Command may or may not support it.
    *                           It should ignore argument if it does not know how to cut out argument info.
-   * @return Command readable help text
+   * @return Command help
    */
   @Nullable
-  String getHelp(boolean tryCutOutArguments);
+  Help getHelp(boolean tryCutOutArguments);
 
 
   /**

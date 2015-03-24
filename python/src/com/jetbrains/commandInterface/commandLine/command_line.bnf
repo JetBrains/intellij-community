@@ -41,6 +41,6 @@ methods=[ getOptionName isLong findRealOption ]
 private short_option_name ::= SHORT_OPTION_NAME_TOKEN
 private long_option_name ::= LONG_OPTION_NAME_TOKEN
 argument ::= LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT {
-methods=[ findOptionForOptionArgument findRealArgument findBestHelpText ]
+methods=[ findOptionForOptionArgument findRealArgument findBestHelp ]
 }
 

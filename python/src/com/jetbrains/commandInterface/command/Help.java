@@ -15,34 +15,49 @@
  */
 package com.jetbrains.commandInterface.command;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * For many commands we know nothing about arguments but their help text.
- * This strategy is for this case
+ * Covers element help: text and external url (if exists)
  *
  * @author Ilya.Kazakevich
  */
-public final class UnknownArgumentsInfo implements ArgumentsInfo {
-  /**
-   * Argument help text
-   */
+public final class Help {
   @NotNull
-  private final Help myHelp;
+  private final String myHelpString;
+  @Nullable
+  private final String myExternalHelpUrl;
 
   /**
-   * @param allArgumentsHelpText argument help text
+   * @param helpString help text (no external url provided)
    */
-  public UnknownArgumentsInfo(@NotNull final Help allArgumentsHelpText) {
-    myHelp = allArgumentsHelpText;
+  public Help(@NotNull final String helpString) {
+    this(helpString, null);
   }
 
+  /**
+   * @param helpString      help text
+   * @param externalHelpUrl external help url (if any)
+   */
+  public Help(@NotNull final String helpString, @Nullable final String externalHelpUrl) {
+    myHelpString = helpString;
+    myExternalHelpUrl = externalHelpUrl;
+  }
 
+  /**
+   * @return help text
+   */
+  @NotNull
+  public String getHelpString() {
+    return myHelpString;
+  }
+
+  /**
+   * @return external help url (if any)
+   */
   @Nullable
-  @Override
-  public Pair<Boolean, Argument> getArgument(final int argumentPosition) {
-    return Pair.create(false, new Argument(myHelp));
+  public String getExternalHelpUrl() {
+    return myExternalHelpUrl;
   }
 }

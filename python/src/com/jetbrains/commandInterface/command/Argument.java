@@ -35,7 +35,7 @@ public final class Argument {
    * Argument help user-readable text
    */
   @NotNull
-  private final String myHelpText;
+  private final Help myHelpText;
   /**
    * List of values argument may have. Null if any value is possible.
    */
@@ -48,7 +48,7 @@ public final class Argument {
   /**
    * @param helpText Argument help user-readable text
    */
-  public Argument(@NotNull final String helpText) {
+  public Argument(@NotNull final Help helpText) {
     this(helpText, null, null);
   }
 
@@ -56,14 +56,14 @@ public final class Argument {
    * @param type Argument value type. Null if any type is possible.
    */
   public Argument(@NotNull final ArgumentType type) {
-    this("", type);
+    this(new Help(""), type);
   }
 
   /**
    * @param helpText Argument help user-readable text
    * @param type     Argument value type. Null if any type is possible.
    */
-  public Argument(@NotNull final String helpText,
+  public Argument(@NotNull final Help helpText,
                   @Nullable final ArgumentType type) {
     this(helpText, null, type);
   }
@@ -72,14 +72,14 @@ public final class Argument {
    * @param availableValues List of values argument may have. Null if any value is possible.
    */
   public Argument(@Nullable final List<String> availableValues) {
-    this("", availableValues, null);
+    this(new Help(""), availableValues, null);
   }
 
   /**
    * @param helpText        Argument help user-readable text
    * @param availableValues List of values argument may have. Null if any value is possible.
    */
-  public Argument(@NotNull final String helpText, @Nullable final List<String> availableValues) {
+  public Argument(@NotNull final Help helpText, @Nullable final List<String> availableValues) {
     this(helpText, availableValues, null);
   }
 
@@ -89,7 +89,7 @@ public final class Argument {
    * @param availableValues List of values argument may have. Null if any value is possible.
    * @param type            Argument value type. Null if any type is possible.
    */
-  public Argument(@NotNull final String helpText,
+  public Argument(@NotNull final Help helpText,
                   @Nullable final List<String> availableValues,
                   @Nullable final ArgumentType type) {
     myHelpText = helpText;
@@ -101,7 +101,7 @@ public final class Argument {
    * @return Argument help user-readable text
    */
   @NotNull
-  public String getHelpText() {
+  public Help getHelp() {
     return myHelpText;
   }
 

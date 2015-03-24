@@ -166,7 +166,7 @@ final class ArgumentHintLayer extends JPanel implements Listener {
     final int x = (myPromptWidthPx + (myCharWidthPx * myDocumentLengthInChars)) + spaceToRight;
 
     final boolean required = nextArg.first;
-    final String argumentText = nextArg.second.getHelpText();
+    final String argumentText = nextArg.second.getHelp().getHelpString();
 
 
     g.setColor(required ? myRequiredColor : myOptionalColor);

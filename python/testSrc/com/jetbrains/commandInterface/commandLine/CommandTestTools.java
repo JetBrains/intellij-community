@@ -53,17 +53,17 @@ final class CommandTestTools {
     //command positional_argument --available-option=available_argument
     final Command command = EasyMock.createMock(Command.class);
     EasyMock.expect(command.getName()).andReturn("command").anyTimes();
-    EasyMock.expect(command.getHelp(true)).andReturn("some_text").anyTimes();
-    EasyMock.expect(command.getHelp(false)).andReturn("some_text").anyTimes();
+    EasyMock.expect(command.getHelp(true)).andReturn(new Help("some_text")).anyTimes();
+    EasyMock.expect(command.getHelp(false)).andReturn(new Help("some_text")).anyTimes();
     final List<Option> options = new ArrayList<Option>();
 
 
-    options.add(new Option(Pair.create(1, new Argument("option argument", Collections.singletonList("available_argument"))), "",
-                           Collections.<String>emptyList(),
-                           Collections.singletonList("--available-option")));
+    options.add(new Option(Pair.create(1, new Argument(new Help("option argument"), Collections.singletonList("available_argument"))), new Help(""),
+                                       Collections.<String>emptyList(),
+                                       Collections.singletonList("--available-option")));
 
 
-    options.add(new Option(null, "",
+    options.add(new Option(null, new Help(""),
                            Collections.<String>emptyList(),
                            Collections.singletonList("--option-no-argument")));
 
@@ -71,7 +71,7 @@ final class CommandTestTools {
 
 
     final ArgumentsInfo argumentInfo = new KnownArgumentsInfo(Collections.singletonList(
-      new Argument("positional_argument",
+      new Argument(new Help("positional_argument"),
                    Collections.singletonList("positional_argument"))), 1, 1);
 
     EasyMock.expect(command.getArgumentsInfo()).andReturn(argumentInfo)
