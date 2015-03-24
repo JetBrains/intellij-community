@@ -213,7 +213,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         return language;
       }
     };
+
+    // Since we're already inside a template language PSI that was built regardless of the file size (for whatever reason), 
+    // there should also be no file size checks for template data files.
     SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
+
     return viewProvider.getPsi(language);
   }
 
