@@ -26,7 +26,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,6 +160,7 @@ public class CommandExecutor {
     EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
     setupLocale();
     ensureMessageFile();
+    ensureTargetsAdded();
   }
 
   private void setupLocale() {
@@ -194,6 +197,21 @@ public class CommandExecutor {
       ensureCommandFile("commit-message", ".txt", myMessage, "-F");
 
       myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
+    }
+  }
+
+  private void ensureTargetsAdded() throws SvnBindException {
+    List<String> targetsPaths = myCommand.getTargetsPaths();
+
+    if (!ContainerUtil.isEmpty(targetsPaths)) {
+      String targetsValue = StringUtil.join(targetsPaths, SystemProperties.getLineSeparator());
+
+      if (myCommandLine.getCommandLineString().length() + targetsValue.length() > VcsFileUtil.FILE_PATH_LIMIT) {
+        ensureCommandFile("command-targets", ".txt", targetsValue, "--targets");
+      }
+      else {
+        myCommandLine.addParameters(targetsPaths);
+      }
     }
   }
 

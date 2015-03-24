@@ -29,17 +29,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -73,19 +69,18 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
   private CommitInfo[] runCommit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
     if (ContainerUtil.isEmpty(paths)) return new CommitInfo[]{CommitInfo.EMPTY};
 
-    final List<String> parameters = new ArrayList<String>();
+    Command command = newCommand(SvnCommandName.ci);
 
-    CommandUtil.put(parameters, Depth.EMPTY);
-    parameters.add("-m");
-    parameters.add(message);
+    command.put(Depth.EMPTY);
+    command.put("-m", message);
     // TODO: seems that sort is not necessary here
     ContainerUtil.sort(paths);
-    CommandUtil.put(parameters, paths);
+    command.setTargets(paths);
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
     CmdCheckinClient.CommandListener listener = new CommandListener(handler);
     listener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths.get(0)));
-    execute(myVcs, SvnTarget.fromFile(paths.get(0)), SvnCommandName.ci, parameters, listener);
+    execute(myVcs, SvnTarget.fromFile(paths.get(0)), null, command, listener);
     listener.throwExceptionIfOccurred();
 
     long revision = validateRevisionNumber(listener.getCommittedRevision());

@@ -99,14 +99,29 @@ public abstract class BaseSvnClient implements SvnClient {
                                  @NotNull SvnCommandName name,
                                  @NotNull List<String> parameters,
                                  @Nullable LineCommandListener listener) throws SvnBindException {
-    Command command = new Command(name);
+    Command command = newCommand(name);
 
+    command.put(parameters);
+
+    return execute(vcs, target, workingDirectory, command, listener);
+  }
+
+  @NotNull
+  public CommandExecutor execute(@NotNull SvnVcs vcs,
+                                 @NotNull SvnTarget target,
+                                 @Nullable File workingDirectory,
+                                 @NotNull Command command,
+                                 @Nullable LineCommandListener listener) throws SvnBindException {
     command.setTarget(target);
     command.setWorkingDirectory(workingDirectory);
     command.setResultBuilder(listener);
-    command.put(parameters);
 
     return newRuntime(vcs).runWithAuthenticationAttempt(command);
+  }
+
+  @NotNull
+  public Command newCommand(@NotNull SvnCommandName name) {
+    return new Command(name);
   }
 
   @NotNull
