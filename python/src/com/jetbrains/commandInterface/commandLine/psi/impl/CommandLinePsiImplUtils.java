@@ -17,6 +17,7 @@ package com.jetbrains.commandInterface.commandLine.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Argument;
+import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
 import com.jetbrains.commandInterface.commandLine.CommandLinePart;
 import com.jetbrains.commandInterface.commandLine.ValidationResult;
@@ -66,20 +67,20 @@ final class CommandLinePsiImplUtils {
 
 
   /**
-   * Tries to find appropriate help text for argument. It can be argument help string for positional argument or option help
+   * Tries to find appropriate help for argument. It can be argument help for positional argument or option help
    * for option argument.
    *
    * @param argument argument to search help for
-   * @return help string for argument or null if not found
+   * @return help for argument or null if not found
    */
   @Nullable
-  static String findBestHelpText(@NotNull final CommandLineArgument argument) {
+  static Help findBestHelp(@NotNull final CommandLineArgument argument) {
     final Option option = argument.findOptionForOptionArgument();
     if (option != null) {
       return option.getHelp();
     }
     final Argument realArgument = argument.findRealArgument();
-    return (realArgument != null ? realArgument.getHelpText() : null);
+    return (realArgument != null ? realArgument.getHelp() : null);
   }
 
 

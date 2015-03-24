@@ -6,6 +6,7 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.commandLine.CommandLinePart;
 import com.jetbrains.commandInterface.command.Argument;
+import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
 
 public interface CommandLineArgument extends CommandLinePart {
@@ -23,6 +24,6 @@ public interface CommandLineArgument extends CommandLinePart {
   Argument findRealArgument();
 
   @Nullable
-  String findBestHelpText();
+  Help findBestHelp();
 
 }

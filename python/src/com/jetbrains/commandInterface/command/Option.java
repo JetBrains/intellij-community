@@ -39,7 +39,7 @@ public final class Option {
   @Nullable
   private final Pair<Integer, Argument> myArgumentAndQuantity;
   @NotNull
-  private final String myHelp;
+  private final Help myHelp;
 
   /**
    * @param argumentAndQuantity if option accepts argument, there should be pair of [argument_quantity, its_type_info]
@@ -48,7 +48,7 @@ public final class Option {
    * @param longNames           option long names
    */
   public Option(@Nullable final Pair<Integer, Argument> argumentAndQuantity,
-                @NotNull final String help,
+                @NotNull final Help help,
                 @NotNull final Collection<String> shortNames,
                 @NotNull final Collection<String> longNames) {
     Preconditions
@@ -99,7 +99,7 @@ public final class Option {
    * @return Option help
    */
   @NotNull
-  public String getHelp() {
+  public Help getHelp() {
     return myHelp;
   }
 }

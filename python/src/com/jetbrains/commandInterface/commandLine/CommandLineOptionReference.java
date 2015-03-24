@@ -55,7 +55,7 @@ public final class CommandLineOptionReference extends CommandLineElementReferenc
       // Suggest long options for -- and short for -
       final List<String> names = getElement().isLong() ? option.getLongNames() : option.getShortNames();
       for (final String optionName : names) {
-        builder.addElement(LookupElementBuilder.create(optionName), option.getHelp());
+        builder.addElement(LookupElementBuilder.create(optionName), option.getHelp().getHelpString());
       }
     }
 
