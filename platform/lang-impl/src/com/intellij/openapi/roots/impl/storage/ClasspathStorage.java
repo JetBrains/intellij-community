@@ -115,6 +115,8 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
       ModifiableRootModel model = null;
       try {
         model = ((ModuleRootManagerImpl)component).getModifiableModel();
+        // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
+        model.clear();
         myConverter.readClasspath(model);
         ((RootModelImpl)model).writeExternal(element);
       }
