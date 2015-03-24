@@ -275,6 +275,7 @@ public class XDebugSessionImpl implements XDebugSession {
       @Override
       public void processTerminated(final ProcessEvent event) {
         stopImpl();
+        myDebugProcess.getProcessHandler().removeProcessListener(this);
       }
     });
     //todo[nik] make 'createConsole()' method return ConsoleView
