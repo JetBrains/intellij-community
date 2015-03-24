@@ -31,7 +31,7 @@ class Signature(object):
 class SignatureFactory(object):
     def __init__(self):
         self._caller_cache = {}
-        self.project_roots =  os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
+        self.project_roots =  os.getenv('IDE_PROJECT_ROOTS', '').split(os.pathsep)
 
     def is_in_scope(self, filename):
         filename = os.path.normcase(filename)
