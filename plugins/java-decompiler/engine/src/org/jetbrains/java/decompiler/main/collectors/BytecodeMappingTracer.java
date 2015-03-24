@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,12 @@ public class BytecodeMappingTracer {
     this.lineNumberTable = lineNumberTable;
   }
 
+  private final Set<Integer> unmappedLines = new HashSet<Integer>();
+
+  public Set<Integer> getUnmappedLines() {
+    return unmappedLines;
+  }
+
   public Map<Integer, Integer> getOriginalLinesMapping() {
     if (lineNumberTable == null) {
       return Collections.emptyMap();
@@ -103,11 +109,15 @@ public class BytecodeMappingTracer {
       if (newLine != null) {
         res.put(originalLine, newLine);
       }
+      else {
+        unmappedLines.add(originalLine);
+      }
     }
     for (Entry<Integer, Integer> entry : mapping.entrySet()) {
       int originalLine = lineNumberTable.findLineNumber(entry.getKey());
       if (originalLine > -1) {
         res.put(originalLine, entry.getValue());
+        unmappedLines.remove(originalLine);
       }
     }
     return res;

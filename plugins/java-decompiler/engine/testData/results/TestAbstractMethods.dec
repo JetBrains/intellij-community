@@ -11,7 +11,7 @@ public abstract class TestAbstractMethods {
 
    public void test2(String var1) {
       System.out.println(var1);// 17
-   }
+   }// 18
 }
 
 class 'pkg/TestAbstractMethods' {
@@ -22,9 +22,11 @@ class 'pkg/TestAbstractMethods' {
    method 'test2 (Ljava/lang/String;)V' {
       0      12
       4      12
+      7      13
    }
 }
 
 Lines mapping:
 11 <-> 7
 17 <-> 13
+18 <-> 14

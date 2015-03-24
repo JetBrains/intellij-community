@@ -11,7 +11,7 @@ public class TestClassCast {
       }
 
       System.out.println(((List)var2).size());// 26
-   }
+   }// 27
 }
 
 class 'pkg/TestClassCast' {
@@ -24,6 +24,7 @@ class 'pkg/TestClassCast' {
       18      12
       1c      12
       21      12
+      24      13
    }
 }
 
@@ -32,3 +33,4 @@ Lines mapping:
 23 <-> 9
 24 <-> 10
 26 <-> 13
+27 <-> 14
