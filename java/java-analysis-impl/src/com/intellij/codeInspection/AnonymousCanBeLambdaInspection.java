@@ -541,9 +541,16 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             final PsiType paramType = superMethod.getParameterList().getParameters()[parameterIndex].getType();
             final PsiClass superClass = superMethod.getContainingClass();
             if (superClass != null) {
-              final PsiSubstitutor inferredSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, (PsiClassType)myInferredType);
+              final PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)myInferredType).resolveGenerics();
+              final PsiClass classCandidate = classResolveResult.getElement();
+              if (classCandidate == null) {
+                myBodyContainsForbiddenRefs = true;
+                return;
+              }
+              final PsiSubstitutor inferredSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, classCandidate, classResolveResult.getSubstitutor());
               final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, myAnonymClass.getBaseClassType());
-              if (!Comparing.equal(inferredSubstitutor.substitute(paramType), substitutor.substitute(paramType))) {
+              if (inferredSubstitutor == null ||
+                  !Comparing.equal(inferredSubstitutor.substitute(paramType), substitutor.substitute(paramType))) {
                 myBodyContainsForbiddenRefs = true;
                 return;
               }
