@@ -23,7 +23,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractFilterChildren;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,10 @@ import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,29 +66,26 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     // there at least some child-parent relationships in passed paths
     paths = filterCommittables(paths);
 
-    return commit(ArrayUtil.toObjectArray(paths, File.class), message);
+    return runCommit(paths, message);
   }
 
   @NotNull
-  public CommitInfo[] commit(@NotNull File[] paths, @NotNull String message) throws VcsException {
-    if (paths.length == 0) return new CommitInfo[]{CommitInfo.EMPTY};
+  private CommitInfo[] runCommit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
+    if (ContainerUtil.isEmpty(paths)) return new CommitInfo[]{CommitInfo.EMPTY};
 
     final List<String> parameters = new ArrayList<String>();
-    CommandUtil.put(parameters, Depth.EMPTY);
-    CommandUtil.put(parameters, false, "--no-unlock");
-    CommandUtil.put(parameters, false, "--keep-changelists");
-    CommandUtil.putChangeLists(parameters, null);
 
+    CommandUtil.put(parameters, Depth.EMPTY);
     parameters.add("-m");
     parameters.add(message);
     // TODO: seems that sort is not necessary here
-    Arrays.sort(paths);
+    ContainerUtil.sort(paths);
     CommandUtil.put(parameters, paths);
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
     CmdCheckinClient.CommandListener listener = new CommandListener(handler);
-    listener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths[0]));
-    execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, listener);
+    listener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths.get(0)));
+    execute(myVcs, SvnTarget.fromFile(paths.get(0)), SvnCommandName.ci, parameters, listener);
     listener.throwExceptionIfOccurred();
 
     long revision = validateRevisionNumber(listener.getCommittedRevision());
@@ -102,6 +101,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return revision;
   }
 
+  @NotNull
   private List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
     final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
     new AbstractFilterChildren<File>() {
