@@ -94,7 +94,6 @@ public abstract class AbstractEclipseClasspathReader<T> {
       throw new ConversionException("Missing classpathentry/@kind");
     }
 
-
     String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
     if (path == null) {
       //noinspection SpellCheckingInspection
@@ -136,7 +135,6 @@ public abstract class AbstractEclipseClasspathReader<T> {
         }
       }
     }
-
     else if (kind.equals(EclipseXml.OUTPUT_KIND)) {
       String output = myRootPath + "/" + path;
       String linked = expandLinkedResourcesPath(macroMap, path);
@@ -148,10 +146,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       }
       setupOutput(rootModel, output);
     }
-
     else if (kind.equals(EclipseXml.LIB_KIND)) {
-      final String libName = getPresentableName(path, libs);
-
       String linked = expandLinkedResourcesPath(macroMap, path);
       String url;
       if (linked != null) {
@@ -183,7 +178,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
         }
       }
 
-      addModuleLibrary(rootModel, element, exported, libName, url, srcUrl, macroMap);
+      addModuleLibrary(rootModel, element, exported, getPresentableName(path, libs), url, srcUrl, macroMap);
     }
     else if (kind.equals(EclipseXml.VAR_KIND)) {
       int slash = path.indexOf("/");
