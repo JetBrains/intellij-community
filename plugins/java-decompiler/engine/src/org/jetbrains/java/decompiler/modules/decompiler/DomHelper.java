@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,7 @@ public class DomHelper {
     // head statement
     Statement firstst = stats.getWithKey(firstblock.id);
     // dummy exit statement
-    Statement dummyexit = new Statement();
-    dummyexit.type = Statement.TYPE_DUMMYEXIT;
+    DummyExitStatement dummyexit = new DummyExitStatement();
 
     Statement general;
     if (stats.size() > 1 || firstblock.isSuccessor(firstblock)) { // multiple basic blocks or an infinite loop of one block
