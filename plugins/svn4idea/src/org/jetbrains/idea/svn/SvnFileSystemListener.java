@@ -535,7 +535,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     return new RepeatSvnActionThroughBusy() {
       @Override
       protected void executeImpl() throws VcsException {
-        vcs.getFactory(file).createRevertClient().revert(new File[]{file}, Depth.allOrFiles(recursive), null);
+        vcs.getFactory(file).createRevertClient().revert(Collections.singletonList(file), Depth.allOrFiles(recursive), null);
       }
     };
   }

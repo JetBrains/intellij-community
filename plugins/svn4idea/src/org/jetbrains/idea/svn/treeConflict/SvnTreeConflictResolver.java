@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -148,7 +149,7 @@ public class SvnTreeConflictResolver {
   }
 
   private void revert(@NotNull File file) throws VcsException {
-    myVcs.getFactory(file).createRevertClient().revert(new File[]{file}, Depth.INFINITY, null);
+    myVcs.getFactory(file).createRevertClient().revert(Collections.singletonList(file), Depth.INFINITY, null);
   }
 
   private void updateFile(@NotNull File file, @NotNull SVNRevision revision) throws SvnBindException {
