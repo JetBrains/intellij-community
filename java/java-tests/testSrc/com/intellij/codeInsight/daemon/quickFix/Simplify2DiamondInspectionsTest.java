@@ -17,18 +17,43 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 
 //todo test3 should be checked if it compiles - as now javac infers Object instead of String?!
 public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedTestCase {
+
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new ExplicitTypeCanBeDiamondInspection(),
     };
+  }
+
+  private boolean myAlignment;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CommonCodeStyleSettings settings = getSettings();
+    myAlignment = settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS;
+    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignment;
+    super.tearDown();
+  }
+
+  private CommonCodeStyleSettings getSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   public void test() throws Exception { doAllTests(); }
