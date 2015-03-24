@@ -288,6 +288,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
   }
 
+  public void testPreferReturnBeforeExpression() {
+    checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
+  }
+
   public void testPreferModifiers() {
     checkPreferredItems(0, "private", "protected", "public", "paaa", "paab");
   }
