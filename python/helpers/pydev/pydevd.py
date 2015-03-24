@@ -380,13 +380,13 @@ class PyDB:
         return self.plugin
 
     def get_project_roots(self):
-        roots = os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
-        pydev_log.debug("PYCHARM_PROJECT_ROOTS %s\n" % roots)
-        return roots
+        if self.project_roots is None:
+            roots = os.getenv('IDE_PROJECT_ROOTS', '').split(os.pathsep)
+            pydev_log.debug("IDE_PROJECT_ROOTS %s\n" % roots)
+            self.project_roots = roots
 
     def not_in_scope(self, filename):
-        if self.project_roots is None:
-            return False
+        self.get_project_roots()
         filename = os.path.normcase(filename)
         for root in self.project_roots:
             root = os.path.normcase(root)
@@ -1140,9 +1140,6 @@ class PyDB:
                     else:
                         exception, notify_always, notify_on_terminate, ignore_libraries = text, 0, 0, 0
 
-                    if int(ignore_libraries) > 0 and self.project_roots is None:
-                        self.project_roots = self.get_project_roots()
-
                     if exception.find('-') != -1:
                         type, exception = exception.split('-')
                     else:
@@ -1545,8 +1542,6 @@ class PyDB:
             #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
             if is_file_to_ignore:
                 if DONT_TRACE[base] == LIB_FILE:
-                    if self.project_roots is None:
-                        self.project_roots = self.get_project_roots()
                     if self.not_in_scope(filename):
                         return None
                 else:

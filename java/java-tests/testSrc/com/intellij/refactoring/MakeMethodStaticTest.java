@@ -203,6 +203,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     doTest(true);
   }
 
+  public void testThisMethodReference() throws Exception {
+    doTest(false);
+  }
+
   public void testPreserveParametersAlignment() throws Exception {
     doTest();
   }

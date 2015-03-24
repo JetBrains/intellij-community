@@ -15,8 +15,12 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -67,5 +71,38 @@ public abstract class AutoTestCase extends UsefulTestCase {
       System.err.println("Can't get random seed: " + e.getMessage());
       return -1;
     }
+  }
+
+  @NotNull
+  public static String textToReadableFormat(@Nullable Document text) {
+    if (text == null) return "null";
+    return "'" + text.getCharsSequence().toString().replace('\n', '*').replace('\t', '+') + "'";
+  }
+
+  public static void assertEqualsCharSequences(@NotNull CharSequence chunk1, @NotNull CharSequence chunk2,
+                                               boolean ignoreSpaces, boolean skipLastNewline) {
+    if (ignoreSpaces) {
+      assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2));
+    }
+    else {
+      if (skipLastNewline) {
+        CharSequence chunk12 = StringUtil.endsWithChar(chunk1, '\n') ? trimLastChar(chunk1) : null;
+        CharSequence chunk22 = StringUtil.endsWithChar(chunk2, '\n') ? trimLastChar(chunk2) : null;
+
+        if (StringUtil.equals(chunk1, chunk2)) return;
+        if (StringUtil.equals(chunk12, chunk2)) return;
+        if (StringUtil.equals(chunk1, chunk22)) return;
+
+        assertTrue(false);
+      }
+      else {
+        assertTrue(StringUtil.equals(chunk1, chunk2));
+      }
+    }
+  }
+
+  @NotNull
+  private static CharSequence trimLastChar(@NotNull CharSequence text) {
+    return new CharSequenceSubSequence(text, 0, text.length() - 1);
   }
 }

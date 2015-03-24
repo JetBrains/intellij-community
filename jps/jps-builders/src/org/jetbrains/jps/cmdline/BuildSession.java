@@ -33,6 +33,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
@@ -567,14 +568,13 @@ final class BuildSession implements Runnable, CanceledStatus {
     return event.getChangedPathsCount() != 0 || event.getDeletedPathsCount() != 0;
   }
 
-  private void finishBuild(Throwable error, boolean hadBuildErrors, boolean doneSomething) {
+  private void finishBuild(final Throwable error, boolean hadBuildErrors, boolean doneSomething) {
     CmdlineRemoteProto.Message lastMessage = null;
     try {
       if (error instanceof CannotLoadJpsModelException) {
         String text = "Failed to load project configuration: " + StringUtil.decapitalize(error.getMessage());
         String path = ((CannotLoadJpsModelException)error).getFile().getAbsolutePath();
-        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path,
-                                                                                                    -1, -1, -1, -1, -1, -1.0f));
+        lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path, -1, -1, -1, -1, -1, -1.0f));
       }
       else if (error != null) {
         Throwable cause = error.getCause();
@@ -595,6 +595,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         final String trace = out.toString();
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
+        }
+        if (error instanceof RebuildRequestedException) {
+          messageText.append("\n").append("Please perform full project rebuild (Build | Rebuild Project)");
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(messageText.toString(), cause));
       }

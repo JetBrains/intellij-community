@@ -10,7 +10,7 @@ public abstract class TestDeprecations {
    /** @deprecated */
    public void byComment() {
       boolean var1 = true;// 27
-   }
+   }// 28
 
    /** @deprecated */
    public abstract void byCommentAbstract();
@@ -19,7 +19,7 @@ public abstract class TestDeprecations {
    @Deprecated
    public void byAnno() {
       boolean var1 = true;// 35
-   }
+   }// 36
 
    /** @deprecated */
    @Deprecated
@@ -32,7 +32,7 @@ public abstract class TestDeprecations {
 
       void foo() {
          boolean var1 = true;// 55
-      }
+      }// 56
    }
 
    /** @deprecated */
@@ -41,7 +41,7 @@ public abstract class TestDeprecations {
 
       void foo() {
          boolean var1 = true;// 46
-      }
+      }// 47
    }
 }
 
@@ -49,11 +49,13 @@ class 'pkg/TestDeprecations' {
    method 'byComment ()V' {
       0      11
       1      11
+      2      12
    }
 
    method 'byAnno ()V' {
       0      20
       1      20
+      2      21
    }
 }
 
@@ -61,6 +63,7 @@ class 'pkg/TestDeprecations$ByAnno' {
    method 'foo ()V' {
       0      33
       1      33
+      2      34
    }
 }
 
@@ -68,11 +71,16 @@ class 'pkg/TestDeprecations$ByComment' {
    method 'foo ()V' {
       0      42
       1      42
+      2      43
    }
 }
 
 Lines mapping:
 27 <-> 12
+28 <-> 13
 35 <-> 21
+36 <-> 22
 46 <-> 43
+47 <-> 44
 55 <-> 34
+56 <-> 35

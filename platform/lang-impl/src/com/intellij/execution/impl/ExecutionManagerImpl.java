@@ -60,6 +60,7 @@ import java.util.List;
 
 public class ExecutionManagerImpl extends ExecutionManager implements Disposable {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
+  public static final Key<Boolean> EXECUTION_SKIP_RUN = Key.create("EXECUTION_SKIP_RUN");
 
   private static final Logger LOG = Logger.getInstance(ExecutionManagerImpl.class);
   private static final ProcessHandler[] EMPTY_PROCESS_HANDLERS = new ProcessHandler[0];
@@ -169,17 +170,24 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   protected void doRun(@NotNull final ExecutionEnvironment environment, @NotNull final Runnable startRunnable) {
-    // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
-    // and execution of startRunnable could be skipped if modality state check fails
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed()) {
-          DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+    Boolean allowSkipRun = environment.getUserData(EXECUTION_SKIP_RUN);
+    if (allowSkipRun != null && allowSkipRun) {
+      environment.getProject().getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(environment.getExecutor().getId(),
+                                                                                                environment);
+    }
+    else {
+      // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
+      // and execution of startRunnable could be skipped if modality state check fails
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (!myProject.isDisposed()) {
+            DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @Override

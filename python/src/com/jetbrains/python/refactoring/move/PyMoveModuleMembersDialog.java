@@ -21,6 +21,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -160,8 +162,24 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
     };
     decorator.setOn(tableIsVisible);
     decorator.setContentComponent(ScrollPaneFactory.createScrollPane(myMemberSelectionTable));
-    validateButtons();
+
+    UiNotifyConnector.doWhenFirstShown(myCenterPanel, new Runnable() {
+      @Override
+      public void run() {
+        preselectLastPathComponent(myBrowseFieldWithButton.getTextField());
+      }
+    });
     init();
+  }
+
+  private static void preselectLastPathComponent(@NotNull JTextField field) {
+    final String text = field.getText();
+    final int start = text.lastIndexOf(File.separatorChar);
+    final int lastDotIndex = text.lastIndexOf('.');
+    final int end = lastDotIndex < 0 ? text.length() : lastDotIndex;
+    if (start + 1 < end) {
+      field.select(start + 1, end);
+    }
   }
 
   @Nullable

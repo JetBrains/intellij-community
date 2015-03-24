@@ -67,8 +67,9 @@ public class MissingMethodBodyFixer implements Fixer {
   static boolean shouldHaveBody(PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    if (containingClass.isInterface() && !method.hasModifierProperty(DEFAULT)) return false;
-    if (method.hasModifierProperty(ABSTRACT)) return false;
-    return !method.hasModifierProperty(NATIVE);
+    if (method.hasModifierProperty(PRIVATE)) return true;
+    if (method.hasModifierProperty(ABSTRACT) || method.hasModifierProperty(NATIVE)) return false;
+    if (containingClass.isInterface() && !method.hasModifierProperty(DEFAULT) && !method.hasModifierProperty(STATIC)) return false;
+    return true;
   }
 }

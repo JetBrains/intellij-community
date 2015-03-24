@@ -10,16 +10,17 @@ public class TestThrowException {
          this.r = new Runnable() {// 12
             public void run() {
                boolean var1 = true;// 15
-            }
+            }// 16
          };
       }
-   }
+   }// 18
 }
 
 class 'pkg/TestThrowException$1' {
    method 'run ()V' {
       0      11
       1      11
+      2      12
    }
 }
 
@@ -29,6 +30,7 @@ class 'pkg/TestThrowException' {
       c      7
       11      7
       1b      9
+      1e      15
    }
 }
 
@@ -37,3 +39,7 @@ Lines mapping:
 10 <-> 8
 12 <-> 10
 15 <-> 12
+16 <-> 13
+18 <-> 16
+Not mapped:
+8

@@ -88,6 +88,7 @@ public final class Option {
   // TODO: USe "known arguments info" to prevent copy/paste
   /**
    * @return if option accepts argument -- pair of [argument_quantity, argument]. Null otherwise.
+   * Unlike position argument, option argument is <a href="https://docs.python.org/2/library/optparse.html#terminology">always mandatory</a>
    */
   @Nullable
   public Pair<Integer, Argument> getArgumentAndQuantity() {

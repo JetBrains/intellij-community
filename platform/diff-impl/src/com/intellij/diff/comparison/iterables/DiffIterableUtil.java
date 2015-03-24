@@ -334,5 +334,25 @@ public class DiffIterableUtil {
       this.val1 = val1;
       this.val2 = val2;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      IntPair pair = (IntPair)o;
+
+      if (val1 != pair.val1) return false;
+      if (val2 != pair.val2) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = val1;
+      result = 31 * result + val2;
+      return result;
+    }
   }
 }

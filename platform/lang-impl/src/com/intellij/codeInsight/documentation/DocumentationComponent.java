@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
@@ -696,7 +697,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ExternalDocAction() {
       super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
@@ -722,10 +722,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         if (!processed) {
           final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
           final List<String> urls;
-          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
+          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl) && BrowserUtil.canBeBrowsed(myEffectiveExternalUrl)) {
             urls = Collections.singletonList(myEffectiveExternalUrl);
           } else {
-            urls = provider.getUrlFor(element, originalElement);
+            urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
             assert urls != null : provider;
             assert !urls.isEmpty() : provider;
           }
@@ -746,7 +746,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           presentation.setEnabled(element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement));
         }
         else {
-          final List<String> urls = provider.getUrlFor(element, originalElement);
+          List<String> urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
           presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
         }
       }

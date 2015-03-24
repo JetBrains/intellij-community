@@ -156,7 +156,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         final String erasedText = TypeConversionUtil.erasure(psiType).getCanonicalText();
         String canonicalText = psiType.getCanonicalText();
         if (canonicalText.contains("?extends") || canonicalText.contains("?super")) {
-          LOG.error("Malformed canonical text: " + psiType + " of " + psiType.getClass() + "; " +
+          LOG.error("Malformed canonical text: " + canonicalText + "; presentable text: " + psiType + " of " + psiType.getClass() + "; " +
                     (psiType instanceof PsiClassReferenceType ? ((PsiClassReferenceType)psiType).getReference().getClass() : ""));
           return null;
         }

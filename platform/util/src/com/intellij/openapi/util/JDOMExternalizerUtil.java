@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -113,6 +114,7 @@ public class JDOMExternalizerUtil {
     return values;
   }
 
+  @SuppressWarnings("Duplicates")
   public static void addChildrenWithValueAttribute(@NotNull Element parent,
                                                    @NotNull String childTagName,
                                                    @NotNull List<String> attrValues) {
@@ -121,6 +123,19 @@ public class JDOMExternalizerUtil {
         Element child = new Element(childTagName);
         child.setAttribute(VALUE_ATTR_NAME, value);
         parent.addContent(child);
+      }
+    }
+  }
+
+  @SuppressWarnings({"deprecation", "Duplicates"})
+  public static void addChildren(@NotNull Element parent,
+                                 @NotNull String childElementName,
+                                 @NotNull Collection<? extends JDOMExternalizable> children) throws WriteExternalException {
+    for (JDOMExternalizable child : children) {
+      if (child != null) {
+        Element element = new Element(childElementName);
+        child.writeExternal(element);
+        parent.addContent(element);
       }
     }
   }

@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -193,75 +194,78 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return false;
     }
     else {
-      return doRun(executorId, environment);
-    }
-  }
+      beforeRun(environment);
 
-  protected boolean doRun(@NotNull final String executorId, @NotNull final ExecutionEnvironment environment) {
-    final Semaphore targetDone = new Semaphore();
-    final Ref<Boolean> result = new Ref<Boolean>(false);
-    final Disposable disposable = Disposer.newDisposable();
+      final Semaphore targetDone = new Semaphore();
+      final Ref<Boolean> result = new Ref<Boolean>(false);
+      final Disposable disposable = Disposer.newDisposable();
 
-    myProject.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
-      @Override
-      public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
-        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          targetDone.down();
-        }
-      }
-
-      @Override
-      public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
-        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          onProcessNotStarted(environment, result, targetDone);
-        }
-      }
-
-      @Override
-      public void processStarted(final String executorIdLocal,
-                                 @NotNull final ExecutionEnvironment environmentLocal,
-                                 @NotNull final ProcessHandler handler) {
-        if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-          handler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void processTerminated(ProcessEvent event) {
-              result.set(event.getExitCode() == 0);
-              targetDone.up();
-            }
-          });
-        }
-      }
-    });
-
-    try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      myProject.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
         @Override
-        public void run() {
-          try {
-            environment.getRunner().execute(environment);
-          }
-          catch (ExecutionException e) {
-            targetDone.up();
-            LOG.error(e);
+        public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
+          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            targetDone.down();
           }
         }
-      }, ModalityState.NON_MODAL);
-    }
-    catch (Exception e) {
-      LOG.error(e);
+
+        @Override
+        public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
+            if (skipRun != null && skipRun) {
+              result.set(true);
+            }
+            targetDone.up();
+          }
+        }
+
+        @Override
+        public void processStarted(final String executorIdLocal,
+                                   @NotNull final ExecutionEnvironment environmentLocal,
+                                   @NotNull final ProcessHandler handler) {
+          if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+            handler.addProcessListener(new ProcessAdapter() {
+              @Override
+              public void processTerminated(ProcessEvent event) {
+                result.set(event.getExitCode() == 0);
+                targetDone.up();
+              }
+            });
+          }
+        }
+      });
+
+      try {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              environment.getRunner().execute(environment);
+            }
+            catch (ExecutionException e) {
+              targetDone.up();
+              LOG.error(e);
+            }
+          }
+        }, ModalityState.NON_MODAL);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        Disposer.dispose(disposable);
+        return false;
+      }
+
+      targetDone.waitFor();
       Disposer.dispose(disposable);
-      return false;
+
+      return result.get();
     }
-
-    targetDone.waitFor();
-    Disposer.dispose(disposable);
-
-    return result.get();
   }
 
-  protected void onProcessNotStarted(@NotNull ExecutionEnvironment environment, @NotNull Ref<Boolean> result,
-                                     @NotNull Semaphore targetDone) {
-    targetDone.up();
+  private static void beforeRun(@NotNull ExecutionEnvironment environment) {
+    for (RunConfigurationBeforeRunProviderDelegate delegate : Extensions.getExtensions(RunConfigurationBeforeRunProviderDelegate.EP_NAME)) {
+      delegate.beforeRun(environment);
+    }
   }
 
   public class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {

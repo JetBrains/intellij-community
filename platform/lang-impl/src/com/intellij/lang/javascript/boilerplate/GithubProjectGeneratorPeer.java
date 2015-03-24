@@ -180,7 +180,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
   @Override
   public void buildUI(@NotNull SettingsStep settingsStep) {
-    settingsStep.addSettingsField("\u001BVersion:", myVersionPanel);
+    settingsStep.addSettingsField("&Version:", myVersionPanel);
     settingsStep.addSettingsComponent(myReloadableComboBoxPanel.getErrorComponent());
   }
 

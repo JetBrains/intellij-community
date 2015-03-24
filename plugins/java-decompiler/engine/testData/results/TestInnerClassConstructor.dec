@@ -3,22 +3,23 @@ package pkg;
 class TestInnerClassConstructor {
    void m() {
       new TestInnerClassConstructor.Inner("text");// 5
-   }
+   }// 6
 
    void n(String var1) {
       System.out.println("n(): " + var1);// 9
-   }
+   }// 10
 
    final class Inner {
       private Inner(String var2) {
          TestInnerClassConstructor.this.n(var2);// 14
-      }
+      }// 15
    }
 }
 
 class 'pkg/TestInnerClassConstructor' {
    method 'm ()V' {
       5      4
+      c      5
    }
 
    method 'n (Ljava/lang/String;)V' {
@@ -26,16 +27,23 @@ class 'pkg/TestInnerClassConstructor' {
       a      8
       13      8
       16      8
+      19      9
    }
 }
 
 class 'pkg/TestInnerClassConstructor$Inner' {
    method '<init> (Lpkg/TestInnerClassConstructor;Ljava/lang/String;)V' {
       b      13
+      e      14
    }
 }
 
 Lines mapping:
 5 <-> 5
+6 <-> 6
 9 <-> 9
+10 <-> 10
 14 <-> 14
+15 <-> 15
+Not mapped:
+13

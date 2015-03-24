@@ -46,6 +46,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
   private static final Object lock = new Object();
   private static final ReferenceQueue<SmartPointerEx> ourQueue = new ReferenceQueue<SmartPointerEx>();
+  @SuppressWarnings("unused") private static final LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      processQueue();
+    }
+  });
+
   private final Project myProject;
   private final Key<Set<PointerReference>> POINTERS_KEY;
   private final Key<Boolean> POINTERS_ARE_FASTENED_KEY;
@@ -54,24 +61,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     myProject = project;
     POINTERS_KEY = Key.create("SMART_POINTERS for "+project);
     POINTERS_ARE_FASTENED_KEY = Key.create("SMART_POINTERS_ARE_FASTENED for "+project);
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        processQueue();
-      }
-    }, project);
   }
 
-  private void processQueue() {
+  private static void processQueue() {
     while (true) {
       PointerReference reference = (PointerReference)ourQueue.poll();
       if (reference == null) break;
       synchronized (lock) {
-        Set<PointerReference> pointers = reference.file.getUserData(POINTERS_KEY);
+        Set<PointerReference> pointers = reference.file.getUserData(reference.key);
         if (pointers != null) {
           pointers.remove(reference);
           if (pointers.isEmpty()) {
-            reference.file.putUserData(POINTERS_KEY, null);
+            reference.file.putUserData(reference.key, null);
           }
         }
       }
@@ -216,7 +217,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         pointers = ContainerUtil.newTroveSet(); // we synchronise access anyway
         containingFile.putUserData(POINTERS_KEY, pointers);
       }
-      pointers.add(new PointerReference(pointer, containingFile));
+      pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY));
 
       if (areBeltsFastened(containingFile)) {
         pointer.fastenBelt(0, null);
@@ -294,7 +295,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     file.putUserData(POINTERS_ARE_FASTENED_KEY, null);
     return fastened;
   }
-  private boolean areBeltsFastened(@NotNull VirtualFile file) {
+  private boolean areBeltsFastened(VirtualFile file) {
     return file.getUserData(POINTERS_ARE_FASTENED_KEY) == Boolean.TRUE;
   }
 
@@ -304,12 +305,17 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   private static class PointerReference extends WeakReference<SmartPointerEx> {
-    @NotNull
     private final VirtualFile file;
+    private final Key<Set<PointerReference>> key;
 
-    private PointerReference(@NotNull SmartPointerEx<?> pointer, @NotNull VirtualFile containingFile) {
-      super(pointer, ourQueue);
+    public PointerReference(SmartPointerEx<?> pointer,
+                            VirtualFile containingFile,
+                            ReferenceQueue<SmartPointerEx> queue,
+                            Key<Set<PointerReference>> key) {
+      super(pointer, queue);
       file = containingFile;
+      this.key = key;
     }
   }
+
 }

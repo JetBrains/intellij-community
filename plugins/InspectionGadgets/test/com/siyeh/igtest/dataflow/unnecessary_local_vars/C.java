@@ -125,5 +125,18 @@ class C {
         }
       }
     }
-  } 
+  }
+
+  void nameShadow(final String name) {
+    final String child = name;
+    class A {
+      void foo(String s){}
+    }
+    
+    A a = new A() {
+      void foo(String name) {
+        System.out.println(child);
+      }
+    };
+  }
 }
