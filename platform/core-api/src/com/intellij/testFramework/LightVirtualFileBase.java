@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,39 +83,6 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     @Nullable
     public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
       return null;
-    }
-
-    @Override
-    public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
-    }
-
-    @Override
-    public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
-    }
-
-    @NotNull
-    @Override
-    public VirtualFile copyFile(Object requestor,
-                                @NotNull VirtualFile vFile,
-                                @NotNull VirtualFile newParent,
-                                @NotNull final String copyName) throws IOException {
-      throw new IOException("Cannot copy files");
-    }
-
-    @Override
-    public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
-    }
-
-    @NotNull
-    @Override
-    public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-      throw new IOException("Cannot create files");
-    }
-
-    @Override
-    @NotNull
-    public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-      throw new IOException("Cannot create directories");
     }
   }
 
