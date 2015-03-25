@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -91,7 +92,7 @@ public class PyPep8NamingInspection extends PyInspection {
           }
         }
         if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_")) {
-          registerProblem(expression, "Variable in function should be lowercase", new PyRenameElementQuickFix());
+          registerAndAddRenameQuickFix(expression, "Variable in function should be lowercase");
         }
       }
     }
@@ -101,8 +102,15 @@ public class PyPep8NamingInspection extends PyInspection {
       final String name = node.getName();
       if (name == null) return;
       if (!LOWERCASE_REGEX.matcher(name).matches()) {
-        registerProblem(node, "Argument name should be lowercase", new PyRenameElementQuickFix());
+        registerAndAddRenameQuickFix(node, "Argument name should be lowercase");
       }
+    }
+
+    private void registerAndAddRenameQuickFix(@Nullable final PsiElement node, @NotNull final String name) {
+      if (getHolder() != null && getHolder().isOnTheFly())
+        registerProblem(node, name, new PyRenameElementQuickFix());
+      else
+        registerProblem(node, name);
     }
 
     @Override
@@ -117,7 +125,10 @@ public class PyPep8NamingInspection extends PyInspection {
       if (!LOWERCASE_REGEX.matcher(name).matches()) {
         final ASTNode nameNode = function.getNameNode();
         if (nameNode != null) {
-          final List<LocalQuickFix> quickFixes = Lists.<LocalQuickFix>newArrayList(new PyRenameElementQuickFix());
+          final List<LocalQuickFix> quickFixes = Lists.newArrayList();
+          if (getHolder() != null && getHolder().isOnTheFly())
+            quickFixes.add(new PyRenameElementQuickFix());
+
           if (containingClass != null) {
             quickFixes.add(new IgnoreBaseClassQuickFix(containingClass, myTypeEvalContext));
           }
@@ -150,7 +161,7 @@ public class PyPep8NamingInspection extends PyInspection {
       if (!MIXEDCASE_REGEX.matcher(name).matches()) {
         final ASTNode nameNode = node.getNameNode();
         if (nameNode != null) {
-          registerProblem(nameNode.getPsi(), "Class names should use CamelCase convention", new PyRenameElementQuickFix());
+          registerAndAddRenameQuickFix(nameNode.getPsi(), "Class names should use CamelCase convention");
         }
       }
     }
@@ -165,19 +176,19 @@ public class PyPep8NamingInspection extends PyInspection {
       if (asName == null || name == null) return;
       if (UPPERCASE_REGEX.matcher(name).matches()) {
         if (!UPPERCASE_REGEX.matcher(asName).matches()) {
-          registerProblem(node.getAsNameElement(), "Constant variable imported as non constant", new PyRenameElementQuickFix());
+          registerAndAddRenameQuickFix(node.getAsNameElement(), "Constant variable imported as non constant");
         }
       }
       else if (LOWERCASE_REGEX.matcher(name).matches()) {
         if (!LOWERCASE_REGEX.matcher(asName).matches()) {
-          registerProblem(node.getAsNameElement(), "Lowercase variable imported as non lowercase", new PyRenameElementQuickFix());
+          registerAndAddRenameQuickFix(node.getAsNameElement(), "Lowercase variable imported as non lowercase");
         }
       }
       else if (LOWERCASE_REGEX.matcher(asName).matches()) {
-        registerProblem(node.getAsNameElement(), "CamelCase variable imported as lowercase", new PyRenameElementQuickFix());
+        registerAndAddRenameQuickFix(node.getAsNameElement(), "CamelCase variable imported as lowercase");
       }
       else if (UPPERCASE_REGEX.matcher(asName).matches()) {
-        registerProblem(node.getAsNameElement(), "CamelCase variable imported as constant", new PyRenameElementQuickFix());
+        registerAndAddRenameQuickFix(node.getAsNameElement(), "CamelCase variable imported as constant");
       }
     }
   }

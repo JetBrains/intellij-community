@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -34,6 +37,19 @@ public enum LanguageLevel {
   PYTHON33(33, true, false, true, true),
   PYTHON34(34, true, false, true, true),
   PYTHON35(35, true, false, true, true);
+
+  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.<LanguageLevel>builder()
+    .add(PYTHON24)
+    .add(PYTHON25)
+    .add(PYTHON26)
+    .add(PYTHON27)
+    .add(PYTHON30)
+    .add(PYTHON31)
+    .add(PYTHON32)
+    .add(PYTHON33)
+    .add(PYTHON34)
+    .add(PYTHON35)
+    .build();
 
   private static LanguageLevel DEFAULT2 = PYTHON27;
   private static LanguageLevel DEFAULT3 = PYTHON34;

@@ -428,7 +428,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     addExceptionBreakpoint(fixture, properties);
   }
 
-  public void testExceptionBreakpointIgnoreLibraries() throws Exception {
+  public void testExceptionBreakpointIgnoreLibrariesOnRaise() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
       @Override
       public void before() throws Exception {
@@ -446,6 +446,23 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("-jython");
+      }
+    });
+  }
+
+  public void testExceptionBreakpointIgnoreLibrariesOnTerminate() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
+      @Override
+      public void before() throws Exception {
+        createExceptionBreak(myFixture, true, false, false, true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
+        resume();
+        waitForTerminate();
       }
     });
   }

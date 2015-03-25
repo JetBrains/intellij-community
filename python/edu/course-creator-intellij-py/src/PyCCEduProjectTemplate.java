@@ -82,7 +82,7 @@ public class PyCCEduProjectTemplate extends EduProjectTemplate {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
           @Override
           public void run() {
-            PyCCProjectGenerator.generateProject(project, baseDir, panel.getName(), panel.getAuthor(), panel.getDescription());
+            PyCCProjectGenerator.generateProject(project, baseDir, panel.getName(), panel.getAuthors(), panel.getDescription());
           }
         });
       }

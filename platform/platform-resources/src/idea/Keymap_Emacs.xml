@@ -161,7 +161,6 @@
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
-      <keyboard-shortcut first-keystroke="control X" second-keystroke="O"/>
     </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
@@ -262,7 +261,7 @@
       <keyboard-shortcut first-keystroke="control 5"/>
     </action>
     <action id="NextSplitter">
-      <keyboard-shortcut first-keystroke="control X" second-keystrole="O"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="O"/>
     </action>
     <action id="Replace">
       <keyboard-shortcut first-keystroke="shift alt 5"/>

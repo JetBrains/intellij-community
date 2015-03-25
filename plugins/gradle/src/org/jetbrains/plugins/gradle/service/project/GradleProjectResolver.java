@@ -44,10 +44,12 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
+import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -150,6 +152,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       parametersList.addProperty(jvmArg.getKey(), jvmArg.getValue());
     }
 
+    final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx.getConnection());
+    GradleVersion gradleVersion = null;
+    if (buildEnvironment != null) {
+      gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    }
 
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
 
@@ -169,6 +176,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
       synchronized (myCancellationMap) {
         myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
+        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
+          myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), new UnsupportedCancellationToken());
+        }
       }
       allModels = buildActionExecutor.run();
       if (allModels == null) {
@@ -196,7 +206,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
-    final BuildEnvironment buildEnvironment = getBuildEnvironment(resolverCtx);
     allModels.setBuildEnvironment(buildEnvironment);
     resolverCtx.setModels(allModels);
 
@@ -278,16 +287,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     return projectDataNode;
-  }
-
-  @Nullable
-  private static BuildEnvironment getBuildEnvironment(@NotNull ProjectResolverContext resolverCtx) {
-    try {
-      return resolverCtx.getConnection().getModel(BuildEnvironment.class);
-    }
-    catch (Exception e) {
-      return null;
-    }
   }
 
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,

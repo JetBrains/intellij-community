@@ -468,9 +468,9 @@ public class DependentGroovycRunner {
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration, final AstAwareResourceLoader resourceLoader) {
     final ClassDependencyLoader checkWellFormed = new ClassDependencyLoader() {
       @Override
-      protected void loadClassDependencies(Class aClass, Set<Class> visited) throws ClassNotFoundException {
+      protected void loadClassDependencies(Class aClass) throws ClassNotFoundException {
         if (resourceLoader.getSourceFile(aClass.getName()) == null) return;
-        super.loadClassDependencies(aClass, visited);
+        super.loadClassDependencies(aClass);
       }
     };
     

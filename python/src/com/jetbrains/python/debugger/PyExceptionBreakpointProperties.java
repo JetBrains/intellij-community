@@ -42,7 +42,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public PyExceptionBreakpointProperties(@NotNull final String exception) {
     myException = exception;
     myNotifyOnTerminate = true;
-    myIgnoreLibraries = true;
+    myIgnoreLibraries = false;
   }
 
   @Override

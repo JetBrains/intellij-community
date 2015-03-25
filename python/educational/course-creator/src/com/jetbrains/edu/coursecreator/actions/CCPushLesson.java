@@ -35,7 +35,7 @@ public class CCPushLesson extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);;
+    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
     if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
