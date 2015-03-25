@@ -23,73 +23,74 @@ import java.util.Set;
  * @author peter
  */
 public class ClassDependencyLoader {
+  private final Set<Class> myVisited = new HashSet<Class>();
 
   /**
    * @param aClass
    * @return aClass
-   * @throws ClassNotFoundException when any of the classes can't be loaded, that's referenced in aClass' fields, methods etc. recursively 
+   * @throws ClassNotFoundException when any of the classes can't be loaded, that's referenced in aClass' fields, methods etc. recursively
    */
   public Class loadDependencies(Class aClass) throws ClassNotFoundException {
-    loadClassDependencies(aClass, new HashSet<Class>());
+    loadClassDependencies(aClass);
     return aClass;
   }
 
-  private void loadTypeDependencies(Type aClass, Set<Class> visited) throws ClassNotFoundException {
+  private void loadTypeDependencies(Type aClass) throws ClassNotFoundException {
     if (aClass instanceof Class) {
-      loadClassDependencies((Class)aClass, visited);
+      loadClassDependencies((Class)aClass);
     }
     else if (aClass instanceof ParameterizedType) {
-      loadTypeDependencies(((ParameterizedType)aClass).getOwnerType(), visited);
+      loadTypeDependencies(((ParameterizedType)aClass).getOwnerType());
       for (Type type : ((ParameterizedType)aClass).getActualTypeArguments()) {
-        loadTypeDependencies(type, visited);
+        loadTypeDependencies(type);
       }
     }
     else if (aClass instanceof WildcardType) {
       for (Type type : ((WildcardType)aClass).getLowerBounds()) {
-        loadTypeDependencies(type, visited);
+        loadTypeDependencies(type);
       }
       for (Type type : ((WildcardType)aClass).getUpperBounds()) {
-        loadTypeDependencies(type, visited);
+        loadTypeDependencies(type);
       }
     }
     else if (aClass instanceof GenericArrayType) {
-      loadTypeDependencies(((GenericArrayType)aClass).getGenericComponentType(), visited);
+      loadTypeDependencies(((GenericArrayType)aClass).getGenericComponentType());
     }
   }
 
-  protected void loadClassDependencies(Class aClass, Set<Class> visited) throws ClassNotFoundException {
+  protected void loadClassDependencies(Class aClass) throws ClassNotFoundException {
     String name = aClass.getName();
-    if (visited.add(aClass)) {
+    if (myVisited.add(aClass)) {
       try {
         for (Method method : aClass.getDeclaredMethods()) {
-          loadTypeDependencies(method.getGenericReturnType(), visited);
+          loadTypeDependencies(method.getGenericReturnType());
           for (Type type : method.getGenericExceptionTypes()) {
-            loadTypeDependencies(type, visited);
+            loadTypeDependencies(type);
           }
           for (Type type : method.getGenericParameterTypes()) {
-            loadTypeDependencies(type, visited);
+            loadTypeDependencies(type);
           }
         }
         for (Constructor method : aClass.getDeclaredConstructors()) {
           for (Type type : method.getGenericExceptionTypes()) {
-            loadTypeDependencies(type, visited);
+            loadTypeDependencies(type);
           }
           for (Type type : method.getGenericParameterTypes()) {
-            loadTypeDependencies(type, visited);
+            loadTypeDependencies(type);
           }
         }
 
         for (Field field : aClass.getDeclaredFields()) {
-          loadTypeDependencies(field.getGenericType(), visited);
+          loadTypeDependencies(field.getGenericType());
         }
 
         Type superclass = aClass.getGenericSuperclass();
         if (superclass != null) {
-          loadClassDependencies(aClass, visited);
+          loadClassDependencies(aClass);
         }
 
         for (Type intf : aClass.getGenericInterfaces()) {
-          loadTypeDependencies(intf, visited);
+          loadTypeDependencies(intf);
         }
 
         aClass.getAnnotations();

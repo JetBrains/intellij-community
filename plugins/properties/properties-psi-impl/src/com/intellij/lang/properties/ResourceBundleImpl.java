@@ -35,6 +35,7 @@ import java.util.List;
 
 public class ResourceBundleImpl extends ResourceBundle {
   @NotNull private final PropertiesFile myDefaultPropertiesFile;
+  private boolean myValid = true;
 
   public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
     myDefaultPropertiesFile = defaultPropertiesFile;
@@ -92,6 +93,14 @@ public class ResourceBundleImpl extends ResourceBundle {
   @Override
   public Project getProject() {
     return myDefaultPropertiesFile.getProject();
+  }
+
+  public boolean isValid() {
+    return myValid;
+  }
+
+  public void invalidate() {
+    myValid = false;
   }
 
   public boolean equals(final Object o) {

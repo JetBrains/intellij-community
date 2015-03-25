@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -169,6 +171,18 @@ public class VfsRootAccess {
     for (String root : roots) {
       ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
     }
+  }
+  @TestOnly
+  public static void allowRootAccessTemporarily(@NotNull Disposable disposable, @NotNull final String... roots) {
+    for (String root : roots) {
+      ourAdditionalRoots.add(FileUtil.toSystemIndependentName(root));
+    }
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        disallowRootAccess(roots);
+      }
+    });
   }
 
   @TestOnly

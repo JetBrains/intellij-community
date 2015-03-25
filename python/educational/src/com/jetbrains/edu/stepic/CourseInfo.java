@@ -1,7 +1,9 @@
 package com.jetbrains.edu.stepic;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,22 +21,18 @@ public class CourseInfo {
   //course type in format "pycharm <language>"
   private String myType;
 
-  private String myAuthor;
-  public static CourseInfo INVALID_COURSE = new CourseInfo("", "", "", "");
+  @SerializedName("instructors")
+  List<Instructor> myInstructors = new ArrayList<Instructor>();
 
-  public CourseInfo(String name, String author, String description, String type) {
-    myName = name;
-    myAuthor = author;
-    myDescription = description;
-    myType = type;
-  }
+  public static CourseInfo INVALID_COURSE = new CourseInfo();
 
   public String getName() {
     return myName;
   }
 
-  public String getAuthor() {
-    return myAuthor;
+  @NotNull
+  public List<Instructor> getInstructors() {
+    return myInstructors;
   }
 
   public String getDescription() {
@@ -55,15 +53,27 @@ public class CourseInfo {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     CourseInfo that = (CourseInfo)o;
-    return that.getName().equals(myName) && that.getAuthor().equals(myAuthor)
+    if (that.getName() == null || that.getDescription() == null) return false;
+    return that.getName().equals(myName)
            && that.getDescription().equals(myDescription);
   }
 
   @Override
   public int hashCode() {
     int result = myName != null ? myName.hashCode() : 0;
-    result = 31 * result + (myAuthor != null ? myAuthor.hashCode() : 0);
     result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
     return result;
+  }
+
+  public static class Instructor {
+    String name;
+
+    public Instructor(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
   }
 }

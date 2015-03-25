@@ -211,10 +211,13 @@ public class StudyProjectGenerator {
       }
       writer = new PrintWriter(cashFile);
       for (CourseInfo courseInfo : myCourses) {
-        String line = String
-          .format("name=%s author=%s description=%s", courseInfo.getName(), courseInfo.getAuthor(),
-                  courseInfo.getDescription());
-        writer.println(line);
+        final List<CourseInfo.Instructor> instructors = courseInfo.getInstructors();
+        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append("description=").append(
+          courseInfo.getDescription());
+        for (CourseInfo.Instructor instructor : instructors) {
+          builder.append("instructor=").append(instructor.getName());
+        }
+        writer.println(builder.toString());
       }
     }
     catch (FileNotFoundException e) {
@@ -228,12 +231,12 @@ public class StudyProjectGenerator {
     }
   }
 
-  public List<CourseInfo> getCourses() {
-    if (!myCourses.isEmpty()) {
+  public List<CourseInfo> getCourses(boolean force) {
+    if (force || myCourses.isEmpty()) {
+      myCourses = EduStepicConnector.getCourses();
       return myCourses;
     }
     else {
-      myCourses = EduStepicConnector.getCourses();
       return myCourses;
     }
   }

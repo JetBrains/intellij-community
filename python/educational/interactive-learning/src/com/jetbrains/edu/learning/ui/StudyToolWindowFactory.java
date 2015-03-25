@@ -36,8 +36,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       }
       String courseName = UIUtil.toHtml("<h1>" + course.getName() + "</h1>", 10);
       String description = UIUtil.toHtml(course.getDescription(), 5);
-      String author = taskManager.getCourse().getAuthor();
-      String authorLabel = UIUtil.toHtml("<b>Author: </b>" + author, 5);
+      String authorLabel = UIUtil.toHtml("<b>Author: </b>" + Course.getAuthorsString(course.getAuthors()), 5);
       contentPanel.add(new JLabel(courseName));
       contentPanel.add(new JLabel(authorLabel));
       contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));

@@ -1283,6 +1283,10 @@
                      key="bigdecimal.legacy.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.BigDecimalLegacyMethodInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="EqualsReplaceableByObjectsCall" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="equals.replaceable.by.objects.call.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.migration.EqualsReplaceableByObjectsCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumerationCanBeIteration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="enumeration.can.be.iteration.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"

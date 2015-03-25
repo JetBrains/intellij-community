@@ -281,6 +281,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myIsInLibraryContent;
   }
 
+  @Nullable
   public Location getLocation() {
     return myLocation;
   }

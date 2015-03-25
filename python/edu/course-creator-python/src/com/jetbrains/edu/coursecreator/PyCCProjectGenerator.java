@@ -55,17 +55,17 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
     generateProject(project, baseDir, mySettingsPanel.getName(),
-                    mySettingsPanel.getAuthor(), mySettingsPanel.getDescription());
+                    mySettingsPanel.getAuthors(), mySettingsPanel.getDescription());
   }
 
   public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                                     @NotNull final String name, @NotNull final String author,
+                                     @NotNull final String name, @NotNull final String[] authors,
                                      @NotNull final String description) {
 
     final CCProjectService service = CCProjectService.getInstance(project);
     final Course course = new Course();
     course.setName(name);
-    course.setAuthor(author);
+    course.setAuthors(authors);
     course.setDescription(description);
     course.setLanguage("Python");
     service.setCourse(course);
@@ -93,7 +93,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   public ValidationResult validate(@NotNull String s) {
     String message = "";
     message = mySettingsPanel.getDescription().isEmpty() ? "Enter description" : message;
-    message = mySettingsPanel.getAuthor().isEmpty() ? "Enter author name" : message;
+    message = mySettingsPanel.getAuthors().length == 0 ? "Enter author name" : message;
     message = mySettingsPanel.getName().isEmpty() ? "Enter course name" : message;
     return message.isEmpty() ? ValidationResult.OK : new ValidationResult(message);
   }

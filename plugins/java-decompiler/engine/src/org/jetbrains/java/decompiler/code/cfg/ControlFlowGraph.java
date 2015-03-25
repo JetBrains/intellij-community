@@ -296,7 +296,7 @@ public class ControlFlowGraph implements CodeConstants {
     VBStyleCollection<BasicBlock, Integer> col = new VBStyleCollection<BasicBlock, Integer>();
 
     InstructionSequence currseq = null;
-    ArrayList<Integer> lstOffs = null;
+    List<Integer> lstOffs = null;
 
     int len = startblock.length;
     short counter = 0;
@@ -306,14 +306,11 @@ public class ControlFlowGraph implements CodeConstants {
     for (int i = 0; i < len; i++) {
 
       if (startblock[i] == 1) {
-        currentBlock = new BasicBlock();
-        currentBlock.id = ++counter;
+        currentBlock = new BasicBlock(++counter);
 
-        currseq = new SimpleInstructionSequence();
-        lstOffs = new ArrayList<Integer>();
+        currseq = currentBlock.getSeq();
+        lstOffs = currentBlock.getInstrOldOffsets();
 
-        currentBlock.setSeq(currseq);
-        currentBlock.setInstrOldOffsets(lstOffs);
         col.addWithKey(currentBlock, currentBlock.id);
 
         blockoffset = instrseq.getOffset(i);
@@ -766,9 +763,7 @@ public class ControlFlowGraph implements CodeConstants {
 
     first = blocks.get(0);
 
-    last = new BasicBlock();
-    last.id = ++last_id;
-    last.setSeq(new SimpleInstructionSequence());
+    last = new BasicBlock(++last_id);
 
     for (BasicBlock block : blocks) {
       if (block.getSuccs().isEmpty()) {

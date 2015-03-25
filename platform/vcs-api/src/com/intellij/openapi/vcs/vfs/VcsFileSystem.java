@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 
 public class VcsFileSystem extends DeprecatedVirtualFileSystem {
-
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
   private static final String PROTOCOL = "vcs";
 
@@ -71,38 +68,5 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem {
   @Override
   protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     super.fireBeforeContentsChange(requestor, file);
-  }
-
-  @Override
-  public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  @Override
-  public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  @Override
-  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 }

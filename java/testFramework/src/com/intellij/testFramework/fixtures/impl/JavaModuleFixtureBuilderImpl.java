@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -142,6 +143,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
 
     final Sdk jdk;
     if (myJdk != null) {
+      VfsRootAccess.allowRootAccessTemporarily(module, myJdk);
       jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
       ((ProjectJdkImpl)jdk).setVersionString("java 1.5");
     }

@@ -78,12 +78,12 @@ public class CCChangeCourseInfo extends DumbAwareAction {
     if (directory != null && !project.getBaseDir().equals(directory.getVirtualFile())) {
       return;
     }
-    CCNewProjectPanel panel = new CCNewProjectPanel(course.getName(), course.getAuthor(), course.getDescription());
+    CCNewProjectPanel panel = new CCNewProjectPanel(course.getName(), Course.getAuthorsString(course.getAuthors()), course.getDescription());
     ChangeCourseInfoDialog changeCourseInfoDialog =
       new ChangeCourseInfoDialog(project, panel);
     changeCourseInfoDialog.show();
     if (changeCourseInfoDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      course.setAuthor(panel.getAuthor());
+      course.setAuthors(panel.getAuthors());
       course.setName(panel.getName());
       course.setDescription(panel.getDescription());
       ProjectView.getInstance(project).refresh();

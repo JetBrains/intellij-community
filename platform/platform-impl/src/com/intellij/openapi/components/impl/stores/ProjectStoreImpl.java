@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.*;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -446,49 +448,67 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   protected final List<Throwable> doSave(@Nullable List<SaveSession> saveSessions, @NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles, @Nullable List<Throwable> errors) {
-    ProjectImpl.UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, myProject);
-    if (notifications.length > 0) {
-      throw new SaveCancelledException();
-    }
-
     beforeSave(readonlyFiles);
 
     super.doSave(saveSessions, readonlyFiles, errors);
 
-    if (!readonlyFiles.isEmpty()) {
-      ReadonlyStatusHandler.OperationStatus status;
-      AccessToken token = ReadAction.start();
-      try {
-        status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
+    UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, myProject);
+    if (readonlyFiles.isEmpty()) {
+      if (notifications.length > 0) {
+        for (UnableToSaveProjectNotification notification : notifications) {
+          notification.expire();
+        }
       }
-      finally {
-        token.finish();
+      return errors;
+    }
+
+    if (notifications.length > 0) {
+      throw new SaveCancelledException();
+    }
+
+    ReadonlyStatusHandler.OperationStatus status;
+    AccessToken token = ReadAction.start();
+    try {
+      status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(getFilesList(readonlyFiles));
+    }
+    finally {
+      token.finish();
+    }
+
+    if (status.hasReadonlyFiles()) {
+      dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
+      throw new SaveCancelledException();
+    }
+    else {
+      List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
+      readonlyFiles.clear();
+      for (Pair<SaveSession, VirtualFile> entry : oldList) {
+        errors = executeSave(entry.first, readonlyFiles, errors);
       }
 
-      if (status.hasReadonlyFiles()) {
-        ProjectImpl.dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
+      if (errors != null) {
+        CompoundRuntimeException.doThrow(errors);
+      }
+
+      if (!readonlyFiles.isEmpty()) {
+        dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
         throw new SaveCancelledException();
-      }
-      else {
-        List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
-        readonlyFiles.clear();
-        for (Pair<SaveSession, VirtualFile> entry : oldList) {
-          errors = executeSave(entry.first, readonlyFiles, errors);
-        }
-
-        if (errors != null) {
-          CompoundRuntimeException.doThrow(errors);
-        }
-
-        if (!readonlyFiles.isEmpty()) {
-          ProjectImpl.dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
-          throw new SaveCancelledException();
-        }
       }
     }
 
     return errors;
+  }
+
+  private static void dropUnableToSaveProjectNotification(@NotNull Project project, @NotNull VirtualFile[] readOnlyFiles) {
+    UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
+    if (notifications.length == 0) {
+      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), project);
+    }
+    else {
+      notifications[0].myFiles = readOnlyFiles;
+    }
   }
 
   protected void beforeSave(@NotNull List<Pair<SaveSession, VirtualFile>> readonlyFiles) {

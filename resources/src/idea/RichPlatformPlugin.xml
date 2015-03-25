@@ -256,7 +256,7 @@
     <!-- Path Variables -->
     <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
          it's only required in full IDEA -->
-    <applicationConfigurable groupId="build" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
+    <applicationConfigurable groupId="appearance" groupWeight="-10" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
     <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
     <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"

@@ -593,4 +593,48 @@ public class ExpressionUtils {
     final IElementType tokenType = prefixExpression.getOperationTokenType();
     return JavaTokenType.MINUS.equals(tokenType);
   }
+
+  @Nullable
+  public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiPolyadicExpression)) {
+      return null;
+    }
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    final IElementType tokenType = polyadicExpression.getOperationTokenType();
+    if (equals) {
+      if (!JavaTokenType.EQEQ.equals(tokenType)) {
+        return null;
+      }
+    }
+    else {
+      if (!JavaTokenType.NE.equals(tokenType)) {
+        return null;
+      }
+    }
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    if (operands.length != 2) {
+      return null;
+    }
+    if (PsiType.NULL.equals(operands[0].getType())) {
+      return getVariable(operands[1]);
+    }
+    else if (PsiType.NULL.equals(operands[1].getType())) {
+      return getVariable(operands[0]);
+    }
+    return null;
+  }
+
+  public static PsiVariable getVariable(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiVariable)) {
+      return null;
+    }
+    return (PsiVariable)target;
+  }
 }

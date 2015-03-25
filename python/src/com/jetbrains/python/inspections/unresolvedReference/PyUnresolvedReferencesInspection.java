@@ -68,6 +68,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -302,12 +303,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               if (element instanceof PyReferenceOwner) {
                 final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
                 final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-                if (reference != null) {
-                  final ResolveResult[] resolveResults = reference.multiResolve(false);
-                  for (ResolveResult resolveResult : resolveResults) {
-                    if (resolveResult instanceof ImportedResolveResult) {
-                      myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
-                    }
+                final ResolveResult[] resolveResults = reference.multiResolve(false);
+                for (ResolveResult resolveResult : resolveResults) {
+                  if (resolveResult instanceof ImportedResolveResult) {
+                    myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
                   }
                 }
               }
@@ -571,11 +570,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
       }
 
-      if (element != null) {
-        PyImportStatementBase importStatementBase = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class);
-        if ((importStatementBase != null) && GenerateBinaryStubsFix.isApplicable(importStatementBase)) {
-          actions.addAll(GenerateBinaryStubsFix.generateFixes(importStatementBase));
-        }
+      PyImportStatementBase importStatementBase = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class);
+      if ((importStatementBase != null) && GenerateBinaryStubsFix.isApplicable(importStatementBase)) {
+        actions.addAll(GenerateBinaryStubsFix.generateFixes(importStatementBase));
       }
       if (qualifiedNames.size() == 1) {
         final QualifiedName qualifiedName = qualifiedNames.get(0);
@@ -873,6 +870,24 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           actions.add(importFix.forLocalImport());
         }
       }
+      else {
+        final String refName = (node instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)node).getReferencedName() : node.getText();
+        if (refName == null) return;
+        final QualifiedName qname = QualifiedName.fromDottedString(refName);
+        final List<String> components = qname.getComponents();
+        if (!components.isEmpty()) {
+          final String packageName = components.get(0);
+          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+            actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, packageName, node));
+          }
+          else {
+            final String packageAlias = PyPackageAliasesProvider.commonAliases.get(packageName);
+            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+              actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageAlias, packageName, node));
+            }
+          }
+        }
+      }
     }
 
     private static boolean suppressHintForAutoImport(PyElement node, AutoImportQuickFix importFix) {
@@ -891,7 +906,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return false;
     }
 
-    private void addCreateClassFix(String refText, PsiElement element, List<LocalQuickFix> actions) {
+    private void addCreateClassFix(@NonNls String refText, PsiElement element, List<LocalQuickFix> actions) {
       if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !refText.toUpperCase().equals(refText) &&
           PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
         PsiElement anchor = element;
