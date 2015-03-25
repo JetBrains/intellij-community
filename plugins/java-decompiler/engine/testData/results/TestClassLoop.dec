@@ -32,7 +32,7 @@ public class TestClassLoop {
             } finally {
                if(var0) {// 52
                   System.out.println("3");// 53
-                  continue;
+                  continue;// 54
                }
             }
          }
@@ -72,6 +72,7 @@ class 'pkg/TestClassLoop' {
       2a      33
       2d      33
       2f      33
+      32      34
       37      39
       3a      39
       3c      39
@@ -88,7 +89,7 @@ Lines mapping:
 49 <-> 30
 52 <-> 33
 53 <-> 34
+54 <-> 35
 58 <-> 40
 Not mapped:
 39
-54
