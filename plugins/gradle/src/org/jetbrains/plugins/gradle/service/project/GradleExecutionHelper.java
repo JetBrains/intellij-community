@@ -35,6 +35,7 @@ import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -443,7 +444,18 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  private static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection) {
+  public static GradleVersion getGradleVersion(@NotNull ProjectConnection connection) {
+    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
+
+    GradleVersion gradleVersion = null;
+    if (buildEnvironment != null) {
+      gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    }
+    return gradleVersion;
+  }
+
+  @Nullable
+  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection) {
     try {
       return connection.getModel(BuildEnvironment.class);
     }

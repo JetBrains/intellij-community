@@ -55,10 +55,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     AllModels allModels = new AllModels(ideaProject);
-
-    // TODO ask gradle guys why there is always null got for BuildEnvironment model
-    //allModels.setBuildEnvironment(controller.findModel(BuildEnvironment.class));
-
     addExtraProject(controller, allModels, null);
     for (IdeaModule module : ideaProject.getModules()) {
       addExtraProject(controller, allModels, module);

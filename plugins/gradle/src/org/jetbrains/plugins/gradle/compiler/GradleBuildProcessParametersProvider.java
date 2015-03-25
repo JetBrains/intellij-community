@@ -80,7 +80,7 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
     File[] children = FileUtil.notNullize(gradleLibDir.listFiles());
     for (File child : children) {
       final String fileName = child.getName();
-      if (fileName.endsWith(".jar") && !fileName.startsWith("logback-") && child.isFile()) {
+      if (fileName.endsWith(".jar") && child.isFile()) {
         classpath.add(child.getAbsolutePath());
       }
     }

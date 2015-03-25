@@ -32,11 +32,13 @@ import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
+import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -118,11 +120,17 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
           }
         }
 
+        GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection);
         BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions, scriptParameters);
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
-        final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
-        launcher.withCancellationToken(cancellationTokenSource.token());
-        myCancellationMap.put(id, cancellationTokenSource);
+
+        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
+          myCancellationMap.put(id, new UnsupportedCancellationToken());
+        } else {
+          final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+          launcher.withCancellationToken(cancellationTokenSource.token());
+          myCancellationMap.put(id, cancellationTokenSource);
+        }
         try {
           launcher.run();
         }
