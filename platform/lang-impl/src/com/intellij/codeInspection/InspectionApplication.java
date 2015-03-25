@@ -41,6 +41,10 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -165,7 +169,10 @@ public class InspectionApplication {
 
       final AnalysisScope scope;
       if (mySourceDirectory == null) {
-        scope = new AnalysisScope(myProject);
+        final String scopeName = System.getProperty("idea.analyze.scope");
+        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(myProject, scopeName) : null;
+        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(myProject, namedScope), myProject) 
+                                   : new AnalysisScope(myProject);
       }
       else {
         mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
