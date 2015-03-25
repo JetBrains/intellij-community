@@ -18,12 +18,12 @@ public enum TestEnum {
    }// 30
 
    private TestEnum() {
-      this("?");
-   }// 34
+      this("?");// 34
+   }
 
    private TestEnum(@Deprecated String var3) {
-      this.s = var3;
-   }// 35
+      this.s = var3;// 35
+   }
 }
 
 class 'pkg/TestEnum$1' {
@@ -59,5 +59,5 @@ Lines mapping:
 22 <-> 7
 27 <-> 12
 30 <-> 18
-34 <-> 22
-35 <-> 26
+34 <-> 21
+35 <-> 25
