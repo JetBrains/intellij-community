@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1038,7 +1038,7 @@ public class FinallyProcessor {
 
       // new empty block
       BasicBlock emptyblock = new BasicBlock(++graph.last_id);
-      emptyblock.setSeq(new SimpleInstructionSequence());
+
       graph.getBlocks().addWithKey(emptyblock, emptyblock.id);
 
       // add to ranges if necessary
