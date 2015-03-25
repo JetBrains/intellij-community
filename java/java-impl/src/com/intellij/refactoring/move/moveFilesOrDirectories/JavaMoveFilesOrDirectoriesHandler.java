@@ -51,6 +51,18 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
   }
 
   @Override
+  public boolean canMove(PsiElement[] elements, PsiElement targetContainer) {
+    if (elements.length > 0) {
+      final Project project = elements[0].getProject();
+      final PsiElement[] adjustForMove = adjustForMove(project, elements, targetContainer);
+      if (adjustForMove != null) {
+        return super.canMove(adjustForMove, targetContainer);
+      }
+    }
+    return super.canMove(elements, targetContainer);
+  }
+
+  @Override
   public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
     sourceElements = super.adjustForMove(project, sourceElements, targetElement);
     if (sourceElements == null) {
