@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 @SomeQueue
 public class ZipperUpdater {
@@ -44,11 +45,11 @@ public class ZipperUpdater {
     myAlarm = new Alarm(threadToUse, parentDisposable);
   }
 
-  public void queue(final Runnable runnable) {
+  public void queue(@NotNull final Runnable runnable) {
     queue(runnable, false);
   }
 
-  public void queue(final Runnable runnable, final boolean urgent) {
+  public void queue(@NotNull final Runnable runnable, final boolean urgent) {
     synchronized (myLock) {
       if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;
