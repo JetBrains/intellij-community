@@ -536,10 +536,9 @@ public class MatcherImpl {
       this.file = file;
     }
 
-    @Nullable
     @Override
     protected List<PsiElement> getPsiElementsToProcess() {
-      PsiElement file = this.file;
+      final PsiElement file = this.file;
       this.file = null;
       return new SmartList<PsiElement>(file);
     }
@@ -547,7 +546,7 @@ public class MatcherImpl {
 
   private abstract class MatchOneFile implements Runnable {
     public void run() {
-      List<PsiElement> files = getPsiElementsToProcess();
+      final List<PsiElement> files = getPsiElementsToProcess();
 
       if (progress!=null) {
         progress.setFraction((double)scannedFilesCount/totalFilesToScan);
@@ -603,7 +602,7 @@ public class MatcherImpl {
       }
     }
 
-    protected abstract @Nullable List<PsiElement> getPsiElementsToProcess();
+    protected abstract List<PsiElement> getPsiElementsToProcess();
   }
 
   // Initiates the matching process for given element
@@ -703,19 +702,18 @@ public class MatcherImpl {
       myOurPatternLanguage2 = ourPatternLanguage2;
     }
 
-    @Nullable
     @Override
     protected List<PsiElement> getPsiElementsToProcess() {
       return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiElement>>() {
         @Override
         public List<PsiElement> compute() {
-          PsiFile file = PsiManager.getInstance(project).findFile(myFileOrDir);
+          final PsiFile file = PsiManager.getInstance(project).findFile(myFileOrDir);
           if (file == null) {
-            return null;
+            return Collections.emptyList();
           }
 
           final FileViewProvider viewProvider = file.getViewProvider();
-          List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
+          final List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
 
           for(Language lang: viewProvider.getLanguages()) {
             if (myProfile.isMyFile(file, lang, myOurPatternLanguage, myOurPatternLanguage2)) {
