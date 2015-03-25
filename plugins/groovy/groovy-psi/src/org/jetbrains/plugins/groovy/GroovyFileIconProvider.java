@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public class GroovyFileIconProvider implements FileIconProvider {
 
   @Nullable
@@ -45,16 +42,14 @@ public class GroovyFileIconProvider implements FileIconProvider {
     if (!(psiFile instanceof GroovyFile)) return null;
     final GroovyFile file = (GroovyFile)psiFile;
     final Icon icon;
-    if (GrFileIndexUtil.isGroovySourceFile(file)) {
-      if (file.isScript()) {
-        icon = GroovyScriptTypeDetector.getIcon(file);
-      }
-      else {
-        final GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
-        icon = typeDefinitions.length > 0
-               ? typeDefinitions[0].getIcon(flags)
-               : JetgroovyIcons.Groovy.Groovy_16x16;
-      }
+    if (file.isScript()) {
+      icon = GroovyScriptTypeDetector.getIcon(file);
+    }
+    else if (GrFileIndexUtil.isGroovySourceFile(file)) {
+      final GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
+      icon = typeDefinitions.length > 0
+             ? typeDefinitions[0].getIcon(flags)
+             : JetgroovyIcons.Groovy.Groovy_16x16;
     }
     else {
       icon = JetgroovyIcons.Groovy.Groovy_outsideSources;
