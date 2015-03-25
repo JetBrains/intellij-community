@@ -207,7 +207,36 @@ class InProcessGroovyc implements GroovycFlavor {
       return pair.second;
     }
 
-    final ClassDependencyLoader checkWellFormed = new ClassDependencyLoader();
+    final ClassDependencyLoader checkWellFormed = new ClassDependencyLoader() {
+      @Override
+      protected void loadClassDependencies(Class aClass) throws ClassNotFoundException {
+        if (!isCompilerCoreClass(aClass.getName()) || !(aClass.getClassLoader() instanceof UrlClassLoader)) {
+          super.loadClassDependencies(aClass);
+        }
+      }
+
+      private boolean isCompilerCoreClass(String name) {
+        if (name.startsWith("groovyjarjar")) {
+          return true;
+        }
+        if (name.startsWith("org.codehaus.groovy.")) {
+          String tail = name.substring("org.codehaus.groovy.".length());
+          if (tail.startsWith("ast") ||
+              tail.startsWith("classgen") ||
+              tail.startsWith("tools.javac") ||
+              tail.startsWith("antlr") ||
+              tail.startsWith("vmplugin") ||
+              tail.startsWith("reflection") ||
+              tail.startsWith("control")) {
+            return true;
+          }
+          if (tail.startsWith("runtime") && name.contains("GroovyMethods")) {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
     UrlClassLoader groovyAllLoader = UrlClassLoader.build().
       urls(toUrls(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyAll)))).allowLock().
         useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
