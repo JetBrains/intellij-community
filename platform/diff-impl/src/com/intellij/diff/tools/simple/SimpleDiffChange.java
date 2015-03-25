@@ -312,12 +312,14 @@ public class SimpleDiffChange {
 
       boolean isEditable = DiffUtil.isEditable(mySide.select(myEditor1, myEditor2));
       boolean isOtherEditable = DiffUtil.isEditable(mySide.other().select(myEditor1, myEditor2));
+      boolean isAppendable = myFragment.getStartLine1() != myFragment.getEndLine1() &&
+                             myFragment.getStartLine2() != myFragment.getEndLine2();
 
       if (myCtrlPressed && myShiftPressed) return null;
       if ((myShiftPressed || !isOtherEditable) && isEditable) {
         return createRevertRenderer(mySide);
       }
-      if (myCtrlPressed) {
+      if (myCtrlPressed && isAppendable) {
         return createAppendRenderer(mySide);
       }
       return createApplyRenderer(mySide);
