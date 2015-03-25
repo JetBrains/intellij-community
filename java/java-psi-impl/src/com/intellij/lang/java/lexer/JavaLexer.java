@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -306,8 +306,9 @@ public class JavaLexer extends LexerBase {
       myTokenType = myFlexLexer.advance();
       myTokenEndOffset = myFlexLexer.getTokenEnd();
     }
-    catch (IOException e) {
-      // Can't be
+    catch (IOException e) { /* impossible */ }
+    catch (Error e) {
+      throw new IllegalArgumentException("Non-parsable text `" + myBuffer + "`");
     }
   }
 
