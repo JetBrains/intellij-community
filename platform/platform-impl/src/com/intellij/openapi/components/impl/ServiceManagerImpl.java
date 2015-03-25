@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ public class ServiceManagerImpl implements BaseComponent {
       @Override
       public void extensionAdded(@NotNull final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
-          ComponentAdapter oldAdapter =
-            picoContainer.unregisterComponent(descriptor.getInterface());// Allow to re-define service implementations in plugins.
+          // Allow to re-define service implementations in plugins.
+          ComponentAdapter oldAdapter = picoContainer.unregisterComponent(descriptor.getInterface());
           if (oldAdapter == null) {
             throw new RuntimeException("Service: " + descriptor.getInterface() + " doesn't override anything");
           }
