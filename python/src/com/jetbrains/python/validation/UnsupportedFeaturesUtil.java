@@ -41,8 +41,8 @@ public class UnsupportedFeaturesUtil {
   public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<LanguageLevel, Set<String>>();
   public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<LanguageLevel, Set<String>>();
   public static Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<String, Map<LanguageLevel, Set<String>>>();
+  public static final List<String> ALL_LANGUAGE_LEVELS = new ArrayList<String>();
 
-  public static Vector<String> ALL_LANGUAGE_LEVELS;
   static {
     try {
       fillMaps();
@@ -52,7 +52,9 @@ public class UnsupportedFeaturesUtil {
       Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
       log.error("Cannot find \"versions.xml\". " + e.getMessage());
     }
-    fillAllLanguageLeves();
+    for (LanguageLevel level : LanguageLevel.ALL_LEVELS) {
+      ALL_LANGUAGE_LEVELS.add(level.toString());
+    }
   }
 
   private static void fillTestCaseMethods() throws IOException {
@@ -70,19 +72,6 @@ public class UnsupportedFeaturesUtil {
     finally {
       reader.close();
     }
-  }
-
-  private static void fillAllLanguageLeves() {
-    ALL_LANGUAGE_LEVELS = new Vector<String>();
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON24.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON25.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON26.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON27.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON30.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON31.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON32.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON33.toString());
-    ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON34.toString());
   }
 
   private static void fillMaps() throws IOException {
