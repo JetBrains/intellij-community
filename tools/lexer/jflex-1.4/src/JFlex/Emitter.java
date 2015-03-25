@@ -804,7 +804,14 @@ final public class Emitter {
   }
   
   private void emitConstructorDecl(boolean printCtorArgs) {
- 
+    println("  /**");
+    println("   * Creates a new scanner");
+    if (scanner.emitInputStreamCtor) {
+      println("   * There is also a java.io.InputStream version of this constructor.");
+    }
+    println("   *");
+    println("   * @param   in  the java.io.Reader to read input from.");
+    println("   */");
     String warn = 
         "// WARNING: this is a default constructor for " +
         "debug/standalone only. Has no custom parameters or init code.";
@@ -836,38 +843,40 @@ final public class Emitter {
     println("  }");
     println();
 
-    
-    println("  /**");
-    println("   * Creates a new scanner.");
-    println("   * There is also java.io.Reader version of this constructor.");
-    println("   *");
-    println("   * @param   in  the java.io.Inputstream to read input from.");
-    println("   */");
-    if (!printCtorArgs) println(warn);
-    
-    print("  ");
-    if ( scanner.isPublic ) print("public ");    
-    print( getBaseName(scanner.className) );      
-    print("(java.io.InputStream in");
-    if (printCtorArgs) emitCtorArgs();
-    print(")");
-    
-    if ( scanner.initThrow != null && printCtorArgs ) {
-      print(" throws ");
-      print( scanner.initThrow );
-    }
-    
-    println(" {");    
 
-    print("    this(new java.io.InputStreamReader(in)");
-    if (printCtorArgs) {
-      for (int i=0; i < scanner.ctorArgs.size(); i++) {
-        print(", "+scanner.ctorArgs.elementAt(i));
-      }      
+    if (scanner.emitInputStreamCtor) {
+      println("  /**");
+      println("   * Creates a new scanner.");
+      println("   * There is also java.io.Reader version of this constructor.");
+      println("   *");
+      println("   * @param   in  the java.io.Inputstream to read input from.");
+      println("   */");
+      if (!printCtorArgs) println(warn);
+
+      print("  ");
+      if (scanner.isPublic) print("public ");
+      print(getBaseName(scanner.className));
+      print("(java.io.InputStream in");
+      if (printCtorArgs) emitCtorArgs();
+      print(")");
+
+      if (scanner.initThrow != null && printCtorArgs) {
+        print(" throws ");
+        print(scanner.initThrow);
+      }
+
+      println(" {");
+
+      print("    this(new java.io.InputStreamReader(in)");
+      if (printCtorArgs) {
+        for (int i = 0; i < scanner.ctorArgs.size(); i++) {
+          print(", " + scanner.ctorArgs.elementAt(i));
+        }
+      }
+      println(");");
+
+      println("  }");
     }
-    println(");");
-    
-    println("  }");
   }
 
   private void emitCtorArgs() {
@@ -1219,11 +1228,14 @@ final public class Emitter {
         println("            if (zzFin.length <= " + zzBufferLLength() + ") { zzFin = new boolean[" + zzBufferLLength() + "+1]; }");
         println("            boolean zzFinL[] = zzFin;");
         println("            while (zzFState != -1 && zzFPos < zzMarkedPos) {");
-        println("              if ((zzAttrL[zzFState] & 1) == 1) { zzFinL[zzFPos] = true; } ");
+        println("              zzFinL[zzFPos] = ((zzAttrL[zzFState] & 1) == 1);");
         println("              zzInput = " + zzBufferLAccess("zzFPos++") + ";");
         println("              zzFState = zzTransL[ zzRowMapL[zzFState] + zzCMapL[zzInput] ];");
         println("            }");
-        println("            if (zzFState != -1 && (zzAttrL[zzFState] & 1) == 1) { zzFinL[zzFPos] = true; } ");
+        println("            if (zzFState != -1) { zzFinL[zzFPos++] = ((zzAttrL[zzFState] & 1) == 1); } ");
+        println("            while (zzFPos <= zzMarkedPos) {");
+        println("              zzFinL[zzFPos++] = false;");
+        println("            }");
         println();                
         println("            zzFState = "+dfa.entryState[action.getEntryState()+1]+";");
         println("            zzFPos = zzMarkedPos;");

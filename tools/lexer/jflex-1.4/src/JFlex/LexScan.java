@@ -1957,7 +1957,8 @@ public final class LexScan implements sym, java_cup.runtime.Scanner {
   boolean caseless;
   boolean inclusive_states;
   boolean eofclose;
-    
+  boolean emitInputStreamCtor = Options.emitInputStreamCtor;
+
   String isImplementing;
   String isExtending;
   String className = "Yylex";

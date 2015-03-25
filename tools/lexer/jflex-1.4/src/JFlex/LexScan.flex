@@ -100,6 +100,7 @@ import java.util.Stack;
   boolean caseless;
   boolean inclusive_states;
   boolean eofclose;
+  boolean emitInputStreamCtor = Options.emitInputStreamCtor;
     
   String isImplementing;
   String isExtending;
