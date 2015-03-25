@@ -7,9 +7,9 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/junit-4.12-src.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/src/hamcrest-1.3-src.zip!/hamcrest-core/src/main/java" />
       <root url="jar://$PROJECT_DIR$/lib/src/hamcrest-1.3-src.zip!/hamcrest-library/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/junit-4.12-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
