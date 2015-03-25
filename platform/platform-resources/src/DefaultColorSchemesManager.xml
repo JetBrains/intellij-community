@@ -1335,6 +1335,12 @@
           <option name="FOREGROUND" value="bbbbbb" />
         </value>
       </option>
+      <option name="CONSOLE_USER_INPUT">
+        <value>
+          <option name="FOREGROUND" value="007f00"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
       <option name="CONSOLE_OUTPUT">
         <value>
           <option name="BACKGROUND" value="454545" />
