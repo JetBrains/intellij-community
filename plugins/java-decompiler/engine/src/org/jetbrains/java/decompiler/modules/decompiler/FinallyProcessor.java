@@ -889,13 +889,16 @@ public class FinallyProcessor {
     if (seqPattern.length() < seqSample.length()) { // split in two blocks
 
       SimpleInstructionSequence seq = new SimpleInstructionSequence();
+      LinkedList<Integer> oldOffsets = new LinkedList<Integer>();
       for (int i = seqSample.length() - 1; i >= seqPattern.length(); i--) {
         seq.addInstruction(0, seqSample.getInstr(i), -1);
+        oldOffsets.addFirst(sample.getOldOffset(i));
         seqSample.removeInstruction(i);
       }
 
       BasicBlock newblock = new BasicBlock(++graph.last_id);
       newblock.setSeq(seq);
+      newblock.getInstrOldOffsets().addAll(oldOffsets);
 
       List<BasicBlock> lstTemp = new ArrayList<BasicBlock>();
       lstTemp.addAll(sample.getSuccs());
