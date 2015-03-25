@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -48,7 +49,7 @@ import java.util.List;
  * @author dcheryasov
  */
 public class ImportFromExistingAction implements QuestionAction {
-  PyElement myTarget;
+  PsiElement myTarget;
   List<ImportCandidateHolder> mySources; // list of <import, imported_item>
   String myName;
   boolean myUseQualifiedImport;
@@ -61,7 +62,7 @@ public class ImportFromExistingAction implements QuestionAction {
    * @param name relevant name ot the target element (e.g. of identifier in an expression).
    * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
    */
-  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, @NotNull String name,
+  public ImportFromExistingAction(@NotNull PsiElement target, @NotNull List<ImportCandidateHolder> sources, @NotNull String name,
                                   boolean useQualified, boolean importLocally) {
     myTarget = target;
     mySources = sources;
@@ -160,11 +161,12 @@ public class ImportFromExistingAction implements QuestionAction {
       if (myImportLocally) {
         AddImportHelper.addLocalImportStatement(myTarget, myName);
       } else {
-        AddImportHelper.addImportStatement(file, myName, null, priority, null);
+        AddImportHelper.addImportStatement(file, myName, item.getAsName(), priority, null);
       }
     }
     else {
-      final String qualifiedName = item.getPath().toString();
+      final QualifiedName path = item.getPath();
+      final String qualifiedName = path != null ? path.toString() : "";
       if (myUseQualifiedImport) {
         String nameToImport = qualifiedName;
         if (item.getImportable() instanceof PsiFileSystemItem) {
@@ -174,7 +176,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalImportStatement(myTarget, nameToImport);
         }
         else {
-          AddImportHelper.addImportStatement(file, nameToImport, null, priority, null);
+          AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, null);
         }
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
@@ -183,7 +185,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalFromImportStatement(myTarget, qualifiedName, myName);
         }
         else {
-          AddImportHelper.addFromImportStatement(file, qualifiedName, myName, null, priority, null);
+          AddImportHelper.addFromImportStatement(file, qualifiedName, myName, item.getAsName(), priority, null);
         }
       }
     }
@@ -209,7 +211,7 @@ public class ImportFromExistingAction implements QuestionAction {
     PsiElement src = item.getImportable();
     new WriteCommandAction(src.getProject(), PyBundle.message("ACT.CMD.use.import"), myTarget.getContainingFile()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         doIt(item);
       }
     }.execute();

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.move;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -157,15 +158,22 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       final PsiElement newElementBody = addToFile(oldElementBody, destination, usages);
       final PsiNamedElement newElement = PyMoveModuleMembersHelper.extractNamedElement(newElementBody);
       assert newElement != null;
+      final List<PsiFile> usageFilesToOptimize = Lists.newArrayList();
       for (UsageInfo usage : usages) {
         final PsiElement usageElement = usage.getElement();
         if (usageElement != null) {
-          updateUsage(usageElement, element, newElement);
+          final boolean optimize = updateUsage(usageElement, element, newElement);
+          if (optimize) {
+            usageFilesToOptimize.add(usageElement.getContainingFile());
+          }
         }
       }
       PyClassRefactoringUtil.restoreNamedReferences(newElementBody, element, myElements);
       // TODO: Remove extra empty lines after the removed element
       oldElementBody.delete();
+      for (PsiFile usageFile : usageFilesToOptimize) {
+        PyClassRefactoringUtil.optimizeImports(usageFile);
+      }
       if (file != null) {
         PyClassRefactoringUtil.optimizeImports(file);
       }
@@ -205,12 +213,12 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void updateUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement oldElement, @NotNull PsiNamedElement newElement) {
+  private static boolean updateUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement oldElement, @NotNull PsiNamedElement newElement) {
     // TODO: Respect the qualified import style
     if (usage instanceof PyQualifiedExpression) {
       PyQualifiedExpression expr = (PyQualifiedExpression)usage;
       if (oldElement instanceof PyClass && PyNames.INIT.equals(expr.getName())) {
-        return;
+        return false;
       }
       if (expr.isQualified()) {
         final PyElementGenerator generator = PyElementGenerator.getInstance(expr.getProject());
@@ -221,7 +229,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
     if (usage instanceof PyStringLiteralExpression) {
       for (PsiReference ref : usage.getReferences()) {
-        if ((ref instanceof PyDunderAllReference)) {
+        if (ref instanceof PyDunderAllReference) {
           usage.delete();
         }
         else {
@@ -237,16 +245,16 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
       }
       final PsiFile usageFile = usage.getContainingFile();
-      if (usageFile == oldElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElement, usage, false)) {
+      final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(oldElement);
+      if (usageFile == oldElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElementBody, usage, false)) {
         PyClassRefactoringUtil.insertImport(oldElement, newElement);
       }
       if (resolvesToLocalStarImport(usage)) {
         PyClassRefactoringUtil.insertImport(usage, newElement);
-        if (usageFile != null) {
-          PyClassRefactoringUtil.optimizeImports(usageFile);
-        }
+        return usageFile != null;
       }
     }
+    return false;
   }
 
 
