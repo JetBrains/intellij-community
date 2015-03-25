@@ -7,21 +7,28 @@ public class PyPackageAliasesProvider {
   private PyPackageAliasesProvider() {
   }
 
-  public static final Map<String, String> commonAliases = new HashMap<String, String>();
+  public static final Map<String, String> commonImportAliases = new HashMap<String, String>();
+  public static final Map<String, String> packageAliases = new HashMap<String, String>();
 
   static {
-    commonAliases.put("np", "numpy");
-    commonAliases.put("pl", "pylab");
-    commonAliases.put("p", "pylab");
-    commonAliases.put("sp", "scipy");
-    commonAliases.put("pd", "pandas");
-    commonAliases.put("sym", "sympy");
-    commonAliases.put("sm", "statmodels");
-    commonAliases.put("nx", "networkx");
-    commonAliases.put("sk", "sklearn");
+    commonImportAliases.put("np", "numpy");
+    commonImportAliases.put("pl", "pylab");
+    commonImportAliases.put("p", "pylab");
+    commonImportAliases.put("sp", "scipy");
+    commonImportAliases.put("pd", "pandas");
+    commonImportAliases.put("sym", "sympy");
+    commonImportAliases.put("sm", "statmodels");
+    commonImportAliases.put("nx", "networkx");
+    commonImportAliases.put("sk", "sklearn");
 
-    commonAliases.put("plt", "matplotlib.pyplot");
-    commonAliases.put("mpimg", "matplotlib.image");
-    commonAliases.put("mimg", "matplotlib.image");
+    commonImportAliases.put("plt", "matplotlib.pyplot");
+    commonImportAliases.put("mpimg", "matplotlib.image");
+    commonImportAliases.put("mimg", "matplotlib.image");
+  }
+
+  static {
+    packageAliases.put("sklearn", "scikit-learn");
+    packageAliases.put("Crypto", "PyCrypto");
+    packageAliases.put("cv2", "pyopencv");
   }
 }

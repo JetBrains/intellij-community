@@ -881,7 +881,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, packageName, node));
           }
           else {
-            final String packageAlias = PyPackageAliasesProvider.commonAliases.get(packageName);
+            final String packageAlias = PyPackageAliasesProvider.commonImportAliases.get(packageName);
             if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
               actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageAlias, packageName, node));
             }
