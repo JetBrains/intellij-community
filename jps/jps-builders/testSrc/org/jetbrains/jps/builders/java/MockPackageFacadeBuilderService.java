@@ -37,6 +37,9 @@ public class MockPackageFacadeBuilderService extends BuilderService {
     catch (ClassNotFoundException e) {
       return Collections.emptyList();
     }
+    catch (NoClassDefFoundError e) {
+      return Collections.emptyList();
+    }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
