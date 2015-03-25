@@ -101,6 +101,8 @@ public class BytecodeMappingTracer {
     }
 
     Map<Integer, Integer> res = new HashMap<Integer, Integer>();
+
+    // first match offsets from line number table
     int[] data = lineNumberTable.getRawData();
     for (int i = 0; i < data.length; i += 2) {
       int originalOffset = data[i];
@@ -113,9 +115,11 @@ public class BytecodeMappingTracer {
         unmappedLines.add(originalLine);
       }
     }
+
+    // now match offsets from decompiler mapping
     for (Entry<Integer, Integer> entry : mapping.entrySet()) {
       int originalLine = lineNumberTable.findLineNumber(entry.getKey());
-      if (originalLine > -1) {
+      if (originalLine > -1 && !res.containsKey(originalLine)) {
         res.put(originalLine, entry.getValue());
         unmappedLines.remove(originalLine);
       }

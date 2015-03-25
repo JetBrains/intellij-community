@@ -12,9 +12,9 @@ class i implements bg {
    private final b b;
 
    i(b var1, j var2) {
-      this.b = var1;
+      this.b = var1;// 1
       this.a = var2;
-   }// 1
+   }
 
    public void a(c var1, k var2, boolean var3) {
       File var4 = this.a.b().a(var1);// 2
@@ -50,7 +50,7 @@ class 'a/a/a/a/e/f/i' {
 
 Lines mapping:
 0 <-> 25
-1 <-> 17
+1 <-> 15
 2 <-> 20
 3 <-> 21
 4 <-> 22
