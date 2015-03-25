@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,15 +173,14 @@ public class JavaStackFrame extends XStackFrame {
       }
 
       final Location location = myDescriptor.getLocation();
-      LOG.assertTrue(location != null);
 
       final ObjectReference thisObjectReference = myDescriptor.getThisObject();
       if (thisObjectReference != null) {
         ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(null, thisObjectReference);
         children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
-      else {
-        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.method().declaringType());
+      else if (location != null) {
+        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.declaringType());
         if (staticDecriptor.isExpandable()) {
           children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
         }
@@ -214,7 +213,8 @@ public class JavaStackFrame extends XStackFrame {
       if (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
         if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute())  {
           final ReferenceType thisRefType = thisObjectReference.referenceType();
-          if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
+          if (thisRefType instanceof ClassType && location != null
+              && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
             final ClassType clsType = (ClassType)thisRefType;
             for (Field field : clsType.fields()) {
               if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
