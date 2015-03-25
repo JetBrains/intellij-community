@@ -95,7 +95,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return null;
     }
 
-    PsiElementFinder[] finders = finders();
+    PsiElementFinder[] finders = filteredFinders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     for (PsiElementFinder finder : finders) {
@@ -136,7 +136,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return findClassesInDumbMode(qualifiedName, scope);
     }
 
-    PsiElementFinder[] finders = finders();
+    PsiElementFinder[] finders = filteredFinders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     List<PsiClass> result = null;
@@ -167,6 +167,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
   }
 
+  /**
+   * Return an array of available psi element finders.
+   *
+   * Use {@link #filteredFinders()} to get only dumb mode aware finders.
+   *
+   * @return an array of available psi element finders
+   */
   @NotNull
   private PsiElementFinder[] finders() {
     PsiElementFinder[] answer = myElementFinders;
@@ -213,6 +220,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return null;
   }
 
+  /**
+   * Returns an array of dumb mode aware psi element finders.
+   *
+   * @return an array of dumb mode aware psi element finders
+   */
   @NotNull
   private PsiElementFinder[] filteredFinders() {
     DumbService dumbService = DumbService.getInstance(getProject());
