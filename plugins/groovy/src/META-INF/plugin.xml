@@ -230,7 +230,6 @@
 
     <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
-
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition"
@@ -490,7 +489,7 @@
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
-    <compileServer.plugin classpath="groovy-jps-plugin.jar"/>
+    <compileServer.plugin classpath="groovy-jps-plugin.jar;groovy-rt-constants.jar"/>
 
     <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>
     <todoIndexer filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyTodoIndexer"/>
@@ -556,7 +555,7 @@
     <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyModuleConverterProvider"/>
     <project.converterProvider implementation="org.jetbrains.plugins.groovy.config.GroovyRunConfigurationConverterProvider"/>
 
-    <iconProvider implementation="org.jetbrains.plugins.groovy.GroovyIconProvider"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.groovy.GroovyFileIconProvider"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>

@@ -82,7 +82,11 @@ public abstract class PsiClassType extends PsiType {
 
   public boolean equals(Object obj) {
     if (this == obj) return true;
-    if (!(obj instanceof PsiClassType)) return false;
+    if (!(obj instanceof PsiClassType)) {
+      return obj instanceof PsiCapturedWildcardType && 
+             ((PsiCapturedWildcardType)obj).getLowerBound().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+             equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+    }
     PsiClassType otherClassType = (PsiClassType)obj;
 
     String className = getClassName();

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 /**
  * @author Max Medvedev
@@ -36,7 +37,7 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!(file instanceof GroovyFileBase)) return null;
+    if (!GrFileIndexUtil.isGroovySourceFile(file)) return null;
     return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)file);
   }
 }

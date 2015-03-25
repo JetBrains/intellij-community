@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -124,7 +125,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private void doRevert(@NotNull File path, boolean recursive) throws VcsException {
-    mySvnVcs.getFactory(path).createRevertClient().revert(new File[]{path}, Depth.allOrFiles(recursive), null);
+    mySvnVcs.getFactory(path).createRevertClient().revert(Collections.singletonList(path), Depth.allOrFiles(recursive), null);
   }
 
   private boolean is17OrGreaterCopy(@NotNull File file, @NotNull Info info) throws VcsException {

@@ -18,13 +18,17 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 /**
  * @author ilyas
@@ -64,5 +68,15 @@ public abstract class GrStubElementBase<T extends StubElement> extends StubBased
     }
 
     return getParentByTree();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getResolveScope() {
+    final PsiFile containingFile = getContainingFile();
+    final GlobalSearchScope elementScope = super.getResolveScope();
+    return GrFileIndexUtil.isGroovySourceFile(containingFile)
+           ? elementScope
+           : GlobalSearchScope.fileScope(containingFile).union(elementScope);
   }
 }

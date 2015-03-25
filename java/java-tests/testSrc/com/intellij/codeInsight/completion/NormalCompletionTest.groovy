@@ -1493,6 +1493,14 @@ class Bar {
     myFixture.assertPreferredCompletionItems(0, "xcreateZoo", "xcreateElephant");
   }
 
+  public void testNoInaccessibleCompiledElements() {
+    configure()
+    myFixture.complete(CompletionType.BASIC, 2)
+    checkResultByFile(getTestName(false) + ".java");
+    assertEmpty(myItems);
+    assertNull(getLookup());
+  }
+
   public void "test code cleanup during completion generation"() {
     myFixture.configureByText "a.java", "class Foo {int i; ge<caret>}"
     myFixture.enableInspections(new UnqualifiedFieldAccessInspection())

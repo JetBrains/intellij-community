@@ -12,23 +12,24 @@ class i implements bg {
    private final b b;
 
    i(b var1, j var2) {
-      this.b = var1;
-      this.a = var2;// 1
+      this.b = var1;// 1
+      this.a = var2;
    }
 
    public void a(c var1, k var2, boolean var3) {
       File var4 = this.a.b().a(var1);// 2
       b.a(this.b).add(var4);// 3
-   }
+   }// 4
 
    public void a(a.a.a.a.c.b var1) {
-   }
+   }// 0
 }
 
 class 'a/a/a/a/e/f/i' {
    method '<init> (La/a/a/a/e/f/b;La/a/a/a/c/j;)V' {
       2      14
       7      15
+      e      16
    }
 
    method 'a (La/a/a/a/c/c;La/a/a/a/a/k;Z)V' {
@@ -39,10 +40,17 @@ class 'a/a/a/a/e/f/i' {
       12      20
       15      20
       1a      20
+      20      21
+   }
+
+   method 'a (La/a/a/a/c/b;)V' {
+      0      24
    }
 }
 
 Lines mapping:
-1 <-> 16
+0 <-> 25
+1 <-> 15
 2 <-> 20
 3 <-> 21
+4 <-> 22

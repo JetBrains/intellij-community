@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDictLiteralExpression {
+public class PyDictLiteralExpressionImpl extends PySequenceExpressionImpl implements PyDictLiteralExpression {
   private static final TokenSet KEY_VALUE_EXPRESSIONS = TokenSet.create(PyElementTypes.KEY_VALUE_EXPRESSION);
 
   public PyDictLiteralExpressionImpl(ASTNode astNode) {

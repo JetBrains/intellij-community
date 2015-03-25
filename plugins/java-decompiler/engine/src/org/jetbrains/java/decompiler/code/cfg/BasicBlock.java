@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,15 +44,11 @@ public class BasicBlock implements IGraphNode {
 
   private List<BasicBlock> succs = new ArrayList<BasicBlock>();
 
-  private List<Integer> instrOldOffsets = new ArrayList<Integer>();
+  private final List<Integer> instrOldOffsets = new ArrayList<Integer>();
 
   private List<BasicBlock> predExceptions = new ArrayList<BasicBlock>();
 
   private List<BasicBlock> succExceptions = new ArrayList<BasicBlock>();
-
-
-  public BasicBlock() {
-  }
 
   public BasicBlock(int id) {
     this.id = id;
@@ -63,11 +59,10 @@ public class BasicBlock implements IGraphNode {
   // *****************************************************************************
 
   public Object clone() {
+    BasicBlock block = new BasicBlock(id);
 
-    BasicBlock block = new BasicBlock();
-    block.id = id;
     block.setSeq(seq.clone());
-    block.setInstrOldOffsets(new ArrayList<Integer>(instrOldOffsets));
+    block.instrOldOffsets.addAll(instrOldOffsets);
 
     return block;
   }
@@ -218,10 +213,6 @@ public class BasicBlock implements IGraphNode {
 
   public List<Integer> getInstrOldOffsets() {
     return instrOldOffsets;
-  }
-
-  public void setInstrOldOffsets(List<Integer> instrInds) {
-    this.instrOldOffsets = instrInds;
   }
 
   public List<? extends IGraphNode> getPredecessors() {

@@ -7,7 +7,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,8 +32,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonMultipleObjectsDeserializer;
-import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonMultipleObjectsDeserializer;
+import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
 
 /**
  * @author Mikhail Golubev
@@ -44,7 +44,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NonNls public static final String REST_API_PATH_PREFIX = "/api/v3/";
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
-  public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   public static final TypeToken<List<GitlabProject>> LIST_OF_PROJECTS_TYPE = new TypeToken<List<GitlabProject>>() {
   };
   public static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {

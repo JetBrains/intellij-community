@@ -9,6 +9,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Bas Leijdekkers
@@ -101,7 +103,7 @@ public class StringToConstraintsTransformerTest {
     test("'a:[aap()]");
   }
 
-  @Test(expected = UnsupportedPatternException.class)
+  @Test(expected = MalformedPatternException.class)
   public void testIncompleteCondition() {
     test("'a:[regex(]");
   }
@@ -151,11 +153,22 @@ public class StringToConstraintsTransformerTest {
   }
 
   @Test
-  public void testScriptEscaping() {
-    test("[within( \"if ('_a:[regex( .*e.* )\\]) { '_st*; }\" )]'_type 'a = '_b;");
+  public void testNestedPatterns() {
+    test("[within( \"if ('_a:[regex( .*e.* )]) { '_st*; }\" )]'_type 'a = '_b;");
     assertEquals("$type$ $a$ = $b$;", myOptions.getSearchPattern());
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     assertEquals("\"if ('_a:[regex( .*e.* )]) { '_st*; }\"", constraint.getWithinConstraint());
+
+    test("[!within( \"<'_tag:[regex( ul|ol )] />\" )]<li />");
+    assertEquals("<li />", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint2 = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    assertEquals("\"<'_tag:[regex( ul|ol )] />\"", constraint2.getWithinConstraint());
+    assertTrue(constraint2.isInvertWithinConstraint());
+
+    test("[within( \"if ('_a:[regex( \".*\" )]) { '_st*; }\" )]'_type 'a = '_b;");
+    assertEquals("$type$ $a$ = $b$;", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint3 = myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    assertEquals("\"if ('_a:[regex( \".*\" )]) { '_st*; }\"", constraint3.getWithinConstraint());
   }
 
   @Test
@@ -184,6 +197,46 @@ public class StringToConstraintsTransformerTest {
     assertEquals("'\\n'$z$", myOptions.getSearchPattern());
     test("'\\u0123''a");
     assertEquals("'\\u0123'$a$", myOptions.getSearchPattern());
+  }
+
+  @Test
+  public void testComplexRegexes() {
+    test("'_t:[regex( *Object\\[\\] ) ] '_t2");
+    assertEquals("$t$ $t2$", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint("t");
+    assertTrue(constraint.isWithinHierarchy());
+    assertEquals("Object\\[\\]", constraint.getRegExp());
+
+    test("// 'Comment:[regex( .*(?:comment).* )]");
+    assertEquals("// $Comment$", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint1 = myOptions.getVariableConstraint("Comment");
+    assertEquals(".*(?:comment).*", constraint1.getRegExp());
+  }
+
+  @Test
+  public void testInvert() {
+    test("'a:[!read&&write]");
+    assertEquals("$a$", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint("a");
+    assertTrue(constraint.isReadAccess());
+    assertTrue(constraint.isInvertReadAccess());
+    assertTrue(constraint.isWriteAccess());
+    assertFalse(constraint.isInvertWriteAccess());
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testAmpersandsExpected() {
+    test("'a:[read write]");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testUnexpectedAmpersands() {
+    test("'a:[&&read]");
+  }
+
+  @Test(expected = MalformedPatternException.class)
+  public void testUnbalancedSpacesSurroundingContent() {
+    test("'a:[regex(  .* ) ]");
   }
 
   private void test(String pattern) {

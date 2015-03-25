@@ -43,7 +43,7 @@ public class Notification {
   private Runnable myWhenExpired;
   private Boolean myImportant;
   private WeakReference<Balloon> myBalloonRef;
-  private long myTimestamp;
+  private final long myTimestamp;
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
     this(groupDisplayId, title, content, type, null);

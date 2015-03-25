@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.SvnClient;
 
 import java.io.File;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -28,5 +28,5 @@ import java.util.Collection;
 public interface CheckinClient extends SvnClient {
 
   @NotNull
-  CommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String comment) throws VcsException;
+  CommitInfo[] commit(@NotNull List<File> paths, @NotNull String comment) throws VcsException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -247,7 +247,9 @@ public class ExitHelper {
 
     boolean res = false;
 
-    for (StatEdge edge : root.getDummyExit().getAllPredecessorEdges()) {
+    DummyExitStatement dummyExit = root.getDummyExit();
+
+    for (StatEdge edge : dummyExit.getAllPredecessorEdges()) {
       if (!edge.explicit) {
         Statement source = edge.getSource();
         List<Exprent> lstExpr = source.getExprents();
@@ -257,6 +259,7 @@ public class ExitHelper {
             ExitExprent ex = (ExitExprent)expr;
             if (ex.getExitType() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
               // remove redundant return
+              dummyExit.addBytecodeOffsets(ex.bytecode);
               lstExpr.remove(lstExpr.size() - 1);
               res = true;
             }

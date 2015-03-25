@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -59,39 +58,6 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
   @Override
   public void refresh(boolean asynchronous) {
-  }
-
-  @Override
-  public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    throw new IOException();
   }
 
   @Override

@@ -110,7 +110,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final String path = getTestName(false) + ".java";
     myFixture.configureByFile(path);
     myFixture.complete(CompletionType.BASIC, 2);
-    assertPreferredItems(0, "BOOLEAN", "booleanMethod", "AN_OBJECT", "voidMethod", "registerNatives");
+    assertPreferredItems(0, "BOOLEAN", "booleanMethod", "AN_OBJECT", "voidMethod");
   }
 
   public void testDispreferDeclared() throws Throwable {
@@ -285,6 +285,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferReturn() {
+    checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
+  }
+
+  public void testPreferReturnBeforeExpression() {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
   }
 

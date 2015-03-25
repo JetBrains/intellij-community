@@ -586,6 +586,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
     myProgressIcon.suspend();
+    Container iconParent = myProgressIcon.getParent();
+    if (iconParent != null) {
+      iconParent.remove(myProgressIcon); // to prevent leaks to this removed parent via progress icon
+    }
+
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
   }

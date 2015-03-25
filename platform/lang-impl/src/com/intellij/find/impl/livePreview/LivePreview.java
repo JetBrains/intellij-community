@@ -406,7 +406,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     balloonBuilder.setCloseButtonEnabled(true);
     myReplacementBalloon = balloonBuilder.createBalloon();
 
-    myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.above);
+    myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }
 
   private void hideBalloon() {
@@ -534,7 +534,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
       Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
       Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
+      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y + myEditor.getLineHeight());
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }

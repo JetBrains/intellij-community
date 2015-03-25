@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ public class SkipEmptySerializationFilter extends SerializationFilterBase {
     }
 
     if (Boolean.FALSE.equals(beanValue) ||
-        (beanValue instanceof String && ((String)beanValue).isEmpty()) ||
+        beanValue instanceof String && ((String)beanValue).isEmpty() ||
         beanValue instanceof Collection && ((Collection)beanValue).isEmpty() ||
-        (beanValue instanceof Map && ((Map)beanValue).isEmpty())) {
+        beanValue instanceof Map && ((Map)beanValue).isEmpty()) {
       return false;
     }
 

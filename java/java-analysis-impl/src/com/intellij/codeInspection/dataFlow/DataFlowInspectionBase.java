@@ -141,7 +141,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, true) {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(
+      scope)) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;
@@ -149,6 +150,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     };
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()), onTheFly);
+  }
+
+  private static boolean isInsideConstructorOrInitializer(PsiElement element) {
+    while (element != null) {
+      element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class);
+      if (element instanceof PsiClassInitializer) return true;
+      if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) return true;
+    }
+    return false;
   }
 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
@@ -190,7 +200,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
         final PsiBinaryExpression binary = (PsiBinaryExpression)elementFactory.createExpressionFromText("a != null", null);
         binary.getLOperand().replace(qualifier);
-        ContainerUtil.addIfNotNull(fixes, createAssertFix(binary));
+        ContainerUtil.addIfNotNull(fixes, createAssertFix(binary, expression));
       }
 
       addSurroundWithIfFix(qualifier, fixes, onTheFly);
@@ -206,7 +216,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  protected LocalQuickFix createAssertFix(PsiBinaryExpression binary) {
+  protected LocalQuickFix createAssertFix(PsiBinaryExpression binary, PsiExpression expression) {
     return null;
   }
 

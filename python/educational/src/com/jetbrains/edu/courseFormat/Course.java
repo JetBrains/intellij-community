@@ -3,8 +3,11 @@ package com.jetbrains.edu.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
+import com.jetbrains.edu.stepic.CourseInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,7 +20,7 @@ public class Course {
   @Expose private String description;
   @Expose private String name;
   private String myCourseDirectory = "";
-  @Expose private String author="";
+  @Expose private List<CourseInfo.Instructor> authors = new ArrayList<CourseInfo.Instructor>();
   private boolean myUpToDate;
 
   @Expose @SerializedName("language")
@@ -56,12 +59,25 @@ public class Course {
     return lessons.get(lessonIndex);
   }
 
-  public String getAuthor() {
-    return author;
+  @NotNull
+  public List<CourseInfo.Instructor> getAuthors() {
+    return authors;
   }
 
-  public void setAuthor(String author) {
-    this.author = author;
+  public static String getAuthorsString(@NotNull List<CourseInfo.Instructor> authors) {
+    return StringUtil.join(authors, new Function<CourseInfo.Instructor, String>() {
+      @Override
+      public String fun(CourseInfo.Instructor instructor) {
+        return instructor.getName();
+      }
+    }, ", ");
+  }
+
+  public void setAuthors(String[] authors) {
+    this.authors = new ArrayList<CourseInfo.Instructor>();
+    for (String name : authors) {
+      this.authors.add(new CourseInfo.Instructor(name));
+    }
   }
 
   public String getName() {
@@ -106,5 +122,9 @@ public class Course {
 
   public void setLanguage(@NotNull final String language) {
     myLanguage = language;
+  }
+
+  public void setAuthors(List<CourseInfo.Instructor> instructors) {
+    this.authors = instructors;
   }
 }

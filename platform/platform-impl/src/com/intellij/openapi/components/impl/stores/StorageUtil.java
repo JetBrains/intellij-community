@@ -137,15 +137,14 @@ public class StorageUtil {
     boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
     if (equals) {
       LOG.warn("Content equals, but it must be handled not on this level — " + result.getName());
-      return result;
     }
     else {
       if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
         DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
       }
       doWrite(requestor, result, virtualFile, content, lineSeparatorIfPrependXmlProlog);
-      return result;
     }
+    return result;
   }
 
   @TestOnly

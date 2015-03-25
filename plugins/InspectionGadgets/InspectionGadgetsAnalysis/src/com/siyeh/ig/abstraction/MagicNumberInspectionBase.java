@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,8 @@ public class MagicNumberInspectionBase extends BaseInspection {
         return;
       }
       if (ignoreInHashCode) {
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true,
+                                                                       PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isHashCode(containingMethod)) {
           return;
         }
@@ -119,7 +120,8 @@ public class MagicNumberInspectionBase extends BaseInspection {
                                                   CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
                                                   CommonClassNames.JAVA_UTIL_MAP,
                                                   CommonClassNames.JAVA_UTIL_COLLECTION,
-                                                  "java.io.ByteArrayOutputStream") != null;
+                                                  "java.io.ByteArrayOutputStream",
+                                                  "java.awt.Dimension") != null;
     }
 
     private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
@@ -145,7 +147,7 @@ public class MagicNumberInspectionBase extends BaseInspection {
 
     public boolean isFinalVariableInitialization(PsiExpression expression) {
       final PsiElement parent =
-        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+        PsiTreeUtil.getParentOfType(expression, PsiVariable.class, PsiAssignmentExpression.class);
       final PsiVariable variable;
       if (!(parent instanceof PsiVariable)) {
         if (!(parent instanceof PsiAssignmentExpression)) {

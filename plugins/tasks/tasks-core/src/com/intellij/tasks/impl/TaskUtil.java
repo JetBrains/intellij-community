@@ -27,15 +27,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskState;
-import com.intellij.tasks.impl.httpclient.ResponseUtil;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HTTP;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -248,7 +246,7 @@ public class TaskUtil {
   public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
     if (logger.isDebugEnabled() && response.hasBeenUsed()) {
       try {
-        String content = ResponseUtil.getResponseContentAsString(response);
+        String content = TaskResponseUtil.getResponseContentAsString(response);
         Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
         String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
@@ -270,7 +268,7 @@ public class TaskUtil {
   public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpResponse response) {
     if (logger.isDebugEnabled()) {
       try {
-        String content = ResponseUtil.getResponseContentAsString(response);
+        String content = TaskResponseUtil.getResponseContentAsString(response);
         org.apache.http.Header header = response.getEntity().getContentType();
         String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
@@ -302,13 +300,5 @@ public class TaskUtil {
     catch (UnsupportedEncodingException e) {
       throw new AssertionError("UTF-8 is not supported");
     }
-  }
-
-  @Contract("null, _ -> false")
-  public static boolean isStateSupported(@Nullable TaskRepository repository, @NotNull TaskState state) {
-    if (repository == null || !repository.isSupported(TaskRepository.STATE_UPDATING)) {
-      return false;
-    }
-    return repository.getRepositoryType().getPossibleTaskStates().contains(state);
   }
 }

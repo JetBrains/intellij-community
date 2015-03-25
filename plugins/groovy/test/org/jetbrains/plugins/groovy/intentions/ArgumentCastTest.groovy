@@ -65,4 +65,15 @@ foo(<caret>'a', 'a')
     foo('',<caret> g:4 )
     ''', 'Cast', GroovyAssignabilityCheckInspection)
   }
+
+  // TODO
+  void ignoredestNamedArguments() {
+    doTextTest '''
+def foo(a, int b, c) {}
+foo(<caret>'a', b: 1, 1)
+''', "Cast 1st parameter to int", '''
+def foo(a, int b, c) {}
+foo('a' as int, b: 1, 1)
+''', GroovyAssignabilityCheckInspection
+  }
 }

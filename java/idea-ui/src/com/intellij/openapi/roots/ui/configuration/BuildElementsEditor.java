@@ -83,14 +83,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       @Override
       public void saveUrl(String url) {
-        if (getCompilerExtension().isCompilerOutputPathInherited()) return;  //do not override settings if any
+        if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
         getCompilerExtension().setCompilerOutputPath(url);
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
       @Override
       public void saveUrl(String url) {
-        if (getCompilerExtension().isCompilerOutputPathInherited()) return; //do not override settings if any
+        if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
         getCompilerExtension().setCompilerOutputPathForTests(url);
       }
     });
@@ -217,6 +217,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
         }
       }
     };
+
+    final ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        commitRunnable.run();
+      }
+    };
+    myPerModuleCompilerOutput.addActionListener(listener);
 
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

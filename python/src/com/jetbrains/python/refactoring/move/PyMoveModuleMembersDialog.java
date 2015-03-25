@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,10 +18,11 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RowIcon;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -35,6 +37,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import java.awt.*;
+import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -52,6 +56,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
   private final PyModuleMemberInfoModel myModuleMemberModel;
+  private final boolean mySeveralElementsSelected;
   private JPanel myCenterPanel;
   private JPanel myTablePanel;
   private TextFieldWithBrowseButton myBrowseFieldWithButton;
@@ -88,7 +93,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
    * @param elements elements to move
    * @param destination destination where elements have to be moved
    */
-  protected PyMoveModuleMembersDialog(@NotNull Project project, @NotNull List<PsiNamedElement> elements, @Nullable String destination) {
+  protected PyMoveModuleMembersDialog(@NotNull Project project, @NotNull final List<PsiNamedElement> elements, @Nullable String destination) {
     super(project, true);
 
     assert !elements.isEmpty();
@@ -115,6 +120,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
     final List<PyModuleMemberInfo> symbolsInfos = collectModuleMemberInfos(myModuleMemberModel.myPyFile);
     for (PyModuleMemberInfo info : symbolsInfos) {
+      //noinspection SuspiciousMethodCalls
       info.setChecked(elements.contains(info.getMember()));
     }
     myModuleMemberModel.memberInfoChanged(new MemberInfoChange<PyElement, PyModuleMemberInfo>(symbolsInfos));
@@ -126,8 +132,8 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    // MoveMemberDialog for Java uses SeparatorFactory.createSeparator instead of custom border
-    final boolean tableIsVisible = PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
+    mySeveralElementsSelected = elements.size() > 1;
+    final boolean tableIsVisible = mySeveralElementsSelected || PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE, false);
     final String description;
     if (!tableIsVisible && elements.size() == 1) {
       if (firstElement instanceof PyFunction) {
@@ -159,9 +165,43 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       }
     };
     decorator.setOn(tableIsVisible);
-    decorator.setContentComponent(ScrollPaneFactory.createScrollPane(myMemberSelectionTable));
-    validateButtons();
+    decorator.setContentComponent(new JBScrollPane(myMemberSelectionTable) {
+      @Override
+      public Dimension getMinimumSize() {
+        // Prevent growth of the dialog after several expand/collapse actions
+        return new Dimension((int)super.getMinimumSize().getWidth(), 0);
+      }
+    });
+
+    UiNotifyConnector.doWhenFirstShown(myCenterPanel, new Runnable() {
+      @Override
+      public void run() {
+        enlargeDialogHeightIfNecessary();
+        preselectLastPathComponent(myBrowseFieldWithButton.getTextField());
+      }
+    });
     init();
+  }
+
+  private void enlargeDialogHeightIfNecessary() {
+    if (mySeveralElementsSelected && !PropertiesComponent.getInstance(getProject()).getBoolean(BULK_MOVE_TABLE_VISIBLE, false)) {
+      final DialogWrapperPeer peer = getPeer();
+      final Dimension realSize = peer.getSize();
+      final double preferredHeight = peer.getPreferredSize().getHeight();
+      if (realSize.getHeight() < preferredHeight) {
+        peer.setSize((int)realSize.getWidth(), (int)preferredHeight);
+      }
+    }
+  }
+
+  private static void preselectLastPathComponent(@NotNull JTextField field) {
+    final String text = field.getText();
+    final int start = text.lastIndexOf(File.separatorChar);
+    final int lastDotIndex = text.lastIndexOf('.');
+    final int end = lastDotIndex < 0 ? text.length() : lastDotIndex;
+    if (start + 1 < end) {
+      field.select(start + 1, end);
+    }
   }
 
   @Nullable

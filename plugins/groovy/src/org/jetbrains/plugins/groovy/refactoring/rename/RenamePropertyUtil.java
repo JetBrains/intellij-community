@@ -79,7 +79,7 @@ public class RenamePropertyUtil {
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllGetters(containingClass, name, isStatic, false));
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllSetters(containingClass, name, isStatic, false));
 
-    for (Iterator<PsiElement> iterator = property.iterator(); iterator.hasNext();) {
+    for (Iterator<PsiElement> iterator = property.iterator(); iterator.hasNext(); ) {
       if (iterator.next() instanceof GrAccessorMethod) iterator.remove();
     }
 
@@ -169,7 +169,7 @@ public class RenamePropertyUtil {
     }
 
     private String getDescription() {
-      return (UsageViewUtil.getType(myMember) + " " + myMember.getName()).trim();
+      return String.format("%s '%s'", UsageViewUtil.getType(myMember), myMember.getName());
     }
 
     public boolean renameProperty() {

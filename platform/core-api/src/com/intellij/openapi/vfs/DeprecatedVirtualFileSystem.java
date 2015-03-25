@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   private final EventDispatcher<VirtualFileListener> myEventDispatcher = EventDispatcher.create(VirtualFileListener.class);
@@ -134,5 +136,40 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   @Override
   public boolean isReadOnly() {
     return true;
+  }
+  @Override
+  protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
+    throw new UnsupportedOperationException("deleteFile() not supported");
+  }
+
+  @Override
+  protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
+    throw new UnsupportedOperationException("move() not supported");
+  }
+
+  @Override
+  protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
+    throw new UnsupportedOperationException("renameFile() not supported");
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+    throw new UnsupportedOperationException("createChildFile() not supported");
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+    throw new UnsupportedOperationException("createChildDirectory() not supported");
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile copyFile(Object requestor,
+                                 @NotNull VirtualFile virtualFile,
+                                 @NotNull VirtualFile newParent,
+                                 @NotNull String copyName) throws IOException {
+    throw new UnsupportedOperationException("copyFile() not supported");
   }
 }

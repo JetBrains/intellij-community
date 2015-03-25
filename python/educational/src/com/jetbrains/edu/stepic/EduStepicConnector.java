@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -42,7 +43,7 @@ public class EduStepicConnector {
   private static String ourSessionId = "524iethiwju2tjywaqmf7tbwx0p0jk1b";
   private static String ourCSRFToken = "LJ9n6OyLVA7hxU94dlYWUu65MF51Nx37";
   //this prefix indicates that course can be opened by educational plugin
-  public static final String PYCHARM_PREFIX = "pycharm ";
+  public static final String PYCHARM_PREFIX = "pycharm";
 
   private EduStepicConnector() {
   }
@@ -61,36 +62,40 @@ public class EduStepicConnector {
   @NotNull
   public static List<CourseInfo> getCourses() {
     try {
-      return getFromStepic("courses/99", CoursesContainer.class).courses;
+      List<CourseInfo> result = new ArrayList<CourseInfo>();
+      final List<CourseInfo> courseInfos =
+        HttpRequests.request(stepicApiUrl + "courses").connect(new HttpRequests.RequestProcessor<List<CourseInfo>>() {
+
+          @Override
+          public List<CourseInfo> process(@NotNull HttpRequests.Request request) throws IOException {
+            final BufferedReader reader = request.getReader();
+            Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+            return gson.fromJson(reader, CoursesContainer.class).courses;
+          }
+        });
+      for (CourseInfo info : courseInfos) {
+        final String courseType = info.getType();
+        if (StringUtil.isEmptyOrSpaces(courseType)) continue;
+        final List<String> typeLanguage = StringUtil.split(courseType, " ");
+        if (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0))) {
+          result.add(info);
+        }
+      }
+      return result;
     }
     catch (IOException e) {
-      LOG.error("IOException " + e.getMessage());
+      LOG.error("Cannot load course list " + e.getMessage());
     }
     return Collections.emptyList();
-    /*try {                             // TODO: uncomment
-      return HttpRequests.request(stepicApiUrl + "courses").connect(new HttpRequests.RequestProcessor<List<CourseInfo>>() {
-
-        @Override
-        public List<CourseInfo> process(@NotNull HttpRequests.Request request) throws IOException {
-          final BufferedReader reader = request.getReader();
-          Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-          return gson.fromJson(reader, CoursesContainer.class).courses;
-        }
-      });
-    }
-    catch (IOException e) {
-      LOG.error("IOException " + e.getMessage());
-    }
-    return null;*/
   }
 
   public static Course getCourse(@NotNull final CourseInfo info) {
     final Course course = new Course();
-    course.setAuthor(info.getAuthor());
+    course.setAuthors(info.getInstructors());
     course.setDescription(info.getDescription());
     course.setName(info.getName());
     String courseType = info.getType();
-    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length()));
+    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
     course.setUpToDate(true);  // TODO: get from stepic
     try {
       for (Integer section : info.sections) {
@@ -128,7 +133,7 @@ public class EduStepicConnector {
   private static void createTask(Lesson lesson, Integer s) throws IOException {
     final Step step = getStep(s);
     final Task task = new Task();
-    task.setName(step.name);
+    task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
     task.setText(step.text);
     for (TestFileWrapper wrapper : step.options.test) {
       task.setTestsTexts(wrapper.name, wrapper.text);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author yole
@@ -52,46 +51,5 @@ public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
-  }
-
-  @Override
-  protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
-    throw new UnsupportedOperationException("deleteFile() not supported");
-  }
-
-  @Override
-  protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
-    throw new UnsupportedOperationException("move() not supported");
-  }
-
-  @Override
-  protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
-    throw new UnsupportedOperationException("renameFile() not supported");
-  }
-
-  @NotNull
-  @Override
-  protected VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    throw new UnsupportedOperationException("createChildFile() not supported");
-  }
-
-  @NotNull
-  @Override
-  protected VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    throw new UnsupportedOperationException("createChildDirectory() not supported");
-  }
-
-  @NotNull
-  @Override
-  protected VirtualFile copyFile(Object requestor,
-                                 @NotNull VirtualFile virtualFile,
-                                 @NotNull VirtualFile newParent,
-                                 @NotNull String copyName) throws IOException {
-    throw new UnsupportedOperationException("copyFile() not supported");
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return true;
   }
 }

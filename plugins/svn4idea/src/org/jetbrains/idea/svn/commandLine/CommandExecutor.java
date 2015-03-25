@@ -26,6 +26,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,11 +54,11 @@ public class CommandExecutor {
   private final AtomicReference<Integer> myExitCodeReference;
 
   @Nullable private String myMessage;
-  @Nullable private File myMessageFile;
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
   private volatile String myDestroyReason;
   private volatile boolean myWasCancelled;
+  @NotNull private final List<File> myTempFiles;
   @NotNull protected final GeneralCommandLine myCommandLine;
   @NotNull protected final String myLocale;
   protected Process myProcess;
@@ -81,6 +84,7 @@ public class CommandExecutor {
       myListeners.addListener(new CommandCancelTracker());
     }
     myLock = new Object();
+    myTempFiles = ContainerUtil.newArrayList();
     myCommandLine = createCommandLine();
     myCommandLine.setExePath(exePath);
     myCommandLine.setWorkDirectory(command.getWorkingDirectory());
@@ -149,13 +153,14 @@ public class CommandExecutor {
   }
 
   protected void cleanup() {
-    cleanupMessageFile();
+    deleteTempFiles();
   }
 
   protected void beforeCreateProcess() throws SvnBindException {
     EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
     setupLocale();
     ensureMessageFile();
+    ensureTargetsAdded();
   }
 
   private void setupLocale() {
@@ -167,22 +172,53 @@ public class CommandExecutor {
     }
   }
 
+  @NotNull
+  private File ensureCommandFile(@NotNull String prefix,
+                                 @NotNull String extension,
+                                 @NotNull String data,
+                                 @NotNull String parameterName) throws SvnBindException {
+    File result = createTempFile(prefix, extension);
+    myTempFiles.add(result);
+
+    try {
+      FileUtil.writeToFile(result, data);
+    }
+    catch (IOException e) {
+      throw new SvnBindException(e);
+    }
+
+    myCommandLine.addParameters(parameterName, result.getAbsolutePath());
+
+    return result;
+  }
+
   private void ensureMessageFile() throws SvnBindException {
     if (myMessage != null) {
-      myMessageFile = createTempFile("commit-message", ".txt");
-      try {
-        FileUtil.writeToFile(myMessageFile, myMessage);
-      }
-      catch (IOException e) {
-        throw new SvnBindException(e);
-      }
-      myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
+      ensureCommandFile("commit-message", ".txt", myMessage, "-F");
+
       myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
     }
   }
 
-  private void cleanupMessageFile() {
-    deleteTempFile(myMessageFile);
+  private void ensureTargetsAdded() throws SvnBindException {
+    List<String> targetsPaths = myCommand.getTargetsPaths();
+
+    if (!ContainerUtil.isEmpty(targetsPaths)) {
+      String targetsValue = StringUtil.join(targetsPaths, SystemProperties.getLineSeparator());
+
+      if (myCommandLine.getCommandLineString().length() + targetsValue.length() > VcsFileUtil.FILE_PATH_LIMIT) {
+        ensureCommandFile("command-targets", ".txt", targetsValue, "--targets");
+      }
+      else {
+        myCommandLine.addParameters(targetsPaths);
+      }
+    }
+  }
+
+  private void deleteTempFiles() {
+    for (File file : myTempFiles) {
+      deleteTempFile(file);
+    }
   }
 
   @NotNull

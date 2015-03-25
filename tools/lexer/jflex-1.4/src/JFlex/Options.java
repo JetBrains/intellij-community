@@ -69,6 +69,8 @@ public class Options {
   public static boolean dot;
   /** If true, you will be flooded with information (e.g. dfa tables).  */
   public static boolean dump;
+  /** If true, the generated scanner will include a constructor taking an InputStream. */
+  public static boolean emitInputStreamCtor;
 
 	static { setDefaults();	}
 
@@ -123,6 +125,7 @@ public class Options {
     time = false;
     dot = false;
     dump = false;
+    emitInputStreamCtor = false;
     Skeleton.readDefault();
   }
 

@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.stepic.CourseInfo;
@@ -34,7 +35,7 @@ public class StudyNewProjectPanel{
 
   public StudyNewProjectPanel(StudyProjectGenerator generator) {
     myGenerator = generator;
-    myAvailableCourses = myGenerator.getCourses();
+    myAvailableCourses = myGenerator.getCourses(false);
     if (myAvailableCourses.isEmpty()) {
       setError(CONNECTION_ERROR);
     }
@@ -42,7 +43,7 @@ public class StudyNewProjectPanel{
       for (CourseInfo courseInfo : myAvailableCourses) {
         myCoursesComboBox.addItem(courseInfo);
       }
-      myAuthorLabel.setText("Author: " + StudyUtils.getFirst(myAvailableCourses).getAuthor());
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(StudyUtils.getFirst(myAvailableCourses).getInstructors()));
       myDescriptionLabel.setText(StudyUtils.getFirst(myAvailableCourses).getDescription());
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(StudyUtils.getFirst(myAvailableCourses));
@@ -92,7 +93,7 @@ public class StudyNewProjectPanel{
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      final List<CourseInfo> courses = myGenerator.getCourses();
+      final List<CourseInfo> courses = myGenerator.getCourses(true);
       if (courses.isEmpty()) {
         setError(CONNECTION_ERROR);
         return;
@@ -126,7 +127,7 @@ public class StudyNewProjectPanel{
         myDescriptionLabel.setText("");
         return;
       }
-      myAuthorLabel.setText("Author: " + selectedCourse.getAuthor());
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getInstructors()));
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);

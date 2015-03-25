@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.move;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,11 +28,17 @@ public class PyMoveModuleMembersHelper {
    * @return whether this element is acceptable for "Move ..." refactoring
    */
   public static boolean isMovableModuleMember(@NotNull PsiElement element) {
-    return isMovableElement(element) && PyUtil.isTopLevel(element);
+    if (!(hasMovableElementType(element) && PyUtil.isTopLevel(element))) {
+      return false;
+    }
+    if (element instanceof PyTargetExpression) {
+      return !(PyNames.ALL.equals(((PyTargetExpression)element).getName())) && isTargetOfSimpleAssignment(element);
+    }
+    return true;
   }
 
-  public static boolean isMovableElement(@NotNull PsiElement element) {
-    return element instanceof PyClass || element instanceof PyFunction || isTargetOfSimpleAssignment(element);
+  public static boolean hasMovableElementType(@NotNull PsiElement element) {
+    return element instanceof PyClass || element instanceof PyFunction || element instanceof PyTargetExpression;
   }
 
   /**
@@ -60,7 +67,7 @@ public class PyMoveModuleMembersHelper {
   public static List<PyElement> getTopLevelModuleMembers(@NotNull PyFile pyFile) {
     final List<PyElement> result = new ArrayList<PyElement>();
     for (PyTargetExpression attr : pyFile.getTopLevelAttributes()) {
-      if (isTargetOfSimpleAssignment(attr)) {
+      if (isMovableModuleMember(attr)) {
         result.add(attr);
       }
     }

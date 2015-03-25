@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 
 import java.io.File;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -43,7 +43,7 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
 
   @NotNull
   @Override
-  public CommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String comment) throws VcsException {
+  public CommitInfo[] commit(@NotNull List<File> paths, @NotNull String comment) throws VcsException {
     File[] pathsToCommit = ArrayUtil.toObjectArray(paths, File.class);
     boolean keepLocks = myVcs.getSvnConfiguration().isKeepLocks();
     SVNCommitPacket[] commitPackets = null;

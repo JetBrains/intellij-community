@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -220,8 +221,13 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
     if (usage instanceof PyStringLiteralExpression) {
       for (PsiReference ref : usage.getReferences()) {
-        if (ref.isReferenceTo(oldElement)) {
-          ref.bindToElement(newElement);
+        if ((ref instanceof PyDunderAllReference)) {
+          usage.delete();
+        }
+        else {
+          if (ref.isReferenceTo(oldElement)) {
+            ref.bindToElement(newElement);
+          }
         }
       }
     }

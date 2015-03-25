@@ -46,8 +46,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class ResponseUtil {
-  public static final Logger LOG = Logger.getInstance(ResponseUtil.class);
+public class TaskResponseUtil {
+  public static final Logger LOG = Logger.getInstance(TaskResponseUtil.class);
 
   public static final String DEFAULT_CHARSET_NAME = CharsetToolkit.UTF8;
   public final static Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
@@ -55,7 +55,7 @@ public class ResponseUtil {
   /**
    * Utility class
    */
-  private ResponseUtil() {
+  private TaskResponseUtil() {
   }
 
   public static Reader getResponseContentAsReader(@NotNull HttpResponse response) throws IOException {
@@ -134,7 +134,7 @@ public class ResponseUtil {
         if (LOG.isDebugEnabled()) {
           String content = getResponseContentAsString(response);
           TaskUtil.prettyFormatJsonToLog(LOG, content);
-            return myGson.fromJson(content, myClass);
+          return myGson.fromJson(content, myClass);
         }
         else {
           return myGson.fromJson(getResponseContentAsReader(response), myClass);
@@ -143,10 +143,6 @@ public class ResponseUtil {
       catch (JsonSyntaxException e) {
         LOG.warn("Malformed server response", e);
         return null;
-      }
-      catch (NumberFormatException e) {
-        LOG.error("NFE in response: " + getResponseContentAsString(response), e);
-        throw new RequestFailedException("Malformed response");
       }
     }
   }
