@@ -33,12 +33,15 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsLogProvider.DetailedLogData;
+import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
@@ -54,21 +57,23 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static List<VcsCommitMetadata> loadMetadata(@NotNull final Project project,
-                                                     @NotNull final VirtualFile root, int limit,
-                                                     @NotNull List<String> parameters) throws VcsException {
+  public static DetailedLogData loadMetadata(@NotNull final Project project,
+                                             @NotNull final HgRepository repository, int limit,
+                                             @NotNull List<String> parameters) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
+    if (factory == null) return LogDataImpl.empty();
+
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
-    HgVersion version = hgvcs.getVersion();
-    List<String> templateList = HgBaseLogParser.constructDefaultTemplate(version);
-    templateList.add("{desc}");
+    final HgVersion version = hgvcs.getVersion();
+    List<String> templateList = HgBaseLogParser.constructCommitInfoWithRefTemplate(version);
     String[] templates = ArrayUtil.toStringArray(templateList);
+    final VirtualFile root = repository.getRoot();
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
+    final Set<VcsRef> refs = ContainerUtil.newHashSet(HgLogProvider.readSeparatedRefs(repository, factory, version));
+    //construct and store local tag names once
+    final Collection<String> localTagNames = HgUtil.getNamesWithoutHashes(repository.getLocalTags());
     HgBaseLogParser<VcsCommitMetadata> baseParser = new HgBaseLogParser<VcsCommitMetadata>() {
 
       @Override
@@ -86,11 +91,14 @@ public class HgHistoryUtil {
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));
         }
-        return factory.createCommitMetadata(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
+        Hash hash = factory.createHash(changeset);
+        refs.addAll(parseRefsFromCommitRecord(hash, repository, attributes, localTagNames, version));
+        return factory.createCommitMetadata(hash, parentsHash, revisionDate.getTime(), root,
                                             subject, author, email, message, author, email, revisionDate.getTime());
       }
     };
-    return getCommitRecords(project, result, baseParser);
+    List<VcsCommitMetadata> commits = getCommitRecords(project, result, baseParser);
+    return new LogDataImpl(refs, commits);
   }
 
   /**
@@ -104,7 +112,7 @@ public class HgHistoryUtil {
   public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
                                                              @NotNull final VirtualFile root,
                                                              int limit,
-                                                             @NotNull List<String> parameters) throws VcsException {
+                                                             @NotNull List<String> parameters) {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
@@ -181,7 +189,7 @@ public class HgHistoryUtil {
     return hgLogCommand.execute(root, template, limit, originalHgFile, args);
   }
 
-  public static HgFile getOriginalHgFile(Project project, VirtualFile root) {
+  private static HgFile getOriginalHgFile(Project project, VirtualFile root) {
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
     if (project.isDisposed()) {
       return hgFile;
@@ -198,9 +206,9 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
-                                                               @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter, boolean silent) {
+  private static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
+                                                                @Nullable HgCommandResult result,
+                                                                @NotNull Function<String, CommitInfo> converter, boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<CommitInfo>();
     if (result == null) {
       return revisions;
@@ -227,8 +235,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<? extends VcsShortCommitDetails> readMiniDetails(@NotNull Project project,
                                                                       @NotNull final VirtualFile root,
-                                                                      @NotNull List<String> hashes)
-    throws VcsException {
+                                                                      @NotNull List<String> hashes) {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -263,21 +270,22 @@ public class HgHistoryUtil {
     });
   }
 
-  @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params)
-    throws VcsException {
+  public static void readAllHashes(@NotNull Project project,
+                                   @NotNull final HgRepository repository,
+                                   @NotNull final Consumer<VcsUser> userRegistry,
+                                   @NotNull final Consumer<TimedVcsCommit> commitConsumer,
+                                   @NotNull final Consumer<VcsRef> referenceConsumer,
+                                   @NotNull List<String> params) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
+    if (factory == null) return;
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
-    HgVersion version = hgvcs.getVersion();
-    String[] templates = ArrayUtil.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
-    HgCommandResult result = getLogResult(project, root, version, -1, params, HgChangesetUtil.makeTemplate(templates));
-    return getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
+    final HgVersion version = hgvcs.getVersion();
+    String[] templates = ArrayUtil.toStringArray(HgBaseLogParser.constructCommitInfoWithRefTemplate(version));
+    HgCommandResult result = getLogResult(project, repository.getRoot(), version, -1, params, HgChangesetUtil.makeTemplate(templates));
+    final Collection<String> localTagNames = HgUtil.getNamesWithoutHashes(repository.getLocalTags());
+    getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
 
       @Override
       protected TimedVcsCommit convertDetails(@NotNull String rev,
@@ -292,8 +300,14 @@ public class HgHistoryUtil {
           parentsHash.add(factory.createHash(parent.getChangeset()));
         }
         userRegistry.consume(factory.createUser(author, email));
-        return factory.createTimedCommit(factory.createHash(changeset),
-                                         parentsHash, revisionDate.getTime());
+        Hash hash = factory.createHash(changeset);
+        TimedVcsCommit timedVcsCommit = factory.createTimedCommit(hash,
+                                                                  parentsHash, revisionDate.getTime());
+        for (VcsRef ref : parseRefsFromCommitRecord(hash, repository, attributes, localTagNames, version)) {
+          referenceConsumer.consume(ref);
+        }
+        commitConsumer.consume(timedVcsCommit);
+        return timedVcsCommit;
       }
     });
   }
@@ -306,12 +320,12 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static Change createChange(@NotNull Project project, @NotNull VirtualFile root,
-                                    @Nullable String fileBefore,
-                                    @Nullable HgRevisionNumber revisionBefore,
-                                    @Nullable String fileAfter,
-                                    HgRevisionNumber revisionAfter,
-                                    FileStatus aStatus) {
+  private static Change createChange(@NotNull Project project, @NotNull VirtualFile root,
+                                     @Nullable String fileBefore,
+                                     @Nullable HgRevisionNumber revisionBefore,
+                                     @Nullable String fileAfter,
+                                     HgRevisionNumber revisionAfter,
+                                     FileStatus aStatus) {
 
     HgContentRevision beforeRevision =
       fileBefore == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);

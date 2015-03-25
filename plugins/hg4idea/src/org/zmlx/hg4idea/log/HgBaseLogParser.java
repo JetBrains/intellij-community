@@ -19,23 +19,26 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Parse one log command line and create appropriate type of commit info or revision info.
@@ -54,6 +57,9 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
 
   protected static final int MESSAGE_INDEX = 5;
   protected static final int BRANCH_INDEX = 6;
+  //if you need full changes, you needn't refs; on the contrary is also true
+  private static final int BOOKMARKS_INDEX = 7;
+  private static final int TAGS_INDEX = 8;
 
   protected static final int FILES_ADDED_INDEX = 7;
   protected static final int FILES_MODIFIED_INDEX = 8;
@@ -64,7 +70,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
 
 
   @Nullable
-  public CommitT convert(@NotNull String line) {
+  private CommitT convert(@NotNull String line) {
 
     // we need to get all attributes, include empty trailing strings, so use non-positive limit as second argument
     List<String> attributes = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR, true, false);
@@ -124,6 +130,26 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
   }
 
   @NotNull
+  public static List<String> constructCommitInfoWithRefTemplate(@NotNull HgVersion currentVersion) {
+    List<String> templates = new ArrayList<String>(constructDefaultTemplate(currentVersion));
+    templates.add("{desc}");
+    templates.add(currentVersion.isRevsetInTemplatesSupport() ? "{ifcontains(rev, revset('head()'), branch)}" : "{branch}");
+    templates.addAll(formatRefLists(Arrays.asList("bookmark", "tag")));
+    return templates;
+  }
+
+  @NotNull
+  private static Collection<String> formatRefLists(@NotNull List<String> names) {
+    return ContainerUtil.map(names, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        String plural = StringUtil.pluralize(s);
+        return "{" + plural + "%'{" + s + "}" + HgChangesetUtil.FILE_SEPARATOR + "'}";
+      }
+    });
+  }
+
+  @NotNull
   public static String[] constructFullCommitTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
     List<String> templates = new ArrayList<String>(constructDefaultTemplate(currentVersion));
     templates.addAll(Arrays.asList("{desc}", "{branch}"));
@@ -147,7 +173,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
   }
 
   @NotNull
-  protected static SmartList<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
+  private static SmartList<HgRevisionNumber> parseParentRevisions(@NotNull String parentsString, @NotNull String currentRevisionString) {
     SmartList<HgRevisionNumber> parents = new SmartList<HgRevisionNumber>();
     if (StringUtil.isEmptyOrSpaces(parentsString)) {
       // parents shouldn't be empty  only if not supported
@@ -177,6 +203,47 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     }
     LOG.warn("Couldn't parse hg log commit info attribute " + index);
     return "";
+  }
+
+  @NotNull
+  protected static List<? extends VcsRef> parseRefsFromCommitRecord(@NotNull final Hash hash,
+                                                                    @NotNull final HgRepository repository,
+                                                                    @NotNull List<String> attributes,
+                                                                    @NotNull final Collection<String> localTagNames,
+                                                                    @NotNull HgVersion currentVersion) {
+    final VirtualFile repositoryRoot = repository.getRoot();
+    List<VcsRef> refs = ContainerUtil.newArrayList();
+    // we could parse branch references only if revset function supported by hg
+    if (currentVersion.isRevsetInTemplatesSupport()) {
+      String branchName = parseAdditionalStringAttribute(attributes, BRANCH_INDEX);
+      if (!StringUtil.isEmptyOrSpaces(branchName)) {
+        refs.add(new VcsRefImpl(hash, branchName,
+                                repository.getOpenedBranches().contains(branchName) ? HgRefManager.BRANCH : HgRefManager.CLOSED_BRANCH,
+                                repositoryRoot));
+      }
+    }
+    // parse bookmarks
+    refs.addAll(ContainerUtil
+                  .map(StringUtil.split(parseAdditionalStringAttribute(attributes, BOOKMARKS_INDEX), HgChangesetUtil.FILE_SEPARATOR),
+                       new Function<String, VcsRef>() {
+                         @Override
+                         public VcsRef fun(String s) {
+                           return new VcsRefImpl(hash, s, HgRefManager.BOOKMARK, repositoryRoot);
+                         }
+                       }));
+    // parse tags
+    refs.addAll(ContainerUtil.map(
+      StringUtil.split(parseAdditionalStringAttribute(attributes, TAGS_INDEX), HgChangesetUtil.FILE_SEPARATOR),
+      new Function<String, VcsRef>() {
+        @Override
+        public VcsRef fun(String tagName) {
+          VcsRefType refType = tagName.equals(HgUtil.TIP_REFERENCE) ? HgRefManager.TIP : localTagNames.contains(tagName)
+                                                                                         ? HgRefManager.LOCAL_TAG
+                                                                                         : HgRefManager.TAG;
+          return new VcsRefImpl(hash, tagName, refType, repositoryRoot);
+        }
+      }));
+    return refs;
   }
 }
 

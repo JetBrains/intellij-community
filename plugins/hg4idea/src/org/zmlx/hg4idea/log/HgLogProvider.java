@@ -29,13 +29,13 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -62,22 +62,33 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public DetailedLogData readFirstBlock(@NotNull VirtualFile root,
-                                                   @NotNull Requirements requirements) throws VcsException {
-    List<VcsCommitMetadata> commits = HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
-                                                                           Collections.<String>emptyList());
-    return new LogDataImpl(readAllRefs(root), commits);
+                                        @NotNull Requirements requirements) throws VcsException {
+    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) return LogDataImpl.empty();
+    return HgHistoryUtil.loadMetadata(myProject, repository, requirements.getCommitCount(),
+                                      Collections.<String>emptyList());
   }
 
   @Override
   @NotNull
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull final Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
-    Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
-    List<TimedVcsCommit> commits = HgHistoryUtil.readAllHashes(myProject, root, new CollectConsumer<VcsUser>(userRegistry),
-                                                               Collections.<String>emptyList());
-    for (TimedVcsCommit commit : commits) {
-      commitConsumer.consume(commit);
+    if (myProject.isDisposed()) return LogDataImpl.empty();
+    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root);
+      return LogDataImpl.empty();
     }
-    return new LogDataImpl(readAllRefs(root), userRegistry);
+
+    HgVcs hgvcs = HgVcs.getInstance(myProject);
+    assert hgvcs != null;
+    final HgVersion version = hgvcs.getVersion();
+    Set<VcsUser> userRegistry = ContainerUtil.newHashSet();
+    Set<VcsRef> vcsRefs = ContainerUtil.newHashSet(readSeparatedRefs(repository, myVcsObjectsFactory, version));
+    HgHistoryUtil.readAllHashes(myProject, repository, new CollectConsumer<VcsUser>(userRegistry),
+                                commitConsumer, new CollectConsumer<VcsRef>(vcsRefs),
+                                Collections.<String>emptyList());
+
+    return new LogDataImpl(vcsRefs, userRegistry);
   }
 
   @NotNull
@@ -94,51 +105,29 @@ public class HgLogProvider implements VcsLogProvider {
   }
 
   @NotNull
-  private Set<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
-    if (myProject.isDisposed()) {
-      return Collections.emptySet();
-    }
-    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    if (repository == null) {
-      LOG.error("Repository not found for root " + root);
-      return Collections.emptySet();
-    }
-
+  public static Set<VcsRef> readSeparatedRefs(@NotNull HgRepository repository,
+                                              VcsLogObjectsFactory vcsObjectsFactory,
+                                              @NotNull HgVersion version) {
+    VirtualFile root = repository.getRoot();
     repository.update();
-    Map<String, Set<Hash>> branches = repository.getBranches();
-    Set<String> openedBranchNames = repository.getOpenedBranches();
-    Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
-    Collection<HgNameWithHashInfo> tags = repository.getTags();
-    Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
-
-    Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
-
-    for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
-      String branchName = entry.getKey();
-      boolean opened = openedBranchNames.contains(branchName);
-      for (Hash hash : entry.getValue()) {
-        refs.add(myVcsObjectsFactory.createRef(hash, branchName, opened ? HgRefManager.BRANCH : HgRefManager.CLOSED_BRANCH, root));
-      }
-    }
-
-    for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
-      refs.add(myVcsObjectsFactory.createRef(bookmarkInfo.getHash(), bookmarkInfo.getName(),
-                         HgRefManager.BOOKMARK, root));
-    }
+    Set<VcsRef> refs = ContainerUtil.newHashSet();
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), HEAD_REFERENCE, HgRefManager.HEAD, root));
+      refs.add(vcsObjectsFactory.createRef(vcsObjectsFactory.createHash(currentRevision), HEAD_REFERENCE, HgRefManager.HEAD, root));
     }
-    String tipRevision = repository.getTipRevision();
-    if (tipRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tipRevision), TIP_REFERENCE, HgRefManager.TIP, root));
-    }
-    for (HgNameWithHashInfo tagInfo : tags) {
-      refs.add(myVcsObjectsFactory.createRef(tagInfo.getHash(), tagInfo.getName(), HgRefManager.TAG, root));
-    }
-    for (HgNameWithHashInfo localTagInfo : localTags) {
-      refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
-                              HgRefManager.LOCAL_TAG, root));
+
+    // read branches separately if inplace template pattern is not supported
+    if (!version.isRevsetInTemplatesSupport()) {
+      Map<String, Set<Hash>> branches = repository.getBranches();
+      Set<String> openedBranchNames = repository.getOpenedBranches();
+
+      for (Map.Entry<String, Set<Hash>> entry : branches.entrySet()) {
+        String branchName = entry.getKey();
+        boolean opened = openedBranchNames.contains(branchName);
+        for (Hash hash : entry.getValue()) {
+          refs.add(vcsObjectsFactory.createRef(hash, branchName, opened ? HgRefManager.BRANCH : HgRefManager.CLOSED_BRANCH, root));
+        }
+      }
     }
     return refs;
   }
@@ -170,18 +159,16 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull final VirtualFile root,
-                                                                       @NotNull VcsLogFilterCollection filterCollection,
-                                                                       int maxCount) throws VcsException {
+                                                       @NotNull VcsLogFilterCollection filterCollection,
+                                                       int maxCount) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
-
+    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root);
+      return Collections.emptyList();
+    }
     // branch filter and user filter may be used several times without delimiter
     if (filterCollection.getBranchFilter() != null) {
-      HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        LOG.error("Repository not found for root " + root);
-        return Collections.emptyList();
-      }
-
       boolean atLeastOneBranchExists = false;
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
         if (branchName.equals(TIP_REFERENCE) || branchExists(repository, branchName)) {
@@ -236,8 +223,12 @@ public class HgLogProvider implements VcsLogProvider {
         filterParameters.add(file.getPath());
       }
     }
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
+    HgHistoryUtil.readAllHashes(myProject, repository, Consumer.EMPTY_CONSUMER,
+                                new CollectConsumer<TimedVcsCommit>(commits), Consumer.EMPTY_CONSUMER,
+                                Collections.<String>emptyList());
 
-    return HgHistoryUtil.readAllHashes(myProject, root, Consumer.EMPTY_CONSUMER, filterParameters);
+    return commits;
   }
 
   @Nullable

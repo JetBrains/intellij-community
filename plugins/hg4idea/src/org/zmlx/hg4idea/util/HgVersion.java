@@ -53,6 +53,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   // since 2.3 - 2.5.3 hg has bug with join function with file_copies
   // see http://mercurial.808500.n3.nabble.com/Bug-3887-New-hg-log-template-quot-rev-join-file-copies-n-quot-prints-literal-quot-sourcename-quot-fos-td4000129.html
   public static final HgVersion BUILT_IN_FUNCTION_SUPPORTED = new HgVersion(2, 6, 0);
+  private static final HgVersion REVSET_IN_TEMPLATES_SUPPORTED = new HgVersion(3, 2, 0);
   public static final HgVersion PARENT_REVISION_TEMPLATES_SUPPORTED = new HgVersion(2, 4, 0);
   public static final HgVersion BRANCH_HEADS_BASE_SERVED_FILE_EXIST = new HgVersion(2, 5, 0);
   public static final HgVersion BRANCH2_FILE_EXIST = new HgVersion(2, 9, 0);
@@ -154,6 +155,10 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   public boolean isBuiltInFunctionSupported() {
     return compareTo(BUILT_IN_FUNCTION_SUPPORTED) >= 0;
+  }
+
+  public boolean isRevsetInTemplatesSupport() {
+    return compareTo(REVSET_IN_TEMPLATES_SUPPORTED) >= 0;
   }
 
   public boolean isLargeFilesWithFollowSupported() {
