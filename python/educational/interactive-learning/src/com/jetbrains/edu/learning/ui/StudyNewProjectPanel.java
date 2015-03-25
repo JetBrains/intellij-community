@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
+import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.stepic.CourseInfo;
@@ -42,7 +43,7 @@ public class StudyNewProjectPanel{
       for (CourseInfo courseInfo : myAvailableCourses) {
         myCoursesComboBox.addItem(courseInfo);
       }
-      myAuthorLabel.setText("Author: " + StudyUtils.getFirst(myAvailableCourses).getAuthor());
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(StudyUtils.getFirst(myAvailableCourses).getInstructors()));
       myDescriptionLabel.setText(StudyUtils.getFirst(myAvailableCourses).getDescription());
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(StudyUtils.getFirst(myAvailableCourses));
@@ -126,7 +127,7 @@ public class StudyNewProjectPanel{
         myDescriptionLabel.setText("");
         return;
       }
-      myAuthorLabel.setText("Author: " + selectedCourse.getAuthor());
+      myAuthorLabel.setText("Author: " + Course.getAuthorsString(selectedCourse.getInstructors()));
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
       myDescriptionLabel.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);

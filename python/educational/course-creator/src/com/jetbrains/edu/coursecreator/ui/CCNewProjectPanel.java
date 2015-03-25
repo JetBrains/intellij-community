@@ -51,8 +51,8 @@ public class CCNewProjectPanel {
   }
 
   @NotNull
-  public String getAuthor() {
-    return StringUtil.notNullize(myAuthorField.getText());
+  public String[] getAuthors() {
+    return StringUtil.splitByLines(StringUtil.notNullize(myAuthorField.getText()));
   }
 
   public void registerValidators(FacetValidatorsManager manager) {
