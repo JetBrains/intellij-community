@@ -111,6 +111,9 @@ public class SheetController {
 
     myResult = null;
 
+    int defaultButtonIndex = -1;
+    int focusedButtonIndex = -1;
+
     for (int i = 0; i < buttons.length; i++) {
       String buttonTitle = buttonTitles[i];
 
@@ -119,12 +122,17 @@ public class SheetController {
       handleMnemonics(i, buttonTitle);
 
       if (buttonTitle.equals(defaultButtonTitle)) {
-        myDefaultButton = buttons[i];
+        defaultButtonIndex = i;
       }
       if (buttonTitle.equals(focusedButton)) {
-        myFocusedButton = buttons[i];
+        focusedButtonIndex = i;
       }
     }
+
+    myFocusedButton = (focusedButtonIndex == -1) ? buttons[buttons.length - 1] : buttons[focusedButtonIndex];
+    myDefaultButton = (defaultButtonIndex == -1 && focusedButtonIndex != defaultButtonIndex) ? buttons[0] : buttons[defaultButtonIndex];
+
+    myDefaultButton = buttons[0];
 
     if (myFocusedButton == null) {
       myFocusedButton = myDefaultButton;
