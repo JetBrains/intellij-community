@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ package org.jetbrains.java.decompiler.code;
 import org.jetbrains.java.decompiler.code.interpreter.Util;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ExceptionTable {
+  public static final ExceptionTable EMPTY = new ExceptionTable(null) {
+    @Override
+    public List<ExceptionHandler> getHandlers() {
+      return Collections.emptyList();
+    }
+  };
 
-  private List<ExceptionHandler> handlers = new ArrayList<ExceptionHandler>();
-
-  public ExceptionTable() {
-  }
+  private final List<ExceptionHandler> handlers;
 
   public ExceptionTable(List<ExceptionHandler> handlers) {
     this.handlers = handlers;
