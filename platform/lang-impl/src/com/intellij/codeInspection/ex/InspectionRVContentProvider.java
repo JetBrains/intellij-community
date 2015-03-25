@@ -21,6 +21,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
@@ -67,6 +69,28 @@ public abstract class InspectionRVContentProvider {
   }
 
   public abstract boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionToolWrapper toolWrapper);
+
+  public boolean hasQuickFixes(InspectionTree tree) {
+    final TreePath[] treePaths = tree.getSelectionPaths();
+    if (treePaths == null) return false;
+    for (TreePath selectionPath : treePaths) {
+      if (!TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
+        @Override
+        public boolean accept(final Object node) {
+          if (!((InspectionTreeNode)node).isValid()) return true;
+          if (node instanceof ProblemDescriptionNode) {
+            final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+            final QuickFix[] fixes = descriptor != null ? descriptor.getFixes() : null;
+            return fixes == null || fixes.length == 0;
+          }
+          return true;
+        }
+      })) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @Nullable
   public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);

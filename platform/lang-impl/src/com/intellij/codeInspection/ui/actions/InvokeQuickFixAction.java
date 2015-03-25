@@ -49,21 +49,14 @@ public class InvokeQuickFixAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    if (!myView.isSingleToolInSelection()) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-
-    //noinspection ConstantConditions
-    @NotNull InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
+    final Presentation presentation = e.getPresentation();
+    InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
     final InspectionRVContentProvider provider = myView.getProvider();
-    if (provider.isContentLoaded()) {
-      final QuickFixAction[] quickFixes = provider.getQuickFixes(toolWrapper, myView.getTree());
-      if (quickFixes == null || quickFixes.length == 0) {
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-      e.getPresentation().setEnabled(!ActionGroupUtil.isGroupEmpty(getFixes(quickFixes), e));
+    if (toolWrapper != null && provider.isContentLoaded()) {
+      presentation.setEnabled(provider.hasQuickFixes(myView.getTree()));
+    }
+    else {
+      presentation.setEnabled(false);
     }
   }
 
