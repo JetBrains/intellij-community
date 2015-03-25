@@ -81,6 +81,12 @@ public abstract class InstructionSequence {
     collinstr.remove(index);
   }
 
+  public void removeLast() {
+    if (!collinstr.isEmpty()) {
+      collinstr.remove(collinstr.size() - 1);
+    }
+  }
+
   public Instruction getCurrentInstr() {
     return collinstr.get(pointer);
   }
