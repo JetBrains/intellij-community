@@ -245,7 +245,8 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
       }
       final PsiFile usageFile = usage.getContainingFile();
-      if (usageFile == oldElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElement, usage, false)) {
+      final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(oldElement);
+      if (usageFile == oldElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElementBody, usage, false)) {
         PyClassRefactoringUtil.insertImport(oldElement, newElement);
       }
       if (resolvesToLocalStarImport(usage)) {
