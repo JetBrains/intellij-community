@@ -549,7 +549,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
               }
               final PsiSubstitutor inferredSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, classCandidate, classResolveResult.getSubstitutor());
               final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, myAnonymClass.getBaseClassType());
-              if (inferredSubstitutor == null ||
+              if (inferredSubstitutor != null &&
                   !Comparing.equal(inferredSubstitutor.substitute(paramType), substitutor.substitute(paramType))) {
                 myBodyContainsForbiddenRefs = true;
                 return;
