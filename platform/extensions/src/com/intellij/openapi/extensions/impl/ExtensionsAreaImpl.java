@@ -204,7 +204,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).addExtensionPointListener(new ExtensionPointListener() {
       @Override
-      @SuppressWarnings({"unchecked"})
       public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
         Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
@@ -296,7 +295,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
   private void notifyEPRegistered(final ExtensionPoint extensionPoint) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
     for (final ExtensionPointAvailabilityListener listener : listeners) {
@@ -335,7 +333,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @NotNull
   @Override
-  @SuppressWarnings({"unchecked"})
   public <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName) {
     return getExtensionPoint(extensionPointName.getName());
   }
@@ -356,8 +353,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
-  private void notifyEPRemoved(final ExtensionPoint extensionPoint) {
+  private void notifyEPRemoved(@NotNull ExtensionPoint extensionPoint) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
     for (final ExtensionPointAvailabilityListener listener : listeners) {
       notifyUnavailableListener(extensionPoint, listener);

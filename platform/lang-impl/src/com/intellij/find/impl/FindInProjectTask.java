@@ -106,7 +106,6 @@ class FindInProjectTask {
     final String filter = findModel.getFileFilter();
     final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
 
-    //noinspection unchecked
     myFileMask = pattern == null ? Conditions.<VirtualFile>alwaysTrue() : new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {

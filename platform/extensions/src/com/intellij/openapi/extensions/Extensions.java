@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,13 +82,12 @@ public class Extensions {
   }
 
   @NotNull
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
   @NotNull
-  @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
     // keep it until 1.7 JDK
     return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
@@ -151,7 +150,7 @@ public class Extensions {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
       if (!equals(configuration.getParentClassName(), parentAreaClass)) {
-        throw new RuntimeException("Area class already registered: " + areaClass + ", "+ ourAreaClass2Configuration.get(areaClass));
+        throw new RuntimeException("Area class already registered: " + areaClass + ", "+ configuration);
       }
       else {
         return;
@@ -190,7 +189,7 @@ public class Extensions {
     private final String myClassName;
     private final String myParentClassName;
 
-    AreaClassConfiguration(@NotNull String className, String parentClassName) {
+    private AreaClassConfiguration(@NotNull String className, String parentClassName) {
       myClassName = className;
       myParentClassName = parentClassName;
     }
@@ -202,6 +201,11 @@ public class Extensions {
 
     public String getParentClassName() {
       return myParentClassName;
+    }
+
+    @Override
+    public String toString() {
+      return "AreaClassConfiguration{myClassName='" + myClassName + '\'' + ", myParentClassName='" + myParentClassName + "'}";
     }
   }
 
