@@ -7,20 +7,20 @@ public abstract class TestLocalClass {
          void foo() {
             boolean var1 = true;// 11
             boolean var2 = true;// 12
-         }
+         }// 13
       }
 
       Local var2 = new Local();// 15
       var2.foo();// 16
-   }
+   }// 17
 
    void boo() {
       boolean var1 = true;// 20
-   }
+   }// 21
 
    void zoo() {
       boolean var1 = true;// 24
-   }
+   }// 25
 }
 
 class 'pkg/TestLocalClass$1Local' {
@@ -29,6 +29,7 @@ class 'pkg/TestLocalClass$1Local' {
       1      7
       2      8
       3      8
+      4      9
    }
 }
 
@@ -38,16 +39,19 @@ class 'pkg/TestLocalClass' {
       1      4
       a      12
       c      13
+      f      14
    }
 
    method 'boo ()V' {
       0      17
       1      17
+      2      18
    }
 
    method 'zoo ()V' {
       0      21
       1      21
+      2      22
    }
 }
 
@@ -55,7 +59,11 @@ Lines mapping:
 8 <-> 5
 11 <-> 8
 12 <-> 9
+13 <-> 10
 15 <-> 13
 16 <-> 14
+17 <-> 15
 20 <-> 18
+21 <-> 19
 24 <-> 22
+25 <-> 23

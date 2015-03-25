@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +66,7 @@ public class Reverter {
     File target = files.iterator().next();
     try {
       // Files passed here are split into groups by root and working copy format - thus we could determine factory based on first file
-      myVcs.getFactory(target).createRevertClient()
-        .revert(ArrayUtil.toObjectArray(files, File.class), Depth.allOrEmpty(recursive), myHandler);
+      myVcs.getFactory(target).createRevertClient().revert(files, Depth.allOrEmpty(recursive), myHandler);
     }
     catch (VcsException e) {
       processRevertError(e);

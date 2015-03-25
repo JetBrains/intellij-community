@@ -136,9 +136,9 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       final SvnRevisionNumber committedRevision =
         change.getBeforeRevision() != null ? (SvnRevisionNumber)change.getBeforeRevision().getRevisionNumber() : null;
       //SvnRevisionNumber committedRevision = new SvnRevisionNumber(SVNRevision.create(cnt * 2 + 1));
-      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, committedRevision, null);
+      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, null);
 
-      resolver.resolveSelectMineFull(((ConflictedSvnChange)change).getBeforeDescription());
+      resolver.resolveSelectMineFull();
 
       myTheirs.refresh(false, true);
       myWorkingCopyDir.refresh(false, true);
@@ -250,9 +250,9 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
         beforePath = change.getBeforeRevision().getFile();
       }
       //SvnRevisionNumber committedRevision = new SvnRevisionNumber(SVNRevision.create(cnt * 2 + 1));
-      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, committedRevision, beforePath);
+      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, beforePath);
 
-      resolver.resolveSelectTheirsFull(((ConflictedSvnChange) change).getBeforeDescription());
+      resolver.resolveSelectTheirsFull();
 
     myTheirs.refresh(false, true);
     myWorkingCopyDir.refresh(false, true);

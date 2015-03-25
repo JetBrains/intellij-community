@@ -21,24 +21,22 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -48,105 +46,116 @@ import java.util.Set;
 * Time: 1:03 PM
 */
 public class SvnTreeConflictResolver {
-  private final SvnVcs myVcs;
-  private final FilePath myPath;
-  private VcsRevisionNumber myCommittedRevision;
-  private final FilePath myRevertPath;
-  private final VcsDirtyScopeManager myDirtyScopeManager;
 
-  public SvnTreeConflictResolver(SvnVcs vcs, FilePath path, VcsRevisionNumber committedRevision, final @Nullable FilePath revertPath) {
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final FilePath myPath;
+  @Nullable private final FilePath myRevertPath;
+  @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
+
+  public SvnTreeConflictResolver(@NotNull SvnVcs vcs, @NotNull FilePath path, @Nullable FilePath revertPath) {
     myVcs = vcs;
     myPath = path;
-    myCommittedRevision = committedRevision;
     myRevertPath = revertPath;
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myVcs.getProject());
   }
 
-  public void resolveSelectTheirsFull(TreeConflictDescription d) throws VcsException {
+  public void resolveSelectTheirsFull() throws VcsException {
     final LocalHistory localHistory = LocalHistory.getInstance();
-    localHistory.putSystemLabel(myVcs.getProject(), "Before accepting theirs for " + TreeConflictRefreshablePanel.filePath(myPath));
+    String pathPresentation = TreeConflictRefreshablePanel.filePath(myPath);
+
+    localHistory.putSystemLabel(myVcs.getProject(), "Before accepting theirs for " + pathPresentation);
     try {
-      updatetoTheirsFull();
+      updateToTheirsFull();
       pathDirty(myPath);
       revertAdditional();
     } finally {
-      localHistory.putSystemLabel(myVcs.getProject(), "After accepting theirs for " + TreeConflictRefreshablePanel.filePath(myPath));
+      localHistory.putSystemLabel(myVcs.getProject(), "After accepting theirs for " + pathPresentation);
     }
   }
 
-  private void pathDirty(final FilePath path) {
-    final VirtualFile validParent = ChangesUtil.findValidParentAccurately(path);
-    if (validParent == null) return;
-    validParent.refresh(false, true);
-    if (path.isDirectory()) {
-      myDirtyScopeManager.dirDirtyRecursively(path);
-    }
-    else {
-      myDirtyScopeManager.fileDirty(path);
+  private void pathDirty(@NotNull FilePath path) {
+    VirtualFile validParent = ChangesUtil.findValidParentAccurately(path);
+
+    if (validParent != null) {
+      validParent.refresh(false, true);
+
+      if (path.isDirectory()) {
+        myDirtyScopeManager.dirDirtyRecursively(path);
+      }
+      else {
+        myDirtyScopeManager.fileDirty(path);
+      }
     }
   }
 
   private void revertAdditional() throws VcsException {
-    if (myRevertPath == null) return;
-    final File ioFile = myRevertPath.getIOFile();
-    final Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
-    myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
-    if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-      FileUtil.delete(ioFile);
+    if (myRevertPath != null) {
+      final File ioFile = myRevertPath.getIOFile();
+      final Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
+
+      revert(ioFile);
+      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+        FileUtil.delete(ioFile);
+      }
+      pathDirty(myRevertPath);
     }
-    pathDirty(myRevertPath);
   }
 
-  public void resolveSelectMineFull(TreeConflictDescription d) throws VcsException {
+  public void resolveSelectMineFull() throws VcsException {
     final File ioFile = myPath.getIOFile();
 
     myVcs.getFactory(ioFile).createConflictClient().resolve(ioFile, Depth.INFINITY, true, true, true);
     pathDirty(myPath);
   }
 
-  private void updatetoTheirsFull() throws VcsException {
+  private void updateToTheirsFull() throws VcsException {
     final File ioFile = myPath.getIOFile();
     Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
-    if (myCommittedRevision == null) {
-      myCommittedRevision = new SvnRevisionNumber(status.getCommittedRevision());
-    }
+
     if (status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
-      updateIoFile(ioFile, SVNRevision.HEAD);
-      return;
+      revert(ioFile);
+      updateFile(ioFile, SVNRevision.HEAD);
     } else if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
-      updateIoFile(ioFile, SVNRevision.HEAD);
+      revert(ioFile);
+      updateFile(ioFile, SVNRevision.HEAD);
       FileUtil.delete(ioFile);
-      return;
     } else {
-      final Set<File> usedToBeAdded = new HashSet<File>();
-      if (myPath.isDirectory()) {
-        StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
-        statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false,
-                              new StatusConsumer() {
-                                @Override
-                                public void consume(Status status) throws SVNException {
-                                  if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-                                    usedToBeAdded.add(status.getFile());
-                                  }
-                                }
-                              }, null);
-      }
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
+      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : ContainerUtil.<File>newHashSet();
+
+      revert(ioFile);
       for (File wasAdded : usedToBeAdded) {
         FileUtil.delete(wasAdded);
       }
-      updateIoFile(ioFile, SVNRevision.HEAD);
+      updateFile(ioFile, SVNRevision.HEAD);
     }
   }
 
-  private void updateIoFile(@NotNull File ioFile, @NotNull final SVNRevision revision) throws SvnBindException {
-    if (! ioFile.exists()) {
-      File parent = ioFile.getParentFile();
-      myVcs.getFactory(parent).createUpdateClient().doUpdate(parent, revision, Depth.INFINITY, true, false);
-    } else {
-      myVcs.getFactory(ioFile).createUpdateClient().doUpdate(ioFile, revision, Depth.INFINITY, false, false);
-    }
+  @NotNull
+  private Set<File> getDescendantsWithAddedStatus(@NotNull File ioFile) throws SvnBindException {
+    final Set<File> result = ContainerUtil.newHashSet();
+    StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
+
+    statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false,
+                          new StatusConsumer() {
+                            @Override
+                            public void consume(Status status) throws SVNException {
+                              if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+                                result.add(status.getFile());
+                              }
+                            }
+                          }, null);
+
+    return result;
+  }
+
+  private void revert(@NotNull File file) throws VcsException {
+    myVcs.getFactory(file).createRevertClient().revert(Collections.singletonList(file), Depth.INFINITY, null);
+  }
+
+  private void updateFile(@NotNull File file, @NotNull SVNRevision revision) throws SvnBindException {
+    boolean useParentAsTarget = !file.exists();
+    File target = useParentAsTarget ? file.getParentFile() : file;
+
+    myVcs.getFactory(target).createUpdateClient().doUpdate(target, revision, Depth.INFINITY, useParentAsTarget, false);
   }
 }

@@ -178,7 +178,7 @@ public class MergeFromTheirsResolver {
     @Override
     public void run(ContinuationContext context) {
       try {
-        new SvnTreeConflictResolver(myVcs, myOldFilePath, myCommittedRevision, null).resolveSelectMineFull(myDescription);
+        new SvnTreeConflictResolver(myVcs, myOldFilePath, null).resolveSelectMineFull();
       }
       catch (VcsException e1) {
         context.handleException(e1, false);

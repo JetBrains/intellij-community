@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
@@ -118,10 +119,22 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
       }
     }
     else {
+      LinkedHashMap<Module, String> module2StorageRoot = new LinkedHashMap<Module, String>();
       for (Module module : dialog.getSelectedModules()) {
-        ModuleRootModel model = ModuleRootManager.getInstance(module);
-        VirtualFile[] contentRoots = model.getContentRoots();
+        VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
         String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
+        module2StorageRoot.put(module, storageRoot);
+        try {
+          DotProjectFileHelper.saveDotProjectFile(module, storageRoot);
+        }
+        catch (Exception e1) {
+          LOG.error(e1);
+        }
+      }
+
+      for (Module module : module2StorageRoot.keySet()) {
+        ModuleRootModel model = ModuleRootManager.getInstance(module);
+        String storageRoot = module2StorageRoot.get(module);
         try {
           Element classpathElement = new EclipseClasspathWriter().writeClasspath(null, model);
           File classpathFile = new File(storageRoot, EclipseXml.CLASSPATH_FILE);
@@ -139,7 +152,6 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
             EclipseJDOMUtil.output(ideaSpecific, emlFile, project);
           }
 
-          DotProjectFileHelper.saveDotProjectFile(module, storageRoot);
         }
         catch (Exception e1) {
           LOG.error(e1);

@@ -29,46 +29,99 @@ public class TestConstants {
 
    @TestConstants.A(byte.class)
    void m1() {
-   }
+   }// 54
 
    @TestConstants.A(char.class)
    void m2() {
-   }
+   }// 55
 
    @TestConstants.A(double.class)
    void m3() {
-   }
+   }// 56
 
    @TestConstants.A(float.class)
    void m4() {
-   }
+   }// 57
 
    @TestConstants.A(int.class)
    void m5() {
-   }
+   }// 58
 
    @TestConstants.A(long.class)
    void m6() {
-   }
+   }// 59
 
    @TestConstants.A(short.class)
    void m7() {
-   }
+   }// 60
 
    @TestConstants.A(boolean.class)
    void m8() {
-   }
+   }// 61
 
    @TestConstants.A(void.class)
    void m9() {
-   }
+   }// 62
 
    @TestConstants.A(Date.class)
    void m10() {
-   }
+   }// 63
 
    @interface A {
       Class<?> value();
    }
 }
 
+class 'pkg/TestConstants' {
+   method 'm1 ()V' {
+      0      31
+   }
+
+   method 'm2 ()V' {
+      0      35
+   }
+
+   method 'm3 ()V' {
+      0      39
+   }
+
+   method 'm4 ()V' {
+      0      43
+   }
+
+   method 'm5 ()V' {
+      0      47
+   }
+
+   method 'm6 ()V' {
+      0      51
+   }
+
+   method 'm7 ()V' {
+      0      55
+   }
+
+   method 'm8 ()V' {
+      0      59
+   }
+
+   method 'm9 ()V' {
+      0      63
+   }
+
+   method 'm10 ()V' {
+      0      67
+   }
+}
+
+Lines mapping:
+54 <-> 32
+55 <-> 36
+56 <-> 40
+57 <-> 44
+58 <-> 48
+59 <-> 52
+60 <-> 56
+61 <-> 60
+62 <-> 64
+63 <-> 68

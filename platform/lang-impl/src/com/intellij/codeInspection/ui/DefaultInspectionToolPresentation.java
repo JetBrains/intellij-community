@@ -62,7 +62,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @NotNull
   private final GlobalInspectionContextImpl myContext;
   protected static String ourOutputPath;
-  protected InspectionNode myToolNode;
+  private InspectionNode myToolNode;
 
   private static final Object lock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>());
@@ -76,6 +76,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private Map<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private boolean isDisposed;
+
+  private final Object myToolLock = new Object();
 
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
@@ -226,14 +228,16 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         return;
       }
       final InspectionNode toolNode;
-      if (myToolNode == null) {
-        final HighlightSeverity currentSeverity = getSeverity((RefElement)refElement);
-        toolNode = view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
-      }
-      else {
-        toolNode = myToolNode;
-        if (toolNode.isTooBigForOnlineRefresh()) {
-          return;
+      synchronized (myToolLock) {
+        if (myToolNode == null) {
+          final HighlightSeverity currentSeverity = getSeverity((RefElement)refElement);
+          toolNode = view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
+        }
+        else {
+          toolNode = myToolNode;
+          if (toolNode.isTooBigForOnlineRefresh()) {
+            return;
+          }
         }
       }
       final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
@@ -262,6 +266,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
   }
 
+  
+  public void setToolNode(InspectionNode toolNode) {
+    synchronized (myToolLock) {
+      myToolNode = toolNode;
+    }
+  }
+  
   protected boolean isDisposed() {
     return isDisposed;
   }

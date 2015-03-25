@@ -14,7 +14,7 @@ public class TestTryCatchFinally {
          System.out.println("finally");// 34
       }
 
-   }
+   }// 36
 
    int foo(int var1) throws Exception {
       if(var1 < 1) {// 39
@@ -51,6 +51,7 @@ class 'pkg/TestTryCatchFinally' {
       2b      13
       2d      13
       30      13
+      38      16
    }
 
    method 'foo (I)I' {
@@ -80,6 +81,7 @@ Lines mapping:
 24 <-> 6
 27 <-> 9
 34 <-> 14
+36 <-> 17
 39 <-> 20
 40 <-> 21
 41 <-> 22
@@ -88,3 +90,11 @@ Lines mapping:
 51 <-> 31
 53 <-> 34
 55 <-> 36
+Not mapped:
+25
+28
+32
+35
+52
+56
+57

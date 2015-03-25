@@ -84,12 +84,6 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
-    for (File path : paths) {
-      put(parameters, path);
-    }
-  }
-
   public static void put(@NotNull List<String> parameters, @Nullable Depth depth) {
     put(parameters, depth, false);
   }

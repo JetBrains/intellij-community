@@ -5,26 +5,26 @@ public abstract class TestAnonymousClass {
       public void run() {
          boolean var1 = true;// 28
          boolean var2 = true;// 29
-      }
+      }// 30
    };
    public static final Runnable R = new Runnable() {
       public void run() {
          boolean var1 = true;// 45
          boolean var2 = true;// 46
-      }
+      }// 47
    };
    public static final Runnable R1 = new Runnable() {
       public void run() {
          boolean var1 = true;// 53
          boolean var2 = true;// 54
-      }
+      }// 55
    };
    private final TestAnonymousClass.InnerRecursive y = new TestAnonymousClass.InnerRecursive(new TestAnonymousClass.InnerRecursive((TestAnonymousClass.InnerRecursive)null) {
       void foo() {
          boolean var1 = true;// 75
          boolean var2 = true;// 76
          boolean var3 = true;// 77
-      }
+      }// 78
    }) {
       int v = 5;
       int t = 5;
@@ -36,7 +36,7 @@ public abstract class TestAnonymousClass {
          boolean var1 = true;// 90
          boolean var2 = true;// 91
          boolean var3 = true;// 92
-      }
+      }// 93
    }) {
       int v = 5;
       int t = 5;
@@ -50,32 +50,32 @@ public abstract class TestAnonymousClass {
             public void foo() throws Exception {
                boolean var1 = true;// 13
                boolean var2 = true;// 14
-            }
+            }// 15
          };// 11
          var2.foo();// 17
       } else {
          System.out.println(5);// 21
       }
 
-   }
+   }// 23
 
    void boo() {
       boolean var1 = true;// 35
-   }
+   }// 36
 
    void zoo() {
       boolean var1 = true;// 39
-   }
+   }// 40
 
    static class InnerRecursive {
       TestAnonymousClass.InnerRecursive r;
 
       public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
          this.r = var1;// 105
-      }
+      }// 106
 
       void foo() {
-      }
+      }// 110
    }
 
    private static class Inner {
@@ -83,7 +83,7 @@ public abstract class TestAnonymousClass {
          public void run() {
             boolean var1 = true;// 66
             boolean var2 = true;// 67
-         }
+         }// 68
       };
    }
 
@@ -98,6 +98,7 @@ class 'pkg/TestAnonymousClass$2' {
       1      5
       2      6
       3      6
+      4      7
    }
 }
 
@@ -107,6 +108,7 @@ class 'pkg/TestAnonymousClass$3' {
       1      11
       2      12
       3      12
+      4      13
    }
 }
 
@@ -116,6 +118,7 @@ class 'pkg/TestAnonymousClass$4' {
       1      17
       2      18
       3      18
+      4      19
    }
 }
 
@@ -127,6 +130,7 @@ class 'pkg/TestAnonymousClass$5' {
       3      24
       4      25
       5      25
+      6      26
    }
 }
 
@@ -138,6 +142,7 @@ class 'pkg/TestAnonymousClass$7' {
       3      36
       4      37
       5      37
+      6      38
    }
 }
 
@@ -147,6 +152,7 @@ class 'pkg/TestAnonymousClass$1' {
       1      50
       2      51
       3      51
+      4      52
    }
 }
 
@@ -158,22 +164,30 @@ class 'pkg/TestAnonymousClass' {
       16      56
       19      56
       1a      56
+      1d      59
    }
 
    method 'boo ()V' {
       0      62
       1      62
+      2      63
    }
 
    method 'zoo ()V' {
       0      66
       1      66
+      2      67
    }
 }
 
 class 'pkg/TestAnonymousClass$InnerRecursive' {
    method '<init> (Lpkg/TestAnonymousClass$InnerRecursive;)V' {
       6      73
+      9      74
+   }
+
+   method 'foo ()V' {
+      0      77
    }
 }
 
@@ -183,6 +197,7 @@ class 'pkg/TestAnonymousClass$Inner$1' {
       1      83
       2      84
       3      84
+      4      85
    }
 }
 
@@ -191,22 +206,37 @@ Lines mapping:
 11 <-> 54
 13 <-> 51
 14 <-> 52
+15 <-> 53
 17 <-> 55
 21 <-> 57
+23 <-> 60
 28 <-> 6
 29 <-> 7
+30 <-> 8
 35 <-> 63
+36 <-> 64
 39 <-> 67
+40 <-> 68
 45 <-> 12
 46 <-> 13
+47 <-> 14
 53 <-> 18
 54 <-> 19
+55 <-> 20
 66 <-> 84
 67 <-> 85
+68 <-> 86
 75 <-> 24
 76 <-> 25
 77 <-> 26
+78 <-> 27
 90 <-> 36
 91 <-> 37
 92 <-> 38
+93 <-> 39
 105 <-> 74
+106 <-> 75
+110 <-> 78
+Not mapped:
+18
+104

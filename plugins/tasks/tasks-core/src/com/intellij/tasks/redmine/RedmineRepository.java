@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.RequestFailedException;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
 import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 
 /**
@@ -39,7 +39,7 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
  */
 @Tag("Redmine")
 public class RedmineRepository extends NewBaseRepositoryImpl {
-  private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
 
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 

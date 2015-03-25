@@ -884,10 +884,12 @@ class AppTest {
     assertTrue(exceptionFound.get());
   }
 
-  public void "test extend GroovyTestCase"() {
+  public void "test extend groovy classes with additional dependencies"() {
     PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar");
+    PsiTestUtil.addLibrary(myModule, "cli", FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib"), "commons-cli-1.2.jar");
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
+    myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
     assertEmpty(make())
   }
 

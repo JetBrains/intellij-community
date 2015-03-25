@@ -18,18 +18,15 @@ package com.intellij.tasks.trello;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloCommentAction;
 import com.intellij.tasks.trello.model.TrelloList;
 
 import java.lang.reflect.Type;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor;
@@ -47,33 +44,15 @@ public class TrelloUtil {
   public static final TypeToken<List<TrelloCommentAction>> LIST_OF_COMMENTS_TYPE = new TypeToken<List<TrelloCommentAction>>() { /* empty */ };
 
   private static Gson buildGson() {
-    GsonBuilder gson = new GsonBuilder();
-    gson.registerTypeAdapter(Date.class, new DateDeserializer());
+    final GsonBuilder gson = TaskGsonUtil.createDefaultBuilder();
     gson.registerTypeAdapter(LabelColor.class, new LabelColorDeserializer());
     return gson.create();
-  }
-
-  private static class DateDeserializer implements JsonDeserializer<Date> {
-      // Trello send UTC dates, so time zone is always Z
-      private static final DateFormat ISO8601_DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS'Z'");
-      static {
-          ISO8601_DATETIME_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-      }
-      @Override
-      public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-          String dateString = json.getAsString();
-          try {
-              return ISO8601_DATETIME_FORMAT.parse(dateString);
-          } catch (ParseException e) {
-              throw null;
-          }
-      }
   }
 
   private static class LabelColorDeserializer implements JsonDeserializer<LabelColor> {
     @Override
     public LabelColor deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-      final String colorName = json.getAsString().toUpperCase();
+      final String colorName = json.getAsString().toUpperCase(Locale.US);
       if (colorName.isEmpty()) {
         return LabelColor.NO_COLOR;
       }

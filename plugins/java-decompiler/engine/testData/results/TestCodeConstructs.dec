@@ -5,7 +5,7 @@ class TestCodeConstructs {
 
    void expressions() {
       (new String()).hashCode();// 20
-   }
+   }// 21
 
    Integer fieldIncrement() {
       return new Integer(this.count++);// 25
@@ -15,6 +15,7 @@ class TestCodeConstructs {
 class 'pkg/TestCodeConstructs' {
    method 'expressions ()V' {
       7      6
+      b      7
    }
 
    method 'fieldIncrement ()Ljava/lang/Integer;' {
@@ -26,4 +27,5 @@ class 'pkg/TestCodeConstructs' {
 
 Lines mapping:
 20 <-> 7
+21 <-> 8
 25 <-> 11

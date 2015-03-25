@@ -43,6 +43,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
   private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
   protected static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
+  protected static final Key<Boolean> SHOW_NOTIFICATION_IN_TEST = Key.create("indent.options.notification.provider.should.update.notification.in.test");
 
   @NotNull
   @Override
@@ -106,13 +107,19 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   }
 
   public static void updateIndentNotification(@NotNull PsiFile file, boolean enforce) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
-      FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(file.getVirtualFile());
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return;
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
+        || ApplicationManager.getApplication().isUnitTestMode()
+           && vFile.getUserData(SHOW_NOTIFICATION_IN_TEST) != null)
+    {
+      FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(vFile);
       if (fileEditor != null) {
         Boolean notifiedFlag = fileEditor.getUserData(NOTIFIED_FLAG);
         if (notifiedFlag == null || enforce) {
           fileEditor.putUserData(NOTIFIED_FLAG, Boolean.TRUE);
-          EditorNotifications.getInstance(file.getProject()).updateNotifications(file.getVirtualFile());
+          EditorNotifications.getInstance(file.getProject()).updateNotifications(vFile);
         }
       }
     }

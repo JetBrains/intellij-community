@@ -48,6 +48,7 @@ import java.util.*;
  */
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
 
+  private final boolean myInJavaDoc;
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
   private final Set<Object> myResultNames = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
@@ -87,7 +88,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     myMatcher = nameCondition;
     myFilter = filter;
     PsiElement scope = element;
-    if (JavaResolveUtil.isInJavaDoc(myElement)) myMembersFlag = true;
+    myInJavaDoc = JavaResolveUtil.isInJavaDoc(myElement);
+    if (myInJavaDoc) myMembersFlag = true;
     while(scope != null && !(scope instanceof PsiFile) && !(scope instanceof PsiClass)){
       scope = scope.getContext();
     }
@@ -308,13 +310,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   public boolean isAccessible(@Nullable final PsiElement element) {
-    if (!myOptions.checkAccess) return true;
+    if (!myOptions.checkAccess && myInJavaDoc) return true;
     if (!(element instanceof PsiMember)) return true;
 
     PsiMember member = (PsiMember)element;
     PsiClass accessObjectClass = myQualified ? myQualifierClass : null;
-    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
-                                                                                           accessObjectClass, myDeclarationHolder);
+    if (JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
+                                                                                        accessObjectClass, myDeclarationHolder)) {
+      return true;
+    }
+    return !myOptions.checkAccess && !(element instanceof PsiCompiledElement);
   }
 
   public void setCompletionElements(@NotNull Object[] elements) {

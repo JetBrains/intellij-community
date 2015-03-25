@@ -8,11 +8,12 @@ import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.api.SvnClient;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public interface RevertClient extends SvnClient {
 
-  void revert(@NotNull File[] paths, @Nullable Depth depth, @Nullable ProgressTracker handler) throws VcsException;
+  void revert(@NotNull Collection<File> paths, @Nullable Depth depth, @Nullable ProgressTracker handler) throws VcsException;
 }

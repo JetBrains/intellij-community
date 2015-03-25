@@ -36,10 +36,7 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -459,14 +456,15 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
 
-    private final boolean myEqualInference;
+    private final PsiType myInferredType;
 
     public ForbiddenRefsChecker(PsiMethod method,
                                 PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
       final PsiType inferredType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(getInferredType(aClass));
-      myEqualInference = !aClass.getBaseClassType().equals(inferredType); 
+      final PsiClassType baseClassType = aClass.getBaseClassType();
+      myInferredType = !baseClassType.equals(inferredType) ? inferredType : null;
     }
 
     @Override
@@ -557,14 +555,31 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         }
       }
 
-      if (myEqualInference) {
+      if (myInferredType != null) {
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getDeclarationScope() == myMethod) {
+          if (!(myInferredType instanceof PsiClassType)) {
+            myBodyContainsForbiddenRefs = true;
+            return;
+          }
           final int parameterIndex = myMethod.getParameterList().getParameterIndex((PsiParameter)resolved);
           for (PsiMethod superMethod : myMethod.findDeepestSuperMethods()) {
-            if (PsiUtil.resolveClassInType(superMethod.getParameterList().getParameters()[parameterIndex].getType()) instanceof PsiTypeParameter) {
-              myBodyContainsForbiddenRefs = true;
-              return;
+            final PsiType paramType = superMethod.getParameterList().getParameters()[parameterIndex].getType();
+            final PsiClass superClass = superMethod.getContainingClass();
+            if (superClass != null) {
+              final PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)myInferredType).resolveGenerics();
+              final PsiClass classCandidate = classResolveResult.getElement();
+              if (classCandidate == null) {
+                myBodyContainsForbiddenRefs = true;
+                return;
+              }
+              final PsiSubstitutor inferredSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, classCandidate, classResolveResult.getSubstitutor());
+              final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, myAnonymClass.getBaseClassType());
+              if (inferredSubstitutor == null ||
+                  !Comparing.equal(inferredSubstitutor.substitute(paramType), substitutor.substitute(paramType))) {
+                myBodyContainsForbiddenRefs = true;
+                return;
+              }
             }
           }
         }
