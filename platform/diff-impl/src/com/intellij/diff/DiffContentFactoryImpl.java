@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.BinaryLightVirtualFile;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactory {
   public final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
@@ -56,9 +58,13 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @Override
   @NotNull
   public DocumentContent create(@NotNull String text, @Nullable FileType type) {
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
-    document.setReadOnly(true);
-    return new DocumentContentImpl(document, type, null, null, null);
+    return create(text, type, true);
+  }
+
+  @Override
+  @NotNull
+  public DocumentContent create(@NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
+    return createImpl(text, type, null, null, respectLineSeparators, true);
   }
 
   @Override
@@ -102,17 +108,32 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @Override
   @NotNull
   public DiffContent createClipboardContent() {
-    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(StringUtil.notNullize(text)));
-    return new DocumentContentImpl(document); // TODO: show difference in line separators ?
+    return createClipboardContent(null);
   }
 
   @Override
   @NotNull
-  public DocumentContent createClipboardContent(@NotNull DocumentContent mainContent) {
+  public DocumentContent createClipboardContent(@Nullable DocumentContent mainContent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(StringUtil.notNullize(text)));
-    return new DocumentContentWrapper(document, mainContent);
+
+    FileType type = mainContent != null ? mainContent.getContentType() : null;
+    VirtualFile highlightFile = mainContent != null ? mainContent.getHighlightFile() : null;
+
+    return createImpl(StringUtil.notNullize(text), type, highlightFile, null, true, false);
+  }
+
+  @NotNull
+  private static DocumentContent createImpl(@NotNull String text,
+                                            @Nullable FileType type,
+                                            @Nullable VirtualFile highlightFile,
+                                            @Nullable Charset charset,
+                                            boolean respectLineSeparators,
+                                            boolean readOnly) {
+    // TODO: detect invalid (different across the file) separators ?
+    LineSeparator separator = respectLineSeparators ? StringUtil.detectSeparators(text) : null;
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
+    if (readOnly) document.setReadOnly(true);
+    return new DocumentContentImpl(document, type, highlightFile, separator, charset);
   }
 
   @Override

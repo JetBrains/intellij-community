@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
+@Deprecated
+/** @deprecated (to be removed in IDEA 15) */
 public class DocumentContentWrapper implements DocumentContent {
   @NotNull private final DocumentContent myBase;
   @NotNull private final Document myDocument;
