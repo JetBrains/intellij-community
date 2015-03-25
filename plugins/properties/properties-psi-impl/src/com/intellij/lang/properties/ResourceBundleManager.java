@@ -215,6 +215,9 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       LOG.assertTrue(state != null);
       myState.getCustomResourceBundles().remove(state);
     } else {
+      if (EmptyResourceBundle.getInstance() != resourceBundle) {
+        ((ResourceBundleImpl) resourceBundle).invalidate();
+      }
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
         final VirtualFile file = propertiesFile.getContainingFile().getVirtualFile();
         myState.getDissociatedFiles().add(file.getUrl());
