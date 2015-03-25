@@ -41,15 +41,23 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   public TextFieldWithBrowseButton(JTextField field, @Nullable ActionListener browseActionListener) {
+    this(field, browseActionListener, null);
+  }
+
+  public TextFieldWithBrowseButton(JTextField field, @Nullable ActionListener browseActionListener, @Nullable Disposable parent) {
     super(field, browseActionListener);
     if (!(field instanceof JBTextField)) {
       UIUtil.addUndoRedoActions(field);
     }
-    installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), parent);
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
-    this(new JBTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener);
+    this(browseActionListener, null);
+  }
+
+  public TextFieldWithBrowseButton(ActionListener browseActionListener, Disposable parent) {
+    this(new JBTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener, parent);
   }
 
   public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
