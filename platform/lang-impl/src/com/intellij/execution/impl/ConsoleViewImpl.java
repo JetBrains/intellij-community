@@ -503,6 +503,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return this;
   }
 
+  /**
+   * Adds transparent (actually, non-opaque) component over console.
+   * It will be as big as console. Use it to draw on console because it does not prevent user from console usage.
+   *
+   * @param component component to add
+   */
+  public final void addLayerToPane(@NotNull final JComponent component) {
+    getComponent(); // Make sure component exists
+    component.setOpaque(false);
+    component.setVisible(true);
+    myJLayeredPane.add(component, 0);
+  }
+
   protected void initConsoleEditor() {
     myEditor = createConsoleEditor();
     registerConsoleEditorActions();
