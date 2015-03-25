@@ -336,7 +336,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         final String[] urls = libraryEntry.getRootUrls(OrderRootType.CLASSES);
         if (urls.length > 0) {
           VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(urls[0]);
-          file = JarFileSystem.getInstance().getVirtualFileForJar(file);
+          final VirtualFile fileForJar = JarFileSystem.getInstance().getVirtualFileForJar(file);
+          if (fileForJar != null) {
+            file = fileForJar;
+          }
           libraryName = file != null ? file.getName() : null;
         }
         if (libraryName == null) {
