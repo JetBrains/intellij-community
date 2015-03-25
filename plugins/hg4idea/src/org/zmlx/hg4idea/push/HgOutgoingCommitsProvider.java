@@ -50,7 +50,7 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
-    String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
+    String[] templates = HgBaseLogParser.constructFullCommitTemplateArgument(true, version);
     HgOutgoingCommand hgOutgoingCommand = new HgOutgoingCommand(project);
     HgTarget hgTarget = pushSpec.getTarget();
     List<VcsError> errors = new ArrayList<VcsError>();

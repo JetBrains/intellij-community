@@ -85,8 +85,7 @@ public class HgLogCommand {
     if ((limit <= 0 && limit != -1) || hgFile == null) {
       return Collections.emptyList();
     }
-
-    String[] templates = HgBaseLogParser.constructFullTemplateArgument(includeFiles, myVersion);
+    String[] templates = HgBaseLogParser.constructFullCommitTemplateArgument(includeFiles, myVersion);
     String template = HgChangesetUtil.makeTemplate(templates);
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);

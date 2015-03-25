@@ -108,7 +108,7 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
-    String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
+    String[] templates = HgBaseLogParser.constructFullCommitTemplateArgument(true, version);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
     return createFullCommitsFromResult(project, root, result, version, false);
   }

@@ -124,17 +124,9 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
   }
 
   @NotNull
-  public static String[] constructFullTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
-    List<String> templates = new ArrayList<String>();
-    templates.add("{rev}");
-    templates.add("{node}");
-    if (currentVersion.isParentRevisionTemplateSupported()) {
-      templates.add("{p1rev}:{p1node} {p2rev}:{p2node}");
-    }
-    else {
-      templates.add("{parents}");
-    }
-    templates.addAll(Arrays.asList("{date|isodatesec}", "{author}", "{desc}", "{branch}"));
+  public static String[] constructFullCommitTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
+    List<String> templates = new ArrayList<String>(constructDefaultTemplate(currentVersion));
+    templates.addAll(Arrays.asList("{desc}", "{branch}"));
     if (!includeFiles) {
       return ArrayUtil.toStringArray(templates);
     }
