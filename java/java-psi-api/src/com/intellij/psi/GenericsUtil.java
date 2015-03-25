@@ -422,7 +422,7 @@ public class GenericsUtil {
           }
           else {
             final PsiType accepted = typeArgument.accept(this);
-            if (typeArgument instanceof PsiIntersectionType) {
+            if (typeArgument instanceof PsiIntersectionType && !(accepted instanceof PsiWildcardType)) {
               toPut = PsiWildcardType.createExtends(typeParameter.getManager(), accepted);
             }
             else {
