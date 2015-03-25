@@ -50,12 +50,10 @@ public class ReplaceConditionalWithIfIntention extends Intention {
   private static void replaceConditionalWithIf(PsiConditionalExpression expression) throws IncorrectOperationException {
     final PsiElement expressionParent = expression.getParent();
     if (expressionParent instanceof PsiLambdaExpression) {
-      String blockText = "{";
-      blockText += PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)expressionParent)) ? "" : "return ";
-      blockText +=  expression.getText() + ";}";
-      final PsiCodeBlock codeBlock = (PsiCodeBlock)expression.replace(
-        JavaPsiFacade.getElementFactory(expression.getProject()).createCodeBlockFromText(blockText, expression));
-      final PsiStatement statement = codeBlock.getStatements()[0];
+      final PsiElement codeBlock =
+        ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(expression)).getBody();
+      LOG.assertTrue(codeBlock instanceof PsiCodeBlock, codeBlock);
+      final PsiStatement statement = ((PsiCodeBlock)codeBlock).getStatements()[0];
       expression = (PsiConditionalExpression)(statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() 
                                                                                       : ((PsiExpressionStatement)statement).getExpression());
     }
