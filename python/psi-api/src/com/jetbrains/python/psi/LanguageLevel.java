@@ -32,10 +32,11 @@ public enum LanguageLevel {
   PYTHON31(31, true, false, true, true),
   PYTHON32(32, true, false, true, true),
   PYTHON33(33, true, false, true, true),
-  PYTHON34(34, true, false, true, true);
+  PYTHON34(34, true, false, true, true),
+  PYTHON35(35, true, false, true, true);
 
   private static LanguageLevel DEFAULT2 = PYTHON27;
-  private static LanguageLevel DEFAULT3 = PYTHON33;
+  private static LanguageLevel DEFAULT3 = PYTHON34;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
@@ -120,6 +121,9 @@ public enum LanguageLevel {
       }
       if (pythonVersion.startsWith("3.4")) {
         return PYTHON34;
+      }
+      if (pythonVersion.startsWith("3.5")) {
+        return PYTHON35;
       }
       return DEFAULT3;
     }

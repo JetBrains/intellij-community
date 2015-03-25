@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
@@ -50,9 +51,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON31, Sets.newHashSet("R", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON32, Sets.newHashSet("R", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON33, Sets.newHashSet("R", "U", "B", "BR", "RB"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON34, Sets.newHashSet("R", "U", "B", "BR", "RB"));
   }
+
+  private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet(Sets.newHashSet("R", "U", "B", "BR", "RB"));
 
   public CompatibilityVisitor(List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -195,6 +196,22 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
       commonRegisterProblem(message, " not support <>, use != instead.", len, node, new ReplaceNotEqOperatorQuickFix());
     }
+    else if (node.isOperator("@")) {
+      checkMatrixMultiplicationOperator(node.getPsiOperator());
+    }
+  }
+
+  private void checkMatrixMultiplicationOperator(PsiElement node) {
+    boolean problem = false;
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+        problem = true;
+        break;
+      }
+    }
+    if (problem) {
+      registerProblem(node, "Python versions < 3.5 do not support matrix multiplication operators");
+    }
   }
 
   @Override
@@ -254,7 +271,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         final LanguageLevel languageLevel = myVersionsToProcess.get(i);
         if (prefix.isEmpty()) continue;
 
-        final Set<String> prefixes = AVAILABLE_PREFIXES.get(languageLevel);
+        final Set<String> prefixesForLanguageLevel = AVAILABLE_PREFIXES.get(languageLevel);
+        final Set<String> prefixes = prefixesForLanguageLevel != null ? prefixesForLanguageLevel : DEFAULT_PREFIXES;
         if (!prefixes.contains(prefix))
           len = appendLanguageLevel(message, len, languageLevel);
       }
@@ -538,6 +556,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         return;
       }
       registerProblem(node, "Python versions < 3.0 do not support '...' outside of sequence slicings.");
+    }
+  }
+
+  @Override
+  public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+    super.visitPyAugAssignmentStatement(node);
+    final PsiElement operation = node.getOperation();
+    if (operation != null) {
+      final IElementType operationType = operation.getNode().getElementType();
+      if (PyTokenTypes.ATEQ.equals(operationType)) {
+        checkMatrixMultiplicationOperator(operation);
+      }
     }
   }
 

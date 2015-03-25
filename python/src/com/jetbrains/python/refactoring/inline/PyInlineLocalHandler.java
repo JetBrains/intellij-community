@@ -50,7 +50,6 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
@@ -315,8 +314,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static PyExpression prepareValue(@NotNull PyStatement def, @NotNull String localName, @NotNull Project project) {
     final PyExpression value = getValue(def);
     assert value != null;
-    if (def instanceof PyAugAssignmentStatementImpl) {
-      final PyAugAssignmentStatementImpl expression = (PyAugAssignmentStatementImpl)def;
+    if (def instanceof PyAugAssignmentStatement) {
+      final PyAugAssignmentStatement expression = (PyAugAssignmentStatement)def;
       final PsiElement operation = expression.getOperation();
       assert operation != null;
       final String op = operation.getText().replace('=', ' ');

@@ -453,7 +453,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == EXP) priority =  3;
-      if (opType == MULT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
+      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
       if (opType == PLUS || opType == MINUS) priority =  5;
       if (opType == LTLT || opType == GTGT) priority = 6;
       if (opType == AND) priority = 7;

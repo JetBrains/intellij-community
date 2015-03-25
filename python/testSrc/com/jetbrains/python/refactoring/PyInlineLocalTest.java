@@ -145,6 +145,11 @@ public class PyInlineLocalTest extends PyTestCase {
     checkOperatorPrecedence("x = 10 if True else 2", "conditional");
   }
 
+  // PY-15390
+  public void testMatMulPrecedence() throws Exception {
+    checkOperatorPrecedence("x = y @ z", "matrixMultiplication");
+  }
+
   private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) throws Exception {
     myFixture.configureByFile("/refactoring/inlinelocal/operatorPrecedence/template.py");
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {

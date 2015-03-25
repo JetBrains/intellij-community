@@ -118,7 +118,7 @@ public class PyTokenTypes {
   public static final PyElementType RBRACKET = new PyElementType("RBRACKET");// ]
   public static final PyElementType LBRACE = new PyElementType("LBRACE");// {
   public static final PyElementType RBRACE = new PyElementType("RBRACE");// }
-  public static final PyElementType AT = new PyElementType("AT");// @
+  public static final PyElementType AT = new PyElementType("AT", "__matmul__");// @
   public static final PyElementType COMMA = new PyElementType("COMMA");// ,
   public static final PyElementType COLON = new PyElementType("COLON");// :
   public static final PyElementType DOT = new PyElementType("DOT");// .
@@ -128,6 +128,7 @@ public class PyTokenTypes {
   public static final PyElementType PLUSEQ = new PyElementType("PLUSEQ");// +=
   public static final PyElementType MINUSEQ = new PyElementType("MINUSEQ");// -=
   public static final PyElementType MULTEQ = new PyElementType("MULTEQ");// *=
+  public static final PyElementType ATEQ = new PyElementType("ATEQ"); // @=
   public static final PyElementType DIVEQ = new PyElementType("DIVEQ"); // /=
   public static final PyElementType FLOORDIVEQ = new PyElementType("FLOORDIVEQ"); // //=
   public static final PyElementType PERCEQ = new PyElementType("PERCEQ");// %=
@@ -139,10 +140,10 @@ public class PyTokenTypes {
   public static final PyElementType EXPEQ = new PyElementType("EXPEQ");// **=
 
   public static final TokenSet OPERATIONS = TokenSet.create(
-      PLUS, MINUS, MULT, EXP, DIV, FLOORDIV, PERC, LTLT, GTGT, AND, OR,
+      PLUS, MINUS, MULT, AT, EXP, DIV, FLOORDIV, PERC, LTLT, GTGT, AND, OR,
       XOR, TILDE, LT, GT, LE, GE, EQEQ, NE, NE_OLD, AT, COLON, TICK, EQ,
       PLUSEQ, MINUSEQ,
-      MULTEQ, DIVEQ, FLOORDIVEQ, PERCEQ, ANDEQ, OREQ, XOREQ, LTLTEQ, GTGTEQ,
+      MULTEQ, ATEQ, DIVEQ, FLOORDIVEQ, PERCEQ, ANDEQ, OREQ, XOREQ, LTLTEQ, GTGTEQ,
       EXPEQ);
 
   public static final TokenSet COMPARISON_OPERATIONS = TokenSet.create(
@@ -150,8 +151,8 @@ public class PyTokenTypes {
 
   public static final TokenSet SHIFT_OPERATIONS = TokenSet.create(LTLT, GTGT);
   public static final TokenSet ADDITIVE_OPERATIONS = TokenSet.create(PLUS, MINUS);
-  public static final TokenSet MULTIPLICATIVE_OPERATIONS = TokenSet.create(MULT, FLOORDIV, DIV, PERC);
-  public static final TokenSet MULTIPLICATIVE_OR_EXP = TokenSet.create(MULT, FLOORDIV, DIV, PERC, EXP);
+  public static final TokenSet MULTIPLICATIVE_OPERATIONS = TokenSet.create(MULT, AT, FLOORDIV, DIV, PERC);
+  public static final TokenSet MULTIPLICATIVE_OR_EXP = TokenSet.create(MULT, AT, FLOORDIV, DIV, PERC, EXP);
   public static final TokenSet UNARY_OPERATIONS = TokenSet.create(PLUS, MINUS, TILDE);
   public static final TokenSet BITWISE_OPERATIONS = TokenSet.create(AND, OR, XOR); 
   public static final TokenSet EQUALITY_OPERATIONS = TokenSet.create(EQEQ, NE, NE_OLD);
@@ -162,7 +163,7 @@ public class PyTokenTypes {
   public static final TokenSet OPEN_BRACES = TokenSet.create(LBRACKET, LBRACE, LPAR);
   public static final TokenSet CLOSE_BRACES = TokenSet.create(RBRACKET, RBRACE, RPAR);
 
-  public static final TokenSet AUG_ASSIGN_OPERATIONS = TokenSet.create(PLUSEQ, MINUSEQ, MULTEQ, DIVEQ,
+  public static final TokenSet AUG_ASSIGN_OPERATIONS = TokenSet.create(PLUSEQ, MINUSEQ, MULTEQ, ATEQ, DIVEQ,
       PERCEQ, EXPEQ, GTGTEQ, LTLTEQ, ANDEQ, OREQ, XOREQ, FLOORDIVEQ);
 
   public static final PyElementType BACKSLASH = new PyElementType("BACKSLASH");

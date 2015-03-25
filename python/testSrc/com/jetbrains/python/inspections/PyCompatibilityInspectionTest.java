@@ -150,6 +150,11 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15390
+  public void testMatMul() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, new Runnable() {
       @Override
