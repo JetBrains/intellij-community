@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -54,9 +54,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.util.Function;
 import com.intellij.util.TimedReference;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -519,60 +516,5 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   protected boolean logSlowComponents() {
     return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
-  }
-
-  public static void dropUnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
-    final UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
-    if (notifications.length == 0) {
-      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), project);
-    }
-  }
-
-  public static class UnableToSaveProjectNotification extends Notification {
-    private Project myProject;
-    private final String[] myFileNames;
-
-    private UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
-      super("Project Settings", "Could not save project!", buildMessage(), NotificationType.ERROR, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
-          final Project _project = unableToSaveProjectNotification.getProject();
-          notification.expire();
-
-          if (_project != null && !_project.isDisposed()) {
-            _project.save();
-          }
-        }
-      });
-
-      myProject = project;
-      myFileNames = ContainerUtil.map(readOnlyFiles, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile file) {
-          return file.getPresentableUrl();
-        }
-      }, new String[readOnlyFiles.length]);
-    }
-
-    public String[] getFileNames() {
-      return myFileNames;
-    }
-
-    private static String buildMessage() {
-      return "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
-             " <a href=\"\">Try to save project again</a>.</p>";
-    }
-
-    public Project getProject() {
-      return myProject;
-    }
-
-    @Override
-    public void expire() {
-      myProject = null;
-      super.expire();
-    }
   }
 }

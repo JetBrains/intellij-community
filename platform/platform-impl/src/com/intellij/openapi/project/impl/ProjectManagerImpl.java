@@ -23,6 +23,9 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -42,7 +45,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -67,6 +69,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -976,17 +979,30 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     return true;
   }
 
-  private static boolean ensureCouldCloseIfUnableToSave(@NotNull final Project project) {
-    final ProjectImpl.UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, project);
-    if (notifications.length == 0) return true;
+  private static boolean ensureCouldCloseIfUnableToSave(@NotNull Project project) {
+    UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
+    if (notifications.length == 0) {
+      return true;
+    }
 
-    final String fileNames = StringUtil.join(notifications[0].getFileNames(), "\n");
+    StringBuilder message = new StringBuilder();
+    message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
+                                 ApplicationNamesInfo.getInstance().getProductName()));
 
-    final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
-                                     ApplicationNamesInfo.getInstance().getProductName());
-    return Messages.showDialog(project, msg, "Unsaved Project", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
-                               Messages.getWarningIcon()) == 0;
+    message.append("\n\nRead-only files:\n");
+    int count = 0;
+    VirtualFile[] files = notifications[0].myFiles;
+    for (VirtualFile file : files) {
+      if (count == 10) {
+        message.append('\n').append("and ").append(files.length - count).append(" more").append('\n');
+      }
+      else {
+        message.append(file.getPath()).append('\n');
+        count++;
+      }
+    }
+    return Messages.showYesNoDialog(project, message.toString(), "Unsaved Project", Messages.getWarningIcon()) == Messages.YES;
   }
 
 
@@ -1038,5 +1054,35 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("project.default.settings");
+  }
+
+  public static class UnableToSaveProjectNotification extends Notification {
+    private Project myProject;
+    public VirtualFile[] myFiles;
+
+    public UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
+      super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
+                                                           " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR, new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+          final Project _project = unableToSaveProjectNotification.myProject;
+          notification.expire();
+
+          if (_project != null && !_project.isDisposed()) {
+            _project.save();
+          }
+        }
+      });
+
+      myProject = project;
+      myFiles = readOnlyFiles;
+    }
+
+    @Override
+    public void expire() {
+      myProject = null;
+      super.expire();
+    }
   }
 }
