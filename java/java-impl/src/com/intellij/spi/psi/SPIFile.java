@@ -58,7 +58,13 @@ public class SPIFile extends PsiFileBase {
     int d;
     final String fileName = getName();
     while ((d = fileName.indexOf(".", idx)) > -1) {
-      final PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, d));
+      final int dotIdx = d;
+      final PsiPackage aPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
+        @Override
+        public PsiPackage compute() {
+          return JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, dotIdx));
+        }
+      });
       if (aPackage != null) {
         refs.add(new SPIFileName2PackageReference(this, aPackage));
       }
@@ -69,7 +75,13 @@ public class SPIFile extends PsiFileBase {
     while (resolve instanceof PsiClass) {
       resolve = ((PsiClass)resolve).getContainingClass();
       if (resolve != null) {
-        final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)resolve);
+        final PsiElement finalResolve = resolve;
+        final String jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            return ClassUtil.getJVMClassName((PsiClass)finalResolve);
+          }
+        });
         if (jvmClassName != null) {
           refs.add(new SPIFileName2PackageReference(this, resolve));
         }
