@@ -99,9 +99,10 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
           myPsiElements.add(smartPointerManager.createSmartPsiElementPointer(element, file));
           element.putUserData(FOLDING_INFO_KEY, fi);
         }
-        else if (region.isValid()) {
-          myRangeMarkers.add(region);
-          region.putUserData(FOLDING_INFO_KEY, fi);
+        else {
+          RangeMarker marker = editor.getDocument().createRangeMarker(region.getStartOffset(), region.getEndOffset());
+          myRangeMarkers.add(marker);
+          marker.putUserData(FOLDING_INFO_KEY, fi);
         }
       }
     }
@@ -197,7 +198,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   void clear() {
     myPsiElements.clear();
     for (RangeMarker marker : myRangeMarkers) {
-      if (!(marker instanceof FoldRegion)) marker.dispose();
+      marker.dispose();
     }
     myRangeMarkers.clear();
     mySerializedElements.clear();
