@@ -15,3 +15,5 @@ com.jetbrains.chronon
 AngularJS
 org.jetbrains.plugins.vagrant
 com.jetbrains.plugins.ini4idea
+com.jetbrains.plugins.meteor
+AWSCloudFormation
