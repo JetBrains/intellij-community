@@ -423,7 +423,16 @@ public class JavaFxPsiUtil {
   public static String isAbleToInstantiate(final PsiClass psiClass) {
     if(psiClass.getConstructors().length > 0) {
       for (PsiMethod constr : psiClass.getConstructors()) {
-        if (constr.getParameterList().getParametersCount() == 0) return null;
+        final PsiParameter[] parameters = constr.getParameterList().getParameters();
+        if (parameters.length == 0) return null;
+        boolean annotated = true;
+        for (PsiParameter parameter : parameters) {
+          if (!AnnotationUtil.isAnnotated(parameter, JavaFxCommonClassNames.JAVAFX_BEANS_NAMED_ARG, false)) {
+            annotated = false;
+            break;
+          }
+        }
+        if (annotated) return null;
       }
       final PsiMethod valueOf = findValueOfMethod(psiClass);
       if (valueOf == null) {
