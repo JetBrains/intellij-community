@@ -16,21 +16,12 @@ public class PySequenceExpressionImpl extends PyElementImpl {
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getPsi() instanceof PyExpression) {
-      PyExpression expression = (PyExpression)child.getPsi();
-      ASTNode exprNode = expression.getNode();
-      ASTNode next = PyPsiUtils.getNextComma(exprNode);
-      ASTNode prev = PyPsiUtils.getPrevComma(exprNode);
-      super.deleteChildInternal(child);
-      if (next != null) {
-        deleteChildInternal(next);
-      }
-      else if (prev != null) {
-        deleteChildInternal(prev);
+      final ASTNode commaNode = PyPsiUtils.getAdjacentComma(child);
+      if (commaNode != null) {
+        super.deleteChildInternal(commaNode);
       }
     }
-    else {
-      super.deleteChildInternal(child);
-    }
+    super.deleteChildInternal(child);
   }
 
   @NotNull
