@@ -33,6 +33,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 
@@ -43,7 +44,8 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
   private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
   protected static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
-  protected static final Key<Boolean> SHOW_NOTIFICATION_IN_TEST = Key.create("indent.options.notification.provider.should.update.notification.in.test");
+
+  private static boolean myShowNotificationInTest = false;
 
   @NotNull
   @Override
@@ -111,8 +113,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     if (vFile == null) return;
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-        || ApplicationManager.getApplication().isUnitTestMode()
-           && vFile.getUserData(SHOW_NOTIFICATION_IN_TEST) != null)
+        || ApplicationManager.getApplication().isUnitTestMode() && myShowNotificationInTest)
     {
       FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(vFile);
       if (fileEditor != null) {
@@ -123,5 +124,10 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
         }
       }
     }
+  }
+
+  @TestOnly
+  static void setShowNotificationInTest(boolean show) {
+    myShowNotificationInTest = show;
   }
 }

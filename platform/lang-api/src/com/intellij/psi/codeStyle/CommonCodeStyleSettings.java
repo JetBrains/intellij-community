@@ -16,9 +16,12 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.util.ReflectionUtil;
@@ -900,6 +903,9 @@ public class CommonCodeStyleSettings {
     public boolean USE_RELATIVE_INDENTS = false;
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
+    private FileIndentOptionsProvider myFileIndentOptionsProvider;
+    private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
+
     @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
@@ -978,6 +984,25 @@ public class CommonCodeStyleSettings {
 
     public void copyFrom(IndentOptions other) {
       copyPublicFields(other, this);
+    }
+
+    @Nullable
+    FileIndentOptionsProvider getFileIndentOptionsProvider() {
+      return myFileIndentOptionsProvider;
+    }
+
+    void setFileIndentOptionsProvider(@NotNull FileIndentOptionsProvider provider) {
+      myFileIndentOptionsProvider = provider;
+    }
+
+    void associateWithDocument(@NotNull Document document) {
+      document.putUserData(INDENT_OPTIONS_KEY, this);
+    }
+
+    @Nullable
+    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
   }
 }

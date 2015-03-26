@@ -40,6 +40,7 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     if (optionsProvider != null) {
       optionsProvider.setEnabledInTest(true);
     }
+    DetectedIndentOptionsNotificationProvider.setShowNotificationInTest(true);
   }
 
   @Override
@@ -49,6 +50,7 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     if (optionsProvider != null) {
       optionsProvider.setEnabledInTest(false);
     }
+    DetectedIndentOptionsNotificationProvider.setShowNotificationInTest(false);
     super.tearDown();
   }
 
@@ -64,15 +66,9 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     PsiFile file = myFixture.getFile();
     VirtualFile vFile = file.getVirtualFile();
 
-    try {
-      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, Boolean.TRUE);
-      assert !isNotificationShown(vFile);
-      myFixture.type('\n');
-      assert isNotificationShown(vFile);
-    }
-    finally {
-      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, null);
-    }
+    assert !isNotificationShown(vFile);
+    myFixture.type('\n');
+    assert isNotificationShown(vFile);
   }
 
   public void testNoNotification_WhenNothingDetected() throws Exception {
@@ -87,15 +83,9 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     PsiFile file = myFixture.getFile();
     VirtualFile vFile = file.getVirtualFile();
 
-    try {
-      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, Boolean.TRUE);
-      assert !isNotificationShown(vFile);
-      myFixture.type('\n');
-      assert !isNotificationShown(vFile);
-    }
-    finally {
-      vFile.putUserData(DetectedIndentOptionsNotificationProvider.SHOW_NOTIFICATION_IN_TEST, null);
-    }
+    assert !isNotificationShown(vFile);
+    myFixture.type('\n');
+    assert !isNotificationShown(vFile);
   }
 
   private boolean isNotificationShown(@NotNull VirtualFile vFile) {
