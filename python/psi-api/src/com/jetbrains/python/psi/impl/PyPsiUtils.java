@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -41,6 +42,9 @@ import java.util.List;
  * @author max
  */
 public class PyPsiUtils {
+  private static final TokenSet ANY_WHITESPACE = TokenSet.orSet(PyTokenTypes.WHITESPACE_OR_LINEBREAK,
+                                                                TokenSet.create(TokenType.WHITE_SPACE));
+
   private static final Logger LOG = Logger.getInstance(PyPsiUtils.class.getName());
 
   private PyPsiUtils() {
@@ -61,8 +65,13 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getPrevComma(@NotNull ASTNode node) {
-    final ASTNode prevNode = TreeUtil.skipElementsBack(node, PyTokenTypes.WHITESPACE_OR_LINEBREAK);
+    final ASTNode prevNode = getPrevNonWhitespaceNode(node);
     return prevNode != null && prevNode.getElementType() == PyTokenTypes.COMMA ? prevNode : null;
+  }
+
+  @Nullable
+  private static ASTNode getPrevNonWhitespaceNode(@NotNull ASTNode node) {
+    return TreeUtil.skipElementsBack(node.getTreePrev(), ANY_WHITESPACE);
   }
 
   /**
@@ -70,8 +79,13 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getNextComma(@NotNull ASTNode node) {
-    final ASTNode nextNode = TreeUtil.skipElements(node, PyTokenTypes.WHITESPACE_OR_LINEBREAK);
+    final ASTNode nextNode = getNextNonWhitespaceNode(node);
     return nextNode != null && nextNode.getElementType() == PyTokenTypes.COMMA ? nextNode : null;
+  }
+
+  @Nullable
+  private static ASTNode getNextNonWhitespaceNode(@NotNull ASTNode node) {
+    return TreeUtil.skipElements(node.getTreeNext(), ANY_WHITESPACE);
   }
 
   /**
@@ -210,32 +224,24 @@ public class PyPsiUtils {
     }
   }
 
-  static void deleteAdjacentComma(ASTDelegatePsiElement pyImportStatement, ASTNode child, final PyElement[] elements) {
-    if (ArrayUtil.contains(child.getPsi(), elements)) {
+  /**
+   * Removes given comma closest to the given child node along with any whitespaces around. Argument {@code filter} serves
+   * to apply this modification only if child the belongs to given set of elements.
+   *
+   * @param node   parent node
+   * @param child  child node comma should be adjacent to
+   * @param filter optional filter to decide whether child node is applicable
+   */
+  public static void deleteAdjacentComma(@NotNull ASTDelegatePsiElement node, @NotNull ASTNode child, @Nullable PyElement[] filter) {
+    if (filter == null || ArrayUtil.contains(child.getPsi(), filter)) {
       final ASTNode commaNode = getAdjacentComma(child);
       if (commaNode != null) {
-        final ASTNode prev = commaNode.getTreePrev();
-        pyImportStatement.deleteChildInternal(commaNode);
-        removeSlash(pyImportStatement, prev);
+        final ASTNode nextNonWhitespace = getNextNonWhitespaceNode(commaNode);
+        final ASTNode prevNonWhitespace = getPrevNonWhitespaceNode(commaNode);
+        final ASTNode last = nextNonWhitespace == null ? node.getNode().getLastChildNode() : nextNonWhitespace.getTreePrev();
+        final ASTNode first = prevNonWhitespace == null ? node.getNode().getFirstChildNode() : prevNonWhitespace.getTreeNext();
+        node.deleteChildRange(first.getPsi(), last.getPsi());
       }
-    }
-  }
-
-  private static void removeSlash(final ASTDelegatePsiElement statement, ASTNode prev) {
-    final List<ASTNode> toDelete = new ArrayList<ASTNode>();
-
-    while (prev instanceof PsiWhiteSpace) {
-      toDelete.add(0, prev);
-      prev = prev.getTreePrev();
-    }
-    prev = prev.getTreeNext();
-
-    while (prev instanceof PsiWhiteSpace) {
-      toDelete.add(prev);
-      prev = prev.getTreeNext();
-    }
-    if (toDelete.size() > 0) {
-      statement.deleteChildRange(toDelete.get(0).getPsi(), toDelete.get(toDelete.size() - 1).getPsi());
     }
   }
 
