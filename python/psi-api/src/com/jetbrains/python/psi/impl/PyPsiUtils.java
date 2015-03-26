@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,26 +56,31 @@ public class PyPsiUtils {
     return psiElements;
   }
 
+  /**
+   * Finds closest comma after the node skipping any whitespaces in-between.
+   */
   @Nullable
-  protected static ASTNode getPrevComma(ASTNode after) {
-    ASTNode node = after;
-    PyElementType comma = PyTokenTypes.COMMA;
-    do {
-      node = node.getTreePrev();
-    }
-    while (node != null && !node.getElementType().equals(comma));
-    return node;
+  public static ASTNode getPrevComma(@NotNull ASTNode node) {
+    final ASTNode prevNode = TreeUtil.skipElementsBack(node, PyTokenTypes.WHITESPACE_OR_LINEBREAK);
+    return prevNode != null && prevNode.getElementType() == PyTokenTypes.COMMA ? prevNode : null;
   }
 
+  /**
+   * Finds closest comma before the node skipping any whitespaces in-between.
+   */
   @Nullable
-  public static ASTNode getNextComma(ASTNode after) {
-    ASTNode node = after;
-    PyElementType comma = PyTokenTypes.COMMA;
-    do {
-      node = node.getTreeNext();
-    }
-    while (node != null && !node.getElementType().equals(comma));
-    return node;
+  public static ASTNode getNextComma(@NotNull ASTNode node) {
+    final ASTNode nextNode = TreeUtil.skipElements(node, PyTokenTypes.WHITESPACE_OR_LINEBREAK);
+    return nextNode != null && nextNode.getElementType() == PyTokenTypes.COMMA ? nextNode : null;
+  }
+
+  /**
+   * Finds closest comma looking for the next comma first and then for preceding one.
+   */
+  @Nullable
+  public static ASTNode getAdjacentComma(@NotNull ASTNode node) {
+    final ASTNode nextComma = getNextComma(node);
+    return nextComma != null ? nextComma : getPrevComma(node);
   }
 
   public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {
@@ -206,13 +212,10 @@ public class PyPsiUtils {
 
   static void deleteAdjacentComma(ASTDelegatePsiElement pyImportStatement, ASTNode child, final PyElement[] elements) {
     if (ArrayUtil.contains(child.getPsi(), elements)) {
-      ASTNode next = getNextComma(child);
-      if (next == null) {
-        next = getPrevComma(child);
-      }
-      if (next != null) {
-        final ASTNode prev = next.getTreePrev();
-        pyImportStatement.deleteChildInternal(next);
+      final ASTNode commaNode = getAdjacentComma(child);
+      if (commaNode != null) {
+        final ASTNode prev = commaNode.getTreePrev();
+        pyImportStatement.deleteChildInternal(commaNode);
         removeSlash(pyImportStatement, prev);
       }
     }
