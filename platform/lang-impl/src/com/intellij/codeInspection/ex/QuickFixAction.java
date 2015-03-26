@@ -53,6 +53,7 @@ import java.util.*;
  * @author max
  */
 public class QuickFixAction extends AnAction {
+  public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper myToolWrapper;
 
   public static InspectionResultsView getInvoker(AnActionEvent e) {

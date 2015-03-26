@@ -144,6 +144,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     installListener(myLoginAnonymouslyJBCheckBox);
 
     enableButtons();
+    enableEditor();
 
     JComponent customPanel = createCustomPanel();
     if (customPanel != null) {
@@ -237,14 +238,18 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
       try {
         myApplying = true;
         apply();
-        boolean selected = myAddCommitMessage.isSelected();
-        UIUtil.setEnabled(myEditorPanel, selected, true);
-        ((EditorEx)myEditor).setRendererMode(!selected);
+        enableEditor();
       }
       finally {
         myApplying = false;
       }
     }
+  }
+
+  private void enableEditor() {
+    boolean selected = myAddCommitMessage.isSelected();
+    UIUtil.setEnabled(myEditorPanel, selected, true);
+    ((EditorEx)myEditor).setRendererMode(!selected);
   }
 
   public JComponent createComponent() {

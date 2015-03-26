@@ -46,10 +46,10 @@ import java.util.Map.Entry;
 
 public class FinallyProcessor {
 
-  private Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
-  private Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
 
-  private VarProcessor varprocessor;
+  private final VarProcessor varprocessor;
 
   public FinallyProcessor(VarProcessor varprocessor) {
     this.varprocessor = varprocessor;
@@ -863,11 +863,11 @@ public class FinallyProcessor {
 
       if ((type & 2) > 0) { // last
         if (finallytype == 0 || finallytype == 2) {
-          seqPattern.removeInstruction(seqPattern.length() - 1);
+          seqPattern.removeLast();
         }
 
         if (finallytype == 2) {
-          seqPattern.removeInstruction(seqPattern.length() - 1);
+          seqPattern.removeLast();
         }
       }
     }
@@ -1078,11 +1078,11 @@ public class FinallyProcessor {
 
       if ((blocktype & 2) > 0) { // last
         if (finallytype == 2 || finallytype == 0) {
-          seq.removeInstruction(seq.length() - 1);
+          seq.removeLast();
         }
 
         if (finallytype == 2) { // astore
-          seq.removeInstruction(seq.length() - 1);
+          seq.removeLast();
         }
       }
     }

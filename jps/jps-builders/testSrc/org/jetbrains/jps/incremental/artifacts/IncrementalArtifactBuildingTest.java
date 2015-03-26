@@ -328,4 +328,27 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     assertOutput(a2, fs().file("a.txt", "2"));
   }
 
+  //todo[nik] fix
+  //ZD-51993
+  public void _testFilesCopiedToTwoDifferentPlacesInArtifact() {
+    final String fileA = createFile("res/a.txt", "0");
+    final String fileB = createFile("res/b.txt", "0");
+    String dir = PathUtil.getParentPath(fileA);
+    JpsArtifact a = addArtifact("a", root()
+                                       .dir("d").dirCopy(dir).end()
+                                       .archive("a.zip").dirCopy(dir));
+    buildAll();
+
+    change(fileA, "1");
+    buildAll();
+    assertOutput(a, fs()
+                      .dir("d").file("a.txt", "1").file("b.txt", "0").end()
+                      .archive("a.zip").file("a.txt", "1").file("b.txt", "0"));
+
+    change(fileB, "1");
+    buildAll();
+    assertOutput(a, fs()
+                      .dir("d").file("a.txt", "1").file("b.txt", "1").end()
+                      .archive("a.zip").file("a.txt", "1").file("b.txt", "1"));
+  }
 }

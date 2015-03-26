@@ -370,8 +370,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return ContainerUtil.<Class>set(
-      GradleBuild.class, ExternalProject.class, ModuleExtendedModel.class, BuildScriptClasspathModel.class);
+    Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ExternalProject.class, ModuleExtendedModel.class);
+    if (!resolverCtx.isPreviewMode()) {
+      result.add(BuildScriptClasspathModel.class);
+    }
+    return result;
   }
 
   @NotNull

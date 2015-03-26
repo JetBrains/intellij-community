@@ -203,6 +203,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     readExternal(state);
   }
 
+  @Override
   public void setProjectBytecodeTarget(@Nullable String level) {
     final String previous = myBytecodeTargetLevel;
     myBytecodeTargetLevel = level;

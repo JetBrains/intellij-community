@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,13 +35,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -112,7 +113,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     final String refText = reference.getRangeInElement().substring(text); // text of the part we're working with
 
     // don't propose meaningless auto imports if no interpreter is configured
-    final Module module = ModuleUtil.findModuleForPsiElement(node);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(node);
     if (module != null && PythonSdkType.findPythonSdk(module) == null) {
       return null;
     }
@@ -123,14 +124,26 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return null;
     }
 
-    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    AutoImportQuickFix fix = addCandidates(node, reference, refText, null);
+    if (fix != null) return fix;
+    final String packageName = PyPackageAliasesProvider.commonImportAliases.get(refText);
+    if (packageName != null) {
+      fix = addCandidates(node, reference, packageName, refText);
+      if (fix != null) return fix;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText, @Nullable String asName) {
+    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, refText, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seenFileNames = new HashSet<String>(); // true import names
 
     PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenFileNames);
     if (fix.getCandidatesCount() == 0 || fix.hasProjectImports() || Registry.is("python.import.always.ask")) {
       // maybe some unimported file has it, too
       ProgressManager.checkCanceled(); // before expensive index searches
-      addSymbolImportCandidates(node, refText, fix, seenFileNames, existingImportFile);
+      addSymbolImportCandidates(node, refText, asName, fix, seenFileNames, existingImportFile);
     }
 
     for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
@@ -216,11 +229,8 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return existingImportFile;
   }
 
-  private static void addSymbolImportCandidates(PyElement node,
-                                                String refText,
-                                                AutoImportQuickFix fix,
-                                                Set<String> seenFileNames,
-                                                PsiFile existingImportFile) {
+  private static void addSymbolImportCandidates(PyElement node, String refText, @Nullable String asName, AutoImportQuickFix fix,
+                                                Set<String> seenFileNames, PsiFile existingImportFile) {
     Project project = node.getProject();
     List<PsiElement> symbols = new ArrayList<PsiElement>();
     symbols.addAll(PyClassNameIndex.find(refText, project, true));
@@ -243,7 +253,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
             }
             if (importPath != null && !seenFileNames.contains(importPath.toString())) {
               // a new, valid hit
-              fix.addImport(symbol, srcfile, importPath);
+              fix.addImport(symbol, srcfile, importPath, asName);
               seenFileNames.add(importPath.toString()); // just in case, again
             }
           }

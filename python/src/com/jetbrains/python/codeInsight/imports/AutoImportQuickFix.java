@@ -19,21 +19,16 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
@@ -50,9 +45,8 @@ import java.util.List;
  *
  * @author dcheryasov
  */
-public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
+public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements HighPriorityAction {
 
-  private final PyElement myNode;
   private final PsiReference myReference;
 
   private final List<ImportCandidateHolder> myImports; // from where and what to import
@@ -64,13 +58,14 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   /**
    * Creates a new, empty fix object.
    * @param node to which the fix applies.
+   * @param name name to import
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name"
    */
-  public AutoImportQuickFix(PyElement node, PsiReference reference, boolean qualify) {
-    myNode = node;
+  public AutoImportQuickFix(PsiElement node, PsiReference reference, String name, boolean qualify) {
+    super(node);
     myReference = reference;
     myImports = new ArrayList<ImportCandidateHolder>();
-    myInitialName = getNameToImport();
+    myInitialName = name;
     myUseQualifiedImport = qualify;
     myExpended = false;
   }
@@ -95,20 +90,19 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     myImports.add(new ImportCandidateHolder(importable, file, null, path));
   }
 
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path, @Nullable String asName) {
+    myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
+  }
+
   @NotNull
   public String getText() {
     if (myUseQualifiedImport) return PyBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
-      return "Import '" + myImports.get(0).getPresentableText(getNameToImport()) + "'";
+      return "Import '" + myImports.get(0).getPresentableText(myInitialName) + "'";
     }
     else {
       return PyBundle.message("ACT.NAME.use.import");
     }
-  }
-
-  @NotNull
-  public String getName() {
-    return getText();
   }
 
   @NotNull
@@ -120,7 +114,9 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
       return false;
     }
-    if (myNode == null || !myNode.isValid() || myNode.getName() == null || myImports.size() <= 0) {
+    final PsiElement element = getStartElement();
+    if (element == null || !element.isValid() || (element instanceof PsiNamedElement && ((PsiNamedElement)element).getName() == null)
+        || myImports.size() <= 0) {
       return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
     }
     if (ImportFromExistingAction.isResolved(myReference)) {
@@ -129,16 +125,13 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       return false;
     }
-    if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).isQualified()))) return false; // we cannot be qualified
-    String name = getNameToImport();
-    if (!name.equals(myInitialName)) {
-      return false;
-    }
+    if ((element instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)element).isQualified()))) return false; // we cannot be qualified
+
     final String message = ShowAutoImportPass.getMessage(
       myImports.size() > 1,
-      ImportCandidateHolder.getQualifiedName(name, myImports.get(0).getPath(), myImports.get(0).getImportElement())
+      ImportCandidateHolder.getQualifiedName(myInitialName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
-    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, name, myUseQualifiedImport, false);
+    final ImportFromExistingAction action = new ImportFromExistingAction(element, myImports, myInitialName, myUseQualifiedImport, false);
     action.onDone(new Runnable() {
       public void run() {
         myExpended = true;
@@ -146,18 +139,18 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     });
     HintManager.getInstance().showQuestionHint(
       editor, message,
-      myNode.getTextOffset(),
-      myNode.getTextRange().getEndOffset(), action);
+      element.getTextOffset(),
+      element.getTextRange().getEndOffset(), action);
     return true;
   }
 
   public boolean isAvailable() {
-    return !myExpended && myNode != null && myNode.isValid() && myImports.size() > 0;
+    return !myExpended && getStartElement() != null && getStartElement().isValid() && myImports.size() > 0;
   }
 
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    invoke(descriptor.getPsiElement().getContainingFile());
-    myExpended = true;
+  @Override
+  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    invoke(getStartElement().getContainingFile());
   }
 
   public void invoke(PsiFile file) throws IncorrectOperationException {
@@ -173,7 +166,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
 
   @NotNull
   protected ImportFromExistingAction createAction() {
-    return new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport, false);
+    return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, myUseQualifiedImport, false);
   }
 
   public void sortCandidates() {
@@ -193,13 +186,8 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     return true;
   }
 
-  public String getNameToImport() {
-    final String text = myReference.getElement().getText();
-    return myReference.getRangeInElement().substring(text); // text of the part we're working with
-  }
-
   public boolean hasProjectImports() {
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myNode.getProject());
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(getStartElement().getProject());
     for (ImportCandidateHolder anImport : myImports) {
       VirtualFile file = anImport.getFile().getVirtualFile();
       if (file != null && fileIndex.isInContent(file)) {
@@ -211,12 +199,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
 
   @NotNull
   public AutoImportQuickFix forLocalImport() {
-    return new AutoImportQuickFix(myNode, myReference, myUseQualifiedImport) {
-      @NotNull
-      @Override
-      public String getName() {
-        return super.getName() + " locally";
-      }
+    return new AutoImportQuickFix(getStartElement(), myReference, myInitialName, myUseQualifiedImport) {
 
       @NotNull
       @Override
@@ -227,8 +210,12 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
       @NotNull
       @Override
       protected ImportFromExistingAction createAction() {
-        return new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport, true);
+        return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, myUseQualifiedImport, true);
       }
     };
+  }
+
+  public String getNameToImport() {
+    return myInitialName;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,9 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
-* Created with IntelliJ IDEA.
-* User: zajac
-* Date: 5/6/12
-* Time: 2:06 AM
-* To change this template use File | Settings | File Templates.
-*/
+ * @author zajac
+ * @since 6.05.2012
+ */
 public class BookmarkItem extends ItemWrapper {
   private final Bookmark myBookmark;
 

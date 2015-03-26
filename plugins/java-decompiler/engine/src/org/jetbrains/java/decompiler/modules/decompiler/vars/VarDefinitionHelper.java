@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ import java.util.Map.Entry;
 
 public class VarDefinitionHelper {
 
-  private HashMap<Integer, Statement> mapVarDefStatements;
+  private final HashMap<Integer, Statement> mapVarDefStatements;
 
   // statement.id, defined vars
-  private HashMap<Integer, HashSet<Integer>> mapStatementVars;
+  private final HashMap<Integer, HashSet<Integer>> mapStatementVars;
 
-  private HashSet<Integer> implDefVars;
+  private final HashSet<Integer> implDefVars;
 
-  private VarProcessor varproc;
+  private final VarProcessor varproc;
 
   public VarDefinitionHelper(Statement root, StructMethod mt, VarProcessor varproc) {
 

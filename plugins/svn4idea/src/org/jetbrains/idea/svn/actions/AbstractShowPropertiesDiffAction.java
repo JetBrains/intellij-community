@@ -232,7 +232,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
                                                     @Nullable final SVNRevision revision)
   throws SVNException, VcsException {
     if (contentRevision == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     SvnTarget target;

@@ -383,6 +383,16 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     mouse().ctrl().alt().shift().pressAt(0, 7).dragTo(1, 5).release();
     checkResultByText("s<selection>om<caret></selection>e <selection><caret>te</selection>xt\nother<selection><caret> t</selection>ext");
   }
+  
+  public void testCaretPositionUpdateOnFolding() throws Exception {
+    initText("line1\n" +
+             "line2\n" +
+             "l<caret>ine3\n" +
+             "line<caret>4");
+    addCollapsedFoldRegion(0, 6, "...");
+    verifyCaretsAndSelections(1, 1, 1, 1,
+                              2, 4, 4, 4);
+  }
 
   private static void doWithAltClickShortcut(ThrowableRunnable runnable) throws Throwable {
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();

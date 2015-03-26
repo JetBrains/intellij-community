@@ -30,11 +30,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private Reference<E> myElement;
@@ -49,9 +51,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
                              @NotNull SmartPointerElementInfo elementInfo,
                              @NotNull Class<? extends PsiElement> elementClass) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    cacheElement(element);
     myElementClass = elementClass;
     myElementInfo = elementInfo;
+    cacheElement(element);
   }
 
   @Override
@@ -91,7 +93,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   private void cacheElement(E element) {
-    myElement = element == null ? null : new SoftReference<E>(element);
+    myElement = element == null ? null : 
+                ((PsiManagerEx)PsiManager.getInstance(getProject())).isBatchFilesProcessingMode() ? new WeakReference<E>(element) : 
+                new SoftReference<E>(element);
   }
 
   @Override

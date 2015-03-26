@@ -153,7 +153,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
       if (SWITCHER == null) {
         isNewSwitcher = true;
-        SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
+        SWITCHER = createAndShowSwitcher(e, SWITCHER_TITLE, false);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
       }
     }
@@ -175,7 +175,12 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  public static SwitcherPanel createAndShowSwitcher(Project project, String title, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(AnActionEvent e, String title, boolean pinned) {
+    Project project = getEventProject(e);
+    if (SWITCHER != null) {
+      SWITCHER.goForward();
+      return null;
+    }
     return createAndShowSwitcher(project, title, pinned, null);
   }
 

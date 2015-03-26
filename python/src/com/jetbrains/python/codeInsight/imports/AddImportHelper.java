@@ -50,7 +50,7 @@ public class AddImportHelper {
   private AddImportHelper() {
   }
 
-  public static void addLocalImportStatement(@NotNull PyElement element, @NotNull String name) {
+  public static void addLocalImportStatement(@NotNull PsiElement element, @NotNull String name) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
 
@@ -61,7 +61,7 @@ public class AddImportHelper {
     }
   }
 
-  public static void addLocalFromImportStatement(@NotNull PyElement element, @NotNull String qualifier, @NotNull String name) {
+  public static void addLocalFromImportStatement(@NotNull PsiElement element, @NotNull String qualifier, @NotNull String name) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
 
@@ -74,7 +74,7 @@ public class AddImportHelper {
   }
 
   @Nullable
-  public static PsiElement getLocalInsertPosition(@NotNull PyElement anchor) {
+  public static PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
     return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
@@ -224,7 +224,7 @@ public class AddImportHelper {
   }
 
   /**
-   * Adds a new {@link com.jetbrains.python.psi.PyFromImportStatement} statement below other top-level imports or as specified by anchor.
+   * Adds a new {@link PyFromImportStatement} statement below other top-level imports or as specified by anchor.
    *
    * @param file   where to operate
    * @param from   import source (reference after {@code from} keyword)
@@ -276,7 +276,7 @@ public class AddImportHelper {
   }
 
   /**
-   * Adds new {@link com.jetbrains.python.psi.PyFromImportStatement} in file or append {@link com.jetbrains.python.psi.PyImportElement} to
+   * Adds new {@link PyFromImportStatement} in file or append {@link PyImportElement} to
    * existing from import statement.
    *
    * @param file     module where import will be added
@@ -320,14 +320,14 @@ public class AddImportHelper {
   }
 
   /**
-   * Adds either {@link com.jetbrains.python.psi.PyFromImportStatement} or {@link com.jetbrains.python.psi.PyImportStatement}
+   * Adds either {@link PyFromImportStatement} or {@link PyImportStatement}
    * to specified target depending on user preferences and whether it's possible to import element via "from" form of import
    * (e.g. consider top level module).
    *
    * @param target  element import is pointing to
    * @param file    file where import will be inserted
    * @param element used to determine where to insert import
-   * @see com.jetbrains.python.codeInsight.PyCodeInsightSettings#PREFER_FROM_IMPORT
+   * @see PyCodeInsightSettings#PREFER_FROM_IMPORT
    * @see #addImportStatement
    * @see #addOrUpdateFromImportStatement
    */
@@ -335,6 +335,7 @@ public class AddImportHelper {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     final PsiFileSystemItem toImport =
       target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
+    if (toImport == null) return;
     final ImportPriority priority = getImportPriority(file, toImport);
     final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
     if (qName == null) return;
@@ -344,6 +345,7 @@ public class AddImportHelper {
     }
     else {
       final QualifiedName toImportQName = QualifiedNameFinder.findCanonicalImportPath(toImport, element);
+      if (toImportQName == null) return;
       if (useQualified) {
         addImportStatement(file, path, null, priority, element);
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
@@ -351,7 +353,9 @@ public class AddImportHelper {
         element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), toImportQName + "." + targetName));
       }
       else {
-        addOrUpdateFromImportStatement(file, toImportQName.toString(), target.getName(), null, priority, element);
+        final String name = target.getName();
+        if (name != null)
+          addOrUpdateFromImportStatement(file, toImportQName.toString(), name, null, priority, element);
       }
     }
   }

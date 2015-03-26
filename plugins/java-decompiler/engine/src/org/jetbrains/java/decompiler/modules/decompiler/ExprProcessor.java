@@ -141,7 +141,7 @@ public class ExprProcessor implements CodeConstants {
 
   private static final String[] typeNames = new String[]{"byte", "char", "double", "float", "int", "long", "short", "boolean",};
 
-  private VarProcessor varProcessor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
+  private final VarProcessor varProcessor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
 
   public void processStatement(RootStatement root, StructClass cl) {
 
@@ -768,6 +768,16 @@ public class ExprProcessor implements CodeConstants {
                .isClassDef()));
   }
 
+  private static void addDeletedGotoInstructionMapping(Statement stat, BytecodeMappingTracer tracer) {
+    if (stat instanceof BasicBlockStatement) {
+      BasicBlock block = ((BasicBlockStatement)stat).getBlock();
+      List<Integer> offsets = block.getInstrOldOffsets();
+      if (!offsets.isEmpty() && offsets.size() > block.getSeq().length()) { // some instructions have been deleted, but we still have offsets
+        tracer.addMapping(offsets.get(offsets.size() - 1)); // add the last offset
+      }
+    }
+  }
+
   public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
     TextBuffer buf = stat.toJava(indent, tracer);
 
@@ -779,9 +789,11 @@ public class ExprProcessor implements CodeConstants {
 
         switch (edge.getType()) {
           case StatEdge.TYPE_BREAK:
+            addDeletedGotoInstructionMapping(stat, tracer);
             buf.append("break");
             break;
           case StatEdge.TYPE_CONTINUE:
+            addDeletedGotoInstructionMapping(stat, tracer);
             buf.append("continue");
         }
 

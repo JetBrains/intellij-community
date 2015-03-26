@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,19 @@ import java.util.Map.Entry;
 
 public class DominatorTreeExceptionFilter {
 
-  private Statement statement;
+  private final Statement statement;
 
   // idom, nodes
-  private Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<Integer, Set<Integer>>();
+  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<Integer, Set<Integer>>();
 
   // handler, range nodes
-  private Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<Integer, Set<Integer>>();
+  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<Integer, Set<Integer>>();
 
   // handler, head dom
   private Map<Integer, Integer> mapExceptionDoms = new HashMap<Integer, Integer>();
 
   // statement, handler, exit nodes
-  private Map<Integer, Map<Integer, Integer>> mapExceptionRangeUniqueExit = new HashMap<Integer, Map<Integer, Integer>>();
+  private final Map<Integer, Map<Integer, Integer>> mapExceptionRangeUniqueExit = new HashMap<Integer, Map<Integer, Integer>>();
 
   private DominatorEngine domEngine;
 

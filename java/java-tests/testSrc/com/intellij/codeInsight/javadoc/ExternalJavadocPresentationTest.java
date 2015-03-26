@@ -50,12 +50,23 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
       doTest("lang/String.html#toLowerCase()", "String/7/page.html", "String/7/expectedToLowerCase.html");
       doTest("lang/String.html#toLowerCase()", "String/6/page.html", "String/6/expectedToLowerCase.html");
   }
-  
+
+  public void testInvalidJavadoc() throws Exception {
+    doTest("", "String/invalid/page.html", "String/invalid/expected.html", false);
+  }
+
   public void testPackageSummary() throws Exception {
     doTest("java/lang/package-summary.html", "packageSummary/util/page.html", "packageSummary/util/expected.html");
   }
 
   private void doTest(@NonNls String url, @NonNls String pageText, @NonNls String expected) throws Exception {
+    doTest(url, pageText, expected, true);
+  }
+
+  private void doTest(@NonNls String url,
+                      @NonNls String pageText,
+                      @NonNls String expected,
+                      final boolean matchStart) throws Exception {
     final String basePath = getTestDataPath() + TEST_ROOT;
     final VirtualFile pageTextFile = LocalFileSystem.getInstance().findFileByPath(basePath + pageText);
     assertNotNull(pageTextFile);
@@ -71,13 +82,17 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
       }
 
       @Override
-      public void doBuildFromStream(String url, Reader input, StringBuilder data, boolean searchForEncoding) throws IOException {
-        super.doBuildFromStream(url, input, data, searchForEncoding);
+      public void doBuildFromStream(String url, Reader input, StringBuilder data, boolean searchForEncoding, boolean matchStart) throws IOException {
+        super.doBuildFromStream(url, input, data, searchForEncoding, matchStart);
       }
     }
     JavadocExternalTestFilter filter = new JavadocExternalTestFilter(getProject());
     StringBuilder extractedData = new StringBuilder();
-    filter.doBuildFromStream(url, new StringReader(LoadTextUtil.loadText(pageTextFile).toString()), extractedData, false);
+    filter.doBuildFromStream(url, new StringReader(LoadTextUtil.loadText(pageTextFile).toString()), extractedData, false, true);
+    if (!matchStart) {
+      assertEmpty(extractedData.toString());
+      filter.doBuildFromStream(url, new StringReader(LoadTextUtil.loadText(pageTextFile).toString()), extractedData, false, false);
+    }
     assertEquals(LoadTextUtil.loadText(expectedTextFile).toString(), extractedData.toString());
   }
 }

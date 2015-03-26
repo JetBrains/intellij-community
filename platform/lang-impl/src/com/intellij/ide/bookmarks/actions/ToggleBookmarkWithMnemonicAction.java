@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author max
+ */
 public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
   public ToggleBookmarkWithMnemonicAction() {
     getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     super.actionPerformed(e);
 
-    DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
     if (project == null) return;
-    final BookmarkInContextInfo info = new BookmarkInContextInfo(dataContext, project).invoke();
+
+    final BookmarkInContextInfo info = new BookmarkInContextInfo(e.getDataContext(), project).invoke();
     final Bookmark bookmark = info.getBookmarkAtPlace();
     final BookmarkManager bookmarks = BookmarkManager.getInstance(project);
     if (bookmark != null) {
       final JBPopup[] popup = new JBPopup[1];
+
       MnemonicChooser mc = new MnemonicChooser() {
         @Override
         protected void onMnemonicChosen(char c) {
@@ -68,25 +71,17 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         }
       };
 
-      final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(mc, mc);
-      popup[0] = builder.
+      popup[0] = JBPopupFactory.getInstance().createComponentPopupBuilder(mc, mc).
         setTitle("Bookmark Mnemonic").
         setFocusable(true).
         setRequestFocus(true).
         setMovable(false).
         setCancelKeyEnabled(false).
         setAdText(bookmarks.hasBookmarksWithMnemonics() ? (UIUtil.isUnderDarcula() ? "Brown" : "Yellow") + " cells are in use" : null).
-        setResizable(false)
-          .createPopup();
+        setResizable(false).
+        createPopup();
 
-      popup[0].showInBestPositionFor(dataContext);
+      popup[0].showInBestPositionFor(e.getDataContext());
     }
-  }
-
-  @Override
-  public void update(AnActionEvent event) {
-    super.update(event);
-
-    event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
   }
 }

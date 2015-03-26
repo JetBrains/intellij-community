@@ -1005,7 +1005,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
           DiffUtil.scrollToPoint(myEditor, myEditorPosition.myPoints[0]);
         }
         else {
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+          DiffUtil.scrollToCaret(myEditor);
         }
         myShouldScroll = false;
       }

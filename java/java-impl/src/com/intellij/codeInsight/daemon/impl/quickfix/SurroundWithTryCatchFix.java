@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,13 +39,15 @@ import org.jetbrains.annotations.NotNull;
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
 
-  private PsiStatement myStatement = null;
+  private PsiElement myStatement = null;
 
   public SurroundWithTryCatchFix(@NotNull PsiElement element) {
-    final PsiFunctionalExpression functionalExpression = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, false);
-    if (functionalExpression == null || 
-        (functionalExpression instanceof PsiLambdaExpression && ((PsiLambdaExpression)functionalExpression).getBody() instanceof PsiCodeBlock)) {
+    final PsiFunctionalExpression functionalExpression = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, false, PsiStatement.class);
+    if (functionalExpression == null) {
       myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
+    }
+    else if (functionalExpression instanceof PsiLambdaExpression) {
+      myStatement = functionalExpression;
     }
   }
 
@@ -82,6 +85,20 @@ public class SurroundWithTryCatchFix implements IntentionAction {
         myStatement = forStatement;
       }
     }
+
+    if (myStatement instanceof PsiLambdaExpression) {
+      PsiElement body = ((PsiLambdaExpression)myStatement).getBody();
+      if (body instanceof PsiExpression) {
+        myStatement = RefactoringUtil.expandExpressionLambdaToCodeBlock(body);
+      }
+
+      body = ((PsiLambdaExpression)myStatement).getBody();
+      LOG.assertTrue(body instanceof PsiCodeBlock);
+      final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      LOG.assertTrue(statements.length == 1);
+      myStatement = statements[0];
+    }
+
     TextRange range = null;
 
     try{

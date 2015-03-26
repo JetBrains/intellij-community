@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ import java.util.Map.Entry;
 public class FlattenStatementsHelper {
 
   // statement.id, node.id(direct), node.id(continue)
-  private Map<Integer, String[]> mapDestinationNodes = new HashMap<Integer, String[]>();
+  private final Map<Integer, String[]> mapDestinationNodes = new HashMap<Integer, String[]>();
 
   // node.id(source), statement.id(destination), edge type
-  private List<Edge> listEdges = new ArrayList<Edge>();
+  private final List<Edge> listEdges = new ArrayList<Edge>();
 
   // node.id(exit), [node.id(source), statement.id(destination)]
-  private Map<String, List<String[]>> mapShortRangeFinallyPathIds = new HashMap<String, List<String[]>>();
+  private final Map<String, List<String[]>> mapShortRangeFinallyPathIds = new HashMap<String, List<String[]>>();
 
   // node.id(exit), [node.id(source), statement.id(destination)]
-  private Map<String, List<String[]>> mapLongRangeFinallyPathIds = new HashMap<String, List<String[]>>();
+  private final Map<String, List<String[]>> mapLongRangeFinallyPathIds = new HashMap<String, List<String[]>>();
 
   // positive if branches
-  private Map<String, Integer> mapPosIfBranch = new HashMap<String, Integer>();
+  private final Map<String, Integer> mapPosIfBranch = new HashMap<String, Integer>();
 
   private DirectGraph graph;
 

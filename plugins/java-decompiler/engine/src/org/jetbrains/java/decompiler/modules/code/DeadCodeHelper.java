@@ -252,7 +252,7 @@ public class DeadCodeHelper {
       Instruction instr = block.getLastInstruction();
 
       if (instr != null && instr.opcode == CodeConstants.opc_goto) {
-        block.getSeq().removeInstruction(block.getSeq().length() - 1);
+        block.getSeq().removeLast();
       }
     }
 

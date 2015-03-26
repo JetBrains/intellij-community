@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -27,13 +28,17 @@ public class DetailController {
   private DetailView myDetailView;
   private ItemWrapper mySelectedItem;
 
-  public DetailController(MasterController myMasterController) {
-    this.myMasterController = myMasterController;
+  public DetailController(MasterController masterController) {
+    myMasterController = masterController;
   }
 
-  protected void doUpdateDetailViewWithItem(ItemWrapper wrapper1) {
-    if (wrapper1 != null) {
-      wrapper1.updateDetailView(myDetailView);
+  public void setDetailView(@NotNull DetailView detailView) {
+    myDetailView = detailView;
+  }
+
+  protected void doUpdateDetailViewWithItem(ItemWrapper wrapper) {
+    if (wrapper != null) {
+      wrapper.updateDetailView(myDetailView);
     }
     else {
       myDetailView.clearEditor();
@@ -99,9 +104,5 @@ public class DetailController {
     if (list.getModel().getSize() == 0) {
       list.clearSelection();
     }
-  }
-
-  public void setDetailView(DetailView detailView) {
-    myDetailView = detailView;
   }
 }

@@ -511,6 +511,9 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private void createUIComponents() {
+    mySourceDirField = new TextFieldWithBrowseButton(null, this);
+    myTargetDirField = new TextFieldWithBrowseButton(null, this);
+
     final AtomicBoolean callUpdate = new AtomicBoolean(true);
     myRootPanel = new JPanel(new BorderLayout()) {
       @Override

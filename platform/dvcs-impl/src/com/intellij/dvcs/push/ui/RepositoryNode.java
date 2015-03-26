@@ -72,6 +72,10 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     return !myLoading.get();
   }
 
+  public void forceUpdateUiModelWithTypedText(@NotNull String forceText) {
+    myRepositoryPanel.getTargetPanel().forceUpdateEditableUiModel(forceText);
+  }
+
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     render(renderer, null);

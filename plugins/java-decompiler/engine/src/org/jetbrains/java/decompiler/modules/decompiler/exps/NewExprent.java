@@ -38,7 +38,7 @@ import java.util.Set;
 public class NewExprent extends Exprent {
 
   private InvocationExprent constructor;
-  private VarType newType;
+  private final VarType newType;
   private List<Exprent> lstDims = new ArrayList<Exprent>();
   private List<Exprent> lstArrayElements = new ArrayList<Exprent>();
   private boolean directArrayInit;

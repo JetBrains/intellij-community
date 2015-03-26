@@ -185,7 +185,6 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         errors = executeSave(session, readonlyFiles, errors);
       }
     }
-
     return errors;
   }
 

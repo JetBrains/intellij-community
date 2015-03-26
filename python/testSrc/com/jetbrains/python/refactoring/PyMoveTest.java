@@ -156,7 +156,7 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("p1/p2/m1.py", "nonp3");
   }
 
-  // PY-6432
+  // PY-6432, PY-15347
   public void testStarImportWithUsages() {
     doMoveSymbolTest("f", "c.py");
   }

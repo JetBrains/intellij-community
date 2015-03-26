@@ -59,7 +59,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.*;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -81,7 +80,7 @@ import java.util.List;
 
 public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
-  private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
+  private Map<VirtualFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private final MyTree myLeftTree = new MyTree();
   private final MyTree myRightTree = new MyTree();
   private final DependenciesUsagesPanel myUsagesPanel;
@@ -92,7 +91,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final Marker myRightTreeMarker;
   private final Marker myLeftTreeMarker;
-  private Set<PsiFile> myIllegalsInRightTree = new HashSet<PsiFile>();
+  private Set<VirtualFile> myIllegalsInRightTree = new HashSet<VirtualFile>();
 
   private final Project myProject;
   private final List<DependenciesBuilder> myBuilders;
@@ -118,10 +117,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myScopeOfInterest = main.getScopeOfInterest();
     myTransitiveBorder = main.getTransitiveBorder();
     myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
-    myIllegalDependencies = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
+    myIllegalDependencies = new HashMap<VirtualFile, Map<DependencyRule, Set<PsiFile>>>();
     for (DependenciesBuilder builder : builders) {
       myDependencies.putAll(builder.getDependencies());
-      myIllegalDependencies.putAll(builder.getIllegalDependencies());
+      putAllDependencies(builder);
     }
     exclude(excluded);
     myProject = project;
@@ -240,6 +239,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
+  private void putAllDependencies(DependenciesBuilder builder) {
+    final Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> dependencies = builder.getIllegalDependencies();
+    for (Map.Entry<PsiFile, Map<DependencyRule, Set<PsiFile>>> entry : dependencies.entrySet()) {
+      myIllegalDependencies.put(entry.getKey().getVirtualFile(), entry.getValue());
+    }
+  }
+
   private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
     if (myTransitiveBorder == 0) return;
     Set<PsiFile> initialSearchFor = new HashSet<PsiFile>(searchFor);
@@ -320,9 +326,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void rebuild() {
-    myIllegalDependencies = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
+    myIllegalDependencies = new HashMap<VirtualFile, Map<DependencyRule, Set<PsiFile>>>();
     for (DependenciesBuilder builder : myBuilders) {
-      myIllegalDependencies.putAll(builder.getIllegalDependencies());
+      putAllDependencies(builder);
     }
     updateLeftTreeModel();
     updateRightTreeModel();
@@ -347,12 +353,15 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private void updateRightTreeModel() {
     Set<PsiFile> deps = new HashSet<PsiFile>();
     Set<PsiFile> scope = getSelectedScope(myLeftTree);
-    myIllegalsInRightTree = new HashSet<PsiFile>();
+    myIllegalsInRightTree = new HashSet<VirtualFile>();
     for (PsiFile psiFile : scope) {
-      Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(psiFile);
+      Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(psiFile.getVirtualFile());
       if (illegalDeps != null) {
         for (final DependencyRule rule : illegalDeps.keySet()) {
-          myIllegalsInRightTree.addAll(illegalDeps.get(rule));
+          final Set<PsiFile> files = illegalDeps.get(rule);
+          for (PsiFile file : files) {
+            myIllegalsInRightTree.add(file.getVirtualFile());
+          }
         }
       }
       final Set<PsiFile> psiFiles = myDependencies.get(psiFile);
@@ -897,7 +906,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         public void run() {
           myBuilders.add(builder);
           myDependencies.putAll(builder.getDependencies());
-          myIllegalDependencies.putAll(builder.getIllegalDependencies());
+          putAllDependencies(builder);
           exclude(myExcluded);
           rebuild();
         }

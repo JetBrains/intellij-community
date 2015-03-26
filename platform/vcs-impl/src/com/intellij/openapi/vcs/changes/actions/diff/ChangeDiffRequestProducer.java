@@ -281,14 +281,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
           createTextContent(mergeData.LAST, file)
         );
 
-        SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
-
-        boolean bRevCurrent = bRev instanceof CurrentContentRevision;
-        boolean aRevCurrent = aRev instanceof CurrentContentRevision;
-        if (bRevCurrent && !aRevCurrent) request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.LEFT);
-        if (!bRevCurrent && aRevCurrent) request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.RIGHT);
-
-        return request;
+        return new SimpleDiffRequest(title, contents, titles);
       }
       catch (VcsException e) {
         LOG.info(e);
@@ -315,7 +308,14 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       String beforeRevisionTitle = getRevisionTitle(bRev, "Base version");
       String afterRevisionTitle = getRevisionTitle(aRev, "Your version");
 
-      return new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
+      SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
+
+      boolean bRevCurrent = bRev instanceof CurrentContentRevision;
+      boolean aRevCurrent = aRev instanceof CurrentContentRevision;
+      if (bRevCurrent && !aRevCurrent) request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.LEFT);
+      if (!bRevCurrent && aRevCurrent) request.putUserData(DiffUserDataKeys.MASTER_SIDE, Side.RIGHT);
+
+      return request;
     }
   }
 

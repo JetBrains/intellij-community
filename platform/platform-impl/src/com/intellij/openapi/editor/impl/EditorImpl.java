@@ -3088,8 +3088,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (!Comparing.equal(color[i], currentColor)) {
             currentColor = color[i] != null ? color[i] : JBColor.black;
 
-            UIUtil.updateLCDContrastBasingOnForegroundColor(g, currentColor);
-
             g.setColor(currentColor);
           }
 

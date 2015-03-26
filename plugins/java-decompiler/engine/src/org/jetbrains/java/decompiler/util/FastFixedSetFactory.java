@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import java.util.*;
 
 public class FastFixedSetFactory<E> {
 
-  private VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<int[], E>();
+  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<int[], E>();
 
-  private int dataLength;
+  private final int dataLength;
 
   public FastFixedSetFactory(Collection<E> set) {
 
@@ -59,9 +59,9 @@ public class FastFixedSetFactory<E> {
 
   public static class FastFixedSet<E> implements Iterable<E> {
 
-    private FastFixedSetFactory<E> factory;
+    private final FastFixedSetFactory<E> factory;
 
-    private VBStyleCollection<int[], E> colValuesInternal;
+    private final VBStyleCollection<int[], E> colValuesInternal;
 
     private int[] data;
 
@@ -286,9 +286,9 @@ public class FastFixedSetFactory<E> {
 
   public static class FastFixedSetIterator<E> implements Iterator<E> {
 
-    private VBStyleCollection<int[], E> colValuesInternal;
-    private int[] data;
-    private int size;
+    private final VBStyleCollection<int[], E> colValuesInternal;
+    private final int[] data;
+    private final int size;
 
     private int pointer = -1;
     private int next_pointer = -1;

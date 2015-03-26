@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -16,9 +17,10 @@ import java.util.Map;
 class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
   @Nullable private final List<VcsFileRevision> myRevisions;
 
-  public AnnotateCurrentRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
+  public AnnotateCurrentRevisionAction(@NotNull UpToDateLineNumberProvider getUpToDateLineNumber,
+                                       @NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super("Annotate Revision", "Annotate selected revision in new tab", AllIcons.Actions.Annotate,
-          annotation, vcs);
+          getUpToDateLineNumber, annotation, vcs);
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) {
       myRevisions = null;

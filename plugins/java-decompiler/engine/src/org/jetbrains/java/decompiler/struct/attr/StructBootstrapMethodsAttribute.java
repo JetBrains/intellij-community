@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import java.util.List;
 
 public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
 
-  private List<LinkConstant> methodRefs = new ArrayList<LinkConstant>();
-  private List<List<PooledConstant>> methodArguments = new ArrayList<List<PooledConstant>>();
+  private final List<LinkConstant> methodRefs = new ArrayList<LinkConstant>();
+  private final List<List<PooledConstant>> methodArguments = new ArrayList<List<PooledConstant>>();
 
   @Override
   public void initContent(ConstantPool pool) throws IOException {

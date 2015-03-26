@@ -1,6 +1,7 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -276,8 +277,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (!StringUtil.isEmpty(errorDetails)) {
           LOG.warn(errorDetails);
         }
-        error.set(new ConfigurationException(ExternalSystemBundle.message("error.resolve.with.reason", errorMessage),
-                                             ExternalSystemBundle.message("error.resolve.generic")));
+        error.set(new ConfigurationException(
+          ExternalSystemBundle.message("error.resolve.with.log_link", errorMessage, PathManager.getLogPath()),
+          ExternalSystemBundle.message("error.resolve.generic")));
       }
     };
 

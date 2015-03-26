@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.io.IOException;
 
 public class ALOAD extends Instruction {
 
-  private static int[] opcodes = new int[]{opc_aload_0, opc_aload_1, opc_aload_2, opc_aload_3};
+  private static final int[] opcodes = new int[]{opc_aload_0, opc_aload_1, opc_aload_2, opc_aload_3};
 
   public void writeToStream(DataOutputStream out, int offset) throws IOException {
     int index = getOperand(0);

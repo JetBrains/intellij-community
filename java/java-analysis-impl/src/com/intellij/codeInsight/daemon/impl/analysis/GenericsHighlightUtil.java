@@ -157,15 +157,16 @@ public class GenericsHighlightUtil {
         final HighlightInfo highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(description).create();
         if (registerIntentions) {
+          if (typeParameterListOwner instanceof PsiClass) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createChangeClassSignatureFromUsageFix((PsiClass)typeParameterListOwner, referenceParameterList));
+          }
+
           PsiElement grandParent = referenceParameterList.getParent().getParent();
           if (grandParent instanceof PsiTypeElement) {
             PsiElement variable = grandParent.getParent();
             if (variable instanceof PsiVariable) {
               if (targetParametersNum == 0) {
                 QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createRemoveTypeArgumentsFix(variable));
-              }
-              if (typeParameterListOwner instanceof PsiClass) {
-                QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createChangeClassSignatureFromUsageFix((PsiClass)typeParameterListOwner, referenceParameterList));
               }
               registerVariableParameterizedTypeFixes(highlightInfo, (PsiVariable)variable, referenceParameterList, javaSdkVersion);
             }

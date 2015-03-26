@@ -1,3 +1,3 @@
-from b import *
+from zzz import *
 
 print(f())
