@@ -18,6 +18,7 @@ package com.intellij.patterns;
 
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,10 +38,15 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
   }
 
   public PsiMethodCallPattern methodCall(final ElementPattern<? extends PsiMethod> method) {
+    final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(method.getCondition().getConditions(), PsiNamePatternCondition.class);
     return new PsiMethodCallPattern().and(this).with(new PatternCondition<PsiMethodCallExpression>("methodCall") {
       public boolean accepts(@NotNull PsiMethodCallExpression callExpression, ProcessingContext context) {
-        final JavaResolveResult[] results = callExpression.getMethodExpression().multiResolve(true);
-        for (JavaResolveResult result : results) {
+        PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+        if (nameCondition != null && !nameCondition.getNamePattern().accepts(methodExpression.getReferenceName())) {
+          return false;
+        }
+
+        for (JavaResolveResult result : methodExpression.multiResolve(true)) {
           if (method.accepts(result.getElement(), context)) {
             return true;
           }
