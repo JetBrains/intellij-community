@@ -234,7 +234,9 @@ public abstract class AbstractExternalFilter {
       data.setLength(0);
       if (matchStart && input instanceof MyReader) {
         try {
-          doBuildFromStream(url, new MyReader(((MyReader)input).myInputStream), data, false, false);
+          final MyReader reader = contentEncoding != null ? new MyReader(((MyReader)input).myInputStream, contentEncoding)
+                                                          : new MyReader(((MyReader)input).myInputStream, ((MyReader)input).getEncoding());
+          doBuildFromStream(url, reader, data, false, false);
         }
         catch (ProcessCanceledException ignored) {}
       }
