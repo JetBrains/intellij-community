@@ -51,9 +51,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
                              @NotNull SmartPointerElementInfo elementInfo,
                              @NotNull Class<? extends PsiElement> elementClass) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    cacheElement(element);
     myElementClass = elementClass;
     myElementInfo = elementInfo;
+    cacheElement(element);
   }
 
   @Override
