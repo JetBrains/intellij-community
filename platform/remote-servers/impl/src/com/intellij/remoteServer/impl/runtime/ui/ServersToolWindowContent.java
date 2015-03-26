@@ -193,13 +193,15 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
       @Override
       public void onConnectionCreated(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
-        pollDeployments(connection);
       }
 
       @Override
       public void onConnectionStatusChanged(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
         updateSelectedServerDetails();
+        if (connection.getStatus() == ConnectionStatus.CONNECTED) {
+          pollDeployments(connection);
+        }
       }
 
       @Override
