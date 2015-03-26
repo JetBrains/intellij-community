@@ -30,6 +30,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -37,10 +38,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
@@ -209,20 +207,50 @@ class InProcessGroovyc implements GroovycFlavor {
       return pair.second;
     }
 
-    UrlClassLoader groovyAllLoader = UrlClassLoader.build().
-      urls(toUrls(Arrays.asList(GroovyBuilder.getGroovyRtRoot().getPath(), groovyAll))).allowLock().
-      useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-        @Override
-        public boolean shouldCacheData(
-          @NotNull URL url) {
+    final ClassDependencyLoader checkWellFormed = new ClassDependencyLoader() {
+      @Override
+      protected void loadClassDependencies(Class aClass) throws ClassNotFoundException {
+        if (!isCompilerCoreClass(aClass.getName()) || !(aClass.getClassLoader() instanceof UrlClassLoader)) {
+          super.loadClassDependencies(aClass);
+        }
+      }
+
+      private boolean isCompilerCoreClass(String name) {
+        if (name.startsWith("groovyjarjar")) {
           return true;
         }
-      }).get();
+        if (name.startsWith("org.codehaus.groovy.")) {
+          String tail = name.substring("org.codehaus.groovy.".length());
+          if (tail.startsWith("ast") ||
+              tail.startsWith("classgen") ||
+              tail.startsWith("tools.javac") ||
+              tail.startsWith("antlr") ||
+              tail.startsWith("vmplugin") ||
+              tail.startsWith("reflection") ||
+              tail.startsWith("control")) {
+            return true;
+          }
+          if (tail.startsWith("runtime") && name.contains("GroovyMethods")) {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
+    UrlClassLoader groovyAllLoader = UrlClassLoader.build().
+      urls(toUrls(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyAll)))).allowLock().
+        useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+          @Override
+          public boolean shouldCacheData(
+            @NotNull URL url) {
+            return true;
+          }
+        }).get();
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         try {
-          return super.loadClass(name, resolve);
+          return checkWellFormed.loadDependencies(super.loadClass(name, resolve));
         }
         catch (NoClassDefFoundError e) {
           // We might attempt to load some class in groovy-all.jar that depends on a class from another library
@@ -238,6 +266,9 @@ class InProcessGroovyc implements GroovycFlavor {
     ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, wrapper));
     return wrapper;
   }
+
+
+
 
   @NotNull
   private static List<URL> toUrls(Collection<String> paths) throws MalformedURLException {

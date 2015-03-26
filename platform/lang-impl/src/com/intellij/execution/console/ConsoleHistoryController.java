@@ -513,7 +513,7 @@ public class ConsoleHistoryController {
       OutputStream os = null;
       try {
         os = new SafeFileOutputStream(file);
-        XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
+        XmlSerializer serializer = XmlPullParserFactory.newInstance("org.xmlpull.mxp1.MXParserFactory", null).newSerializer();
         try {
           serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
         }

@@ -242,5 +242,7 @@
 
     <extensionPoint qualifiedName="com.intellij.diff.DiffTool" interface="com.intellij.diff.DiffTool"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
+
+    <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate"/>
   </extensionPoints>
 </idea-plugin>
