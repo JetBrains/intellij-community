@@ -1,5 +1,14 @@
 package org.jetbrains.jsonProtocol
 
+public val STRING_TYPE: String = "string"
+public val INTEGER_TYPE: String = "integer"
+public val NUMBER_TYPE: String = "number"
+public val BOOLEAN_TYPE: String = "boolean"
+public val OBJECT_TYPE: String = "object"
+public val ARRAY_TYPE: String = "array"
+public val UNKNOWN_TYPE: String = "unknown"
+public val ANY_TYPE: String = "any"
+
 /**
  * Defines schema of WIP metamodel defined in http://svn.webkit.org/repository/webkit/trunk/Source/WebCore/inspector/Inspector.json
  */
@@ -181,16 +190,5 @@ public trait ProtocolMetaModel {
 
     JsonOptionalField
     public fun hidden(): Boolean
-  }
-
-  companion object {
-    public val STRING_TYPE: String = "string"
-    public val INTEGER_TYPE: String = "integer"
-    public val NUMBER_TYPE: String = "number"
-    public val BOOLEAN_TYPE: String = "boolean"
-    public val OBJECT_TYPE: String = "object"
-    public val ARRAY_TYPE: String = "array"
-    public val UNKNOWN_TYPE: String = "unknown"
-    public val ANY_TYPE: String = "any"
   }
 }

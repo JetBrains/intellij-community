@@ -14,11 +14,11 @@ import java.util.ArrayList
 import java.util.LinkedHashMap
 
 fun InterfaceReader(protocolInterfaces: Array<Class<*>>): InterfaceReader {
-  val __ = InterfaceReader(LinkedHashMap<Class<*>, TypeWriter<*>>(protocolInterfaces.size()))
+  val map = LinkedHashMap<Class<*>, TypeWriter<*>>(protocolInterfaces.size())
   for (typeClass in protocolInterfaces) {
-    __.typeToTypeHandler.put(typeClass, null)
+    map.put(typeClass, null)
   }
-  return __
+  return InterfaceReader(map)
 }
 
 class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>) {
@@ -39,22 +39,16 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
     while (hasUnresolved) {
       hasUnresolved = false
       // refs can be modified - new items can be added
-      //noinspection ForLoopReplaceableByForEach
-      run {
-        var i = 0
-        val n = refs.size()
-        while (i < n) {
-          val ref = refs.get(i)
+      for (i in 0..refs.size() - 1) {
+        val ref = refs.get(i)
+        ref.type = typeToTypeHandler.get(ref.typeClass)
+        if (ref.type == null) {
+          createIfNotExists(ref.typeClass)
+          hasUnresolved = true
           ref.type = typeToTypeHandler.get(ref.typeClass)
           if (ref.type == null) {
-            createIfNotExists(ref.typeClass)
-            hasUnresolved = true
-            ref.type = typeToTypeHandler.get(ref.typeClass)
-            if (ref.type == null) {
-              throw IllegalStateException()
-            }
+            throw IllegalStateException()
           }
-          i++
         }
       }
     }
@@ -71,10 +65,9 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
       return
     }
 
-    if (processed.contains(typeClass)) {
+    if (!processed.add(typeClass)) {
       return
     }
-    processed.add(typeClass)
 
     typeToTypeHandler.put(typeClass, null)
 
