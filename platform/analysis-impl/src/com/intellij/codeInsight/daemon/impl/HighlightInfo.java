@@ -648,15 +648,13 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
-  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
-
   private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
         HighlightDisplayKey key = quickFixInfo.key != null
                                   ? quickFixInfo.key
-                                  : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+                                  : null;
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), range, key);
       }
     }
