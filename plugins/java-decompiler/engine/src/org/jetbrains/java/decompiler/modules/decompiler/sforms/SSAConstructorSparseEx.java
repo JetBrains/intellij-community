@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,24 +42,24 @@ import java.util.Map.Entry;
 public class SSAConstructorSparseEx {
 
   // node id, var, version
-  private HashMap<String, SFormsFastMapDirect> inVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> inVarVersions = new HashMap<String, SFormsFastMapDirect>();
 
   // node id, var, version (direct branch)
-  private HashMap<String, SFormsFastMapDirect> outVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> outVarVersions = new HashMap<String, SFormsFastMapDirect>();
 
   // node id, var, version (negative branch)
-  private HashMap<String, SFormsFastMapDirect> outNegVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> outNegVarVersions = new HashMap<String, SFormsFastMapDirect>();
 
   // node id, var, version
-  private HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<String, SFormsFastMapDirect>();
 
   // (var, version), version
-  private HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<VarVersionPair, FastSparseSet<Integer>>();
+  private final HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<VarVersionPair, FastSparseSet<Integer>>();
 
   // var, version
-  private HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
+  private final HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
 
-  private List<VarVersionPair> startVars = new ArrayList<VarVersionPair>();
+  private final List<VarVersionPair> startVars = new ArrayList<VarVersionPair>();
 
   // set factory
   private FastSparseSetFactory<Integer> factory;

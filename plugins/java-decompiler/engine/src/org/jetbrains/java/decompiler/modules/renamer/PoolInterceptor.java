@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import java.util.HashMap;
 
 public class PoolInterceptor {
 
-  private IIdentifierRenamer helper;
+  private final IIdentifierRenamer helper;
 
-  private HashMap<String, String> mapOldToNewNames = new HashMap<String, String>();
+  private final HashMap<String, String> mapOldToNewNames = new HashMap<String, String>();
 
-  private HashMap<String, String> mapNewToOldNames = new HashMap<String, String>();
+  private final HashMap<String, String> mapNewToOldNames = new HashMap<String, String>();
 
   public PoolInterceptor(IIdentifierRenamer helper) {
     this.helper = helper;

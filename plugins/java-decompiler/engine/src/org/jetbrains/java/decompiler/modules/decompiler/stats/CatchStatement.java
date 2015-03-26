@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ import java.util.List;
 
 public class CatchStatement extends Statement {
 
-  private List<List<String>> exctstrings = new ArrayList<List<String>>();
+  private final List<List<String>> exctstrings = new ArrayList<List<String>>();
 
-  private List<VarExprent> vars = new ArrayList<VarExprent>();
+  private final List<VarExprent> vars = new ArrayList<VarExprent>();
 
   // *****************************************************************************
   // constructors
