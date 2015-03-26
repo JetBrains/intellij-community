@@ -79,13 +79,13 @@ public class MasterDetailPopupBuilder implements MasterController {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        chooseItemWithEnterOrDoubleClick();
+        chooseItems(true);
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, list);
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        chooseItemWithEnterOrDoubleClick();
+        chooseItems(true);
       }
     }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, list);
 
@@ -140,10 +140,11 @@ public class MasterDetailPopupBuilder implements MasterController {
     }
   }
 
-  private void chooseItemWithEnterOrDoubleClick() {
-    ItemWrapper[] items = getSelectedItems();
-    if (items.length > 0) {
-      myDelegate.itemChosen(items[0], myProject, myPopup, true);
+  private void chooseItems(boolean withEnterOrDoubleClick) {
+    for (Object item : getSelectedItems()) {
+      if (item instanceof ItemWrapper) {
+        myDelegate.itemChosen((ItemWrapper)item, myProject, myPopup, withEnterOrDoubleClick);
+      }
     }
   }
 
@@ -222,17 +223,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
           @Override
           public void run() {
-            Object[] values = getSelectedItems();
-            if (values.length == 1) {
-              myDelegate.itemChosen((ItemWrapper)values[0], myProject, myPopup, false);
-            }
-            else {
-              for (Object value : values) {
-                if (value instanceof ItemWrapper) {
-                  myDelegate.itemChosen((ItemWrapper)value, myProject, myPopup, false);
-                }
-              }
-            }
+            chooseItems(false);
           }
         });
       }

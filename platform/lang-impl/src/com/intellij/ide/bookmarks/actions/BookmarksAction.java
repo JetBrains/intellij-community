@@ -63,10 +63,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     if (myPopup != null && myPopup.isVisible()) return;
 
-    final DefaultListModel model = buildModel(project);
-
-    final JBList list = new JBList(model);
-    list.getEmptyText().setText("No Bookmarks");
+    final JBList list = new JBList(buildModel(project));
 
     EditBookmarkDescriptionAction editDescriptionAction = new EditBookmarkDescriptionAction(project, list);
     DefaultActionGroup actions = new DefaultActionGroup();
@@ -85,10 +82,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       setPopupTuner(new Consumer<PopupChooserBuilder>() {
         @Override
         public void consume(PopupChooserBuilder builder) {
-          builder.
-            setCloseOnEnter(false).
-            setCancelOnClickOutside(false).
-            setCancelOnWindowDeactivation(true);
+          builder.setCloseOnEnter(false).setCancelOnClickOutside(false);
         }
       }).
       setDoneRunnable(new Runnable() {
@@ -102,9 +96,11 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        Object selectedValue = list.getSelectedValue();
-        if (selectedValue instanceof BookmarkItem) {
-          itemChosen((BookmarkItem)selectedValue, project, myPopup, true);
+        @SuppressWarnings("deprecation") Object[] values = list.getSelectedValues();
+        for (Object item : values) {
+          if (item instanceof BookmarkItem) {
+            itemChosen((BookmarkItem)item, project, myPopup, true);
+          }
         }
       }
     }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list);
@@ -112,7 +108,17 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     editDescriptionAction.setPopup(myPopup);
     myPopup.showCenteredInCurrentWindow(project);
 
+    list.getEmptyText().setText("No Bookmarks");
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static DefaultListModel buildModel(Project project) {
+    DefaultListModel model = new DefaultListModel();
+    for (Bookmark bookmark : BookmarkManager.getInstance(project).getValidBookmarks()) {
+      model.addElement(new BookmarkItem(bookmark));
+    }
+    return model;
   }
 
   @Override
@@ -141,9 +147,9 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (!BookmarkManager.getInstance(project).hasBookmarksWithMnemonics()) {
       return null;
     }
-    final JLabel mnemonicLabel = new JLabel();
-    mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
 
+    JLabel mnemonicLabel = new JLabel();
+    mnemonicLabel.setFont(Bookmark.MNEMONIC_FONT);
     mnemonicLabel.setPreferredSize(new JLabel("W.").getPreferredSize());
     mnemonicLabel.setOpaque(false);
     return mnemonicLabel;
@@ -166,14 +172,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   @Override
   public void removeSelectedItemsInTree() { }
 
-  private static DefaultListModel buildModel(Project project) {
-    DefaultListModel model = new DefaultListModel();
-    for (Bookmark bookmark : BookmarkManager.getInstance(project).getValidBookmarks()) {
-      //noinspection unchecked
-      model.addElement(new BookmarkItem(bookmark));
-    }
-    return model;
-  }
 
   protected static class BookmarkInContextInfo {
     private final DataContext myDataContext;
