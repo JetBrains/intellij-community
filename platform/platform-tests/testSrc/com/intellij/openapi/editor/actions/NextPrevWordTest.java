@@ -17,6 +17,8 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -93,5 +95,13 @@ public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
     FoldRegion[] foldRegions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
     assertEquals(1, foldRegions.length);
     assertFalse(foldRegions[0].isExpanded());
+  }
+  
+  public void testRegexpCharsAreNotTreatedAsSeparateWords() {
+    FileType regExpFileType = FileTypeManagerEx.getInstanceEx().findFileTypeByName("RegExp");
+    assertNotNull(regExpFileType);
+    myFixture.configureByText(regExpFileType, "<caret>abc");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+    myFixture.checkResult("abc<caret>");
   }
 }

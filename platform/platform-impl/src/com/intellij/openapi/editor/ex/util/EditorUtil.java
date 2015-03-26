@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +228,6 @@ public final class EditorUtil {
    * long document lines - {@link Editor#logicalPositionToOffset(LogicalPosition)}
    * should be faster when soft wraps are enabled. To be removed in IDEA 16.
    */
-  @SuppressWarnings("UnusedDeclaration")
   public static int calcOffset(@NotNull EditorEx editor,
                                @NotNull CharSequence text,
                                int start,

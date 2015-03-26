@@ -27,7 +27,7 @@ public class BytecodeMappingTracer {
   private StructLineNumberTableAttribute lineNumberTable = null;
 
   // bytecode offset, source line
-  private Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();
 
   public BytecodeMappingTracer() { }
 

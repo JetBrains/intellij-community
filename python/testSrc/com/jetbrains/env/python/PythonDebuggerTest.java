@@ -464,6 +464,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
       }
+
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 

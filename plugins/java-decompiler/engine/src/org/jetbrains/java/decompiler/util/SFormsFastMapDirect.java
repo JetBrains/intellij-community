@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ public class SFormsFastMapDirect {
 
   private int size;
 
-  @SuppressWarnings("unchecked") private FastSparseSet<Integer>[][] elements = new FastSparseSet[3][];
+  @SuppressWarnings("unchecked") private final FastSparseSet<Integer>[][] elements = new FastSparseSet[3][];
 
-  private int[][] next = new int[3][];
+  private final int[][] next = new int[3][];
 
   public SFormsFastMapDirect() {
     this(true);
@@ -363,8 +363,8 @@ public class SFormsFastMapDirect {
 
           list.add(new Entry<Integer, FastSparseSet<Integer>>() {
 
-            private Integer var = key;
-            private FastSparseSet<Integer> val = ent;
+            private final Integer var = key;
+            private final FastSparseSet<Integer> val = ent;
 
             public Integer getKey() {
               return var;

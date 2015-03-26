@@ -183,6 +183,6 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   private static UnknownFeature createExtensionFeature(String extension) {
-    return new UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.getName(), extension);
+    return new UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.getName(), "File Type", extension);
   }
 }

@@ -141,7 +141,7 @@ public class ExprProcessor implements CodeConstants {
 
   private static final String[] typeNames = new String[]{"byte", "char", "double", "float", "int", "long", "short", "boolean",};
 
-  private VarProcessor varProcessor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
+  private final VarProcessor varProcessor = (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR);
 
   public void processStatement(RootStatement root, StructClass cl) {
 

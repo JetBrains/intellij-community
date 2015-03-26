@@ -53,7 +53,7 @@ public class SimplifyExprentsHelper {
 
   static MatchEngine class14Builder = new MatchEngine();
   
-  private boolean firstInvocation;
+  private final boolean firstInvocation;
 
   public SimplifyExprentsHelper(boolean firstInvocation) {
     this.firstInvocation = firstInvocation;

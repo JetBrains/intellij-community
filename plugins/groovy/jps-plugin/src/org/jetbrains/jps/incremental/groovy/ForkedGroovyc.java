@@ -69,7 +69,7 @@ class ForkedGroovyc implements GroovycFlavor {
     }
 
     List<String> vmParams = ContainerUtilRt.newArrayList();
-    vmParams.add("-Xmx" + settings.heapSize + "m");
+    vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", settings.heapSize) + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
     

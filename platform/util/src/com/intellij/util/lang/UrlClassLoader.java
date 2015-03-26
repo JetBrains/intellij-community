@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ public class UrlClassLoader extends ClassLoader {
   // Feature enabling flag for saving / restoring file system information for local class directories, see Builder#usePersistentClasspathIndexForLocalClassDirectories
   private static final boolean INDEX_PERSISTENCE_ENABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
   @NonNls static final String CLASS_EXTENSION = ".class";
+  private static boolean ourParallel = false;
 
   static {
     // Since Java 7 classloading is parallel on parallel capable classloader (http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html)
@@ -59,6 +61,7 @@ public class UrlClassLoader extends ClassLoader {
         Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
         registerAsParallelCapable.setAccessible(true);
         registerAsParallelCapable.invoke(null);
+        ourParallel = true;
       }
       catch (Exception ignored) { }
     }
@@ -134,6 +137,7 @@ public class UrlClassLoader extends ClassLoader {
 
   private final List<URL> myURLs;
   private final ClassPath myClassPath;
+  private final WeakStringInterner myClassNameInterner;
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
@@ -172,6 +176,7 @@ public class UrlClassLoader extends ClassLoader {
     });
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
+    myClassNameInterner = ourParallel ? new WeakStringInterner() : null;
   }
 
   @NotNull
@@ -333,6 +338,10 @@ public class UrlClassLoader extends ClassLoader {
     else if (SystemInfo.isMac) return "mac/";
     else if (SystemInfo.isLinux) return "linux/";
     else return "";
+  }
+
+  protected Object getClassLoadingLock(String className) {
+    return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;
   }
 
   /**

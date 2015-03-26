@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class NestedMemberAccess {
   private static final int METHOD_ACCESS_METHOD = 4;
 
   private boolean noSynthFlag;
-  private Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
+  private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
 
 
   public void propagateMemberAccess(ClassNode root) {

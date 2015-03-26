@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -33,9 +34,9 @@ import java.util.List;
 
 public class CatchStatement extends Statement {
 
-  private List<List<String>> exctstrings = new ArrayList<List<String>>();
+  private final List<List<String>> exctstrings = new ArrayList<List<String>>();
 
-  private List<VarExprent> vars = new ArrayList<VarExprent>();
+  private final List<VarExprent> vars = new ArrayList<VarExprent>();
 
   // *****************************************************************************
   // constructors
@@ -167,9 +168,17 @@ public class CatchStatement extends Statement {
     buf.appendIndent(indent).append("}");
 
     for (int i = 1; i < stats.size(); i++) {
-      List<String> exception_types = exctstrings.get(i - 1);
+      Statement stat = stats.get(i);
+      // map first instruction storing the exception to the catch statement
+      BasicBlock block = stat.getBasichead().getBlock();
+      if (!block.getSeq().isEmpty() && block.getInstruction(0).opcode == CodeConstants.opc_astore) {
+        Integer offset = block.getOldOffset(0);
+        if (offset > -1) tracer.addMapping(offset);
+      }
 
       buf.append(" catch (");
+
+      List<String> exception_types = exctstrings.get(i - 1);
       if (exception_types.size() > 1) { // multi-catch, Java 7 style
         for (int exc_index = 1; exc_index < exception_types.size(); ++exc_index) {
           VarType exc_type = new VarType(CodeConstants.TYPE_OBJECT, 0, exception_types.get(exc_index));
@@ -181,7 +190,7 @@ public class CatchStatement extends Statement {
       buf.append(vars.get(i - 1).toJava(indent, tracer));
       buf.append(") {").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
-      buf.append(ExprProcessor.jmpWrapper(stats.get(i), indent + 1, true, tracer)).appendIndent(indent)
+      buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, true, tracer)).appendIndent(indent)
         .append("}");
     }
     buf.appendLineSeparator();
