@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -66,6 +67,16 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
    */
   public KnownArgumentsInfo(@NotNull final Collection<Argument> arguments) {
     this(arguments, arguments.size(), arguments.size());
+  }
+
+  /**
+   *
+   * @param minArguments minimum arguments required
+   * @param maxArguments maximum argument allowed
+   * @param arguments arguments
+   */
+  public KnownArgumentsInfo(final int minArguments, final int maxArguments, @NotNull final Argument... arguments) {
+    this(Arrays.asList(arguments), minArguments, maxArguments);
   }
 
   /**
