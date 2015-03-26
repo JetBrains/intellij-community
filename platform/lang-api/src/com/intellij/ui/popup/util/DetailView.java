@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 5/9/12
- * Time: 5:34 AM
- * To change this template use File | Settings | File Templates.
+ * @author zajac
+ * @since 9.05.2012
  */
 public interface DetailView extends UserDataHolder {
 
@@ -51,8 +48,8 @@ public interface DetailView extends UserDataHolder {
 
   void setCurrentItem(@Nullable ItemWrapper item);
 
-  class PreviewEditorState {
 
+  class PreviewEditorState {
     public static PreviewEditorState EMPTY = new PreviewEditorState(null, null, null);
 
     public static PreviewEditorState create(VirtualFile file, int line) {
@@ -61,6 +58,29 @@ public interface DetailView extends UserDataHolder {
 
     public static PreviewEditorState create(VirtualFile file, int line, TextAttributes attributes) {
       return new PreviewEditorState(file, line < 0 ? null : new LogicalPosition(line, 0), attributes);
+    }
+
+    private final VirtualFile myFile;
+    private final LogicalPosition myNavigate;
+    private final TextAttributes myAttributes;
+
+    public PreviewEditorState(VirtualFile file, @Nullable LogicalPosition navigate, TextAttributes attributes) {
+      myFile = file;
+      myNavigate = navigate;
+      myAttributes = attributes;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    @Nullable
+    public LogicalPosition getNavigate() {
+      return myNavigate;
+    }
+
+    public TextAttributes getAttributes() {
+      return myAttributes;
     }
 
     @Override
@@ -83,30 +103,6 @@ public interface DetailView extends UserDataHolder {
       result = 31 * result + (myNavigate != null ? myNavigate.hashCode() : 0);
       result = 31 * result + (myAttributes != null ? myAttributes.hashCode() : 0);
       return result;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    @Nullable
-    public LogicalPosition getNavigate() {
-      return myNavigate;
-    }
-
-    public TextAttributes getAttributes() {
-      return myAttributes;
-    }
-
-    private final VirtualFile myFile;
-    private final LogicalPosition myNavigate;
-    private final TextAttributes myAttributes;
-
-    public PreviewEditorState(VirtualFile file, @Nullable LogicalPosition navigate, TextAttributes attributes) {
-
-      myFile = file;
-      myNavigate = navigate;
-      myAttributes = attributes;
     }
   }
 }
