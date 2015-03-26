@@ -37,7 +37,7 @@ public class DecompilerContext {
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
   public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 
-  private static ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
+  private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
 
   private final Map<String, Object> properties;
   private StructContext structContext;

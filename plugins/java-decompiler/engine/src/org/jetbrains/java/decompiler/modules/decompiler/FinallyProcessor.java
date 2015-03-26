@@ -46,10 +46,10 @@ import java.util.Map.Entry;
 
 public class FinallyProcessor {
 
-  private Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
-  private Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
 
-  private VarProcessor varprocessor;
+  private final VarProcessor varprocessor;
 
   public FinallyProcessor(VarProcessor varprocessor) {
     this.varprocessor = varprocessor;

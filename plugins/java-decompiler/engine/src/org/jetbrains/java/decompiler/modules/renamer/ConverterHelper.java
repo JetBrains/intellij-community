@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class ConverterHelper implements IIdentifierRenamer {
   private int classCounter = 0;
   private int fieldCounter = 0;
   private int methodCounter = 0;
-  private Set<String> setNonStandardClassNames = new HashSet<String>();
+  private final Set<String> setNonStandardClassNames = new HashSet<String>();
 
   @Override
   public boolean toBeRenamed(Type elementType, String className, String element, String descriptor) {
