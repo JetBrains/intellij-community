@@ -81,6 +81,9 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       for (FilteringNode n : nodes) {
         addToCache(n, false);
       }
+      if (nodes.isEmpty()) {
+        myLeaves.add(node);
+      }
     }
   }
 
