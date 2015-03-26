@@ -1,7 +1,9 @@
 package org.jetbrains.protocolReader
 
-
 import java.util.Arrays
+
+public val EMPTY_CHARS: CharArray = CharArray(0)
+private val indentGranularity = 2
 
 public class TextOutput(public val out: StringBuilder) {
   private var identLevel: Int = 0
@@ -119,10 +121,5 @@ public class TextOutput(public val out: StringBuilder) {
       out.append(indents[identLevel])
       justNewLined = false
     }
-  }
-
-  class object {
-    public val EMPTY_CHARS: CharArray = CharArray(0)
-    private val indentGranularity = 2
   }
 }

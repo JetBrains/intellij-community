@@ -218,7 +218,7 @@ class OutputClassScope(generator: DomainGenerator, classNamePath: NamePath) : Cl
 
   private fun appendEnumClass(out: TextOutput, description: String?, enumConstants: List<String>, enumName: String) {
     out.doc(description)
-    Enums.appendEnums(enumConstants, enumName, false, out)
+    appendEnums(enumConstants, enumName, false, out)
     out.newLine().append("private final String protocolValue;").newLine()
     out.newLine().append(enumName).append("(String protocolValue)").openBlock()
     out.append("this.protocolValue = protocolValue;").closeBlock()

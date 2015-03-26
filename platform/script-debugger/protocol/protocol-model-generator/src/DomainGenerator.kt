@@ -61,14 +61,15 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
 
         out.append(')').openBlock()
 
+        val requestClassName = generator.naming.requestClassName.replace("Request", "SimpleRequest")
         if (hasParams) {
-          out.append("V8SimpleRequest<").append(returnType).append(">").append(" r =")
+          out.append(requestClassName).append('<').append(returnType).append(">").append(" r =")
         }
         else {
           out.append("return")
         }
 
-        out.append(" new V8SimpleRequest<").append(returnType).append(">(\"")
+        out.append(" new ").append(requestClassName).append("<").append(returnType).append(">(\"")
         if (!domain.domain().isEmpty()) {
           out.append(domain.domain()).append('.')
         }
@@ -252,7 +253,7 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
       override fun generate() {
         val fileUpdater = generator.startJavaFile(generator.naming.inputEnum, domain, name)
         fileUpdater.out.doc(type.description())
-        Enums.appendEnums(enumConstants, generator.naming.inputEnum.getShortName(name), true, fileUpdater.out)
+        appendEnums(enumConstants, generator.naming.inputEnum.getShortName(name), true, fileUpdater.out)
         fileUpdater.update()
       }
 

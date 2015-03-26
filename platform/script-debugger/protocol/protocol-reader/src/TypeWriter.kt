@@ -5,6 +5,12 @@ import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
 import java.util.LinkedHashMap
 
+public val FIELD_PREFIX: Char = '_'
+
+private fun assignField(out: TextOutput, fieldName: String): TextOutput {
+  return out.append(FIELD_PREFIX).append(fieldName).append(" = ")
+}
+
 class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, private val volatileFields: List<VolatileFieldBinding>, private val methodHandlerMap: LinkedHashMap<Method, MethodHandler>,
                     /** Loaders that should read values and save them in field array on parse time. */
                     private val fieldLoaders: List<FieldLoader>, private val hasLazyFields: Boolean) {
@@ -12,7 +18,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
   /** Subtype aspects of the type or null */
   val subtypeAspect: ExistingSubtypeAspect?
 
-  {
+  init {
     subtypeAspect = if (jsonSuperClass == null) null else ExistingSubtypeAspect(jsonSuperClass)
   }
 
@@ -221,13 +227,5 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
     }
     out.closeBlock()
     out.newLine().append("while ((name = reader.nextNameOrNull()) != null)").semi()
-  }
-
-  class object {
-    public val FIELD_PREFIX: Char = '_'
-
-    private fun assignField(out: TextOutput, fieldName: String): TextOutput {
-      return out.append(FIELD_PREFIX).append(fieldName).append(" = ")
-    }
   }
 }

@@ -1,13 +1,9 @@
 package org.jetbrains.protocolReader
 
 class StandaloneType(private val namePath: NamePath, private val writeMethodName: String) : BoxableType() {
-  override fun getWriteMethodName(): String {
-    return writeMethodName
-  }
+  override fun getWriteMethodName() = writeMethodName
 
-  override fun getFullText(): CharSequence {
-    return namePath.getFullText()
-  }
+  override fun getFullText() = namePath.getFullText()
 
   override fun getShortText(contextNamespace: NamePath): String {
     val nameLength = namePath.getLength()
@@ -22,28 +18,33 @@ class StandaloneType(private val namePath: NamePath, private val writeMethodName
   }
 
   private fun subtractContextRecursively(namePos: NamePath?, count: Int, prefix: NamePath): StringBuilder? {
-    var namePos = namePos
-    var prefix = prefix
     if (count > 1) {
       val result = subtractContextRecursively(namePos!!.parent, count - 1, prefix)
       if (result == null) {
         return null
       }
       result.append('.')
-      result.append(namePos!!.lastComponent)
+      result.append(namePos.lastComponent)
       return result
     }
     else {
+      var namePos = namePos
+      var prefix = prefix
       val nameComponent = namePos!!.lastComponent
       namePos = namePos!!.parent
       do {
         if (namePos!!.lastComponent != prefix.lastComponent) {
           return null
         }
+
         namePos = namePos!!.parent
+        if (namePos == null) {
+          break
+        }
+
         prefix = prefix.parent!!
       }
-      while (namePos != null)
+      while (true)
 
       val result = StringBuilder()
       result.append(nameComponent)

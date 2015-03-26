@@ -317,7 +317,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _description;
     }
 
-    @NotNull
     @Override
     public java.util.List<java.lang.String> getEnum() {
       return _getEnum;
@@ -344,7 +343,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _optional;
     }
 
-    @NotNull
     @Override
     public java.lang.String ref() {
       return _ref;
@@ -476,7 +474,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _description;
     }
 
-    @NotNull
     @Override
     public java.util.List<java.lang.String> getEnum() {
       return _getEnum;
@@ -565,7 +562,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _description;
     }
 
-    @NotNull
     @Override
     public java.util.List<java.lang.String> getEnum() {
       return _getEnum;
@@ -586,7 +582,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _properties;
     }
 
-    @NotNull
     @Override
     public java.lang.String ref() {
       return _ref;
@@ -661,7 +656,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _description;
     }
 
-    @NotNull
     @Override
     public java.util.List<java.lang.String> getEnum() {
       return _getEnum;
@@ -688,7 +682,6 @@ public final class ProtocolSchemaReaderImpl implements org.jetbrains.jsonProtoco
       return _optional;
     }
 
-    @NotNull
     @Override
     public java.lang.String ref() {
       return _ref;

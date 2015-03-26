@@ -7,7 +7,7 @@ fun getPackageName(rootPackage: String, domain: String): String {
   return rootPackage + '.' + domain.toLowerCase()
 }
 
-abstract class ClassNameScheme private(private val suffix: String, private val rootPackage: String) {
+abstract class ClassNameScheme(private val suffix: String, private val rootPackage: String) {
   fun getFullName(domainName: String, baseName: String): NamePath {
     return NamePath(getShortName(baseName), NamePath(getPackageNameVirtual(domainName)))
   }

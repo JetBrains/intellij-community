@@ -1,7 +1,6 @@
 package org.jetbrains.protocolReader
 
-import org.jetbrains.jsonProtocol.ItemDescriptor
-import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import org.jetbrains.jsonProtocol.*
 import java.nio.file.FileSystems
 import java.util.ArrayList
 import java.util.Collections
@@ -24,7 +23,7 @@ class Generator(outputDir: String, rootPackage: String, requestClassName: String
     naming = Naming(rootPackage, requestClassName)
   }
 
-  public class Naming(public val inputPackage: String, public val requestClassName: String) {
+  public class Naming(val inputPackage: String, val requestClassName: String) {
     public val params: ClassNameScheme
     public val additionalParam: ClassNameScheme
     public val outputTypedef: ClassNameScheme
@@ -121,7 +120,7 @@ class Generator(outputDir: String, rootPackage: String, requestClassName: String
       }
 
       override fun visitObject(properties: List<ProtocolMetaModel.ObjectProperty>?): TypeDescriptor {
-        return TypeDescriptor(scope.generateNestedObject(typedObject.description(), properties!!), optional)
+        return TypeDescriptor(scope.generateNestedObject(typedObject.description(), properties), optional)
       }
 
       override fun visitUnknown(): TypeDescriptor {
@@ -246,17 +245,17 @@ fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
   }
   val typeName = typedObject.type()
   when (typeName) {
-    ProtocolMetaModel.BOOLEAN_TYPE -> return visitor.visitBoolean()
-    ProtocolMetaModel.STRING_TYPE -> {
+    BOOLEAN_TYPE -> return visitor.visitBoolean()
+    STRING_TYPE -> {
       if (typedObject.getEnum() != null) {
         return visitor.visitEnum(typedObject.getEnum()!!)
       }
       return visitor.visitString()
     }
-    ProtocolMetaModel.INTEGER_TYPE, "int" -> return visitor.visitInteger()
-    ProtocolMetaModel.NUMBER_TYPE -> return visitor.visitNumber()
-    ProtocolMetaModel.ARRAY_TYPE -> return visitor.visitArray(typedObject.items())
-    ProtocolMetaModel.OBJECT_TYPE -> {
+    INTEGER_TYPE, "int" -> return visitor.visitInteger()
+    NUMBER_TYPE -> return visitor.visitNumber()
+    ARRAY_TYPE -> return visitor.visitArray(typedObject.items())
+    OBJECT_TYPE -> {
       if (typedObject !is ItemDescriptor.Type) {
         return visitor.visitObject(null)
       }
@@ -268,10 +267,9 @@ fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
       else {
         return visitor.visitObject(properties)
       }
-      return visitor.visitUnknown()
     }
-    ProtocolMetaModel.ANY_TYPE -> return visitor.visitUnknown()
-    ProtocolMetaModel.UNKNOWN_TYPE -> return visitor.visitUnknown()
+    ANY_TYPE -> return visitor.visitUnknown()
+    UNKNOWN_TYPE -> return visitor.visitUnknown()
   }
   throw RuntimeException("Unrecognized type " + typeName)
 }

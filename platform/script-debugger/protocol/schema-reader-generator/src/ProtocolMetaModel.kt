@@ -79,12 +79,10 @@ public trait ProtocolMetaModel {
     JsonOptionalField
     override fun items(): ArrayItemType
 
-    JsonField(name = "enum")
-    JsonOptionalField
+    JsonField(name = "enum", optional = true)
     override fun getEnum(): List<String>
 
-    JsonOptionalField
-    JsonField(name = "\$ref")
+    JsonField(name = "\$ref", optional = true)
     override fun ref(): String
 
     JsonOptionalField
@@ -126,8 +124,7 @@ public trait ProtocolMetaModel {
     JsonOptionalField
     override fun properties(): List<ObjectProperty>
 
-    JsonField(name = "enum")
-    JsonOptionalField
+    JsonField(name = "enum", optional = true)
     override fun getEnum(): List<String>
 
     JsonOptionalField
@@ -149,12 +146,10 @@ public trait ProtocolMetaModel {
     JsonOptionalField
     override fun items(): ArrayItemType
 
-    JsonField(name = "\$ref")
-    JsonOptionalField
+    JsonField(name = "\$ref", optional = true)
     override fun ref(): String
 
-    JsonField(name = "enum")
-    JsonOptionalField
+    JsonField(name = "enum", optional = true)
     override fun getEnum(): List<String>
 
     JsonOptionalField
@@ -180,12 +175,10 @@ public trait ProtocolMetaModel {
     JsonOptionalField
     override fun items(): ArrayItemType
 
-    JsonField(name = "\$ref")
-    JsonOptionalField
+    JsonField(name = "\$ref", optional = true)
     override fun ref(): String
 
-    JsonField(name = "enum")
-    JsonOptionalField
+    JsonField(name = "enum", optional = true)
     override fun getEnum(): List<String>
 
     JsonOptionalField

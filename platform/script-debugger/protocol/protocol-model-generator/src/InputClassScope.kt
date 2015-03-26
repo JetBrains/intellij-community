@@ -38,7 +38,7 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
       addMember(object : TextOutConsumer {
         override fun append(out: TextOutput) {
           out.newLine().doc(description)
-          Enums.appendEnums(enumConstants, enumName, true, out)
+          appendEnums(enumConstants, enumName, true, out)
         }
       })
       return StandaloneType(NamePath(enumName, classContextNamespace), "writeEnum")
