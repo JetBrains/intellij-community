@@ -1,5 +1,12 @@
 package org.jetbrains.protocolReader
 
+fun getPackageName(rootPackage: String, domain: String): String {
+  if (domain.isEmpty()) {
+    return rootPackage
+  }
+  return rootPackage + '.' + domain.toLowerCase()
+}
+
 abstract class ClassNameScheme private(private val suffix: String, private val rootPackage: String) {
   fun getFullName(domainName: String, baseName: String): NamePath {
     return NamePath(getShortName(baseName), NamePath(getPackageNameVirtual(domainName)))
@@ -32,23 +39,12 @@ abstract class ClassNameScheme private(private val suffix: String, private val r
   }
 
   class Input(suffix: String, rootPackage: String) : ClassNameScheme(suffix, rootPackage) {
-
     fun getParseMethodName(domain: String, name: String): String {
-      return "read" + Generator.capitalizeFirstChar(domain) + getShortName(name)
+      return "read" + capitalizeFirstChar(domain) + getShortName(name)
     }
   }
 
   class Output(suffix: String, rootPackage: String) : ClassNameScheme(suffix, rootPackage)
 
   class Common(suffix: String, rootPackage: String) : ClassNameScheme(suffix, rootPackage)
-
-  default object {
-
-    public fun getPackageName(rootPackage: String, domain: String): String {
-      if (domain.isEmpty()) {
-        return rootPackage
-      }
-      return rootPackage + '.' + domain.toLowerCase()
-    }
-  }
 }

@@ -8,7 +8,7 @@ abstract class BoxableType {
 
   abstract fun getWriteMethodName(): String
 
-  default object {
+  companion object {
     val STRING: BoxableType = StandaloneType(NamePath("String"), "writeString")
     val ANY_STRING: BoxableType = StandaloneType(NamePath("String"), "writeString")
     val INT: BoxableType = StandaloneType(NamePath("int"), "writeInt")

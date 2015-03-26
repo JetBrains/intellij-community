@@ -183,7 +183,7 @@ public trait ProtocolMetaModel {
     public fun hidden(): Boolean
   }
 
-  default object {
+  companion object {
     public val STRING_TYPE: String = "string"
     public val INTEGER_TYPE: String = "integer"
     public val NUMBER_TYPE: String = "number"

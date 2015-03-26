@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader
 
+import org.jetbrains.jsonProtocol.ProtocolMetaModel
+
 trait TypeVisitor<R> {
   public fun visitRef(refName: String): R
 

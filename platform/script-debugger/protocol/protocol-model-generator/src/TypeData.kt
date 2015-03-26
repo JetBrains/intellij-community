@@ -1,5 +1,7 @@
 package org.jetbrains.protocolReader
 
+import org.jetbrains.jsonProtocol.ProtocolMetaModel
+
 class TypeData(private val name: String) {
   private var input: Input? = null
   private var output: Output? = null
@@ -39,7 +41,7 @@ class TypeData(private val name: String) {
   }
 
   abstract  class Direction {
-    default object {
+    companion object {
       val INPUT = object : Direction() {
         override fun get(typeData: TypeData)  = typeData.getInput()
       }
@@ -139,19 +141,17 @@ class TypeData(private val name: String) {
       return domainGenerator.createStandaloneInputTypeBinding(type!!)
     }
   }
+}
 
-  default object {
-    public val ANY: StandaloneTypeBinding = object : StandaloneTypeBinding {
-      override fun getJavaType(): BoxableType {
-        return BoxableType.ANY_STRING
-      }
+public val ANY: StandaloneTypeBinding = object : StandaloneTypeBinding {
+  override fun getJavaType(): BoxableType {
+    return BoxableType.ANY_STRING
+  }
 
-      override fun generate() {
-      }
+  override fun generate() {
+  }
 
-      override fun getDirection(): Direction? {
-        return null
-      }
-    }
+  override fun getDirection(): TypeData.Direction? {
+    return null
   }
 }

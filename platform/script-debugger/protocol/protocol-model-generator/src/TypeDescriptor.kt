@@ -1,7 +1,6 @@
 package org.jetbrains.protocolReader
 
 class TypeDescriptor(val type: BoxableType, private val optional: Boolean, private val nullable: Boolean = false, private val asRawString: Boolean = false) {
-
   fun isNullable(): Boolean {
     return nullable
   }

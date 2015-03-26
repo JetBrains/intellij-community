@@ -1,8 +1,11 @@
 package org.jetbrains.protocolReader
 
+import org.jetbrains.jsonProtocol.ItemDescriptor
+import org.jetbrains.jsonProtocol.ProtocolMetaModel
+
 class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassScope(generator, namePath) {
 
-  fun generateDeclarationBody(out: TextOutput, list: List<Named>) {
+  fun generateDeclarationBody(out: TextOutput, list: List<ItemDescriptor.Named>) {
     run {
       var i = 0
       val n = list.size()
@@ -13,8 +16,8 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
         }
 
         val name = ClassScope.getName(named)
-        val declarationName = Generator.generateMethodNameSubstitute(name, out)
-        val typeDescriptor = InputMemberScope(name).resolveType<Named>(named)
+        val declarationName = generateMethodNameSubstitute(name, out)
+        val typeDescriptor = InputMemberScope(name).resolveType<ItemDescriptor.Named>(named)
         typeDescriptor.writeAnnotations(out)
         out.append(typeDescriptor.type.getShortText(classContextNamespace)).space().append(declarationName).append("();")
         if (i != (n - 1)) {
@@ -31,7 +34,7 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
 
   inner class InputMemberScope(memberName: String) : MemberScope(this@InputClassScope, memberName) {
     override fun generateEnum(description: String?, enumConstants: List<String>): BoxableType {
-      val enumName = Generator.capitalizeFirstChar(memberName)
+      val enumName = capitalizeFirstChar(memberName)
       addMember(object : TextOutConsumer {
         override fun append(out: TextOutput) {
           out.newLine().doc(description)
@@ -41,8 +44,8 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
       return StandaloneType(NamePath(enumName, classContextNamespace), "writeEnum")
     }
 
-    override fun generateNestedObject(description: String?, properties: List<ObjectProperty>?): BoxableType {
-      val objectName = Generator.capitalizeFirstChar(memberName)
+    override fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType {
+      val objectName = capitalizeFirstChar(memberName)
       addMember(object : TextOutConsumer {
         override fun append(out: TextOutput) {
           out.newLine().doc(description)
@@ -56,9 +59,9 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
             for (property in properties) {
               out.doc(property.description())
 
-              val methodName = Generator.generateMethodNameSubstitute(ClassScope.getName(property), out)
+              val methodName = generateMethodNameSubstitute(ClassScope.getName(property), out)
               val memberScope = InputMemberScope(ClassScope.getName(property))
-              val propertyTypeData = memberScope.resolveType<ObjectProperty>(property)
+              val propertyTypeData = memberScope.resolveType<ProtocolMetaModel.ObjectProperty>(property)
               propertyTypeData.writeAnnotations(out)
 
               out.append(propertyTypeData.type.getShortText(classContextNamespace) + ' ' + methodName + "();").newLine()

@@ -1,7 +1,14 @@
 package org.jetbrains.protocolReader
 
-class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Domain) {
+import org.jetbrains.jsonProtocol.ItemDescriptor
+import org.jetbrains.jsonProtocol.ProtocolMetaModel
 
+fun fixMethodName(name: String): String {
+  val i = name.indexOf("breakpoint")
+  return if (i > 0) name.substring(0, i) + 'B' + name.substring(i + 1) else name
+}
+
+class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Domain) {
   fun registerTypes() {
     if (domain.types() != null) {
       for (type in domain.types()!!) {
@@ -10,7 +17,6 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     }
   }
 
-  throws(javaClass<IOException>())
   fun generateCommandsAndEvents() {
     val requestsFileUpdater = generator.startJavaFile(generator.naming.params.getPackageNameVirtual(domain.domain()), "Requests.java")
     val out = requestsFileUpdater.out
@@ -100,7 +106,6 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     }
   }
 
-  throws(javaClass<IOException>())
   private fun generateRequest(command: ProtocolMetaModel.Command, returnType: String) {
     val baseTypeBuilder = object : TextOutConsumer {
       override fun append(out: TextOutput) {
@@ -156,11 +161,11 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
   }
 
   fun createStandaloneOutputTypeBinding(type: ProtocolMetaModel.StandaloneType, name: String): StandaloneTypeBinding {
-    return Generator.switchByType<StandaloneTypeBinding>(type, MyCreateStandaloneTypeBindingVisitorBase(this, type, name))
+    return switchByType(type, MyCreateStandaloneTypeBindingVisitorBase(this, type, name))
   }
 
   fun createStandaloneInputTypeBinding(type: ProtocolMetaModel.StandaloneType): StandaloneTypeBinding {
-    return Generator.switchByType<StandaloneTypeBinding>(type, object : CreateStandaloneTypeBindingVisitorBase(this, type) {
+    return switchByType(type, object : CreateStandaloneTypeBindingVisitorBase(this, type) {
       override fun visitObject(properties: List<ProtocolMetaModel.ObjectProperty>?): StandaloneTypeBinding {
         return createStandaloneObjectInputTypeBinding(type, properties)
       }
@@ -191,8 +196,8 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         val itemBoxableType = generator.resolveType(items, resolveAndGenerateScope).type
 
         val arrayType = ListType(itemBoxableType)
-        val target = object : StandaloneTypeBinding.Target {
-          override fun resolve(context: StandaloneTypeBinding.Target.ResolveContext): BoxableType {
+        val target = object : Target {
+          override fun resolve(context: Target.ResolveContext): BoxableType {
             return arrayType
           }
         }
@@ -212,7 +217,6 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         return StandaloneType(fullTypeName, "writeMessage")
       }
 
-      throws(javaClass<IOException>())
       override fun generate() {
         val className = generator.naming.inputValue.getFullName(domain.domain(), name)
         val fileUpdater = generator.startJavaFile(generator.naming.inputValue, domain, name)
@@ -245,7 +249,6 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         return StandaloneType(generator.naming.inputEnum.getFullName(domain.domain(), name), "writeEnum")
       }
 
-      throws(javaClass<IOException>())
       override fun generate() {
         val fileUpdater = generator.startJavaFile(generator.naming.inputEnum, domain, name)
         fileUpdater.out.doc(type.description())
@@ -263,10 +266,10 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
    * Typedef is an empty class that just holds description and
    * refers to an actual type (such as String).
    */
-  fun createTypedefTypeBinding(type: ProtocolMetaModel.StandaloneType, target: StandaloneTypeBinding.Target, nameScheme: ClassNameScheme, direction: TypeData.Direction?): StandaloneTypeBinding {
+  fun createTypedefTypeBinding(type: ProtocolMetaModel.StandaloneType, target: Target, nameScheme: ClassNameScheme, direction: TypeData.Direction?): StandaloneTypeBinding {
     val name = type.id()
     val typedefJavaName = nameScheme.getFullName(domain.domain(), name)
-    val actualJavaType = target.resolve(object : StandaloneTypeBinding.Target.ResolveContext {
+    val actualJavaType = target.resolve(object : Target.ResolveContext {
       override fun generateNestedObject(shortName: String, description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType {
         val classNamePath = NamePath(shortName, typedefJavaName)
         if (direction == null) {
@@ -299,7 +302,6 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     }
   }
 
-  throws(javaClass<IOException>())
   private fun generateEvenData(event: ProtocolMetaModel.Event) {
     val className = generator.naming.eventData.getShortName(event.name())
     val fileUpdater = generator.startJavaFile(generator.naming.eventData, domain, event.name())
@@ -312,7 +314,7 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         out.append("(\"").append(domainName).append('.').append(event.name()).append("\", ").append(fullName).append(".class)").openBlock()
         run {
           out.append("@Override").newLine().append("public ").append(fullName).append(" read(")
-          out.append(generator.naming.inputPackage).append('.').append(Generator.READER_INTERFACE_NAME + " protocolReader, ").append(JSON_READER_PARAMETER_DEF).append(")").openBlock()
+          out.append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME + " protocolReader, ").append(JSON_READER_PARAMETER_DEF).append(")").openBlock()
           out.append("return protocolReader.").append(generator.naming.eventData.getParseMethodName(domainName, event.name())).append("(reader);").closeBlock()
         }
         out.closeBlock()
@@ -327,7 +329,7 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
       out.doc(description)
     }
     out.append("@org.jetbrains.jsonProtocol.JsonType").newLine().append("public interface ").append(className).openBlock()
-    val classScope = InputClassScope(this, NamePath(className, NamePath(ClassNameScheme.getPackageName(generator.naming.inputPackage, domain.domain()))))
+    val classScope = InputClassScope(this, NamePath(className, NamePath(getPackageName(generator.naming.inputPackage, domain.domain()))))
     if (additionalMembersText != null) {
       classScope.addMember(additionalMembersText)
     }
@@ -336,13 +338,5 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     }
     classScope.writeAdditionalMembers(out)
     out.closeBlock()
-  }
-
-  default object {
-
-    fun fixMethodName(name: String): String {
-      val i = name.indexOf("breakpoint")
-      return if (i > 0) name.substring(0, i) + 'B' + name.substring(i + 1) else name
-    }
   }
 }

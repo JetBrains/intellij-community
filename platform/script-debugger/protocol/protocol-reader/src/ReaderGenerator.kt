@@ -13,7 +13,7 @@ public class ReaderGenerator {
     val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>
     val root: ReaderRoot<ROOT>
 
-    {
+    init {
       this.basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
 
       typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
@@ -25,7 +25,7 @@ public class ReaderGenerator {
     public var value: String? = null
   }
 
-  class object {
+  companion object {
     public fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
       val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), configuration.className + ".java"))
       generate(configuration, fileUpdater.builder)

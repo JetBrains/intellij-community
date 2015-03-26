@@ -1,5 +1,8 @@
 package org.jetbrains.protocolReader
 
+import gnu.trove.THashMap
+import java.util.ArrayList
+
 /**
  * Keeps track of all referenced types.
  * A type may be used and resolved (generated or hard-coded).
@@ -25,7 +28,6 @@ class TypeMap {
     typesToGenerate.add(binding)
   }
 
-  throws(javaClass<IOException>())
   public fun generateRequestedTypes() {
     // Size may grow during iteration.
     //noinspection ForLoopReplaceableByForEach
@@ -39,7 +41,7 @@ class TypeMap {
   }
 
   fun getTypeData(domainName: String, typeName: String): TypeData {
-    val key = Pair.create<String, String>(domainName, typeName)
+    val key = Pair(domainName, typeName)
     var result: TypeData? = map.get(key)
     if (result == null) {
       result = TypeData(typeName)

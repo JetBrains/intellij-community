@@ -1,15 +1,17 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.protocolReader
+
+import org.jetbrains.jsonProtocol.ItemDescriptor
+import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import java.nio.file.FileSystems
+import java.util.ArrayList
+import java.util.Collections
+import java.util.HashMap
+import java.util.HashSet
 
 /**
  * Read metamodel and generates set of files with Java classes/interfaces for the protocol.
  */
-class Generator [throws(javaClass<IOException>())]
-(outputDir: String, rootPackage: String, requestClassName: String) {
-
+class Generator(outputDir: String, rootPackage: String, requestClassName: String) {
   val jsonProtocolParserClassNames = ArrayList<String>()
   val parserRootInterfaceItems = ArrayList<ParserRootInterfaceItem>()
   val typeMap = TypeMap()
@@ -48,8 +50,7 @@ class Generator [throws(javaClass<IOException>())]
     }
   }
 
-  throws(javaClass<IOException>())
-  fun go(metamodel: Root) {
+  fun go(metamodel: ProtocolMetaModel.Root) {
     initializeKnownTypes()
 
     val domainList = metamodel.domains()
@@ -114,12 +115,12 @@ class Generator [throws(javaClass<IOException>())]
         return TypeDescriptor(BoxableType.MAP, optional)
       }
 
-      override fun visitArray(items: ArrayItemType): TypeDescriptor {
-        val type = scope.resolveType<ArrayItemType>(items).type
+      override fun visitArray(items: ProtocolMetaModel.ArrayItemType): TypeDescriptor {
+        val type = scope.resolveType<ProtocolMetaModel.ArrayItemType>(items).type
         return TypeDescriptor(ListType(type), optional, false, type == BoxableType.ANY_STRING)
       }
 
-      override fun visitObject(properties: List<ObjectProperty>?): TypeDescriptor {
+      override fun visitObject(properties: List<ProtocolMetaModel.ObjectProperty>?): TypeDescriptor {
         return TypeDescriptor(scope.generateNestedObject(typedObject.description(), properties!!), optional)
       }
 
@@ -129,7 +130,6 @@ class Generator [throws(javaClass<IOException>())]
     })
   }
 
-  throws(javaClass<IOException>())
   private fun generateParserInterfaceList() {
     val fileUpdater = startJavaFile(naming.inputPackage, PARSER_INTERFACE_LIST_CLASS_NAME + ".java")
     // Write classes in stable order.
@@ -147,7 +147,6 @@ class Generator [throws(javaClass<IOException>())]
     fileUpdater.update()
   }
 
-  throws(javaClass<IOException>())
   private fun generateParserRoot(parserRootInterfaceItems: List<ParserRootInterfaceItem>) {
     val fileUpdater = startJavaFile(naming.inputPackage, READER_INTERFACE_NAME + ".java")
     // Write classes in stable order.
@@ -202,8 +201,7 @@ class Generator [throws(javaClass<IOException>())]
     return typeMap.resolve(domainName, shortName, direction)!!
   }
 
-  throws(javaClass<IOException>())
-  fun startJavaFile(nameScheme: ClassNameScheme, domain: Domain, baseName: String): FileUpdater {
+  fun startJavaFile(nameScheme: ClassNameScheme, domain: ProtocolMetaModel.Domain, baseName: String): FileUpdater {
     return startJavaFile(nameScheme.getPackageNameVirtual(domain.domain()), nameScheme.getShortName(baseName) + ".java")
   }
 
@@ -212,77 +210,75 @@ class Generator [throws(javaClass<IOException>())]
     fileUpdater.out.append("// Generated source").newLine().append("package ").append(packageName).semi().newLine().newLine()
     return fileUpdater
   }
-
-  default object {
-    private val PARSER_INTERFACE_LIST_CLASS_NAME = "GeneratedReaderInterfaceList"
-    val READER_INTERFACE_NAME = "ProtocolResponseReader"
-
-    private fun isDomainSkipped(domain: Domain): Boolean {
-      if (domain.domain() == "CSS" || domain.domain() == "Inspector") {
-        return false
-      }
-
-      // todo DOMDebugger
-      return domain.hidden() || domain.domain() == "DOMDebugger" || domain.domain() == "Timeline" || domain.domain() == "Input"
-    }
-
-    fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
-      if (!BAD_METHOD_NAMES.contains(originalName)) {
-        return originalName
-      }
-      out.append("@org.jetbrains.jsonProtocol.JsonField(jsonLiteralName=\"").append(originalName).append("\")").newLine()
-      return "get" + Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1)
-    }
-
-    fun capitalizeFirstChar(s: String): String {
-      if (!s.isEmpty() && Character.isLowerCase(s.charAt(0))) {
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1)
-      }
-      return s
-    }
-
-    fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
-      val refName = if (typedObject is ItemDescriptor.Referenceable) (typedObject : ItemDescriptor.Referenceable).ref() else null
-      if (refName != null) {
-        return visitor.visitRef(refName)
-      }
-      val typeName = typedObject.type()
-      when (typeName) {
-        ProtocolMetaModel.BOOLEAN_TYPE -> return visitor.visitBoolean()
-        ProtocolMetaModel.STRING_TYPE -> {
-          if (typedObject.getEnum() != null) {
-            return visitor.visitEnum(typedObject.getEnum()!!)
-          }
-          return visitor.visitString()
-        }
-        ProtocolMetaModel.INTEGER_TYPE, "int" -> return visitor.visitInteger()
-        ProtocolMetaModel.NUMBER_TYPE -> return visitor.visitNumber()
-        ProtocolMetaModel.ARRAY_TYPE -> return visitor.visitArray(typedObject.items())
-        ProtocolMetaModel.OBJECT_TYPE -> {
-          if (typedObject !is ItemDescriptor.Type) {
-            return visitor.visitObject(null)
-          }
-
-          val properties = (typedObject : ItemDescriptor.Type).properties()
-          if (properties == null || properties.isEmpty()) {
-            return visitor.visitMap()
-          }
-          else {
-            return visitor.visitObject(properties)
-          }
-          return visitor.visitUnknown()
-        }
-        ProtocolMetaModel.ANY_TYPE -> return visitor.visitUnknown()
-        ProtocolMetaModel.UNKNOWN_TYPE -> return visitor.visitUnknown()
-      }
-      throw RuntimeException("Unrecognized type " + typeName)
-    }
-
-    private fun initializeKnownTypes() {
-      // Code example:
-      // typeMap.getTypeData("Page", "Cookie").getInput().setJavaTypeName("Object");
-    }
-
-    private val BAD_METHOD_NAMES = HashSet(listOf("this"))
-  }
 }
+
+private val PARSER_INTERFACE_LIST_CLASS_NAME = "GeneratedReaderInterfaceList"
+val READER_INTERFACE_NAME = "ProtocolResponseReader"
+
+private fun isDomainSkipped(domain: ProtocolMetaModel.Domain): Boolean {
+  if (domain.domain() == "CSS" || domain.domain() == "Inspector") {
+    return false
+  }
+
+  // todo DOMDebugger
+  return domain.hidden() || domain.domain() == "DOMDebugger" || domain.domain() == "Timeline" || domain.domain() == "Input"
+}
+
+fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
+  if (!BAD_METHOD_NAMES.contains(originalName)) {
+    return originalName
+  }
+  out.append("@org.jetbrains.jsonProtocol.JsonField(jsonLiteralName=\"").append(originalName).append("\")").newLine()
+  return "get" + Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1)
+}
+
+fun capitalizeFirstChar(s: String): String {
+  if (!s.isEmpty() && Character.isLowerCase(s.charAt(0))) {
+    return Character.toUpperCase(s.charAt(0)) + s.substring(1)
+  }
+  return s
+}
+
+fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
+  val refName = if (typedObject is ItemDescriptor.Referenceable) (typedObject : ItemDescriptor.Referenceable).ref() else null
+  if (refName != null) {
+    return visitor.visitRef(refName)
+  }
+  val typeName = typedObject.type()
+  when (typeName) {
+    ProtocolMetaModel.BOOLEAN_TYPE -> return visitor.visitBoolean()
+    ProtocolMetaModel.STRING_TYPE -> {
+      if (typedObject.getEnum() != null) {
+        return visitor.visitEnum(typedObject.getEnum()!!)
+      }
+      return visitor.visitString()
+    }
+    ProtocolMetaModel.INTEGER_TYPE, "int" -> return visitor.visitInteger()
+    ProtocolMetaModel.NUMBER_TYPE -> return visitor.visitNumber()
+    ProtocolMetaModel.ARRAY_TYPE -> return visitor.visitArray(typedObject.items())
+    ProtocolMetaModel.OBJECT_TYPE -> {
+      if (typedObject !is ItemDescriptor.Type) {
+        return visitor.visitObject(null)
+      }
+
+      val properties = (typedObject : ItemDescriptor.Type).properties()
+      if (properties == null || properties.isEmpty()) {
+        return visitor.visitMap()
+      }
+      else {
+        return visitor.visitObject(properties)
+      }
+      return visitor.visitUnknown()
+    }
+    ProtocolMetaModel.ANY_TYPE -> return visitor.visitUnknown()
+    ProtocolMetaModel.UNKNOWN_TYPE -> return visitor.visitUnknown()
+  }
+  throw RuntimeException("Unrecognized type " + typeName)
+}
+
+private fun initializeKnownTypes() {
+  // Code example:
+  // typeMap.getTypeData("Page", "Cookie").getInput().setJavaTypeName("Object");
+}
+
+private val BAD_METHOD_NAMES = HashSet(listOf("this"))

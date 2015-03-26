@@ -1,5 +1,10 @@
 package org.jetbrains.protocolReader
 
+import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.jsonProtocol.ItemDescriptor
+import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import java.util.ArrayList
+
 class OutputClassScope(generator: DomainGenerator, classNamePath: NamePath) : ClassScope(generator, classNamePath) {
   fun <P : ItemDescriptor.Named> generate(out: TextOutput, parameters: List<P>?) {
     if (parameters == null) {
@@ -65,7 +70,7 @@ class OutputClassScope(generator: DomainGenerator, classNamePath: NamePath) : Cl
     for (parameter in parameters) {
       if (parameter.getEnum() != null) {
         out.newLine().newLine()
-        appendEnumClass(out, parameter.description(), parameter.getEnum()!!, Generator.capitalizeFirstChar((parameter.name())))
+        appendEnumClass(out, parameter.description(), parameter.getEnum()!!, capitalizeFirstChar((parameter.name())))
       }
     }
 
@@ -205,7 +210,7 @@ class OutputClassScope(generator: DomainGenerator, classNamePath: NamePath) : Cl
 
   inner class OutputMemberScope(memberName: String) : MemberScope(this@OutputClassScope, memberName) {
     override fun generateEnum(description: String?, enumConstants: List<String>): BoxableType {
-      return StandaloneType(NamePath(Generator.capitalizeFirstChar(memberName), classContextNamespace), "writeEnum")
+      return StandaloneType(NamePath(capitalizeFirstChar(memberName), classContextNamespace), "writeEnum")
     }
 
     override fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?) = throw UnsupportedOperationException()

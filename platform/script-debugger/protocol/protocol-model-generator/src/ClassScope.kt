@@ -1,5 +1,8 @@
 package org.jetbrains.protocolReader
 
+import org.jetbrains.jsonProtocol.ItemDescriptor
+import java.util.ArrayList
+
 abstract class ClassScope(val generator: DomainGenerator, val classContextNamespace: NamePath) {
   private val additionalMemberTexts = ArrayList<TextOutConsumer>(2)
 
@@ -24,7 +27,7 @@ abstract class ClassScope(val generator: DomainGenerator, val classContextNamesp
 
   abstract fun getTypeDirection(): TypeData.Direction
 
-  default object {
+  companion object {
     fun getName(named: ItemDescriptor.Named) = named.shortName() ?: named.name()
   }
 }
