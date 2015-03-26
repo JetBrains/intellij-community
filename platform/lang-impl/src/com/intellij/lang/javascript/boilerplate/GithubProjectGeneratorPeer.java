@@ -17,6 +17,7 @@ package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.intellij.BundleBase;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -180,7 +181,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
   @Override
   public void buildUI(@NotNull SettingsStep settingsStep) {
-    settingsStep.addSettingsField("&Version:", myVersionPanel);
+    settingsStep.addSettingsField(BundleBase.replaceMnemonicAmpersand("&Version:"), myVersionPanel);
     settingsStep.addSettingsComponent(myReloadableComboBoxPanel.getErrorComponent());
   }
 
