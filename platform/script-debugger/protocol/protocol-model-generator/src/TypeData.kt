@@ -1,7 +1,5 @@
 package org.jetbrains.protocolReader
 
-import org.jetbrains.protocolReader.TypeData
-
 class TypeData(private val name: String) {
   private var input: Input? = null
   private var output: Output? = null

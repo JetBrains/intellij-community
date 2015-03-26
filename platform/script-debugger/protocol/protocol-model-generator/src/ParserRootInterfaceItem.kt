@@ -1,7 +1,5 @@
 package org.jetbrains.protocolReader
 
-import org.jetbrains.protocolReader.ParserRootInterfaceItem
-
 class ParserRootInterfaceItem(val domain: String, val name: String, private val nameScheme: ClassNameScheme.Input) : Comparable<ParserRootInterfaceItem> {
   val fullName: String
 

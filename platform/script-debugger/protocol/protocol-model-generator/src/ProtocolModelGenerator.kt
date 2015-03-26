@@ -1,7 +1,5 @@
 package org.jetbrains.protocolReader
 
-import org.jetbrains.protocolReader.ProtocolModelGenerator
-
 public class ProtocolModelGenerator {
   default object {
     throws(javaClass<IOException>())
