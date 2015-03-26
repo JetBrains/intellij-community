@@ -20,6 +20,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -334,9 +335,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
 
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
-    VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory.createStyle(
-      rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
-      dummyRendererComponent.getBackground());
+    VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
+      .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
+                   dummyRendererComponent.getBackground());
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
       ContainerUtil.map(myHighlighters, new Function<VcsLogHighlighter, VcsLogHighlighter.VcsCommitStyle>() {
@@ -406,7 +407,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
-        previousSelection.restore(myDataPack.getVisibleGraph());
+        previousSelection.restore(myDataPack.getVisibleGraph(), answer == null || answer.getCommitToJump() != null);
       }
     }
 
@@ -438,24 +439,66 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public static class Selection {
-    private final TIntHashSet myCommits;
-    private final VcsLogGraphTable myTable;
+    @NotNull private final VcsLogGraphTable myTable;
+    @NotNull private final TIntHashSet mySelectedCommits;
+    @Nullable private final Integer myVisibleSelectedCommit;
+    @Nullable private final Integer myDelta;
+
 
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
-      myCommits = getCommitsAtRows(myTable.myDataPack.getVisibleGraph(), myTable.getSelectedRows());
+      List<Integer> selectedRows = ContainerUtil.sorted(toList(myTable.getSelectedRows()));
+      Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(myTable);
+
+      VisibleGraph<Integer> graph = myTable.myDataPack.getVisibleGraph();
+
+      mySelectedCommits = new TIntHashSet();
+
+      Integer visibleSelectedCommit = null;
+      Integer delta = null;
+      for (int row : selectedRows) {
+        if (row < graph.getVisibleCommitCount()) {
+          Integer commit = graph.getRowInfo(row).getCommit();
+          mySelectedCommits.add(commit);
+          if (visibleRows.first - 1 <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
+            visibleSelectedCommit = commit;
+            delta = myTable.getCellRect(row, 0, false).y - myTable.getVisibleRect().y;
+          }
+        }
+      }
+      if (visibleSelectedCommit == null && visibleRows.first - 1 >= 0) {
+        visibleSelectedCommit = graph.getRowInfo(visibleRows.first - 1).getCommit();
+        delta = myTable.getCellRect(visibleRows.first - 1, 0, false).y - myTable.getVisibleRect().y;
+      }
+
+      myVisibleSelectedCommit = visibleSelectedCommit;
+      myDelta = delta;
     }
 
-    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph) {
-      TIntHashSet rowsToSelect = findNewRowsToSelect(myTable.getGraphTableModel(), newVisibleGraph, myCommits);
-      if (!rowsToSelect.isEmpty()) {
-        rowsToSelect.forEach(new TIntProcedure() {
+    private static List<Integer> toList(int[] array) {
+      List<Integer> result = ContainerUtil.newArrayList();
+      for (int i : array) {
+        result.add(i);
+      }
+      return result;
+    }
+
+    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection) {
+      Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getGraphTableModel(), newVisibleGraph);
+      if (!toSelectAndScroll.first.isEmpty()) {
+        toSelectAndScroll.first.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int row) {
             myTable.addRowSelectionInterval(row, row);
             return true;
           }
         });
+
+      }
+      if (scrollToSelection && toSelectAndScroll.second != null) {
+        assert myDelta != null;
+        Rectangle startRect = myTable.getCellRect(toSelectAndScroll.second, 0, true);
+        myTable.scrollRectToVisible(new Rectangle(startRect.x, Math.max(startRect.y - myDelta, 0), startRect.width, myTable.getVisibleRect().height));
       }
       // sometimes commits that were selected are now collapsed
       // currently in this case selection disappears
@@ -464,37 +507,32 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
 
     @NotNull
-    private TIntHashSet findNewRowsToSelect(@NotNull GraphTableModel newModel,
-                                            @NotNull VisibleGraph<Integer> visibleGraph,
-                                            @NotNull TIntHashSet selectedHashes) {
+    private Pair<TIntHashSet, Integer> findRowsToSelectAndScroll(@NotNull GraphTableModel model,
+                                                                 @NotNull VisibleGraph<Integer> visibleGraph) {
       TIntHashSet rowsToSelect = new TIntHashSet();
-      if (newModel.getRowCount() == 0) {
+
+      if (model.getRowCount() == 0) {
         // this should have been covered by facade.getVisibleCommitCount,
         // but if the table is empty (no commits match the filter), the GraphFacade is not updated, because it can't handle it
         // => it has previous values set.
-        return rowsToSelect;
+        return Pair.create(rowsToSelect, null);
       }
+
+      Integer rowToScroll = null;
       for (int row = 0;
-           row < visibleGraph.getVisibleCommitCount() && rowsToSelect.size() < selectedHashes.size();
+           row < visibleGraph.getVisibleCommitCount() && (rowsToSelect.size() < mySelectedCommits.size() || rowToScroll == null);
            row++) { //stop iterating if found all hashes
         int commit = visibleGraph.getRowInfo(row).getCommit();
-        if (selectedHashes.contains(commit)) {
+        if (mySelectedCommits.contains(commit)) {
           rowsToSelect.add(row);
         }
-      }
-      return rowsToSelect;
-    }
-
-    @NotNull
-    private TIntHashSet getCommitsAtRows(@NotNull VisibleGraph<Integer> graph, int[] rows) {
-      TIntHashSet commits = new TIntHashSet();
-      for (int row : rows) {
-        if (row < graph.getVisibleCommitCount()) {
-          commits.add(graph.getRowInfo(row).getCommit());
+        if (myVisibleSelectedCommit != null && myVisibleSelectedCommit == commit) {
+          rowToScroll = row;
         }
       }
-      return commits;
+      return Pair.create(rowsToSelect, rowToScroll);
     }
+
   }
 
   private class MyHeaderMouseAdapter extends MouseAdapter {
