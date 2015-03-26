@@ -15,15 +15,14 @@
  */
 package com.jetbrains.python.refactoring.move;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -35,21 +34,23 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyDunderAllReference;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-
-import static com.jetbrains.python.psi.impl.PyImportStatementNavigator.getImportStatementByElement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
+ * Group found usages by moved elements and move each of these elements using {@link PyMoveSymbolProcessor}.
+ *
  * @author vlan
+ * @author Mikhail Golubev
+ *
+ * @see PyMoveSymbolProcessor
  */
 public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.move.module.members");
@@ -136,7 +137,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
               if (usedFromOutside) {
                 checkValidImportableFile(e, destination.getVirtualFile());
               }
-              moveElement(e, usageInfos, destination);
+              new PyMoveSymbolProcessor(e, destination, usageInfos, myElements).moveElement();
             }
           }
         });
@@ -150,136 +151,9 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     return REFACTORING_NAME;
   }
 
-  private void moveElement(@NotNull PsiNamedElement element, @NotNull Collection<UsageInfo> usages, @NotNull PyFile destination) {
-    final PsiFile file = element.getContainingFile();
-    final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(element);
-    if (oldElementBody != null) {
-      PyClassRefactoringUtil.rememberNamedReferences(oldElementBody);
-      final PsiElement newElementBody = addToFile(oldElementBody, destination, usages);
-      final PsiNamedElement newElement = PyMoveModuleMembersHelper.extractNamedElement(newElementBody);
-      assert newElement != null;
-      final List<PsiFile> usageFilesToOptimize = Lists.newArrayList();
-      for (UsageInfo usage : usages) {
-        final PsiElement usageElement = usage.getElement();
-        if (usageElement != null) {
-          final boolean optimize = updateUsage(usageElement, element, newElement);
-          if (optimize) {
-            usageFilesToOptimize.add(usageElement.getContainingFile());
-          }
-        }
-      }
-      PyClassRefactoringUtil.restoreNamedReferences(newElementBody, element, myElements);
-      // TODO: Remove extra empty lines after the removed element
-      oldElementBody.delete();
-      for (PsiFile usageFile : usageFilesToOptimize) {
-        PyClassRefactoringUtil.optimizeImports(usageFile);
-      }
-      if (file != null) {
-        PyClassRefactoringUtil.optimizeImports(file);
-      }
-    }
-  }
-
-  @NotNull
-  private static PsiElement addToFile(@NotNull PsiElement element, @NotNull final PyFile destination,
-                                      @NotNull Collection<UsageInfo> usages) {
-    List<PsiElement> topLevelAtDestination = new ArrayList<PsiElement>();
-    for (UsageInfo usage : usages) {
-      final PsiElement e = usage.getElement();
-      if (e != null && ScopeUtil.getScopeOwner(e) == destination && getImportStatementByElement(e) == null) {
-        PsiElement topLevel = PsiTreeUtil.findFirstParent(e, new Condition<PsiElement>() {
-          @Override
-          public boolean value(PsiElement element) {
-            return element.getParent() == destination;
-          }
-        });
-        if (topLevel != null) {
-          topLevelAtDestination.add(topLevel);
-        }
-      }
-    }
-    if (topLevelAtDestination.isEmpty()) {
-      return destination.add(element);
-    }
-    else {
-      Collections.sort(topLevelAtDestination, new Comparator<PsiElement>() {
-        @Override
-        public int compare(PsiElement e1, PsiElement e2) {
-          return PsiUtilCore.compareElementsByPosition(e1, e2);
-        }
-      });
-      final PsiElement firstUsage = topLevelAtDestination.get(0);
-      return destination.addBefore(element, firstUsage);
-    }
-  }
-
-  private static boolean updateUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement oldElement, @NotNull PsiNamedElement newElement) {
-    // TODO: Respect the qualified import style
-    if (usage instanceof PyQualifiedExpression) {
-      PyQualifiedExpression expr = (PyQualifiedExpression)usage;
-      if (oldElement instanceof PyClass && PyNames.INIT.equals(expr.getName())) {
-        return false;
-      }
-      if (expr.isQualified()) {
-        final PyElementGenerator generator = PyElementGenerator.getInstance(expr.getProject());
-        final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expr), expr.getName());
-        final PsiElement newExpr = expr.replace(generated);
-        PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
-      }
-    }
-    if (usage instanceof PyStringLiteralExpression) {
-      for (PsiReference ref : usage.getReferences()) {
-        if (ref instanceof PyDunderAllReference) {
-          usage.delete();
-        }
-        else {
-          if (ref.isReferenceTo(oldElement)) {
-            ref.bindToElement(newElement);
-          }
-        }
-      }
-    }
-    else {
-      final PyImportStatementBase importStmt = getImportStatementByElement(usage);
-      if (importStmt != null) {
-        PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
-      }
-      final PsiFile usageFile = usage.getContainingFile();
-      final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(oldElement);
-      if (usageFile == oldElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElementBody, usage, false)) {
-        PyClassRefactoringUtil.insertImport(oldElement, newElement);
-      }
-      if (resolvesToLocalStarImport(usage)) {
-        PyClassRefactoringUtil.insertImport(usage, newElement);
-        return usageFile != null;
-      }
-    }
-    return false;
-  }
-
-
-  private static boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
-    final PsiReference ref = element.getReference();
-    final List<PsiElement> resolvedElements = new ArrayList<PsiElement>();
-    if (ref instanceof PsiPolyVariantReference) {
-      for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
-        resolvedElements.add(result.getElement());
-      }
-    }
-    else if (ref != null) {
-      resolvedElements.add(ref.resolve());
-    }
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile != null) {
-      for (PsiElement resolved : resolvedElements) {
-        if (resolved instanceof PyStarImportElement && resolved.getContainingFile() == containingFile) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
+  /**
+   * Additionally contains referenced element.
+   */
   private static void checkValidImportableFile(PsiElement anchor, VirtualFile file) {
     final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
@@ -288,9 +162,6 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  /**
-   * Additionally contains referenced element.
-   */
   private static class MyUsageInfo extends UsageInfo {
     private final PsiElement myMovedElement;
     public MyUsageInfo(@NotNull UsageInfo usageInfo, @NotNull PsiElement element) {
