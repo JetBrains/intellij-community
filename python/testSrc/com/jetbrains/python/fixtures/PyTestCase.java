@@ -86,7 +86,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Nullable
   protected static VirtualFile getVirtualFileByName(String fileName) {
-    return LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
+    return LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName.replace(File.separatorChar, '/'));
   }
 
   @Override
