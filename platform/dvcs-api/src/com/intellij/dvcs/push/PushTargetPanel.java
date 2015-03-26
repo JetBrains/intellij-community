@@ -49,4 +49,7 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
    * Add an ability to track edit field process
    */
   public abstract void addTargetEditorListener(@NotNull PushTargetEditorListener listener);
+
+  public void forceUpdateEditableUiModel(@NotNull String forcedText) {
+  }
 }
