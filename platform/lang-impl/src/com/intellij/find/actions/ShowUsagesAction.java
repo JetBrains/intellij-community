@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -697,11 +697,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       }
     });
 
-    ActiveComponent spinningProgress = new ActiveComponent() {
-      @Override
-      public void setActive(boolean active) {
-      }
-
+    ActiveComponent spinningProgress = new ActiveComponent.Adapter() {
       @Override
       public JComponent getComponent() {
         return processIcon;
@@ -769,11 +765,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     pinToolBar.setBorder(null);
     pinToolBar.setOpaque(false);
 
-    return new ActiveComponent() {
-      @Override
-      public void setActive(boolean active) {
-      }
-
+    return new ActiveComponent.Adapter() {
       @Override
       public JComponent getComponent() {
         return pinToolBar;
