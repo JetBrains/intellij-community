@@ -4,13 +4,16 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +31,7 @@ public class PyMoveSymbolProcessor {
   private final List<UsageInfo> myUsages;
   private final PsiElement[] myAllMovedElements;
   private final List<PsiFile> myOptimizeImportTargets = new ArrayList<PsiFile>();
+  private final List<ScopeOwner> myScopeOwnersWithGlobal = new ArrayList<ScopeOwner>();
 
   public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
                                @NotNull PyFile destination,
@@ -131,10 +135,7 @@ public class PyMoveSymbolProcessor {
         return;
       }
       if (expr.isQualified()) {
-        final PyElementGenerator generator = PyElementGenerator.getInstance(expr.getProject());
-        final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expr), expr.getName());
-        final PsiElement newExpr = expr.replace(generated);
-        PyClassRefactoringUtil.insertImport(newExpr, newElement, null, true);
+        insertImportFromAndReplaceReference(newElement, expr);
       }
     }
     if (usage instanceof PyStringLiteralExpression) {
@@ -150,20 +151,83 @@ public class PyMoveSymbolProcessor {
       }
     }
     else {
+      // Update import of unqualified reference
       final PyImportStatementBase importStmt = getImportStatementByElement(usage);
       if (importStmt != null) {
         PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
       }
+      // Do nothing if usage itself was moved too
+      if (belongsToSomeMovedElement(usage)) {
+        return;
+      }
       final PsiFile usageFile = usage.getContainingFile();
-      final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
-      if (usageFile == myMovedElement.getContainingFile() && !PsiTreeUtil.isAncestor(oldElementBody, usage, false)) {
-        PyClassRefactoringUtil.insertImport(myMovedElement, newElement);
+      if (usageFile == myMovedElement.getContainingFile() && usage instanceof PyQualifiedExpression) {
+        if (usage.getParent() instanceof PyGlobalStatement) {
+          myScopeOwnersWithGlobal.add(ScopeUtil.getScopeOwner(usage));
+          usage.delete();
+        }
+        else if (myScopeOwnersWithGlobal.contains(ScopeUtil.getScopeOwner(usage))) {
+          insertQualifiedImportAndReplaceReference(newElement, (PyQualifiedExpression)usage);
+        }
+        else {
+          insertImportFromAndReplaceReference(newElement, (PyQualifiedExpression)usage);
+        }
       }
       if (resolvesToLocalStarImport(usage)) {
         PyClassRefactoringUtil.insertImport(usage, newElement);
         myOptimizeImportTargets.add(usageFile);
       }
     }
+  }
+
+  private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
+    return ContainerUtil.exists(myAllMovedElements, new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement movedElement) {
+        final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
+        return PsiTreeUtil.isAncestor(movedElementBody, element, false);
+      }
+    });
+  }
+
+
+  /**
+   * <pre><code>
+   *   print(foo.bar)
+   * </code></pre>
+   * is transformed to
+   * <pre><code>
+   *   from new import bar
+   *   print(bar)
+   * </code></pre>
+   */
+  private static void insertImportFromAndReplaceReference(@NotNull PsiNamedElement targetElement,
+                                                          @NotNull PyQualifiedExpression expression) {
+    PyClassRefactoringUtil.insertImport(expression, targetElement, null, true);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(expression.getProject());
+    final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expression), expression.getReferencedName());
+    expression.replace(generated);
+  }
+
+  /**
+   * <pre><code>
+   *   print(foo.bar)
+   * </code></pre>
+   * is transformed to
+   * <pre><code>
+   *   import new
+   *   print(new.bar)
+   * </code></pre>
+   */
+  private static void insertQualifiedImportAndReplaceReference(@NotNull PsiNamedElement targetElement,
+                                                               @NotNull PyQualifiedExpression expression) {
+    final PsiFile file = targetElement.getContainingFile();
+    final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(file, expression);
+    PyClassRefactoringUtil.insertImport(expression, file, null, false);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(expression.getProject());
+    final PyExpression generated = generator.createExpressionFromText(LanguageLevel.forElement(expression),
+                                                                      qualifier + "." + expression.getReferencedName());
+    expression.replace(generated);
   }
 
   private static boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
