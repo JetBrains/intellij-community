@@ -39,7 +39,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -238,6 +241,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
           private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins = new HashMap<Plugin, IdeaPluginDescriptor>();
           private List<String> myBundledPlugin;
+          private final MultiMap<String, UnknownFeature> myFeatures = new MultiMap<String, UnknownFeature>();
 
           @Override
           public void run() {
@@ -256,6 +260,7 @@ public class PluginsAdvertiser implements StartupActivity {
                 if (pluginId != null) {
                   for (Plugin plugin : pluginId) {
                     ids.put(plugin.myPluginId, plugin);
+                    myFeatures.putValue(plugin.myPluginId, feature);
                   }
                 }
               }
@@ -299,8 +304,7 @@ public class PluginsAdvertiser implements StartupActivity {
           private void onSuccess() {
             String message = null;
             if (!myPlugins.isEmpty() || !myDisabledPlugins.isEmpty()) {
-              message = "Features covered by non-bundled plugins are detected.<br>";
-
+              message = getAddressedMessagePresentation();
               if (!myDisabledPlugins.isEmpty()) {
                 message += "<a href=\"enable\">Enable plugins...</a><br>";
               }
@@ -308,7 +312,7 @@ public class PluginsAdvertiser implements StartupActivity {
                 message += "<a href=\"configure\">Configure plugins...</a><br>";
               }
 
-              message += "<a href=\"ignore\">Ignore All</a>";
+              message += "<a href=\"ignore\">Ignore Unknown Features</a>";
             }
             else if (myBundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)) {
               message = "Features covered by " + IDEA_ULTIMATE_EDITION +
@@ -321,6 +325,35 @@ public class PluginsAdvertiser implements StartupActivity {
               final ConfigurePluginsListener notificationListener = new ConfigurePluginsListener(unknownFeatures, project, myAllPlugins, myPlugins, myDisabledPlugins);
               NOTIFICATION_GROUP.createNotification(DISPLAY_ID, message, NotificationType.INFORMATION, notificationListener).notify(project);
             }
+          }
+
+          @NotNull
+          private String getAddressedMessagePresentation() {
+            final MultiMap<String, String> addressedFeatures = MultiMap.createSet();
+            final Set<String> ids = new LinkedHashSet<String>();
+            for (PluginDownloader plugin : myPlugins) {
+              ids.add(plugin.getPluginId());
+            }
+            for (Plugin plugin : myDisabledPlugins.keySet()) {
+              ids.add(plugin.myPluginId);
+            }
+            for (String id : ids) {
+              for (UnknownFeature feature : myFeatures.get(id)) {
+                addressedFeatures.putValue(feature.getFeatureDisplayName(), feature.getImplementationName());
+              }
+            }
+            final String addressedFeaturesPresentation = StringUtil.join(addressedFeatures.entrySet(),
+                                                                         new Function<Map.Entry<String, Collection<String>>, String>() {
+                                                                           @Override
+                                                                           public String fun(Map.Entry<String, Collection<String>> entry) {
+                                                                             return entry.getKey() + "[" + StringUtil.join(entry.getValue(), ", ") + "]";
+                                                                           }
+                                                                         }, ", ");
+            final int addressedFeaturesNumber = addressedFeatures.keySet().size();
+            final int pluginsNumber = ids.size();
+            return "Unknown feature" + (addressedFeaturesNumber == 1 ? "" : "s") + 
+                   " (" + addressedFeaturesPresentation + ") covered by " + (myPlugins.isEmpty() ? "disabled" : "non-bundled") + " plugin" + (pluginsNumber == 1 ? "" : "s") + 
+                   " detected.<br>";
           }
         });
       }

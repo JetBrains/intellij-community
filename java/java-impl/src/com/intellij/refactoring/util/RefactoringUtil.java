@@ -56,6 +56,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -934,6 +935,21 @@ public class RefactoringUtil {
 
   public static boolean isLoopOrIf(PsiElement element) {
     return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
+  }
+
+  public static PsiElement expandExpressionLambdaToCodeBlock(@NotNull PsiElement element) {
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
+    LOG.assertTrue(lambdaExpression != null);
+    final PsiElement body = lambdaExpression.getBody();
+    LOG.assertTrue(body instanceof PsiExpression);
+    String blockText = "{";
+    blockText += PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression)) ? "" : "return ";
+    blockText +=  body.getText() + ";}";
+
+    final String resultedLambdaText = lambdaExpression.getParameterList().getText() + "->" + blockText;
+    final PsiExpression expressionFromText =
+      JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(resultedLambdaText, lambdaExpression);
+    return CodeStyleManager.getInstance(element.getProject()).reformat(lambdaExpression.replace(expressionFromText));
   }
 
   public interface ImplicitConstructorUsageVisitor {

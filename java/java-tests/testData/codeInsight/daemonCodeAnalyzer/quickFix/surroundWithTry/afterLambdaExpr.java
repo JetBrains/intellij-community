@@ -5,7 +5,13 @@ public class ExTest {
     }
 
     {
-        Block<String> b = (t) -> ExTest.may<caret>beThrow(t);
+        Block<String> b = (t) -> {
+            try {
+                ExTest.maybeThrow(t);
+            } catch (Ex ex) {
+                ex.printStackTrace();
+            }
+        };
     }
 
 

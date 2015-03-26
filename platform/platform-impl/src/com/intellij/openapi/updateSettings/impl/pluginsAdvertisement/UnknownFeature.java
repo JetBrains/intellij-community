@@ -22,10 +22,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UnknownFeature {
   private final String myFeatureType;
+  private final String myFeatureDisplayName;
   private final String myImplementationName;
 
-  public UnknownFeature(@NotNull String featureType, @NotNull String implementationName) {
+  public UnknownFeature(@NotNull String featureType, String featureDisplayName, @NotNull String implementationName) {
     myFeatureType = featureType;
+    myFeatureDisplayName = featureDisplayName;
     myImplementationName = implementationName;
   }
 
@@ -35,6 +37,10 @@ public class UnknownFeature {
 
   public String getImplementationName() {
     return myImplementationName;
+  }
+
+  public String getFeatureDisplayName() {
+    return myFeatureDisplayName;
   }
 
   @Override
