@@ -7,7 +7,7 @@ public class TestTryCatchFinally {
       } catch (Exception var9) {
          try {
             System.out.println("sout2");// 27
-         } catch (Exception var8) {
+         } catch (Exception var8) {// 28
             ;
          }
       } finally {
@@ -30,7 +30,7 @@ public class TestTryCatchFinally {
       try {
          int var2 = Integer.parseInt(var1);// 51
          return var2;
-      } catch (Exception var6) {
+      } catch (Exception var6) {// 52
          System.out.println("Error" + var6);// 53
       } finally {
          System.out.println("Finally");// 55
@@ -48,6 +48,7 @@ class 'pkg/TestTryCatchFinally' {
       14      8
       17      8
       19      8
+      1f      9
       2b      13
       2d      13
       30      13
@@ -68,6 +69,7 @@ class 'pkg/TestTryCatchFinally' {
       1      30
       4      30
       e      31
+      f      32
       10      33
       1a      33
       23      33
@@ -83,6 +85,7 @@ class 'pkg/TestTryCatchFinally' {
 Lines mapping:
 24 <-> 6
 27 <-> 9
+28 <-> 10
 34 <-> 14
 36 <-> 17
 39 <-> 20
@@ -91,13 +94,12 @@ Lines mapping:
 42 <-> 23
 45 <-> 25
 51 <-> 31
+52 <-> 33
 53 <-> 34
 55 <-> 36
 56 <-> 39
 57 <-> 39
 Not mapped:
 25
-28
 32
 35
-52
