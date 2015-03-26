@@ -513,6 +513,14 @@ public class PushLog extends JPanel implements DataProvider {
 
   public void fireEditorUpdated(@NotNull String currentText) {
     if (mySyncStrategy) {
+      //update ui model
+      List<RepositoryNode> repositoryNodes =
+        getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(), RepositoryNode.class, false);
+      for (RepositoryNode node : repositoryNodes) {
+        if (node.isEditableNow()) {
+          node.forceUpdateUiModelWithTypedText(currentText);
+        }
+      }
       setSyncText(currentText);
       myTree.repaint();
     }
