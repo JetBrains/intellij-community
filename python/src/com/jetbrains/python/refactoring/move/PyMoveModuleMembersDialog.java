@@ -47,7 +47,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PyMoveModuleMembersDialog extends RefactoringDialog {
-  @NonNls private final static String BULK_MOVE_TABLE_VISIBLE = "py.move.module.member.dialog.table.visible";
+  @NonNls private final static String BULK_MOVE_TABLE_VISIBLE = "python.move.module.members.dialog.show.table";
 
   /**
    * Instance to be injected to mimic this class in tests
@@ -223,7 +223,7 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
 
   @Override
   protected String getHelpId() {
-    return "python.reference.moveClass";
+    return "python.reference.moveModuleMembers";
   }
 
   @Override
