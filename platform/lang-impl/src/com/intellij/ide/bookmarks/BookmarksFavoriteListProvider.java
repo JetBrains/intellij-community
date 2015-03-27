@@ -42,10 +42,10 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
 
   public BookmarksFavoriteListProvider(Project project, BookmarkManager bookmarkManager, FavoritesManager favoritesManager) {
     super(project, "Bookmarks");
-    project.getMessageBus().connect(project).subscribe(BookmarksListener.TOPIC, this);
-    updateChildren();
     myBookmarkManager = bookmarkManager;
     myFavoritesManager = favoritesManager;
+    project.getMessageBus().connect(project).subscribe(BookmarksListener.TOPIC, this);
+    updateChildren();
   }
 
   @Override
