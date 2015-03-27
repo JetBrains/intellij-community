@@ -134,6 +134,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   @Nullable
   private static PsiElement findCommonAncestorForWholeRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+    if (start.getContainingFile() != end.getContainingFile()) {
+      return null;
+    }
     final PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
     if (parent == null) {
       return null;
