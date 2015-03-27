@@ -42,7 +42,7 @@ public abstract class BaseRepository extends TaskRepository {
   protected boolean myUseHttpAuthentication;
   protected boolean myLoginAnonymously;
   protected CustomTaskState myPreferredOpenTaskState;
-  private CustomTaskState myPreferredCloseTaskState;
+  protected CustomTaskState myPreferredCloseTaskState;
 
   public BaseRepository(TaskRepositoryType type) {
     super(type);
