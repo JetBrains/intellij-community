@@ -61,8 +61,8 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
 
     final PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(element, PsiTypeElement.class);
-    final PsiReferenceParameterList parameterList = PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class);
-    if (parameterList != null && typeElement != null) {
+    final PsiReferenceParameterList parameterList = PsiTreeUtil.getParentOfType(typeElement, PsiReferenceParameterList.class);
+    if (parameterList != null) {
       final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (aClass instanceof PsiAnonymousClass) {
         editor.getCaretModel().moveToOffset(aClass.getTextOffset());
