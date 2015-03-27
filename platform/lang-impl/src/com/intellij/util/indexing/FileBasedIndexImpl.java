@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.DelegatingProgressIndicator;
@@ -2356,7 +2357,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     @NotNull
     @Override
     public List<VirtualFile> getFiles() {
-      return myFiles;
+      synchronized (myFiles) {
+        return myFiles;
+      }
     }
 
     @Override
@@ -2383,7 +2386,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final ID<?, ?> indexId = affectedIndexCandidates.get(i);
             try {
               if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
-                myFiles.add(file);
+                synchronized (myFiles) {
+                  myFiles.add(file);
+                }
                 oldStuff = false;
                 break;
               }
@@ -2522,7 +2527,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public VirtualFile findFileById(Project project, int id) {
-    return IndexInfrastructure.findFileById((PersistentFS) ManagingFS.getInstance(), id);
+    return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
   }
 
   @Nullable
@@ -2566,45 +2571,65 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @Override
-  public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+  public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull final Project project, final ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }
+
+    List<Runnable> tasks = new ArrayList<Runnable>();
+
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // iterate project content
-    projectFileIndex.iterateContent(processor);
+    tasks.add(new Runnable() {
+      @Override
+      public void run() {
+        projectFileIndex.iterateContent(processor);
+      }
+    });
+    /*
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    for(final Module module: modules) {
+      tasks.add(new Runnable() {
+        @Override
+        public void run() {
+          if (module.isDisposed()) return;
+          ModuleRootManager.getInstance(module).getFileIndex().iterateContent(processor);
+        }
+      });
+    }*/
 
-    if (project.isDisposed()) {
-      return;
-    }
-
-    Set<VirtualFile> visitedRoots = new THashSet<VirtualFile>();
+    final Set<VirtualFile> visitedRoots = new THashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
         return;
       }
-      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
+      for (final VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator, visitedRoots, null);
+          tasks.add(new Runnable() {
+            @Override
+            public void run() {
+              if (project.isDisposed() || !root.isValid()) return;
+              iterateRecursively(root, processor, indicator, visitedRoots, null);
+            }
+          });
         }
       }
-      for (VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
+      for (final VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator, visitedRoots, null);
+          tasks.add(new Runnable() {
+            @Override
+            public void run() {
+              if (project.isDisposed() || !root.isValid()) return;
+              iterateRecursively(root, processor, indicator, visitedRoots, null);
+            }
+          });
         }
       }
     }
 
-    if (project.isDisposed()) {
-      return;
-    }
     // iterate associated libraries
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (module.isDisposed()) {
-        return;
-      }
+    for (final Module module : ModuleManager.getInstance(project).getModules()) {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry) {
@@ -2613,15 +2638,33 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final VirtualFile[] libSources = entry.getRootFiles(OrderRootType.SOURCES);
             final VirtualFile[] libClasses = entry.getRootFiles(OrderRootType.CLASSES);
             for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
-              for (VirtualFile root : roots) {
+              for (final VirtualFile root : roots) {
                 if (visitedRoots.add(root)) {
-                  iterateRecursively(root, processor, indicator, null, projectFileIndex);
+                  tasks.add(new Runnable() {
+                    @Override
+                    public void run() {
+                      if (project.isDisposed() || module.isDisposed() || !root.isValid()) return;
+                      iterateRecursively(root, processor, indicator, null, projectFileIndex);
+                    }
+                  });
                 }
               }
             }
           }
         }
       }
+    }
+
+    if (Registry.is("idea.concurrent.scanning.files.to.index")) {
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, true, false, new Processor<Runnable>() {
+        @Override
+        public boolean process(Runnable runnable) {
+          runnable.run();
+          return true;
+        }
+      });
+    } else {
+      for(Runnable r:tasks) r.run();
     }
   }
 

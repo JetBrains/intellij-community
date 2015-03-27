@@ -20,6 +20,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -37,6 +38,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -46,6 +48,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
@@ -55,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
@@ -253,6 +257,8 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       }
     });
 
+    List<Runnable> tasks = new ArrayList<Runnable>();
+
     for (final Module module : modules) {
       Runnable iteration = ApplicationManager.getApplication().runReadAction(new Computable<Runnable>() {
         @Override
@@ -280,7 +286,19 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
           };
         }
       });
-      iteration.run();
+      tasks.add(iteration);
+    }
+
+    if (Registry.is("idea.concurrent.scanning.files.to.index")) {
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, false, new Processor<Runnable>() {
+        @Override
+        public boolean process(Runnable runnable) {
+          runnable.run();
+          return true;
+        }
+      });
+    } else {
+      for(Runnable r:tasks) r.run();
     }
   }
 
