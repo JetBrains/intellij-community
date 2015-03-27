@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.SystemInfo;
@@ -60,6 +61,7 @@ public class RecentProjectPanel extends JPanel {
   private int myHoverIndex = -1;
   private final int closeButtonInset = JBUI.scale(7);
   private Icon currentIcon = AllIcons.Welcome.Project.Remove;
+  private static final Logger LOG = Logger.getInstance("#" + RecentProjectPanel.class.getName());
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
     {
@@ -350,25 +352,31 @@ public class RecentProjectPanel extends JPanel {
 
       fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
 
-      FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
-      int maxWidth = RecentProjectPanel.this.getWidth() - JBUI.scale(40);
-      if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
-        int left = 1; int right = 1;
-        int center = fullText.length() / 2;
-        String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-        while (fm.stringWidth(s) > maxWidth) {
-          if (left == right) {
-            left++;
-          } else {
-            right++;
-          }
+      try {
+        FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
+        int maxWidth = RecentProjectPanel.this.getWidth() - JBUI.scale(40);
+        if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
+          int left = 1; int right = 1;
+          int center = fullText.length() / 2;
+          String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+          while (fm.stringWidth(s) > maxWidth) {
+            if (left == right) {
+              left++;
+            } else {
+              right++;
+            }
 
-          if (center - left < 0 || center + right >= fullText.length()) {
-            return "";
+            if (center - left < 0 || center + right >= fullText.length()) {
+              return "";
+            }
+            s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
           }
-          s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+          return s;
         }
-        return s;
+      } catch (Exception e) {
+        LOG.error("Path label font: " + pathLabel.getFont());
+        LOG.error("Panel width: " + RecentProjectPanel.this.getWidth());
+        LOG.error(e);
       }
 
       return fullText;
