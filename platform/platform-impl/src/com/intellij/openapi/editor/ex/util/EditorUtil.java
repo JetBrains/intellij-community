@@ -865,6 +865,36 @@ public final class EditorUtil {
     int line = document.getLineNumber(offset);
     return offset == document.getLineEndOffset(line);
   }
+
+  /**
+   * Setting selection using {@link SelectionModel#setSelection(int, int)} or {@link Caret#setSelection(int, int)} methods can result
+   * in resulting selection range to be larger than requested (in case requested range intersects with collapsed fold regions).
+   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as 
+   * requested.
+   */
+  public static void setSelectionExpandingFoldedRegionsIfNeeded(@NotNull Editor editor, int startOffset, int endOffset) {
+    FoldingModel foldingModel = editor.getFoldingModel();
+    FoldRegion startFoldRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
+    if (startFoldRegion != null && (startFoldRegion.getStartOffset() == startOffset || startFoldRegion.isExpanded())) {
+      startFoldRegion = null;
+    }
+    FoldRegion endFoldRegion = foldingModel.getCollapsedRegionAtOffset(endOffset);
+    if (endFoldRegion != null && (endFoldRegion.getStartOffset() == endOffset || endFoldRegion.isExpanded())) {
+      endFoldRegion = null;
+    }
+    if (startFoldRegion != null || endFoldRegion != null) {
+      final FoldRegion finalStartFoldRegion = startFoldRegion;
+      final FoldRegion finalEndFoldRegion = endFoldRegion;
+      foldingModel.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
+          if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
+        }
+      });
+    }
+    editor.getSelectionModel().setSelection(startOffset, endOffset);
+  }
 }
 
 
