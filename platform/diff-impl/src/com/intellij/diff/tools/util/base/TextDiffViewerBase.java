@@ -117,6 +117,11 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     );
   }
 
+  @CalledInAwt
+  protected void onSettingsChanged() {
+    rediff();
+  }
+
   //
   // Impl
   //
@@ -159,10 +164,6 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     }
 
     return result;
-  }
-
-  protected static int getLineCount(@NotNull Document document) {
-    return DiffUtil.getLineCount(document);
   }
 
   private class MyFontSizeListener implements PropertyChangeListener {
@@ -273,7 +274,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       if (getCurrentSetting() == setting) return;
       getTextSettings().setHighlightPolicy(setting);
       update(e);
-      rediff();
+      onSettingsChanged();
     }
 
     @NotNull
@@ -304,7 +305,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       if (getCurrentSetting() == setting) return;
       getTextSettings().setIgnorePolicy(setting);
       update(e);
-      rediff();
+      onSettingsChanged();
     }
 
     @NotNull
