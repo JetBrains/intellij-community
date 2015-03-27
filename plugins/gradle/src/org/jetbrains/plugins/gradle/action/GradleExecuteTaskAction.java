@@ -17,11 +17,10 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -35,7 +34,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -56,7 +54,14 @@ import java.util.Map;
  * @author Vladislav.Soroka
  * @since 11/25/2014
  */
-public class GradleExecuteTaskAction extends DumbAwareAction {
+public class GradleExecuteTaskAction extends ExternalSystemAction {
+
+  @Override
+  protected boolean isVisible(AnActionEvent e) {
+    if (!super.isVisible(e)) return false;
+    return GradleConstants.SYSTEM_ID.equals(getSystemId(e));
+  }
+
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
