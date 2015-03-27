@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyImportElement;
@@ -67,7 +68,9 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    PyPsiUtils.deleteAdjacentComma(this, child, getImportElements());
+    if (ArrayUtil.contains(child.getPsi(), getImportElements())) {
+      PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
+    }
     super.deleteChildInternal(child);
   }
 

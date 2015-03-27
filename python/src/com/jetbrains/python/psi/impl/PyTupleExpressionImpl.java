@@ -56,7 +56,7 @@ public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements P
     super.deleteChildInternal(child);
     final PyExpression[] children = getElements();
     final PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
-    if (children.length == 1 && PyPsiUtils.getNextComma(children[0].getNode()) == null ) {
+    if (children.length == 1 && PyPsiUtils.getNextComma(children[0]) == null ) {
       addAfter(generator.createComma().getPsi(), children[0]);
     }
     else if (children.length == 0 && !(getParent() instanceof PyParenthesizedExpression)) {
