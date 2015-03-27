@@ -1,6 +1,7 @@
 accessor
 aggregator
 ajax
+akka
 alloc
 anyschema
 aopalliance
