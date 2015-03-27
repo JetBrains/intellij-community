@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 fun getPackageName(rootPackage: String, domain: String): String {
   if (domain.isEmpty()) {

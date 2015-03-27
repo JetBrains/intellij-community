@@ -1,4 +1,7 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
+
+import org.jetbrains.protocolReader.JSON_READER_PARAMETER_DEF
+import org.jetbrains.protocolReader.TextOutput
 
 class ParserRootInterfaceItem(val domain: String, val name: String, private val nameScheme: ClassNameScheme.Input) : Comparable<ParserRootInterfaceItem> {
   val fullName: String

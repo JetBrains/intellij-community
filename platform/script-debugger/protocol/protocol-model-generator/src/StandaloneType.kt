@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 class StandaloneType(private val namePath: NamePath, private val writeMethodName: String) : BoxableType() {
   override fun getWriteMethodName() = writeMethodName

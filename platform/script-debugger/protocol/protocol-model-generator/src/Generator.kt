@@ -1,6 +1,8 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.*
+import org.jetbrains.protocolReader.FileUpdater
+import org.jetbrains.protocolReader.TextOutput
 import java.nio.file.FileSystems
 import java.util.ArrayList
 import java.util.Collections

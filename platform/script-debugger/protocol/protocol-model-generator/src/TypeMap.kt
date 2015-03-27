@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import gnu.trove.THashMap
 import java.util.ArrayList

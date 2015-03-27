@@ -1,7 +1,9 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import org.jetbrains.protocolReader.TextOutput
+import org.jetbrains.protocolReader.appendEnums
 
 class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassScope(generator, namePath) {
 

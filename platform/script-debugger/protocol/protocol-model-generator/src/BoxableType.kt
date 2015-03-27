@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 abstract class BoxableType {
 

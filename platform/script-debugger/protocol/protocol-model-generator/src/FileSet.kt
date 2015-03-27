@@ -1,7 +1,8 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import gnu.trove.THashSet
 import gnu.trove.TObjectProcedure
+import org.jetbrains.protocolReader.FileUpdater
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path

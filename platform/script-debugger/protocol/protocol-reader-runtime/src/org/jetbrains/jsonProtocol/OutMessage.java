@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonWriter;
@@ -87,7 +102,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeDoubleArray(String name, double[] value) {
+  public final void writeDoubleArray(String name, double[] value) {
     try {
       beginArguments();
       writer.name(name);
@@ -102,7 +117,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeIntArray(@NotNull String name, @NotNull int[] value) {
+  public final void writeIntArray(@NotNull String name, @NotNull int[] value) {
     try {
       beginArguments();
       writer.name(name);
@@ -117,7 +132,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeIntSet(@NotNull String name, @NotNull TIntHashSet value) {
+  public final void writeIntSet(@NotNull String name, @NotNull TIntHashSet value) {
     try {
       beginArguments();
       writer.name(name);
@@ -142,7 +157,7 @@ public abstract class OutMessage {
 
   }
 
-  protected final void writeIntList(@NotNull String name, @NotNull TIntArrayList value) {
+  public final void writeIntList(@NotNull String name, @NotNull TIntArrayList value) {
     try {
       beginArguments();
       writer.name(name);
@@ -157,7 +172,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeSingletonIntArray(@NotNull String name, int value) {
+  public final void writeSingletonIntArray(@NotNull String name, int value) {
     try {
       beginArguments();
       writer.name(name);
@@ -264,7 +279,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeDouble(String name, double value) {
+  public final void writeDouble(String name, double value) {
     try {
       beginArguments();
       writer.name(name).value(value);
@@ -274,7 +289,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeBoolean(String name, boolean value) {
+  public final void writeBoolean(String name, boolean value) {
     try {
       beginArguments();
       writer.name(name).value(value);
@@ -290,7 +305,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeString(@NotNull String name, CharSequence value) {
+  public final void writeString(@NotNull String name, CharSequence value) {
     if (value != null) {
       try {
         prepareWriteRaw(this, name);
@@ -302,7 +317,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeNullableString(@NotNull String name, @Nullable String value) {
+  public final void writeNullableString(@NotNull String name, @Nullable String value) {
     try {
       beginArguments();
       writer.name(name).value(value);

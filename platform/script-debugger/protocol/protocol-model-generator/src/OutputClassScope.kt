@@ -1,8 +1,10 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import org.jetbrains.protocolReader.TextOutput
+import org.jetbrains.protocolReader.appendEnums
 import java.util.ArrayList
 
 class OutputClassScope(generator: DomainGenerator, classNamePath: NamePath) : ClassScope(generator, classNamePath) {

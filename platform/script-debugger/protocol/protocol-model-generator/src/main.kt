@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.ProtocolSchemaReaderImpl

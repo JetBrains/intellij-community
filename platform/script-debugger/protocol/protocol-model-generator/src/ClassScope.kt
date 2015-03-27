@@ -1,6 +1,7 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ItemDescriptor
+import org.jetbrains.protocolReader.TextOutput
 import java.util.ArrayList
 
 abstract class ClassScope(val generator: DomainGenerator, val classContextNamespace: NamePath) {

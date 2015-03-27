@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 class NamePath(val lastComponent: String, val parent: NamePath? = null) {
 

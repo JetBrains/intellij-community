@@ -1,11 +1,18 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
+import org.jetbrains.protocolReader.JSON_READER_PARAMETER_DEF
+import org.jetbrains.protocolReader.TextOutput
+import org.jetbrains.protocolReader.appendEnums
 
 fun fixMethodName(name: String): String {
   val i = name.indexOf("breakpoint")
   return if (i > 0) name.substring(0, i) + 'B' + name.substring(i + 1) else name
+}
+
+trait TextOutConsumer {
+  fun append(out: TextOutput)
 }
 
 class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Domain) {

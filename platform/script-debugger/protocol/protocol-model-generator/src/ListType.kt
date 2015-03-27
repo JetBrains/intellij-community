@@ -1,4 +1,4 @@
-package org.jetbrains.protocolReader
+package org.jetbrains.protocolModelGenerator
 
 open class ListType(private val itemType: BoxableType) : BoxableType() {
 
