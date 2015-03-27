@@ -85,7 +85,7 @@ public abstract class JBEditorTabsPainter {
                                 selectedShape.labelPath.deltaY(4)));
     }
 
-    g2d.setColor(Gray._0.withAlpha(50));
+    g2d.setColor(Gray._0.withAlpha(15));
     g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
                                                    selectedShape.path.getMaxX(),
                                                    selectedShape.labelPath.getMaxY()));
