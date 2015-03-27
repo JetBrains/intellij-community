@@ -29,8 +29,6 @@
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
 
     <productivityFeaturesProvider implementation="com.intellij.remoteServer.statistics.CloudFeaturesProvider"/>
-
-    <tipAndTrick file="UploadSshKey.html" feature-id="upload.ssh.key"/>
   </extensions>
   <application-components>
     <component>
