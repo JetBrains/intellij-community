@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -648,13 +649,15 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
+  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+
   private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
         HighlightDisplayKey key = quickFixInfo.key != null
                                   ? quickFixInfo.key
-                                  : null;
+                                  : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), range, key);
       }
     }
@@ -808,9 +811,16 @@ public class HighlightInfo implements Segment {
 
         myCanCleanup = toolWrapper.isCleanupTool();
 
-        ContainerUtil.addIfNotNull(newOptions, intentionManager.createFixAllIntention(toolWrapper, myAction));
+        final IntentionAction fixAllIntention = intentionManager.createFixAllIntention(toolWrapper, myAction);
         InspectionProfileEntry wrappedTool = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
                                                                                                : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+        if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
+          if (fixAllIntention != null) {
+            return Collections.<IntentionAction>singletonList(fixAllIntention);
+          }
+          return Collections.<IntentionAction>emptyList();
+        }
+        ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
           final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
           if (suppressActions != null) {
