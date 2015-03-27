@@ -230,7 +230,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
-    if (cursor != null) {
+    if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, 0), dummy);
@@ -338,6 +338,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
     Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
+      if (!highlighter.isValid()) continue;
       boolean intersectsWithSelection = false;
       for (int i = 0; i < starts.length; ++i) {
         TextRange selectionRange = new TextRange(starts[i], ends[i]);
