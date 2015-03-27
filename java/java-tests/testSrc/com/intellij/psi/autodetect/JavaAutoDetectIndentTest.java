@@ -36,4 +36,13 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
   public void testNotIndentedComment() {
     doTestIndentSize(3);
   }
+
+  public void testContinuationIndents_DoNotCount() {
+    doTestIndentSize(2);
+  }
+
+  public void testContinuationIndents_InMethodParameters_DoNotCount() {
+    doTestIndentSize(4);
+  }
+
 }
