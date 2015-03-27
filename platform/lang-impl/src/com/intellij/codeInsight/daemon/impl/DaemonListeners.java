@@ -62,8 +62,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.Profile;
@@ -140,8 +140,7 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager,
-                         @NotNull EditorColorsManager colorsManager) {
+                         @NotNull FileStatusManager fileStatusManager) {
     Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
@@ -285,7 +284,7 @@ public class DaemonListeners implements Disposable {
       }
     });
 
-    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+    editorColorsManager.addEditorColorsListener(new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         stopDaemonAndRestartAllFiles("Global color scheme changed");
@@ -534,7 +533,7 @@ public class DaemonListeners implements Disposable {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
         statusBar.addWidget(myTogglePopupHintsPanel, myProject);
         updateStatusBar();

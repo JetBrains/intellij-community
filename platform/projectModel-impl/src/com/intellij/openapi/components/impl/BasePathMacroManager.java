@@ -115,6 +115,7 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  @NotNull
   @Override
   public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
     return new MyTrackingPathMacroSubstitutor();

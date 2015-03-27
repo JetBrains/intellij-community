@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,32 +18,29 @@ package com.intellij.openapi.components.impl;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class ComponentManagerConfigurator {
   private final ComponentManagerImpl myComponentManager;
 
-  public ComponentManagerConfigurator(final ComponentManagerImpl componentManager) {
+  public ComponentManagerConfigurator(@NotNull ComponentManagerImpl componentManager) {
     myComponentManager = componentManager;
   }
 
-  private void loadConfiguration(@NotNull ComponentConfig[] configs, final boolean defaultProject, final PluginDescriptor descriptor) {
-    for (ComponentConfig config : configs) {
-      loadSingleConfig(defaultProject, config, descriptor);
-    }
-  }
-
-  private void loadSingleConfig(final boolean defaultProject, @NotNull ComponentConfig config, final PluginDescriptor descriptor) {
+  private void loadSingleConfig(@NotNull ComponentConfig config,
+                                @Nullable PluginDescriptor descriptor,
+                                boolean defaultProject) {
     if (defaultProject && !config.isLoadForDefaultProject()) return;
     if (!myComponentManager.isComponentSuitable(config.options)) return;
 
     myComponentManager.registerComponent(config, descriptor);
   }
 
-  public void loadComponentsConfiguration(final ComponentConfig[] components,
-                                          final PluginDescriptor descriptor,
-                                          final boolean defaultProject) {
-    if (components == null) return;
-
-    loadConfiguration(components, defaultProject, descriptor);
+  void loadComponentsConfiguration(@NotNull ComponentConfig[] components,
+                                   @Nullable PluginDescriptor descriptor,
+                                   final boolean defaultProject) {
+    for (ComponentConfig config : components) {
+      loadSingleConfig(config, descriptor, defaultProject);
+    }
   }
 }

@@ -115,7 +115,6 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonListeners</implementation-class>
       <option name="workspace" value="true"/>
-      <!--<loadForDefaultProject/>-->
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>

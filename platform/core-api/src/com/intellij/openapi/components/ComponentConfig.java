@@ -101,4 +101,16 @@ public class ComponentConfig {
   public void setLoadForDefaultProject(boolean loadForDefaultProject) {
     this.loadForDefaultProject = loadForDefaultProject;
   }
+
+  @Override
+  public String toString() {
+    return "ComponentConfig{" +
+           "implementationClass='" + implementationClass + '\'' +
+           ", interfaceClass='" + interfaceClass + '\'' +
+           ", headlessImplementationClass='" + headlessImplementationClass + '\'' +
+           ", loadForDefaultProject=" + loadForDefaultProject +
+           ", options=" + options +
+           ", pluginDescriptor=" + pluginDescriptor +
+           '}';
+  }
 }
