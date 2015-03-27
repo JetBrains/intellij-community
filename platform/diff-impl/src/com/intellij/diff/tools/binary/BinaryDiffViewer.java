@@ -26,6 +26,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -42,6 +43,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -172,9 +174,9 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   private Pair<FileEditor, FileEditorProvider> createEditor(@NotNull final DiffContent content) throws IOException {
     if (content instanceof EmptyContent) return Pair.empty();
-    if (content instanceof BinaryFileContent) {
+    if (content instanceof FileContent) {
       Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((BinaryFileContent)content).getFile();
+      VirtualFile file = ((FileContent)content).getFile();
 
       FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
       if (providers.length == 0) throw new IOException("Can't find FileEditorProvider");
@@ -269,8 +271,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         };
       }
 
-      // TODO: compare text with image by-byte?
-      if (!(contents.get(0) instanceof BinaryFileContent) || !(contents.get(1) instanceof BinaryFileContent)) {
+      if (!(contents.get(0) instanceof FileContent) || !(contents.get(1) instanceof FileContent)) {
         return new Runnable() {
           @Override
           public void run() {
@@ -279,12 +280,35 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         };
       }
 
-      final BinaryFileContent content1 = (BinaryFileContent)contents.get(0);
-      final BinaryFileContent content2 = (BinaryFileContent)contents.get(1);
-      byte[] bytes1 = content1.getBytes();
-      byte[] bytes2 = content2.getBytes();
+      final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
+      final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
+      if (!file1.isValid() || !file2.isValid()) {
+        return new Runnable() {
+          @Override
+          public void run() {
+            myPanel.addDiffErrorNotification();
+            clearDiffPresentation();
+          }
+        };
+      }
 
-      final boolean equal = Arrays.equals(bytes1, bytes2);
+      final boolean equal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          try {
+            // we can't use getInputStream() here because we can't restore BOM marker
+            // (getBom() can return null for binary files, while getInputStream() strips BOM for all files).
+            // It can be made for files from VFS that implements FileSystemInterface though.
+            byte[] bytes1 = file1.contentsToByteArray();
+            byte[] bytes2 = file2.contentsToByteArray();
+            return Arrays.equals(bytes1, bytes2);
+          }
+          catch (IOException e) {
+            LOG.warn(e);
+            return false;
+          }
+        }
+      });
 
       return new Runnable() {
         @Override
@@ -401,10 +425,10 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return true;
     if (content instanceof DocumentContent) return true;
-    if (content instanceof BinaryFileContent) {
+    if (content instanceof FileContent) {
       Project project = context.getProject();
       if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((BinaryFileContent)content).getFile();
+      VirtualFile file = ((FileContent)content).getFile();
 
       return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
     }
@@ -413,8 +437,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
   public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return false;
-    if (content instanceof DocumentContent) return false;
-    if (content instanceof BinaryFileContent) {
+    if (content instanceof FileContent) {
       if (content.getContentType() == null) return false;
       if (content.getContentType().isBinary()) return true;
       if (content.getContentType() instanceof UIBasedFileType) return true;

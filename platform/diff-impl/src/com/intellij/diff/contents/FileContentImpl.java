@@ -25,14 +25,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 /**
- * Allows to compare binary files
+ * Allows to compare files
  */
-public class BinaryFileContentImpl implements DiffContent, BinaryFileContent {
+public class FileContentImpl implements FileContent, BinaryFileContent {
   @NotNull private final VirtualFile myFile;
   @Nullable private final Project myProject;
   @NotNull private final FileType myType;
 
-  public BinaryFileContentImpl(@Nullable Project project, @NotNull VirtualFile file) {
+  public FileContentImpl(@Nullable Project project, @NotNull VirtualFile file) {
     assert file.isValid() && !file.isDirectory();
     myProject = project;
     myFile = file;
