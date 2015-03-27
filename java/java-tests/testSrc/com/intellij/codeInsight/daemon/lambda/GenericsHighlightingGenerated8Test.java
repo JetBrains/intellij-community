@@ -36,8 +36,7 @@ public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestC
 
   public void testEmptyTestT() throws Exception {}
 
-  @Bombed(day = 30, month = Calendar.MARCH, year = 2015)
-  public void testUnrelatedClasses() throws Exception {
+  public void _testUnrelatedClasses() throws Exception {
     doTest();
   }
 
