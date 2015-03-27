@@ -737,8 +737,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     ProgressManager.getInstance().run(task);
   }
 
-  private void cleanup(final AnalysisScope scope,
-                       final InspectionProfile profile,
+  private void cleanup(@NotNull AnalysisScope scope,
+                       @NotNull InspectionProfile profile,
                        final Project project,
                        final Runnable postRunnable,
                        final String commandName) {
@@ -752,7 +752,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final TextRange range;
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-      range = elements.length == 1 ? elements[0].getTextRange() : null;
+      range = elements.length == 1 ? ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+        @Override
+        public TextRange compute() {
+          return elements[0].getTextRange();
+        }
+      }) : null;
     }
     else {
       range = null;
