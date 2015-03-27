@@ -347,7 +347,7 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   }
 
   private static class ExactMatchLineNumbersMapping implements LineNumbersMapping {
-    private int[] myMapping;
+    private final int[] myMapping;
 
     private ExactMatchLineNumbersMapping(@NotNull int[] mapping) {
       myMapping = mapping;

@@ -51,7 +51,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class SimplifyExprentsHelper {
 
-  static MatchEngine class14Builder = new MatchEngine();
+  static final MatchEngine class14Builder = new MatchEngine();
   
   private final boolean firstInvocation;
 

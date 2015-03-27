@@ -489,9 +489,9 @@ public class FlattenStatementsHelper {
   }
 
   public static class FinallyPathWrapper {
-    public String source;
-    public String destination;
-    public String entry;
+    public final String source;
+    public final String destination;
+    public final String entry;
 
     private FinallyPathWrapper(String source, String destination, String entry) {
       this.source = source;
@@ -522,16 +522,16 @@ public class FlattenStatementsHelper {
 
   private static class StackEntry {
 
-    public CatchAllStatement catchstatement;
-    public boolean state;
-    public int edgetype;
-    public boolean isFinallyExceptionPath;
+    public final CatchAllStatement catchstatement;
+    public final boolean state;
+    public final int edgetype;
+    public final boolean isFinallyExceptionPath;
 
-    public Statement destination;
-    public Statement finallyShortRangeEntry;
-    public Statement finallyLongRangeEntry;
-    public DirectNode finallyShortRangeSource;
-    public DirectNode finallyLongRangeSource;
+    public final Statement destination;
+    public final Statement finallyShortRangeEntry;
+    public final Statement finallyLongRangeEntry;
+    public final DirectNode finallyShortRangeSource;
+    public final DirectNode finallyLongRangeSource;
 
     public StackEntry(CatchAllStatement catchstatement,
                       boolean state,
@@ -561,9 +561,9 @@ public class FlattenStatementsHelper {
   }
 
   private static class Edge {
-    public String sourceid;
-    public Integer statid;
-    public int edgetype;
+    public final String sourceid;
+    public final Integer statid;
+    public final int edgetype;
 
     public Edge(String sourceid, Integer statid, int edgetype) {
       this.sourceid = sourceid;

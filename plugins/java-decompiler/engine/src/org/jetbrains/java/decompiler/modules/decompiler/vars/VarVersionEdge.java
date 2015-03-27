@@ -20,11 +20,11 @@ public class VarVersionEdge { // FIXME: can be removed?
   public static final int EDGE_GENERAL = 0;
   public static final int EDGE_PHANTOM = 1;
 
-  public int type;
+  public final int type;
 
-  public VarVersionNode source;
+  public final VarVersionNode source;
 
-  public VarVersionNode dest;
+  public final VarVersionNode dest;
 
   private final int hashCode;
 

@@ -44,9 +44,9 @@ public class CheckTypesResult {
   }
 
   public static class ExprentTypePair {
-    public Exprent exprent;
-    public VarType type;
-    public VarType desttype;
+    public final Exprent exprent;
+    public final VarType type;
+    public final VarType desttype;
 
     public ExprentTypePair(Exprent exprent, VarType type, VarType desttype) {
       this.exprent = exprent;
