@@ -39,7 +39,7 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
 
-  final List<String> ignoredTypes = new ArrayList(Arrays.asList("java.util.stream.Stream"));
+  final List<String> ignoredTypes = new ArrayList<String>(Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream"));
 
   @Nls
   @NotNull
