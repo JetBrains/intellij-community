@@ -70,8 +70,9 @@ public class PyMoveSymbolProcessor {
   }
 
   private void deleteElement() {
-    //noinspection ConstantConditions
-    PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement).delete();
+    final PsiElement elementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
+    assert elementBody != null;
+    PyUtil.deleteElementSafely(elementBody);
   }
 
   private void optimizeImports(@Nullable PsiFile originalFile) {
@@ -164,7 +165,12 @@ public class PyMoveSymbolProcessor {
       if (usageFile == myMovedElement.getContainingFile() && usage instanceof PyQualifiedExpression) {
         if (usage.getParent() instanceof PyGlobalStatement) {
           myScopeOwnersWithGlobal.add(ScopeUtil.getScopeOwner(usage));
-          usage.delete();
+          if (((PyGlobalStatement)usage.getParent()).getGlobals().length == 1) {
+            PyUtil.deleteElementSafely(usage.getParent());
+          }
+          else {
+            usage.delete();
+          }
         }
         else if (myScopeOwnersWithGlobal.contains(ScopeUtil.getScopeOwner(usage))) {
           insertQualifiedImportAndReplaceReference(newElement, (PyQualifiedExpression)usage);

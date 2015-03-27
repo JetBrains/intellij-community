@@ -1602,6 +1602,19 @@ public class PyUtil {
     return element;
   }
 
+  /**
+   * Removes given element substituting if with {@code pass} to avoid empty statement list.
+   */
+  public static void deleteElementSafely(@NotNull PsiElement element) {
+    if (element instanceof PyStatement) {
+      final PyStatementList statementList = as(element.getParent(), PyStatementList.class);
+      if (statementList != null && statementList.getStatements().length == 1) {
+        element.replace(PyElementGenerator.getInstance(element.getProject()).createPassStatement());
+      }
+    }
+    element.delete();
+  }
+
   @NotNull
   public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     PyType type = context.getType(callable);

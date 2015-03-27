@@ -335,7 +335,17 @@ public class PyMoveTest extends PyTestCase {
   }
 
   // PY-15342
-  public void testGlobalReference() {
+  public void testGlobalStatementWithSingleName() {
+    doMoveSymbolTest("VAR", "b.py");
+  }
+
+  // PY-15342
+  public void testGlobalStatementWithTwoNames() {
+    doMoveSymbolTest("VAR", "b.py");
+  }
+
+  // PY-15342
+  public void testGlobalStatementOnly() {
     doMoveSymbolTest("VAR", "b.py");
   }
 
