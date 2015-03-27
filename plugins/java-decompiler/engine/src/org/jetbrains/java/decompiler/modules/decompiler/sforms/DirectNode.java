@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ public class DirectNode {
   public static final int NODE_INCREMENT = 5;
   public static final int NODE_TRY = 6;
 
-  public int type;
+  public final int type;
 
-  public String id;
+  public final String id;
 
   public BasicBlockStatement block;
 
-  public Statement statement;
+  public final Statement statement;
 
   public List<Exprent> exprents = new ArrayList<Exprent>();
 
-  public List<DirectNode> succs = new ArrayList<DirectNode>();
+  public final List<DirectNode> succs = new ArrayList<DirectNode>();
 
-  public List<DirectNode> preds = new ArrayList<DirectNode>();
+  public final List<DirectNode> preds = new ArrayList<DirectNode>();
 
   public DirectNode(int type, Statement statement, String id) {
     this.type = type;

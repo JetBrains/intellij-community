@@ -80,7 +80,7 @@ public class Statement implements IMatchable {
   private final Map<Integer, List<Statement>> mapPredStates = new HashMap<Integer, List<Statement>>();
 
   // statement as graph
-  protected VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<Statement, Integer>();
+  protected final VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<Statement, Integer>();
 
   protected Statement parent;
 
@@ -88,9 +88,9 @@ public class Statement implements IMatchable {
 
   protected List<Exprent> exprents;
 
-  protected HashSet<StatEdge> labelEdges = new HashSet<StatEdge>();
+  protected final HashSet<StatEdge> labelEdges = new HashSet<StatEdge>();
 
-  protected List<Exprent> varDefinitions = new ArrayList<Exprent>();
+  protected final List<Exprent> varDefinitions = new ArrayList<Exprent>();
 
   // copied statement, s. deobfuscating of irreducible CFGs
   private boolean copied = false;

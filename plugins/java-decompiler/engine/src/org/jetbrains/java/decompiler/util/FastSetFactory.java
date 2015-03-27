@@ -192,7 +192,7 @@ public class FastSetFactory<E> {
         index = factory.addElement(element);
       }
 
-      return index[0] >= data.length ? false : ((data[index[0]] & index[1]) != 0);
+      return index[0] < data.length && ((data[index[0]] & index[1]) != 0);
     }
 
     public boolean contains(FastSet<E> set) {

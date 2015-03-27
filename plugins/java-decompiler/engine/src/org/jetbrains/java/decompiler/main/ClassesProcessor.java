@@ -353,14 +353,14 @@ public class ClassesProcessor {
     public int type;
     public int access;
     public String simpleName;
-    public StructClass classStruct;
+    public final StructClass classStruct;
     private ClassWrapper wrapper;
     public String enclosingMethod;
     public InvocationExprent superInvocation;
-    public Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
+    public final Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
     public VarType anonymousClassType;
-    public List<ClassNode> nested = new ArrayList<ClassNode>();
-    public Set<String> enclosingClasses = new HashSet<String>();
+    public final List<ClassNode> nested = new ArrayList<ClassNode>();
+    public final Set<String> enclosingClasses = new HashSet<String>();
     public ClassNode parent;
     public LambdaInformation lambdaInformation;
     public boolean namelessConstructorStub = false;

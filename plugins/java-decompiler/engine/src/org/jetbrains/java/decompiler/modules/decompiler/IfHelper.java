@@ -733,10 +733,10 @@ public class IfHelper {
   }
 
   private static class IfNode {
-    public Statement value;
+    public final Statement value;
 
-    public List<IfNode> succs = new ArrayList<IfNode>();
-    public List<Integer> edgetypes = new ArrayList<Integer>();
+    public final List<IfNode> succs = new ArrayList<IfNode>();
+    public final List<Integer> edgetypes = new ArrayList<Integer>();
 
     public IfNode(Statement value) {
       this.value = value;

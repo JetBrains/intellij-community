@@ -25,8 +25,8 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 public class MatchNode {
 
   public static class RuleValue {
-    public int parameter;
-    public Object value;
+    public final int parameter;
+    public final Object value;
     
     public RuleValue(int parameter, Object value) {
       this.parameter = parameter;

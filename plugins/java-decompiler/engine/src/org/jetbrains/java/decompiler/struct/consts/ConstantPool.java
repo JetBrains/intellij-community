@@ -34,7 +34,7 @@ public class ConstantPool implements NewClassNameBuilder {
   public static final int FIELD = 1;
   public static final int METHOD = 2;
 
-  private List<PooledConstant> pool = new ArrayList<PooledConstant>();
+  private final List<PooledConstant> pool = new ArrayList<PooledConstant>();
   private final PoolInterceptor interceptor;
 
 
