@@ -44,7 +44,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
 
     protected final String myId;
     protected final XmlSuppressionProvider myProvider;
-    private ThreeState myShouldBeAppliedToInjectionHost;
+    private ThreeState myShouldBeAppliedToInjectionHost = ThreeState.UNSURE;
 
     protected XmlSuppressFix(String inspectionId, XmlSuppressionProvider suppressionProvider) {
       myId = inspectionId;
