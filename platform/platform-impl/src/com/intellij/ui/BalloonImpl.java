@@ -902,6 +902,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     abstract int getChangeShift(AbstractPosition original, int xShift, int yShift);
 
     public void updateBounds(final BalloonImpl balloon) {
+      if (balloon.myLayeredPane == null || balloon.myComp == null) return;
+
       final Rectangle bounds =
         getUpdatedBounds(balloon.myLayeredPane.getSize(), balloon.myForcedBounds, balloon.myComp.getPreferredSize(), balloon.myShowPointer,
                          balloon.myTargetPoint, balloon.myContainerInsets);
