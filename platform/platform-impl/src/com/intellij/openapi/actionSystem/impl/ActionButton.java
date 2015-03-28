@@ -71,7 +71,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myPlace = place;
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-    myMinimumButtonSize = JBDimension.create(minimumSize);
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
@@ -196,8 +195,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else {
       return new Dimension(
-        icon.getIconWidth() + myInsets.left + myInsets.right,
-        icon.getIconHeight() + myInsets.top + myInsets.bottom
+        Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
+        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom)
       );
     }
   }
