@@ -17,6 +17,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.BlockingQueue;
@@ -93,6 +94,7 @@ class TaskQueue {
 
   public void ensureUpToDate() {
     try {
+      if (Registry.is("idea.concurrent.scanning.files.to.index")) return;
       while(myUpdatesCount.get() > 0) {
         Runnable runnable = myPendingWriteRequestsQueue.poll(10, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
@@ -112,6 +114,7 @@ class TaskQueue {
     int workRequests = myDoWorkRequest.getAndIncrement();
 
     if (workRequests == 0) {
+      if(Registry.is("idea.concurrent.scanning.files.to.index")) return;
       myDoWorkRequest.incrementAndGet();
       // we have 3 content independent indices but only one of them is heavy IO bound so there is no need in more than one thread
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

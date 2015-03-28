@@ -1791,7 +1791,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void scheduleUpdate(@NotNull ID<?, ?> indexId, @NotNull Computable<Boolean> update, @NotNull Runnable successRunnable) {
-    if (myNotRequiringContentIndices.contains(indexId) /*&& !Registry.is("idea.concurrent.scanning.files.to.index")*/) {
+    if (myNotRequiringContentIndices.contains(indexId) && !Registry.is("idea.concurrent.scanning.files.to.index")) {
       myContentlessIndicesUpdateQueue.submit(update, successRunnable);
     }
     else {
