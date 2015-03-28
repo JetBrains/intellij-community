@@ -1791,7 +1791,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void scheduleUpdate(@NotNull ID<?, ?> indexId, @NotNull Computable<Boolean> update, @NotNull Runnable successRunnable) {
-    if (myNotRequiringContentIndices.contains(indexId)) {
+    if (myNotRequiringContentIndices.contains(indexId) /*&& !Registry.is("idea.concurrent.scanning.files.to.index")*/) {
       myContentlessIndicesUpdateQueue.submit(update, successRunnable);
     }
     else {
@@ -2570,6 +2570,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  public static final ThreadLocal<Boolean> ourConcurrentlyFlag = new ThreadLocal<Boolean>();
+
   @Override
   public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull final Project project, final ProgressIndicator indicator) {
     if (project.isDisposed()) {
@@ -2655,7 +2657,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    if (Registry.is("idea.concurrent.scanning.files.to.index")) {
+    if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, true, false, new Processor<Runnable>() {
         @Override
         public boolean process(Runnable runnable) {

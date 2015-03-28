@@ -289,7 +289,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       tasks.add(iteration);
     }
 
-    if (Registry.is("idea.concurrent.scanning.files.to.index")) {
+    if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, false, new Processor<Runnable>() {
         @Override
         public boolean process(Runnable runnable) {
@@ -301,6 +301,8 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       for(Runnable r:tasks) r.run();
     }
   }
+
+  public static final ThreadLocal<Boolean> ourConcurrentlyFlag = new ThreadLocal<Boolean>();
 
   private void applyPushersToFile(final VirtualFile fileOrDir, final FilePropertyPusher[] pushers, final Object[] moduleValues) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
