@@ -32,7 +32,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final RefPainter myRefPainter;
+  @NotNull private final LabelPainters.LabelPainter myLabelPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
 
   @Nullable private PaintInfo myGraphImage;
@@ -45,12 +45,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     myDataHolder = dataHolder;
     myPainter = painter;
     myGraphTable = table;
-    myRefPainter = new RefPainter(colorManager, false) {
-      @Override
-      protected int getRowHeight() {
-        return myGraphTable.getRowHeight();
-      }
-    };
+    myLabelPainter = LabelPainters.createPainter(false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
   }
 
@@ -59,7 +54,14 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     super.paintComponent(g);
 
     if (myRefs != null) {
-      myRefPainter.drawLabels((Graphics2D)g, collectLabelsForRefs(myRefs), myGraphImage != null ? myGraphImage.getWidth() : 0);
+      int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PrintParameters.LABEL_PADDING;
+      Map<String, Color> labelsForReferences = collectLabelsForRefs(myRefs);
+      for (Map.Entry<String, Color> entry : labelsForReferences.entrySet()) {
+        Dimension size = myLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics());
+        int paddingY = (myGraphTable.getRowHeight() - size.height) / 2;
+        myLabelPainter.paintLabel((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
+        paddingX += size.width + PrintParameters.LABEL_PADDING;
+      }
     }
 
     if (myGraphImage != null) {
@@ -90,7 +92,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     else {
       graphPadding = 0;
     }
-    int textPadding = graphPadding + calcRefsPadding(myRefs);
+    int textPadding = graphPadding + calculateReferencePadding(myRefs);
 
     setBorder(null);
     append("");
@@ -132,8 +134,15 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     return getLabelsForRefs(branches, tags);
   }
 
-  private int calcRefsPadding(@NotNull Collection<VcsRef> refs) {
-    return myRefPainter.getLabelsWidth(collectLabelsForRefs(refs).keySet(), this.getFontMetrics(RefPainter.DEFAULT_FONT));
+  private int calculateReferencePadding(@NotNull Collection<VcsRef> references) {
+    if (references.isEmpty()) return 0;
+
+    int paddingX = 2 * PrintParameters.LABEL_PADDING;
+    for (String label : collectLabelsForRefs(references).keySet()) {
+      Dimension size = myLabelPainter.calculateSize(label, this.getFontMetrics(LabelPainters.getFont()));
+      paddingX += size.width + PrintParameters.LABEL_PADDING;
+    }
+    return paddingX;
   }
 
   @NotNull
