@@ -50,6 +50,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
+import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -66,8 +67,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-
-import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
@@ -102,7 +101,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public Color getColor(int colorId) {
       return ColorGenerator.getColor(colorId);
     }
-  });
+  }) {
+    @Override
+    protected int getRowHeight() {
+      return VcsLogGraphTable.this.getRowHeight();
+    }
+  };
 
   @NotNull private VisiblePack myDataPack;
 
@@ -118,7 +122,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
     setDefaultRenderer(String.class, new StringCellRenderer());
 
-    setRowHeight(HEIGHT_CELL);
+    setRowHeight(RefPainter.REF_HEIGHT);
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
 
@@ -597,7 +601,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
 
     private void performAction(@NotNull MouseEvent e, @NotNull final GraphAction.Type actionType) {
-      int row = PositionUtil.getRowIndex(e.getPoint());
+      int row = PositionUtil.getRowIndex(e.getPoint(), getRowHeight());
       if (row > getRowCount() - 1) {
         return;
       }
@@ -636,7 +640,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull
   private Point calcPoint4Graph(@NotNull Point clickPoint) {
-    return new Point(clickPoint.x - getXOffset(), PositionUtil.getYInsideRow(clickPoint));
+    return new Point(clickPoint.x - getXOffset(), PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
 
   private int getXOffset() {
@@ -663,12 +667,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       int width = getWidth();
 
       if (isNarrow) {
-        g.fillRect(0, 0, width - ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
+        g.fillRect(0, 0, width - ROOT_INDICATOR_WHITE_WIDTH, myUi.getTable().getRowHeight());
         g.setColor(myBorderColor);
-        g.fillRect(width - ROOT_INDICATOR_WHITE_WIDTH, 0, ROOT_INDICATOR_WHITE_WIDTH, HEIGHT_CELL);
+        g.fillRect(width - ROOT_INDICATOR_WHITE_WIDTH, 0, ROOT_INDICATOR_WHITE_WIDTH, myUi.getTable().getRowHeight());
       }
       else {
-        g.fillRect(0, 0, width, HEIGHT_CELL);
+        g.fillRect(0, 0, width, myUi.getTable().getRowHeight());
       }
 
       super.paintComponent(g);
@@ -681,7 +685,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       if (value instanceof VirtualFile) {
         VirtualFile root = (VirtualFile)value;
-        int readableRow = TableScrollingUtil.getReadableRow(table, Math.round(HEIGHT_CELL * 0.5f));
+        int readableRow = TableScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
         if (row < readableRow) {
           text = "";
         }
@@ -796,7 +800,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       if (!(anEvent instanceof MouseEvent)) return true;
       MouseEvent e = (MouseEvent)anEvent;
 
-      int row = PositionUtil.getRowIndex(e.getPoint());
+      int row = PositionUtil.getRowIndex(e.getPoint(), getRowHeight());
       if (row > getRowCount() - 1) {
         return false;
       }

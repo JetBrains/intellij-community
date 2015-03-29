@@ -27,41 +27,40 @@ public class PositionUtil {
     return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
   }
 
-  public static boolean overUpEdge(int upPosition, int downPosition, int x, int y) {
+  public static boolean overUpEdge(int upPosition, int downPosition, int x, int y, int rowHeight) {
     float thick = THICK_LINE;
     int x1 = WIDTH_NODE * downPosition + WIDTH_NODE / 2;
-    int y1 = HEIGHT_CELL / 2;
+    int y1 = rowHeight / 2;
     int x2 = WIDTH_NODE * upPosition + WIDTH_NODE / 2;
-    int y2 = -HEIGHT_CELL / 2;
+    int y2 = -rowHeight / 2;
     //return true;
     return (distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick);
   }
 
-  public static boolean overDownEdge(int upPosition, int downPosition, int x, int y) {
+  public static boolean overDownEdge(int upPosition, int downPosition, int x, int y, int rowHeight) {
     float thick = THICK_LINE;
     int x1 = WIDTH_NODE * upPosition + WIDTH_NODE / 2;
-    int y1 = HEIGHT_CELL / 2;
+    int y1 = rowHeight / 2;
     int x2 = WIDTH_NODE * downPosition + WIDTH_NODE / 2;
-    int y2 = HEIGHT_CELL + HEIGHT_CELL / 2;
+    int y2 = rowHeight + rowHeight / 2;
     return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick;
   }
 
-  public static boolean overNode(int position, int x, int y, SimplePrintElement.Type type) {
+  public static boolean overNode(int position, int x, int y, SimplePrintElement.Type type, int rowHeight) {
     int r = CIRCLE_RADIUS;
     int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
-    int y0 = HEIGHT_CELL / 2;
-    if (type == SimplePrintElement.Type.DOWN_ARROW) y0 = PrintParameters.HEIGHT_CELL - r;
+    int y0 = rowHeight / 2;
+    if (type == SimplePrintElement.Type.DOWN_ARROW) y0 = rowHeight - r;
     if (type == SimplePrintElement.Type.UP_ARROW) y0 = r;
 
     return distance(x0, y0, x, y) <= r;
   }
 
-  public static int getYInsideRow(@NotNull Point point) {
-    return point.y - getRowIndex(point) * HEIGHT_CELL;
+  public static int getYInsideRow(@NotNull Point point, int rowHeight) {
+    return point.y - getRowIndex(point, rowHeight) * rowHeight;
   }
 
-  public static int getRowIndex(@NotNull Point point) {
-    return point.y / HEIGHT_CELL;
+  public static int getRowIndex(@NotNull Point point, int rowHeight) {
+    return point.y / rowHeight;
   }
-
 }
