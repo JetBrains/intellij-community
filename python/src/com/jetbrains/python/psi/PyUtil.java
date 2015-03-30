@@ -1610,6 +1610,7 @@ public class PyUtil {
       final PyStatementList statementList = as(element.getParent(), PyStatementList.class);
       if (statementList != null && statementList.getStatements().length == 1) {
         element.replace(PyElementGenerator.getInstance(element.getProject()).createPassStatement());
+        return;
       }
     }
     element.delete();
