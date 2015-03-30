@@ -101,7 +101,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-1425
   public void testNone() {
-    doTest("unknown",
+    doTest("Any",
            "class C:\n" +
            "    def __init__(self): self.foo = None\n" +
            "expr = C().foo");
@@ -238,7 +238,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnknownTypeInUnion() {
-    doTest("int | unknown",
+    doTest("int | Any",
            "def f(c, x):\n" +
            "    if c:\n" +
            "        return 1\n" +
@@ -596,7 +596,7 @@ public class PyTypeTest extends PyTestCase {
                         "    foo(3)\n" +
                         "    foo('bar')\n";
     final PyExpression expr = parseExpr(text);
-    doTest("int | str | unknown", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("int | str | Any", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   public void testUpperBoundGeneric() {
@@ -764,7 +764,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testNoResolveToFunctionsInTypes() {
-    doTest("C | unknown",
+    doTest("C | Any",
            "class C(object):\n" +
            "    def bar(self):\n" +
            "        pass\n" +
