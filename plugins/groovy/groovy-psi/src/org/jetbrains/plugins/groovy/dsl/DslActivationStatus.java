@@ -31,7 +31,10 @@ import java.util.Map;
 
 @State(
   name = "DslActivationStatus",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivationStatus.xml")
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivationStatus.xml")
+  }
 )
 public class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {
 
