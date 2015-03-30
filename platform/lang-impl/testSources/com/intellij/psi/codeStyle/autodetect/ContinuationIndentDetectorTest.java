@@ -39,7 +39,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
       "int a = 2;"
     );
 
-    doTest(1, 2);
+    doCheckLinesWithContinuationIndents(1, 2);
   }
 
   public void testNoContinuationIndent_OnLineStartingWithRightParenth() {
@@ -50,7 +50,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
       ");"
     );
 
-    doTest(1, 2);
+    doCheckLinesWithContinuationIndents(1, 2);
   }
 
   public void testNoContinuationIndents_BetweenBraces() {
@@ -73,7 +73,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
       "  \n" +
       "}"
     );
-    doTest();
+    doCheckLinesWithContinuationIndents();
   }
 
   public void testMixedBraces() {
@@ -101,11 +101,36 @@ public class ContinuationIndentDetectorTest extends TestCase {
       "  }\n" +
       "}"
     );
-    doTest(7, 8, 9, 10, 11, 12, 13, 14, 15);
+    doCheckLinesWithContinuationIndents(7, 8, 9, 10, 11, 12, 13, 14, 15);
   }
 
+  public void testClosingBracesAtLineStart() {
+    configure("class Test {\n" +
+              "  public static void main(String[] args) {\n" +
+              "    tree.put(\"Web Development\", Pair.create(PlatformImplIcons.WebDevelopment, Arrays.asList(\n" +
+              "        \"HTML:HtmlTools\",\n" +
+              "        \"com.intellij.css\",\n" +
+              "        \"JavaScript:JavaScript,JSIntentionPowerPack\",\n" +
+              "        \"com.jetbrains.restClient\"\n" +
+              "    )));\n" +
+              "  }\n" +
+              "}");
+    doCheckLinesWithContinuationIndents(3, 4, 5, 6);
+  }
 
-  private void doTest(Integer ...linesWithContinuationIndents) {
+  public void testInsideParenth() {
+    configure("@State(\n" +
+              "  name = \"AndroidRemoteDataBaseManager\",\n" +
+              "  storages = {\n" +
+              "    @Storage(\n" +
+              "      file = StoragePathMacros.APP_CONFIG + \"/androidRemoteDatabases.xml\"\n" +
+              "    )}\n" +
+              ")\n" +
+              "class T {}");
+    doCheckLinesWithContinuationIndents(1, 2, 3, 4, 5);
+  }
+
+  private void doCheckLinesWithContinuationIndents(Integer... linesWithContinuationIndents) {
     Set<Integer> continuationLines = ContainerUtil.newHashSet(linesWithContinuationIndents);
 
     for (int currentLine = 0; currentLine < myLineStartOffsets.size(); currentLine++) {
@@ -120,7 +145,6 @@ public class ContinuationIndentDetectorTest extends TestCase {
       myContinuationIndentDetector.feedLineStartingAt(lineStartOffset);
     }
   }
-
 
   private List<Integer> calculateLineStartOffsets(String text) {
     List<Integer> lineStartOffsets = ContainerUtil.newArrayList();

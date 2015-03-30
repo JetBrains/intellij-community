@@ -16,17 +16,18 @@
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 class ContinuationIndentDetector {
-  private List<Bracket> myBrackets = ContainerUtil.newArrayList();
+  private Stack<Bracket> myOpenedBrackets = ContainerUtil.newStack();
 
   private final CharSequence myText;
   private final int myLength;
-  private boolean myStackCorrupted = false;
+  private boolean myIncorrectBracketsOrder = false;
 
   public ContinuationIndentDetector(@NotNull CharSequence text) {
     myText = text;
@@ -34,38 +35,52 @@ class ContinuationIndentDetector {
   }
 
   public void feedLineStartingAt(int startOffset) {
-    if (myStackCorrupted) return;
+    if (myIncorrectBracketsOrder) return;
 
-    int lineEndOffset = getLineEndOffset(startOffset);
-
-    for (int i = startOffset; i < lineEndOffset; i++) {
-      char c = myText.charAt(i);
-      Bracket bracket = Bracket.forChar(c);
+    for (int i = startOffset; i < getLineEndOffset(startOffset); i++) {
+      Bracket bracket = Bracket.forChar(myText.charAt(i));
       if (bracket == null) continue;
+      processBracket(bracket);
+    }
+  }
 
-      if (bracket.isOpening()) {
-        myBrackets.add(bracket);
+  private void processBracket(@NotNull Bracket bracket) {
+    if (bracket.isOpening()) {
+      myOpenedBrackets.add(bracket);
+    }
+    else {
+      if (!myOpenedBrackets.isEmpty() && bracket.isClosing(myOpenedBrackets.peek())) {
+        myOpenedBrackets.pop();
       }
       else {
-        if (myBrackets.isEmpty()) {
-          myStackCorrupted = true;
-        }
-        myBrackets.remove(myBrackets.size() - 1);
+        myIncorrectBracketsOrder = true;
       }
     }
   }
 
   public boolean isContinuationIndent(int lineStartOffset) {
-    if (myStackCorrupted || myBrackets.isEmpty()) {
-      return false;
-    }
-    int textStartOffset = CharArrayUtil.shiftForward(myText, lineStartOffset, " \t");
+    if (myIncorrectBracketsOrder) return false;
+    List<Bracket> openedBrackets = excludeBracketsClosedAtLineStart(lineStartOffset);
+    return openedBrackets.contains(Bracket.LPARENTH);
+  }
 
-    for (int i = myBrackets.size() - 1; i >= 0; i--) {
-      if (myBrackets.get(i) == Bracket.LPARENTH && myText.charAt(textStartOffset) != ')') return true;
+  @NotNull
+  private List<Bracket> excludeBracketsClosedAtLineStart(int lineStartOffset) {
+    int nonWhiteSpaceCharOffset = CharArrayUtil.shiftForward(myText, lineStartOffset, " \t");
+
+    for (int i = myOpenedBrackets.size() - 1; i >= 0 && nonWhiteSpaceCharOffset < myText.length(); i--) {
+      Bracket lastOpenedBracket = myOpenedBrackets.get(i);
+      char nonWhiteSpaceChar = myText.charAt(nonWhiteSpaceCharOffset);
+
+      Bracket bracket = Bracket.forChar(nonWhiteSpaceChar);
+      if (bracket == null || !bracket.isClosing(lastOpenedBracket)) {
+        return myOpenedBrackets.subList(0, i + 1);
+      }
+
+      nonWhiteSpaceCharOffset = CharArrayUtil.shiftForward(myText, nonWhiteSpaceCharOffset, " \t");
     }
 
-    return false;
+    return ContainerUtil.emptyList();
   }
 
   private int getLineEndOffset(int lineStartOffset) {
@@ -74,21 +89,43 @@ class ContinuationIndentDetector {
   }
 
   private enum Bracket {
-    LBRACE('{', true),
-    LPARENTH('(', true),
-    RBRACE('}', false),
-    RPARENTH(')', false);
+    LBRACE('{') {
+      @Override
+      boolean isOpening() {
+        return true;
+      }
+    },
+    LPARENTH('(') {
+      @Override
+      boolean isOpening() {
+        return true;
+      }
+    },
+    RBRACE('}') {
+      @Override
+      public boolean isClosing(Bracket bracket) {
+        return bracket == LBRACE;
+      }
+    },
+    RPARENTH(')') {
+      @Override
+      public boolean isClosing(Bracket bracket) {
+        return bracket == LPARENTH;
+      }
+    };
 
     private final char myChar;
-    private boolean myIsOpeningBracket;
 
-    Bracket(char c, boolean isOpeningBracket) {
-      myIsOpeningBracket = isOpeningBracket;
+    Bracket(char c) {
       myChar = c;
     }
 
+    public boolean isClosing(Bracket bracket) {
+      return false;
+    }
+
     boolean isOpening() {
-      return myIsOpeningBracket;
+      return false;
     }
 
     static Bracket forChar(char c) {
