@@ -132,7 +132,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyType() {
-    doTest("unknown",
+    doTest("Any",
            "from typing import Any\n" +
            "\n" +
            "def f(expr: Any):\n" +
