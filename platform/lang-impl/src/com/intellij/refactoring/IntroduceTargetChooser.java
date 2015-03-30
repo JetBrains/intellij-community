@@ -89,7 +89,7 @@ public class IntroduceTargetChooser {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         SmartPsiElementPointer<T> pointer = (SmartPsiElementPointer<T>)value;
         final T expr = pointer.getElement();
-        if (expr != null && expr.isValid()) {
+        if (expr != null) {
           String text = renderer.fun(expr);
           int firstNewLinePos = text.indexOf('\n');
           String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
@@ -112,7 +112,7 @@ public class IntroduceTargetChooser {
         if (index < 0) return;
         SmartPsiElementPointer<T> pointer = ((SmartPsiElementPointer<T>)model.get(index));
         final T expr = pointer.getElement();
-        if (expr != null && expr.isValid()) {
+        if (expr != null) {
           highlighter.highlight(expr, Collections.<PsiElement>singletonList(expr));
         }
       }
