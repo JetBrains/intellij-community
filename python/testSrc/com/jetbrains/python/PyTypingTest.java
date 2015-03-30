@@ -249,6 +249,14 @@ public class PyTypingTest extends PyTestCase {
            "expr = foo('bar')\n");
   }
 
+  public void testOptionalType() {
+    doTest("Optional[int]",
+           "from typing import Optional\n" +
+           "\n" +
+           "def foo(expr: Optional[int]):\n" +
+           "    pass\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
