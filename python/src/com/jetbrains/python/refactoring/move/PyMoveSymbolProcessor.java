@@ -146,14 +146,13 @@ public class PyMoveSymbolProcessor {
     if (belongsToSomeMovedElement(usage)) {
       return;
     }
-    // TODO: Respect the qualified import style
     if (usage instanceof PyQualifiedExpression) {
       final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)usage;
       if (myMovedElement instanceof PyClass && PyNames.INIT.equals(qualifiedExpr.getName())) {
         return;
       }
       else if (qualifiedExpr.isQualified()) {
-        insertImportFromAndReplaceReference(newElement, qualifiedExpr);
+        insertQualifiedImportAndReplaceReference(newElement, qualifiedExpr);
       }
       else if (usageFile == myMovedElement.getContainingFile()) {
         if (usage.getParent() instanceof PyGlobalStatement) {
