@@ -90,7 +90,7 @@ public class SimpleDiffChange {
     myHighlighters.clear();
 
     for (MyGutterOperation operation : myOperations) {
-      operation.destroy();
+      operation.dispose();
     }
     myOperations.clear();
   }
@@ -201,7 +201,7 @@ public class SimpleDiffChange {
     }
 
     for (MyGutterOperation operation : myOperations) {
-      operation.destroy();
+      operation.dispose();
     }
     myOperations.clear();
 
@@ -287,7 +287,7 @@ public class SimpleDiffChange {
       update(true);
     }
 
-    public void destroy() {
+    public void dispose() {
       myHighlighter.dispose();
     }
 
