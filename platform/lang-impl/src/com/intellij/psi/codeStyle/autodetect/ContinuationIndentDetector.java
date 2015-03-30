@@ -20,8 +20,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 class ContinuationIndentDetector {
   private Stack<Bracket> myOpenedBrackets = ContainerUtil.newStack();
 
@@ -58,29 +56,11 @@ class ContinuationIndentDetector {
     }
   }
 
-  public boolean isContinuationIndent(int lineStartOffset) {
-    if (myIncorrectBracketsOrder) return false;
-    List<Bracket> openedBrackets = excludeBracketsClosedAtLineStart(lineStartOffset);
-    return openedBrackets.contains(Bracket.LPARENTH);
-  }
-
-  @NotNull
-  private List<Bracket> excludeBracketsClosedAtLineStart(int lineStartOffset) {
-    int nonWhiteSpaceCharOffset = CharArrayUtil.shiftForward(myText, lineStartOffset, " \t");
-
-    for (int i = myOpenedBrackets.size() - 1; i >= 0 && nonWhiteSpaceCharOffset < myText.length(); i--) {
-      Bracket lastOpenedBracket = myOpenedBrackets.get(i);
-      char nonWhiteSpaceChar = myText.charAt(nonWhiteSpaceCharOffset);
-
-      Bracket bracket = Bracket.forChar(nonWhiteSpaceChar);
-      if (bracket == null || !bracket.isClosing(lastOpenedBracket)) {
-        return myOpenedBrackets.subList(0, i + 1);
-      }
-
-      nonWhiteSpaceCharOffset = CharArrayUtil.shiftForward(myText, nonWhiteSpaceCharOffset, " \t");
+  public boolean isContinuationIndent() {
+    if (myIncorrectBracketsOrder) {
+      return false;
     }
-
-    return ContainerUtil.emptyList();
+    return myOpenedBrackets.contains(Bracket.LPARENTH);
   }
 
   private int getLineEndOffset(int lineStartOffset) {

@@ -50,7 +50,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
       ");"
     );
 
-    doCheckLinesWithContinuationIndents(1, 2);
+    doCheckLinesWithContinuationIndents(1, 2, 3);
   }
 
   public void testNoContinuationIndents_BetweenBraces() {
@@ -101,7 +101,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
       "  }\n" +
       "}"
     );
-    doCheckLinesWithContinuationIndents(7, 8, 9, 10, 11, 12, 13, 14, 15);
+    doCheckLinesWithContinuationIndents(7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
   }
 
   public void testClosingBracesAtLineStart() {
@@ -115,7 +115,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
               "    )));\n" +
               "  }\n" +
               "}");
-    doCheckLinesWithContinuationIndents(3, 4, 5, 6);
+    doCheckLinesWithContinuationIndents(3, 4, 5, 6, 7);
   }
 
   public void testInsideParenth() {
@@ -127,7 +127,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
               "    )}\n" +
               ")\n" +
               "class T {}");
-    doCheckLinesWithContinuationIndents(1, 2, 3, 4, 5);
+    doCheckLinesWithContinuationIndents(1, 2, 3, 4, 5, 6);
   }
 
   private void doCheckLinesWithContinuationIndents(Integer... linesWithContinuationIndents) {
@@ -135,7 +135,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
 
     for (int currentLine = 0; currentLine < myLineStartOffsets.size(); currentLine++) {
       Integer lineStartOffset = myLineStartOffsets.get(currentLine);
-      boolean isContinuation = myContinuationIndentDetector.isContinuationIndent(lineStartOffset);
+      boolean isContinuation = myContinuationIndentDetector.isContinuationIndent();
       if (continuationLines.contains(currentLine)) {
         assertTrue("Line " +  currentLine + " should start with continuation indent", isContinuation);
       }

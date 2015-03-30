@@ -74,7 +74,7 @@ public class LineIndentInfoBuilder {
       return LineIndentInfo.LINE_WITH_TABS;
     }
     else {
-      boolean isContinuationIndent = myContinuationIndentDetector.isContinuationIndent(lineStartOffset);
+      boolean isContinuationIndent = myContinuationIndentDetector.isContinuationIndent();
       myContinuationIndentDetector.feedLineStartingAt(lineStartOffset);
       return isContinuationIndent ? LineIndentInfo.LINE_WITH_CONTINUATION_INDENT
                                   : LineIndentInfo.newWhiteSpaceIndent(textStartOffset - lineStartOffset);
