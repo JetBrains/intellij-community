@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,14 @@ import java.util.Arrays;
  * @author ilyas
  */
 public class GroovyCompilerLoader extends AbstractProjectComponent {
+  static final String GROOVY_STUBS = "groovyStubs";
+  private final CompilerManager myCompilerManager;
+  private final FileEditorManager myFileEditorManager;
 
-  public static final String GROOVY_STUBS = "groovyStubs";
-
-  public GroovyCompilerLoader(Project project) {
+  public GroovyCompilerLoader(Project project, CompilerManager manager, FileEditorManager editorManager) {
     super(project);
+    myCompilerManager = manager;
+    myFileEditorManager = editorManager;
   }
 
   @Nullable
@@ -67,8 +70,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
 
   @Override
   public void projectOpened() {
-    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
+    myCompilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
@@ -76,12 +78,10 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
         if (file.getName().endsWith(".java") && file.getPath().contains(GROOVY_STUBS)) {
           final PsiClass psiClass = findClassByStub(myProject, file);
           if (psiClass != null) {
-            final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-            final FileEditor[] editors = fileEditorManager.getEditors(file);
+            final FileEditor[] editors = myFileEditorManager.getEditors(file);
             if (editors.length != 0) {
-              decorateStubFile(file, fileEditorManager, editors[0]);
+              decorateStubFile(file, myFileEditorManager, editors[0]);
             }
-
           }
         }
       }

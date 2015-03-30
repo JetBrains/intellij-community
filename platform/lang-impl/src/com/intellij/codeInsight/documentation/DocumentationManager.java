@@ -98,7 +98,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private final ActionManagerEx myActionManagerEx;
 
-  private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
+  private final TargetElementUtilBase myTargetElementUtilBase;
 
   private boolean myCloseOnSneeze;
   
@@ -160,7 +160,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(final Project project, ActionManagerEx managerEx) {
+  public DocumentationManager(final Project project, ActionManagerEx managerEx, TargetElementUtilBase targetElementUtilBase) {
     super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
@@ -199,6 +199,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     };
     myActionManagerEx.addAnActionListener(actionListener, project);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);
+    myTargetElementUtilBase = targetElementUtilBase;
   }
 
   private void closeDocHint() {
@@ -578,11 +579,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      element = assertSameProject(util.findTargetElement(editor, ourFlagsForTargetElements, offset));
+      element = assertSameProject(util.findTargetElement(editor, myTargetElementUtilBase.getAllAccepted(), offset));
 
       // Allow context doc over xml tag content
       if (element != null || contextElement != null) {
-        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, ourFlagsForTargetElements, element, contextElement));
+        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtilBase.getAllAccepted(), element, contextElement));
         if (adjusted != null) {
           element = adjusted;
         }
