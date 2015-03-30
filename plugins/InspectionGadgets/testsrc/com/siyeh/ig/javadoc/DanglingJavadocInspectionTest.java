@@ -33,6 +33,10 @@ public class DanglingJavadocInspectionTest extends LightInspectionTestCase {
     doTest();
   }
 
+  public void testPackageInfo() {
+    doNamedTest("package-info");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

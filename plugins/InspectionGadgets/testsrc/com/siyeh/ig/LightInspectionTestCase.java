@@ -130,7 +130,11 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
   }
 
   protected final void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    doNamedTest(getTestName(false));
+  }
+
+  protected final void doNamedTest(String name) {
+    myFixture.configureByFile(name + ".java");
     myFixture.testHighlighting(true, false, false);
   }
 }
