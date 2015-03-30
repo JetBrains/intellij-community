@@ -113,6 +113,19 @@ public class PyTypeModelBuilder {
     }
   }
 
+  static class OptionalType extends TypeModel {
+    private final TypeModel type;
+
+    private OptionalType(TypeModel type) {
+      this.type = type;
+    }
+
+    @Override
+    void accept(TypeVisitor visitor) {
+      visitor.optional(this);
+    }
+  }
+
   private static TypeModel _(String name) {
     return new NamedType(name);
   }
@@ -194,17 +207,22 @@ public class PyTypeModelBuilder {
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
+      final PyUnionType unionType = (PyUnionType)type;
       if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type)) {
-        result = new UnknownType(build(((PyUnionType)type).excludeNull(myContext), true));
+        result = new UnknownType(build(unionType.excludeNull(myContext), true));
       }
       else {
-        result = new OneOf(
-          Collections2.transform(((PyUnionType)type).getMembers(), new Function<PyType, TypeModel>() {
-            @Override
-            public TypeModel apply(PyType t) {
-              return build(t, false);
-            }
-          }));
+        final PyType optionalType = getOptionalType(unionType);
+        if (optionalType != null) {
+          return new OptionalType(build(optionalType, true));
+        }
+
+        result = new OneOf(Collections2.transform(unionType.getMembers(), new Function<PyType, TypeModel>() {
+          @Override
+          public TypeModel apply(PyType t) {
+            return build(t, false);
+          }
+        }));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
@@ -215,6 +233,27 @@ public class PyTypeModelBuilder {
     }
     myVisited.put(type, result);
     return result;
+  }
+
+  @Nullable
+  private static PyType getOptionalType(@NotNull PyUnionType type) {
+    final Collection<PyType> members = type.getMembers();
+    if (members.size() == 2) {
+      boolean foundNone = false;
+      PyType optional = null;
+      for (PyType member : members) {
+        if (PyNoneType.INSTANCE.equals(member)) {
+          foundNone = true;
+        }
+        else if (member != null) {
+          optional = member;
+        }
+      }
+      if (foundNone) {
+        return optional;
+      }
+    }
+    return null;
   }
 
   private TypeModel build(@NotNull PyCallableType type) {
@@ -243,6 +282,8 @@ public class PyTypeModelBuilder {
     void param(ParamType text);
 
     void unknown(UnknownType type);
+
+    void optional(OptionalType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -397,6 +438,13 @@ public class PyTypeModelBuilder {
     @Override
     public void unknown(UnknownType type) {
       type.type.accept(this);
+    }
+
+    @Override
+    public void optional(OptionalType type) {
+      add("Optional[");
+      type.type.accept(this);
+      add("]");
     }
   }
 }
