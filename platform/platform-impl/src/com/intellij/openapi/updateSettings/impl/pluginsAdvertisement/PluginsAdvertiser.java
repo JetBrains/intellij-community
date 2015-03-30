@@ -41,6 +41,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
@@ -322,7 +323,7 @@ public class PluginsAdvertiser implements StartupActivity {
             }
 
             if (message != null) {
-              final ConfigurePluginsListener notificationListener = new ConfigurePluginsListener(unknownFeatures, project, myAllPlugins, myPlugins, myDisabledPlugins);
+              final ConfigurePluginsListener notificationListener = new ConfigurePluginsListener(unknownFeatures, project, PluginManagerMain.mapToPluginIds(myAllPlugins), myPlugins, myDisabledPlugins);
               NOTIFICATION_GROUP.createNotification(DISPLAY_ID, message, NotificationType.INFORMATION, notificationListener).notify(project);
             }
           }
@@ -449,13 +450,13 @@ public class PluginsAdvertiser implements StartupActivity {
   private static class ConfigurePluginsListener implements NotificationListener {
     private final Set<UnknownFeature> myUnknownFeatures;
     private final Project myProject;
-    private final List<IdeaPluginDescriptor> myAllPlugins;
+    private final List<PluginId> myAllPlugins;
     private final Set<PluginDownloader> myPlugins;
     private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
 
     public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
                                     Project project,
-                                    List<IdeaPluginDescriptor> allPlugins,
+                                    List<PluginId> allPlugins,
                                     Set<PluginDownloader> plugins,
                                     Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
       myUnknownFeatures = unknownFeatures;
