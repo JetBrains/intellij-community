@@ -32,6 +32,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -180,13 +181,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       PyParameterList parameterList = (PyParameterList)parent;
       PyFunction func = parameterList.getContainingFunction();
       if (func != null) {
-        final PyAnnotation annotation = getAnnotation();
-        if (annotation != null) {
-          final PyType type = context.getType(annotation);
-          if (type != null) {
-            return type;
-          }
-        }
         StructuredDocString docString = func.getStructuredDocString();
         if (PyNames.INIT.equals(func.getName()) && docString == null) {
           PyClass pyClass = func.getContainingClass();
@@ -231,6 +225,16 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           PyType result = provider.getParameterType(this, func, context);
           if (result != null) return result;
+        }
+        final PyAnnotation annotation = getAnnotation();
+        if (annotation != null) {
+          final PyType type = context.getType(annotation);
+          if (type != null) {
+            if (PyTypingTypeProvider.isAny(type)) {
+              return null;
+            }
+            return type;
+          }
         }
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();

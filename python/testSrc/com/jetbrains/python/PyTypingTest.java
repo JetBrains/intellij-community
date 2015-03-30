@@ -141,9 +141,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testGenericType() {
     doTest("A",
-           "from typing import typevar\n" +
+           "from typing import TypeVar\n" +
            "\n" +
-           "T = typevar('A')\n" +
+           "T = TypeVar('A')\n" +
            "\n" +
            "def f(expr: T):\n" +
            "    pass\n");
@@ -151,9 +151,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testGenericBoundedType() {
     doTest("T <= int | str",
-           "from typing import typevar\n" +
+           "from typing import TypeVar\n" +
            "\n" +
-           "T = typevar('T', values=(int, str))\n" +
+           "T = TypeVar('T', int, str)\n" +
            "\n" +
            "def f(expr: T):\n" +
            "    pass\n");
@@ -161,9 +161,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClass() {
     doTest("C[int]",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class C(Generic[T]):\n" +
            "    def __init__(self, x: T):\n" +
@@ -174,9 +174,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClassMethod() {
     doTest("int",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class C(Generic[T]):\n" +
            "    def __init__(self, x: T):\n" +
@@ -189,9 +189,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClassInheritance() {
     doTest("int",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class B(Generic[T]):\n" +
            "    def foo(self) -> T:\n" +
@@ -214,7 +214,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("str | bytes",
+    doTest("bytes | str",
            "from typing import AnyStr\n" +
            "\n" +
            "def foo(x: AnyStr) -> AnyStr:\n" +
@@ -224,11 +224,11 @@ public class PyTypingTest extends PyTestCase {
            "    expr = foo(x)\n");
   }
 
-  public void testFunctionType() {
+  public void testCallableType() {
     doTest("(int, str) -> str",
-           "from typing import Function\n" +
+           "from typing import Callable\n" +
            "\n" +
-           "def foo(expr: Function[[int, str], str]):\n" +
+           "def foo(expr: Callable[[int, str], str]):\n" +
            "    pass\n");
   }
 
