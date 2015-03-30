@@ -2082,7 +2082,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String wrapWithDoubleQuote(@NotNull String str) {
-    return '\"' + str + "\"";
+    return '"' + str + '"';
   }
 
   @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};

@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
+  private static final Logger LOG = Logger.getInstance("#" + JavaFoldingBuilderBase.class.getName());
   private static final String SMILEY = "<~>";
 
   private static String getPlaceholderText(PsiElement element) {
@@ -108,16 +108,16 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
     // builder-style setter?
     if (statements.length > 1 && !(statements[1] instanceof PsiReturnStatement)) return false;
-    
+
     // any setter? 
     if (statement instanceof PsiExpressionStatement) {
       PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
       if (expr instanceof PsiAssignmentExpression) {
         PsiExpression lhs = ((PsiAssignmentExpression)expr).getLExpression();
         PsiExpression rhs = ((PsiAssignmentExpression)expr).getRExpression();
-        return lhs instanceof PsiReferenceExpression && 
-               rhs instanceof PsiReferenceExpression && 
-               !((PsiReferenceExpression)rhs).isQualified() && 
+        return lhs instanceof PsiReferenceExpression &&
+               rhs instanceof PsiReferenceExpression &&
+               !((PsiReferenceExpression)rhs).isQualified() &&
                PropertyUtil.isSimplePropertySetter(method); // last check because it can perform long return type resolve
       }
     }
@@ -202,7 +202,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
     if (element == null) return null;
     if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
-    if (element == null || element.equals(first)) return null;
+    if (element.equals(first)) return null;
     return new UnfairTextRange(first.getTextOffset(), element.getTextOffset());
   }
 
@@ -296,10 +296,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private static boolean resolvesCorrectly(PsiReferenceExpression expression) {
     for (final JavaResolveResult result : expression.multiResolve(true)) {
-  if (!result.isValidResult()) {
-    return false;
-  }
-}
+      if (!result.isValidResult()) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -319,7 +319,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return;
     }
 
-   PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     if (classReference == null) {
       final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
@@ -636,7 +636,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (bodyStart > leftStart && !StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(leftStart + 1, bodyStart))) {
       return false;
     }
-    
+
     int leftEnd = statement.getTextRange().getStartOffset();
     int rightStart = statement.getTextRange().getEndOffset();
     int rightEnd = body.getTextRange().getEndOffset();
@@ -655,7 +655,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     descriptorList.add(new NamedFoldingDescriptor(rBrace, rightStart, rightEnd, group, rightText));
     return true;
   }
-  
+
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
@@ -665,7 +665,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-    if (element instanceof PsiNewExpression || element instanceof PsiJavaToken && 
+    if (element instanceof PsiNewExpression || element instanceof PsiJavaToken &&
                                                element.getParent() instanceof PsiAnonymousClass) {
       return settings.isCollapseLambdas();
     }
@@ -724,6 +724,16 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                  || element.getParent().getParent() instanceof PsiAnonymousClass)) {
       return settings.isInlineParameterNamesForLiteralCallArguments();
     }
+    else if (element instanceof PsiBinaryExpression) {
+      return settings.isCollapseComparables();
+    }
+    else if (element instanceof PsiPolyadicExpression) {
+      return settings.isCollapseConstantExpressions();
+    }
+    else if ((element instanceof PsiLiteralExpression)
+             || (element instanceof PsiMethodCallExpression)) {
+      return settings.isCollapseStrings();
+    }
     else {
       LOG.error("Unknown element:" + element);
       return false;
@@ -747,9 +757,49 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         if (!dumb) {
           addMethodGenericParametersFolding(expression, foldElements, document, quick);
           inlineLiteralArgumentsNames(expression, foldElements, quick);
+
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseStrings()) {
+            foldElements.addAll(StringFormatFoldingManager.fold(expression));
+          }
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseComparables()) {
+            foldElements.addAll(ComparisonFoldingManager.fold(expression));
+          }
         }
 
         super.visitMethodCallExpression(expression);
+      }
+
+      @Override
+      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+        if (!dumb) {
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseConstantExpressions()) {
+            foldElements.addAll(ConstantExpressionFoldingManager.fold(expression));
+          }
+        }
+
+        super.visitPolyadicExpression(expression);
+      }
+
+      @Override
+      public void visitLiteralExpression(PsiLiteralExpression expression) {
+        if (!dumb) {
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseStrings()) {
+            foldElements.addAll(StringEscapeFoldingManager.fold(expression));
+          }
+        }
+
+        super.visitLiteralExpression(expression);
+      }
+
+      @Override
+      public void visitBinaryExpression(PsiBinaryExpression expression) {
+        if (!dumb) {
+          if (!quick && JavaCodeFoldingSettings.getInstance().isCollapseComparables()) {
+            foldElements.addAll(ComparisonFoldingManager.fold(expression));
+          }
+        }
+
+        super.visitBinaryExpression(expression);
       }
 
       @Override
@@ -772,13 +822,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private static void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression,
                                                   @NotNull List<FoldingDescriptor> foldElements,
-                                                  boolean quick)
-  {
+                                                  boolean quick) {
     if (quick || !JavaCodeFoldingSettings.getInstance().isInlineParameterNamesForLiteralCallArguments()) {
       return;
     }
-    ParameterNameFoldingManager manager = new ParameterNameFoldingManager(expression);
-    foldElements.addAll(manager.buildDescriptors());
+
+    foldElements.addAll(new ParameterNameFoldingManager(expression).buildDescriptors());
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,

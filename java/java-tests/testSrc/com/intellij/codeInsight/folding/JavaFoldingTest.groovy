@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,15 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.intellij.lang.annotations.Language
+import org.intellij.lang.annotations.RegExp
 
-/**
- * @author Denis Zhdanov
- * @since 1/17/11 1:00 PM
- */
+import static com.intellij.codeInsight.folding.impl.ComparisonFoldingManager.COMPARISON_GROUP_NAME
+import static com.intellij.codeInsight.folding.impl.ConstantExpressionFoldingManager.CONSTANT_EXPRESSION_GROUP_NAME
+import static com.intellij.codeInsight.folding.impl.StringEscapeFoldingManager.STRING_ESCAPE_GROUP_NAME
+import static com.intellij.codeInsight.folding.impl.StringFormatFoldingManager.STRING_FORMAT_GROUP_NAME
+
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
-
   def JavaCodeFoldingSettingsImpl myFoldingSettings
   def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
 
@@ -65,43 +67,60 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
     super.tearDown()
   }
 
+  private getAllFoldRegions() { myFixture.editor.foldingModel.allFoldRegions }
+
+  private getExpandedFoldRegions() { allFoldRegions.findAll { it.expanded } }
+
+  private getFoldRegions(@RegExp def groupNameMatcher) { allFoldRegions*.group.findAll { it ==~ groupNameMatcher } as Set }
+
+  private def configure(@Language("JAVA") String text) {
+    myFixture.configureByText("a.java", text)
+    CodeFoldingManagerImpl.getInstance(project).buildInitialFoldings(myFixture.editor)
+    (myFixture.editor.foldingModel as FoldingModelEx).rebuild()
+    myFixture.doHighlighting()
+  }
+
   public void testEndOfLineComments() {
-    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
+    myFixture.testFolding("${PathManagerEx.testDataPath}/codeInsight/folding/${getTestName(false)}.java")
   }
 
   public void testEditingImports() {
-    configure """\
-import java.util.List;
-import java.util.Map;
-<caret>
+    configure '''
+      import java.util.List;
+      import java.util.Map;
+      <caret>
 
-class Foo { List a; Map b; }
-"""
+      class Foo { List a; Map b; }
+    '''
 
-    assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+    assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(16)
 
     myFixture.type 'import '
     myFixture.doHighlighting()
-    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+    assertSize 0, allFoldRegions
   }
 
   public void testJavadocLikeClassHeader() {
-    def text = """\
-/**
- * This is a header to collapse
- */
-import java.util.*;
-class Foo { List a; Map b; }
-"""
+    @Language("JAVA") def text = '''
+      /**
+       * This is a header to collapse
+       */
+      import java.util.*;
+      class Foo { List a; Map b; }
+    '''
     configure text
-    def foldRegion = myFixture.editor.foldingModel.getCollapsedRegionAtOffset(0)
+
+    def commentStartIndex = text.indexOf("/**")
+    def commentEndIndex = text.indexOf("*/", commentStartIndex) + "*/".length()
+
+    def foldRegion = myFixture.editor.foldingModel.getCollapsedRegionAtOffset(commentStartIndex)
     assert foldRegion
-    assertEquals 0, foldRegion.startOffset
-    assertEquals text.indexOf("import") - 1, foldRegion.endOffset
+    assertEquals commentStartIndex, foldRegion.startOffset
+    assertEquals commentEndIndex, foldRegion.endOffset
   }
 
   public void testSubsequentCollapseBlock() {
-    def text = """\
+    @Language("JAVA") def text = '''
 class Test {
     void test(int i) {
         if (i > 1) {
@@ -109,7 +128,7 @@ class Test {
         }
     }
 }
-"""
+'''
     configure text
     myFixture.performEditorAction 'CollapseBlock'
     myFixture.performEditorAction 'CollapseBlock'
@@ -119,17 +138,17 @@ class Test {
   public void testFoldGroup() {
     // Implied by IDEA-79420
     myFoldingSettings.COLLAPSE_CLOSURES = true
-    def text = """\
-class Test {
-    void test() {
-        new Runnable() {
+    @Language("JAVA") def text = '''
+      class Test {
+        void test() {
+          new Runnable() {
             public void run() {
-                int i = 1;
+              int i = 1;
             }
-        }.run();
-    }
-}
-"""
+          }.run();
+        }
+      }
+    '''
 
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
@@ -156,22 +175,22 @@ class Test {
 
   public void "test closure folding when an abstract method is not in the direct superclass"() {
     myFoldingSettings.COLLAPSE_CLOSURES = true
-    def text = """\
-public abstract class AroundTemplateMethod<T> {
-  public abstract T execute();
-}
-private static abstract class SetupTimer<T> extends AroundTemplateMethod<T> {
-}
-class Test {
-    void test() {
-     new SetupTimer<Integer>() {
-      public Integer execute() {
-        return 0;
+    @Language("JAVA") def text = '''
+      public abstract class AroundTemplateMethod<T> {
+        public abstract T execute();
       }
-    };
-  }
-}
-"""
+      private static abstract class SetupTimer<T> extends AroundTemplateMethod<T> {
+      }
+      class Test {
+        void test() {
+          new SetupTimer<Integer>() {
+            public Integer execute() {
+              return 0;
+            }
+          };
+        }
+      }
+    '''
 
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
@@ -182,21 +201,21 @@ class Test {
     assertNotNull closureStartFold.group
     def closureFolds = foldingModel.getGroupedRegions(closureStartFold.group)
     assertNotNull closureFolds
-    assertEquals(2, closureFolds.size())
+    assertSize 2, closureFolds
   }
 
   public void "test builder style setter"() {
     myFoldingSettings.COLLAPSE_ACCESSORS = true
-    def text = """\
-class Foo {
-    private String bar;
+    @Language("JAVA") def text = '''
+      class Foo {
+        private String bar;
 
-    public Foo setBar(String bar) {
-        this.bar = bar;
-        return this;
-    }
-}
-"""
+        public Foo setBar(String bar) {
+          this.bar = bar;
+          return this;
+        }
+      }
+    '''
 
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
@@ -207,18 +226,18 @@ class Foo {
   }
 
   public void "test closure folding doesn't expand when editing inside"() {
-    def text = """\
-class Test {
-    void test() {
-     new Runnable() {
-      static final long serialVersionUID = 42L;
-      public void run() {
-        System.out.println();
+    @Language("JAVA") def text = '''
+      class Test {
+        void test() {
+          new Runnable() {
+            static final long serialVersionUID = 42L;
+            public void run() {
+              System.out.println();
+            }
+          };
+        }
       }
-    };
-  }
-}
-"""
+    '''
 
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
@@ -240,47 +259,47 @@ class Test {
     myFixture.addClass('interface Runnable4 { void run(); }')
     myFixture.addClass('abstract class MyAction { public abstract void run(); public void registerVeryCustomShortcutSet() {} }')
     myFixture.addClass('abstract class MyAction2 { public abstract void run(); public void registerVeryCustomShortcutSet() {} }')
-    def text = """\
-class Test {
-  MyAction2 action2;
+    @Language("JAVA") def text = '''
+      class Test {
+        MyAction2 action2;
 
-  void test() {
-    Runnable r = new Runnable() {
-      public void run() {
-        System.out.println();
-      }
-    };
-    new Runnable2() {
-      public void run() {
-        System.out.println();
-      }
-    }.run();
-    foo(new Runnable3() {
-      public void run() {
-        System.out.println();
-      }
-    });
-    bar(new Runnable4() {
-      public void run() {
-        System.out.println();
-      }
-    });
-    new MyAction() {
-      public void run() {
-        System.out.println();
-      }
-    }.registerVeryCustomShortcutSet();
-    action2 = new MyAction2() {
-      public void run() {
-        System.out.println();
-      }
-    }
-  }
+        void test() {
+          Runnable r = new Runnable() {
+            public void run() {
+              System.out.println();
+            }
+          };
+          new Runnable2() {
+            public void run() {
+              System.out.println();
+            }
+          }.run();
+          foo(new Runnable3() {
+            public void run() {
+              System.out.println();
+            }
+          });
+          bar(new Runnable4() {
+            public void run() {
+              System.out.println();
+            }
+          });
+          new MyAction() {
+            public void run() {
+              System.out.println();
+            }
+          }.registerVeryCustomShortcutSet();
+          action2 = new MyAction2() {
+            public void run() {
+              System.out.println();
+            }
+          };
+        }
 
-  void foo(Object o) {}
-  void bar(Runnable4 o) {}
-}
-"""
+        void foo(Object o) {}
+        void bar(Runnable4 o) {}
+      }
+    '''
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
@@ -297,18 +316,18 @@ class Test {
   }
 
   public void "test closure folding after paste"() {
-    def text = """\
-class Test {
-<caret>// comment
-  void test() {
-    Runnable r = new Runnable() {
-      public void run() {
-        System.out.println();
+    @Language("JAVA") def text = '''
+      class Test {
+      <caret>// comment
+        void test() {
+          Runnable r = new Runnable() {
+            public void run() {
+              System.out.println();
+            }
+          };
+        }
       }
-    };
-  }
-}
-"""
+    '''
     configure text
     myFixture.performEditorAction("EditorCut")
     myFixture.performEditorAction("EditorPaste")
@@ -319,26 +338,26 @@ class Test {
   }
 
   public void "test closure folding when overriding one method of many"() {
-    myFixture.addClass('abstract class Runnable { void run() {}; void run2() {} }')
-    myFixture.addClass('abstract class Runnable2 { void run() {}; void run2() {} }')
-    def text = """\
-class Test {
-  void test() {
-    Runnable r = new Runnable() {
-      public void run() {
-        System.out.println();
-      }
-    };
-    foo(new Runnable2() {
-      public void run2() {
-        System.out.println();
-      }
-    });
-  }
+    myFixture.addClass('abstract class Runnable { void run() {} void run2() {} }')
+    myFixture.addClass('abstract class Runnable2 { void run() {} void run2() {} }')
+    @Language("JAVA") def text = '''
+      class Test {
+        void test() {
+          Runnable r = new Runnable() {
+            public void run() {
+              System.out.println();
+            }
+          };
+          foo(new Runnable2() {
+            public void run2() {
+              System.out.println();
+            }
+          });
+        }
 
-  void foo(Object o) {}
-}
-"""
+        void foo(Object o) {}
+      }
+    '''
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
@@ -347,16 +366,16 @@ class Test {
   }
 
   public void "test no closure folding when the method throws an unresolved exception"() {
-    def text = """\
-class Test {
-    void test() { new Runnable() {
-      public void run() throws Asadfsdafdfasd {
-        System.out.println(<caret>);
+    @Language("JAVA") def text = '''
+      class Test {
+          void test() { new Runnable() {
+            public void run() throws Asadfsdafdfasd {
+              System.out.println(<caret>);
+            }
+          };
+        }
       }
-    };
-  }
-}
-"""
+    '''
 
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
@@ -364,31 +383,31 @@ class Test {
   }
 
   public void "test no closure folding for synchronized methods"() {
-    def text = """\
-class Test {
-    void test() { new Runnable() {
-      public synchronized void run() {
-        System.out.println(<caret>);
+    @Language("JAVA") def text = '''
+      class Test {
+          void test() { new Runnable() {
+            public synchronized void run() {
+              System.out.println(<caret>);
+            }
+          };
+        }
       }
-    };
-  }
-}
-"""
+    '''
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
     assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
   }
 
   public void testFindInFolding() {
-    def text = """\
-class Test {
-    void test1() {
-    }
-    void test2() {
-        <caret>test1();
-    }
-}
-"""
+    @Language("JAVA") def text = '''
+      class Test {
+        void test1() {
+        }
+        void test2() {
+          <caret>test1();
+        }
+      }
+    '''
     configure text
     myFixture.performEditorAction 'CollapseBlock'
     myFixture.editor.caretModel.moveToOffset(text.indexOf('test1'))
@@ -398,105 +417,104 @@ class Test {
   }
 
   public void testCustomFolding() {
-    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
+    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java")
   }
 
   public void "test custom folding IDEA-122715 and IDEA-87312"() {
-    def text = """\
-public class Test {
+    @Language("JAVA") def text = '''
+      public class Test {
+        //region Foo
+        interface Foo {void bar();}
+        //endregion
 
-    //region Foo
-    interface Foo {void bar();}
-    //endregion
+        //region Bar
+        void test() {
 
-    //region Bar
-    void test() {
-
-    }
-    //endregion
-    enum Bar {
-        BAR1,
-        BAR2
-    }
-}
-"""
+        }
+        //endregion
+        enum Bar {
+          BAR1,
+          BAR2
+        }
+      }
+    '''
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
-    int count = 0;
+    int count = 0
     for (FoldRegion region : foldingModel.allFoldRegions) {
       if (region.startOffset == text.indexOf("//region Foo")) {
-        assert region.placeholderText == "Foo";
-        count ++;
+        assert region.placeholderText == "Foo"
+        count++
       }
       else if (region.startOffset == text.indexOf("//region Bar")) {
         assert region.placeholderText == "Bar"
-        count ++;
+        count++
       }
     }
-    assert count == 2 : "Not all custom regions are found";
+    assert count == 2 : "Not all custom regions are found"
   }
 
   public void "test custom foldings intersecting with language ones"() {
-    def text = """\
-class Foo {
-//*********************************************
-// region Some
-//*********************************************
+    @Language("JAVA") def text = '''
+      class Foo {
+      //*********************************************
+      // region Some
+      //*********************************************
 
-  int t = 1;
+        int t = 1;
 
-//*********************************************
-// endregion
-//*********************************************
-}
-"""
+      //*********************************************
+      // endregion
+      //*********************************************
+      }
+    '''
     configure text
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
-    assertEquals 1, foldRegionsCount
+    assertSize 1, allFoldRegions
     assertEquals "Some", foldingModel.allFoldRegions[0].placeholderText
   }
 
   public void "test custom folding collapsed by default"() {
-    def text = """\
-class Test {
-  void test() {
-    //<editor-fold desc="Custom region">
-    System.out.println(1);
-    System.out.println(2);
-    //</editor-fold>
-    System.out.println(3);
-  };
-}
-"""
-    boolean oldValue = CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS;
+    @Language("JAVA") def text = '''
+      class Test {
+        void test() {
+          //<editor-fold desc="Custom region">
+          System.out.println(1);
+          System.out.println(2);
+          //</editor-fold>
+          System.out.println(3);
+        }
+      }
+    '''
+    boolean oldValue = CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS
     try {
-      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = true;
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = true
       configure text
       def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
       assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("//<editor-fold"))
     }
     finally {
-      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = oldValue;
+      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = oldValue
     }
   }
 
   public void "test move methods"() {
-    def initialText = '''\
-class Test {
-    void test1() {
-    }
+    @Language("JAVA") def initialText = '''
+      class Test {
+        void test1() {
+        }
 
-    void test2() {
-    }
-}
-'''
+        void test2() {
+        }
+      }
+      '''
 
     Closure<FoldRegion> fold = { String methodName ->
       def text = myFixture.editor.document.text
       def nameIndex = text.indexOf(methodName)
       def start = text.indexOf('{', nameIndex)
       def end = text.indexOf('}', start) + 1
-      def regions = myFixture.editor.foldingModel.allFoldRegions
+      def regions = allFoldRegions
       for (region in regions) {
         if (region.startOffset == start && region.endOffset == end) {
           return region
@@ -536,45 +554,37 @@ class Test {
       outerFold.expanded = false
     }
     def folds = foldModel.fetchVisible()
-    assertEquals(1, folds.length)
-    assertEquals(2, folds[0].startOffset)
-    assertEquals(6, folds[0].endOffset)
-  }
-
-  private def configure(String text) {
-    myFixture.configureByText("a.java", text)
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
-    def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
-    foldingModel.rebuild()
-    myFixture.doHighlighting()
+    assertSize 1, folds
+    assertEquals 2, folds[0].startOffset
+    assertEquals 6, folds[0].endOffset
   }
 
   public void "test simple property accessors in one line"() {
-    configure """class Foo {
- int field;
- int field2;
- int field3;
+    configure '''
+      class Foo {
+        int field;
+        int field2;
+        int field3;
 
- int getField()
- {
-   return field;
- }
+        int getField()
+        {
+          return field;
+        }
 
- void setField(int f) {
-   field = f;
- }
+        void setField(int f) {
+          field = f;
+        }
 
- void setField2(int f){field2=f;} // normal method folding here
+        void setField2(int f){field2=f;} // normal method folding here
 
-  // normal method folding here
- void setField3(int f){
+        // normal method folding here
+        void setField3(int f){
 
-   field2=f;
- }
-
-}"""
+          field2=f;
+        }
+      }'''
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    def regions = allFoldRegions.sort { it.startOffset }
     assert regions.size() == 6
 
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
@@ -596,74 +606,75 @@ class Test {
   }
 
   public void "test fold one-line methods"() {
-    configure """class Foo {
- @Override
- int someMethod() {
-   return 0;
- }
+    configure '''
+      class Foo {
+        @Override
+        int someMethod() {
+          return 0;
+        }
 
- int someOtherMethod(
-   int param) {
-   return 0;
- }
-
-}"""
+        int someOtherMethod(
+          int param) {
+          return 0;
+        }
+      }'''
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    def regions = allFoldRegions.sort { it.startOffset }
     assert regions.size() == 3
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
   }
 
   public void "test don't inline array methods"() {
-    configure """class Foo {
- int arrayMethod(int param)[] {
-   return new int[];
- }
-
-}"""
-    assert myFixture.editor.foldingModel.allFoldRegions.size() == 1
+    configure '''
+      class Foo {
+        int arrayMethod(int param)[] {
+          return new int[]{param};
+        }
+      }'''
+    assertSize 1, allFoldRegions
   }
 
   public void "test don't inline very long one-line methods"() {
-    configure """class Foo {
- int someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
+    configure '''
+      class Foo {
+       int someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
 
- // don't create folding that would exceed the right margin
- int getSomeVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable() {
-   return someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
- }
-}"""
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 1
+       // don't create folding that would exceed the right margin
+       int getSomeVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable() {
+         return someVeryVeryLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongVariable;
+       }
+      }'''
+    def regions = allFoldRegions.sort { it.startOffset }
+    assertSize 1, regions
     assert regions[0].placeholderText == '{...}'
   }
 
   public void "test insert boolean literal argument name"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
-    def text = """class Groo {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true
+    @Language("JAVA") def text = '''
+      class Groo {
+        public void test() {
+          boolean testNow = System.currentTimeMillis() > 34000;
+          int times = 1;
+          float pi = 4;
+          String title = "Testing...";
+          char ch = 'q';
+          File file;
 
- public void test() {
-  boolean testNow = System.currentTimeMillis() > 34000;
-  int times = 1;
-  float pi = 4;
-  String title = "Testing..."
-  char ch = 'q'
-  File file;
+          configure(true, false, 555, 3.141f, "Huge Title", 'c', null);
+          configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
+         }
 
-  configure(true, false, 555, 3.141f, "Huge Title", 'c', null);
-  configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
- }
+         public void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pii, String title, char terminate, File file) {
+          System.out.println();
+          System.out.println();
+         }
 
- pubic void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pii, String title, char terminate, File file) {
-  System.out.println();
-  System.out.println();
- }
-
-}"""
+      }'''
     configure text
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Groo', GlobalSearchScope.allScope(project))
 
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    def regions = allFoldRegions.sort { it.startOffset }
     assert regions.size() == 9
 
     def literals = fooClass.methods[0].body.statements[6].children[0].children[1].children.findAll { it instanceof PsiLiteralExpression }
@@ -678,156 +689,153 @@ class Test {
   }
 
   public void "test do not inline name if setter"() {
-    def text = """class Groo {
+    configure '''
+      class Groo {
 
- public void test() {
-  setTestNow(false);
-  System.out.println("");
- }
+       public void test() {
+        setTestNow(false);
+        System.out.println("");
+       }
 
- pubic void setTestNow(boolean testNow) {
-  System.out.println("");
-  System.out.println("");
- }
+       public void setTestNow(boolean testNow) {
+        System.out.println("");
+        System.out.println("");
+       }
 
-}"""
-    configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions
-    assert regions.size() == 2
+      }
+    '''
+    assertSize 2, allFoldRegions
   }
 
   public void "test do not collapse varargs"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
-    def text = """
-public class VarArgTest {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true
+    @Language("JAVA") def text = '''
+      public class VarArgTest {
 
-  public void main() {
-    System.out.println("AAA");
-    testBooleanVarargs(13, false);
-  }
+        public void main() {
+          System.out.println("AAA");
+          testBooleanVarargs(13, false);
+        }
 
-  public boolean testBooleanVarargs(int test, boolean... booleans) {
-    int temp = test;
-    return false;
-  }
-}
-"""
+        public boolean testBooleanVarargs(int test, boolean... booleans) {
+          int temp = test;
+          return false;
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    def regions = allFoldRegions.sort { it.startOffset }
     assert regions.size() == 3
     checkRangeOffsetByPositionInText(regions[1], text, "13")
     assert regions[1].placeholderText == "test: 13"
   }
 
   public void "test do not inline if parameter length is one or two"() {
-    def text = """
-public class CharSymbol {
+    @Language("JAVA") def text = '''
+      public class CharSymbol {
 
-  public void main() {
-    System.out.println("AAA");
-    count(1, false);
-  }
+        public void main() {
+          System.out.println("AAA");
+          count(1, false);
+        }
 
-  public void count(int t, boolean fa) {
-    int temp = test;
-    boolean isFast = fast;
-  }
-}
-"""
+        public void count(int t, boolean fa) {
+          int temp = test;
+          boolean isFast = fast;
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 2
+    assertSize 2, allFoldRegions
   }
 
   public void "test do not inline known subsequent parameter names"() {
-    def text = """
-public class Test {
-  public void main() {
-    test1(1, 2);
-    test2(1, 2);
-    test3(1, 2);
-    doTest("first", "second");
-  }
+    @Language("JAVA") def text = '''
+      public class Test {
+        public void main() {
+          test1(1, 2);
+          test2(1, 2);
+          test3(1, 2);
+          doTest("first", "second");
+        }
 
-  public void test1(int first, int second) {
-    int start = first;
-    int end = second;
-  }
+        public void test1(int first, int second) {
+          int start = first;
+          int end = second;
+        }
 
-  public void test2(int key, int value) {
-    int start = key;
-    int end = value;
-  }
+        public void test2(int key, int value) {
+          int start = key;
+          int end = value;
+        }
 
-  public void test3(int key, int value) {
-    int start = key;
-    int end = value;
-  }
-}
-"""
+        public void test3(int key, int value) {
+          int start = key;
+          int end = value;
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions
-    assert regions.size() == 4
+    assertSize 4, allFoldRegions
   }
 
   public void "test do not inline paired ranged names"() {
-    def text = """
-public class CharSymbol {
+    @Language("JAVA") def text = '''
+      public class CharSymbol {
 
-  public void main() {
-    String s = "AAA";
-    int last = 3;
+        public void main() {
+          String s = "AAA";
+          int last = 3;
 
-    substring1(1, last);
-    substring2(1, last);
-    substring3(1, last);
-    substring4(1, last);
-  }
+          substring1(1, last);
+          substring2(1, last);
+          substring3(1, last);
+          substring4(1, last);
+        }
 
-  public void substring1(int beginIndex, int endIndex) {
-    int start = beginIndex;
-    int end = endIndex;
-  }
+        public void substring1(int beginIndex, int endIndex) {
+          int start = beginIndex;
+          int end = endIndex;
+        }
 
-  public void substring2(int startIndex, int endIndex) {
-    int start = startIndex;
-    int end = endIndex;
-  }
+        public void substring2(int startIndex, int endIndex) {
+          int start = startIndex;
+          int end = endIndex;
+        }
 
-  public void substring3(int from, int to) {
-    int start = from;
-    int end = to;
-  }
+        public void substring3(int from, int to) {
+          int start = from;
+          int end = to;
+        }
 
-  public void substring4(int first, int last) {
-    int start = first;
-    int end = last;
-  }
-}
-"""
+        public void substring4(int first, int last) {
+          int start = first;
+          int end = last;
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 5
+    assertSize 5, allFoldRegions
   }
 
   public void "test inline names if literal expression can be assigned to method parameter"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
-    def text = """
-public class CharSymbol {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true
+    @Language("JAVA") def text = '''
+      public class CharSymbol {
 
-  public void main() {
-    Object obj = new Object();
-    count(100, false, "Hi!");
-  }
+        public void main() {
+          Object obj = new Object();
+          count(100, false, "Hi!");
+        }
 
-  public void count(Integer test, Boolean boo, CharSequence seq) {
-    int a = test;
-    Object obj = new Object();
-  }
-}
-"""
+        public void count(Integer test, Boolean boo, CharSequence seq) {
+          int a = test;
+          Object obj = new Object();
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    def regions = allFoldRegions.sort { it.startOffset }
     assert regions.size() == 5
 
     checkRangeOffsetByPositionInText(regions[1], text, "100")
@@ -841,24 +849,24 @@ public class CharSymbol {
   }
 
   public void "test inline negative and positive numbers"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
-    def text = """
-public class CharSymbol {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true
+    @Language("JAVA") def text = '''
+      public class CharSymbol {
 
-  public void main() {
-    Object obj = new Object();
-    count(-1, obj);
-    count(+1, obj);
-  }
+        public void main() {
+          Object obj = new Object();
+          count(-1, obj);
+          count(+1, obj);
+        }
 
-  public void count(int test, Object obj) {
-    Object tmp = obj;
-    boolean isFast = false;
-  }
-}
-"""
+        public void count(int test, Object obj) {
+          Object tmp = obj;
+          boolean isFast = false;
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    def regions = allFoldRegions.sort { it.startOffset }
     assert regions.size() == 4
 
     checkRangeOffsetByPositionInText(regions[1], text, "-1")
@@ -869,28 +877,28 @@ public class CharSymbol {
   }
 
   public void "test inline constructor literal arguments names"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
-    def text = """
-public class Test {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true
+    @Language("JAVA") def text = '''
+      public class Test {
 
-  public void main() {
-    System.out.println("AAA");
-    Checker r = new Checker(true, false) {
-        @Override
-        void test() {
+        public void main() {
+          System.out.println("AAA");
+          Checker r = new Checker(true, false) {
+            @Override
+            void test() {
+            }
+          };
         }
-    };
-  }
 
-  abstract class Checker {
-    Checker(boolean isActive, boolean requestFocus) {}
-    abstract void test();
-  }
-}
-"""
+        abstract class Checker {
+          Checker(boolean isActive, boolean requestFocus) {}
+          abstract void test();
+        }
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.length == 6
+    def regions = allFoldRegions.sort { it.startOffset }
+    assertSize 6, regions
 
     assert regions[1].placeholderText == "isActive: true"
     assert regions[2].placeholderText == "requestFocus: false"
@@ -900,25 +908,25 @@ public class Test {
   }
 
   public void "test inline anonymous class constructor literal arguments names"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
-    def text = """
-public class Test {
+    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true
+    @Language("JAVA") def text = '''
+      public class Test {
 
-  Test(int counter, boolean shouldTest) {
-    System.out.println();
-    System.out.println();
-  }
+        Test(int counter, boolean shouldTest) {
+          System.out.println();
+          System.out.println();
+        }
 
-  public static void main() {
-    System.out.println();
-    Test t = new Test(10, false);
-  }
+        public static void main() {
+          System.out.println();
+          Test t = new Test(10, false);
+        }
 
-}
-"""
+      }
+    '''
     configure text
-    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.length == 4
+    def regions = allFoldRegions.sort { it.startOffset }
+    assertSize 4, regions
 
     assert regions[2].placeholderText == "counter: 10"
     assert regions[3].placeholderText == "shouldTest: false"
@@ -931,101 +939,99 @@ public class Test {
     assert region.startOffset == text.indexOf(foldElement) && region.endOffset == text.indexOf(foldElement) + foldElement.length()
   }
 
-
   private def changeFoldRegions(Closure op) {
     myFixture.editor.foldingModel.runBatchFoldingOperationDoNotCollapseCaret(op)
   }
 
   public void "test unselect word should go inside folding group"() {
-    configure """class Foo {
- int field;
+    configure '''class Foo {
+       int field;
 
- int getField() {
-   return field;
- }
+       int getField() {
+         return field;
+       }
 
-}"""
-    assertSize 2, myFixture.editor.foldingModel.allFoldRegions
+      }'''
+    assertSize 2, allFoldRegions
     myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("return"))
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
-    assert """int getField() {
-   return field;
- }""" == myFixture.editor.selectionModel.selectedText
+    assert '''int getField() {
+         return field;
+       }''' == myFixture.editor.selectionModel.selectedText
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }
 
   public void "test expand and collapse regions in selection"() {
-    def text = """
-class Foo {
-    public static void main() {
-        new Runnable(){
+    @Language("JAVA") def text = '''
+      class Foo {
+        public static void main() {
+          new Runnable(){
             public void run() {
             }
-        }.run();
-    }
-}
-"""
+          }.run();
+        }
+      }
+    '''
     configure text
-    assertEquals 3, foldRegionsCount
+    assertSize 3, allFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
-    assertEquals 3, expandedFoldRegionsCount
+    assertSize 3, expandedFoldRegions
 
 
     myFixture.editor.selectionModel.setSelection(text.indexOf("new"), text.indexOf("run();"))
     myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS)
-    assertEquals 1, expandedFoldRegionsCount
+    assertSize 1, expandedFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
-    assertEquals 3, expandedFoldRegionsCount
+    assertSize 3, expandedFoldRegions
   }
 
   public void "test expand and collapse recursively"() {
-    def text = """
-class Foo {
-    public static void main() {
-        new Runnable(){
+    @Language("JAVA") def text = '''
+      class Foo {
+        public static void main() {
+          new Runnable(){
             public void run() {
             }
-        }.run();
-    }
-}
-"""
+          }.run();
+        }
+      }
+    '''
     configure text
-    assertEquals 3, foldRegionsCount
+    assertSize 3, allFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_REGIONS)
-    assertEquals 3, expandedFoldRegionsCount
-
+    assertSize 3, expandedFoldRegions
 
     myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
     myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_REGION_RECURSIVELY)
-    assertEquals 1, expandedFoldRegionsCount
+    assertSize 1, expandedFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_REGION_RECURSIVELY)
-    assertEquals 3, expandedFoldRegionsCount
+    assertSize 3, expandedFoldRegions
   }
 
   public void "test expand to level"() {
-    def text = """
-class Foo {
-    public static void main() {
-        new Runnable(){
+    @Language("JAVA") def text = '''
+      class Foo {
+        public static void main() {
+          new Runnable(){
             public void run() {
             }
-        }.run();
-    }
-}
-"""
+          }.run();
+        }
+      }
+    '''
     configure text
-    assertEquals 3, foldRegionsCount
+    assertSize 3, allFoldRegions
 
     myFixture.editor.caretModel.moveToOffset(text.indexOf("new"))
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_TO_LEVEL_1)
-    assertEquals 2, expandedFoldRegionsCount
+    assertSize 2, expandedFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_ALL_TO_LEVEL_1)
-    assertEquals 1, expandedFoldRegionsCount
+    assertSize 1, expandedFoldRegions
   }
 
   public void "test single line closure unfolds when converted to multiline"() {
@@ -1033,18 +1039,18 @@ class Foo {
     try {
       Registry.get("editor.durable.folding.state").setValue(false)
 
-      def text = """
-  class Foo {
-    void m() {
-      SwingUtilities.invokeLater(new Runnable() {
+      @Language("JAVA") def text = '''
+        class Foo {
+          void m() {
+            SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                  System.out.println();
+                System.out.println();
               }
-          });
-    }
-  }
-  """
+            });
+          }
+        }
+      '''
       configure text
       assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable"))
       myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
@@ -1058,38 +1064,38 @@ class Foo {
   }
 
   public void "test folding state is preserved for unchanged text in bulk mode"() {
-    def text = """
-class Foo {
-    void m1() {
+    @Language("JAVA") def text = '''
+      class Foo {
+        void m1() {
 
-    }
-    void m2() {
+        }
+        void m2() {
 
-    }
-}
-"""
+        }
+      }
+    '''
     configure text
-    assertEquals 2, foldRegionsCount
-    assertEquals 2, expandedFoldRegionsCount
+    assertSize 2, allFoldRegions
+    assertSize 2, expandedFoldRegions
     myFixture.performEditorAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS)
-    assertEquals 0, expandedFoldRegionsCount
+    assertSize 0, expandedFoldRegions
 
     def document = (DocumentEx)myFixture.editor.document
     WriteCommandAction.runWriteCommandAction myFixture.project, {
-      document.inBulkUpdate = true;
+      document.inBulkUpdate = true
       try {
-        document.insertString(document.getText().indexOf("}") + 1, "\n");
+        document.insertString(document.getText().indexOf("}") + 1, "\n")
       }
       finally {
-        document.inBulkUpdate = false;
+        document.inBulkUpdate = false
       }
     }
-    assertEquals 2, foldRegionsCount
-    assertEquals 0, expandedFoldRegionsCount
+    assertSize 2, allFoldRegions
+    assertSize 0, expandedFoldRegions
   }
 
   public void "test processing of tabs inside fold regions"() {
-    String text = """public class Foo {
+    @Language("JAVA") def text = '''public class Foo {
 \tpublic static void main(String[] args) {
 \t\tjavax.swing.SwingUtilities.invokeLater(new Runnable() {
 \t\t\t@Override
@@ -1098,14 +1104,14 @@ class Foo {
 \t\t\t}
 \t\t});
 \t}
-}""";
+}'''
     configure text
     assert myFixture.editor.getFoldingModel().getCollapsedRegionAtOffset(text.indexOf("new"))
     myFixture.editor.settings.useTabCharacter = true
     EditorTestUtil.configureSoftWraps(myFixture.editor, 1000)
     myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_TAB)
-    myFixture.checkResult("""public class Foo {
+    myFixture.checkResult('''public class Foo {
 \tpublic static void main(String[] args) {
 \t\tjavax.swing.SwingUtilities.invokeLater(new Runnable() {
 \t\t\t@Override
@@ -1114,14 +1120,143 @@ class Foo {
 \t\t\t}
 \t\t});
 \t}
-}""");
+}''')
   }
 
-  private int getFoldRegionsCount() {
-    return myFixture.editor.foldingModel.allFoldRegions.length
+  public void "test whether constant expressions are folded"() {
+    myFoldingSettings.COLLAPSE_CONSTANT_EXPRESSIONS = true
+
+    @Language("JAVA") def text = '''
+      @SuppressWarnings("All") abstract class Foo {
+        private static final int x = 0;
+        private static int y = 0;
+        static {
+          String format = 2 + "^" + x + '=' + "1";  /** simple primitive concatenations as assignment */
+          ("A" + '+' + "B").length();               /** parenthesized expression */
+          String.format('"' + "%d" + '"', 0);       /** method parameter */
+
+          boolean b = (1 == 1); /** boolean constant */
+          int i = 1 + 2;        /** numeric constant */
+
+          int v = x + y; /* non-constant */
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(CONSTANT_EXPRESSION_GROUP_NAME)
   }
 
-  private int getExpandedFoldRegionsCount() {
-    return myFixture.editor.foldingModel.allFoldRegions.count { it.isExpanded() ? 1 : 0}
+  public void "test whether string escapes are folded"() {
+    myFoldingSettings.COLLAPSE_STRINGS = true
+
+    @Language("JAVA") def text = '''
+      import java.util.regex.Pattern;
+      @SuppressWarnings("All") abstract class Foo {
+        static {
+          String str = "\\\\";                                                                  /** a single backslash character (escaped here twice) */
+          str = "\\\\\\\\";                                                                     /** two backslashes */
+          str = "c:\\\\Program Files (x86)\\\\JetBrains\\\\IntelliJ IDEA\\\\bin\\\\idea64.exe"; /** path */
+          Pattern.compile("\\\\d+\\\\.\\\\d");                                                  /** regexp as method parameter */
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(STRING_ESCAPE_GROUP_NAME)
+  }
+
+  public void "test whether string formats are folded"() {
+    myFoldingSettings.COLLAPSE_STRINGS = true
+
+    @Language("JAVA") def text = '''
+      import java.util.Locale;
+      import static java.lang.String.*;
+
+      @SuppressWarnings("All") abstract class Foo {
+        private static final String PATTERN = "'%s'";
+        private static Object x = 0;
+        static {
+          String.format("");              /** empty */
+          String.format("test");          /** simple folding */
+          String.format("%s", "test");    /** simple format */
+          String.format("%s←", "test");  /** first */
+          String.format("→%s", "test");  /** last */
+          String.format("→%s←", "test"); /** middle */
+          String.format(":%s)", "");      /** replace with empty */
+
+          java.lang.String.format("%s=%s", x, "y"); /** fully qualified with non-constant */
+          format(" [%d : %d] ", 1
+                              , 2);                 /** static import and extensive spacing */
+
+          String.format("%n%d%%", 100);     /** constant pattern at beginning and end */
+          String.format("-%n%d%%%n-", 100); /** constant pattern in the middle */
+
+          String.format("x = %d, y = %f", ("".length() >= 0) ? 1 : 0, Math.PI); /** complex expression */
+
+          final int num = 3;
+          String.format(Locale.getDefault(), "%d + %d = %d",1,2,num); /** with locale, constant and no spacing */
+
+          final String constant = "0";
+          String.format(PATTERN, constant); /** constant, non-literal pattern and value */
+
+          String.format("%d");                   /* error: fewer args */
+          String.format("%d, %d, %d", "NaN", 1); /* error: fewer args */
+          String.format("%d, %d", 1, 2, 3);      /* error: more args */
+          String.format("none", 1);              /* error: more args */
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(STRING_FORMAT_GROUP_NAME)
+  }
+
+  public void "test whether comparable expressions are folded"() {
+    myFoldingSettings.COLLAPSE_COMPARABLES = true
+
+    @Language("JAVA") def text = '''
+      import java.io.File;
+      import java.math.*;
+      import java.util.Date;
+
+      @SuppressWarnings("All") class Foo {
+        static int nonConstantValue;
+        static {
+          boolean x = BigDecimal.ZERO.compareTo(BigDecimal.valueOf(Math.PI)) <  0;  /** BigDecimal */
+          x = new Date().compareTo(new Date())                               <  1;  /** Date with non-zero RHS */
+          x = "ab".compareTo("bc")                                           <= 0;  /** String */                   /** ≤ */
+          x = new File(".").compareTo(new File("."))                         == 0;  /** File */                     /** ≡ */
+          x = Integer.valueOf(0).compareTo(1)                                != -1; /** Integer */                  /** ≥ */
+          x = Character.valueOf('b').compareTo('a')                          != 0;  /** Character */                /** ≢ */
+          x = Float.valueOf(0).compareTo(1f)                                 != 1;  /** Float */                    /** ≤ */
+          x = Boolean.TRUE.compareTo(false)                                  >= 0;  /** Boolean */                  /** ≥ */
+          x = ((Double)Double.POSITIVE_INFINITY).compareTo(Math.E)           > -1;  /** Double with non-zero RHS */
+          x = BigInteger.ONE.compareTo(BigInteger.ZERO)                      >  0;  /** BigInteger */
+
+          x = BigInteger.ONE.compareTo(BigInteger.ZERO) > nonConstantValue; /* Cannot determine RHS */
+          BigInteger.ONE.compareTo(BigInteger.ZERO);                        /* Missing RHS */
+
+          final int IS_ZERO_OR_NEGATIVE = 1;
+          final Comparable l = "left", r = "right";
+          x = (l.compareTo(r) < IS_ZERO_OR_NEGATIVE); /** Comparison for non-literal with constant non-literal right side */
+
+          x = BigDecimal.ONE.signum() == -1; /** ≡ */ /** signum */
+
+          x = "a".equals("a");  /** ≡ */
+          x = !"a".equals("b"); /** ≢ */
+
+          x = (0 <  1);
+          x = (0 <= 1);  /** ≤ */
+          x = (1 == 1);  /** ≡ */
+          x = (1 != 0);  /** ≢ */
+          x = (1 >= 0);  /** ≥ */
+          x = (1 >  0);
+        }
+      }
+    '''
+    configure text
+
+    assertSize text.count("/**"), getFoldRegions(COMPARISON_GROUP_NAME)
   }
 }
