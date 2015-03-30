@@ -356,7 +356,6 @@ public class SvnDiffViewer implements DiffViewer {
     public MySplitter(@NotNull String text) {
       super(true);
       myLabelText = text;
-      setOrientation(true);
     }
 
     @Override
