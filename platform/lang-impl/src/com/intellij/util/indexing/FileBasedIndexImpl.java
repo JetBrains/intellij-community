@@ -2658,7 +2658,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, true, false, new Processor<Runnable>() {
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, false, false, new Processor<Runnable>() {
         @Override
         public boolean process(Runnable runnable) {
           runnable.run();
