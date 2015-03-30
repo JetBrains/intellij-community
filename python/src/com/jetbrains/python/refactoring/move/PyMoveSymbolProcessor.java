@@ -142,40 +142,20 @@ public class PyMoveSymbolProcessor {
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {
+    final PsiFile usageFile = usage.getContainingFile();
+    if (belongsToSomeMovedElement(usage)) {
+      return;
+    }
     // TODO: Respect the qualified import style
     if (usage instanceof PyQualifiedExpression) {
-      PyQualifiedExpression expr = (PyQualifiedExpression)usage;
-      if (myMovedElement instanceof PyClass && PyNames.INIT.equals(expr.getName())) {
+      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)usage;
+      if (myMovedElement instanceof PyClass && PyNames.INIT.equals(qualifiedExpr.getName())) {
         return;
       }
-      if (expr.isQualified()) {
-        insertImportFromAndReplaceReference(newElement, expr);
+      else if (qualifiedExpr.isQualified()) {
+        insertImportFromAndReplaceReference(newElement, qualifiedExpr);
       }
-    }
-    if (usage instanceof PyStringLiteralExpression) {
-      for (PsiReference ref : usage.getReferences()) {
-        if (ref instanceof PyDunderAllReference) {
-          usage.delete();
-        }
-        else {
-          if (ref.isReferenceTo(myMovedElement)) {
-            ref.bindToElement(newElement);
-          }
-        }
-      }
-    }
-    else {
-      // Update import of unqualified reference
-      final PyImportStatementBase importStmt = getImportStatementByElement(usage);
-      if (importStmt != null) {
-        PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
-      }
-      // Do nothing if usage itself was moved too
-      if (belongsToSomeMovedElement(usage)) {
-        return;
-      }
-      final PsiFile usageFile = usage.getContainingFile();
-      if (usageFile == myMovedElement.getContainingFile() && usage instanceof PyQualifiedExpression) {
+      else if (usageFile == myMovedElement.getContainingFile()) {
         if (usage.getParent() instanceof PyGlobalStatement) {
           myScopeOwnersWithGlobal.add(ScopeUtil.getScopeOwner(usage));
           if (((PyGlobalStatement)usage.getParent()).getGlobals().length == 1) {
@@ -186,15 +166,33 @@ public class PyMoveSymbolProcessor {
           }
         }
         else if (myScopeOwnersWithGlobal.contains(ScopeUtil.getScopeOwner(usage))) {
-          insertQualifiedImportAndReplaceReference(newElement, (PyQualifiedExpression)usage);
+          insertQualifiedImportAndReplaceReference(newElement, qualifiedExpr);
         }
         else {
-          insertImportFromAndReplaceReference(newElement, (PyQualifiedExpression)usage);
+          insertImportFromAndReplaceReference(newElement, qualifiedExpr);
+        }
+      }
+      else {
+        final PyImportStatementBase importStmt = getImportStatementByElement(usage);
+        if (importStmt != null) {
+          PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
         }
       }
       if (resolvesToLocalStarImport(usage)) {
         PyClassRefactoringUtil.insertImport(usage, newElement);
         myOptimizeImportTargets.add(usageFile);
+      }
+    }
+    else if (usage instanceof PyStringLiteralExpression) {
+      for (PsiReference ref : usage.getReferences()) {
+        if (ref instanceof PyDunderAllReference) {
+          usage.delete();
+        }
+        else {
+          if (ref.isReferenceTo(myMovedElement)) {
+            ref.bindToElement(newElement);
+          }
+        }
       }
     }
   }
