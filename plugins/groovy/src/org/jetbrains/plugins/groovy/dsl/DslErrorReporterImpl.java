@@ -43,7 +43,7 @@ public class DslErrorReporterImpl extends DslErrorReporter {
 
     final String exceptionText = ExceptionUtil.getThrowableText(e);
     LOG.info(exceptionText);
-    GroovyDslFileIndex.disableFile(vfile, exceptionText);
+    GroovyDslFileIndex.disableFile(vfile, DslActivationStatus.Status.ERROR, exceptionText);
 
 
     if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vfile)) {
@@ -60,6 +60,5 @@ public class DslErrorReporterImpl extends DslErrorReporter {
                                               notification.expire();
                                             }
                                           }).notify(project);
-
   }
 }
