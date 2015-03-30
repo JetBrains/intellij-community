@@ -386,6 +386,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     });
   }
 
+  @NotNull
   @Override
   public Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
                                                @Nullable final Collection<String> _recursiveRoots,

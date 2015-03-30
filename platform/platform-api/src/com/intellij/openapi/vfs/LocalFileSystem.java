@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,30 +42,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public static LocalFileSystem getInstance() {
     return LocalFileSystemHolder.ourInstance;
-  }
-
-  /**
-   * Checks whether given file is a symbolic link.
-   *
-   * @param file a file to check.
-   * @return <code>true</code> if the file is a symbolic link, <code>false</code> otherwise
-   * @since 11.0
-   */
-  @Override
-  public boolean isSymLink(@NotNull final VirtualFile file) {
-    return false;
-  }
-
-  /**
-   * Checks whether given file is a special file.
-   *
-   * @param file a file to check.
-   * @return <code>true</code> if the file exists and is a special one, <code>false</code> otherwise
-   * @since 11.0
-   */
-  @Override
-  public boolean isSpecialFile(@NotNull final VirtualFile file) {
-    return false;
   }
 
   @Nullable
@@ -141,6 +117,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
+  @NotNull
   public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
                                                         @Nullable final Collection<String> recursiveRoots,
                                                         @Nullable final Collection<String> flatRoots);
