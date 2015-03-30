@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,13 +221,14 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       s_modifierOrder.put(PsiModifier.PROTECTED, Integer.valueOf(1));
       s_modifierOrder.put(PsiModifier.PRIVATE, Integer.valueOf(2));
       s_modifierOrder.put(PsiModifier.ABSTRACT, Integer.valueOf(3));
-      s_modifierOrder.put(PsiModifier.STATIC, Integer.valueOf(4));
-      s_modifierOrder.put(PsiModifier.FINAL, Integer.valueOf(5));
-      s_modifierOrder.put(PsiModifier.TRANSIENT, Integer.valueOf(6));
-      s_modifierOrder.put(PsiModifier.VOLATILE, Integer.valueOf(7));
-      s_modifierOrder.put(PsiModifier.SYNCHRONIZED, Integer.valueOf(8));
-      s_modifierOrder.put(PsiModifier.NATIVE, Integer.valueOf(9));
-      s_modifierOrder.put(PsiModifier.STRICTFP, Integer.valueOf(10));
+      s_modifierOrder.put(PsiModifier.DEFAULT, Integer.valueOf(4));
+      s_modifierOrder.put(PsiModifier.STATIC, Integer.valueOf(5));
+      s_modifierOrder.put(PsiModifier.FINAL, Integer.valueOf(6));
+      s_modifierOrder.put(PsiModifier.TRANSIENT, Integer.valueOf(7));
+      s_modifierOrder.put(PsiModifier.VOLATILE, Integer.valueOf(8));
+      s_modifierOrder.put(PsiModifier.SYNCHRONIZED, Integer.valueOf(9));
+      s_modifierOrder.put(PsiModifier.NATIVE, Integer.valueOf(10));
+      s_modifierOrder.put(PsiModifier.STRICTFP, Integer.valueOf(11));
     }
 
     @Override
