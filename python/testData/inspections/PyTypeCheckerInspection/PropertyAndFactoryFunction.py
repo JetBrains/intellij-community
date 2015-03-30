@@ -7,4 +7,4 @@ def f():
     return C()
 
 def test():
-    f().foo + <warning descr="Expected type 'str | unicode', got 'int' instead">1</warning>
+    f().foo + <warning descr="Expected type 'Union[str, unicode]', got 'int' instead">1</warning>

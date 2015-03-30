@@ -266,9 +266,11 @@ public class PyTypeModelBuilder {
     public void unknown(UnknownType type) {
       final TypeModel nested = type.type;
       if (nested != null) {
+        add("Union[");
         nested.accept(this);
+        add(", " + PyNames.UNKNOWN_TYPE);
+        add("]");
       }
-      add(" | " + PyNames.UNKNOWN_TYPE);
     }
   }
 
@@ -310,7 +312,9 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      processList(oneOf.oneOfTypes, " | ");
+      add("Union[");
+      processList(oneOf.oneOfTypes, ", ");
+      add("]");
       myDepth--;
     }
 

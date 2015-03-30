@@ -84,7 +84,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testUnionType() {
-    doTest("int | str",
+    doTest("Union[int, str]",
            "from typing import Union\n" +
            "\n" +
            "def f(expr: Union[int, str]):\n" +
@@ -214,7 +214,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("bytes | str",
+    doTest("Union[bytes, str]",
            "from typing import AnyStr\n" +
            "\n" +
            "def foo(x: AnyStr) -> AnyStr:\n" +
