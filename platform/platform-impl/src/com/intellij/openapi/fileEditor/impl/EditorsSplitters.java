@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdePanePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -155,14 +156,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Override
   protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-
-    if (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) {
-      g.setColor(UIUtil.isUnderDarcula()? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
-      g.drawLine(0, 0, getWidth(), 0);
-    }
-
     if (showEmptyText()) {
+      super.paintComponent(g);
+      g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
+      g.drawLine(0, 0, getWidth(), 0);
+
+      IdeBackgroundUtil.paintFrameBackground(g, this);
       ourPainter.paintEmptyText(this, g);
     }
   }
