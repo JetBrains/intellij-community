@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
@@ -36,7 +35,10 @@ class ContinuationIndentDetector {
   public void feedLineStartingAt(int startOffset) {
     if (myIncorrectBracketsOrder) return;
 
-    for (int i = startOffset; i < getLineEndOffset(startOffset); i++) {
+    int lineEndOffset = CharArrayUtil.indexOf(myText, "\n", startOffset, myLength);
+    if (lineEndOffset < 0) lineEndOffset = myLength;
+
+    for (int i = startOffset; i < lineEndOffset; i++) {
       Bracket bracket = Bracket.forChar(myText.charAt(i));
       if (bracket == null) continue;
       processBracket(bracket);
@@ -58,20 +60,12 @@ class ContinuationIndentDetector {
   }
 
   public boolean isContinuationIndent() {
-    if (!shouldDetect() || myIncorrectBracketsOrder) {
+    if (myIncorrectBracketsOrder) {
       return false;
     }
     return myOpenedBrackets.contains(Bracket.LPARENTH);
   }
 
-  private boolean shouldDetect() {
-    return Registry.is("detect.indent.ignore.continuation.indented.lines");
-  }
-
-  private int getLineEndOffset(int lineStartOffset) {
-    int lineEndOffset = CharArrayUtil.indexOf(myText, "\n", lineStartOffset, myLength);
-    return lineEndOffset < 0 ? myLength : lineEndOffset;
-  }
 
   private enum Bracket {
     LBRACE('{') {
