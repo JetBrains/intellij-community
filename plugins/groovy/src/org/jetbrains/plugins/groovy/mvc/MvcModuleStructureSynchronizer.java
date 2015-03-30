@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
-      public void moduleAdded(Project project, Module module) {
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         queue(SyncAction.UpdateProjectStructure, module);
         queue(SyncAction.CreateAppStructureIfNeeded, module);
       }

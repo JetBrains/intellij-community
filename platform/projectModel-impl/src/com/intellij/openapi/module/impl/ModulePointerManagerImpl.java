@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,17 +43,17 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     myProject = project;
     project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
-      public void beforeModuleRemoved(Project project, Module module) {
+      public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         unregisterPointer(module);
       }
 
       @Override
-      public void moduleAdded(Project project, Module module) {
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         moduleAppears(module);
       }
 
       @Override
-      public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
+      public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
         for (Module module : modules) {
           moduleAppears(module);
         }

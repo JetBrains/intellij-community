@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,12 +51,12 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
   }
 
   @Override
-  public void registerError(ConfigurationErrorDescription errorDescription) {
+  public void registerError(@NotNull ConfigurationErrorDescription errorDescription) {
     registerErrors(Collections.singletonList(errorDescription));
   }
 
   @Override
-  public void registerErrors(Collection<? extends ConfigurationErrorDescription> errorDescriptions) {
+  public void registerErrors(@NotNull Collection<? extends ConfigurationErrorDescription> errorDescriptions) {
     if (myProject.isDisposed() || myProject.isDefault() || errorDescriptions.isEmpty()) return;
 
     boolean first;

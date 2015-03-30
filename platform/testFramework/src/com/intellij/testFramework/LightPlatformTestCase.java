@@ -320,7 +320,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         });
         connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
           @Override
-          public void moduleAdded(Project project, Module module) {
+          public void moduleAdded(@NotNull Project project, @NotNull Module module) {
             fail("Adding modules is not permitted in LightIdeaTestCase.");
           }
         });
