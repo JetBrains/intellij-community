@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -35,14 +36,10 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
     if (module == null) return;
 
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
-
-    if (configuration.getBytecodeTargetLevel(module) == null) {
-      String targetLevel = mavenProject.getTargetLevel();
-      if (targetLevel == null) {
-        // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
-        targetLevel = "1.5";
-      }
-      configuration.setBytecodeTargetLevel(module, targetLevel);
+    String targetLevel = mavenProject.getTargetLevel();
+    if (targetLevel != null || configuration.getBytecodeTargetLevel(module) == null) {
+      // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
+      configuration.setBytecodeTargetLevel(module, ObjectUtils.notNull(targetLevel, "1.5"));
     }
 
     // Exclude src/main/archetype-resources
