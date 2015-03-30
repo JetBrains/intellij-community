@@ -60,7 +60,7 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
     final Annotation annotation = holder.createWarningAnnotation(psiElement, message);
     annotation.setFileLevelAnnotation(true);
     if (status == ERROR) {
-      final String error = GroovyDslFileIndex.getInactivityReason(vfile);
+      final String error = GroovyDslFileIndex.getError(vfile);
       if (error != null) {
         annotation.registerFix(GroovyQuickFixFactory.getInstance().createInvestigateFix(error));
       }
@@ -96,7 +96,7 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       FileDocumentManager.getInstance().saveAllDocuments();
-      GroovyDslFileIndex.activateUntilModification(myVfile);
+      GroovyDslFileIndex.activate(myVfile);
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
 

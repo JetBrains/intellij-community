@@ -449,7 +449,7 @@ class AwsService {
 
   private def addGdsl(String text) {
     final PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text)
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    GroovyDslFileIndex.activate(file.virtualFile)
   }
 
 }

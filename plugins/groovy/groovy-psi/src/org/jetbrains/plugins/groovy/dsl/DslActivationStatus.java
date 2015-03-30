@@ -47,15 +47,15 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
     @Attribute
     public Status status;
     @Attribute
-    public String message;
+    public String error;
 
     public Entry() {
     }
 
-    public Entry(String url, Status status, String message) {
+    public Entry(String url, Status status, String error) {
       this.url = url;
       this.status = status;
-      this.message = message;
+      this.error = error;
     }
   }
 
@@ -86,8 +86,8 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
 
   @Override
   public void loadState(State state) {
-    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
     if (state.entries == null) return;
+    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
     for (Entry entry : state.entries) {
       if (entry.url == null || entry.status == null) continue;
       final VirtualFile file = fileManager.findFileByUrl(entry.url);

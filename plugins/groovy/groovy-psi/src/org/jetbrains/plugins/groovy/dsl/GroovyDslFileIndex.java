@@ -143,16 +143,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   @Nullable
-  public static String getInactivityReason(VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).message;
+  public static String getError(VirtualFile file) {
+    return DslActivationStatus.getInstance().get(file).error;
   }
 
   public static boolean isActivated(VirtualFile file) {
     return DslActivationStatus.getInstance().get(file).status == Status.ACTIVE;
   }
 
-  public static void activateUntilModification(final VirtualFile vfile) {
-    setStatusAndMessage(vfile, Status.ACTIVE, null);
+  public static void activate(final VirtualFile vfile) {
+    setStatusAndError(vfile, Status.ACTIVE, null);
     clearScriptCache();
   }
 
@@ -173,17 +173,17 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }, app.getDisposed());
   }
 
-  static void disableFile(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String message) {
+  static void disableFile(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
     assert status != Status.ACTIVE;
-    setStatusAndMessage(vfile, status, message);
+    setStatusAndError(vfile, status, error);
     vfile.putUserData(CACHED_EXECUTOR, null);
     clearScriptCache();
   }
 
-  private static void setStatusAndMessage(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String message) {
+  private static void setStatusAndError(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
     final DslActivationStatus.Entry entry = DslActivationStatus.getInstance().get(vfile);
     entry.status = status;
-    entry.message = message;
+    entry.error = error;
   }
 
   @Nullable
@@ -487,7 +487,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             // => cache globally by file instance
             vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
             if (executor != null) {
-              activateUntilModification(vfile);
+              activate(vfile);
             }
           }
         }
