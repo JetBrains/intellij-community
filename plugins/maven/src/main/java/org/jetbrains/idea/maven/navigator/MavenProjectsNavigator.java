@@ -26,10 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -40,6 +37,9 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
@@ -278,8 +278,13 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = (ToolWindowEx)manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = (ToolWindowEx)manager.registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
+    final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
+    final Content content = contentFactory.createContent(panel, "", false);
+    ContentManager contentManager = myToolWindow.getContentManager();
+    contentManager.addContent(content);
+    contentManager.setSelectedContent(content, false);
 
     final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
       boolean wasVisible = false;
