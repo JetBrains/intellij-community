@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.QualifiedName;
@@ -147,6 +148,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (unionType != null) {
       return unionType;
     }
+    final Ref<PyType> optionalType = getOptionalType(expression, context);
+    if (optionalType != null) {
+      return optionalType.get();
+    }
     final PyType callableType = getCallableType(expression, context);
     if (callableType != null) {
       return callableType;
@@ -166,6 +171,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyType stringBasedType = getStringBasedType(expression, context);
     if (stringBasedType != null) {
       return stringBasedType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getOptionalType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    if (expression instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+      final PyExpression operand = subscriptionExpr.getOperand();
+      final String operandName = resolveToQualifiedName(operand, context);
+      if ("typing.Optional".equals(operandName)) {
+        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+        if (indexExpr != null) {
+          final PyType type = getType(indexExpr, context);
+          if (type != null) {
+            return Ref.create(PyUnionType.union(type, PyNoneType.INSTANCE));
+          }
+        }
+        return Ref.create();
+      }
     }
     return null;
   }
