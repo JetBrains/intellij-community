@@ -1,7 +1,10 @@
 package com.jetbrains.python.refactoring.move;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
@@ -63,7 +66,6 @@ public class PyMoveSymbolProcessor {
         }
       }
       PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, myAllMovedElements);
-      // TODO: Remove extra empty lines after the removed element
       deleteElement();
       optimizeImports(sourceFile);
     }
@@ -71,8 +73,19 @@ public class PyMoveSymbolProcessor {
 
   private void deleteElement() {
     final PsiElement elementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
+    final Project project = myMovedElement.getProject();
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    final PsiFile pyFile = myMovedElement.getContainingFile();
     assert elementBody != null;
+    final Document document = manager.getDocument(pyFile);
+    final PsiElement prevVisible = PsiTreeUtil.prevVisibleLeaf(elementBody);
+    final PsiElement nextVisible = PsiTreeUtil.nextVisibleLeaf(elementBody);
     PyUtil.deleteElementSafely(elementBody);
+    assert document != null;
+    manager.commitDocument(document);
+    CodeStyleManager.getInstance(project).reformatText(pyFile,
+                                                       prevVisible != null ? prevVisible.getTextRange().getEndOffset() : 0,
+                                                       nextVisible != null ? nextVisible.getTextOffset() : pyFile.getTextLength());
   }
 
   private void optimizeImports(@Nullable PsiFile originalFile) {
