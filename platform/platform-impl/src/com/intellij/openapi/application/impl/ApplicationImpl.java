@@ -17,6 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -119,6 +120,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
+  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
+  private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
   private boolean myIsFiringLoadingEvent = false;
@@ -1238,7 +1241,24 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         if (!isWriteAccessAllowed()) {
           assertNoPsiLock();
         }
-        myLock.writeLock().lockInterruptibly();
+        if (!myLock.writeLock().tryLock()) {
+          final AtomicBoolean lockAcquired = new AtomicBoolean(false);
+          if (ourDumpThreadsOnLongWriteActionWaiting > 0) {
+            executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                while (!lockAcquired.get()) {
+                  TimeoutUtil.sleep(ourDumpThreadsOnLongWriteActionWaiting);
+                  if (!lockAcquired.get()) {
+                    PerformanceWatcher.getInstance().dumpThreads("waiting", true);
+                  }
+                }
+              }
+            });
+          }
+          myLock.writeLock().lockInterruptibly();
+          lockAcquired.set(true);
+        }
       }
       catch (InterruptedException e) {
         throw new RuntimeInterruptedException(e);
