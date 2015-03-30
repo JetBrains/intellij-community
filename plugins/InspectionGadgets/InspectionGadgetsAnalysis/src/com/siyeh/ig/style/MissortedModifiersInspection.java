@@ -20,8 +20,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -86,12 +86,11 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiModifierList modifierList =
         (PsiModifierList)descriptor.getPsiElement();
       final List<String> modifiers = new ArrayList<String>();
+      final List<String> typeAnnotations = new ArrayList<String>();
       final PsiElement[] children = modifierList.getChildren();
       for (final PsiElement child : children) {
         if (child instanceof PsiComment) {
@@ -109,14 +108,21 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           modifiers.add(child.getText());
         }
         else if (child instanceof PsiAnnotation) {
-          modifiers.add(0, child.getText());
+          if (PsiImplUtil.isTypeAnnotation(child)) {
+            typeAnnotations.add(child.getText());
+          }
+          else {
+            modifiers.add(0, child.getText());
+          }
         }
       }
       Collections.sort(modifiers, new ModifierComparator());
       @NonNls final StringBuilder buffer = new StringBuilder();
       for (String modifier : modifiers) {
-        buffer.append(modifier);
-        buffer.append(' ');
+        buffer.append(modifier).append(' ');
+      }
+      for (String annotation : typeAnnotations) {
+        buffer.append(annotation).append(' ');
       }
       final PsiManager manager = modifierList.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -189,8 +195,10 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       }
       final PsiElement[] children = modifierList.getChildren();
       String currentModifier = null;
+      boolean typeAnnotationSeen = false;
       for (final PsiElement child : children) {
         if (child instanceof PsiJavaToken) {
+          if (m_requireAnnotationsFirst && typeAnnotationSeen) return true;
           final String text = child.getText();
           if (modifierComparator.compare(text, currentModifier) < 0) {
             return true;
@@ -198,6 +206,12 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           currentModifier = text;
         }
         if (child instanceof PsiAnnotation) {
+          if (PsiImplUtil.isTypeAnnotation(child)) {
+            // type annotations come next to type
+            // see e.g. http://www.oracle.com/technetwork/articles/java/ma14-architect-annotations-2177655.html
+            typeAnnotationSeen = true;
+            continue;
+          }
           if (m_requireAnnotationsFirst && currentModifier != null) {
             //things aren't in order, since annotations come first
             return true;

@@ -22,6 +22,7 @@ class MissortedModifiers {
   }
 
   <warning descr="Missorted modifiers 'public @Deprecated'">public @Deprecated</warning> void foo3(){};
+  private @ReadOnly int [] nums;
 
   <warning descr="Missorted modifiers 'private transient static'">private transient static</warning> Hashtable mAttributeMeta;
 
