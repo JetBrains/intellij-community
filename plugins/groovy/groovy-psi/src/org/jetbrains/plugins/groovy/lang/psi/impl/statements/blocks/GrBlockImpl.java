@@ -49,7 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.util.ResolveProfiler;
+import com.intellij.util.profiling.ResolveProfiler;
 
 /**
  * @author ven
@@ -124,7 +124,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
           }
           finally {
             final long time = ResolveProfiler.finish();
-            ResolveProfiler.write("flow " + GrBlockImpl.this.toString() + " : " + time);
+            ResolveProfiler.write("flow", GrBlockImpl.this, time);
           }
         }
       }, false);

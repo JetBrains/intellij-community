@@ -63,7 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.util.ResolveProfiler;
+import com.intellij.util.profiling.ResolveProfiler;
 
 import java.util.*;
 
@@ -827,7 +827,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
     finally {
       final long time = ResolveProfiler.finish();
-      ResolveProfiler.write("ref " + getText() + " " + hashCode() + " : " + time);
+      ResolveProfiler.write("ref", this, time);
     }
   }
 
