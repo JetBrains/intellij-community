@@ -144,11 +144,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @Nullable
   public static String getError(VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).error;
+    return DslActivationStatus.getInstance().getGdslFileInfo(file).error;
   }
 
   public static boolean isActivated(VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).status == Status.ACTIVE;
+    return DslActivationStatus.getInstance().getGdslFileInfo(file).status == Status.ACTIVE;
   }
 
   public static void activate(final VirtualFile vfile) {
@@ -157,7 +157,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   public static Status getStatus(final VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).status;
+    return DslActivationStatus.getInstance().getGdslFileInfo(file).status;
   }
 
   private static void clearScriptCache() {
@@ -181,7 +181,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static void setStatusAndError(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
-    final DslActivationStatus.Entry entry = DslActivationStatus.getInstance().get(vfile);
+    final DslActivationStatus.Entry entry = DslActivationStatus.getInstance().getGdslFileInfo(vfile);
     entry.status = status;
     entry.error = error;
   }
