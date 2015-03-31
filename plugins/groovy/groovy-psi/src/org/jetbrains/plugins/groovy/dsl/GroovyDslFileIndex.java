@@ -196,7 +196,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   @Nullable
-  public static PsiClassType pocessScriptSuperClasses(@NotNull GroovyFile scriptFile) {
+  public static PsiClassType processScriptSuperClasses(@NotNull GroovyFile scriptFile) {
     if (!scriptFile.isScript()) return null;
 
     final VirtualFile virtualFile = scriptFile.getVirtualFile();
