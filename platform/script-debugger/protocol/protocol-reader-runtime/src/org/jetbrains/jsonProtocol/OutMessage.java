@@ -52,7 +52,7 @@ public abstract class OutMessage {
   protected void beginArguments() throws IOException {
   }
 
-  protected final void writeEnum(String name, Enum<?> value) {
+  public final void writeEnum(String name, Enum<?> value) {
     try {
       beginArguments();
       writer.name(name).value(value.toString());
@@ -62,7 +62,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeMap(String name, Map<String, String> value) {
+  public final void writeMap(String name, Map<String, String> value) {
     try {
       beginArguments();
       writer.name(name);
@@ -185,7 +185,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final <E extends OutMessage> void writeList(String name, List<E> value) {
+  public final <E extends OutMessage> void writeList(String name, List<E> value) {
     if (value == null || value.isEmpty()) {
       return;
     }
@@ -227,10 +227,24 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeStringList(@NotNull String name, @NotNull Collection<String> value) {
+  public final void writeStringList(@NotNull String name, @NotNull Collection<String> value) {
     try {
       beginArguments();
       JsonWriters.writeStringList(writer, name, value);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public final void writeEnumList(@NotNull String name, @NotNull Collection<? extends Enum<?>> values) {
+    try {
+      beginArguments();
+      writer.name(name).beginArray();
+      for (Enum<?> item : values) {
+        writer.value(item.toString());
+      }
+      writer.endArray();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -247,7 +261,7 @@ public abstract class OutMessage {
     ByteBufUtilEx.writeUtf8(message.buffer, rawValue);
   }
 
-  protected final void writeMessage(@NotNull String name, @NotNull OutMessage value) {
+  public final void writeMessage(@NotNull String name, @NotNull OutMessage value) {
     try {
       beginArguments();
       prepareWriteRaw(this, name);
@@ -317,10 +331,10 @@ public abstract class OutMessage {
     }
   }
 
-  public final void writeNullableString(@NotNull String name, @Nullable String value) {
+  public final void writeNullableString(@NotNull String name, @Nullable CharSequence value) {
     try {
       beginArguments();
-      writer.name(name).value(value);
+      writer.name(name).value(value.toString());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

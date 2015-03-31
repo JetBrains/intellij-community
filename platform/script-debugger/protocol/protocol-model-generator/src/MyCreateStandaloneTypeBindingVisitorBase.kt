@@ -34,11 +34,7 @@ class MyCreateStandaloneTypeBindingVisitorBase(private val generator: DomainGene
 
           override fun getTypeDirection() = TypeData.Direction.OUTPUT
 
-          override fun <T : ItemDescriptor> resolveType(typedObject: T) = throw UnsupportedOperationException()
-
-          override fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType {
-            return context.generateNestedObject("Item", description, properties)
-          }
+          override fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?) = context.generateNestedObject("Item", description, properties)
         }).type)
       }
     }, generator.generator.naming.outputTypedef, TypeData.Direction.OUTPUT)

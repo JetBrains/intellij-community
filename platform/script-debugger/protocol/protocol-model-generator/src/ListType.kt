@@ -2,21 +2,18 @@ package org.jetbrains.protocolModelGenerator
 
 open class ListType(private val itemType: BoxableType) : BoxableType() {
 
-  override fun getWriteMethodName(): String {
-    if (itemType == BoxableType.STRING) {
-      return "writeStringList"
+  override val writeMethodName: String
+    get() = when {
+      itemType == BoxableType.STRING -> {
+        "writeStringList"
+      }
+      itemType == BoxableType.LONG -> "writeLongArray"
+      itemType == BoxableType.INT -> "writeIntArray"
+      itemType == BoxableType.NUMBER ->  "writeDoubleArray"
+      itemType == BoxableType.NUMBER -> "writeDoubleArray"
+      itemType is StandaloneType && itemType.writeMethodName == "writeEnum" -> "writeEnumList"
+      else -> "writeList"
     }
-    else if (itemType == BoxableType.LONG) {
-      return "writeLongArray"
-    }
-    else if (itemType == BoxableType.INT) {
-      return "writeIntArray"
-    }
-    else if (itemType == BoxableType.NUMBER) {
-      return "writeDoubleArray"
-    }
-    return "writeList"
-  }
 
   override fun getFullText(): String {
     if (itemType == BoxableType.LONG || itemType == BoxableType.INT || itemType == BoxableType.NUMBER) {
@@ -29,6 +26,6 @@ open class ListType(private val itemType: BoxableType) : BoxableType() {
     if (itemType == BoxableType.LONG || itemType == BoxableType.INT || itemType == BoxableType.NUMBER) {
       return "${itemType.getFullText()}[]"
     }
-    return "java.util.List<" + itemType.getShortText(contextNamespace) + '>'
+    return "java.util.List<${itemType.getShortText(contextNamespace)}>"
   }
 }

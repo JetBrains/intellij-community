@@ -1,15 +1,12 @@
 package org.jetbrains.protocolModelGenerator
 
+import gnu.trove.THashMap
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.protocolReader.TextOutput
 import java.util.ArrayList
 
 abstract class ClassScope(val generator: DomainGenerator, val classContextNamespace: NamePath) {
   private val additionalMemberTexts = ArrayList<TextOutConsumer>(2)
-
-  protected fun getShortClassName(): String {
-    return classContextNamespace.lastComponent
-  }
 
   fun addMember(out: TextOutConsumer) {
     additionalMemberTexts.add(out)
@@ -26,9 +23,7 @@ abstract class ClassScope(val generator: DomainGenerator, val classContextNamesp
     }
   }
 
-  abstract fun getTypeDirection(): TypeData.Direction
-
-  companion object {
-    fun getName(named: ItemDescriptor.Named) = named.shortName() ?: named.name()
-  }
+  abstract val typeDirection: TypeData.Direction
 }
+
+fun ItemDescriptor.Named.getName() = shortName() ?: name()

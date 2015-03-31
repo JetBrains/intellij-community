@@ -1,12 +1,11 @@
 package org.jetbrains.protocolModelGenerator
 
 abstract class BoxableType {
-
   abstract fun getFullText(): CharSequence
 
   abstract fun getShortText(contextNamespace: NamePath): String
 
-  abstract fun getWriteMethodName(): String
+  abstract val writeMethodName: String
 
   companion object {
     val STRING: BoxableType = StandaloneType(NamePath("String"), "writeString")
