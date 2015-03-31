@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -113,9 +115,14 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   @Override
   public void setSelected(@Nullable AnActionEvent e, boolean selected) {
-    if (!selected) {
+
+    if (e == null) return;
+    boolean macMainMenu = SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
+
+    if (!selected && !macMainMenu) {
       return;
     }
+
     final Project project = findProject();
     if (project == null) {
       return;
@@ -123,7 +130,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     final JFrame projectFrame = WindowManager.getInstance().getFrame(project);
     final int frameState = projectFrame.getExtendedState();
 
-    if (SystemInfo.isMac && (projectFrame.getExtendedState() & Frame.ICONIFIED) != 0) {
+    if (macMainMenu && !(e.getInputEvent().getSource() instanceof ActionMenuItem) && (projectFrame.getExtendedState() & Frame.ICONIFIED) != 0) {
       // On Mac minimized window should not be restored this way
       return;
     }
