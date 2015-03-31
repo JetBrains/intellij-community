@@ -20,7 +20,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -48,7 +47,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
@@ -63,6 +61,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 
 public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater");
@@ -290,16 +289,42 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     }
 
     if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, false, new Processor<Runnable>() {
-        @Override
-        public boolean process(Runnable runnable) {
-          runnable.run();
-          return true;
-        }
-      });
+      invoke2xConcurrently(tasks);
     } else {
       for(Runnable r:tasks) r.run();
     }
+  }
+
+  public static void invoke2xConcurrently(final List<Runnable> tasks) {
+    final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
+    Future<?> result = null;
+    if (tasks.size() > 1) {
+      result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          Runnable runnable;
+          while ((runnable = tasksQueue.poll()) != null) runnable.run();
+        }
+      });
+    }
+
+    Runnable runnable;
+    while ((runnable = tasksQueue.poll()) != null) runnable.run();
+
+    if (result != null) {
+      try {
+        result.get();
+      } catch (Exception ex) {
+        LOG.error(ex);
+      }
+    }
+    //JobLauncher.getInstance().invokeConcurrently(tasks, null, false, false, new Processor<Runnable>() {
+    //  @Override
+    //  public boolean process(Runnable runnable) {
+    //    runnable.run();
+    //    return true;
+    //  }
+    //});
   }
 
   public static final ThreadLocal<Boolean> ourConcurrentlyFlag = new ThreadLocal<Boolean>();
