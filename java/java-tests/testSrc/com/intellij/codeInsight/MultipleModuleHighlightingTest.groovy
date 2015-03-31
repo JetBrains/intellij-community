@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -25,7 +24,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
  */
 class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
-  @Bombed(day = 1, month = Calendar.APRIL)
   public void "test use original place classpath for reference type resolving"() {
     addTwoModules()
 
@@ -60,7 +58,6 @@ class Class3 {
     myFixture.checkHighlighting()
   }
 
-  @Bombed(day = 1, month = Calendar.APRIL)
   public void "test use original place classpath for new expression type resolving"() {
     addTwoModules()
 

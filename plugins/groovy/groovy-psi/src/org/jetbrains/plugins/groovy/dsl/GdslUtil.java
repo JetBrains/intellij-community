@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Contract;
 
@@ -27,7 +28,7 @@ public class GdslUtil {
     @Override
     @Contract("null -> false")
     public boolean value(VirtualFile file) {
-      return file != null && !file.isDirectory() && "gdsl".equals(file.getExtension());
+      return file != null && !file.isDirectory() && StringUtil.endsWith(file.getNameSequence(), ".gdsl");
     }
   };
   static volatile boolean ourGdslStopped = false;

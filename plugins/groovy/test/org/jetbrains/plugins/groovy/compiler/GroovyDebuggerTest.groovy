@@ -34,10 +34,7 @@ import com.intellij.debugger.impl.GenericDebuggerRunner
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.OSProcessManager
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -95,7 +92,10 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     def configuration = createScriptConfiguration(script.virtualFile.path, myModule)
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      def listener = [onTextAvailable: { ProcessEvent evt, type -> /*println evt.text*/ }] as ProcessAdapter
+      def listener = [onTextAvailable: { ProcessEvent evt, type ->
+        if (type == ProcessOutputTypes.STDERR)
+          println evt.text
+      }] as ProcessAdapter
       runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
     }
     try {
@@ -403,7 +403,7 @@ trait Introspector {  // 1
 class FooT implements Introspector {
     def a = 1
     def b = 3
-    
+
     String toString() { 'fooInstance' }
 }
 
@@ -433,14 +433,16 @@ new FooT().whoAmI()
   }
 
   private def resume() {
+    if (debugSession == null) return
     debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
     Semaphore semaphore = new Semaphore()
     semaphore.down()
+    def process = debugProcess
     // wait for all events processed
-    debugProcess.managerThread.schedule(new DebuggerCommandImpl() {
+    process.managerThread.schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
         semaphore.up();
@@ -450,18 +452,18 @@ new FooT().whoAmI()
     assert finished: 'Too long debugger actions'
 
     int i = 0
-    def suspendManager = debugProcess.suspendManager
-    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
+    def suspendManager = process.suspendManager
+    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !process.processHandler.processTerminated) {
       Thread.sleep(10)
     }
 
     def context = suspendManager.pausedContext
-    assert context: "too long process, terminated=$debugProcess.processHandler.processTerminated"
+    assert context: "too long process, terminated=${process.processHandler.processTerminated}"
     return context
   }
 
   private DebugProcessImpl getDebugProcess() {
-    return getDebugSession().process
+    return debugSession?.process
   }
 
   private DebuggerSession getDebugSession() {

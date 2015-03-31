@@ -17,11 +17,14 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,10 +39,10 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
-  private final List<IdeaPluginDescriptor> myAllPlugins;
+  private final List<PluginId> myAllPlugins;
   private final Set<String> mySkippedPlugins = new HashSet<String>();
 
-  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<IdeaPluginDescriptor> allPlugins) {
+  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<PluginId> allPlugins) {
     super(project);
     myProject = project;
     Arrays.sort(plugins, new Comparator<PluginDownloader>() {

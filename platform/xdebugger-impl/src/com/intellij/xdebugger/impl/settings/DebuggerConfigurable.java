@@ -48,7 +48,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
 
   @Override
   public String getHelpTopic() {
-    return myRootConfigurable != null ? myRootConfigurable.getHelpTopic() : null;
+    return "reference.idesettings.debugger";
   }
 
   @Override

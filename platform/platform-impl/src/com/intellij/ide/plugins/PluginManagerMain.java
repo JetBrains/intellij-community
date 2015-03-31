@@ -49,6 +49,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -229,6 +230,16 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginTable;
   }
 
+  @NotNull
+  public static List<PluginId> mapToPluginIds(List<IdeaPluginDescriptor> plugins) {
+    return ContainerUtil.map(plugins, new Function<IdeaPluginDescriptor, PluginId>() {
+      @Override
+      public PluginId fun(IdeaPluginDescriptor descriptor) {
+        return descriptor.getPluginId();
+      }
+    });
+  }
+
   private static String getTextPrefix() {
     final int fontSize = JBUI.scale(12);
     final int m1 = JBUI.scale(2);
@@ -394,7 +405,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean downloadPlugins(final List<PluginNode> plugins,
-                                        final List<IdeaPluginDescriptor> allPlugins,
+                                        final List<PluginId> allPlugins,
                                         final Runnable onSuccess,
                                         @Nullable final Runnable cleanup) throws IOException {
     final boolean[] result = new boolean[1];

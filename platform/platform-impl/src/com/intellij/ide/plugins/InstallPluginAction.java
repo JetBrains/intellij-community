@@ -176,7 +176,8 @@ public class InstallPluginAction extends AnAction implements DumbAware {
             ourInstallingNodes.removeAll(list);
           }
         };
-        PluginManagerMain.downloadPlugins(list, myHost.getPluginsModel().getAllPlugins(), onInstallRunnable, cleanupRunnable);
+        final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();
+        PluginManagerMain.downloadPlugins(list, PluginManagerMain.mapToPluginIds(plugins), onInstallRunnable, cleanupRunnable);
       }
       catch (final IOException e1) {
         ourInstallingNodes.removeAll(list);

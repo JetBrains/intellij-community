@@ -133,7 +133,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    */
   void dispose(){
     myDocument.removeDocumentListener(myDocumentListener);
-    EditorHistoryManager.getInstance(myProject).updateHistoryEntry(myFile, false);
+    if (!myProject.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
+      EditorHistoryManager.getInstance(myProject).updateHistoryEntry(myFile, false);
+    }
     disposeEditor(myEditor);
     myConnection.disconnect();
 
@@ -276,7 +278,8 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     final Editor e = validateCurrentEditor();
     if (e == null) return null;
 
-    if (!myProject.isDisposed()) {
+    // There's no FileEditorManager for default project (which is used in diff command-line application)
+    if (!myProject.isDisposed() && !myProject.isDefault()) {
       final Object o = FileEditorManager.getInstance(myProject).getData(dataId, e, e.getCaretModel().getCurrentCaret());
       if (o != null) return o;
     }

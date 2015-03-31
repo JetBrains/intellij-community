@@ -75,7 +75,7 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
     }
   });
 
-  public Entry get(@NotNull VirtualFile file) {
+  public Entry getGdslFileInfo(@NotNull VirtualFile file) {
     return myStatus.get(file);
   }
 

@@ -886,10 +886,16 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed = false;
       }
 
-      if (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
-          PsiModifier.STRICTFP.equals(modifier) || PsiModifier.SYNCHRONIZED.equals(modifier)) {
+      if (PsiModifier.PRIVATE.equals(modifier)) {
         isAllowed &= modifierOwnerParent instanceof PsiClass && 
                      (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner));
+      }
+      else if (PsiModifier.STRICTFP.equals(modifier)) {
+        isAllowed &= modifierOwnerParent instanceof PsiClass && (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel8OrHigher(modifierOwner));
+      }
+      else if (PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
+               PsiModifier.SYNCHRONIZED.equals(modifier)) {
+        isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
 
       if (containingClass != null && containingClass.isAnnotationType()) {

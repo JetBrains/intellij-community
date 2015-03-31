@@ -56,17 +56,19 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
       LOG.error("Cannot open text editor for " + file);
     }
     CodeFoldingState state = null;
-    try {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
-        state = CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
+    if (!project.isDefault()) { // There's no CodeFoldingManager for default project (which is used in diff command-line application)
+      try {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          state = CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
+        }
       }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error("Error building initial foldings", e);
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error("Error building initial foldings", e);
+      }
     }
     final CodeFoldingState finalState = state;
     return new Builder() {

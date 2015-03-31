@@ -34,7 +34,10 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
@@ -711,54 +714,12 @@ public class PsiClassImplUtil {
   }
 
   @Nullable
-  public static PsiClassType correctType(PsiClassType originalType, final GlobalSearchScope resolveScope) {
-    if (!Registry.is("java.correct.class.type.by.place.resolve.scope")) {
+  public static <T extends PsiType> T correctType(@Nullable final T originalType, @NotNull final GlobalSearchScope resolveScope) {
+    if (originalType == null || !Registry.is("java.correct.class.type.by.place.resolve.scope")) {
       return originalType;
     }
 
-    final PsiClassType.ClassResolveResult originalResolveResult = originalType.resolveGenerics();
-    PsiClass superClass = originalResolveResult.getElement();
-    if (superClass == null) {
-      return originalType;
-    }
-
-    String qualifiedName = superClass.getQualifiedName();
-    if (qualifiedName != null && !PsiSearchScopeUtil.isInScope(resolveScope, superClass)) {
-      final PsiFile file = superClass.getContainingFile();
-      if (file == null || !file.getViewProvider().isPhysical()) {
-        return originalType;
-      }
-      PsiClass originalSuperClass = superClass;
-      PsiSubstitutor originalSubstitutor = originalResolveResult.getSubstitutor();
-      superClass = JavaPsiFacade.getInstance(superClass.getProject()).findClass(qualifiedName, resolveScope);
-      if (superClass == null) {
-        return null;
-      }
-
-      PsiTypeParameter[] typeParameters = superClass.getTypeParameters();
-      PsiTypeParameter[] originalTypeParameters = originalSuperClass.getTypeParameters();
-      if (typeParameters.length != originalTypeParameters.length) return null;
-
-      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      for (int i = 0; i < originalTypeParameters.length; i++) {
-        PsiType originalSubstitute = originalSubstitutor.substitute(originalTypeParameters[i]);
-        if (originalSubstitute != null) {
-          PsiType substitute = originalSubstitute.accept(new PsiTypeVisitor<PsiType>() {
-            @Nullable
-            @Override
-            public PsiType visitClassType(PsiClassType classType) {
-              return correctType(classType, resolveScope);
-            }
-          });
-          if (substitute == null) return null;
-
-          substitutor = substitutor.put(typeParameters[i], substitute);
-        }
-      }
-      return JavaPsiFacade.getElementFactory(superClass.getProject()).createType(superClass, substitutor);
-    }
-
-    return originalType;
+    return new TypeCorrector(resolveScope).mapType(originalType);
   }
 
   private static boolean processSuperTypes(@NotNull PsiClass aClass,

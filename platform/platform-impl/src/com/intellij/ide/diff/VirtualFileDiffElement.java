@@ -96,7 +96,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   @Override
   @Nullable
   public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
-    if (project == null) return null;
+    if (project == null || project.isDefault()) return null;
     return new OpenFileDescriptor(project, myFile);
   }
 

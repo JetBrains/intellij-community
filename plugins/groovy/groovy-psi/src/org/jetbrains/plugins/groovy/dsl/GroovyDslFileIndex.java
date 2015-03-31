@@ -144,11 +144,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @Nullable
   public static String getError(VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).error;
+    return DslActivationStatus.getInstance().getGdslFileInfo(file).error;
   }
 
   public static boolean isActivated(VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).status == Status.ACTIVE;
+    return DslActivationStatus.getInstance().getGdslFileInfo(file).status == Status.ACTIVE;
   }
 
   public static void activate(final VirtualFile vfile) {
@@ -157,7 +157,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   public static Status getStatus(final VirtualFile file) {
-    return DslActivationStatus.getInstance().get(file).status;
+    return DslActivationStatus.getInstance().getGdslFileInfo(file).status;
   }
 
   private static void clearScriptCache() {
@@ -181,7 +181,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static void setStatusAndError(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
-    final DslActivationStatus.Entry entry = DslActivationStatus.getInstance().get(vfile);
+    final DslActivationStatus.Entry entry = DslActivationStatus.getInstance().getGdslFileInfo(vfile);
     entry.status = status;
     entry.error = error;
   }
@@ -314,16 +314,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       @Nullable
       @Override
       public Result<List<VirtualFile>> compute() {
-        final List<VirtualFile> result = ContainerUtil.newArrayList();
-        result.addAll(getBundledGdslFiles());
-        result.addAll(getProjectGdslFiles(project));
+         final List<VirtualFile> result = ContainerUtil.newArrayList();
+        getBundledGdslFiles(result);
+        getProjectGdslFiles(project, result);
         return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
     });
   }
 
-  private static List<VirtualFile> getBundledGdslFiles() {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+  private static List<VirtualFile> getBundledGdslFiles(List<VirtualFile> result) {
+    if (result == null) result = ContainerUtil.newArrayList();
     for (File file : getBundledScriptFolders()) {
       if (file.exists()) {
         File[] children = file.listFiles();
@@ -342,8 +342,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return result;
   }
 
-  private static List<VirtualFile> getProjectGdslFiles(Project project) {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+  private static List<VirtualFile> getProjectGdslFiles(Project project, List<VirtualFile> result) {
+    if (result == null) result = ContainerUtil.newArrayList();
+
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
