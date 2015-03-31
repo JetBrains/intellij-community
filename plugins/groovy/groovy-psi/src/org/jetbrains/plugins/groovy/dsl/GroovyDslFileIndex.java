@@ -314,16 +314,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       @Nullable
       @Override
       public Result<List<VirtualFile>> compute() {
-        final List<VirtualFile> result = ContainerUtil.newArrayList();
-        result.addAll(getBundledGdslFiles());
-        result.addAll(getProjectGdslFiles(project));
+         final List<VirtualFile> result = ContainerUtil.newArrayList();
+        getBundledGdslFiles(result);
+        getProjectGdslFiles(project, result);
         return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
     });
   }
 
-  private static List<VirtualFile> getBundledGdslFiles() {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+  private static List<VirtualFile> getBundledGdslFiles(List<VirtualFile> result) {
+    if (result == null) result = ContainerUtil.newArrayList();
     for (File file : getBundledScriptFolders()) {
       if (file.exists()) {
         File[] children = file.listFiles();
@@ -342,8 +342,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return result;
   }
 
-  private static List<VirtualFile> getProjectGdslFiles(Project project) {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+  private static List<VirtualFile> getProjectGdslFiles(Project project, List<VirtualFile> result) {
+    if (result == null) result = ContainerUtil.newArrayList();
+
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
