@@ -38,7 +38,6 @@ import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -191,18 +190,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           returnType.assertValid(typeProvider.toString());
         }
         return returnType;
-      }
-    }
-    if (context.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
-      final PyAnnotation annotation = getAnnotation();
-      if (annotation != null) {
-        final PyType type = context.getType(annotation);
-        if (type != null) {
-          if (PyTypingTypeProvider.isAny(type)) {
-            return null;
-          }
-          return type;
-        }
       }
     }
     final PyType docStringType = getReturnTypeFromDocString();

@@ -33,7 +33,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -227,16 +226,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           final Ref<PyType> resultRef = provider.getParameterType(this, func, context);
           if (resultRef != null) {
             return resultRef.get();
-          }
-        }
-        final PyAnnotation annotation = getAnnotation();
-        if (annotation != null) {
-          final PyType type = context.getType(annotation);
-          if (type != null) {
-            if (PyTypingTypeProvider.isAny(type)) {
-              return null;
-            }
-            return type;
           }
         }
         if (context.maySwitchToAST(this)) {

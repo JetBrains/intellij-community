@@ -172,9 +172,32 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (genericType != null) {
       return genericType;
     }
+    final Ref<PyType> classType = getClassType(expression, context);
+    if (classType != null) {
+      return classType.get();
+    }
     final PyType stringBasedType = getStringBasedType(expression, context);
     if (stringBasedType != null) {
       return stringBasedType;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getClassType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(expression);
+    if (type != null && isAny(type)) {
+      return Ref.create();
+    }
+    if (type instanceof PyClassLikeType) {
+      final PyClassLikeType classType = (PyClassLikeType)type;
+      if (classType.isDefinition()) {
+        final PyType instanceType = classType.toInstance();
+        return Ref.create(instanceType);
+      }
+    }
+    else if (type instanceof PyNoneType) {
+      return Ref.create(type);
     }
     return null;
   }
