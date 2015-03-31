@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
   @Override
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(myPathMacroManager.createTrackingSubstitutor(), myProject) {
+      @NotNull
       @Override
       public StorageData createIprStorageData(@NotNull String filePath) {
         return new IdeaIprStorageData(ROOT_TAG_NAME, myProject, filePath);

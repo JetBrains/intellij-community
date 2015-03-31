@@ -33,6 +33,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     myProject = project;
   }
 
+  @NotNull
   @Override
   protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
     if (fileSpec.equals(StoragePathMacros.PROJECT_FILE)) {
@@ -46,6 +47,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     }
   }
 
+  @NotNull
   protected StorageData createIprStorageData(@NotNull String filePath) {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
