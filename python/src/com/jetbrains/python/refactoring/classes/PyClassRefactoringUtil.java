@@ -24,11 +24,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
@@ -40,6 +42,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +56,6 @@ public final class PyClassRefactoringUtil {
   private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
   private static final Key<Boolean> ENCODED_USE_FROM_IMPORT = Key.create("PyEncodedUseFromImport");
   private static final Key<String> ENCODED_IMPORT_AS = Key.create("PyEncodedImportAs");
-  /**
-   * Existence of value for this key means that given element was imported from the module via {@code __all__}, but nonetheless unresolved,
-   * because it was defined indirectly, e.g. via {@code globals()), {@code sys.modules}, etc. In this case {@link #ENCODED_IMPORT}
-   * will point to {@code __all__} itself, and the only way to know element's name is to extract it from the corresponding import element
-   * and then save as copyable user data using this key.
-   */
-  private static final Key<String> DYNAMIC_IMPORTED_NAME = Key.create("PyDynamicImportedName");
 
 
   private PyClassRefactoringUtil() {
@@ -270,17 +266,6 @@ public final class PyClassRefactoringUtil {
           target = c;
         }
       }
-      if (target instanceof PyTargetExpression && PyNames.ALL.equals(target.getName())) {
-        final PsiFile srcModule = target.getContainingFile();
-        final PsiFile destModule = node.getContainingFile();
-        final QualifiedName allModulePath = QualifiedNameFinder.findCanonicalImportPath(srcModule, node);
-        final String importedName = node.getCopyableUserData(DYNAMIC_IMPORTED_NAME);
-        if (allModulePath != null && importedName != null) {
-          final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(destModule, srcModule);
-          AddImportHelper.addOrUpdateFromImportStatement(destModule, allModulePath.toString(), importedName, asName, priority, null);
-        }
-        return;
-      }
       if (target == null) return;
       if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
       if (ArrayUtil.contains(target, otherMovedElements)) return;
@@ -295,7 +280,6 @@ public final class PyClassRefactoringUtil {
       node.putCopyableUserData(ENCODED_IMPORT, null);
       node.putCopyableUserData(ENCODED_IMPORT_AS, null);
       node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
-      node.putCopyableUserData(DYNAMIC_IMPORTED_NAME, null);
     }
   }
 
@@ -397,7 +381,7 @@ public final class PyClassRefactoringUtil {
       return;
     }
     final List<PsiElement> allResolveResults = multiResolveExpression(node);
-    final PsiElement target = ContainerUtil.getFirstItem(allResolveResults);
+    PsiElement target = ContainerUtil.getFirstItem(allResolveResults);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       final NameDefiner importElement = getImportElement(node);
       if (!PyUtil.inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
@@ -408,7 +392,7 @@ public final class PyClassRefactoringUtil {
           if (result instanceof PyImportElement) {
             final QualifiedName importedQName = ((PyImportElement)result).getImportedQName();
             if (importedQName != null) {
-              node.putCopyableUserData(DYNAMIC_IMPORTED_NAME, importedQName.toString());
+              target = new DynamicNamedElement(target.getContainingFile(), importedQName.toString());
               break;
             }
           }
@@ -621,5 +605,36 @@ public final class PyClassRefactoringUtil {
     final PyAssignmentStatement assignmentStatement = generator.createFromText(level, PyAssignmentStatement.class, text);
     //TODO: Add metaclass to the top. Add others between last attributeName and first method
     return PyUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
+  }
+
+  private static class DynamicNamedElement extends LightElement implements PsiNamedElement {
+    private final PsiFile myFile;
+    private final String myName;
+
+    public DynamicNamedElement(@NotNull PsiFile file, @NotNull String name) {
+      super(file.getManager(), file.getLanguage());
+      myName = name;
+      myFile = file;
+    }
+
+    @Override
+    public String toString() {
+      return "DynamicNamedElement(file='" + getContainingFile().getName() + "', name='" + getName() +"')";
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return myFile;
+    }
+
+    @Override
+    public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+      return null;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
   }
 }
