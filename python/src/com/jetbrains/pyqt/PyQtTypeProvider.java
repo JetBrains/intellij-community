@@ -15,6 +15,7 @@
  */
 package com.jetbrains.pyqt;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallable;
@@ -36,7 +37,7 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
   private static final String ourQt4Signal = "pyqtSignal";
 
   @Override
-  public PyType getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (PyNames.INIT.equals(callable.getName()) && callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
       final PyClass containingClass = function.getContainingClass();
@@ -46,8 +47,10 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
           final QualifiedName name = QualifiedName.fromDottedString(classQName);
           final String qtVersion = name.getComponents().get(0);
           final PyClass aClass = PyClassNameIndex.findClass(qtVersion + "." + ourQtBoundSignal, function.getProject());
-          if (aClass != null)
-            return new PyClassTypeImpl(aClass, false);
+          if (aClass != null) {
+            final PyType type = new PyClassTypeImpl(aClass, false);
+            return Ref.create(type);
+          }
         }
       }
     }
