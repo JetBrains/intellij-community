@@ -439,8 +439,9 @@ new FooT().whoAmI()
   private SuspendContextImpl waitForBreakpoint() {
     Semaphore semaphore = new Semaphore()
     semaphore.down()
+    def process = debugProcess
     // wait for all events processed
-    debugProcess.managerThread.schedule(new DebuggerCommandImpl() {
+    process.managerThread.schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
         semaphore.up();
@@ -450,13 +451,13 @@ new FooT().whoAmI()
     assert finished: 'Too long debugger actions'
 
     int i = 0
-    def suspendManager = debugProcess.suspendManager
-    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !debugProcess.processHandler.processTerminated) {
+    def suspendManager = process.suspendManager
+    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !process.processHandler.processTerminated) {
       Thread.sleep(10)
     }
 
     def context = suspendManager.pausedContext
-    assert context: "too long process, terminated=$debugProcess.processHandler.processTerminated"
+    assert context: "too long process, terminated=${process.processHandler.processTerminated}"
     return context
   }
 
