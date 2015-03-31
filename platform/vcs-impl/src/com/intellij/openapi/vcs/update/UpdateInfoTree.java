@@ -200,7 +200,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         }
         return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
       }
-    });
+    }, true);
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
