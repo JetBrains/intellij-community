@@ -18,6 +18,8 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -218,13 +220,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         @Override
         public void run() {
           // give button chance to handle action listener
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               myForcePressed = false;
               myPopup = null;
             }
-          });
+          }, ModalityState.any());
           repaint();
           fireStateChanged();
         }
