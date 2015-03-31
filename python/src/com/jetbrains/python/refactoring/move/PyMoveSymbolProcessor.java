@@ -34,7 +34,7 @@ public class PyMoveSymbolProcessor {
   private final List<UsageInfo> myUsages;
   private final PsiElement[] myAllMovedElements;
   private final List<PsiFile> myOptimizeImportTargets = new ArrayList<PsiFile>();
-  private final List<ScopeOwner> myScopeOwnersWithGlobal = new ArrayList<ScopeOwner>();
+  private final Set<ScopeOwner> myScopeOwnersWithGlobal = new HashSet<ScopeOwner>();
 
   public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
                                @NotNull PyFile destination,
