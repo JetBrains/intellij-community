@@ -252,7 +252,7 @@ public class EclipseClasspathWriter {
     if (path != null) {
       orderEntry.setAttribute(EclipseXml.PATH_ATTR, path);
     }
-    if (index == -1) {
+    if (index == -1 || index >= classpathRoot.getContentSize()) {
       classpathRoot.addContent(orderEntry);
     }
     else {

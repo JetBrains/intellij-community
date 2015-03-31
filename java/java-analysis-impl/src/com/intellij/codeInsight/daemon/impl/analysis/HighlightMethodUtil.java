@@ -88,6 +88,7 @@ public class HighlightMethodUtil {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
       if (!PsiUtil.isAccessible(containingFile.getProject(), superMethod, method, null)) continue;
+      if (!includeRealPositionInfo && MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, includeRealPositionInfo);
       if (info != null) return info;
     }
@@ -1039,6 +1040,7 @@ public class HighlightMethodUtil {
     boolean isInterface = aClass != null && aClass.isInterface();
     boolean isExtension = method.hasModifierProperty(PsiModifier.DEFAULT);
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
 
     final List<IntentionAction> additionalFixes = new ArrayList<IntentionAction>();
     String description = null;
@@ -1052,7 +1054,7 @@ public class HighlightMethodUtil {
       }
     }
     else if (isInterface) {
-      if (!isExtension && !isStatic) {
+      if (!isExtension && !isStatic && !isPrivate) {
         description = JavaErrorMessages.message("interface.methods.cannot.have.body");
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false));

@@ -98,7 +98,9 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
           if (tooltip.length() > 0) {
             tooltip.append(UIUtil.BORDER_LINE);
           }
-          tooltip.append(UIUtil.getHtmlBody(info));
+          if (info != null) {
+            tooltip.append(UIUtil.getHtmlBody(info));
+          }
         }
         return XmlStringUtil.wrapInHtml(tooltip);
       }

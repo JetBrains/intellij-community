@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -53,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.spock.SpockUtils;
@@ -62,10 +62,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
-
 public class GroovyTypeCheckVisitorHelper {
-
+  
+  @SuppressWarnings("unchecked") 
+  private static final Function<PsiType, PsiType> id = (Function<PsiType, PsiType>)Function.ID;
+  
   @Nullable
   @Contract("null -> null")
   protected static GrListOrMap getTupleInitializer(@Nullable GrExpression initializer) {
@@ -170,17 +171,13 @@ public class GroovyTypeCheckVisitorHelper {
                                              @Nullable GrArgumentList argumentList) {
     if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
     final List<GrExpression> args = getExpressionArgumentsOfCall(argumentList);
-
-    if (args == null) {
-      return LocalQuickFix.EMPTY_ARRAY;
-    }
-
+    if (args == null) return LocalQuickFix.EMPTY_ARRAY;
+    
+    final List<Pair<Integer, PsiType>> allErrors = new ArrayList<Pair<Integer, PsiType>>();
     final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
-
-    List<Pair<Integer, PsiType>> allErrors = new ArrayList<Pair<Integer, PsiType>>();
     for (GrClosureSignature closureSignature : signatures) {
-      final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.<PsiType>mapSimpleSignatureWithErrors(
-        closureSignature, argumentTypes, Function.ID, argumentList, 1
+      final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
+        closureSignature, argumentTypes, id, argumentList, 1
       );
       if (map != null) {
         final List<Pair<Integer, PsiType>> errors = map.getErrors();
@@ -196,7 +193,6 @@ public class GroovyTypeCheckVisitorHelper {
     for (Pair<Integer, PsiType> error : allErrors) {
       fixes.add(new ParameterCastFix(error.first, error.second, args.get(error.first)));
     }
-
     return fixes.toArray(new LocalQuickFix[fixes.size()]);
   }
 
@@ -269,10 +265,9 @@ public class GroovyTypeCheckVisitorHelper {
 
   @Nullable
   public static List<GrExpression> getExpressionArgumentsOfCall(@NotNull GrArgumentList argumentList) {
-    final GrExpression[] argArray = argumentList.getExpressionArguments();
     final ArrayList<GrExpression> args = ContainerUtil.newArrayList();
 
-    for (GrExpression arg : argArray) {
+    for (GroovyPsiElement arg : argumentList.getAllArguments()) {
       if (arg instanceof GrSpreadArgument) {
         GrExpression spreaded = ((GrSpreadArgument)arg).getArgument();
         if (spreaded instanceof GrListOrMap && !((GrListOrMap)spreaded).isMap()) {
@@ -282,8 +277,11 @@ public class GroovyTypeCheckVisitorHelper {
           return null;
         }
       }
-      else {
-        args.add(arg);
+      else if (arg instanceof GrExpression) {
+        args.add((GrExpression)arg);
+      }
+      else if (arg instanceof GrNamedArgument) {
+        args.add(((GrNamedArgument)arg).getExpression());
       }
     }
 

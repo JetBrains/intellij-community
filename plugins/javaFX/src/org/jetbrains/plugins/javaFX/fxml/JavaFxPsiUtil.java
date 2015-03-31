@@ -423,7 +423,16 @@ public class JavaFxPsiUtil {
   public static String isAbleToInstantiate(final PsiClass psiClass) {
     if(psiClass.getConstructors().length > 0) {
       for (PsiMethod constr : psiClass.getConstructors()) {
-        if (constr.getParameterList().getParametersCount() == 0) return null;
+        final PsiParameter[] parameters = constr.getParameterList().getParameters();
+        if (parameters.length == 0) return null;
+        boolean annotated = true;
+        for (PsiParameter parameter : parameters) {
+          if (!AnnotationUtil.isAnnotated(parameter, JavaFxCommonClassNames.JAVAFX_BEANS_NAMED_ARG, false)) {
+            annotated = false;
+            break;
+          }
+        }
+        if (annotated) return null;
       }
       final PsiMethod valueOf = findValueOfMethod(psiClass);
       if (valueOf == null) {
@@ -527,15 +536,15 @@ public class JavaFxPsiUtil {
     return false;
   }
 
-  public static PsiType getWrappedPropertyType(PsiField field, final Project project, final Map<String, PsiType> typeMap) {
-    final PsiType fieldType = field.getType();
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
-    final PsiClass fieldClass = resolveResult.getElement();
-    if (fieldClass == null) return fieldType;
-    return CachedValuesManager.getManager(project).getCachedValue(field, new CachedValueProvider<PsiType>() {
+  public static PsiType getWrappedPropertyType(final PsiField field, final Project project, final Map<String, PsiType> typeMap) {
+    return CachedValuesManager.getCachedValue(field, new CachedValueProvider<PsiType>() {
       @Nullable
       @Override
       public Result<PsiType> compute() {
+        final PsiType fieldType = field.getType();
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
+        final PsiClass fieldClass = resolveResult.getElement();
+        if (fieldClass == null) return Result.create(fieldType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         PsiType substitute = null;
         for (String typeName : typeMap.keySet()) {
           if (InheritanceUtil.isInheritor(fieldType, typeName)) {

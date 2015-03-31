@@ -171,10 +171,10 @@ public abstract class AbstractExternalFilter {
   }
 
   protected void doBuildFromStream(String url, Reader input, StringBuilder data) throws IOException {
-    doBuildFromStream(url, input, data, true);
+    doBuildFromStream(url, input, data, true, true);
   }
 
-  protected void doBuildFromStream(final String url, Reader input, final StringBuilder data, boolean searchForEncoding) throws IOException {
+  protected void doBuildFromStream(final String url, Reader input, final StringBuilder data, boolean searchForEncoding, boolean matchStart) throws IOException {
     Trinity<Pattern, Pattern, Boolean> settings = getParseSettings(url);
     @NonNls Pattern startSection = settings.first;
     @NonNls Pattern endSection = settings.second;
@@ -215,14 +215,14 @@ public abstract class AbstractExternalFilter {
         }
       }
     }
-    while (read != null && !startSection.matcher(StringUtil.toUpperCase(read)).find());
+    while (read != null && matchStart && !startSection.matcher(StringUtil.toUpperCase(read)).find());
 
     if (input instanceof MyReader && contentEncoding != null && !contentEncoding.equalsIgnoreCase(CharsetToolkit.UTF8) &&
         !contentEncoding.equals(((MyReader)input).getEncoding())) {
       //restart page parsing with correct encoding
       try {
         data.setLength(0);
-        doBuildFromStream(url, new MyReader(((MyReader)input).myInputStream, contentEncoding), data, false);
+        doBuildFromStream(url, new MyReader(((MyReader)input).myInputStream, contentEncoding), data, false, true);
       }
       catch (ProcessCanceledException e) {
         return;
@@ -232,6 +232,14 @@ public abstract class AbstractExternalFilter {
 
     if (read == null) {
       data.setLength(0);
+      if (matchStart && input instanceof MyReader) {
+        try {
+          final MyReader reader = contentEncoding != null ? new MyReader(((MyReader)input).myInputStream, contentEncoding)
+                                                          : new MyReader(((MyReader)input).myInputStream, ((MyReader)input).getEncoding());
+          doBuildFromStream(url, reader, data, false, false);
+        }
+        catch (ProcessCanceledException ignored) {}
+      }
       return;
     }
 

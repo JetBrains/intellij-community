@@ -31,8 +31,10 @@ public interface ExternalDocumentationProvider {
   String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls);
 
   /**
-   * Quick check for existence of external documentation for specified element. Called from action update, so must be fast.
-   * If not implemented, update check is performed by calling {@link DocumentationProvider#getUrlFor(com.intellij.psi.PsiElement, com.intellij.psi.PsiElement)}.
+   * Quick check for existence of external documentation for specified element which can be displayed in external browser. 
+   * Called from action update, so must be fast. If not implemented, update check is performed by calling 
+   * {@link DocumentationProvider#getUrlFor(PsiElement, PsiElement)} and retaining only 'browsable' urls
+   * (see {@link com.intellij.ide.BrowserUtil#canBeBrowsed(String)}).
    *
    * @param element the element to check for existence of documentation
    * @param originalElement the element at caret (on which the action was invoked)

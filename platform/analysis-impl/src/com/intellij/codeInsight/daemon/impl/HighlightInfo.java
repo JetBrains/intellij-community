@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -810,9 +811,16 @@ public class HighlightInfo implements Segment {
 
         myCanCleanup = toolWrapper.isCleanupTool();
 
-        ContainerUtil.addIfNotNull(newOptions, intentionManager.createFixAllIntention(toolWrapper, myAction));
+        final IntentionAction fixAllIntention = intentionManager.createFixAllIntention(toolWrapper, myAction);
         InspectionProfileEntry wrappedTool = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
                                                                                                : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
+        if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
+          if (fixAllIntention != null) {
+            return Collections.<IntentionAction>singletonList(fixAllIntention);
+          }
+          return Collections.<IntentionAction>emptyList();
+        }
+        ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
           final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
           if (suppressActions != null) {

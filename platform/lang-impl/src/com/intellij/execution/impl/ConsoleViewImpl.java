@@ -100,10 +100,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
 
-  static {
+  private static boolean ourTypedHandlerInitialized;
+
+  private static synchronized void initTypedHandler() {
+    if (ourTypedHandlerInitialized) return;
     final EditorActionManager actionManager = EditorActionManager.getInstance();
     final TypedAction typedAction = actionManager.getTypedAction();
     typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
+    ourTypedHandlerInitialized = true;
   }
 
 
@@ -281,6 +285,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                             boolean usePredefinedMessageFilter)
   {
     super(new BorderLayout());
+    initTypedHandler();
     myIsViewer = viewer;
     myState = initialState;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);

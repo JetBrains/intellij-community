@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
@@ -61,7 +61,12 @@ public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, Refer
         if (file.getLanguage() == SPILanguage.INSTANCE) {
           final PsiReference reference = file.getReference();
           if (reference != null) {
-            consumer.process(reference);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                consumer.process(reference);
+              }
+            });
           }
         }
       }
@@ -80,9 +85,13 @@ public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, Refer
           for (PsiFile file : files) {
             if (file.getLanguage() == SPILanguage.INSTANCE) {
               final PsiReference[] references = file.getReferences();
-              for (PsiReference reference : references) {
+              for (final PsiReference reference : references) {
                 if (reference.getCanonicalText().equals(qualifiedName)) {
-                  consumer.process(reference);
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      consumer.process(reference);
+                    }
+                  });
                 }
               }
             }

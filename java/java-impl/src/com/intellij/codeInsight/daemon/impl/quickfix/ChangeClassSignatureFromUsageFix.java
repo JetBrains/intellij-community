@@ -103,8 +103,10 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
         }
       }
 
-      final PsiClassType type = (PsiClassType)typeElement.getType();
-      result.put(new TypeParameterInfo(suggester.suggest(type), type), factory.createTypeCodeFragment(type.getClassName(), typeElement, true));
+      final PsiType type = typeElement.getType();
+      final String suggestedName = type instanceof PsiClassType ? suggester.suggest((PsiClassType)type) : suggester.suggestUnusedName("T");
+      result.put(new TypeParameterInfo(suggestedName, type),
+                 factory.createTypeCodeFragment(suggestedName, typeElement, true));
     }
     return result;
   }

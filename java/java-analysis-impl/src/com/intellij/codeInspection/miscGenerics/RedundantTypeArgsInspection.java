@@ -129,7 +129,9 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
             final PsiCallExpression copy = (PsiCallExpression)expression.copy(); //see IDEADEV-8174
             try {
-              copy.getTypeArgumentList().delete();
+              final PsiMethodCallExpression expr = (PsiMethodCallExpression)
+                JavaPsiFacade.getInstance(copy.getProject()).getElementFactory().createExpressionFromText("foo()", null);
+              copy.getTypeArgumentList().replace(expr.getTypeArgumentList());
               if (copy.resolveMethod() != element) return;
             }
             catch (IncorrectOperationException e) {

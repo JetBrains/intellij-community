@@ -29,6 +29,8 @@ public class ReplaceConditionalWithIfTest extends IPPTestCase {
     public void testConditionalInIf() { doTest(); }
     public void testConditionalInBinaryExpression() { doTest(); }
     public void testArrayInitializer() { doTest(); }
+    public void testInsideExprLambda() { doTest(); }
+    public void testInsideExprLambdaWithParams() { doTest(); }
 
     @Override
     protected String getIntentionName() {

@@ -75,20 +75,32 @@ public class JavaCompletionUtil {
   public static final OffsetKey LPAREN_OFFSET = OffsetKey.create("lparen");
   public static final OffsetKey RPAREN_OFFSET = OffsetKey.create("rparen");
   public static final OffsetKey ARG_LIST_END_OFFSET = OffsetKey.create("argListEnd");
-  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
-    @Override
-    @Nullable
-    public ExpectedTypeInfo[] fun(final CompletionLocation location) {
-      if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
-        .accepts(location.getCompletionParameters().getPosition())) {
-        return ExpectedTypeInfo.EMPTY_ARRAY;
-      }
+  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes",
+                                                                                                               new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
+                                                                                                                 @Override
+                                                                                                                 @Nullable
+                                                                                                                 public ExpectedTypeInfo[] fun(
+                                                                                                                   final CompletionLocation location) {
+                                                                                                                   if (PsiJavaPatterns
+                                                                                                                     .psiElement()
+                                                                                                                     .beforeLeaf(
+                                                                                                                       PsiJavaPatterns
+                                                                                                                         .psiElement()
+                                                                                                                         .withText("."))
+                                                                                                                     .accepts(location
+                                                                                                                                .getCompletionParameters()
+                                                                                                                                .getPosition())) {
+                                                                                                                     return ExpectedTypeInfo.EMPTY_ARRAY;
+                                                                                                                   }
 
-      return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
-    }
-  });
+                                                                                                                   return JavaSmartCompletionContributor
+                                                                                                                     .getExpectedTypes(
+                                                                                                                       location
+                                                                                                                         .getCompletionParameters());
+                                                                                                                 }
+                                                                                                               });
   private static final ElementPattern<PsiElement> LEFT_PAREN = psiElement(JavaTokenType.LPARENTH).andOr(psiElement().withParent(
-      PsiExpressionList.class), psiElement().afterLeaf(".", PsiKeyword.NEW));
+    PsiExpressionList.class), psiElement().afterLeaf(".", PsiKeyword.NEW));
 
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");
 

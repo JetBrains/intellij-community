@@ -28,6 +28,14 @@ import java.util.Map;
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
   private final Map<Class<?>, Object> myDefaultBeans = new THashMap<Class<?>, Object>();
 
+  public SkipDefaultValuesSerializationFilters() { }
+
+  public SkipDefaultValuesSerializationFilters(Object... defaultBeans) {
+    for (Object defaultBean : defaultBeans) {
+      myDefaultBeans.put(defaultBean.getClass(), defaultBean);
+    }
+  }
+
   @Override
   protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
     Object defValue = accessor.read(getDefaultBean(bean));

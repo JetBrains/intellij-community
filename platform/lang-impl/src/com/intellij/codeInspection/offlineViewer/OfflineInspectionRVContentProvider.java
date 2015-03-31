@@ -62,6 +62,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
+    if (treePaths == null) return QuickFixAction.EMPTY; 
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     final Map<RefEntity, Set<QuickFix>> actions = new HashMap<RefEntity, Set<QuickFix>>();
     for (TreePath selectionPath : treePaths) {

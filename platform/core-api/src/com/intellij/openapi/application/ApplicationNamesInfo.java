@@ -31,11 +31,16 @@ public class ApplicationNamesInfo {
   @NonNls private static final String ATTRIBUTE_PRODUCT = "product";
   @NonNls private static final String ATTRIBUTE_FULL_NAME = "fullname";
   @NonNls private static final String ATTRIBUTE_SCRIPT = "script";
+  @NonNls private static final String ELEMENT_VERSION = "version";
+  @NonNls private static final String ATTRIBUTE_MAJOR = "major";
+  @NonNls private static final String ATTRIBUTE_MINOR = "minor";
 
   private String myProductName;
   private String myFullProductName;
   private String myLowercaseProductName;
   private String myScriptName;
+  private String myMajorVersion;
+  private String myMinorVersion;
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
@@ -64,6 +69,12 @@ public class ApplicationNamesInfo {
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
     myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase());
     myScriptName = names.getAttributeValue(ATTRIBUTE_SCRIPT);
+
+    final Element version = rootElement.getChild(ELEMENT_VERSION);
+    if (version != null) {
+      myMajorVersion = version.getAttributeValue(ATTRIBUTE_MAJOR);
+      myMinorVersion = version.getAttributeValue(ATTRIBUTE_MINOR);
+    }
   }
 
   /**
@@ -92,6 +103,14 @@ public class ApplicationNamesInfo {
    */
   public String getScriptName() {
     return myScriptName;
+  }
+
+  public String getMinorVersion() {
+    return myMinorVersion;
+  }
+
+  public String getMajorVersion() {
+    return myMajorVersion;
   }
 
   public static String getComponentName() {

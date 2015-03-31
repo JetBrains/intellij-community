@@ -221,7 +221,7 @@ libraryLicense(name: "Maven3", libraryNames: ["Maven3", "maven-dependency-tree-1
 libraryLicense(name: "Gradle", version: "1.12", license: "Apache 2.0", url: "http://gradle.org/", licenseUrl: "http://gradle.org/license")
 libraryLicense(name: "gradle-tooling-api-2.0.jar", version: "2.0", license: "Apache 2.0", url: "http://gradle.org/", licenseUrl: "http://gradle.org/license")
 libraryLicense(name: "GradleJnaPosix", version: "1.0.3", license: "LGPL 2.1", url: "http://www.jruby.org/", licenseUrl: "http://www.gnu.org/licenses/lgpl-2.1.txt")
-libraryLicense(name: "Slf4j", version: "1.7.2", license: "MIT License", url: "http://slf4j.org/", licenseUrl: "http://slf4j.org/license.html")
+libraryLicense(name: "Slf4j", version: "1.7.10", license: "MIT License", url: "http://slf4j.org/", licenseUrl: "http://slf4j.org/license.html")
 libraryLicense(name: "GradleGuava", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Jsr305", version: "1.3.9", license: "New BSD", url: "http://code.google.com/p/jsr-305/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "markdownj", attachedTo: "tasks-core", version: "", license: "BSD", url: "http://markdownj.org/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")

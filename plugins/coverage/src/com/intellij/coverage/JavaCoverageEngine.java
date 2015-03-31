@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -593,8 +594,9 @@ public class JavaCoverageEngine extends CoverageEngine {
           builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
           final SourceCodeProvider sourceCodeProvider = new SourceCodeProvider() {
             public String getSourceCode(@NotNull final String classname) throws IOException {
-              return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+              return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<String>() {
                 public String compute() {
+                  if (project.isDisposed()) return "";
                   final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
                   return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
                 }
@@ -611,8 +613,9 @@ public class JavaCoverageEngine extends CoverageEngine {
                 final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
-                  final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(new Computable<PsiClass>() {
                     public PsiClass compute() {
+                      if (project.isDisposed()) return null;
                       return psiFacade.findClass(aClass.getFQName(), productionScope);
                     }
                   });

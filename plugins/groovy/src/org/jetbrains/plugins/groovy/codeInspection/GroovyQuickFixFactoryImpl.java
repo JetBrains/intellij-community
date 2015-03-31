@@ -67,7 +67,8 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public IntentionAction createCreateFieldFromUsageFix(GrReferenceExpression expr) {
-    return new CreateFieldFromUsageFix(expr);
+    final String referenceName = expr.getReferenceName();
+    return referenceName == null ? null : new CreateFieldFromUsageFix(expr, referenceName);
   }
 
   @Override

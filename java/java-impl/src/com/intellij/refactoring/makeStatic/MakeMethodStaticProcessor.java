@@ -83,7 +83,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   @Override
   protected MultiMap<PsiElement, String> getConflictDescriptions(UsageInfo[] usages) {
     MultiMap<PsiElement, String> descriptions = super.getConflictDescriptions(usages);
-    if (mySettings.isMakeClassParameter()) {
+    if (mySettings.isMakeClassParameter() || mySettings.isMakeFieldParameters()) {
       for (UsageInfo usage : usages) {
         PsiElement element = usage.getElement();
         if (element instanceof PsiMethodReferenceExpression) {
@@ -329,7 +329,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         if (anchor != null) {
           anchor = argList.addAfter(fieldRef, anchor);
         }
-        else {
+        else if (argList != null) {
           if (exprs.length > 0) {
             anchor = argList.addBefore(fieldRef, exprs[0]);
           }

@@ -246,7 +246,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private InvalidArtifact createInvalidArtifact(ArtifactState state, String errorMessage) {
     final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
-    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature("com.intellij.packaging.artifacts.ArtifactType", state.getArtifactType());
+    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature("com.intellij.packaging.artifacts.ArtifactType", state.getArtifactType(), "Artifact");
     return artifact;
   }
 

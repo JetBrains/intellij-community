@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
@@ -33,8 +34,11 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -54,6 +58,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
@@ -105,6 +110,38 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setShowsRootHandles(false);
     myTree.setExpandableItemsEnabled(false);
     RelativeFont.BOLD.install(myTree);
+
+    myTree.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final TreePath path = myTree.getPathForRow(myTree.getLeadSelectionRow());
+        if (path != null) {
+          final String pathInTheTree = StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
+            @Nullable
+            @Override
+            public String fun(Object o) {
+              if (o == path.getPath()[0]) {
+                return null;
+              }
+              else {
+                final MyNode node = extractNode(o);
+                return node != null ? node.myDisplayName : null;
+              }
+            }
+          }), " | ");
+          if (!StringUtil.isEmpty(pathInTheTree)) {
+            return new TextTransferable("File | Settings | " + pathInTheTree);
+          }
+        }
+        return null;
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     myScroller = ScrollPaneFactory.createScrollPane(null, true);
     myScroller.setViewport(new GradientViewport(myTree, 5, 0, 0, 0, true) {

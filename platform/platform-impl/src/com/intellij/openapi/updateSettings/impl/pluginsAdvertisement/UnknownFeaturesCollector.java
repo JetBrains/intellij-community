@@ -46,11 +46,11 @@ public class UnknownFeaturesCollector implements PersistentStateComponent<Elemen
   }
 
   public void registerUnknownRunConfiguration(String configurationName) {
-    registerUnknownFeature("com.intellij.configurationType", configurationName);
+    registerUnknownFeature("com.intellij.configurationType", configurationName, "Run Configuration");
   }
   
-  public void registerUnknownFeature(String featureType, String implementationName) {
-    final UnknownFeature feature = new UnknownFeature(featureType, implementationName);
+  public void registerUnknownFeature(String featureType, String implementationName, String featureDisplayName) {
+    final UnknownFeature feature = new UnknownFeature(featureType, featureDisplayName, implementationName);
     if (!isIgnored(feature)) {
       myUnknownFeatures.add(feature);
     }
@@ -88,7 +88,7 @@ public class UnknownFeaturesCollector implements PersistentStateComponent<Elemen
     myIgnoredUnknownFeatures.clear();
     for (Element element : state.getChildren()) {
       myIgnoredUnknownFeatures.add(
-        new UnknownFeature(element.getAttributeValue(FEATURE_ID), element.getAttributeValue(IMPLEMENTATION_NAME)));
+        new UnknownFeature(element.getAttributeValue(FEATURE_ID), null, element.getAttributeValue(IMPLEMENTATION_NAME)));
     }
   }
 }

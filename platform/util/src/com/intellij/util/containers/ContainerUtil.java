@@ -52,7 +52,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<K, V> map) {
+  public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newHashMap(map);
   }
 

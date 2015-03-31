@@ -18,12 +18,19 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.action.ExternalSystemToggleAction;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
  * @since 10/20/2014
  */
 public class ToggleOfflineAction extends ExternalSystemToggleAction {
+
+  @Override
+  protected boolean isVisible(AnActionEvent e) {
+    if (!super.isVisible(e)) return false;
+    return GradleConstants.SYSTEM_ID.equals(getSystemId(e));
+  }
 
   @Override
   protected boolean doIsSelected(AnActionEvent e) {

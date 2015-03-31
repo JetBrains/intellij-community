@@ -306,7 +306,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
       configurable = myFilter.myContext.getParentConfigurable(configurable);
     }
-    return null;
+    return "preferences";
   }
 
   @Override

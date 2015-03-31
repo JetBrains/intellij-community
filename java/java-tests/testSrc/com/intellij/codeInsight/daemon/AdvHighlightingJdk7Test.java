@@ -63,6 +63,14 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "staticImportConflict/UsageMixed.java", BASE_PATH + "/staticImportConflict", false, false);
   }
 
+  public void testRawInnerClassImport() throws Exception {
+    doTest(BASE_PATH + "raw/p/Class1.java", BASE_PATH + "/raw", false, false);
+  }
+  
+  public void testRawInnerClassImportOnDemand() throws Exception {
+    doTest(BASE_PATH + "rawOnDemand/p/Class1.java", BASE_PATH + "/rawOnDemand", false, false);
+  }
+
   //ambiguous method calls
   private void doTestAmbiguous() throws Exception {
     doTestAmbiguous(JavaSdkVersion.JDK_1_7);

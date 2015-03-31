@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.TaskManager;
@@ -32,6 +33,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -117,6 +119,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myAddCommitMessage.setSelected(repository.isShouldFormatCommitMessage());
     myDocument = EditorFactory.getInstance().createDocument(repository.getCommitMessageFormat());
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
+    myEditor.getSettings().setCaretRowShown(false);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
     myComment.setText("Available placeholders: " + repository.getComment());
     String advertiser = repository.getRepositoryType().getAdvertiser();
@@ -141,6 +144,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     installListener(myLoginAnonymouslyJBCheckBox);
 
     enableButtons();
+    enableEditor();
 
     JComponent customPanel = createCustomPanel();
     if (customPanel != null) {
@@ -234,11 +238,18 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
       try {
         myApplying = true;
         apply();
+        enableEditor();
       }
       finally {
         myApplying = false;
       }
     }
+  }
+
+  private void enableEditor() {
+    boolean selected = myAddCommitMessage.isSelected();
+    UIUtil.setEnabled(myEditorPanel, selected, true);
+    ((EditorEx)myEditor).setRendererMode(!selected);
   }
 
   public JComponent createComponent() {
