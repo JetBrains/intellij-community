@@ -23,14 +23,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -206,15 +209,14 @@ public class VfsImplUtil {
         ourHandlers.put(localPath, record);
 
         final String finalRootPath = localPath;
-        forEachDirectoryComponent(localPath, new Processor<String>() {
+        forEachDirectoryComponent(localPath, new Consumer<String>() {
           @Override
-          public boolean process(String containingDirectoryPath) {
+          public void consume(String containingDirectoryPath) {
             Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
             if (handlers == null) {
               ourDominatorsMap.put(containingDirectoryPath, handlers = ContainerUtil.newTroveSet());
             }
             handlers.add(finalRootPath);
-            return true;
           }
         });
         refresh = true;
@@ -236,11 +238,11 @@ public class VfsImplUtil {
     return t;
   }
 
-  private static void forEachDirectoryComponent(String rootPath, Processor<String> processor) {
+  private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {
     int index = rootPath.lastIndexOf('/');
     while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);
-      if (!processor.process(containingDirectoryPath)) return;
+      consumer.consume(containingDirectoryPath);
       index = rootPath.lastIndexOf('/', index - 1);
     }
   }
@@ -301,14 +303,13 @@ public class VfsImplUtil {
     public static InvalidationState invalidate(@Nullable InvalidationState state, final String path) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
       if (handlerPair != null) {
-        forEachDirectoryComponent(path, new Processor<String>() {
+        forEachDirectoryComponent(path, new Consumer<String>() {
           @Override
-          public boolean process(String containingDirectoryPath) {
+          public void consume(String containingDirectoryPath) {
             Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
             if (handlers != null && handlers.remove(path) && handlers.size() == 0) {
               ourDominatorsMap.remove(containingDirectoryPath);
             }
-            return true;
           }
         });
 
