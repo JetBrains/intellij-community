@@ -31,7 +31,7 @@ import java.util.Map;
  * @author peter
  */
 class TypeCorrector extends PsiTypeMapper {
-  private final Map<PsiClassType, PsiClassType> myResultMap = ContainerUtil.newHashMap();
+  private final Map<PsiClassType, PsiClassType> myResultMap = ContainerUtil.newIdentityHashMap();
   private final GlobalSearchScope myResolveScope;
 
   TypeCorrector(GlobalSearchScope resolveScope) {
