@@ -133,7 +133,8 @@ public class DanglingJavadocInspection extends BaseInspection {
         return;
       }
       if (JavaDocUtil.isInsidePackageInfo(comment) &&
-          PsiTreeUtil.skipSiblingsForward(comment, PsiWhiteSpace.class) instanceof PsiPackageStatement) {
+          PsiTreeUtil.skipSiblingsForward(comment, PsiWhiteSpace.class) instanceof PsiPackageStatement &&
+          "package-info.java".equals(comment.getContainingFile().getName())) {
         return;
       }
       registerError(comment.getFirstChild());

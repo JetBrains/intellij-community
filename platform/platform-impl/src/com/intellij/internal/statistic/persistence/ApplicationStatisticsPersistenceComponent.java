@@ -164,7 +164,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
       public String fun(UsageDescriptor usageDescriptor) {
         final String key = usageDescriptor.getKey();
         final int value = usageDescriptor.getValue();
-        return value > 1 ? key + "=" + value : key;
+        return value != 1 ? key + "=" + value : key;
       }
     }, TOKENIZER);
   }

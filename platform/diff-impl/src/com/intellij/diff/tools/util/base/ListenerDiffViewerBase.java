@@ -71,7 +71,6 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
       @Override
       public void documentChanged(DocumentEvent event) {
         onDocumentChange(event);
-        scheduleRediff();
       }
     };
   }
@@ -92,7 +91,6 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         if (files.contains(event.getFile())) {
           onFileChange(event);
-          scheduleRediff();
         }
       }
 
@@ -100,7 +98,6 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (files.contains(event.getFile())) {
           onFileChange(event);
-          scheduleRediff();
         }
       }
     };
@@ -112,6 +109,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
   @CalledInAwt
   protected void onDocumentChange(@NotNull DocumentEvent event) {
+    scheduleRediff();
   }
 
   @CalledInAwt
@@ -120,6 +118,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
   @CalledInAwt
   protected void onFileChange(@NotNull VirtualFileEvent event) {
+    scheduleRediff();
   }
 
   //

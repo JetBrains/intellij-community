@@ -31,15 +31,16 @@ import java.util.List;
 
 public abstract class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettingsHolder.TextDiffSettings myTextSettings;
+  @NotNull private final List<? extends Editor> myEditors;
+
   @NotNull private final EditorSettingToggleAction[] myActions;
 
-  @NotNull
-  public abstract List<? extends Editor> getEditors();
-
-  public SetEditorSettingsAction(@NotNull TextDiffSettingsHolder.TextDiffSettings settings) {
+  public SetEditorSettingsAction(@NotNull TextDiffSettingsHolder.TextDiffSettings settings,
+                                 @NotNull List<? extends Editor> editors) {
     super("Editor Settings", null, AllIcons.General.SecondaryGroup);
     setPopup(true);
     myTextSettings = settings;
+    myEditors = editors;
 
     myActions = new EditorSettingToggleAction[]{
       new EditorSettingToggleAction("EditorToggleShowWhitespaces") {
@@ -121,7 +122,7 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
   }
 
   public void applyDefaults() {
-    for (Editor editor : getEditors()) {
+    for (Editor editor : myEditors) {
       for (EditorSettingToggleAction action : myActions) {
         action.apply(editor, action.isSelected());
       }
@@ -146,7 +147,7 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      for (Editor editor : getEditors()) {
+      for (Editor editor : myEditors) {
         setSelected(state);
         apply(editor, state);
       }

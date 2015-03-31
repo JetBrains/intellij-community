@@ -324,7 +324,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   public boolean isOptimizedDrawingEnabled() {
-    return !myGlassPane.hasPainters() && myGlassPane.getComponentCount() == 0;
+    return myGlassPane.isVisible();
   }
 
   public ToolWindowsPane getToolWindowsPane() {

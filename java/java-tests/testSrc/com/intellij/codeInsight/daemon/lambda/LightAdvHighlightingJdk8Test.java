@@ -43,6 +43,10 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testStrictfpInsideInterface() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);

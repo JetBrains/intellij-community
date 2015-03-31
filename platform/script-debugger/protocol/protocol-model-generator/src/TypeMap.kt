@@ -9,34 +9,39 @@ import java.util.ArrayList
  */
 class TypeMap {
   private val map = THashMap<Pair<String, String>, TypeData>()
-  private var domainGeneratorMap: Map<String, DomainGenerator>? = null
-  private val typesToGenerate = ArrayList<StandaloneTypeBinding>()
 
-  fun setDomainGeneratorMap(domainGeneratorMap: Map<String, DomainGenerator>) {
-    this.domainGeneratorMap = domainGeneratorMap
-  }
+  var domainGeneratorMap: Map<String, DomainGenerator>? = null
+
+  private val typesToGenerate = ArrayList<StandaloneTypeBinding>()
 
   fun resolve(domainName: String, typeName: String, direction: TypeData.Direction): BoxableType? {
     val domainGenerator = domainGeneratorMap!!.get(domainName)
     if (domainGenerator == null) {
       throw RuntimeException("Failed to find domain generator: " + domainName)
     }
-    return getTypeData(domainName, typeName).get(direction).resolve(this, domainGenerator)
+    return direction.get(getTypeData(domainName, typeName)).resolve(this, domainGenerator)
   }
 
   fun addTypeToGenerate(binding: StandaloneTypeBinding) {
     typesToGenerate.add(binding)
   }
 
-  public fun generateRequestedTypes() {
-    // Size may grow during iteration.
-    //noinspection ForLoopReplaceableByForEach
-    for (i in typesToGenerate.indices) {
-      typesToGenerate.get(i).generate()
-    }
+  fun generateRequestedTypes() {
+    // size may grow during iteration
+    var list = typesToGenerate.copyToArray()
+    typesToGenerate.clear()
+    while (true) {
+      for (binding in list) {
+        binding.generate()
+      }
 
-    for (typeData in map.values()) {
-      typeData.checkComplete()
+      if (typesToGenerate.isEmpty()) {
+        break
+      }
+      else {
+        list = typesToGenerate.copyToArray()
+        typesToGenerate.clear()
+      }
     }
   }
 

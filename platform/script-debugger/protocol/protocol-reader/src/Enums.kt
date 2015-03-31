@@ -26,5 +26,11 @@ fun appendEnums(enumConstants: List<String>, enumName: String, input: Boolean, o
   }
   else {
     out.semi().newLine()
+    out.newLine().append("private final String protocolValue;").newLine()
+    out.newLine().append(enumName).append("(String protocolValue)").openBlock()
+    out.append("this.protocolValue = protocolValue;").closeBlock()
+    out.newLine().newLine().append("public String toString()").openBlock()
+    out.append("return protocolValue;").closeBlock()
+    out.closeBlock()
   }
 }

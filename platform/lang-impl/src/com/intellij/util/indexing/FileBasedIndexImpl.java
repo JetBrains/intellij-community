@@ -17,7 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.DelegatingProgressIndicator;
@@ -47,6 +46,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -2658,13 +2658,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, false, false, new Processor<Runnable>() {
-        @Override
-        public boolean process(Runnable runnable) {
-          runnable.run();
-          return true;
-        }
-      });
+      PushedFilePropertiesUpdaterImpl.invoke2xConcurrently(tasks);
     } else {
       for(Runnable r:tasks) r.run();
     }

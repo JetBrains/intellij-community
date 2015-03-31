@@ -88,6 +88,8 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         }
 
         out.closeBlock()
+
+        classScope.writeAdditionalMembers(out)
       }
       else {
         generateRequest(command, returnType)
@@ -128,7 +130,7 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         if (!domain.domain().isEmpty()) {
           out.append(domain.domain()).append('.')
         }
-        out.append(command.name()).append("\";").closeBlock()
+        out.append(command.name()).append('"').semi().closeBlock()
       }
     }
     generateTopLevelOutputClass(generator.naming.params, command.name(), command.description(), baseTypeBuilder, memberBuilder, command.parameters())
@@ -179,7 +181,19 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
       }
 
       override fun visitEnum(enumConstants: List<String>): StandaloneTypeBinding {
-        return createStandaloneEnumInputTypeBinding(type, enumConstants, TypeData.Direction.INPUT)
+        val name = type.id()
+        return object : StandaloneTypeBinding {
+          override fun getJavaType() = StandaloneType(generator.naming.inputEnum.getFullName(domain.domain(), name), "writeEnum")
+
+          override fun generate() {
+            val fileUpdater = generator.startJavaFile(generator.naming.inputEnum, domain, name)
+            fileUpdater.out.doc(type.description())
+            appendEnums(enumConstants, generator.naming.inputEnum.getShortName(name), true, fileUpdater.out)
+            fileUpdater.update()
+          }
+
+          override fun getDirection() = TypeData.Direction.INPUT
+        }
       }
 
       override fun visitArray(items: ProtocolMetaModel.ArrayItemType): StandaloneTypeBinding {
@@ -187,30 +201,19 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
           // This class is responsible for generating ad hoc type.
           // If we ever are to do it, we should generate into string buffer and put strings
           // inside TypeDef class.
-          override fun getDomainName(): String {
-            return domain.domain()
-          }
+          override fun getDomainName() = domain.domain()
 
-          override fun getTypeDirection(): TypeData.Direction {
-            return TypeData.Direction.INPUT
-          }
-
-          override fun <T : ItemDescriptor> resolveType(typedObject: T): TypeDescriptor {
-            throw UnsupportedOperationException()
-          }
+          override fun getTypeDirection() = TypeData.Direction.INPUT
 
           override fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?) = throw UnsupportedOperationException()
         }
-        val itemBoxableType = generator.resolveType(items, resolveAndGenerateScope).type
 
-        val arrayType = ListType(itemBoxableType)
-        val target = object : Target {
+        val arrayType = ListType(generator.resolveType(items, resolveAndGenerateScope).type)
+        return createTypedefTypeBinding(type, object : Target {
           override fun resolve(context: Target.ResolveContext): BoxableType {
             return arrayType
           }
-        }
-
-        return createTypedefTypeBinding(type, target, generator.naming.inputTypedef, TypeData.Direction.INPUT)
+        }, generator.naming.inputTypedef, TypeData.Direction.INPUT)
       }
     })
   }
@@ -229,11 +232,8 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         val className = generator.naming.inputValue.getFullName(domain.domain(), name)
         val fileUpdater = generator.startJavaFile(generator.naming.inputValue, domain, name)
         val out = fileUpdater.out
-        if (type.description() != null) {
-          out.doc(type.description())
-        }
+        descriptionAndRequiredImport(type.description(), out)
 
-        out.append("@org.jetbrains.jsonProtocol.JsonType").newLine()
         out.append("public interface ").append(className.lastComponent).openBlock()
         val classScope = InputClassScope(this@DomainGenerator, className)
         if (properties != null) {
@@ -244,29 +244,7 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
         fileUpdater.update()
       }
 
-      override fun getDirection(): TypeData.Direction? {
-        return TypeData.Direction.INPUT
-      }
-    }
-  }
-
-  fun createStandaloneEnumInputTypeBinding(type: ProtocolMetaModel.StandaloneType, enumConstants: List<String>, direction: TypeData.Direction): StandaloneTypeBinding {
-    val name = type.id()
-    return object : StandaloneTypeBinding {
-      override fun getJavaType(): BoxableType {
-        return StandaloneType(generator.naming.inputEnum.getFullName(domain.domain(), name), "writeEnum")
-      }
-
-      override fun generate() {
-        val fileUpdater = generator.startJavaFile(generator.naming.inputEnum, domain, name)
-        fileUpdater.out.doc(type.description())
-        appendEnums(enumConstants, generator.naming.inputEnum.getShortName(name), true, fileUpdater.out)
-        fileUpdater.update()
-      }
-
-      override fun getDirection(): TypeData.Direction? {
-        return direction
-      }
+      override fun getDirection() = TypeData.Direction.INPUT
     }
   }
 
@@ -297,16 +275,12 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     })
 
     return object : StandaloneTypeBinding {
-      override fun getJavaType(): BoxableType {
-        return actualJavaType
-      }
+      override fun getJavaType() = actualJavaType
 
       override fun generate() {
       }
 
-      override fun getDirection(): TypeData.Direction? {
-        return direction
-      }
+      override fun getDirection() = direction
     }
   }
 
@@ -317,7 +291,7 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     val fullName = generator.naming.eventData.getFullName(domainName, event.name()).getFullText()
     generateJsonProtocolInterface(fileUpdater.out, className, event.description(), event.parameters(), object : TextOutConsumer {
       override fun append(out: TextOutput) {
-        out.newLine().append("org.jetbrains.wip.protocol.WipEventType<").append(fullName).append("> TYPE").newLine()
+        out.append("org.jetbrains.wip.protocol.WipEventType<").append(fullName).append("> TYPE").newLine()
         out.append("\t= new org.jetbrains.wip.protocol.WipEventType<").append(fullName).append(">")
         out.append("(\"").append(domainName).append('.').append(event.name()).append("\", ").append(fullName).append(".class)").openBlock()
         run {
@@ -333,10 +307,8 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
   }
 
   private fun generateJsonProtocolInterface(out: TextOutput, className: String, description: String?, parameters: List<ProtocolMetaModel.Parameter>?, additionalMembersText: TextOutConsumer?) {
-    if (description != null) {
-      out.doc(description)
-    }
-    out.append("@org.jetbrains.jsonProtocol.JsonType").newLine().append("public interface ").append(className).openBlock()
+    descriptionAndRequiredImport(description, out)
+    out.append("public interface ").append(className).openBlock()
     val classScope = InputClassScope(this, NamePath(className, NamePath(getPackageName(generator.naming.inputPackage, domain.domain()))))
     if (additionalMembersText != null) {
       classScope.addMember(additionalMembersText)
@@ -346,5 +318,13 @@ class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Do
     }
     classScope.writeAdditionalMembers(out)
     out.closeBlock()
+  }
+
+  private fun descriptionAndRequiredImport(description: String?, out: TextOutput) {
+    out.append("import org.jetbrains.jsonProtocol.JsonType;").newLine().newLine()
+    if (description != null) {
+      out.doc(description)
+    }
+    out.append("@JsonType").newLine()
   }
 }

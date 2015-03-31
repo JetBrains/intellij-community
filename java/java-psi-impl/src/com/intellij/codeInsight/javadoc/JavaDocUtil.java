@@ -364,14 +364,6 @@ public class JavaDocUtil {
   }
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
-    if (containingComment == null || containingComment.getOwner() != null) {
-      return false;
-    }
-    final PsiElement parent = containingComment.getParent();
-    if (!(parent instanceof PsiJavaFile)) {
-      return false;
-    }
-    final PsiJavaFile file = (PsiJavaFile)parent;
-    return "package-info.java".equals(file.getName());
+    return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
   }
 }

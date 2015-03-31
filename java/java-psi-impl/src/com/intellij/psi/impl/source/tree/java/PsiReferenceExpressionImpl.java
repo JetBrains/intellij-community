@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
@@ -405,11 +406,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
           PsiUtil.ensureValidType(substitutedType);
           PsiType normalized = PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
           PsiUtil.ensureValidType(normalized);
-          return normalized;
+          return PsiClassImplUtil.correctType(normalized, expr.getResolveScope());
         }
       }
 
-      return TypeConversionUtil.erasure(ret);
+      return PsiClassImplUtil.correctType(TypeConversionUtil.erasure(ret), expr.getResolveScope());
     }
   }
 

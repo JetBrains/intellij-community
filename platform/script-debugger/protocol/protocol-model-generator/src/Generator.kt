@@ -1,5 +1,6 @@
 package org.jetbrains.protocolModelGenerator
 
+import gnu.trove.THashMap
 import org.jetbrains.jsonProtocol.*
 import org.jetbrains.protocolReader.FileUpdater
 import org.jetbrains.protocolReader.TextOutput
@@ -16,6 +17,8 @@ class Generator(outputDir: String, rootPackage: String, requestClassName: String
   val jsonProtocolParserClassNames = ArrayList<String>()
   val parserRootInterfaceItems = ArrayList<ParserRootInterfaceItem>()
   val typeMap = TypeMap()
+
+  val nestedTypeMap = THashMap<NamePath, StandaloneType>()
 
   private val fileSet: FileSet
   val naming: Naming
@@ -72,7 +75,7 @@ class Generator(outputDir: String, rootPackage: String, requestClassName: String
       }
     }
 
-    typeMap.setDomainGeneratorMap(domainGeneratorMap)
+    typeMap.domainGeneratorMap = domainGeneratorMap
 
     for (domainGenerator in domainGeneratorMap.values()) {
       domainGenerator.generateCommandsAndEvents()
@@ -229,7 +232,7 @@ fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String 
   if (!BAD_METHOD_NAMES.contains(originalName)) {
     return originalName
   }
-  out.append("@org.jetbrains.jsonProtocol.JsonField(jsonLiteralName=\"").append(originalName).append("\")").newLine()
+  out.append("@org.jetbrains.jsonProtocol.JsonField(name = \"").append(originalName).append("\")").newLine()
   return "get" + Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1)
 }
 

@@ -39,7 +39,7 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
   @Nullable
   @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    if (myProject == null) return null;
+    if (myProject == null || myProject.isDefault()) return null;
     return new OpenFileDescriptor(myProject, myFile, offset);
   }
 

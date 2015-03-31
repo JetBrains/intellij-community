@@ -28,9 +28,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
@@ -40,7 +42,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
+public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
 
@@ -61,10 +63,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   });
   private final JRootPane myRootPane;
 
-  private final Set<Painter> myPainters = new LinkedHashSet<Painter>();
-  private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
+  private final Map<String, PaintersHelper> myNamedPainters = new FactoryMap<String, PaintersHelper>() {
+    @Nullable
+    @Override
+    protected PaintersHelper create(String key) {
+      return new PaintersHelper(IdeGlassPaneImpl.this);
+    }
+  };
 
-  private boolean myPaintingActive;
   private boolean myPreprocessorActive;
   private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<Object, Cursor>();
 
@@ -84,6 +90,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     setOpaque(false);
     setVisible(false);
     setLayout(null);
+
+    if (myRootPane instanceof IdeRootPane) {
+      IdeBackgroundUtil.initFramePainters(getNamedPainters("ide"));
+      IdeBackgroundUtil.initEditorPainters(getNamedPainters("editor"));
+    }
 
     myFocusProxy.setOpaque(false);
     myFocusProxy.setPreferredSize(JBUI.emptySize());
@@ -486,12 +497,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private void deactivateIfNeeded() {
-    if (myPaintingActive) {
-      if (myPainters.isEmpty() && getComponentCount() == 0) {
-        myPaintingActive = false;
-      }
-    }
-
     if (myPreprocessorActive && myMouseListeners.isEmpty()) {
       myPreprocessorActive = false;
     }
@@ -500,12 +505,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private void activateIfNeeded() {
-    if (!myPaintingActive) {
-      if (!myPainters.isEmpty() || getComponentCount() > 0) {
-        myPaintingActive = true;
-      }
-    }
-
     if (!myPreprocessorActive && !myMouseListeners.isEmpty()) {
       myPreprocessorActive = true;
     }
@@ -515,9 +514,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private void applyActivationState() {
     boolean wasVisible = isVisible();
+    boolean hasWork = getPainters().hasPainters() || getComponentCount() > 0;
 
-    if (wasVisible != myPaintingActive) {
-      setVisible(myPaintingActive);
+    if (wasVisible != hasWork) {
+      setVisible(hasWork);
     }
 
     IdeEventQueue queue = IdeEventQueue.getInstance();
@@ -534,10 +534,18 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
   }
 
+  @NotNull
+  PaintersHelper getNamedPainters(@NotNull String name) {
+    return myNamedPainters.get(name);
+  }
+
+  @NotNull
+  private PaintersHelper getPainters() {
+    return getNamedPainters("glass");
+  }
+
   public void addPainter(final Component component, final Painter painter, final Disposable parent) {
-    myPainters.add(painter);
-    myPainter2Component.put(painter, component == null ? this : component);
-    painter.addListener(this);
+    getPainters().addPainter(painter, component);
     activateIfNeeded();
     Disposer.register(parent, new Disposable() {
       public void dispose() {
@@ -551,9 +559,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   public void removePainter(final Painter painter) {
-    myPainters.remove(painter);
-    myPainter2Component.remove(painter);
-    painter.removeListener(this);
+    getPainters().removePainter(painter);
     deactivateIfNeeded();
   }
 
@@ -594,49 +600,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   protected void paintComponent(final Graphics g) {
-    if (myPainters.isEmpty()) return;
-
-    Graphics2D g2d = (Graphics2D)g;
-    for (Painter painter : myPainters) {
-      final Rectangle clip = g.getClipBounds();
-
-      final Component component = myPainter2Component.get(painter);
-      if (component.getParent() == null) continue;
-      final Rectangle componentBounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), this);
-
-      if (!painter.needsRepaint()) {
-        continue;
-      }
-
-      if (clip.contains(componentBounds) || clip.intersects(componentBounds)) {
-        final Point targetPoint = SwingUtilities.convertPoint(this, 0, 0, component);
-        final Rectangle targetRect = new Rectangle(targetPoint, component.getSize());
-        g2d.translate(-targetRect.x, -targetRect.y);
-        painter.paint(component, g2d);
-        g2d.translate(targetRect.x, targetRect.y);
-      }
-    }
+    getPainters().paint(g);
   }
 
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
-  }
-
-  public boolean hasPainters() {
-    return !myPainters.isEmpty();
-  }
-
-  public void onNeedsRepaint(final Painter painter, final JComponent dirtyComponent) {
-    if (dirtyComponent != null && dirtyComponent.isShowing()) {
-      final Rectangle rec = SwingUtilities.convertRectangle(dirtyComponent, dirtyComponent.getBounds(), this);
-      if (rec != null) {
-        repaint(rec);
-        return;
-      }
-    }
-
-    repaint();
   }
 
   public Component getTargetComponentFor(MouseEvent e) {
@@ -654,7 +623,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   @Override
   public boolean isOptimizedDrawingEnabled() {
-    return !hasPainters() && super.isOptimizedDrawingEnabled();
+    return !getPainters().hasPainters() && super.isOptimizedDrawingEnabled();
   }
 
   @Override

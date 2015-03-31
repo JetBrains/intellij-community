@@ -4,10 +4,10 @@ import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 
 trait ResolveAndGenerateScope {
-  public fun getDomainName(): String
-  public fun getTypeDirection(): TypeData.Direction
+  fun getDomainName(): String
+  fun getTypeDirection(): TypeData.Direction
 
-  public fun <T : ItemDescriptor> resolveType(typedObject: T): TypeDescriptor
+  fun <T : ItemDescriptor> resolveType(typedObject: T): TypeDescriptor = throw UnsupportedOperationException()
 
-  public fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType
+  open fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType = throw UnsupportedOperationException()
 }

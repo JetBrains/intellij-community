@@ -105,6 +105,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     if (data.length == 1) {
       VirtualFile otherFile = getOtherFile(project, data[0]);
       if (otherFile == null) return null;
+      if (!data[0].isValid()) return null;
       return DiffRequestFactory.getInstance().createFromFiles(project, data[0], otherFile);
     }
     else {
@@ -127,8 +128,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
       key = LAST_USED_FILE_KEY;
     }
     VirtualFile selectedFile = getDefaultSelection(project, key, file);
-    VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, selectedFile);
-    VirtualFile otherFile = result.length == 1 ? result[0] : null;
+    VirtualFile otherFile = FileChooser.chooseFile(descriptor, project, selectedFile);
     if (otherFile != null) updateDefaultSelection(project, key, otherFile);
     return otherFile;
   }

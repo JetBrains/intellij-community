@@ -59,7 +59,7 @@ public class DiffPanelOptions {
   }
 
   public void showSource(@Nullable OpenFileDescriptor descriptor) {
-    if (descriptor == null || myDiffPanel.getProject() == null) return;
+    if (descriptor == null || myDiffPanel.getProject() == null || myDiffPanel.getProject().isDefault()) return;
     myShowSourcePolicy.showSource(descriptor, myDiffPanel);
   }
 

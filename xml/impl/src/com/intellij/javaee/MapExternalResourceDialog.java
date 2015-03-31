@@ -15,6 +15,7 @@
  */
 package com.intellij.javaee;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -36,7 +37,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -46,6 +46,7 @@ import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -233,17 +234,20 @@ public class MapExternalResourceDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myExplorerPanel = new JBPanel(new BorderLayout()) {
+    myExplorerPanel = new JPanel(new BorderLayout());
+    DataManager.registerDataProvider(myExplorerPanel, new DataProvider() {
+      @Nullable
       @Override
-      public void calcData(DataKey key, DataSink sink) {
-        if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-          sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, myExplorer.getSelectedFiles());
+      public Object getData(@NonNls String dataId) {
+        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+          return myExplorer.getSelectedFiles();
         }
-        else if (key == FileSystemTree.DATA_KEY) {
-          sink.put(FileSystemTree.DATA_KEY, myExplorer);
+        else if (FileSystemTree.DATA_KEY.is(dataId)) {
+          return myExplorer;
         }
+        return null;
       }
-    };
+    });
   }
 
   @Nullable

@@ -155,13 +155,13 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
   @Nullable
   @Override
   public String getHelpTopic() {
-    return XmlBundle.message("emmet.configuration.title");
+    return getId();
   }
 
   @NotNull
   @Override
   public String getId() {
-    return "xml.emmet";
+    return "reference.idesettings.emmet.xml";
   }
 
   @Nullable

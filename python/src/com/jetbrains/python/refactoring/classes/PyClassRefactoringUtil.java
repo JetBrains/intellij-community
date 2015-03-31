@@ -24,10 +24,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -38,6 +42,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,32 +251,36 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  private static void restoreReference(final PyReferenceExpression node, PsiElement[] otherMovedElements) {
-    PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
-    final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
-    final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
-    if (target instanceof PsiDirectory) {
-      target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, node);
-    }
-    if (target instanceof PyFunction) {
-      final PyFunction f = (PyFunction)target;
-      final PyClass c = f.getContainingClass();
-      if (c != null && c.findInitOrNew(false) == f) {
-        target = c;
+  private static void restoreReference(@NotNull PyReferenceExpression node, @NotNull PsiElement[] otherMovedElements) {
+    try {
+      PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
+      final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
+      final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
+      if (target instanceof PsiDirectory) {
+        target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, node);
+      }
+      if (target instanceof PyFunction) {
+        final PyFunction f = (PyFunction)target;
+        final PyClass c = f.getContainingClass();
+        if (c != null && c.findInitOrNew(false) == f) {
+          target = c;
+        }
+      }
+      if (target == null) return;
+      if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
+      if (ArrayUtil.contains(target, otherMovedElements)) return;
+      if (target instanceof PyFile || target instanceof PsiDirectory) {
+        insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
+      }
+      else {
+        insertImport(node, target, asName, true);
       }
     }
-    if (target == null) return;
-    if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
-    if (ArrayUtil.contains(target, otherMovedElements)) return;
-    if (target instanceof PyFile || target instanceof PsiDirectory) {
-      insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
+    finally {
+      node.putCopyableUserData(ENCODED_IMPORT, null);
+      node.putCopyableUserData(ENCODED_IMPORT_AS, null);
+      node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
     }
-    else {
-      insertImport(node, target, asName, true);
-    }
-    node.putCopyableUserData(ENCODED_IMPORT, null);
-    node.putCopyableUserData(ENCODED_IMPORT_AS, null);
-    node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
   }
 
   public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
@@ -371,11 +380,23 @@ public final class PyClassRefactoringUtil {
     if (qualifier != null && !(resolveExpression(qualifier) instanceof PyImportedModule)) {
       return;
     }
-    final PsiElement target = resolveExpression(node);
+    final List<PsiElement> allResolveResults = multiResolveExpression(node);
+    PsiElement target = ContainerUtil.getFirstItem(allResolveResults);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       final NameDefiner importElement = getImportElement(node);
       if (!PyUtil.inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
         return;
+      }
+      if (target instanceof PyTargetExpression && PyNames.ALL.equals(((PyTargetExpression)target).getName())) {
+        for (PsiElement result : allResolveResults) {
+          if (result instanceof PyImportElement) {
+            final QualifiedName importedQName = ((PyImportElement)result).getImportedQName();
+            if (importedQName != null) {
+              target = new DynamicNamedElement(target.getContainingFile(), importedQName.toString());
+              break;
+            }
+          }
+        }
       }
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
       if (importElement instanceof PyImportElement) {
@@ -405,6 +426,16 @@ public final class PyClassRefactoringUtil {
       return ((PyReferenceExpression)expr).getReference().resolve();
     }
     return null;
+  }
+
+  @NotNull
+  private static List<PsiElement> multiResolveExpression(@NotNull PyReferenceExpression expr) {
+    return ContainerUtil.mapNotNull(expr.getReference().multiResolve(false), new Function<ResolveResult, PsiElement>() {
+      @Override
+      public PsiElement fun(ResolveResult result) {
+        return result.getElement();
+      }
+    });
   }
 
   public static void updateImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
@@ -574,5 +605,36 @@ public final class PyClassRefactoringUtil {
     final PyAssignmentStatement assignmentStatement = generator.createFromText(level, PyAssignmentStatement.class, text);
     //TODO: Add metaclass to the top. Add others between last attributeName and first method
     return PyUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
+  }
+
+  private static class DynamicNamedElement extends LightElement implements PsiNamedElement {
+    private final PsiFile myFile;
+    private final String myName;
+
+    public DynamicNamedElement(@NotNull PsiFile file, @NotNull String name) {
+      super(file.getManager(), file.getLanguage());
+      myName = name;
+      myFile = file;
+    }
+
+    @Override
+    public String toString() {
+      return "DynamicNamedElement(file='" + getContainingFile().getName() + "', name='" + getName() +"')";
+    }
+
+    @Override
+    public PsiFile getContainingFile() {
+      return myFile;
+    }
+
+    @Override
+    public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+      return null;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
   }
 }

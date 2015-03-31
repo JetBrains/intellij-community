@@ -1,7 +1,6 @@
 package org.jetbrains.protocolModelGenerator
 
-class NamePath(val lastComponent: String, val parent: NamePath? = null) {
-
+data class NamePath(val lastComponent: String, val parent: NamePath? = null) {
   fun getLength(): Int {
     var res = 1
     run {
