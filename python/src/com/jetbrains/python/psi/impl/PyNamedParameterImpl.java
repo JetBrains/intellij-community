@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -223,8 +224,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           return PyBuiltinCache.getInstance(this).getTupleType();
         }
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-          PyType result = provider.getParameterType(this, func, context);
-          if (result != null) return result;
+          final Ref<PyType> resultRef = provider.getParameterType(this, func, context);
+          if (resultRef != null) {
+            return resultRef.get();
+          }
         }
         final PyAnnotation annotation = getAnnotation();
         if (annotation != null) {

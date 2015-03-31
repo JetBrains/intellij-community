@@ -139,11 +139,14 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
     if (isInsideNumPy(function)) {
       final String name = parameter.getName();
       if (name != null) {
-        return getParameterType(function, name);
+        final PyType type = getParameterType(function, name);
+        if (type != null) {
+          return Ref.create(type);
+        }
       }
     }
     return null;
@@ -269,9 +272,12 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
-      return getCallType((PyFunction)callable, null, context);
+      final PyType type = getCallType((PyFunction)callable, null, context);
+      if (type != null) {
+        return Ref.create(type);
+      }
     }
     return null;
   }

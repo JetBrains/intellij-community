@@ -51,13 +51,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.Protocol")
     .build();
 
-  public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final PyAnnotation annotation = param.getAnnotation();
     if (annotation != null) {
       // XXX: Requires switching from stub to AST
       final PyExpression value = annotation.getValue();
       if (value != null) {
-        return getTypingType(value, context);
+        final PyType type = getTypingType(value, context);
+        if (type != null) {
+          return Ref.create(type);
+        }
       }
     }
     return null;
@@ -65,7 +68,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
       final PyAnnotation annotation = function.getAnnotation();
@@ -73,12 +76,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         // XXX: Requires switching from stub to AST
         final PyExpression value = annotation.getValue();
         if (value != null) {
-          return getTypingType(value, context);
+          final PyType type = getTypingType(value, context);
+          return type != null ? Ref.create(type) : null;
         }
       }
       final PyType constructorType = getGenericConstructorType(function, context);
       if (constructorType != null) {
-        return constructorType;
+        return Ref.create(constructorType);
       }
     }
     return null;
