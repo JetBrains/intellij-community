@@ -351,7 +351,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     EditorEx editor = getCurrentEditor();
 
     DocumentContent content = getCurrentSide().select(myActualContent1, myActualContent2);
-    if (content == null) return null;
+    assert content != null;
 
     int offset = editor.getCaretModel().getOffset();
     return content.getOpenFileDescriptor(offset);
