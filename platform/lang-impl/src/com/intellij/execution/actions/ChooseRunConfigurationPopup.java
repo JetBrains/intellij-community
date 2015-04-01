@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -1038,8 +1039,9 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
     }
-
-    populateWithDynamicRunners(result, wrappedExisting, project, manager, selectedConfiguration);
+    if (!DumbService.isDumb(project)) {
+      populateWithDynamicRunners(result, wrappedExisting, project, manager, selectedConfiguration);
+    }
     result.addAll(wrappedExisting.values());
     return result.toArray(new ItemWrapper[result.size()]);
   }
