@@ -283,10 +283,6 @@ public class NumPyDocString {
     if (index >= 0) {
       return typeString.substring(0, index);
     }
-    index = typeString.indexOf(" of ");  // e.g. ndarray of dtype float
-    if (index >= 0) {
-      return typeString.substring(0, index);
-    }
     return typeString;
   }
 
