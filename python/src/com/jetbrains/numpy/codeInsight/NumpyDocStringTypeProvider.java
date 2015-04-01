@@ -15,6 +15,7 @@
  */
 package com.jetbrains.numpy.codeInsight;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +49,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
     // 184 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "numpy.core.multiarray.ndarray or collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array-like", "numpy.core.multiarray.ndarray or collections.Iterable");
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
     // an instance of 'numpy.core.multiarray.dtype', however the type checker isn't able to check it.
     // 30 occurrences
@@ -70,6 +72,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float or complex");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.Iterable");
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("ints", "int");
   }
 
   @Nullable
@@ -205,7 +209,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
     for (String typeName : NumPyDocString.getNumpyUnionType(typeString)) {
       if (anchor instanceof PyFunction && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
-          (typeName.equals("array_like") || typeName.equals("ndarray"))) {
+          ("array_like".equals(typeName) || "ndarray".equals(typeName))) {
         return true;
       }
     }
@@ -224,9 +228,14 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
         parameter = docString.getNamedParameter(parameterName.substring(2));
       }
       if (parameter != null) {
-        final PyType numberType = getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number|numpy.core.multiarray.ndarray", function);
-        if (isUfuncType(function, parameter.getType())) return numberType;
-        return parseNumpyDocType(function, parameter.getType());
+        if (isUfuncType(function, parameter.getType())) {
+          return getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number|numpy.core.multiarray.ndarray", function);
+        }
+        final PyType numpyDocType = parseNumpyDocType(function, parameter.getType());
+        if ("size".equals(parameterName)) {
+          return getPsiFacade(function).createUnionType(Lists.newArrayList(numpyDocType, PyBuiltinCache.getInstance(function).getIntType()));
+        }
+        return numpyDocType;
       }
     }
     return null;
