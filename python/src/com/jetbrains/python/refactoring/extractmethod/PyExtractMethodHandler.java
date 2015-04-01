@@ -78,7 +78,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     element2 = PyPsiUtils.getSignificantToTheLeft(element2, false);
     if (element1 == null || element2 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.using.selected.elements"),
+                                          PyBundle.message("refactoring.extract.method.error.bad.selection"),
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
@@ -122,7 +122,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     CommonRefactoringUtil.showErrorHint(project, editor,
-                                        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.using.selected.elements"),
+                                        PyBundle.message("refactoring.extract.method.error.bad.selection"),
                                         RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
   }
 

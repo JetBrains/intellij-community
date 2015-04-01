@@ -56,7 +56,7 @@ public class PyCodeFragmentUtil {
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
     if (flow == null) {
-      throw new CannotCreateCodeFragmentException("Cannot determine execution flow for the code fragment");
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.undetermined.execution.flow"));
     }
     final List<Instruction> graph = Arrays.asList(flow.getInstructions());
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
@@ -64,12 +64,10 @@ public class PyCodeFragmentUtil {
     if ((subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) ||
         subGraphAnalysis.targetInstructions > 1 ||
         subGraphAnalysis.outerLoopBreaks > 0) {
-      throw new CannotCreateCodeFragmentException(
-        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.interrupted.execution.flow"));
     }
     if (subGraphAnalysis.starImports > 0) {
-      throw new CannotCreateCodeFragmentException(
-        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.from.import.inside"));
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.star.import"));
     }
 
     final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
@@ -104,7 +102,7 @@ public class PyCodeFragmentUtil {
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
     if (yieldsFound && LanguageLevel.forElement(owner).isOlderThan(LanguageLevel.PYTHON33)) {
-      throw new CannotCreateCodeFragmentException("Cannot perform refactoring with 'yield' statement inside code block");
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.yield"));
     }
 
     return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0, yieldsFound);

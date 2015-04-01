@@ -147,7 +147,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testWrongSelectionFromImportStar() {
-    doFail("bar", "Cannot perform refactoring with from import statement inside code block");
+    doFail("bar", "Cannot perform refactoring with star import statement inside code block");
   }
 
   public void testPy479() {
