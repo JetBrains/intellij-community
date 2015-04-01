@@ -19,6 +19,7 @@ import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -82,9 +83,9 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       return;
     }
 
-    final PsiElement[] statements = getStatementsRange(element1, element2);
+    final Couple<PsiElement> statements = getStatementsRange(element1, element2);
     if (statements != null) {
-      final ScopeOwner owner = PsiTreeUtil.getParentOfType(statements[0], ScopeOwner.class);
+      final ScopeOwner owner = PsiTreeUtil.getParentOfType(statements.getFirst(), ScopeOwner.class);
       if (owner == null) {
         return;
       }
@@ -97,7 +98,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
                                             RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
         return;
       }
-      PyExtractMethodUtil.extractFromStatements(project, editor, fragment, statements[0], statements[1]);
+      PyExtractMethodUtil.extractFromStatements(project, editor, fragment, statements.getFirst(), statements.getSecond());
       return;
     }
 
@@ -126,7 +127,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static PsiElement[] getStatementsRange(final PsiElement element1, final PsiElement element2) {
+  private static Couple<PsiElement> getStatementsRange(final PsiElement element1, final PsiElement element2) {
     final PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent == null) {
       return null;
@@ -137,8 +138,8 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       return null;
     }
 
-    final PsiElement statement1 = PyPsiUtils.getStatement(statementList, element1);
-    final PsiElement statement2 = PyPsiUtils.getStatement(statementList, element2);
+    final PsiElement statement1 = PyPsiUtils.getParentRightBefore(element1, statementList);
+    final PsiElement statement2 = PyPsiUtils.getParentRightBefore(element2, statementList);
     if (statement1 == null || statement2 == null){
       return null;
     }
@@ -146,7 +147,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     // return elements if they are really first and last elements of statements
     if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
         element2 == PyPsiUtils.getSignificantToTheLeft(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
-      return new PsiElement[]{statement1, statement2};
+      return Couple.of(statement1, statement2);
     }
     return null;
   }

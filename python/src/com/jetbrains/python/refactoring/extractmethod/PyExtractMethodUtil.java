@@ -479,7 +479,7 @@ public class PyExtractMethodUtil {
     PsiElement result;
     if (parent instanceof PyFile || parent instanceof PyClass) {
       PsiElement target = parent instanceof PyClass ? ((PyClass)parent).getStatementList() : parent;
-      final PsiElement anchorStatement = PyPsiUtils.getStatement(target, anchor);
+      final PsiElement anchorStatement = PyPsiUtils.getParentRightBefore(anchor, target);
       result = target.addBefore(generatedMethod, anchorStatement);
     }
     else {
@@ -635,7 +635,7 @@ public class PyExtractMethodUtil {
 
     //return if don`t want to extract method
     if (!dialog.isOK()) {
-      return Pair.create(null, null);
+      return Pair.empty();
     }
 
     return Pair.create(dialog.getMethodName(), dialog.getVariableData());

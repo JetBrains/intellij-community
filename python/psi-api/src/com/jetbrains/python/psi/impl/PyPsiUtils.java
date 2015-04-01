@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
@@ -115,7 +116,7 @@ public class PyPsiUtils {
     if (compStatement == null) {
       return null;
     }
-    return getStatement(compStatement, element);
+    return getParentRightBefore(element, compStatement);
   }
 
   public static PyElement getStatementList(final PsiElement element) {
@@ -125,14 +126,21 @@ public class PyPsiUtils {
            : PsiTreeUtil.getParentOfType(element, PyFile.class, PyStatementList.class);
   }
 
+  /**
+   * Returns ancestor of the element that is also direct child of the given super parent.
+   *
+   * @param element     element to start search from
+   * @param superParent direct parent of the desired ancestor
+   * @return described element or {@code null} if it doesn't exist
+   */
   @Nullable
-  public static PsiElement getStatement(final PsiElement compStatement, PsiElement element) {
-    PsiElement parent = element.getParent();
-    while (parent != null && parent != compStatement) {
-      element = parent;
-      parent = element.getParent();
-    }
-    return parent != null ? element : null;
+  public static PsiElement getParentRightBefore(@NotNull PsiElement element, @NotNull final PsiElement superParent) {
+    return PsiTreeUtil.findFirstParent(element, false, new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement element) {
+        return element.getParent() == superParent;
+      }
+    });
   }
 
   public static List<PsiElement> collectElements(final PsiElement statement1, final PsiElement statement2) {
@@ -161,7 +169,7 @@ public class PyPsiUtils {
 
   public static int getElementIndentation(final PsiElement element) {
     final PsiElement compStatement = getStatementList(element);
-    final PsiElement statement = getStatement(compStatement, element);
+    final PsiElement statement = getParentRightBefore(element, compStatement);
     if (statement == null) {
       return 0;
     }
