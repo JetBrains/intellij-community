@@ -16,6 +16,8 @@
 package com.jetbrains.numpy.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -139,18 +141,29 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final PyPsiFacade facade = getPsiFacade(anchor);
-    final String realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(typeString);
-    if (realTypeName != null) {
-      final PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
-      if (type != null) {
-        return type;
-      }
-    }
+    typeString = getNumpyRealTypeName(typeString);
+
     final PyType type = facade.parseTypeAnnotation(typeString, anchor);
     if (type != null) {
       return type;
     }
     return getNominalType(anchor, typeString);
+  }
+
+  @NotNull
+  private static String getNumpyRealTypeName(@NotNull String typeString) {
+    final String realTypeName = NUMPY_ALIAS_TO_REAL_TYPE.get(typeString);
+    if (realTypeName != null) {
+      return realTypeName;
+    }
+    final List<String> typeSubStrings = StringUtil.split(typeString, " ");
+    List<String> typeParts = new ArrayList<String>();
+    for (String string : typeSubStrings) {
+      final String type = NUMPY_ALIAS_TO_REAL_TYPE.get(string);
+      typeParts.add(type != null ? type : string);
+    }
+    typeString = StringUtil.join(typeParts, " ");
+    return typeString;
   }
 
   /**
