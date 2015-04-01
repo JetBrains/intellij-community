@@ -723,7 +723,7 @@
                      groupName="Code style issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
-       <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
+    <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
                      groupBundle="messages.InspectionsBundle"
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.StringTokenizerDelimiterInspection"
