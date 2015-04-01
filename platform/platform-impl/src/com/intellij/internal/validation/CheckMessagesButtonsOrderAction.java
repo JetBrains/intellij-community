@@ -41,6 +41,14 @@ public class CheckMessagesButtonsOrderAction  extends AnAction implements DumbAw
           @Override
           public void run() {
 
+            // Case  0
+
+            String message = 2 + " usage" + (2 > 1 ? "s were" : " was") +
+                             " found in comments and non-code files.\nWould you like to rename " + (2 > 1 ? "them" : "it") + "?";
+            String[] options = {"Show Usages", "Cancel", "Rename Only Code Usages", "Rename All Usages"};
+            int focusedOptionIndex = 2;
+            Messages.showDialog(message, "Rename", options, 0, focusedOptionIndex, Messages.getQuestionIcon(), null);
+
 
             // Case 1
 
