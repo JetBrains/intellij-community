@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -403,24 +404,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @NotNull
   private static GroovyResolveResult[] collapseReflectedMethods(GroovyResolveResult[] candidates) {
-    List<GroovyResolveResult> filtered = ContainerUtil.filter(candidates, new Condition<GroovyResolveResult>() {
-      @Override
-      public boolean value(GroovyResolveResult result) {
-        PsiElement element = result.getElement();
-        return !(element instanceof GrReflectedMethod && hasMoreCompleteOverload((GrReflectedMethod)element));
+    Set<GrMethod> visited = ContainerUtil.newHashSet();
+    List<GroovyResolveResult> collapsed = ContainerUtil.newArrayList();
+    for (GroovyResolveResult result : candidates) {
+      PsiElement element = result.getElement();
+      if (element instanceof GrReflectedMethod) {
+        GrMethod baseMethod = ((GrReflectedMethod)element).getBaseMethod();
+        if (visited.add(baseMethod)) {
+          collapsed.add(PsiImplUtil.reflectedToBase(result, baseMethod, (GrReflectedMethod)element));
+        }
+      } else {
+        collapsed.add(result);
       }
-
-      private boolean hasMoreCompleteOverload(GrReflectedMethod element) {
-        final int skipped = element.getSkippedParameters().length;
-        return ContainerUtil.or(element.getBaseMethod().getReflectedMethods(), new Condition<GrReflectedMethod>() {
-          @Override
-          public boolean value(GrReflectedMethod method) {
-            return method.getSkippedParameters().length > skipped;
-          }
-        });
-      }
-    });
-    return filtered.toArray(new GroovyResolveResult[filtered.size()]);
+    }
+    return collapsed.toArray(new GroovyResolveResult[collapsed.size()]);
   }
 
   private static void assertAllAreValid(@NotNull GroovyResolveResult[] candidates) {
