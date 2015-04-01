@@ -8,4 +8,4 @@ def f(spam, eggs):
 
 def test():
     f(<warning descr="Expected type 'list[Union[str, unicode]]', got 'list[int]' instead">[1, 2, 3]</warning>,
-      (<warning descr="Expected type '(bool, int, unicode)', got '(bool, int, str)' instead">False, 2, ''</warning>))
+      (<warning descr="Expected type 'Tuple[bool, int, unicode]', got 'Tuple[bool, int, str]' instead">False, 2, ''</warning>))

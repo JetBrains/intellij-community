@@ -845,12 +845,12 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-12801
   public void testTupleConcatenation() {
-    doTest("(int, bool, str)",
+    doTest("Tuple[int, bool, str]",
            "expr = (1,) + (True, 'spam') + ()");
   }
 
   public void testTupleMultiplication() {
-    doTest("(int, bool, int, bool)",
+    doTest("Tuple[int, bool, int, bool]",
            "expr = (1, False) * 2");
   }
 

@@ -43,4 +43,4 @@ def test():
     f2(1, <weak_warning descr="Expected type 'list[int]' (matched generic type 'list[T]'), got 'list[str]' instead">['foo']</weak_warning>, 'bar')
 
     result = f3(1, 'foo', True)
-    f4(<warning descr="Expected type '(bool, int, str)', got '(int, str, bool)' instead">result</warning>)
+    f4(<warning descr="Expected type 'Tuple[bool, int, str]', got 'Tuple[int, str, bool]' instead">result</warning>)

@@ -124,7 +124,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinTupleWithParameters() {
-    doTest("(int, str)",
+    doTest("Tuple[int, str]",
            "from typing import Tuple\n" +
            "\n" +
            "def f(expr: Tuple[int, str]):\n" +
