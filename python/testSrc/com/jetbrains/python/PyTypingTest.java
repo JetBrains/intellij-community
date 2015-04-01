@@ -271,6 +271,14 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testCast() {
+    doTest("str",
+           "from typing import cast\n" +
+           "\n" +
+           "def foo(x):\n" +
+           "    expr = cast(str, x)\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
