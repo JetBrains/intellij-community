@@ -281,4 +281,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testDuplicateCheckParam() {
     doTest("foo");
   }
+
+  // PY-7753
+  public void testRedundantGlobalInTopLevelFunction() {
+    doTest("foo");
+  }
 }
