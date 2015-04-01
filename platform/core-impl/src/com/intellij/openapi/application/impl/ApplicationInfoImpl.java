@@ -256,7 +256,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Override
   public String getStrictVersion() {
-    return myMajorVersion + "." + myMinorVersion + "." + myMicroVersion + "." + myPatchVersion;
+    return myMajorVersion + "." + myMinorVersion + "." + StringUtil.notNullize(myMicroVersion, "0") + "." + StringUtil.notNullize(myPatchVersion, "0");
   }
 
   @Override
