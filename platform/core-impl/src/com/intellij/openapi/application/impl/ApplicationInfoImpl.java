@@ -238,8 +238,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getFullVersion() {
     if (myFullVersion == null) {
-      if (myMajorVersion != null && !myMajorVersion.trim().isEmpty()) {
-        if (myMinorVersion != null && !myMinorVersion.trim().isEmpty()) {
+      if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
+        if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
           return myMajorVersion + "." + myMinorVersion;
         }
         else {
