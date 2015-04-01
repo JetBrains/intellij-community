@@ -90,7 +90,21 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  public static boolean isAny(@NotNull PyType type) {
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if ("typing.cast".equals(function.getQualifiedName()) && callSite instanceof PyCallExpression) {
+      final PyCallExpression callExpr = (PyCallExpression)callSite;
+      final PyExpression[] args = callExpr.getArguments();
+      if (args.length > 0) {
+        final PyExpression typeExpr = args[0];
+        return getTypingType(typeExpr, context);
+      }
+    }
+    return null;
+  }
+
+  private static boolean isAny(@NotNull PyType type) {
     return type instanceof PyClassType && "typing.Any".equals(((PyClassType)type).getPyClass().getQualifiedName());
   }
 
