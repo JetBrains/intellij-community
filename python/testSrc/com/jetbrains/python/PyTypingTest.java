@@ -263,6 +263,14 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testFlattenUnions() {
+    doTest("Union[int, str, list]",
+           "from typing import Union\n" +
+           "\n" +
+           "def foo(expr: Union[int, Union[str, list]]):\n" +
+           "    pass\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
