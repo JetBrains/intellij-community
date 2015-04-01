@@ -84,7 +84,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testUnionType() {
-    doTest("int | str",
+    doTest("Union[int, str]",
            "from typing import Union\n" +
            "\n" +
            "def f(expr: Union[int, str]):\n" +
@@ -124,7 +124,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinTupleWithParameters() {
-    doTest("(int, str)",
+    doTest("Tuple[int, str]",
            "from typing import Tuple\n" +
            "\n" +
            "def f(expr: Tuple[int, str]):\n" +
@@ -132,7 +132,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyType() {
-    doTest("unknown",
+    doTest("Any",
            "from typing import Any\n" +
            "\n" +
            "def f(expr: Any):\n" +
@@ -141,9 +141,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testGenericType() {
     doTest("A",
-           "from typing import typevar\n" +
+           "from typing import TypeVar\n" +
            "\n" +
-           "T = typevar('A')\n" +
+           "T = TypeVar('A')\n" +
            "\n" +
            "def f(expr: T):\n" +
            "    pass\n");
@@ -151,9 +151,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testGenericBoundedType() {
     doTest("T <= int | str",
-           "from typing import typevar\n" +
+           "from typing import TypeVar\n" +
            "\n" +
-           "T = typevar('T', values=(int, str))\n" +
+           "T = TypeVar('T', int, str)\n" +
            "\n" +
            "def f(expr: T):\n" +
            "    pass\n");
@@ -161,9 +161,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClass() {
     doTest("C[int]",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class C(Generic[T]):\n" +
            "    def __init__(self, x: T):\n" +
@@ -174,9 +174,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClassMethod() {
     doTest("int",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class C(Generic[T]):\n" +
            "    def __init__(self, x: T):\n" +
@@ -189,9 +189,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClassInheritance() {
     doTest("int",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class B(Generic[T]):\n" +
            "    def foo(self) -> T:\n" +
@@ -214,7 +214,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("str | bytes",
+    doTest("Union[bytes, str]",
            "from typing import AnyStr\n" +
            "\n" +
            "def foo(x: AnyStr) -> AnyStr:\n" +
@@ -224,11 +224,11 @@ public class PyTypingTest extends PyTestCase {
            "    expr = foo(x)\n");
   }
 
-  public void testFunctionType() {
+  public void testCallableType() {
     doTest("(int, str) -> str",
-           "from typing import Function\n" +
+           "from typing import Callable\n" +
            "\n" +
-           "def foo(expr: Function[[int, str], str]):\n" +
+           "def foo(expr: Callable[[int, str], str]):\n" +
            "    pass\n");
   }
 
@@ -247,6 +247,36 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = foo('bar')\n");
+  }
+
+  public void testOptionalType() {
+    doTest("Optional[int]",
+           "from typing import Optional\n" +
+           "\n" +
+           "def foo(expr: Optional[int]):\n" +
+           "    pass\n");
+  }
+
+  public void testOptionalFromDefaultNone() {
+    doTest("Optional[int]",
+           "def foo(expr: int = None):\n" +
+           "    pass\n");
+  }
+
+  public void testFlattenUnions() {
+    doTest("Union[int, str, list]",
+           "from typing import Union\n" +
+           "\n" +
+           "def foo(expr: Union[int, Union[str, list]]):\n" +
+           "    pass\n");
+  }
+
+  public void testCast() {
+    doTest("str",
+           "from typing import cast\n" +
+           "\n" +
+           "def foo(x):\n" +
+           "    expr = cast(str, x)\n");
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyFunction;
@@ -65,7 +66,9 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  public PyType getParameterType(@NotNull final PyNamedParameter param, @NotNull final PyFunction func, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getParameterType(@NotNull final PyNamedParameter param,
+                                      @NotNull final PyFunction func,
+                                      @NotNull TypeEvalContext context) {
     if (!(param.getParent() instanceof PyParameterList)) return null;
     List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());
     final int index = params.indexOf(param);
@@ -91,7 +94,10 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
       }
     });
     if (superMethodParameterTypes.size() > 0) {
-      return superMethodParameterTypes.get(0);
+      final PyType type = superMethodParameterTypes.get(0);
+      if (type != null) {
+        return Ref.create(type);
+      }
     }
     return null;
   }
