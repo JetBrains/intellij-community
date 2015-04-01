@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,7 +297,7 @@ public final class TreeUtil {
   private static IndexTreePathState removeLastPathComponent(@NotNull final DefaultTreeModel model, @NotNull final TreePath pathToBeRemoved) {
     final IndexTreePathState selectionState = new IndexTreePathState(pathToBeRemoved);
     if (((MutableTreeNode) pathToBeRemoved.getLastPathComponent()).getParent() == null) return selectionState;
-    model.removeNodeFromParent((MutableTreeNode) pathToBeRemoved.getLastPathComponent());
+    model.removeNodeFromParent((MutableTreeNode)pathToBeRemoved.getLastPathComponent());
     return selectionState;
   }
 
@@ -661,7 +661,7 @@ public final class TreeUtil {
     return row;
   }
 
-  private static int getVisibleRowCount(@NotNull final JTree tree) {
+  public static int getVisibleRowCount(@NotNull final JTree tree) {
     final Rectangle visible = tree.getVisibleRect();
 
     if (visible == null) return 0;
@@ -675,6 +675,17 @@ public final class TreeUtil {
       }
     }
     return count;
+  }
+
+  /**
+   * works correctly for trees with fixed row height only.
+   * For variable height trees (e.g. trees with custom tree node renderer) use the {@link #getVisibleRowCount(JTree)} which is slower
+   */
+  public static int getVisibleRowCountForFixedRowHeight(@NotNull final JTree tree) {
+    // myTree.getVisibleRowCount returns 20
+    Rectangle bounds = tree.getRowBounds(0);
+    int rowHeight = bounds == null ? 0 : bounds.height;
+    return rowHeight == 0 ? tree.getVisibleRowCount() : tree.getVisibleRect().height / rowHeight;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

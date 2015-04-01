@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class ContentEntryTreeEditor {
   protected final Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
   private final JPanel myTreePanel;
-  private final DefaultMutableTreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
+  private final TreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
   protected final DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
@@ -205,7 +205,7 @@ public class ContentEntryTreeEditor {
     if (myFileSystemTree != null) {
       myFileSystemTree.updateTree();
       final DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
-      final int visibleRowCount = myTree.getVisibleRowCount();
+      final int visibleRowCount = TreeUtil.getVisibleRowCount(myTree);
       for (int row = 0; row < visibleRowCount; row++) {
         final TreePath pathForRow = myTree.getPathForRow(row);
         if (pathForRow != null) {
@@ -215,18 +215,6 @@ public class ContentEntryTreeEditor {
           }
         }
       }
-    }
-  }
-
-  private static class MarkSourceToggleActionsGroup extends DefaultActionGroup {
-    public MarkSourceToggleActionsGroup(String groupName, final Icon rootIcon) {
-      super(groupName, true);
-      getTemplatePresentation().setIcon(rootIcon);
-    }
-
-    @Override
-    public boolean displayTextInToolbar() {
-      return true;
     }
   }
 
