@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
@@ -632,6 +633,9 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
         ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(result.getClass()), "setMultiModuleProjectDirectory", File.class);
       if (setMultiModuleProjectDirectoryMethod != null) {
         try {
+          if (file == null) {
+            file = new File(FileUtil.getTempDirectory());
+          }
           setMultiModuleProjectDirectoryMethod.invoke(result, MavenServerUtil.findMavenBasedir(file));
         }
         catch (Exception e) {
