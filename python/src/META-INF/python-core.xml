@@ -734,6 +734,13 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </action>
 
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="AllIcons.Actions.TraceInto"
+            text="Step Into My Code" description="Step to the next line executed ignoring libraries">
+      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift F7"/>
+    </action>
+
     <group id="PyPackagingMenu" text="Packaging">
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
