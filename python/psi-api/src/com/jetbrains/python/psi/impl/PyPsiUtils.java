@@ -233,7 +233,7 @@ public class PyPsiUtils {
       final PsiElement nextNonWhitespace = getNextNonWhitespaceSibling(commaNode);
       final PsiElement last = nextNonWhitespace == null ? element.getLastChild() : nextNonWhitespace.getPrevSibling();
       final PsiElement prevNonWhitespace = getPrevNonWhitespaceSibling(commaNode);
-      final PsiElement first = prevNonWhitespace == null ? element.getLastChild() : prevNonWhitespace.getNextSibling();
+      final PsiElement first = prevNonWhitespace == null ? element.getFirstChild() : prevNonWhitespace.getNextSibling();
       element.deleteChildRange(first, last);
     }
   }
