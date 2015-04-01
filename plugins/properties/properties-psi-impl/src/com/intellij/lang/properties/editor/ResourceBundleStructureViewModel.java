@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel, StructureViewModel.ExpandInfoProvider {
   private final ResourceBundle myResourceBundle;
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
-  private final StructureViewTreeElement myRoot;
+  private final ResourceBundleFileStructureViewElement myRoot;
 
   public ResourceBundleStructureViewModel(ResourceBundle root) {
     myResourceBundle = root;
@@ -46,6 +46,14 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   public void setSeparator(String separator) {
     myByWordPrefixesGrouper.setSeparator(separator);
     PropertiesSeparatorManager.getInstance(myResourceBundle.getProject()).setSeparator(myResourceBundle, separator);
+  }
+
+  public void setShowOnlyIncomplete(boolean showOnlyIncomplete) {
+    myRoot.setShowOnlyIncomplete(showOnlyIncomplete);
+  }
+
+  public boolean isShowOnlyIncomplete() {
+    return myRoot.isShowOnlyIncomplete();
   }
 
   public String getSeparator() {
