@@ -20,35 +20,27 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.Location;
 import com.intellij.execution.PatternConfigurationDelegate;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestsUIUtil;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
-public class TestNGPatternConfigurationProducer extends TestNGConfigurationProducer{
-  private static PatternConfigurationDelegate ourDelegate = new PatternConfigurationDelegate() {
-    @Override
+public class TestNGPatternConfigurationProducer extends PatternConfigurationDelegate<TestNGConfiguration> {
+  public TestNGPatternConfigurationProducer() {
+    super(TestNGConfigurationType.getInstance());
+  }
+
+  @Override
     protected boolean isTestClass(PsiClass psiClass) {
       return TestNGUtil.hasTest(psiClass);
     }
@@ -57,14 +49,13 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
     protected boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
       return psiElement instanceof PsiModifierListOwner && TestNGUtil.hasTest((PsiModifierListOwner)psiElement);
     }
-  };
-
+  
   @Override
   protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
-    final PsiElement element = ourDelegate.checkPatterns(context, classes);
+    final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
       return false;
     }
@@ -77,25 +68,17 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
     return true;
   }
 
-  public static boolean isMultipleElementsSelected(ConfigurationContext context) {
-    return ourDelegate.isMultipleElementsSelected(context);
-  }
-
-  public static Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
-    return ourDelegate.findModule(configuration, contextModule, patterns);
-  }
-  
   @Override
   protected Module findModule(TestNGConfiguration configuration, Module contextModule) {
     final Set<String> patterns = configuration.data.getPatterns();
-    return ourDelegate.findModule(configuration, contextModule, patterns);
+    return findModule(configuration, contextModule, patterns);
   }
 
   @Override
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
     final String type = testNGConfiguration.getPersistantData().TEST_OBJECT;
     if (Comparing.equal(type, TestType.PATTERN.getType())) {
-      return ourDelegate.isConfiguredFromContext(context, testNGConfiguration.getPersistantData().getPatterns());
+      return isConfiguredFromContext(context, testNGConfiguration.getPersistantData().getPatterns());
     }
     return false;
   }

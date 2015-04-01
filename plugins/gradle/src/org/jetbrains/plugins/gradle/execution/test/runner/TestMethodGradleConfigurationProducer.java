@@ -55,7 +55,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   protected boolean setupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     final Location contextLocation = context.getLocation();
@@ -82,7 +82,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (configuration == null) return false;
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 

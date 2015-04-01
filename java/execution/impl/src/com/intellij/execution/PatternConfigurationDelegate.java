@@ -15,10 +15,10 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -35,9 +35,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class PatternConfigurationDelegate {
+public abstract class PatternConfigurationDelegate<T extends ModuleBasedConfiguration> extends JavaRunConfigurationProducerBase<T> implements Cloneable{
   protected abstract boolean isTestClass(PsiClass psiClass);
   protected abstract boolean isTestMethod(boolean checkAbstract, PsiElement psiElement);
+
+  public PatternConfigurationDelegate(ConfigurationType configurationType) {
+    super(configurationType);
+  }
 
   public Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
     return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), new Condition<PsiClass>() {

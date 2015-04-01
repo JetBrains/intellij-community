@@ -64,7 +64,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
 
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     PsiClass testClass = JUnitUtil.getTestClass(location);
@@ -99,7 +99,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
 
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 

@@ -22,6 +22,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.PatternConfigurationDelegate;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,8 @@ public class AddToTestsPatternAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final Set<PsiElement> classes = PatternConfigurationProducer.collectTestMembers(psiElements, true);
+    final Set<PsiElement> classes = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).collectTestMembers(psiElements,
+                                                                                                                                true);
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final List<JUnitConfiguration> patternConfigurations = collectPatternConfigurations(classes, project);
@@ -81,7 +83,7 @@ public class AddToTestsPatternAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      final Set<PsiElement> foundMembers = PatternConfigurationProducer.collectTestMembers(psiElements, true);
+      final Set<PsiElement> foundMembers = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).collectTestMembers(psiElements, true);
       if (foundMembers.isEmpty()) return;
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {

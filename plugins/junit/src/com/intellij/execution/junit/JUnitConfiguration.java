@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -441,7 +442,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
     }
     myData.setPatterns(patterns);
-    final Module module = PatternConfigurationProducer.findModule(this, getConfigurationModule().getModule(), patterns);
+    final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
+      .getModule(), patterns);
     if (module == null) {
       myData.setScope(TestSearchScope.WHOLE_PROJECT);
       setModule(null);
