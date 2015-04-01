@@ -46,7 +46,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
     NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
     // 184 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable or int or long or float or complex");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "collections.Iterable");
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
     // an instance of 'numpy.core.multiarray.dtype', however the type checker isn't able to check it.
     // 30 occurrences
@@ -88,6 +88,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             // Function returns single value
             final String typeName = returns.get(0).getType();
             if (typeName != null) {
+              final PyType genericType = getPsiFacade(function).parseTypeAnnotation("T", function);
+              if (isUfuncType(function, typeName)) return genericType;
               return parseNumpyDocType(function, typeName);
             }
             return null;
@@ -188,6 +190,16 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return getPsiFacade(anchor).createUnionType(types);
   }
 
+  private static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
+    for (String typeName : NumPyDocString.getNumpyUnionType(typeString)) {
+      if (anchor instanceof PyFunction && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
+          (typeName.equals("array_like") || typeName.equals("ndarray"))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   private static PyType getParameterType(@NotNull PyFunction function, @NotNull String parameterName) {
     final NumPyDocString docString = NumPyDocString.forFunction(function, function);
@@ -200,6 +212,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
         parameter = docString.getNamedParameter(parameterName.substring(2));
       }
       if (parameter != null) {
+        final PyType numberType = getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number|numpy.core.multiarray.ndarray", function);
+        if (isUfuncType(function, parameter.getType())) return numberType;
         return parseNumpyDocType(function, parameter.getType());
       }
     }
