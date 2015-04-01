@@ -126,6 +126,19 @@ public class PyTypeModelBuilder {
     }
   }
 
+  static class TupleType extends TypeModel {
+    private final List<TypeModel> members;
+
+    public TupleType(List<TypeModel> members) {
+      this.members = members;
+    }
+
+    @Override
+    void accept(TypeVisitor visitor) {
+      visitor.tuple(this);
+    }
+  }
+
   private static TypeModel _(String name) {
     return new NamedType(name);
   }
@@ -228,6 +241,15 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = build((PyCallableType)type);
     }
+    else if (type instanceof PyTupleType) {
+      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
+      final PyTupleType tupleType = (PyTupleType)type;
+      for (int i = 0; i < tupleType.getElementCount(); i++) {
+        final PyType elementType = tupleType.getElementType(i);
+        elementModels.add(build(elementType, true));
+      }
+      result = new TupleType(elementModels);
+    }
     if (result == null) {
       result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
@@ -284,6 +306,8 @@ public class PyTypeModelBuilder {
     void unknown(UnknownType type);
 
     void optional(OptionalType type);
+
+    void tuple(TupleType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -444,6 +468,13 @@ public class PyTypeModelBuilder {
     public void optional(OptionalType type) {
       add("Optional[");
       type.type.accept(this);
+      add("]");
+    }
+
+    @Override
+    public void tuple(TupleType type) {
+      add("Tuple[");
+      processList(type.members, ", ");
       add("]");
     }
   }
