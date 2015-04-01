@@ -975,7 +975,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static GroovyResolveResult reflectedToBase(GroovyResolveResult result, GrMethod baseMethod, GrReflectedMethod reflectedMethod) {
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    PsiSubstitutor substitutor = result.getSubstitutor();
     PsiTypeParameter[] reflectedParameters = reflectedMethod.getTypeParameters();
     PsiTypeParameter[] baseParameters = baseMethod.getTypeParameters();
     assert baseParameters.length == reflectedParameters.length;
