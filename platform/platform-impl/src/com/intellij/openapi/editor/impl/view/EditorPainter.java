@@ -569,7 +569,7 @@ class EditorPainter {
     for (LineLayout.Fragment fragment : lineLayout.getFragmentsInVisualOrder()) {
       if (startOffset == endOffset) {
         if (startOffset >= fragment.getStartOffset() && startOffset <= fragment.getEndOffset()) {
-          x = fragment.absoluteOffsetToX(x, startOffset - fragment.getVisualStartOffset());
+          x = fragment.absoluteOffsetToX(x, startOffset);
           result.add(x);
           result.add(x);
           break;
