@@ -78,7 +78,7 @@ public class PyExtractMethodUtil {
                                            @NotNull final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.with.local"),
+                                          PyBundle.message("refactoring.extract.method.error.local.variable.modifications.and.returns"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
@@ -92,7 +92,7 @@ public class PyExtractMethodUtil {
     final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
     if (elementsRange.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          "Cannot perform refactoring from empty code fragment",
+                                          PyBundle.message("refactoring.extract.method.error.empty.fragment"),
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
@@ -181,7 +181,7 @@ public class PyExtractMethodUtil {
           }
         });
       }
-    }, "Extract method", null);
+    }, PyBundle.message("refactoring.extract.method"), null);
   }
 
   private static void processDuplicates(@NotNull final PsiElement callElement,
@@ -273,14 +273,14 @@ public class PyExtractMethodUtil {
                                            @NotNull final PsiElement expression) {
     if (!fragment.getOutputVariables().isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          "Cannot perform refactoring from expression with local variables modifications inside code fragment",
+                                          PyBundle.message("refactoring.extract.method.error.local.variable.modifications"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
     if (fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          "Cannot extract method with return instructions inside code fragment",
+                                          PyBundle.message("refactoring.extract.method.error.returns"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
@@ -350,7 +350,7 @@ public class PyExtractMethodUtil {
             }
           });
         }
-      }, "Extract method", null);
+      }, PyBundle.message("refactoring.extract.method"), null);
     }
   }
 
