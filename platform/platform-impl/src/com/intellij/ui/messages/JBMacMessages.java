@@ -75,8 +75,8 @@ public class JBMacMessages extends MacMessagesEmulation {
 
     Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
-    final String defaultOptionTitle = defaultOptionIndex != -1 ? buttons[buttons.length - 1 - defaultOptionIndex] : null;
-    final String focusedButtonTitle = focusedOptionIndex != -1 ? buttons[buttons.length - 1 - focusedOptionIndex] : null;
+    final String defaultOptionTitle = defaultOptionIndex != -1 ? buttons[defaultOptionIndex] : null;
+    final String focusedButtonTitle = focusedOptionIndex != -1 ? buttons[focusedOptionIndex] : null;
 
     final SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, defaultOptionTitle, focusedButtonTitle);
     String result = sheetMessage.getResult();
