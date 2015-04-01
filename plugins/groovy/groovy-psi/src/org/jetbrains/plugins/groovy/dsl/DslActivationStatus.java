@@ -89,13 +89,16 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
 
   @Override
   public void loadState(State state) {
-    if (state.entries == null) return;
-    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    for (Entry entry : state.entries) {
-      if (entry.url == null || entry.status == null) continue;
-      final VirtualFile file = fileManager.findFileByUrl(entry.url);
-      if (file != null) {
-        myStatus.put(file, entry);
+    synchronized (myStatus) {
+      myStatus.clear();
+      if (state.entries == null) return;
+      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
+      for (Entry entry : state.entries) {
+        if (entry.url == null || entry.status == null) continue;
+        final VirtualFile file = fileManager.findFileByUrl(entry.url);
+        if (file != null) {
+          myStatus.put(file, entry);
+        }
       }
     }
   }
