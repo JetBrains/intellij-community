@@ -63,7 +63,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
     long started = System.currentTimeMillis();
-    PushedFilePropertiesUpdaterImpl.ourConcurrentlyFlag.set(Boolean.TRUE);
+    boolean canProceedConcurrently = !ApplicationManager.getApplication().isWriteAccessAllowed();
+    PushedFilePropertiesUpdaterImpl.ourConcurrentlyFlag.set(canProceedConcurrently);
     try {
       PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
     } finally {
@@ -77,7 +78,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     long l = System.currentTimeMillis();
-    FileBasedIndexImpl.ourConcurrentlyFlag.set(Boolean.TRUE);
+    FileBasedIndexImpl.ourConcurrentlyFlag.set(canProceedConcurrently);
     try {
       myIndex.iterateIndexableFiles(finder, myProject, indicator);
     } finally {
