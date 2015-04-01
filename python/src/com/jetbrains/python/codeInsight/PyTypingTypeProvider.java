@@ -51,6 +51,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.Protocol")
     .build();
 
+  @Nullable
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final PyAnnotation annotation = param.getAnnotation();
     if (annotation != null) {
@@ -59,7 +60,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (value != null) {
         final PyType type = getTypingType(value, context);
         if (type != null) {
-          return Ref.create(type);
+          final PyType optionalType = getOptionalTypeFromDefaultNone(param, type, context);
+          return Ref.create(optionalType != null ? optionalType : type);
         }
       }
     }
@@ -90,6 +92,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static boolean isAny(@NotNull PyType type) {
     return type instanceof PyClassType && "typing.Any".equals(((PyClassType)type).getPyClass().getQualifiedName());
+  }
+
+  @Nullable
+  private static PyType getOptionalTypeFromDefaultNone(@NotNull PyNamedParameter param,
+                                                       @NotNull PyType type,
+                                                       @NotNull TypeEvalContext context) {
+    final PyExpression defaultValue = param.getDefaultValue();
+    if (defaultValue != null) {
+      final PyType defaultType = context.getType(defaultValue);
+      if (defaultType instanceof PyNoneType) {
+        return PyUnionType.union(type, defaultType);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -152,7 +168,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (unionType != null) {
       return unionType;
     }
-    final Ref<PyType> optionalType = getOptionalType(expression, context);
+    final Ref<PyType> optionalType = getOptionalTypeFromDefaultNone(expression, context);
     if (optionalType != null) {
       return optionalType.get();
     }
@@ -203,7 +219,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Ref<PyType> getOptionalType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static Ref<PyType> getOptionalTypeFromDefaultNone(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
       final PyExpression operand = subscriptionExpr.getOperand();
