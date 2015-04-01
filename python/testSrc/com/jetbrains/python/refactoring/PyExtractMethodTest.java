@@ -122,7 +122,12 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   // PY-2903
-  public void _testComment() {
+  public void testComment() {
+    doTest("bar");
+  }
+
+  // PY-2903
+  public void testSeveralCommentsAbove() {
     doTest("bar");
   }
 

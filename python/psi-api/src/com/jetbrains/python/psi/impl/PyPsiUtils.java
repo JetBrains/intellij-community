@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
@@ -244,6 +245,37 @@ public class PyPsiUtils {
       final PsiElement first = prevNonWhitespace == null ? element.getFirstChild() : prevNonWhitespace.getNextSibling();
       element.deleteChildRange(first, last);
     }
+  }
+
+  /**
+   * Returns comments preceding given elements as pair of the first and the last such comments. Comments should not be
+   * separated by any empty line.
+   * @param element element comments should be adjacent to
+   * @return described range or {@code null} if there are no such comments
+   */
+  @Nullable
+  public static Couple<PsiComment> getPrecedingComments(@NotNull PsiElement element) {
+    PsiComment firstComment = null, lastComment = null;
+    overComments:
+    while (true) {
+      int newLinesCount = 0;
+      for (element = element.getPrevSibling(); element instanceof PsiWhiteSpace; element = element.getPrevSibling()) {
+        newLinesCount += StringUtil.getLineBreakCount(element.getText());
+        if (newLinesCount > 1) {
+          break overComments;
+        }
+      }
+      if (element instanceof PsiComment) {
+        if (lastComment == null) {
+          lastComment = (PsiComment)element;
+        }
+        firstComment = (PsiComment)element;
+      }
+      else {
+        break;
+      }
+    }
+    return lastComment == null ? null : Couple.of(firstComment, lastComment);
   }
 
   @NotNull
