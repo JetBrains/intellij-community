@@ -21,7 +21,6 @@ import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
@@ -128,6 +127,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
     public PsiReference[] getReferencesByString(String str,
                                                 @NotNull final PsiElement position,
                                                 int offsetInPosition) {
+      if (str.length() == 0) return PsiReference.EMPTY_ARRAY;
       final PsiReference[] references = super.getReferencesByString(str, position, offsetInPosition);
       final int offset = position instanceof XmlTag ? 1 : 0;
       if (references.length <= offset) return PsiReference.EMPTY_ARRAY;
