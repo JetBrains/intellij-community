@@ -292,6 +292,13 @@ public class ReimportingTest extends MavenImportingTestCase {
 
     importProject();
     assertEquals("1.6", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+
+    // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>project</artifactId>" +
+                          "<version>1</version>");
+    importProject();
+    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
   private static String createPomXmlWithModuleDependency(final String dependencyType) {
