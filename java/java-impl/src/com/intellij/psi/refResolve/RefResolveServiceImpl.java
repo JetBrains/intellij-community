@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.refResolve;
 
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -34,10 +33,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
@@ -529,7 +525,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     // fine but grabs all CPUs
     //return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(fileList, indicator, false, false, processor);
 
-    int parallelism = Math.min(4, JobSchedulerImpl.CORES_COUNT);
+    int parallelism = CacheUpdateRunner.indexingThreadCount();
     final Callable<Boolean> processFileFromSet = new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
