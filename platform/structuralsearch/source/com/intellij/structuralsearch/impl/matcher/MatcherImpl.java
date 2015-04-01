@@ -37,12 +37,10 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -433,7 +431,7 @@ public class MatcherImpl {
   }
 
   class TaskScheduler implements MatchingProcess {
-    private LinkedList<Runnable> tasks = new LinkedList<Runnable>();
+    private ArrayList<Runnable> tasks = new ArrayList<Runnable>();
     private boolean ended;
     private Runnable taskQueueEndAction;
 
@@ -479,7 +477,7 @@ public class MatcherImpl {
           break;
         }
 
-        final Runnable task = tasks.removeFirst();
+        final Runnable task = tasks.remove(tasks.size() - 1);
         try {
           task.run();
         }
