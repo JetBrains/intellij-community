@@ -71,7 +71,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionOfTuples() {
-    doTest("(int | str, str | int)",
+    doTest("Union[Tuple[int, str], Tuple[str, int]]",
            "def x():\n" +
            "  if True:\n" +
            "    return (1, 'a')\n" +
