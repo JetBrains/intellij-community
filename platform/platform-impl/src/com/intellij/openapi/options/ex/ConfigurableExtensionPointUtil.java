@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
@@ -129,11 +131,57 @@ public class ConfigurableExtensionPointUtil {
     return tree;
   }
 
+  /**
+   * @param project         the project used to load application settings
+   * @param withIdeSettings specifies whether to load application settings or not
+   * @param loadComponents  specifies whether to load Configurable components or not
+   * @return the list of all available settings according to parameters
+   */
+  private static List<Configurable> getAllConfigurables(@Nullable Project project, boolean withIdeSettings, boolean loadComponents) {
+    List<Configurable> list = ContainerUtil.newArrayList();
+    if (withIdeSettings) {
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        if (loadComponents) {
+          ContainerUtil.addAll(list, application.getComponents(Configurable.class));
+        }
+        for (ConfigurableEP<Configurable> extension : application.getExtensions(Configurable.APPLICATION_CONFIGURABLE)) {
+          ContainerUtil.addIfNotNull(list, ConfigurableWrapper.wrapConfigurable(extension));
+        }
+      }
+    }
+    if (project != null) {
+      if (loadComponents) {
+        ContainerUtil.addAll(list, project.getComponents(Configurable.class));
+      }
+      for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {
+        ContainerUtil.addIfNotNull(list, ConfigurableWrapper.wrapConfigurable(extension));
+      }
+    }
+    return list;
+  }
+
+  /**
+   * @param configurable settings component to validate
+   * @param project      current project, default template project or {@code null} for IDE settings
+   * @return {@code true} if the specified configurable must be shown in the settings dialog
+   */
+  private static boolean isValid(Configurable configurable, Project project) {
+    if (configurable == null) {
+      return false;
+    }
+    if (ConfigurableWrapper.cast(Configurable.Assistant.class, configurable) != null) {
+      return false;
+    }
+    OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, configurable);
+    if (optional != null && !optional.needDisplay()) {
+      return false;
+    }
+    return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
+  }
+
   private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
-    OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, each);
-    return each instanceof Configurable.Assistant
-        || optional != null && !optional.needDisplay()
-        || filter != null && !filter.isIncluded(each);
+    return !isValid(each, null) || (filter != null && !filter.isIncluded(each));
   }
 
   /*
