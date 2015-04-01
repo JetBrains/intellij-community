@@ -240,35 +240,25 @@ public class MatcherImpl {
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
 
-    if (/*TokenBasedSearcher.canProcess(compiledPattern)*/ false) {
-      //TokenBasedSearcher searcher = new TokenBasedSearcher(this);
-      //searcher.search(compiledPattern);
-      if (isTesting) {
-        matchContext.getSink().matchingFinished();
-        return;
+    if (isTesting) {
+      // testing mode;
+      final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
+
+      PsiElement parent = elements[0].getParent();
+      if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
+        visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
       }
+      else {
+        for (PsiElement element : elements) {
+          match(element);
+        }
+      }
+
+      matchContext.getSink().matchingFinished();
+      return;
     }
-    else {
-      if (isTesting) {
-        // testing mode;
-        final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
-
-        PsiElement parent = elements[0].getParent();
-        if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
-          visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
-        }
-        else {
-          for (PsiElement element : elements) {
-            match(element);
-          }
-        }
-
-        matchContext.getSink().matchingFinished();
-        return;
-      }
-      if (!findMatches(options, compiledPattern)) {
-        return;
-      }
+    if (!findMatches(options, compiledPattern)) {
+      return;
     }
 
     if (scheduler.getTaskQueueEndAction()==null) {
