@@ -285,6 +285,13 @@ public class PyTypingTest extends PyTestCase {
            "    expr = x  # type: int\n");
   }
 
+  public void testMultiAssignmentComment() {
+    doTest("Tuple[int, str]",
+           "def foo(x)\n" +
+           "    c1, c2 = x  # type: int, str\n" +
+           "    expr = c1, c2\n");
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);

@@ -27,6 +27,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -113,9 +114,29 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression && context.maySwitchToAST(referenceTarget)) {
-      final String comment = getTypeComment((PyTargetExpression)referenceTarget);
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final String comment = getTypeComment(target);
       if (comment != null) {
-        return getStringBasedType(comment, referenceTarget, context);
+        final PyType type = getStringBasedType(comment, referenceTarget, context);
+        final PyType tupleAssignmentType = getTupleAssignmentType(target, type);
+        if (tupleAssignmentType != null) {
+          return tupleAssignmentType;
+        }
+        return type;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getTupleAssignmentType(@NotNull PyTargetExpression target, @Nullable PyType type) {
+    if (type instanceof PyTupleType) {
+      final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
+      if (assignment != null) {
+        final PyExpression leftExpr = PyPsiUtils.flattenParens(assignment.getLeftHandSideExpression());
+        if (leftExpr instanceof PyTupleExpression) {
+          return PyTypeChecker.getTargetTypeFromTupleAssignment(target, (PyTupleExpression)leftExpr, (PyTupleType)type);
+        }
       }
     }
     return null;
@@ -302,8 +323,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     codeFragment.setContext(anchor.getContainingFile());
     final PsiElement element = codeFragment.getFirstChild();
     if (element instanceof PyExpressionStatement) {
-      final PyExpression dummyExpr = ((PyExpressionStatement)element).getExpression();
-      return getType(dummyExpr, context);
+      final PyExpression expr = ((PyExpressionStatement)element).getExpression();
+      if (expr instanceof PyTupleExpression) {
+        final PyTupleExpression tupleExpr = (PyTupleExpression)expr;
+        final List<PyType> elementTypes = new ArrayList<PyType>();
+        for (PyExpression elementExpr : tupleExpr.getElements()) {
+          elementTypes.add(getType(elementExpr, context));
+        }
+        return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
+      }
+      return getType(expr, context);
     }
     return null;
   }
