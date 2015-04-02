@@ -47,6 +47,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
     .put("typing.Set", PyNames.SET)
+    .put("typing.FrozenSet", "frozenset")
     .put("typing.Tuple", PyNames.TUPLE)
     .build();
 
