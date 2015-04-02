@@ -31,6 +31,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -82,6 +83,11 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
                                           RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
+    if (rangeBelongsToSameClassBody(element1, element2)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.extract.method.error.class.level"),
+                                          RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+      return;
+    }
 
     final Couple<PsiElement> statements = getStatementsRange(element1, element2);
     if (statements != null) {
@@ -124,6 +130,12 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorHint(project, editor,
                                         PyBundle.message("refactoring.extract.method.error.bad.selection"),
                                         RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+  }
+
+  private static boolean rangeBelongsToSameClassBody(@NotNull PsiElement element1, @NotNull PsiElement element2) {
+    final PyClass firstScopeOwner = PsiTreeUtil.getParentOfType(element1, PyClass.class, false, ScopeOwner.class);
+    final PyClass secondScopeOwner = PsiTreeUtil.getParentOfType(element2, PyClass.class, false, ScopeOwner.class);
+    return firstScopeOwner != null && firstScopeOwner == secondScopeOwner;
   }
 
   @Nullable

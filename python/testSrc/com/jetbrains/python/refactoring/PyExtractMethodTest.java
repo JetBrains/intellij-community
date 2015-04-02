@@ -101,10 +101,6 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("bar");
   }
 
-  public void testNameCollisionClass() {
-    doFail("hello", "Method name clashes with already existing name");
-  }
-
   public void testNameCollisionFile() {
     doFail("hello", "Method name clashes with already existing name");
   }
@@ -149,10 +145,6 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("bar");
   }
 
-  public void testClassContext() {
-    doTest("bar");
-  }
-
   public void testConditionalReturn() {
     doFail("bar", "Cannot perform refactoring when execution flow is interrupted");
   }
@@ -161,7 +153,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("bar");
   }
 
-  public void testComment2() {
+  public void testCommentIncluded() {
     doTest("baz");
   }
 
@@ -280,5 +272,10 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   // PY-7753
   public void testRedundantGlobalInTopLevelFunction() {
     doTest("foo");
+  }
+
+  // PY-6620
+  public void testProhibitedAtClassLevel() {
+    doFail("foo", "Cannot perform refactoring at class level");
   }
 }
