@@ -567,15 +567,13 @@
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 
-    <projectService
-        serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleManagerImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsFacadeImpl"/>
 
-    <projectService
-        serviceImplementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
 
@@ -1106,6 +1104,18 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
 
+    <localInspection language="Groovy"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupPath="Groovy"
+                     groupKey="groovy.dfa.issues"
+                     key="groovy.nullness"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GrNullabilityInspection"/>
+
+
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.lang.flow.GrNullness"/>
+
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
@@ -1607,10 +1617,21 @@
       <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
               text="get PsiType" description=""
               internal="true"/>
-
+      <action id="GetNullabilityAction" 
+              class="org.jetbrains.plugins.groovy.actions.GrGetNullabilityAction"
+              text="get nullability"
+              internal="true"/>
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"
+              description="" internal="true"/>
+      <action id="DumpNewGroovyControlFlowAction"
+              class="org.jetbrains.plugins.groovy.actions.DumpNewGroovyControlFlow"
+              text="dump new groovy control flow"
+              description="" internal="true"/>
+      <action id="DumpJavaControlFlowAction"
+              class="org.jetbrains.plugins.groovy.actions.DumpJavaControlFlowAction"
+              text="dump java control flow"
               description="" internal="true"/>
       <action id="DumpGroovyStubsAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyStubsAction"
