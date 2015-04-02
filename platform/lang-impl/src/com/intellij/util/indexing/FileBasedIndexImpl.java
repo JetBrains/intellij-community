@@ -2608,7 +2608,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       });
     }*/
 
-    final Set<VirtualFile> visitedRoots = new THashSet<VirtualFile>();
+    final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
