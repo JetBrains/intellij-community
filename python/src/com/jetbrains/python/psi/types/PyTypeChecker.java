@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
@@ -608,6 +609,35 @@ public class PyTypeChecker {
       final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
       if (results != null && !results.isEmpty()) {
         return results.get(0).getElement();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target, @NotNull PyTupleExpression parentTuple,
+                                                        @NotNull PyTupleType assignedTupleType) {
+    final int count = assignedTupleType.getElementCount();
+    final PyExpression[] elements = parentTuple.getElements();
+    if (elements.length == count) {
+      final int index = ArrayUtil.indexOf(elements, target);
+      if (index >= 0) {
+        return assignedTupleType.getElementType(index);
+      }
+      for (int i = 0; i < count; i++) {
+        PyExpression element = elements[i];
+        while (element instanceof PyParenthesizedExpression) {
+          element = ((PyParenthesizedExpression)element).getContainedExpression();
+        }
+        if (element instanceof PyTupleExpression) {
+          final PyType elementType = assignedTupleType.getElementType(i);
+          if (elementType instanceof PyTupleType) {
+            final PyType result = getTargetTypeFromTupleAssignment(target, (PyTupleExpression)element, (PyTupleType)elementType);
+            if (result != null) {
+              return result;
+            }
+          }
+        }
       }
     }
     return null;

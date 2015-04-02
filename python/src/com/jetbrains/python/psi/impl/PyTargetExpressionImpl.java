@@ -27,7 +27,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
@@ -212,7 +211,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           if (value != null) {
             final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
             if (assignedType instanceof PyTupleType) {
-              final PyType t = getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)assignedType);
+              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, (PyTupleExpression)parent, (PyTupleType)assignedType);
               if (t != null) {
                 return t;
               }
@@ -310,34 +309,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
-  private PyType getTypeFromTupleAssignment(@NotNull PyTupleExpression tuple, @NotNull PyTupleType tupleType) {
-    final int count = tupleType.getElementCount();
-    final PyExpression[] elements = tuple.getElements();
-    if (elements.length == count) {
-      final int index = ArrayUtil.indexOf(elements, this);
-      if (index >= 0) {
-        return tupleType.getElementType(index);
-      }
-      for (int i = 0; i < count; i++) {
-        PyExpression element = elements[i];
-        while (element instanceof PyParenthesizedExpression) {
-          element = ((PyParenthesizedExpression)element).getContainedExpression();
-        }
-        if (element instanceof PyTupleExpression) {
-          final PyType elementType = tupleType.getElementType(i);
-          if (elementType instanceof PyTupleType) {
-            final PyType result = getTypeFromTupleAssignment((PyTupleExpression)element, (PyTupleType)elementType);
-            if (result != null) {
-              return result;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   private PyType getTypeFromIteration(@NotNull TypeEvalContext context) {
     PyExpression target = null;
     PyExpression source = null;
@@ -363,7 +334,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyType sourceType = context.getType(source);
       final PyType type = getIterationType(sourceType, source, this, context);
       if (type instanceof PyTupleType && target instanceof PyTupleExpression) {
-        return getTypeFromTupleAssignment((PyTupleExpression)target, (PyTupleType)type);
+        return PyTypeChecker.getTargetTypeFromTupleAssignment(this, (PyTupleExpression)target, (PyTupleType)type);
       }
       if (target == this && type != null) {
         return type;
