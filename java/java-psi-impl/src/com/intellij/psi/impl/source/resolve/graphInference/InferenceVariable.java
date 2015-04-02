@@ -102,23 +102,6 @@ public class InferenceVariable extends LightTypeParameter {
       return dependencies;
     }
 
-    next:
-    for (InferenceVariable variable : session.getInferenceVariables()) {
-      if (!dependencies.contains(variable) && variable != this) {
-        for (List<PsiType> bounds : variable.myBounds.values()) { //todo
-          if (bounds != null) {
-            for (PsiType bound : bounds) {
-              final InferenceVariable inferenceVariable = session.getInferenceVariable(bound);
-              if (inferenceVariable == this) {
-                dependencies.add(variable);
-                continue next;
-              }
-            }
-          }
-        }
-      }
-    }
-
     if (!session.hasCapture(this)) {
       return dependencies;
     }
