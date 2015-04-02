@@ -33,4 +33,20 @@ public class PyNumpyTypeTest extends PyTestCase {
   public void testDtype() {
     doTest();
   }
+
+  public void testEmpty() {
+    doTest();
+  }
+
+  public void testTranspose() {
+    doTest();
+  }
+
+  public void testArgSort() {
+    doTest();
+  }
+
+  public void testVectorize() {
+    doTest();
+  }
 }
