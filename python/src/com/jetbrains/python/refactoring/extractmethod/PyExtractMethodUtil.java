@@ -467,17 +467,18 @@ public class PyExtractMethodUtil {
     }
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
-    final PsiElement insertionAnchor;
-    if (parent instanceof PyFile || parent instanceof PyClass) {
-      final PsiElement target = parent instanceof PyClass ? ((PyClass)parent).getStatementList() : parent;
-      insertionAnchor = PyPsiUtils.getParentRightBefore(anchor, target);
+    final PsiElement result;
+    // The only safe case to insert extracted function *after* original scope owner is function.
+    if (parent instanceof PyFunction) {
+      result = parent.getParent().addAfter(generatedMethod, parent);
     }
     else {
-      insertionAnchor = parent;
+      final PsiElement target = parent instanceof PyClass ? ((PyClass)parent).getStatementList() : parent;
+      final PsiElement insertionAnchor = PyPsiUtils.getParentRightBefore(anchor, target);
+      assert insertionAnchor != null;
+      final Couple<PsiComment> comments = PyPsiUtils.getPrecedingComments(insertionAnchor);
+      result = insertionAnchor.getParent().addBefore(generatedMethod, comments != null ? comments.getFirst() : insertionAnchor);
     }
-    assert insertionAnchor != null;
-    final Couple<PsiComment> comments = PyPsiUtils.getPrecedingComments(insertionAnchor);
-    final PsiElement result = insertionAnchor.getParent().addBefore(generatedMethod, comments != null ? comments.getFirst() : insertionAnchor);
     // to ensure correct reformatting, mark the entire method as generated
     result.accept(new PsiRecursiveElementVisitor() {
       @Override

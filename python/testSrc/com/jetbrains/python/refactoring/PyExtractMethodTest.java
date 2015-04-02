@@ -121,16 +121,6 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("sum_squares");
   }
 
-  // PY-2903
-  public void testComment() {
-    doTest("bar");
-  }
-
-  // PY-2903
-  public void testSeveralCommentsAbove() {
-    doTest("bar");
-  }
-
   public void testFile() {
     doTest("bar");
   }
