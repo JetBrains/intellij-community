@@ -65,4 +65,16 @@ public class PyNumpyTypeTest extends PyTestCase {
   public void testUFunc() {
     doTest();
   }
+
+  public void testReturnOptional() {
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testReturnTuple() {
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
 }

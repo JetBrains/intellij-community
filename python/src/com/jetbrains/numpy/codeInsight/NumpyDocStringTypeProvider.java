@@ -104,12 +104,34 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             return null;
           default:
             // Function returns a tuple
+            final ArrayList<PyType> unionMembers = new ArrayList<PyType>();
+
             final List<PyType> members = new ArrayList<PyType>();
-            for (NumPyDocStringParameter ret : returns) {
+
+            for (int i = 0; i < returns.size(); i++) {
+              NumPyDocStringParameter ret = returns.get(i);
               final String memberTypeName = ret.getType();
-              members.add(memberTypeName != null ? parseNumpyDocType(function, memberTypeName) : null);
+              final PyType returnType = memberTypeName != null ? parseNumpyDocType(function, memberTypeName) : null;
+              final boolean isOptional = memberTypeName != null && memberTypeName.contains("optional");
+
+              if (isOptional) {
+                if (i != 0) {
+                  if(members.size() > 1)
+                    unionMembers.add(facade.createTupleType(members, function));
+                   else
+                    unionMembers.add(returnType);
+                }
+              }
+              members.add(returnType);
+
+              if (i == returns.size() - 1 && isOptional) {
+                unionMembers.add(facade.createTupleType(members, function));
+              }
             }
-            return facade.createTupleType(members, function);
+            if (unionMembers.isEmpty()) {
+              return facade.createTupleType(members, function);
+            }
+            return facade.createUnionType(unionMembers);
         }
       }
     }
