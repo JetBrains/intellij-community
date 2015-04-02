@@ -728,6 +728,11 @@
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.StringTokenizerDelimiterInspection"
                      displayName="Duplicated delimiters in java.util.StringTokenizer"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
+                     groupBundle="messages.InspectionsBundle"
+                     groupName="Performance issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
+                     displayName="Collection.addAll() can be replaced with parametrized constructor"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
