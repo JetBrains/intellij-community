@@ -15,28 +15,28 @@
  */
 package org.jetbrains.plugins.groovy.actions;
 
+import com.intellij.codeInspection.dataFlow.ControlFlow;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
+import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowAnalyzerImpl;
+import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Max Medvedev
- */
-public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
+import static org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction.collectControlFlowOwners;
+
+public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
@@ -53,36 +53,29 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
       passInner(controlFlowOwners.get(0));
     }
     else {
-      IntroduceTargetChooser.showChooser(editor, controlFlowOwners, new Pass<GrControlFlowOwner>() {
-                                           @Override
-                                           public void pass(GrControlFlowOwner grExpression) {
-                                             passInner(grExpression);
-                                           }
-                                         }, new Function<GrControlFlowOwner, String>() {
-        @Override
-        public String fun(GrControlFlowOwner flowOwner) {
-          return flowOwner.getText();
+      IntroduceTargetChooser.showChooser(
+        editor,
+        controlFlowOwners,
+        new Pass<GrControlFlowOwner>() {
+          @Override
+          public void pass(GrControlFlowOwner grExpression) {
+            passInner(grExpression);
+          }
+        }, new Function<GrControlFlowOwner, String>() {
+          @Override
+          public String fun(GrControlFlowOwner flowOwner) {
+            return flowOwner.getText();
+          }
         }
-      }
       );
     }
   }
 
-  static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final Editor editor, final int offset) {
-    final PsiElement elementAtCaret = file.findElementAt(offset);
-    final List<GrControlFlowOwner> result = new ArrayList<GrControlFlowOwner>();
-
-    for (GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(elementAtCaret);
-         owner != null && !result.contains(owner);
-         owner = ControlFlowUtils.findControlFlowOwner(owner)) {
-      result.add(owner);
-    }
-    return result;
-  }
-
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void passInner(GrControlFlowOwner owner) {
+    GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(new GrDfaValueFactory(),owner);
+    ControlFlow flow = analyzer.buildControlFlow();
     System.out.println(owner.getText());
-    System.out.println(ControlFlowUtils.dumpControlFlow(owner.getControlFlow()));
+    System.out.println(flow);
   }
 }
