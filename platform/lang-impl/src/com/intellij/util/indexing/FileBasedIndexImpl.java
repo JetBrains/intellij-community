@@ -2570,12 +2570,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  public static final ThreadLocal<Boolean> ourConcurrentlyFlag = new ThreadLocal<Boolean>();
+  @Override
+  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+    PushedFilePropertiesUpdaterImpl.invoke2xConcurrentlyIfPossible(collectScanRootRunnables(processor, project, indicator));
+  }
 
   @Override
   public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull final Project project, final ProgressIndicator indicator) {
+    for(Runnable r: collectScanRootRunnables(processor, project, indicator)) r.run();
+  }
+
+  private static @NotNull List<Runnable> collectScanRootRunnables(@NotNull final ContentIterator processor,
+                                                  @NotNull final Project project,
+                                                  final ProgressIndicator indicator) {
     if (project.isDisposed()) {
-      return;
+      return Collections.emptyList();
     }
 
     List<Runnable> tasks = new ArrayList<Runnable>();
@@ -2604,7 +2613,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
-        return;
+        return null;
       }
       for (final VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
@@ -2656,12 +2665,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
     }
-
-    if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
-      PushedFilePropertiesUpdaterImpl.invoke2xConcurrently(tasks);
-    } else {
-      for(Runnable r:tasks) r.run();
-    }
+    return tasks;
   }
 
   private static void iterateRecursively(@Nullable final VirtualFile root,
