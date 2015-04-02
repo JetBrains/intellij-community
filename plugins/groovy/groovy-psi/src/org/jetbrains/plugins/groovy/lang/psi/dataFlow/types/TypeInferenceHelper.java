@@ -115,30 +115,30 @@ public class TypeInferenceHelper {
     return getDefUseMaps(scope) == null;
   }
 
-  @Nullable
-  private static DFAType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
-    final Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> pair = getDefUseMaps(scope);
-    if (pair == null) return null;
-
-    final int varIndex = pair.first.getVarIndex(varName);
-    final DefinitionMap allDefs = pair.second.get(instruction.num());
-    final int[] varDefs = allDefs.getDefinitions(varIndex);
-    if (varDefs == null) return null;
-
-    DFAType result = null;
-    for (int defIndex : varDefs) {
-      DFAType defType = getDefinitionType(flow[defIndex], flow, scope, trace);
-
-      if (defType != null) {
-        defType = defType.negate(instruction);
-      }
-
-      if (defType != null) {
-        result = result == null ? defType : DFAType.create(defType, result, scope.getManager());
-      }
-    }
-    return result;
-  }
+  //@Nullable
+  //private static DFAType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
+  //  final Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> pair = getDefUseMaps(scope);
+  //  if (pair == null) return null;
+  //
+  //  final int varIndex = pair.first.getVarIndex(varName);
+  //  final DefinitionMap allDefs = pair.second.get(instruction.num());
+  //  final int[] varDefs = allDefs.getDefinitions(varIndex);
+  //  if (varDefs == null) return null;
+  //
+  //  DFAType result = null;
+  //  for (int defIndex : varDefs) {
+  //    DFAType defType = getDefinitionType(flow[defIndex], flow, scope, trace);
+  //
+  //    if (defType != null) {
+  //      defType = defType.negate(instruction);
+  //    }
+  //
+  //    if (defType != null) {
+  //      result = result == null ? defType : DFAType.create(defType, result, scope.getManager());
+  //    }
+  //  }
+  //  return result;
+  //}
 
   @Nullable
   private static Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> getDefUseMaps(@NotNull final GrControlFlowOwner scope) {
@@ -179,47 +179,47 @@ public class TypeInferenceHelper {
     });
   }
 
-  @Nullable
-  private static DFAType getDefinitionType(Instruction instruction, Instruction[] flow, GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
-    if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
-      final PsiElement element = instruction.getElement();
-      if (element != null) {
-        return DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), scope.getManager(), scope.getResolveScope()));
-      }
-    }
-    if (instruction instanceof MixinTypeInstruction) {
-      return mixinType((MixinTypeInstruction)instruction, flow, scope, trace);
-    }
-    return null;
-  }
+  //@Nullable
+  //private static DFAType getDefinitionType(Instruction instruction, Instruction[] flow, GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
+  //  if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
+  //    final PsiElement element = instruction.getElement();
+  //    if (element != null) {
+  //      return DFAType.create(TypesUtil.boxPrimitiveType(getInitializerType(element), scope.getManager(), scope.getResolveScope()));
+  //    }
+  //  }
+  //  if (instruction instanceof MixinTypeInstruction) {
+  //    return mixinType((MixinTypeInstruction)instruction, flow, scope, trace);
+  //  }
+  //  return null;
+  //}
 
-  @Nullable
-  private static DFAType mixinType(final MixinTypeInstruction instruction, final Instruction[] flow, final GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
-    if (!trace.add(instruction)) {
-      return null;
-    }
-
-    String varName = instruction.getVariableName();
-    if (varName == null) {
-      return null;
-    }
-    ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
-    if (originalInstr == null) {
-      LOG.error(scope.getContainingFile().getName() + ":" + scope.getText());
-    }
-
-    DFAType original = getInferredType(varName, originalInstr, flow, scope, trace);
-    final PsiType mixin = instruction.inferMixinType();
-    if (mixin == null) {
-      return original;
-    }
-    if (original == null) {
-      original = DFAType.create(null);
-    }
-    original.addMixin(mixin, instruction.getConditionInstruction());
-    trace.remove(instruction);
-    return original;
-  }
+  //@Nullable
+  //private static DFAType mixinType(final MixinTypeInstruction instruction, final Instruction[] flow, final GrControlFlowOwner scope, Set<MixinTypeInstruction> trace) {
+  //  if (!trace.add(instruction)) {
+  //    return null;
+  //  }
+  //
+  //  String varName = instruction.getVariableName();
+  //  if (varName == null) {
+  //    return null;
+  //  }
+  //  ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
+  //  if (originalInstr == null) {
+  //    LOG.error(scope.getContainingFile().getName() + ":" + scope.getText());
+  //  }
+  //
+  //  DFAType original = getInferredType(varName, originalInstr, flow, scope, trace);
+  //  final PsiType mixin = instruction.inferMixinType();
+  //  if (mixin == null) {
+  //    return original;
+  //  }
+  //  if (original == null) {
+  //    original = DFAType.create(null);
+  //  }
+  //  original.addMixin(mixin, instruction.getConditionInstruction());
+  //  trace.remove(instruction);
+  //  return original;
+  //}
 
 
   @Nullable

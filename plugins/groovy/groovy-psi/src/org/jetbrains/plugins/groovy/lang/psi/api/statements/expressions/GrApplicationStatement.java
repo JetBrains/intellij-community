@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrApplicationStatement extends GrStatement, GrMethodCall {
 
+  @NotNull
   @Override
   GrCommandArgumentList getArgumentList();
 

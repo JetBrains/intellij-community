@@ -113,6 +113,7 @@ public class GrClosureSignatureUtil {
     return new GrClosableSignatureImpl(block);
   }
 
+  @NotNull
   public static GrClosureSignature createSignature(final PsiMethod method, PsiSubstitutor substitutor) {
     return new GrMethodSignatureImpl(method, substitutor);
   }
