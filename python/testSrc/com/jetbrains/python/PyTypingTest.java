@@ -287,9 +287,23 @@ public class PyTypingTest extends PyTestCase {
 
   public void testMultiAssignmentComment() {
     doTest("Tuple[int, str]",
-           "def foo(x)\n" +
+           "def foo(x):\n" +
            "    c1, c2 = x  # type: int, str\n" +
            "    expr = c1, c2\n");
+  }
+
+  public void testForLoopComment() {
+    doTest("int",
+           "def foo(xs):\n" +
+           "    for expr, x in xs:  # type: int, str\n" +
+           "        pass\n");
+  }
+
+  public void testWithComment() {
+    doTest("int",
+           "def foo(x):\n" +
+           "    with x as expr:  # type: int\n" +
+           "        pass\n");
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {
