@@ -94,7 +94,7 @@ public class TrailingSpacesInPropertyInspection extends PropertySuppressableInsp
         PsiElement key = keyNode.getPsi();
         TextRange textRange = getTrailingSpaces(key, myIgnoreVisibleSpaces);
         if (textRange != null) {
-          descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing Spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
+          descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
         }
       }
       ASTNode valueNode = ((PropertyImpl)property).getValueNode();
@@ -102,7 +102,7 @@ public class TrailingSpacesInPropertyInspection extends PropertySuppressableInsp
         PsiElement value = valueNode.getPsi();
         TextRange textRange = getTrailingSpaces(value, myIgnoreVisibleSpaces);
         if (textRange != null) {
-          descriptors.add(manager.createProblemDescriptor(value, textRange, "Trailing Spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
+          descriptors.add(manager.createProblemDescriptor(value, textRange, "Trailing spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
         }
       }
     }
