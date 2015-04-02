@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -340,32 +341,53 @@ public class Switcher extends AnAction implements DumbAware {
       int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
-
-      final VirtualFile[] recentFiles = ArrayUtil.reverseArray(getFiles(project));
-      final int len = recentFiles.length;
-      boolean firstRecentMarked = false;
-      final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
-      for (int i = 0; i < len; i++) {
-        if (isPinnedMode() && selectedFiles.contains(recentFiles[i])) {
-          continue;
+      final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
+      if (!pinned) {
+        if (UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+            editors.add(new FileInfo(pair.first, pair.second, project));
+          }
         }
+      }
+      if (editors.size() < 2 || isPinnedMode()) {
+        if (isPinnedMode() && editors.size() > 1) {
+          filesData.addAll(editors);
+        }
+        final VirtualFile[] recentFiles = ArrayUtil.reverseArray(getFiles(project));
+        final int maxFiles = Math.max(editors.size(), recentFiles.length);
+        final int len = isPinnedMode() ? recentFiles.length : Math.min(toolWindows.getModel().getSize(), maxFiles);
+        boolean firstRecentMarked = false;
+        final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
+        for (int i = 0; i < len; i++) {
+          if (isPinnedMode() && selectedFiles.contains(recentFiles[i])) {
+            continue;
+          }
 
-        final FileInfo info = new FileInfo(recentFiles[i], null, project);
-        boolean add = true;
-        if (isPinnedMode()) {
-          for (FileInfo fileInfo : filesData) {
-            if (fileInfo.first.equals(info.first)) {
-              add = false;
-              break;
+          final FileInfo info = new FileInfo(recentFiles[i], null, project);
+          boolean add = true;
+          if (isPinnedMode()) {
+            for (FileInfo fileInfo : filesData) {
+              if (fileInfo.first.equals(info.first)) {
+                add = false;
+                break;
+              }
+            }
+          }
+          if (add) {
+            filesData.add(info);
+            if (!firstRecentMarked) {
+              firstRecentMarked = true;
+              selectionIndex = filesData.size() - 1;
             }
           }
         }
-        if (add) {
-          filesData.add(info);
-          if (!firstRecentMarked) {
-            firstRecentMarked = true;
-            selectionIndex = filesData.size() - 1;
-          }
+        //if (editors.size() == 1) selectionIndex++;
+        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
+          filesData.add(0, editors.get(0));
+        }
+      } else {
+        for (int i = 0; i < Math.min(30, editors.size()); i++) {
+          filesData.add(editors.get(i));
         }
       }
 
