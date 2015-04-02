@@ -19,8 +19,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -33,11 +35,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author vlan
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
+  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
   private static ImmutableMap<String, String> BUILTIN_COLLECTIONS = ImmutableMap.<String, String>builder()
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
@@ -99,6 +104,33 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (args.length > 0) {
         final PyExpression typeExpr = args[0];
         return getTypingType(typeExpr, context);
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyTargetExpression && context.maySwitchToAST(referenceTarget)) {
+      final String comment = getTypeComment((PyTargetExpression)referenceTarget);
+      if (comment != null) {
+        return getStringBasedType(comment, referenceTarget, context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getTypeComment(@NotNull PyTargetExpression target) {
+    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
+    if (assignment != null) {
+      final PsiElement lastChild = assignment.getLastChild();
+      if (lastChild instanceof PsiComment) {
+        final String text = lastChild.getText();
+        final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+        if (m.matches()) {
+          return m.group(1);
+        }
       }
     }
     return null;
@@ -257,14 +289,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (expression instanceof PyStringLiteralExpression) {
       // XXX: Requires switching from stub to AST
       final String contents = ((PyStringLiteralExpression)expression).getStringValue();
-      final Project project = expression.getProject();
-      final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", contents, false);
-      codeFragment.setContext(expression.getContainingFile());
-      final PsiElement element = codeFragment.getFirstChild();
-      if (element instanceof PyExpressionStatement) {
-        final PyExpression dummyExpr = ((PyExpressionStatement)element).getExpression();
-        return getType(dummyExpr, context);
-      }
+      return getStringBasedType(contents, expression, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getStringBasedType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
+    final Project project = anchor.getProject();
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", contents, false);
+    codeFragment.setContext(anchor.getContainingFile());
+    final PsiElement element = codeFragment.getFirstChild();
+    if (element instanceof PyExpressionStatement) {
+      final PyExpression dummyExpr = ((PyExpressionStatement)element).getExpression();
+      return getType(dummyExpr, context);
     }
     return null;
   }
