@@ -99,8 +99,12 @@ public class PyTypeCheckerInspection extends PyInspection {
             continue;
           }
           if (p.hasDefaultValue()) {
-            final PyExpression value = p.getDefaultValue();
-            final String keyName = key.getName();
+           final PyExpression value = p.getDefaultValue();
+            String keyName = key.getName();
+            if (key instanceof PyKeywordArgument) {
+              final PyExpression valueExpression = ((PyKeywordArgument)key).getValueExpression();
+              keyName = valueExpression != null ? valueExpression.getName() : "";
+            }
             if (value != null && keyName != null && keyName.equals(value.getName()))
               continue;
           }
