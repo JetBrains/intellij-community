@@ -1,0 +1,89 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.plugins.groovy.lang.flow.instruction;
+
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.NullabilityProblem;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
+
+import java.util.Collection;
+import java.util.Map;
+
+public class GrNullabilityInstructionVisitor extends GrGenericStandardInstructionVisitor<GrNullabilityInstructionVisitor> {
+
+  public GrNullabilityInstructionVisitor(GrDataFlowRunner<GrNullabilityInstructionVisitor> runner) {
+    super(runner);
+  }
+
+  private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<NullabilityProblem, PsiElement>();
+  private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
+
+  public MultiMap<NullabilityProblem, PsiElement> getProblems() {
+    return myProblems;
+  }
+
+  public Collection<PsiElement> getProblems(final NullabilityProblem kind) {
+    return ContainerUtil.filter(myProblems.get(kind), new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement psiElement) {
+        StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
+        // non-ephemeral NPE should be reported
+        // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
+        //  (e.g. if it's inside "if (var == null)" check after contract method invocation
+        return info.normalNpe || info.ephemeralNpe && !info.normalOk;
+      }
+    });
+  }
+
+  @Override
+  protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, NullabilityProblem problem, PsiElement anchor) {
+    boolean ok = super.checkNotNullable(state, value, problem, anchor);
+    if (!ok && anchor != null) {
+      myProblems.putValue(problem, anchor);
+    }
+    Pair<NullabilityProblem, PsiElement> key = Pair.create(problem, anchor);
+    StateInfo info = myStateInfos.get(key);
+    if (info == null) {
+      myStateInfos.put(key, info = new StateInfo());
+    }
+    if (state.isEphemeral() && !ok) {
+      info.ephemeralNpe = true;
+    }
+    else if (!state.isEphemeral()) {
+      if (ok) {
+        info.normalOk = true;
+      }
+      else {
+        info.normalNpe = true;
+      }
+    }
+    return ok;
+  }
+
+  private static class StateInfo {
+    boolean ephemeralNpe;
+    boolean normalNpe;
+    boolean normalOk;
+  }
+}
+
+
