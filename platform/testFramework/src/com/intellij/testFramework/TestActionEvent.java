@@ -37,6 +37,10 @@ public class TestActionEvent extends AnActionEvent {
     super(null, DataManager.getInstance().getDataContext(), "", presentation, ActionManager.getInstance(), 0);
   }
 
+  public TestActionEvent(DataContext context) {
+    super(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
+  }
+
   public TestActionEvent() {
     super(null, DataManager.getInstance().getDataContext(), "", new Presentation(), ActionManager.getInstance(), 0);
   }
