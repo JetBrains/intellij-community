@@ -91,8 +91,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
         final PyPsiFacade facade = getPsiFacade(function);
         switch (returns.size()) {
           case 0:
-            // Function returns nothing
-            return facade.parseTypeAnnotation("None", function);
+            return null;
           case 1:
             // Function returns single value
             final String typeName = returns.get(0).getType();
