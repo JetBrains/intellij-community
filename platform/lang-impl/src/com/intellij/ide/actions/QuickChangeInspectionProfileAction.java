@@ -56,7 +56,6 @@ public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction 
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && InspectionProjectProfileManager.getInstance(project).getProfiles().size() > 1);
   }
