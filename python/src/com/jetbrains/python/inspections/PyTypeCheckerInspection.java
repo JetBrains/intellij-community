@@ -93,20 +93,27 @@ public class PyTypeCheckerInspection extends PyInspection {
         boolean genericsCollected = false;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : results.getArguments().entrySet()) {
           final PyNamedParameter p = entry.getValue();
+          final PyExpression key = entry.getKey();
           if (p.isPositionalContainer() || p.isKeywordContainer()) {
             // TODO: Support *args, **kwargs
             continue;
+          }
+          if (p.hasDefaultValue()) {
+            final PyExpression value = p.getDefaultValue();
+            final String keyName = key.getName();
+            if (value != null && keyName != null && keyName.equals(value.getName()))
+              continue;
           }
           final PyType paramType = myTypeEvalContext.getType(p);
           if (paramType == null) {
             continue;
           }
-          final PyType argType = myTypeEvalContext.getType(entry.getKey());
+          final PyType argType = myTypeEvalContext.getType(key);
           if (!genericsCollected) {
             substitutions.putAll(PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext));
             genericsCollected = true;
           }
-          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);
+          checkTypes(paramType, argType, key, myTypeEvalContext, substitutions);
         }
       }
     }

@@ -49,4 +49,8 @@ public class PyNumpyTypeTest extends PyTestCase {
   public void testVectorize() {
     doTest();
   }
+
+  public void testDefaultValue() {
+    doTest();
+  }
 }
