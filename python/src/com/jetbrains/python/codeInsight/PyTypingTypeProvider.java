@@ -27,7 +27,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -118,9 +117,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final String comment = getTypeComment(target);
       if (comment != null) {
         final PyType type = getStringBasedType(comment, referenceTarget, context);
-        final PyType tupleAssignmentType = getTupleAssignmentType(target, type);
-        if (tupleAssignmentType != null) {
-          return tupleAssignmentType;
+        if (type instanceof PyTupleType) {
+          final PyTupleExpression tupleExpr = PsiTreeUtil.getParentOfType(target, PyTupleExpression.class);
+          if (tupleExpr != null) {
+            return PyTypeChecker.getTargetTypeFromTupleAssignment(target, tupleExpr, (PyTupleType)type);
+          }
         }
         return type;
       }
@@ -129,26 +130,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getTupleAssignmentType(@NotNull PyTargetExpression target, @Nullable PyType type) {
-    if (type instanceof PyTupleType) {
-      final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
-      if (assignment != null) {
-        final PyExpression leftExpr = PyPsiUtils.flattenParens(assignment.getLeftHandSideExpression());
-        if (leftExpr instanceof PyTupleExpression) {
-          return PyTypeChecker.getTargetTypeFromTupleAssignment(target, (PyTupleExpression)leftExpr, (PyTupleType)type);
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   private static String getTypeComment(@NotNull PyTargetExpression target) {
-    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
-    if (assignment != null) {
-      final PsiElement lastChild = assignment.getLastChild();
-      if (lastChild instanceof PsiComment) {
-        final String text = lastChild.getText();
+    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class, PyWithStatement.class,
+                                                                    PyForPart.class);
+    if (commentContainer != null) {
+      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
+      if (comment != null) {
+        final String text = comment.getText();
         final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
         if (m.matches()) {
           return m.group(1);
@@ -156,6 +144,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (true) {
+      if (child == null) {
+        return null;
+      }
+      if (child instanceof PsiComment) {
+        return (PsiComment)child;
+      }
+      if (child.getText().contains("\n")) {
+        return null;
+      }
+      child = child.getNextSibling();
+    }
   }
 
   private static boolean isAny(@NotNull PyType type) {
