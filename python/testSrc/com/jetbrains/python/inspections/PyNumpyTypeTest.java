@@ -53,4 +53,8 @@ public class PyNumpyTypeTest extends PyTestCase {
   public void testDefaultValue() {
     doTest();
   }
+
+  public void testSort() {
+    doTest();
+  }
 }
