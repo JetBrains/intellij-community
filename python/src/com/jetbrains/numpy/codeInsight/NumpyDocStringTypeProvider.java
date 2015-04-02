@@ -45,7 +45,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
 
   static {
-    NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray or collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
     NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
     // 184 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "numpy.core.multiarray.ndarray or collections.Iterable");
