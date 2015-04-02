@@ -77,4 +77,10 @@ public class PyNumpyTypeTest extends PyTestCase {
     myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
     myFixture.checkHighlighting(true, false, true);
   }
+
+  public void testSlogdet() {
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
 }
