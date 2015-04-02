@@ -164,7 +164,7 @@ public class ConfigurableExtensionPointUtil {
               LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
             }
             else {
-              LOG.warn("use deprecated groupId instead of parentId: " + groupId + " for id: " + id);
+              //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
               parentId = groupId;
             }
           }

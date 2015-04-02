@@ -96,9 +96,10 @@
     <applicationService serviceInterface="com.intellij.diff.tools.external.ExternalDiffSettings"
                         serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
     <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff"
-                             instance="com.intellij.diff.settings.DiffSettingsConfigurable"/>
-    <applicationConfigurable groupId="tools" id="diff.external" displayName="External Diff Tools" parentId="diff.base"
-                             instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
+                             instance="com.intellij.diff.settings.DiffSettingsConfigurable">
+      <configurable id="diff.external" displayName="External Diff Tools"
+                    instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
+    </applicationConfigurable>
 
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
