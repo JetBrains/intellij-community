@@ -20,20 +20,21 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 /**
  * @author Max Medvedev
  */
 public class GrInspectionUtil {
-  public static boolean isNull(@NotNull GrExpression expression) {
-    return "null".equals(expression.getText());
+  public static boolean isNull(@NotNull PsiElement expression) {
+    return expression instanceof GrLiteral && ((GrLiteral)expression).getType() == PsiType.NULL;
   }
 
   public static boolean isEquality(@NotNull GrBinaryExpression binaryCondition) {
