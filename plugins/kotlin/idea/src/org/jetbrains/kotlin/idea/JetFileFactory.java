@@ -24,6 +24,6 @@ import org.jetbrains.annotations.NotNull;
 public class JetFileFactory extends FileTypeFactory {
     @Override
     public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-        consumer.consume(JetFileType.INSTANCE, "kt;kts;ktm");
+        consumer.consume(JetFileType.INSTANCE, "kt;kts");
     }
 }
