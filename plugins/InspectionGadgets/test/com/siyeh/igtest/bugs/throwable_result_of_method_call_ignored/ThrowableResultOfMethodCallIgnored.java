@@ -1,7 +1,7 @@
 package com.siyeh.igtest.bugs.throwable_result_of_method_call_ignored;
 
 
-public class ThrowableResultOfMethodCallIgnored {
+class ThrowableResultOfMethodCallIgnored {
     public static void test() {
         try {
             <warning descr="Result of 'firstNonNull()' not thrown">firstNonNull</warning>(new Throwable(), null);
