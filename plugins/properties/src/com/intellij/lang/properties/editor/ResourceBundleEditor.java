@@ -74,7 +74,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -492,7 +491,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
     if (propertyName == null) return;
 
-    for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles(myProject)) {
+    for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
       final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
       if (editor == null) continue;
       final IProperty property = propertiesFile.findPropertyByKey(propertyName);
@@ -587,7 +586,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         if (oldKey == null || !oldKey.equals(getSelectedPropertyName())) {
           return;
         }
-        final String newKey = getPropertyKey(event.getNewChild());
         childrenChanged(event);
       }
 
