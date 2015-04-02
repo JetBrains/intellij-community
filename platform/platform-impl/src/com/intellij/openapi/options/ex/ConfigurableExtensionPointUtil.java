@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.project.Project;
@@ -129,6 +130,16 @@ public class ConfigurableExtensionPointUtil {
       }
     }
     return tree;
+  }
+
+  /**
+   * @param project         a project used to load project settings or {@code null}
+   * @param withIdeSettings specifies whether to load application settings or not
+   * @return the root configurable group that represents a tree of settings
+   */
+  public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
+    Map<String, List<Configurable>> map = groupConfigurables(getConfigurables(project, withIdeSettings, true));
+    return new SortedConfigurableGroup(project, map);
   }
 
   /**
