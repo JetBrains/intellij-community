@@ -141,8 +141,27 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     setItems(items);
   }
 
+  @Override
+  public void exchangeRows(int idx1, int idx2) {
+    super.exchangeRows(idx1, idx2);
+    List<OrderEntry> entries = getEntries();
+    myState.getRootModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
+  }
+
   public void clear() {
     setItems(Collections.<ClasspathTableItem<?>>emptyList());
+  }
+
+  private List<OrderEntry> getEntries() {
+    final int count = getRowCount();
+    final List<OrderEntry> entries = new ArrayList<OrderEntry>(count);
+    for (int row = 0; row < count; row++) {
+      final OrderEntry entry = getItem(row).getEntry();
+      if (entry != null) {
+        entries.add(entry);
+      }
+    }
+    return entries;
   }
 
   private static class ClasspathTableItemClasspathColumnInfo extends ColumnInfo<ClasspathTableItem<?>, ClasspathTableItem<?>> {
