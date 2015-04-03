@@ -344,14 +344,38 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    checkResultByText(message, myEditor, fileText, ignoreTrailingSpaces, filePath);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final Document document = EditorFactory.getInstance().createDocument(fileText);
+
+        if (ignoreTrailingSpaces) {
+          ((DocumentImpl)document).stripTrailingSpaces(getProject());
+        }
+
+        EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        String newFileText = document.getText();
+
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        String fileText = myFile.getText();
+        String failMessage = getMessage("Text mismatch", message);
+        if (filePath != null && !newFileText.equals(fileText)) {
+          throw new FileComparisonFailure(failMessage, newFileText, fileText, filePath);
+        }
+        assertEquals(failMessage, newFileText, fileText);
+
+        EditorTestUtil.verifyCaretAndSelectionState(myEditor, carets, message);
+      }
+    });
   }
 
-  protected static void checkResultByText(final String message,
-                                          @NotNull final Editor editor,
-                                          @NotNull final String fileText,
-                                          final boolean ignoreTrailingSpaces,
-                                          final String filePath) {
+  protected static void checkResultByTextWithoutPSI(final String message,
+                                                    @NotNull final Editor editor,
+                                                    @NotNull final String fileText,
+                                                    final boolean ignoreTrailingSpaces,
+                                                    final String filePath) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
