@@ -41,7 +41,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     if (!ep.canCreateConfigurable()) {
       return null;
     }
-    if (ep.displayName != null || ep.key != null || ep.groupId != null) {
+    if (ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
       return !ep.dynamic && ep.children == null && ep.childrenEPName == null
              ? (T)new ConfigurableWrapper(ep)
              : (T)new CompositeWrapper(ep);
