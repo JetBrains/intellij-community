@@ -21,7 +21,6 @@ import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -61,7 +60,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Nobody will serialize console
-final class CommandConsole extends LanguageConsoleImpl {
+final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>,Condition<LanguageConsoleView> {
   /**
    * List of commands (to be injected into {@link CommandLineFile}) if any
    */
@@ -70,15 +69,16 @@ final class CommandConsole extends LanguageConsoleImpl {
   @NotNull
   private final Module myModule;
   /**
-   * Current execution action (to be used to unregister it when user switches mode)
+   * {@link CommandModeConsumer} or {@link ProcessModeConsumer} to delegate execution to.
+   * It also may be null if exection is not available.
    */
   @Nullable
-  private AnAction myCurrentAction;
+  private Consumer<String> myCurrentConsumer;
   /**
-   * One to sync action access
+   * One to sync action access to consumer field because it may be changed by callback when process is terminated
    */
   @NotNull
-  private final Object myActionSemaphore = new Object();
+  private final Object myConsumerSemaphore = new Object();
 
   /**
    * @param module      module console runs on
@@ -104,9 +104,10 @@ final class CommandConsole extends LanguageConsoleImpl {
                                       @NotNull final String title,
                                       @Nullable final List<Command> commandList) {
     final CommandConsole console = new CommandConsole(module, title, commandList);
-    console.switchToCommandMode();
     console.setEditable(true);
+    LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
 
+    console.switchToCommandMode();
     return console;
   }
 
@@ -127,14 +128,13 @@ final class CommandConsole extends LanguageConsoleImpl {
       public void run() {
         setLanguage(CommandLineLanguage.INSTANCE);
         final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
-        resetAction(null);
+        resetConsumer(null);
         if (file == null || myCommandList == null) {
           return;
         }
         file.setCommands(myCommandList);
         final CommandConsole console = CommandConsole.this;
-        resetAction(LanguageConsoleBuilder
-                      .registerExecuteAction(console, new CommandModeConsumer(myCommandList, myModule, console), getTitle(), null, null));
+        resetConsumer(new CommandModeConsumer(myCommandList, myModule, console));
       }
     }, ModalityState.NON_MODAL);
   }
@@ -148,9 +148,7 @@ final class CommandConsole extends LanguageConsoleImpl {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        resetAction(LanguageConsoleBuilder
-                      // We pass null as history persistence id because we do not need to store all that junk user types to process
-                      .registerExecuteAction(CommandConsole.this, new ProcessModeConsumer(processHandler), getTitle(), getTitle(), null));
+        resetConsumer(new ProcessModeConsumer(processHandler));
 
         // In process mode we do not need prompt and highlighting
         setLanguage(PlainTextLanguage.INSTANCE);
@@ -161,17 +159,32 @@ final class CommandConsole extends LanguageConsoleImpl {
 
 
   /**
-   * Unregisters current action and sets new one (if passed)
+   * Chooses consumer to delegate execute action to.
    *
-   * @param newAction new action to register (returned by {@link LanguageConsoleBuilder#registerExecuteAction(LanguageConsoleView, Consumer, String, String, Condition)}
-   *                  or null if just reset action
+   * @param newConsumer new consumer to register to delegate execution to
+   *                  or null if just reset consumer
    */
-  private void resetAction(@Nullable final AnAction newAction) {
-    synchronized (myActionSemaphore) {
-      if (myCurrentAction != null) {
-        LanguageConsoleBuilder.unregisterExecuteAction(this, myCurrentAction);
+  private void resetConsumer(@Nullable final Consumer<String> newConsumer) {
+    synchronized (myConsumerSemaphore) {
+      myCurrentConsumer = newConsumer;
+    }
+  }
+
+  @Override
+  public boolean value(final LanguageConsoleView t) {
+    // Is execution available?
+    synchronized (myConsumerSemaphore) {
+      return myCurrentConsumer != null;
+    }
+  }
+
+  @Override
+  public void consume(final String t) {
+    // User requested execution (enter clicked)
+    synchronized (myConsumerSemaphore) {
+      if (myCurrentConsumer != null) {
+        myCurrentConsumer.consume(t);
       }
-      myCurrentAction = newAction;
     }
   }
 

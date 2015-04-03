@@ -108,14 +108,12 @@ public final class LanguageConsoleBuilder {
 
   private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
-    action.registerCustomShortcutSet(action.getShortcutSet(), getComponentForExecuteAction(console));
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
     new ConsoleHistoryController(historyType, null, console).install();
   }
 
   /**
-   * todo This API doesn't look good, but it is much better than force client to know low-level details.
-   *
-   * @see #unregisterExecuteAction(LanguageConsoleView, AnAction)
+   * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
   public static AnAction registerExecuteAction(@NotNull LanguageConsoleView console,
                                                @NotNull final Consumer<String> executeActionHandler,
@@ -130,30 +128,9 @@ public final class LanguageConsoleBuilder {
     };
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
-    action.registerCustomShortcutSet(action.getShortcutSet(), getComponentForExecuteAction(console));
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
     new ConsoleHistoryController(historyType, historyPersistenceId, console).install();
     return action;
-  }
-
-  /**
-   * Unregisters execute action, registered by {@link #registerExecuteAction(LanguageConsoleView, Consumer, String, String, Condition)}
-   *
-   * @param console console to unregister execute action
-   * @param consoleExecuteAction  action, returned by {@link #registerExecuteAction(LanguageConsoleView, Consumer, String, String, Condition)}
-   * @see #registerExecuteAction(LanguageConsoleView, Consumer, String, String, Condition)
-   */
-  public static void unregisterExecuteAction(@NotNull LanguageConsoleView console,
-                                             @NotNull AnAction consoleExecuteAction) {
-    consoleExecuteAction.unregisterCustomShortcutSet(getComponentForExecuteAction(console));
-  }
-
-  /**
-   * @param console console that provides component to bind to execute action
-   * @return component to bind to execute action for {@link #registerExecuteAction(LanguageConsoleView, Consumer, String, String, Condition)}
-   */
-  @NotNull
-  private static JComponent getComponentForExecuteAction(@NotNull LanguageConsoleView console) {
-    return console.getConsoleEditor().getComponent();
   }
 
   public LanguageConsoleBuilder gutterContentProvider(@Nullable GutterContentProvider value) {
