@@ -105,7 +105,7 @@ public class SetupTaskChooserAction extends AnAction {
           LocalFileSystem.getInstance().refresh(true);
         }
       });
-      task.run(null);
+      task.run(null, null);
     }
     catch (ExecutionException ee) {
       Messages.showErrorDialog(module.getProject(), "Failed to run task: " + ee.getMessage(), taskName);

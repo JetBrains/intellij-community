@@ -15,10 +15,20 @@
  */
 
 /**
+ * <h1>Command line console</h1>
+ * <p>
  * Package to display command line console on the bottom of the screen. It supports history, execution, syntax highlighting and so on.
- * Entry point is {@link com.jetbrains.commandInterface.console.CommandLineConsole}
+ * Entry point is {@link com.jetbrains.commandInterface.console.CommandLineConsoleApi}.
+ * </p>
+ * <p/>
+ * <h2>Technical details</h2>
+ * <p>
+ * This package uses {@link com.jetbrains.commandInterface.console.CommandConsole} and it can work in 2 modes: "command-mode"
+ *  to accept, highlight and execute commands, and in "process-mode" to pass stdin/stdout to process it execute.
+ * See class documentation for details.
+ * </p>
  *
  * @author Ilya.Kazakevich
- * @see com.jetbrains.commandInterface.console.CommandLineConsole
+ * @see com.jetbrains.commandInterface.console.CommandLineConsoleApi
  */
 package com.jetbrains.commandInterface.console;
