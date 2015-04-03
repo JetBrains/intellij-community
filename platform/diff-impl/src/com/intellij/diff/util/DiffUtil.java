@@ -497,6 +497,10 @@ public class DiffUtil {
   // Focus
   //
 
+  public static boolean isFocusedComponent(@Nullable Component component) {
+    return isFocusedComponent(null, component);
+  }
+
   public static boolean isFocusedComponent(@Nullable Project project, @Nullable Component component) {
     if (component == null) return false;
     return IdeFocusManager.getInstance(project).getFocusedDescendantFor(component) != null;

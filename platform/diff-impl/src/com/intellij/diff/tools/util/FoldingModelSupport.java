@@ -17,6 +17,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -171,10 +172,18 @@ public class FoldingModelSupport {
   private FoldedBlock createRange(int[] starts, int[] ends, boolean expanded) {
     boolean hasFolding = false;
     FoldRegion[] regions = new FoldRegion[myCount];
+    boolean hasExpanded = false; // do not desync on runBatchFoldingOperationDoNotCollapseCaret
+
     for (int i = 0; i < myCount; i++) {
       if (ends[i] - starts[i] < 2) continue;
       regions[i] = addFolding(myEditors[i], starts[i], ends[i], expanded);
       hasFolding |= regions[i] != null;
+      hasExpanded |= regions[i] != null && regions[i].isExpanded();
+    }
+    if (hasExpanded && !expanded) {
+      for (FoldRegion region : regions) {
+        if (region != null) region.setExpanded(true);
+      }
     }
     return hasFolding ? new FoldedBlock(regions) : null;
   }
@@ -199,12 +208,18 @@ public class FoldingModelSupport {
       lastRunnable = new Runnable() {
         @Override
         public void run() {
-          editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+          Runnable operation = new Runnable() {
             @Override
             public void run() {
               finalRunnable.run();
             }
-          });
+          };
+          if (DiffUtil.isFocusedComponent(editor.getComponent())) {
+            editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+          }
+          else {
+            editor.getFoldingModel().runBatchFoldingOperation(operation);
+          }
         }
       };
     }
