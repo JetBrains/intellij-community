@@ -728,6 +728,11 @@
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.StringTokenizerDelimiterInspection"
                      displayName="Duplicated delimiters in java.util.StringTokenizer"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
+                     groupBundle="messages.InspectionsBundle"
+                     groupName="Performance issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
+                     displayName="Collection.addAll() can be replaced with parametrized constructor"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
@@ -1268,7 +1273,9 @@
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"/>
 
+    <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaInternalTemplatesHandler"/>
     <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler"/>
+
     <defaultTemplatePropertiesProvider implementation="com.intellij.ide.fileTemplates.TemplatePackagePropertyProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiClassFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiFieldFavoriteNodeProvider"/>

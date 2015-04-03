@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,42 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FieldHidesSuperclassFieldInspectionBase extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreStaticFields = true;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    for (Element child : new ArrayList<Element>(node.getChildren())) {
+      final String name = child.getAttributeValue("name");
+      final String value = child.getAttributeValue("value");
+      if ("ignoreStaticFields".equals(name) && "true".equals(value)) {
+        node.removeContent(child);
+      }
+    }
+  }
 
   @Override
   @NotNull
@@ -73,8 +90,7 @@ public class FieldHidesSuperclassFieldInspectionBase extends BaseInspection {
     return new FieldHidesSuperclassFieldVisitor();
   }
 
-  private class FieldHidesSuperclassFieldVisitor
-    extends BaseInspectionVisitor {
+  private class FieldHidesSuperclassFieldVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(@NotNull PsiField field) {
@@ -92,16 +108,20 @@ public class FieldHidesSuperclassFieldInspectionBase extends BaseInspection {
         if (!visitedClasses.add(ancestorClass)) {
           return;
         }
-        final PsiField ancestorField =
-          ancestorClass.findFieldByName(fieldName, false);
-        if (ancestorField != null) {
-          if (!m_ignoreInvisibleFields ||
-              ClassUtils.isFieldVisible(ancestorField, aClass)) {
-            registerFieldError(field);
-            return;
-          }
-        }
+        final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
         ancestorClass = ancestorClass.getSuperClass();
+        if (ancestorField == null) {
+          continue;
+        }
+        if (m_ignoreInvisibleFields && !ClassUtils.isFieldVisible(ancestorField, aClass)) {
+          continue;
+        }
+        if (ignoreStaticFields && field.hasModifierProperty(PsiModifier.STATIC) &&
+            ancestorField.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        registerFieldError(field);
+        return;
       }
     }
   }

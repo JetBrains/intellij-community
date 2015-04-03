@@ -20,9 +20,12 @@ import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -32,6 +35,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +56,7 @@ public class PyCodeFragmentUtil {
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
     if (flow == null) {
-      throw new CannotCreateCodeFragmentException("Cannot determine execution flow for the code fragment");
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.undetermined.execution.flow"));
     }
     final List<Instruction> graph = Arrays.asList(flow.getInstructions());
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
@@ -60,12 +64,10 @@ public class PyCodeFragmentUtil {
     if ((subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) ||
         subGraphAnalysis.targetInstructions > 1 ||
         subGraphAnalysis.outerLoopBreaks > 0) {
-      throw new CannotCreateCodeFragmentException(
-        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.interrupted.execution.flow"));
     }
     if (subGraphAnalysis.starImports > 0) {
-      throw new CannotCreateCodeFragmentException(
-        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.from.import.inside"));
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.star.import"));
     }
 
     final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
@@ -100,7 +102,7 @@ public class PyCodeFragmentUtil {
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
     if (yieldsFound && LanguageLevel.forElement(owner).isOlderThan(LanguageLevel.PYTHON33)) {
-      throw new CannotCreateCodeFragmentException("Cannot perform refactoring with 'yield' statement inside code block");
+      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.yield"));
     }
 
     return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0, yieldsFound);
@@ -323,6 +325,7 @@ public class PyCodeFragmentUtil {
     return result;
   }
 
+  @NotNull
   private static List<PsiElement> filterElementsInScope(@NotNull Collection<PsiElement> elements, @NotNull ScopeOwner owner) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     for (PsiElement element : elements) {
@@ -337,6 +340,7 @@ public class PyCodeFragmentUtil {
     return result;
   }
 
+  @NotNull
   private static Set<PsiElement> getSubGraphElements(@NotNull List<Instruction> subGraph) {
     final Set<PsiElement> result = new HashSet<PsiElement>();
     for (Instruction instruction : subGraph) {
@@ -355,12 +359,24 @@ public class PyCodeFragmentUtil {
     for (Instruction instruction : getWriteInstructions(instructions)) {
       if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
-        if (scope.isGlobal(name) || owner instanceof PsiFile) {
+        final PsiElement element = instruction.getElement();
+        if (scope.isGlobal(name) ||
+            (owner instanceof PsiFile && element instanceof PsiNamedElement && isUsedOutside((PsiNamedElement)element, instructions))) {
           globalWrites.add(name);
         }
       }
     }
     return globalWrites;
+  }
+
+  private static boolean isUsedOutside(@NotNull PsiNamedElement element, @NotNull List<Instruction> subGraph) {
+    final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
+    return ContainerUtil.exists(PyRefactoringUtil.findUsages(element, false), new Condition<UsageInfo>() {
+      @Override
+      public boolean value(UsageInfo usageInfo) {
+        return !subGraphElements.contains(usageInfo.getElement());
+      }
+    });
   }
 
   @NotNull
@@ -403,6 +419,7 @@ public class PyCodeFragmentUtil {
     return Collections.emptyList();
   }
 
+  @NotNull
   private static List<Instruction> getReadInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<Instruction>();
     for (Instruction instruction : subGraph) {
@@ -416,6 +433,7 @@ public class PyCodeFragmentUtil {
     return result;
   }
 
+  @NotNull
   private static List<Instruction> getWriteInstructions(@NotNull List<Instruction> subGraph) {
     final List<Instruction> result = new ArrayList<Instruction>();
     for (Instruction instruction : subGraph) {

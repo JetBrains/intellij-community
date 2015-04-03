@@ -42,6 +42,10 @@ import java.util.Set;
 public abstract class FileBasedIndex implements BaseComponent {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
+  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+    iterateIndexableFiles(processor, project, indicator);
+  }
+
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);

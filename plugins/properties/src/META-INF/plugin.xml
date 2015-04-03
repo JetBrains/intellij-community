@@ -134,5 +134,9 @@
             description="Add Property to Resource Bundle">
       <add-to-group group-id="NewGroup" anchor="first"/>
     </action>
+    <action id="GotoNextIncompletePropertyAction"
+            class="com.intellij.lang.properties.editor.GotoNextIncompletePropertyAction"
+            text="Go to next incomplete property"
+            use-shortcut-of="GotoNextError"/>
   </actions>
 </idea-plugin>

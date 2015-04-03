@@ -787,20 +787,26 @@ public class InferenceSession {
     return substitutor.substitute(bound);
   }
 
-  private static boolean hasBoundProblems(final List<InferenceVariable> typeParams,
-                                          final PsiSubstitutor substitutor,
-                                          final PsiElement context) {
+  private  boolean hasBoundProblems(final List<InferenceVariable> typeParams,
+                                    final PsiSubstitutor psiSubstitutor,
+                                    final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
-      if (typeParameter.getCallContext() != context) {
+      if (isForeignVariable(psiSubstitutor, typeParameter)) {
         continue;
       }
       final List<PsiType> extendsTypes = typeParameter.getBounds(InferenceBound.UPPER);
       final PsiType[] bounds = extendsTypes.toArray(new PsiType[extendsTypes.size()]);
-      if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, context, true) != null) {
+      if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, myContext, true) != null) {
         return true;
       }
     }
     return false;
+  }
+
+  private boolean isForeignVariable(PsiSubstitutor fullSubstitutor,
+                                    InferenceVariable typeParameter) {
+    return fullSubstitutor.putAll(mySiteSubstitutor).getSubstitutionMap().containsKey(typeParameter.getParameter()) &&
+           typeParameter.getCallContext() != myContext;
   }
 
   private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
@@ -812,7 +818,7 @@ public class InferenceSession {
       if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
         PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor, foreignMap);
         if (firstSubstitutor != null) {
-          if (hasBoundProblems(vars, firstSubstitutor, myContext)) {
+          if (hasBoundProblems(vars, substitutor, firstSubstitutor)) {
             firstSubstitutor = null;
           }
         }
@@ -912,7 +918,7 @@ public class InferenceSession {
           foreignMap.put(var, type);
         }
 
-        if (substitutor.putAll(mySiteSubstitutor).getSubstitutionMap().containsKey(typeParameter) && var.getCallContext() != myContext) {
+        if (isForeignVariable(substitutor, var)) {
           continue;
         }
 

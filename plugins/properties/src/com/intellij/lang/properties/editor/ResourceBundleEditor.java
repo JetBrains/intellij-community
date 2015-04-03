@@ -27,9 +27,11 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
@@ -72,7 +74,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -490,7 +491,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
     if (propertyName == null) return;
 
-    for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles(myProject)) {
+    for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
       final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
       if (editor == null) continue;
       final IProperty property = propertiesFile.findPropertyByKey(propertyName);
@@ -585,7 +586,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         if (oldKey == null || !oldKey.equals(getSelectedPropertyName())) {
           return;
         }
-        final String newKey = getPropertyKey(event.getNewChild());
         childrenChanged(event);
       }
 
@@ -680,6 +680,38 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   public ResourceBundleEditorViewElement getSelectedElementIfOnlyOne() {
     final Collection<ResourceBundleEditorViewElement> selectedElements = getSelectedElements();
     return selectedElements.size() == 1 ? ContainerUtil.getFirstItem(selectedElements) : null;
+  }
+
+  public void selectNextIncompleteProperty() {
+    if (getSelectedNodes().size() != 1) {
+      return;
+    }
+    final IProperty selectedProperty = getSelectedProperty();
+    if (selectedProperty == null) {
+      return;
+    }
+
+    final ResourceBundleFileStructureViewElement root =
+      (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
+    final Map<String, IProperty> propertiesMap =
+      ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete());
+    final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
+    final List<String> keysOrder = new ArrayList<String>(propertiesMap.keySet());
+    if (isAlphaSorted) {
+      Collections.sort(keysOrder);
+    }
+
+    final String currentKey = selectedProperty.getKey();
+    final int idx = keysOrder.indexOf(currentKey);
+    LOG.assertTrue(idx != -1);
+    for (int i = 1; i < keysOrder.size(); i++) {
+      int trimmedIndex = (i + idx) % keysOrder.size();
+      final String key = keysOrder.get(trimmedIndex);
+      if (!PropertiesUtil.isPropertyComplete(myResourceBundle, key)) {
+        selectProperty(key);
+        return;
+      }
+    }
   }
 
   @Override

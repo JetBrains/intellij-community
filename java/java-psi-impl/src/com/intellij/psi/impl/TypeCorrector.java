@@ -158,6 +158,10 @@ class TypeCorrector extends PsiTypeMapper {
       return ContainerUtil.map2Array(myDelegate.getParameters(), PsiType.class, new Function<PsiType, PsiType>() {
         @Override
         public PsiType fun(PsiType type) {
+          if (type == null) {
+            LOG.error(myDelegate);
+            return null;
+          }
           return mapType(type);
         }
       });

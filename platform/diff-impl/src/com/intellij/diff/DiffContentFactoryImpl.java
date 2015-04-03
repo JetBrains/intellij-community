@@ -175,6 +175,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     if (file == null) {
       throw new IOException("Can't create temp file for revision content");
     }
+    file.refresh(true, false);
     return file;
   }
 }

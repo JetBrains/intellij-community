@@ -28,7 +28,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiTypeMapper");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiTypeMapper");
 
   @Nullable
   public <T extends PsiType> T mapType(@NotNull T type) {

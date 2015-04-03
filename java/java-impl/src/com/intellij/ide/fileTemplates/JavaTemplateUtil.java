@@ -32,10 +32,14 @@ public class JavaTemplateUtil {
   @NonNls public static final String TEMPLATE_I18NIZED_EXPRESSION = "I18nized Expression.java";
   @NonNls public static final String TEMPLATE_I18NIZED_CONCATENATION = "I18nized Concatenation.java";
   @NonNls public static final String TEMPLATE_I18NIZED_JSP_EXPRESSION = "I18nized JSP Expression.jsp";
+
   @NonNls public static final String INTERNAL_CLASS_TEMPLATE_NAME = "Class";
   @NonNls public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";
   @NonNls public static final String INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME = "AnnotationType";
   @NonNls public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
+
+  public static final String[] INTERNAL_JAVA_TEMPLATES = new String[]{INTERNAL_CLASS_TEMPLATE_NAME,
+    INTERNAL_INTERFACE_TEMPLATE_NAME, INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, INTERNAL_ENUM_TEMPLATE_NAME};
 
   private JavaTemplateUtil() {
   }
