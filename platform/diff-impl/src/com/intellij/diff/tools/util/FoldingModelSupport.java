@@ -330,8 +330,8 @@ public class FoldingModelSupport {
     @Override
     public void process(@NotNull Handler handler) {
       for (FoldedBlock folding : myFoldings) {
-        FoldRegion region1 = folding.myRegions[myLeft];
-        FoldRegion region2 = folding.myRegions[myRight];
+        FoldRegion region1 = folding.getRegion(myLeft);
+        FoldRegion region2 = folding.getRegion(myRight);
         if (region1 == null || !region1.isValid() || region1.isExpanded()) continue;
         if (region2 == null || !region2.isValid() || region2.isExpanded()) continue;
         int line1 = myEditors[myLeft].getDocument().getLineNumber(region1.getStartOffset());
@@ -356,7 +356,7 @@ public class FoldingModelSupport {
   private class ExpandSuggester {
     @Nullable private final FoldingCache myCache;
     private final int[] myIndex = new int[myCount];
-    protected final boolean myDefault;
+    private final boolean myDefault;
 
     public ExpandSuggester(@Nullable FoldingCache cache, boolean defaultValue) {
       myCache = cache;
@@ -364,8 +364,8 @@ public class FoldingModelSupport {
     }
 
     public boolean isExpanded(int[] starts, int[] ends) {
-      if (myCache == null || myCache.myRanges.length != myCount) return myDefault;
-      if (myDefault != myCache.myExpandByDefault) return myDefault;
+      if (myCache == null || myCache.ranges.length != myCount) return myDefault;
+      if (myDefault != myCache.expandByDefault) return myDefault;
 
       Boolean state = null;
       for (int i = 0; i < myCount; i++) {
@@ -384,13 +384,13 @@ public class FoldingModelSupport {
     private Boolean getCachedExpanded(int start, int end, int index) {
       if (start == end) return null;
 
-      List<FoldedRangeState> ranges = myCache.myRanges[index];
+      List<FoldedRangeState> ranges = myCache.ranges[index];
       for (; myIndex[index] < ranges.size(); myIndex[index]++) {
         FoldedRangeState range = ranges.get(myIndex[index]);
-        if (range.myEndLine <= start) continue;
-        if (range.myStartLine >= end) return null;
-        if (range.myStartLine <= start && range.myEndLine >= end) {
-          return range.myExpanded;
+        if (range.endLine <= start) continue;
+        if (range.startLine >= end) return null;
+        if (range.startLine <= start && range.endLine >= end) {
+          return range.expanded;
         }
       }
       return null;
@@ -432,24 +432,24 @@ public class FoldingModelSupport {
   }
 
   private static class FoldingCache {
-    public final boolean myExpandByDefault;
-    @NotNull public final List<FoldedRangeState>[] myRanges;
+    public final boolean expandByDefault;
+    @NotNull public final List<FoldedRangeState>[] ranges;
 
     public FoldingCache(@NotNull List<FoldedRangeState>[] ranges, boolean expandByDefault) {
-      myRanges = ranges;
-      myExpandByDefault = expandByDefault;
+      this.ranges = ranges;
+      this.expandByDefault = expandByDefault;
     }
   }
 
   private static class FoldedRangeState {
-    public final int myStartLine;
-    public final int myEndLine;
-    public final boolean myExpanded;
+    public final int startLine;
+    public final int endLine;
+    public final boolean expanded;
 
     public FoldedRangeState(int startLine, int endLine, boolean expanded) {
-      myStartLine = startLine;
-      myEndLine = endLine;
-      myExpanded = expanded;
+      this.startLine = startLine;
+      this.endLine = endLine;
+      this.expanded = expanded;
     }
   }
 
