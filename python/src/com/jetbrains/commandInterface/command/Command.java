@@ -15,7 +15,6 @@
  */
 package com.jetbrains.commandInterface.command;
 
-import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public interface Command {
+public interface Command extends CommandExecutor {
 
 
   /**
@@ -57,11 +56,4 @@ public interface Command {
   @NotNull
   List<Option> getOptions();
 
-  /**
-   * Execute command
-   *
-   * @param module     module to execute command against
-   * @param parameters command's arguments and options (just like entered by user but splitted by space)
-   */
-  void execute(@NotNull final Module module, @NotNull final List<String> parameters);
 }

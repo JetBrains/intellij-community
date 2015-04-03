@@ -15,12 +15,15 @@
  */
 package com.jetbrains.commandInterface.console;
 
+import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,24 +34,31 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
+ * Supports {@link CommandConsole} in "command-mode"
  * Delegates console execution to command.
  *
  * @author Ilya.Kazakevich
  */
-class CommandExecutor implements Consumer<String> {
+final class CommandModeConsumer implements Consumer<String> {
   @NotNull
   private static final Pattern EMPTY_SPACE = Pattern.compile("\\s+");
   @NotNull
   private final Collection<Command> myCommands = new ArrayList<Command>();
   @NotNull
   private final Module myModule;
+  @NotNull
+  private final LanguageConsoleImpl myConsole;
 
-  CommandExecutor(@NotNull final Collection<Command> commands, @NotNull final Module module) {
+  CommandModeConsumer(@NotNull final Collection<Command> commands,
+                      @NotNull final Module module,
+                      @NotNull final LanguageConsoleImpl console) {
     myCommands.addAll(commands);
     myModule = module;
+    myConsole = console;
   }
+
   @Override
-  public final void consume(final String t) {
+  public void consume(final String t) {
     /**
      * We need to: 1) parse input 2) fetch command 3) split its arguments.
      */
@@ -63,8 +73,11 @@ class CommandExecutor implements Consumer<String> {
       if (command.getName().equals(commandName)) {
         final List<String> argument = Arrays.asList(EMPTY_SPACE.split(file.getText().trim()));
         // 1 because we need to command which is on the first place
-        command.execute(myModule, argument.subList(1, argument.size()));
+        command.execute(commandName, myModule, argument.subList(1, argument.size()), myConsole);
+        return;
       }
     }
+    myConsole.print(PyBundle.message("commandLine.commandNotFound", commandName), ConsoleViewContentType.ERROR_OUTPUT);
+    myConsole.print("", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 }

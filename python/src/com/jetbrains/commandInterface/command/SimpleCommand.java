@@ -15,14 +15,20 @@
  */
 package com.jetbrains.commandInterface.command;
 
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Simple implementation of {@link Command}. It just structure that stores all info + {@link CommandExecutor} to execute commands
+ * Simple implementation of {@link Command}. It just structure that stores all info + {@link CommandExecutor} to execute commands.
+ * It also delegates its execution to external {@link CommandExecutor}
+ *
  * @author Ilya.Kazakevich
  */
 public final class SimpleCommand implements Command {
@@ -88,8 +94,11 @@ public final class SimpleCommand implements Command {
   }
 
   @Override
-  public void execute(@NotNull final Module module, @NotNull final List<String> parameters) {
-    myExecutor.execute(myName, module, parameters);
+  public void execute(@NotNull final String commandName,
+                      @NotNull final Module module,
+                      @NotNull final List<String> parameters,
+                      @Nullable final ConsoleView consoleView) {
+    myExecutor.execute(myName, module, parameters, consoleView);
   }
 
   @NotNull

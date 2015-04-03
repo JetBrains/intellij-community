@@ -31,9 +31,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
-import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +41,9 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineConsole {
+public final class CommandLineConsoleApi {
 
-  private CommandLineConsole() {
+  private CommandLineConsoleApi() {
   }
 
   /**
@@ -75,15 +72,7 @@ public final class CommandLineConsole {
 
     final ContentManager contentManager = window.getContentManager();
     contentManager.removeAllContents(true);
-    final LanguageConsoleImpl console = new LanguageConsoleImpl(project, "", CommandLineLanguage.INSTANCE);
-    console.setPrompt(consoleName + " > ");
-    console.setEditable(true);
-
-    final CommandLineFile file = PyUtil.as(console.getFile(), CommandLineFile.class);
-    if (file != null && commandList != null) {
-      file.setCommands(commandList);
-      LanguageConsoleBuilder.registerExecuteAction(console, new CommandExecutor(commandList, module), consoleName, consoleName, null);
-    }
+    final LanguageConsoleImpl console = CommandConsole.createConsole(module, consoleName, commandList);
 
 
     final Content content = new ContentImpl(console.getComponent(), "", true);
