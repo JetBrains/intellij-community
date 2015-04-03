@@ -104,6 +104,10 @@ public class ExistingTemplatesComponent {
           if (configuration.isPredefined()) {
             return;
           }
+          final int[] rows = patternTree.getSelectionRows();
+          if (rows != null && rows.length > 0) {
+            patternTree.addSelectionRow(rows[0] - 1);
+          }
           patternTreeModel.removeNodeFromParent(node);
           configurationManager.removeConfiguration(configuration);
         }
