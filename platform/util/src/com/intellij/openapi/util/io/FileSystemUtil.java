@@ -68,9 +68,9 @@ public class FileSystemUtil {
 
   private static Mediator getMediator() {
     Throwable error = null;
-    final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
+    boolean forceNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
 
-    if (!forceUseNio2) {
+    if (!forceNio2) {
       if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
         try {
           return check(new IdeaWin32MediatorImpl());
@@ -98,9 +98,7 @@ public class FileSystemUtil {
       }
     }
 
-    final String message =
-      "Failed to load filesystem access layer (" + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + forceUseNio2 + ")";
-    LOG.error(message, error);
+    LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", nio2=" + forceNio2, error);
 
     return new FallbackMediatorImpl();
   }
