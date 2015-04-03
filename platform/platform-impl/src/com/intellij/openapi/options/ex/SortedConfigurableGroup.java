@@ -74,7 +74,7 @@ public final class SortedConfigurableGroup
     add(30, build);
     add(20, remove(map, "language"));
     add(10, remove(map, "tools"));
-    add(-10, remove(map, null));
+    add(-10, remove(map, "other"));
     // process unsupported groups
     if (0 < map.size()) {
       for (String groupId : map.keySet().toArray(new String[map.size()])) {

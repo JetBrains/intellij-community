@@ -178,16 +178,19 @@ public class ConfigurableExtensionPointUtil {
               parentId = groupId;
             }
           }
+          if (parentId == null) {
+            parentId = "other";
+          }
           if (Node.cyclic(tree, parentId, node)) {
             LOG.warn("ignore cyclic dependency: " + parentId + " cannot contain " + id);
-            parentId = null;
+            parentId = "other";
           }
           node.myParent = Node.add(tree, parentId, node);
           node.myValue = wrapper;
         }
       }
       else {
-        Node.add(tree, null, configurable);
+        Node.add(tree, "other", configurable);
       }
     }
     Map<String, List<Configurable>> map = ContainerUtil.newHashMap();
