@@ -113,7 +113,7 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public enum FillType {
-    BG_CENTER, TILE, STRETCH,
+    BG_CENTER, TILE, SCALE,
     CENTER, TOP_CENTER, BOTTOM_CENTER,
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
   }
@@ -141,7 +141,7 @@ final class PaintersHelper implements Painter.Listener {
               fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
             }
             catch (IllegalArgumentException e) {
-              fillType = FillType.STRETCH;
+              fillType = FillType.SCALE;
             }
             String url = parts[0].contains("://")? parts[0] :
                          VfsUtilCore.pathToUrl(parts[0].contains("/") ? parts[0] : PathManager.getConfigPath() + "/" + parts[0]);
@@ -184,9 +184,14 @@ final class PaintersHelper implements Painter.Listener {
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
 
-      if (fillType == FillType.STRETCH) {
-        if (scaled == null || scaled.getWidth(null) != cw || scaled.getHeight(null) != ch) {
-          scaled = image.getScaledInstance(cw, ch, Image.SCALE_SMOOTH);
+      if (fillType == FillType.SCALE) {
+        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
+        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
+        boolean useWidth = cw * h > ch * w;
+        int sw = useWidth ? cw : w * ch / h;
+        int sh = useWidth ? h * cw / w : ch;
+        if (sw0 != sw || sh0 != sh) {
+          scaled = image.getScaledInstance(sw, sh, Image.SCALE_SMOOTH);
         }
       }
 
@@ -225,7 +230,7 @@ final class PaintersHelper implements Painter.Listener {
           x += w;
         }
       }
-      else if (fillType == FillType.STRETCH) {
+      else if (fillType == FillType.SCALE) {
         UIUtil.drawImage(g, scaled, i.left, i.top, null);
       }
       cfg.restore();
