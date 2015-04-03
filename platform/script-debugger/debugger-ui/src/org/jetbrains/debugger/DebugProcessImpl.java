@@ -45,6 +45,7 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
   protected volatile StepAction lastStep;
   protected volatile CallFrame lastCallFrame;
   protected volatile boolean isForceStep;
+  protected volatile boolean disableDoNotStepIntoLibraries;
 
   protected final ConcurrentMap<Url, VirtualFile> urlToFileCache = ContainerUtil.newConcurrentMap();
 
@@ -192,6 +193,7 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
       lastStep = null;
       lastCallFrame = null;
       urlToFileCache.clear();
+      disableDoNotStepIntoLibraries = false;
     }
     else {
       lastStep = stepAction;
