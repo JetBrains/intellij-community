@@ -133,8 +133,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
         HttpResponse httpResponse = client.execute(myCurrentRequest);
         StatusLine statusLine = httpResponse.getStatusLine();
         if (statusLine != null && statusLine.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          myCurrentRequest = new HttpGet(getIssuesUrl(0, 1, true));
+          // Check that projects can be downloaded via given URL and the latter is not project-specific
+          myCurrentRequest = new HttpGet(getProjectsUrl(0, 1));
           statusLine = client.execute(myCurrentRequest).getStatusLine();
+          if (statusLine != null && statusLine.getStatusCode() == HttpStatus.SC_OK) {
+            myCurrentRequest = new HttpGet(getIssuesUrl(0, 1, true));
+            statusLine = client.execute(myCurrentRequest).getStatusLine();
+          }
         }
         if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
           throw RequestFailedException.forStatusCode(statusLine.getStatusCode(), statusLine.getReasonPhrase());
@@ -192,14 +197,8 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     int offset = 0;
     ProjectsWrapper wrapper;
     do {
-      URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
-      builder.addParameter("offset", String.valueOf(offset));
-      builder.addParameter("limit", "50");
-      if (isUseApiKeyAuthentication()) {
-        builder.addParameter("key", myAPIKey);
-      }
 
-      HttpGet method = new HttpGet(builder.toString());
+      HttpGet method = new HttpGet(getProjectsUrl(offset, 50));
       wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
       offset += wrapper.getProjects().size();
       allProjects.addAll(wrapper.getProjects());
@@ -208,6 +207,17 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
     myProjects = allProjects;
     return Collections.unmodifiableList(myProjects);
+  }
+
+  @NotNull
+  private URI getProjectsUrl(int offset, int limit) throws URISyntaxException {
+    URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
+    builder.addParameter("offset", String.valueOf(offset));
+    builder.addParameter("limit", String.valueOf(limit));
+    if (isUseApiKeyAuthentication()) {
+      builder.addParameter("key", myAPIKey);
+    }
+    return builder.build();
   }
 
   @Nullable

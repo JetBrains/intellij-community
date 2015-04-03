@@ -17,7 +17,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class RedmineIntegrationTest extends TaskManagerTestCase {
-  private static final String REDMINE_2_0_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8072/";
+  private static final String REDMINE_2_0_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8072";
 
   private RedmineRepository myRepository;
 
@@ -73,16 +73,28 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     assertEquals("prj-1 7 7 Summary contains 'baz'", TaskUtil.getChangeListComment(localTask));
   }
 
-  /**
-   * Redmine doesn't send 401 or 403 errors, when issues are downloaded with wrong credentials, so current user information is
-   * fetched instead.
-   */
+  // IDEA-122845
+  // Redmine doesn't send 401 or 403 errors, when issues are downloaded with wrong credentials (and anonymous access is allowed),
+  // so current user information is fetched instead.
   public void testCredentialsCheck() throws Exception {
     myRepository.setPassword("wrong-password");
     try {
       //noinspection ConstantConditions
       final Exception exception = myRepository.createCancellableConnection().call();
-      assertNotNull("Test connection must fail when wrong credentials specified", exception);
+      assertNotNull("Test connection must fail when wrong credentials are specified", exception);
+    }
+    catch (Exception e) {
+      assertEquals(TaskBundle.message("failure.login"), e.getMessage());
+    }
+  }
+
+  // IDEA-138740
+  public void testProjectSpecificUrlCheck() throws Exception {
+    myRepository.setUrl(REDMINE_2_0_TEST_SERVER_URL + "/projects/prj-1");
+    try {
+      //noinspection ConstantConditions
+      final Exception exception = myRepository.createCancellableConnection().call();
+      assertNotNull("Test connection must fail when project-specific URL is specified", exception);
     }
     catch (Exception e) {
       assertEquals(TaskBundle.message("failure.login"), e.getMessage());
