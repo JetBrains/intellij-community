@@ -1081,7 +1081,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               public List<String> compute() {
                 final SmartPsiElementPointer originalElementPtr = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
                 final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
-                return provider.getUrlFor(myElement, originalElement);
+                if (((ExternalDocumentationProvider)provider).hasDocumentationFor(myElement, originalElement)) {
+                  return provider.getUrlFor(myElement, originalElement);
+                }
+                return null;
               }
             }
         );
