@@ -52,7 +52,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
-  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftMap();
+  private final ConcurrentMap<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
@@ -92,7 +92,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     Map<GlobalSearchScope, PsiClass> map = myClassCache.get(qualifiedName);
     if (map == null) {
       map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
-      myClassCache.put(qualifiedName, map);
+      map = ConcurrencyUtil.cacheOrGet(myClassCache, qualifiedName, map);
     }
     PsiClass result = map.get(scope);
     if (result == null) {

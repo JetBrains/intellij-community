@@ -489,12 +489,11 @@ public class CompleteReferenceExpression {
       }
 
       if (element instanceof GrReflectedMethod) {
-        element = ((GrReflectedMethod)element).getBaseMethod();
-        if (!myProcessedMethodWithOptionalParams.add((GrMethod)element)) return;
+        GrMethod base = ((GrReflectedMethod)element).getBaseMethod();
+        if (!myProcessedMethodWithOptionalParams.add(base)) return;
 
-        result = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(), result.getSpreadState(),
-                                             result.getSubstitutor(), result.isAccessible(), result.isStaticsOK(),
-                                             result.isInvokedOnProperty(), result.isValidResult());
+        result = PsiImplUtil.reflectedToBase(result, base, (GrReflectedMethod)element);
+        element = base;
       }
 
       if (myFieldPointerOperator && !(element instanceof PsiVariable)) {
