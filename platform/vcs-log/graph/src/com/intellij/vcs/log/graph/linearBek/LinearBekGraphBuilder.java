@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class LinearBekGraphBuilder {
-  private static final int MAX_BLOCK_SIZE = 200;
+  static final int MAX_BLOCK_SIZE = 200;
   private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
   private static final GraphEdgeToDownNode GRAPH_EDGE_TO_DOWN_NODE = new GraphEdgeToDownNode();
   @NotNull private final GraphLayout myGraphLayout;
@@ -30,13 +30,17 @@ final class LinearBekGraphBuilder {
     myGraphLayout = graphLayout;
   }
 
-  public void collapseAll() {
+  @NotNull
+  public IntSet collapseAll() {
+    IntSet collapsedMerges = new IntOpenHashSet();
     for (int i = myLinearBekGraph.myGraph.nodesCount() - 1; i >= 0; i--) {
       MergeFragment fragment = getFragment(i);
       if (fragment != null) {
         fragment.collapse(myLinearBekGraph);
+        collapsedMerges.add(fragment.getParent());
       }
     }
+    return collapsedMerges;
   }
 
   @Nullable
@@ -298,6 +302,10 @@ final class LinearBekGraphBuilder {
 
     public boolean isBody(int index) {
       return myBlockBody.contains(index);
+    }
+
+    public int getLeftChild() {
+      return myLeftChild;
     }
   }
 

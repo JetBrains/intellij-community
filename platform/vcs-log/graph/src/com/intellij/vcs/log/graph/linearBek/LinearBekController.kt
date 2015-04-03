@@ -18,7 +18,10 @@ import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphA
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap
 import com.intellij.vcs.log.graph.linearBek.LinearBekGraph.WorkingLinearBekGraph
 import com.intellij.vcs.log.graph.linearBek.LinearBekGraphBuilder.MergeFragment
+import com.intellij.vcs.log.graph.utils.BfsSearch
+import com.intellij.vcs.log.graph.utils.IntHashSetFlags
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.*
 
 class LinearBekController(controller: BekBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
@@ -30,9 +33,11 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
   private val bekGraphLayout: BekGraphLayout = BekGraphLayout(permanentGraphInfo.permanentGraphLayout, controller.bekIntMap)
   private val linearBekGraphBuilder: LinearBekGraphBuilder = LinearBekGraphBuilder(compiledGraph, bekGraphLayout)
 
+  private val mergeCommits: IntSet
+
   init {
     val start = System.currentTimeMillis()
-    linearBekGraphBuilder.collapseAll()
+    mergeCommits = linearBekGraphBuilder.collapseAll()
     LOG.debug("Linear bek took " + (System.currentTimeMillis() - start) / 1000.0 + " sec")
   }
 
@@ -107,21 +112,47 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
     }
   }
 
+  private fun <T> iterateMerges(start: Int, function: (Int) -> T?): T? {
+    val search = object : BfsSearch<T>(start, LinearGraphUtils.asLiteLinearGraph(delegateGraph),
+                                       IntHashSetFlags(delegateGraph.nodesCount()),
+                                       down = false, limit = LinearBekGraphBuilder.MAX_BLOCK_SIZE) {
+      override val queue: Queue<Int> = PriorityQueue<Int>(1, Collections.reverseOrder()).also { it.add(start) }
+    }
+    return search.find { if (mergeCommits.contains(it)) function(it) else null }
+  }
+
+  private fun isCollapsed(merge: Int): Boolean = LinearGraphUtils.getDownNodes(compiledGraph, merge).size == 1
+
   private fun highlightNode(node: GraphNode): LinearGraphAnswer? {
-    val fragments = collectChildFragments(node.nodeIndex)
-    if (fragments.isEmpty()) return null
-    return LinearGraphUtils.createSelectedAnswer(compiledGraph, fragments.flatMapTo(mutableSetOf()) { it.allNodes })
+    return iterateMerges(node.nodeIndex) { merge: Int ->
+      if (!isCollapsed(merge)) {
+        val fragments = collectChildFragments(merge)
+        if (fragments.isEmpty()) return@iterateMerges null
+
+        val nodesToHighlight = fragments.flatMapTo(mutableSetOf()) { it.allNodes }
+        if (nodesToHighlight.contains(node.nodeIndex)) {
+          return@iterateMerges LinearGraphUtils.createSelectedAnswer(compiledGraph, nodesToHighlight)
+        }
+      }
+      null
+    }
   }
 
   private fun collapseNode(node: GraphNode): LinearGraphAnswer? {
-    val fragments = collectChildFragments(node.nodeIndex)
-    if (fragments.isEmpty()) return null
+    return iterateMerges(node.nodeIndex) { merge: Int ->
+      if (!isCollapsed(merge)) {
+        val fragments = collectChildFragments(merge)
+        if (fragments.isEmpty()) return@iterateMerges null
 
-    val nodesToCollapse = fragments.flatMapTo(TreeSet(Comparator.reverseOrder())) { f -> f.tailsAndBody + f.parent }
-    for (i in nodesToCollapse) {
-      linearBekGraphBuilder.collapseFragment(i)
+        val nodesToCollapse = fragments.flatMapTo(TreeSet(Comparator.reverseOrder())) { f -> f.tailsAndBody + f.parent }
+        if (!nodesToCollapse.contains(node.nodeIndex) && !fragments.any { it.leftChild == node.nodeIndex }) return@iterateMerges null
+        for (i in nodesToCollapse) {
+          linearBekGraphBuilder.collapseFragment(i)
+        }
+        return@iterateMerges LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES)
+      }
+      null
     }
-    return LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES)
   }
 
   private fun collectChildFragments(merge: Int): Set<MergeFragment> {
