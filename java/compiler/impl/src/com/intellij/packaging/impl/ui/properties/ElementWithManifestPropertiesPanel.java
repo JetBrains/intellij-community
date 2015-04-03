@@ -104,7 +104,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
                file.getName().equalsIgnoreCase(ManifestFileUtil.MANIFEST_FILE_NAME));
       }
     };
-    descriptor.setTitle("Specify Path to MANIFEST.MF file");
+    descriptor.setTitle("Specify Path to MANIFEST.MF File");
     final VirtualFile file = FileChooser.chooseFile(descriptor, myContext.getProject(), null);
     if (file == null) return;
 
