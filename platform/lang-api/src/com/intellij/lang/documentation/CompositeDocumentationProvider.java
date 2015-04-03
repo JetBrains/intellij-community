@@ -16,7 +16,6 @@
 
 package com.intellij.lang.documentation;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -191,7 +190,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         if (((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement)) return true;
       }
       else {
-        if (hasBrowsableUrlsFor(provider, element, originalElement)) return true;
+        if (hasUrlsFor(provider, element, originalElement)) return true;
       }
     }
     return false;
@@ -221,12 +220,6 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
 
   public static boolean hasUrlsFor(DocumentationProvider provider, PsiElement element, PsiElement originalElement) {
     final List<String> urls = provider.getUrlFor(element, originalElement);
-    if (urls != null && !urls.isEmpty()) return true;
-    return false;
-  }
-
-  public static boolean hasBrowsableUrlsFor(DocumentationProvider provider, PsiElement element, PsiElement originalElement) {
-    final List<String> urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
     if (urls != null && !urls.isEmpty()) return true;
     return false;
   }
