@@ -32,6 +32,7 @@ import java.util.*;
 
 /**
  * @author nik
+ * @author Sergey.Malenkov
  */
 public class ConfigurableExtensionPointUtil {
 
@@ -138,7 +139,16 @@ public class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
-    Map<String, List<Configurable>> map = groupConfigurables(getConfigurables(project, withIdeSettings, true));
+    return getConfigurableGroup(getConfigurables(project, withIdeSettings, true), project);
+  }
+
+  /**
+   * @param configurables a list of settings to process
+   * @param project       a project used to create a project settings group or {@code null}
+   * @return the root configurable group that represents a tree of settings
+   */
+  public static ConfigurableGroup getConfigurableGroup(@NotNull List<Configurable> configurables, @Nullable Project project) {
+    Map<String, List<Configurable>> map = groupConfigurables(configurables);
     return new SortedConfigurableGroup(project, map);
   }
 
