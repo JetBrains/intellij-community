@@ -66,6 +66,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleImpl");
   @NonNls public static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
+  private JPanel mySearchComponent;
+  private JComboBox myLogFilterCombo;
+  private JPanel myTextFilterWrapper;
+
   private boolean myDisposed;
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
@@ -98,9 +102,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       ProgressManager.getInstance().run(task);
     }
   };
-  private JPanel mySearchComponent;
-  private JComboBox myLogFilterCombo;
-  private JPanel myTextFilterWrapper;
 
   public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
     this(project, reader, title, buildInActions, model, GlobalSearchScope.allScope(project));
