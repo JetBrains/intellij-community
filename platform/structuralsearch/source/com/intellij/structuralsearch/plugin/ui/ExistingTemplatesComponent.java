@@ -22,7 +22,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,16 +44,13 @@ public class ExistingTemplatesComponent {
   private final Project project;
 
   private ExistingTemplatesComponent(Project project) {
-
     this.project = project;
-    final DefaultMutableTreeNode root;
-    patternTreeModel = new DefaultTreeModel(
-      root = new DefaultMutableTreeNode(null)
-    );
+    final DefaultMutableTreeNode root = new DefaultMutableTreeNode(null);
+    patternTreeModel = new DefaultTreeModel(root);
 
     DefaultMutableTreeNode parent = null;
     String lastCategory = null;
-    LinkedList<Object> nodesToExpand = new LinkedList<Object>();
+    final List<DefaultMutableTreeNode> nodesToExpand = new ArrayList<DefaultMutableTreeNode>();
 
     final List<Configuration> predefined = StructuralSearchUtil.getPredefinedTemplates();
     for (final Configuration info : predefined) {
@@ -74,24 +71,21 @@ public class ExistingTemplatesComponent {
       parent.add(node);
     }
 
-    parent = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category"));
-    userTemplatesNode = parent;
-    root.add(parent);
-    nodesToExpand.add(parent);
+    userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category"));
+    root.add(userTemplatesNode);
+    nodesToExpand.add(userTemplatesNode);
 
     final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(this.project).getConfigurationManager();
     if (configurationManager.getConfigurations() != null) {
       for (final Configuration config : configurationManager.getConfigurations()) {
-        parent.add(new DefaultMutableTreeNode(config));
+        userTemplatesNode.add(new DefaultMutableTreeNode(config));
       }
     }
 
     patternTree = createTree(patternTreeModel);
 
-    for (final Object aNodesToExpand : nodesToExpand) {
-      patternTree.expandPath(
-        new TreePath(new Object[]{root, aNodesToExpand})
-      );
+    for (final DefaultMutableTreeNode nodeToExpand : nodesToExpand) {
+      patternTree.expandPath(new TreePath(new Object[]{root, nodeToExpand}));
     }
 
     panel = ToolbarDecorator.createDecorator(patternTree)
