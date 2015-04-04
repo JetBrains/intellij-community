@@ -39,7 +39,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
   public SearchForTestsTask(@Nullable final Project project,
                             @NotNull  final ServerSocket socket) {
-    super(project, ExecutionBundle.message("seaching.test.progress.title"), true);
+    super(project, ExecutionBundle.message("searching.test.progress.title"), true);
     myServerSocket = socket;
   }
 
