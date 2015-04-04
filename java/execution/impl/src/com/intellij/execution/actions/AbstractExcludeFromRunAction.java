@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 15-Jun-2010
- */
-package com.intellij.execution.junit;
+package com.intellij.execution.actions;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.*;
@@ -32,21 +29,25 @@ import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.Set;
 
-public class ExcludeFromRunAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#" + ExcludeFromRunAction.class.getName());
+
+public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfiguration<JavaRunConfigurationModule>> extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#" + AbstractExcludeFromRunAction.class.getName());
+
+  protected abstract Set<String> getPattern(T configuration);
+  protected abstract boolean isPatternBasedConfiguration(RunConfiguration configuration);
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project != null);
-    final JUnitConfiguration configuration = (JUnitConfiguration)RunConfiguration.DATA_KEY.getData(dataContext);
+    final T configuration = (T)RunConfiguration.DATA_KEY.getData(dataContext);
     LOG.assertTrue(configuration != null);
     final GlobalSearchScope searchScope = configuration.getConfigurationModule().getSearchScope();
-    final Set<String> patterns = configuration.getPersistentData().getPatterns();
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
     LOG.assertTrue(testProxy != null);
-    patterns.remove(((PsiClass)testProxy.getLocation(project, searchScope).getPsiElement()).getQualifiedName());
+    final String qualifiedName = ((PsiClass)testProxy.getLocation(project, searchScope).getPsiElement()).getQualifiedName();
+    getPattern(configuration).remove(qualifiedName);
   }
 
   @Override
@@ -57,17 +58,14 @@ public class ExcludeFromRunAction extends AnAction{
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
-      if (configuration instanceof JUnitConfiguration) {
-        final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
-        if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
-          final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
-          if (testProxy != null) {
-            final Location location = testProxy.getLocation(project, ((JUnitConfiguration)configuration).getConfigurationModule().getSearchScope());
-            if (location != null) {
-              final PsiElement psiElement = location.getPsiElement();
-              if (psiElement instanceof PsiClass && data.getPatterns().contains(((PsiClass)psiElement).getQualifiedName())) {
-                presentation.setVisible(true);
-              }
+      if (isPatternBasedConfiguration(configuration)) {
+        final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
+        if (testProxy != null) {
+          final Location location = testProxy.getLocation(project, ((T)configuration).getConfigurationModule().getSearchScope());
+          if (location != null) {
+            final PsiElement psiElement = location.getPsiElement();
+            if (psiElement instanceof PsiClass && getPattern((T)configuration).contains(((PsiClass)psiElement).getQualifiedName())) {
+              presentation.setVisible(true);
             }
           }
         }
