@@ -66,13 +66,6 @@ public interface ValidationResult {
    * @return real argument (positional or optional) or null if can't be find
    */
   @Nullable
-  Collection<String> getPossibleArgumentValues(@NotNull CommandLineArgument argument);
-
-  /**
-   * @return next argument for command in format [is_required, argument] or null if no argument allowed here
-   */
-  @Nullable
-  Pair<Boolean, Argument> getNextArg();
   Argument getArgument(@NotNull CommandLineArgument commandLineArgument);
 
   /**
@@ -82,4 +75,10 @@ public interface ValidationResult {
    */
   @Nullable
   Option getOption(@NotNull CommandLineOption option);
+
+  /**
+   * @return next argument for command in format [is_required, argument] or null if no argument allowed here
+   */
+  @Nullable
+  Pair<Boolean, Argument> getNextArg();
 }
