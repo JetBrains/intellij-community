@@ -27,9 +27,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -47,7 +44,6 @@ import java.net.ServerSocket;
 import java.util.Collection;
 
 public class TestPackage extends TestObject {
-  protected BackgroundableProcessIndicator mySearchForTestsIndicator;
   protected ServerSocket myServerSocket;
   private boolean myFoundTests = true;
 
@@ -64,51 +60,51 @@ public class TestPackage extends TestObject {
   @Override
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     final JUnitProcessHandler handler = super.createHandler(executor);
-    final SearchForTestsTask[] tasks = new SearchForTestsTask[1];
+    final SearchForTestsTask task = createSearchingForTestsTask();
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(ProcessEvent event) {
         super.startNotified(event);
-        tasks[0] = (SearchForTestsTask)findTests();
+        task.startSearch();
       }
 
       @Override
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
-        if (mySearchForTestsIndicator != null && !mySearchForTestsIndicator.isCanceled()) {
-          if (tasks[0] != null) {
-            tasks[0].finish();
-          }
-        }
+        task.ensureFinished();
       }
     });
     return handler;
   }
 
-  public Task findTests() {
+  public SearchForTestsTask createSearchingForTestsTask() {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final TestClassFilter filter;
-    try {
-      filter = getClassFilter(data);
-    }
-    catch (CantRunException ignored) {
-      //should not happen
-      return null;
-    }
 
-    return findTestsWithProgress(new Consumer<Collection<PsiClass>>() {
+    return new SearchForTestsTask(myConfiguration.getProject(), myServerSocket) {
+      private final THashSet<PsiClass> myClasses = new THashSet<PsiClass>();
       @Override
-      public void consume(Collection<PsiClass> classes) {
+      protected void search() {
+        myClasses.clear();
         try {
-          addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+          ConfigurationUtil.findAllTestClasses(getClassFilter(data), myClasses);
+        }
+        catch (CantRunException ignored) {}
+      }
+
+      @Override
+      protected void onFound() {
+        myFoundTests = !myClasses.isEmpty();
+
+        try {
+          addClassesListToJavaParameters(myClasses, new Function<PsiElement, String>() {
             @Override
             @Nullable
-            public String fun(PsiElement element) {
+            public String fun(final PsiElement element) {
               if (element instanceof PsiClass) {
                 return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
               }
               else if (element instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod)element;
+                final PsiMethod method = (PsiMethod)element;
                 return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
               }
               else {
@@ -117,11 +113,9 @@ public class TestPackage extends TestObject {
             }
           }, getPackageName(data), false);
         }
-        catch (CantRunException ignored) {
-          //can't be here
-        }
+        catch (CantRunException ignored) {}
       }
-    }, filter);
+    };
   }
 
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
@@ -229,34 +223,6 @@ public class TestPackage extends TestObject {
     if (getSourceScope() == null) {
       myConfiguration.getConfigurationModule().checkForWarning();
     }
-  }
-
-  private SearchForTestsTask findTestsWithProgress(final Consumer<Collection<PsiClass>> callback, final TestClassFilter classFilter) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      THashSet<PsiClass> classes = new THashSet<PsiClass>();
-      ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      callback.consume(classes);
-      return null;
-    }
-
-    final THashSet<PsiClass> classes = new THashSet<PsiClass>();
-    final SearchForTestsTask task =
-      new SearchForTestsTask(classFilter.getProject(), myServerSocket) {
-        @Override
-        protected void search() {
-          classes.clear();
-          ConfigurationUtil.findAllTestClasses(classFilter, classes);
-        }
-
-        @Override
-        protected void onFound() {
-          myFoundTests = !classes.isEmpty();
-          callback.consume(classes);
-        }
-      };
-    mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
-    return task;
   }
 
   @Override

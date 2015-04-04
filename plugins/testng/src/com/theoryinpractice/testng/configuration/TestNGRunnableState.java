@@ -36,8 +36,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -86,7 +84,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
   private int port;
   private String debugPort;
   private File myTempFile;
-  private BackgroundableProcessIndicator mySearchForTestIndicator;
   private ServerSocket myServerSocket;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
@@ -135,9 +132,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       public void processTerminated(final ProcessEvent event) {
         unboundOutputRoot.flush();
 
-        if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
-          task.finish();
-        }
+        task.ensureFinished();
       }
 
       @Override
@@ -148,8 +143,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         }
         client.prepareListening(listener, config.getProject(), port);
         myStarted = true;
-        mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
+        task.startSearch();
       }
 
       @Override
@@ -229,16 +223,12 @@ public class TestNGRunnableState extends JavaCommandLineState {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
-
-        if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
-          task.finish();
-        }
+        task.ensureFinished();
       }
 
       @Override
       public void startNotified(final ProcessEvent event) {
-        mySearchForTestIndicator = new BackgroundableProcessIndicator(task);
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
+        task.startSearch();
       }
     });
 

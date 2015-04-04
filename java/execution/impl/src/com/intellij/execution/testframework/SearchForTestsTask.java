@@ -17,10 +17,13 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +39,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#" + SearchForTestsTask.class.getName());
   protected Socket mySocket;
   private ServerSocket myServerSocket;
+  private ProgressIndicator myProcessIndicator;
 
   public SearchForTestsTask(@Nullable final Project project,
                             @NotNull  final ServerSocket socket) {
@@ -46,6 +50,28 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
   protected abstract void search() throws CantRunException;
   protected abstract void onFound();
+
+  public void ensureFinished() {
+    if (myProcessIndicator != null && !myProcessIndicator.isCanceled()) {
+      finish();
+    }
+  }
+
+  public void startSearch() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        search();
+        onFound();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      myProcessIndicator = new BackgroundableProcessIndicator(this);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(this, myProcessIndicator);
+    }
+  }
 
   @Override
   public void run(@NotNull ProgressIndicator indicator) {

@@ -29,9 +29,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -61,7 +58,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  public Task findTests() {
+  public SearchForTestsTask createSearchingForTestsTask() {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     final Project project = myConfiguration.getProject();
     final Set<String> classNames = new LinkedHashSet<String>();
@@ -73,7 +70,7 @@ public class TestsPattern extends TestPackage {
     }
 
     if (classNames.size() == data.getPatterns().size()) {
-      final SearchForTestsTask task = new SearchForTestsTask(project, myServerSocket) {
+      return new SearchForTestsTask(project, myServerSocket) {
         @Override
         protected void search() throws CantRunException {
           final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME)
@@ -90,12 +87,9 @@ public class TestsPattern extends TestPackage {
         @Override
         protected void onFound() {}
       };
-      mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
-      return task;
     }
 
-    return super.findTests();
+    return super.createSearchingForTestsTask();
   }
 
   private static PsiClass getTestClass(Project project, String className) {
