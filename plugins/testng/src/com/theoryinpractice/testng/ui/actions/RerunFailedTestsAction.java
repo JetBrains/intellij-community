@@ -70,27 +70,38 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
 
                 final GlobalSearchScope scope = config.getConfigurationModule().getSearchScope();
                 final Project project = config.getProject();
-                for (AbstractTestProxy proxy : failedTests) {
-                  final Location location = proxy.getLocation(project, scope);
-                  if (location != null) {
-                    final PsiElement element = location.getPsiElement();
-                    if (element instanceof PsiMethod && element.isValid()) {
-                      final PsiMethod psiMethod = (PsiMethod)element;
-                      PsiClass psiClass = psiMethod.getContainingClass();
-                      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                        final AbstractTestProxy parent = proxy.getParent();
-                        final PsiElement elt = parent != null ? parent.getLocation(project, scope).getPsiElement() : null;
-                        if (elt instanceof PsiClass) {
-                          psiClass = (PsiClass)elt;
-                        }
-                      }
-                      Collection<PsiMethod> psiMethods = classes.get(psiClass);
-                      if (psiMethods == null) {
-                        psiMethods = new ArrayList<PsiMethod>();
-                        classes.put(psiClass, psiMethods);
-                      }
-                      psiMethods.add(psiMethod);
+                for (final AbstractTestProxy proxy : failedTests) {
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      includeFailedTestWithDependencies(classes, scope, project, proxy);
                     }
+                  });
+                }
+              }
+
+              private void includeFailedTestWithDependencies(Map<PsiClass, Collection<PsiMethod>> classes,
+                                                             GlobalSearchScope scope,
+                                                             Project project,
+                                                             AbstractTestProxy proxy) {
+                final Location location = proxy.getLocation(project, scope);
+                if (location != null) {
+                  final PsiElement element = location.getPsiElement();
+                  if (element instanceof PsiMethod && element.isValid()) {
+                    final PsiMethod psiMethod = (PsiMethod)element;
+                    PsiClass psiClass = psiMethod.getContainingClass();
+                    if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                      final AbstractTestProxy parent = proxy.getParent();
+                      final PsiElement elt = parent != null ? parent.getLocation(project, scope).getPsiElement() : null;
+                      if (elt instanceof PsiClass) {
+                        psiClass = (PsiClass)elt;
+                      }
+                    }
+                    Collection<PsiMethod> psiMethods = classes.get(psiClass);
+                    if (psiMethods == null) {
+                      psiMethods = new ArrayList<PsiMethod>();
+                      classes.put(psiClass, psiMethods);
+                    }
+                    psiMethods.add(psiMethod);
                   }
                 }
               }
