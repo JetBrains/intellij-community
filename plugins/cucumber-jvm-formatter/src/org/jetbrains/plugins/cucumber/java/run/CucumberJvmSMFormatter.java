@@ -236,7 +236,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @Override
   public void uri(String s) {
-    String currentDir = System.getenv().get("current_dir");
+    String currentDir = System.getProperty("current_dir");
     if (currentDir != null) {
       uri = currentDir + File.separator + s;
     }
