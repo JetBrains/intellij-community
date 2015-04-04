@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -47,9 +48,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -320,7 +324,40 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitForStatement(GrForStatement statement) {
     startElement(statement);
-    //final GrForClause clause = statement.getClause();
+    final GrForClause clause = statement.getClause();
+    if (clause instanceof GrTraditionalForClause) {
+      final GrTraditionalForClause traditionalForClause = (GrTraditionalForClause)clause;
+
+      final GrCondition initialization = traditionalForClause.getInitialization();
+      if (initialization != null) {
+        initialization.accept(this);
+      }
+
+      final GrExpression condition = traditionalForClause.getCondition();
+      if (condition != null) {
+        condition.accept(this);
+      }
+      else {
+        pushUnknown();
+      }
+      addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(statement), true, condition));
+
+      final GrStatement body = statement.getBody();
+      if (body != null) {
+        body.accept(this);
+      }
+      final GrExpression update = traditionalForClause.getUpdate();
+      if (update != null) {
+        update.accept(this);
+        pop();
+      }
+      addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(condition)));
+
+      final GrVariable variable = traditionalForClause.getDeclaredVariable();
+      if (variable != null) {
+        addInstruction(new FlushVariableInstruction<V>(myFactory.getVarFactory().createVariableValue(variable, false)));
+      }
+    }
     //final Set<GrVariable> declaredVars = ContainerUtil.newTroveSet();
     //if (clause instanceof GrForInClause) {
     //  final GrForInClause forInClause = (GrForInClause)clause;
@@ -347,48 +384,19 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     //  }
     //  addInstruction(new GotoInstruction(forStart));
     //}
-    //else if (clause instanceof GrTraditionalForClause) {
-    //  final GrTraditionalForClause traditionalForClause = (GrTraditionalForClause)clause;
-    //
-    //  final GrCondition initialization = traditionalForClause.getInitialization();
-    //  if (initialization != null) {
-    //    initialization.accept(this);
-    //  }
-    //
-    //  final GrParameter parameter = PsiTreeUtil.findChildOfType(initialization, GrParameter.class);
-    //  if (parameter != null) {
-    //    declaredVars.add(parameter);
-    //  }
-    //
-    //  final GrExpression condition = traditionalForClause.getCondition();
-    //  if (condition != null) {
-    //    condition.accept(this);
-    //  }
-    //  else {
-    //    addInstruction(new PushInstruction(statement.getRParenth() == null ? null : myFactory.createValue(true), null));
-    //  }
-    //  addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(statement), true, condition));
-    //
-    //  final GrStatement body = statement.getBody();
-    //  if (body != null) {
-    //    body.accept(this);
-    //  }
-    //  final GrExpression update = traditionalForClause.getUpdate();
-    //  if (update != null) {
-    //    update.accept(this);
-    //  }
-    //  addInstruction(new PopInstruction());
-    //  final ControlFlowImpl.ControlFlowOffset forStart = initialization != null
-    //                                                     ? myFlow.getEndOffset(initialization)
-    //                                                     : myFlow.getStartOffset(statement);
-    //  addInstruction(new GotoInstruction(forStart));
-    //}
-    //finishElement(statement);
-    //for (GrVariable variable : declaredVars) {
-    //  addInstruction(new FlushVariableInstruction<V>(myFactory.getVarFactory().createVariableValue(variable, false)));
-    //}
+    finishElement(statement);
   }
 
+  @Override
+  public void visitParameter(GrParameter parameter) {
+    startElement(parameter);
+    final GrExpression initializer = parameter.getInitializerGroovy();
+    if (initializer != null) {
+      initialize(parameter, initializer);
+      pop();
+    }
+    finishElement(parameter);
+  }
 
   @Override
   public void visitElvisExpression(GrElvisExpression expression) {
@@ -611,7 +619,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         ? ((GrReturnStatement)element).getReturnValue()
         : element
       ));
-      addInstruction(new ReturnInstruction<V>(false, element));
+      //addInstruction(new ReturnInstruction<V>(false, element));
     }
     else if (element instanceof GrStatement && element.getParent() instanceof GrCodeBlock) {
       if (element instanceof GrExpression) {
