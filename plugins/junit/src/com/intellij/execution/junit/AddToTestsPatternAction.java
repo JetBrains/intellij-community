@@ -20,7 +20,7 @@
  */
 package com.intellij.execution.junit;
 
-import com.intellij.execution.PatternConfigurationDelegate;
+import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -50,14 +50,14 @@ public class AddToTestsPatternAction extends AnAction {
     if (patternConfigurations.size() == 1) {
       final JUnitConfiguration configuration = patternConfigurations.get(0);
       for (PsiElement aClass : classes) {
-        configuration.getPersistentData().getPatterns().add(PatternConfigurationDelegate.getQName(aClass));
+        configuration.getPersistentData().getPatterns().add(AbstractPatternBasedConfigurationProducer.getQName(aClass));
       }
     } else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JUnitConfiguration>("Choose suite to add", patternConfigurations) {
         @Override
         public PopupStep onChosen(JUnitConfiguration configuration, boolean finalChoice) {
           for (PsiElement aClass : classes) {
-            configuration.getPersistentData().getPatterns().add(PatternConfigurationDelegate.getQName(aClass));
+            configuration.getPersistentData().getPatterns().add(AbstractPatternBasedConfigurationProducer.getQName(aClass));
           }
           return FINAL_CHOICE;
         }
@@ -105,7 +105,8 @@ public class AddToTestsPatternAction extends AnAction {
     for (RunConfiguration configuration : configurations) {
       final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
       if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
-        if (foundClasses.size() > 1 || !data.getPatterns().contains(PatternConfigurationDelegate.getQName(foundClasses.iterator().next())) ) {
+        if (foundClasses.size() > 1 || !data.getPatterns().contains(
+          AbstractPatternBasedConfigurationProducer.getQName(foundClasses.iterator().next())) ) {
           foundConfigurations.add((JUnitConfiguration)configuration);
         }
       }
