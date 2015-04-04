@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -115,7 +116,16 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
     myFile.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitAssignmentExpression(GrAssignmentExpression expression) {
-        if (isRefToMe(expression.getLValue())) {
+        final GrExpression lValue = expression.getLValue();
+        if (lValue instanceof GrTupleExpression) {
+          for (GrExpression grExpression : ((GrTupleExpression)lValue).getExpressions()) {
+            if (isRefToMe(grExpression)) {
+              myHasWriteAccess = true;
+              break;
+            }
+          }
+        }
+        else if (isRefToMe(lValue)) {
           myHasWriteAccess = true;
         }
         super.visitAssignmentExpression(expression);
