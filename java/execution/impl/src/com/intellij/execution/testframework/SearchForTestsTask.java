@@ -63,7 +63,9 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
           }
         }
       });
-      if (ex[0] != null) throw ex[0];
+      if (ex[0] != null) {
+        logCantRunException(ex[0]);
+      }
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -74,6 +76,10 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     catch (Throwable e) {
       LOG.error(e);
     }
+  }
+
+  protected void logCantRunException(CantRunException e) throws CantRunException {
+    throw e;
   }
 
   @Override
