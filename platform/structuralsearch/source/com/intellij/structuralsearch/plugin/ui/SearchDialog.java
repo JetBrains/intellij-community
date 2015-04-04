@@ -108,7 +108,7 @@ public class SearchDialog extends DialogWrapper {
     if (showScope) setModal(false);
     myShowScopePanel = showScope;
     myRunFindActionOnClose = runFindActionOnClose;
-    this.searchContext = (SearchContext)searchContext.clone();
+    this.searchContext = searchContext;
     setTitle(getDefaultTitle());
 
     if (runFindActionOnClose) {
