@@ -19,48 +19,32 @@ package com.intellij.execution.junit;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.execution.testframework.SourceScope;
-import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 public class TestPackage extends TestObject {
   protected BackgroundableProcessIndicator mySearchForTestsIndicator;
@@ -112,9 +96,9 @@ public class TestPackage extends TestObject {
       return null;
     }
 
-    return findTestsWithProgress(new FindCallback() {
+    return findTestsWithProgress(new Consumer<Collection<PsiClass>>() {
       @Override
-      public void found(@NotNull final Collection<PsiClass> classes) {
+      public void consume(Collection<PsiClass> classes) {
         try {
           addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
             @Override
@@ -247,143 +231,38 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private MySearchForTestsTask findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
-    if (isSyncSearch()) {
+  private SearchForTestsTask findTestsWithProgress(final Consumer<Collection<PsiClass>> callback, final TestClassFilter classFilter) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      callback.found(classes);
+      callback.consume(classes);
       return null;
     }
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
-    final MySearchForTestsTask task =
-      new MySearchForTestsTask(classFilter, classes, callback, myServerSocket);
+    final SearchForTestsTask task =
+      new SearchForTestsTask(classFilter.getProject(), myServerSocket) {
+        @Override
+        protected void search() {
+          classes.clear();
+          ConfigurationUtil.findAllTestClasses(classFilter, classes);
+        }
+
+        @Override
+        protected void onFound() {
+          myFoundTests = !classes.isEmpty();
+          callback.consume(classes);
+        }
+      };
     mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
     return task;
   }
 
-  private static boolean isSyncSearch() {
-    return ApplicationManager.getApplication().isUnitTestMode();
-  }
-
   @Override
   protected void notifyByBalloon(JUnitRunningModel model, boolean started, final JUnitConsoleProperties consoleProperties) {
-    if (myFoundTests) {
+    if (myFoundTests || !ResetConfigurationModuleAdapter.tryWithAnotherModule(myConfiguration, consoleProperties.isDebug())) {
       super.notifyByBalloon(model, started, consoleProperties);
-    }
-    else {
-      final String packageName = myConfiguration.getPackage();
-      if (packageName == null) return;
-      final Project project = myConfiguration.getProject();
-      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-      if (aPackage == null) return;
-      final Module module = myConfiguration.getConfigurationModule().getModule();
-      if (module == null) return;
-      final Set<Module> modulesWithPackage = new HashSet<Module>();
-      final PsiDirectory[] directories = aPackage.getDirectories();
-      for (PsiDirectory directory : directories) {
-        final Module currentModule = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
-        if (module != currentModule && currentModule != null) {
-          modulesWithPackage.add(currentModule);
-        }
-      }
-      if (!modulesWithPackage.isEmpty()) {
-        final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        final Function<Module, String> moduleNameRef = new Function<Module, String>() {
-          @Override
-          public String fun(Module module) {
-            final String moduleName = module.getName();
-            return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
-          }
-        };
-        String message = "Tests were not found in module \"" + module.getName() + "\".\n" +
-                         "Use ";
-        if (modulesWithPackage.size() == 1) {
-          message += "module \"" + moduleNameRef.fun(modulesWithPackage.iterator().next()) + "\" ";
-        }
-        else {
-          message += "one of\n" + StringUtil.join(modulesWithPackage, moduleNameRef, "\n") + "\n";
-        }
-        message += "instead";
-        toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
-                                          new ResetConfigurationModuleAdapter(project, consoleProperties, toolWindowManager,
-                                                                              testRunDebugId));
-      }
-    }
-  }
-
-  public interface FindCallback {
-    /**
-     * Invoked in dispatch thread
-     */
-    void found(@NotNull Collection<PsiClass> classes);
-  }
-
-  private class MySearchForTestsTask extends SearchForTestsTask {
-    private final TestClassFilter myClassFilter;
-    private final THashSet<PsiClass> myClasses;
-    private final FindCallback myCallback;
-
-    public MySearchForTestsTask(TestClassFilter classFilter,
-                                THashSet<PsiClass> classes,
-                                FindCallback callback,
-                                ServerSocket serverSocket) {
-      super(classFilter.getProject(), serverSocket);
-      myClassFilter = classFilter;
-      myClasses = classes;
-      myCallback = callback;
-    }
-
-
-    @Override
-    protected void search() {
-      myClasses.clear();
-      ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
-    }
-
-    @Override
-    protected void onFound() {
-      myFoundTests = !myClasses.isEmpty();
-      myCallback.found(myClasses);
-    }
-  }
-
-  private class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
-    private final Project myProject;
-    private final JUnitConsoleProperties myConsoleProperties;
-    private final ToolWindowManager myToolWindowManager;
-    private final String myTestRunDebugId;
-
-    public ResetConfigurationModuleAdapter(final Project project,
-                                           final JUnitConsoleProperties consoleProperties,
-                                           final ToolWindowManager toolWindowManager,
-                                           final String testRunDebugId) {
-      myProject = project;
-      myConsoleProperties = consoleProperties;
-      myToolWindowManager = toolWindowManager;
-      myTestRunDebugId = testRunDebugId;
-    }
-
-    @Override
-    protected void hyperlinkActivated(HyperlinkEvent e) {
-      final Module moduleByName = ModuleManager.getInstance(myProject).findModuleByName(e.getDescription());
-      if (moduleByName != null) {
-        myConfiguration.getConfigurationModule().setModule(moduleByName);
-        try {
-          Executor executor = myConsoleProperties.isDebug() ? DefaultDebugExecutor.getDebugExecutorInstance()
-                                                            : DefaultRunExecutor.getRunExecutorInstance();
-          ExecutionEnvironmentBuilder.create(myProject, executor, myConfiguration).contentToReuse(null).buildAndExecute();
-          Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
-          if (balloon != null) {
-            balloon.hide();
-          }
-        }
-        catch (ExecutionException e1) {
-          LOG.error(e1);
-        }
-      }
     }
   }
 }

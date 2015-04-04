@@ -68,6 +68,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private final TableView resultsTable;
 
   private final TestNGResultsTableModel model;
+  private final TestNGConfiguration configuration;
   private TestNGTestTreeView tree;
 
   private final Project project;
@@ -94,6 +95,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
                        final ExecutionEnvironment environment) {
     super(component, console.getConsole().createConsoleActions(), console.getProperties(),
           environment, TESTNG_SPLITTER_PROPERTY, 0.5f);
+    this.configuration = configuration;
     this.project = configuration.getProject();
 
     model = new TestNGResultsTableModel(project);
@@ -409,7 +411,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           }
         }
         tree.repaint();
-        TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
+        if (total > 0 ||
+            !ResetConfigurationModuleAdapter.tryWithAnotherModule(configuration, getProperties().isDebug())) {
+          TestsUIUtil.notifyByBalloon(project, started, rootNode, getProperties(), "in " + getTime());
+        }
       }
     });
   }
