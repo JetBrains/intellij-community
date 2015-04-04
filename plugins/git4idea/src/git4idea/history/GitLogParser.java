@@ -167,9 +167,19 @@ public class GitLogParser {
     //
     // R100    dir/anew.txt    anew.txt
     final List<String> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
+    String notMatchedPart = null;
     final List<GitLogRecord> res = new ArrayList<GitLogRecord>(records.size());
     for (String record : records) {
       if (!record.trim().isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
+        if (notMatchedPart != null) {
+          record = notMatchedPart + record;
+        }
+        if (ONE_RECORD.matcher(record).matches()) {
+          notMatchedPart = null;
+        } else {
+          notMatchedPart = record;
+          continue;
+        }
         res.add(parseOneRecord(record));
       }
     }
