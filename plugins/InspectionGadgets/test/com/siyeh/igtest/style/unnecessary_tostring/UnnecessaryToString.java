@@ -14,6 +14,7 @@ public class UnnecessaryToString {
     void fizzz(Object o) {
         boolean c = true;
         System.out.println(o.toString() + c);
+        System.out.println((o.toString()) + c);
     }
 
     void polyadic(Object s) {

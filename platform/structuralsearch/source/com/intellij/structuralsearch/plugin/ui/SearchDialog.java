@@ -125,7 +125,7 @@ public class SearchDialog extends DialogWrapper {
     this.useLastConfiguration = useLastConfiguration;
   }
 
-  public void setSearchPattern(final Configuration config) {
+  private void setSearchPattern(final Configuration config) {
     model.setShadowConfig(config);
     setValuesFromConfig(config);
     initiateValidation();
@@ -626,26 +626,21 @@ public class SearchDialog extends DialogWrapper {
             }
 
             final Configuration configuration = model.getConfig();
+            model = new SearchModel(createConfiguration());
+            model.setShadowConfig(configuration);
             configuration.setName(name);
             setValuesToConfig(configuration);
             setDialogTitle(configuration);
 
-            if (model.getShadowConfig() == null || model.getShadowConfig().isPredefined()) {
-              filterOutUnusedVariableConstraints(configuration);
-              existingTemplatesComponent.addConfigurationToUserTemplates(configuration);
-            }
-            else {  // ???
-              setValuesToConfig(model.getShadowConfig());
-              model.getShadowConfig().setName(name);
-            }
+            filterOutUnusedVariableConstraints(configuration);
+            configurationManager.addConfiguration(configuration);
+            existingTemplatesComponent.setUserTemplates(configurationManager);
           }
         }
       })
     );
 
-    panel.add(
-      Box.createHorizontalStrut(8)
-    );
+    panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
       createJButtonForAction(

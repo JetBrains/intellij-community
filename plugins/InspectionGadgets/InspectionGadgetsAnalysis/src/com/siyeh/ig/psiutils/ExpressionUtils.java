@@ -498,8 +498,9 @@ public class ExpressionUtils {
       int index = -1;
       for (int i = 0, length = operands.length; i < length; i++) {
         final PsiExpression operand = operands[i];
-        if (expression.equals(operand)) {
+        if (PsiTreeUtil.isAncestor(operand, expression, false)) {
           index = i;
+          break;
         }
       }
       if (index > 0) {
