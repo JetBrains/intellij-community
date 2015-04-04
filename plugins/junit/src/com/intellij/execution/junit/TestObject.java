@@ -520,8 +520,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
-                                                boolean createTempFile,
-                                                boolean junit4) throws CantRunException {
+                                                    boolean createTempFile) throws CantRunException {
     try {
       if (createTempFile) {
         createTempFiles();

@@ -98,7 +98,7 @@ public class TestMethods extends TestMethod {
         }
         return null;
       }
-    }, data.getPackageName(), true, false);
+    }, data.getPackageName(), true);
 
   }
 

@@ -22,15 +22,12 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -57,18 +54,15 @@ import org.testng.xml.XmlSuite;
 
 import java.io.*;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class SearchingForTestsTask extends Task.Backgroundable {
+public class SearchingForTestsTask extends SearchForTestsTask {
   private static final Logger LOG = Logger.getInstance("#" + SearchingForTestsTask.class.getName());
   private final Map<PsiClass, Collection<PsiMethod>> myClasses;
-  private Socket mySocket;
   private final TestData myData;
   private final Project myProject;
-  private final ServerSocket myServerSocket;
   private final TestNGConfiguration myConfig;
   private final File myTempFile;
   private final IDEARemoteTestRunnerClient myClient;
@@ -77,96 +71,17 @@ public class SearchingForTestsTask extends Task.Backgroundable {
                                TestNGConfiguration config,
                                File tempFile,
                                IDEARemoteTestRunnerClient client) {
-    super(config.getProject(), "Searching For Tests ...", true);
+    super(config.getProject(), serverSocket);
     myClient = client;
     myData = config.getPersistantData();
     myProject = config.getProject();
-    myServerSocket = serverSocket;
     myConfig = config;
     myTempFile = tempFile;
     myClasses = new LinkedHashMap<PsiClass, Collection<PsiMethod>>();
   }
 
-  public void run(@NotNull ProgressIndicator indicator) {
-    try {
-      mySocket = myServerSocket.accept();
-      try {
-        final CantRunException[] ex = new CantRunException[1];
-        DumbService.getInstance(myProject).repeatUntilPassesInSmartMode(new Runnable() {
-          @Override
-          public void run() {
-            myClasses.clear();
-            try {
-              fillTestObjects(myClasses);
-            }
-            catch (CantRunException e) {
-              ex[0] = e;
-            }
-          }
-        });
-        if (ex[0] != null) throw ex[0];
-      }
-      catch (CantRunException e) {
-        logCantRunException(e);
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-  }
-
   @Override
-  public void onSuccess() {
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-      @Override
-      public void run() {
-        writeTempFile();
-        finish();
-
-        if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
-      }
-    });
-  }
-
-  @Override
-  public void onCancel() {
-    finish();
-  }
-
-  public void finish() {
-    DataOutputStream os = null;
-    try {
-      if (mySocket == null || mySocket.isClosed()) return;
-      os = new DataOutputStream(mySocket.getOutputStream());
-      os.writeBoolean(true);
-    }
-    catch (Throwable e) {
-      LOG.info(e);
-    }
-    finally {
-      try {
-        if (os != null) os.close();
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-      }
-
-      try {
-        myServerSocket.close();
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-      }
-    }
-  }
-
-  private void writeTempFile() {
+  protected void onFound() {
     if (myClasses.size() > 0) {
       composeTestSuiteFromClasses();
     }
@@ -186,6 +101,17 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  protected void search() throws CantRunException {
+    myClasses.clear();
+    fillTestObjects(myClasses);
+  }
+
+  @Override
+  protected void startListening() {
+    if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
   }
 
   private void logCantRunException(CantRunException e) {

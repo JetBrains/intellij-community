@@ -26,9 +26,9 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -40,10 +40,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -75,33 +73,22 @@ public class TestsPattern extends TestPackage {
     }
 
     if (classNames.size() == data.getPatterns().size()) {
-      final SearchForTestsTask task = new SearchForTestsTask(project, "Searching for tests...", true) {
+      final SearchForTestsTask task = new SearchForTestsTask(project, myServerSocket) {
         @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            mySocket = myServerSocket.accept();
-            addClassesListToJavaParameters(classNames,
-                                           StringUtil.isEmpty(data.METHOD_NAME)
-                                           ? FunctionUtil.<String>id()
-                                           : new Function<String, String>() {
-                                             @Override
-                                             public String fun(String className) {
-                                               return className;
-                                             }
-                                           }, "", false, true);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
+        protected void search() throws CantRunException {
+          final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME)
+                                                        ? FunctionUtil.<String>id()
+                                                        : new Function<String, String>() {
+                                                          @Override
+                                                          public String fun(String className) {
+                                                            return className;
+                                                          }
+                                                        };
+          addClassesListToJavaParameters(classNames, nameFunction, "", false);
         }
 
         @Override
-        public void onSuccess() {
-          finish();
-        }
+        protected void onFound() {}
       };
       mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
       ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);

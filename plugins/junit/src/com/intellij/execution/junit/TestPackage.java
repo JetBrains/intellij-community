@@ -27,18 +27,16 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -57,11 +55,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -118,7 +114,7 @@ public class TestPackage extends TestObject {
 
     return findTestsWithProgress(new FindCallback() {
       @Override
-      public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
+      public void found(@NotNull final Collection<PsiClass> classes) {
         try {
           addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
             @Override
@@ -135,7 +131,7 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, getPackageName(data), false, isJunit4);
+          }, getPackageName(data), false);
         }
         catch (CantRunException ignored) {
           //can't be here
@@ -254,15 +250,14 @@ public class TestPackage extends TestObject {
   private MySearchForTestsTask findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
-      boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      callback.found(classes, isJUnit4);
+      ConfigurationUtil.findAllTestClasses(classFilter, classes);
+      callback.found(classes);
       return null;
     }
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
-    final boolean[] isJunit4 = new boolean[1];
     final MySearchForTestsTask task =
-      new MySearchForTestsTask(classFilter, isJunit4, classes, callback);
+      new MySearchForTestsTask(classFilter, classes, callback, myServerSocket);
     mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
     return task;
@@ -323,100 +318,35 @@ public class TestPackage extends TestObject {
     /**
      * Invoked in dispatch thread
      */
-    void found(@NotNull Collection<PsiClass> classes, final boolean isJunit4);
+    void found(@NotNull Collection<PsiClass> classes);
   }
 
-  protected abstract class SearchForTestsTask extends Task.Backgroundable {
-
-    protected Socket mySocket;
-
-    public SearchForTestsTask(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
-      super(project, title, canBeCancelled);
-    }
-
-
-    protected void finish() {
-      DataOutputStream os = null;
-      try {
-        if (mySocket == null || mySocket.isClosed()) return;
-        os = new DataOutputStream(mySocket.getOutputStream());
-        os.writeBoolean(true);
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-      }
-      finally {
-        try {
-          if (os != null) os.close();
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-
-        try {
-          if (!myServerSocket.isClosed()) {
-            myServerSocket.close();
-          }
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-      }
-    }
-
-    @Override
-    public void onCancel() {
-      finish();
-    }
-  }
   private class MySearchForTestsTask extends SearchForTestsTask {
     private final TestClassFilter myClassFilter;
-    private final boolean[] myJunit4;
     private final THashSet<PsiClass> myClasses;
     private final FindCallback myCallback;
 
-    public MySearchForTestsTask(TestClassFilter classFilter, boolean[] junit4, THashSet<PsiClass> classes, FindCallback callback) {
-      super(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true);
+    public MySearchForTestsTask(TestClassFilter classFilter,
+                                THashSet<PsiClass> classes,
+                                FindCallback callback,
+                                ServerSocket serverSocket) {
+      super(classFilter.getProject(), serverSocket);
       myClassFilter = classFilter;
-      myJunit4 = junit4;
       myClasses = classes;
       myCallback = callback;
     }
 
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      try {
-        mySocket = myServerSocket.accept();
-        DumbService.getInstance(getProject()).repeatUntilPassesInSmartMode(new Runnable() {
-          @Override
-          public void run() {
-            myClasses.clear();
-            myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
-          }
-        });
-        myFoundTests = !myClasses.isEmpty();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
+    protected void search() {
+      myClasses.clear();
+      ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
     }
 
     @Override
-    public void onSuccess() {
-      DumbService.getInstance(getProject()).runWhenSmart(new Runnable() {
-        @Override
-        public void run() {
-          myCallback.found(myClasses, myJunit4[0]);
-          finish();
-        }
-      });
+    protected void onFound() {
+      myFoundTests = !myClasses.isEmpty();
+      myCallback.found(myClasses);
     }
   }
 
