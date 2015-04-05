@@ -450,13 +450,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private static boolean validateRegExp(EditorTextField field) {
+    final String s = field.getDocument().getText();
     try {
-      final String s = field.getDocument().getText();
       if (s.length() > 0) {
         Pattern.compile(s);
       }
     } catch(PatternSyntaxException ex) {
-      Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression"), SSRBundle.message("invalid.regular.expression"));
+      Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression", ex.getMessage()),
+                               SSRBundle.message("invalid.regular.expression.title"));
       field.requestFocus();
       return false;
     }
