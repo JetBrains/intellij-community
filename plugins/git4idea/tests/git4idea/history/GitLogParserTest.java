@@ -33,6 +33,7 @@ import java.util.*;
 
 import static git4idea.history.GitLogParser.*;
 import static git4idea.history.GitLogParser.GitLogOption.*;
+import static git4idea.history.GitLogParser.NameStatus.*;
 
 public class GitLogParserTest extends GitPlatformTest {
 
@@ -104,23 +105,23 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   public void testparseAllWithoutNameStatus() throws VcsException {
-    doTestAllRecords(GitTestLogRecord.NameStatusOption.NONE);
+    doTestAllRecords(NONE);
   }
 
   public void testparseAllWithName() throws VcsException {
-    doTestAllRecords(GitTestLogRecord.NameStatusOption.NAME);
+    doTestAllRecords(NAME);
   }
 
   public void testparseAllWithNameStatus() throws VcsException {
-    doTestAllRecords(GitTestLogRecord.NameStatusOption.STATUS);
+    doTestAllRecords(STATUS);
   }
 
-  private void doTestAllRecords(GitTestLogRecord.NameStatusOption nameStatusOption) throws VcsException {
+  private void doTestAllRecords(NameStatus nameStatusOption) throws VcsException {
     NameStatus option;
     switch (nameStatusOption) {
-      case NONE:   option = NameStatus.NONE; break;
-      case NAME:   option = NameStatus.NAME; break;
-      case STATUS: option = NameStatus.STATUS; break;
+      case NONE:   option = NONE; break;
+      case NAME:   option = NAME; break;
+      case STATUS: option = STATUS; break;
       default: throw new AssertionError();
     }
 
@@ -133,20 +134,20 @@ public class GitLogParserTest extends GitPlatformTest {
 
   public void testparseOneRecordWithoutNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
-    doTestOneRecord(GitTestLogRecord.NameStatusOption.NONE);
+    doTestOneRecord(NONE);
   }
 
   public void testparseOneRecordWithName() throws VcsException {
-    myParser = new GitLogParser(myProject, NameStatus.NAME,  GIT_LOG_OPTIONS);
-    doTestOneRecord(GitTestLogRecord.NameStatusOption.NAME);
+    myParser = new GitLogParser(myProject, NAME,  GIT_LOG_OPTIONS);
+    doTestOneRecord(NAME);
   }
 
   public void testparseOneRecordWithNameStatus() throws VcsException {
-    myParser = new GitLogParser(myProject, NameStatus.STATUS, GIT_LOG_OPTIONS);
-    doTestOneRecord(GitTestLogRecord.NameStatusOption.STATUS);
+    myParser = new GitLogParser(myProject, STATUS, GIT_LOG_OPTIONS);
+    doTestOneRecord(STATUS);
   }
-  
-  private void doTestOneRecord(GitTestLogRecord.NameStatusOption option) throws VcsException {
+
+  private void doTestOneRecord(NameStatus option) throws VcsException {
     String s = myRecord.prepareOutputLine(option);
     GitLogRecord record = myParser.parseOneRecord(s);
     assertRecord(record, myRecord, option);
@@ -154,14 +155,14 @@ public class GitLogParserTest extends GitPlatformTest {
 
   private void assertAllRecords(List<GitLogRecord> actualRecords,
                                 List<GitTestLogRecord> expectedRecords,
-                                GitTestLogRecord.NameStatusOption nameStatusOption) throws VcsException {
+                                NameStatus nameStatusOption) throws VcsException {
     assertEquals(actualRecords.size(), expectedRecords.size());
     for (int i = 0; i < actualRecords.size(); i++) {
       assertRecord(actualRecords.get(i), expectedRecords.get(i), nameStatusOption);
     }
   }
 
-  private static String prepareOutputForAllRecords(GitTestLogRecord.NameStatusOption nameStatusOption) {
+  private static String prepareOutputForAllRecords(NameStatus nameStatusOption) {
     StringBuilder sb = new StringBuilder();
     for (GitTestLogRecord record : ALL_RECORDS) {
       sb.append(record.prepareOutputLine(nameStatusOption)).append("\n");
@@ -169,7 +170,7 @@ public class GitLogParserTest extends GitPlatformTest {
     return sb.toString();
   }
 
-  private void assertRecord(GitLogRecord actual, GitTestLogRecord expected, GitTestLogRecord.NameStatusOption option) throws VcsException {
+  private void assertRecord(GitLogRecord actual, GitTestLogRecord expected, NameStatus option) throws VcsException {
     assertEquals(expected.getHash(), actual.getHash());
 
     assertEquals(expected.getCommitterName(), actual.getCommitterName());
@@ -192,9 +193,9 @@ public class GitLogParserTest extends GitPlatformTest {
 
     assertSameElements(actual.getParentsHashes(), expected.getParents());
 
-    if (option == GitTestLogRecord.NameStatusOption.NAME) {
+    if (option == NAME) {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
-    } else if (option == GitTestLogRecord.NameStatusOption.STATUS) {
+    } else if (option == STATUS) {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
       assertChanges(actual.parseChanges(myProject, myRoot), expected.changes());
     }
@@ -388,21 +389,17 @@ public class GitLogParserTest extends GitPlatformTest {
       return sb.toString();
     }
 
-    enum NameStatusOption {
-      NONE, NAME, STATUS
-    }
-    
-    String prepareOutputLine(NameStatusOption nameStatusOption) {
+    String prepareOutputLine(NameStatus nameStatusOption) {
       StringBuilder sb = new StringBuilder(RECORD_START);
       for (GitLogOption option : GIT_LOG_OPTIONS) {
         sb.append(optionToValue(option)).append(ITEMS_SEPARATOR);
       }
       sb.append(RECORD_END);
 
-      if (nameStatusOption == NameStatusOption.NAME) {
+      if (nameStatusOption == NAME) {
         sb.append("\n\n").append(pathsAsString());
       }
-      else if (nameStatusOption == NameStatusOption.STATUS) {
+      else if (nameStatusOption == STATUS) {
         sb.append("\n\n").append(changesAsString());
       }
 
