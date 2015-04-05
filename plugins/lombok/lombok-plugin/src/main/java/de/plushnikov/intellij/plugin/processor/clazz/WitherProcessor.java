@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,13 +29,13 @@ public class WitherProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRightType(psiClass, builder) && validateVisibility(psiAnnotation);
+    return validateAnnotationOnRightType(psiClass, builder) && validateVisibility(psiAnnotation) && fieldProcessor.validConstructor(psiClass, builder);
   }
 
   protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("'@Wither' is only supported on a class, enum or field type");
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
+      builder.addError("@Wither is only supported on a class or a field.");
       result = false;
     }
     return result;
@@ -65,10 +66,10 @@ public class WitherProcessor extends AbstractClassProcessor {
         createWither = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         // Skip final fields
         createWither &= !(modifierList.hasModifierProperty(PsiModifier.FINAL) && psiField.hasInitializer());
-        // Skip fields having Wither annotation already
-        createWither &= !hasFieldProcessorAnnotation(modifierList);
         // Skip fields that start with $
         createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+        // Skip fields having Wither annotation already
+        createWither &= !PsiAnnotationUtil.isAnnotatedWith(psiField, Wither.class);
       }
       if (createWither) {
         PsiMethod method = fieldProcessor.createWitherMethod(psiField, methodModifier, accessors);
@@ -79,13 +80,4 @@ public class WitherProcessor extends AbstractClassProcessor {
     }
     return result;
   }
-
-  private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
-    boolean hasSetterAnnotation = false;
-    for (PsiAnnotation fieldAnnotation : modifierList.getAnnotations()) {
-      hasSetterAnnotation |= fieldProcessor.acceptAnnotation(fieldAnnotation, PsiMethod.class);
-    }
-    return hasSetterAnnotation;
-  }
-
 }

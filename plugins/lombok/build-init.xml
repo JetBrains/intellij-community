@@ -12,7 +12,6 @@
     <checksum file="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz" property="downloadChecksum" algorithm="SHA-256"/>
     <echo>Downloaded file checksum: ${downloadChecksum}</echo>
 
-    <!--<untar src="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz" dest="${basedir}"/>-->
     <untar src="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz" dest="${basedir}" compression="gzip"/>
 
     <move file="${basedir}/idea-IC-${ideaBuildVersion}" tofile="${basedir}/idea-IC"/>
