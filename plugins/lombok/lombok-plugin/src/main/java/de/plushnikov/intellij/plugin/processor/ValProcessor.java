@@ -1,14 +1,20 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiDiamondType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
@@ -55,47 +61,67 @@ public class ValProcessor extends AbstractProcessor {
     return Collections.emptyList();
   }
 
+  public void verifyTypeElement(@NotNull final PsiTypeElement psiTypeElement, @NotNull final ProblemsHolder holder) {
+    final PsiElement typeParent = psiTypeElement.getParent();
+
+    if (isVal(psiTypeElement)) {
+      if (typeParent instanceof PsiField || (typeParent instanceof PsiParameter && !(((PsiParameter) typeParent).getDeclarationScope() instanceof PsiForeachStatement))) {
+        holder.registerProblem(psiTypeElement, "'val' works only on local variables and on foreach loops", ProblemHighlightType.ERROR);
+      } else if (typeParent instanceof PsiLocalVariable) {
+        final PsiLocalVariable psiVariable = (PsiLocalVariable) typeParent;
+        final PsiExpression initializer = psiVariable.getInitializer();
+        if (initializer == null) {
+          holder.registerProblem(psiTypeElement, "'val' on a local variable requires an initializer expression", ProblemHighlightType.ERROR);
+        } else if (initializer instanceof PsiArrayInitializerExpression) {
+          holder.registerProblem(psiTypeElement, "'val' is not compatible with array initializer expressions. Use the full form (new int[] { ... } instead of just { ... })", ProblemHighlightType.ERROR);
+        } else if (initializer instanceof PsiLambdaExpression) {
+          holder.registerProblem(psiTypeElement, "'val' is not allowed with lambda expressions.", ProblemHighlightType.ERROR);
+        } else {
+          final PsiElement typeParentParent = typeParent.getParent();
+          if (typeParentParent instanceof PsiDeclarationStatement && typeParentParent.getParent() instanceof PsiForStatement) {
+            holder.registerProblem(psiTypeElement, "'val' is not allowed in old-style for loops", ProblemHighlightType.ERROR);
+          }
+        }
+      }
+    }
+  }
+
+  protected boolean isVal(@NotNull PsiTypeElement psiTypeElement) {
+    final PsiJavaCodeReferenceElement referenceElement = psiTypeElement.getInnermostComponentReferenceElement();
+    if (null != referenceElement) {
+      final PsiElement psiElement = referenceElement.resolve();
+      if (psiElement instanceof PsiClass) {
+        final String qualifiedName = ((PsiClass) psiElement).getQualifiedName();
+        return LOMBOK_VAL_FQN.equals(qualifiedName) || LOMBOK_VAL_SHORT_NAME.equals(qualifiedName);
+      }
+    }
+    return false;
+  }
+
   @Nullable
   public PsiType inferType(PsiTypeElement typeElement) {
+    PsiType psiType = null;
+
     final PsiElement parent = typeElement.getParent();
-    if (!(parent instanceof PsiLocalVariable || parent instanceof PsiParameter)) {
-      return null;
-    }
+    if ((parent instanceof PsiLocalVariable || parent instanceof PsiParameter) && isVal(typeElement)) {
 
-    final String typeElementText = typeElement.getText();
-    if (!(LOMBOK_VAL_SHORT_NAME.equals(typeElementText) || LOMBOK_VAL_FQN.equals(typeElementText))) {
-      return null;
-    }
+      if (parent instanceof PsiLocalVariable) {
+        psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());
+      } else {
+        psiType = processParameterDeclaration(((PsiParameter) parent).getDeclarationScope());
+      }
 
-    PsiType psiType;
-    if (parent instanceof PsiLocalVariable) {
-      psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());
-    } else {
-      psiType = processParameterDeclaration(((PsiParameter) parent).getDeclarationScope());
-    }
-
-    if (null == psiType) {
-      psiType = PsiType.getJavaLangObject(typeElement.getManager(), GlobalSearchScope.projectScope(typeElement.getProject()));
+      if (null == psiType) {
+        psiType = PsiType.getJavaLangObject(typeElement.getManager(), GlobalSearchScope.projectScope(typeElement.getProject()));
+      }
     }
     return psiType;
   }
 
-  //TODO ERROR:  'val' is not allowed in old-style for loops
-  public PsiType processLocalVariableInitializer(PsiExpression initializer) {
+  protected PsiType processLocalVariableInitializer(PsiExpression initializer) {
     PsiType result = null;
-    if (initializer instanceof PsiArrayInitializerExpression) {
-      // TODO add ERROR : 'val' is not compatible with array initializer expressions. Use the full form (new int[] { ... } instead of just { ... })
-//      PsiArrayInitializerExpression psiArrayInitializerExpression = (PsiArrayInitializerExpression) initializer;
-//      final PsiExpression[] psiArrayInitializer = psiArrayInitializerExpression.getInitializers();
-//      if (psiArrayInitializer.length > 0) {
-//        final PsiType psiArrayElementType = psiArrayInitializer[0].getType();
-//        if (null != psiArrayElementType) {
-//          result = new PsiArrayType(psiArrayElementType);
-//        }
-//      }
-    } else if (null != initializer) {
+    if (null != initializer && !(initializer instanceof PsiArrayInitializerExpression)) {
       if (!recursionBreaker.get().contains(initializer)) {
-
         recursionBreaker.get().add(initializer);
         try {
           result = initializer.getType();
@@ -120,7 +146,7 @@ public class ValProcessor extends AbstractProcessor {
     return result;
   }
 
-  public PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
+  protected PsiType processParameterDeclaration(PsiElement parentDeclarationScope) {
     PsiType result = null;
     if (parentDeclarationScope instanceof PsiForeachStatement) {
       final PsiForeachStatement foreachStatement = (PsiForeachStatement) parentDeclarationScope;

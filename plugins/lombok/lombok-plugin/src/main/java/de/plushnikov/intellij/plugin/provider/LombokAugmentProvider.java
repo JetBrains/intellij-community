@@ -47,9 +47,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   };
 
   private Collection<String> registeredAnnotationNames;
+  private ValProcessor valProcessor;
 
   public LombokAugmentProvider() {
     log.debug("LombokAugmentProvider created");
+    valProcessor = new ValProcessor();
   }
 
   @NotNull
@@ -117,7 +119,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   @Nullable
   protected PsiType inferType(PsiTypeElement typeElement) {
-    return new ValProcessor().inferType(typeElement);
+    return valProcessor.inferType(typeElement);
   }
 
   private void initRegisteredAnnotations() {

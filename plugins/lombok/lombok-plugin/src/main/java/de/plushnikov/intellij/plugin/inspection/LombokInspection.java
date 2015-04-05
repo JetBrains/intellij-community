@@ -7,16 +7,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeElement;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
-import gnu.trove.THashMap;
+import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -28,8 +29,12 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
 
   private final Map<String, Collection<Processor>> allProblemHandlers;
 
+  private final ValProcessor valProcessor;
+
   public LombokInspection() {
-    allProblemHandlers = new THashMap<String, Collection<Processor>>();
+    valProcessor = new ValProcessor();
+
+    allProblemHandlers = new HashMap<String, Collection<Processor>>();
     for (Processor lombokInspector : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
       Collection<Processor> inspectorCollection = allProblemHandlers.get(lombokInspector.getSupportedAnnotation());
       if (null == inspectorCollection) {
@@ -69,9 +74,12 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
+
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        // do nothing, just implement
+      public void visitTypeElement(PsiTypeElement type) {
+        super.visitTypeElement(type);
+
+        valProcessor.verifyTypeElement(type, holder);
       }
 
       @Override

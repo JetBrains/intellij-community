@@ -27,20 +27,20 @@ public class ValWeirdTypes<Z> {
 		val y = 5 + 3L;
 	}
 
-//	public void testAnonymousInnerClass() {
-//		val y = new Runnable() {
-//			public void run() {}
-//		};
-//		System.out.println(y);
-//	}
+	public void testAnonymousInnerClass() {
+		val y = new Runnable() {
+			public void run() {}
+		};
+		System.out.println(y);
+	}
 
 	public <T extends Number> void testTypeParams(List<T> param) {
-//		val t = param.get(0);
-//		val z = fieldList.get(0);
+		val t = param.get(0);
+		val z = fieldList.get(0);
 		val k = param;
 		val y = fieldList;
 	}
-//
+
 //	public void testBounds(List<? extends Number> lower, List<? super Number> upper) {
 //		val a = lower.get(0);
 //		val b = upper.get(0);
@@ -57,7 +57,7 @@ public class ValWeirdTypes<Z> {
 //		val d = c ? a : b;
 //		RandomAccess confirm = c ? a : b;
 //	}
-//
+
 	public void nullType() {
 		val nully = null;
 	}
