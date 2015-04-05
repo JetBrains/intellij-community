@@ -16,10 +16,10 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.TestProxy;
@@ -54,8 +54,8 @@ public class TestMethods extends TestMethod {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    defaultInitialize();
+  protected void initialize(final JavaParameters javaParameters) throws ExecutionException {
+    defaultInitialize(javaParameters);
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     final Project project = module.getProject();
@@ -64,9 +64,9 @@ public class TestMethods extends TestMethod {
       @Override
       public void run() {
         try {
-          myConfiguration.configureClasspath(myJavaParameters);
+          myConfiguration.configureClasspath(javaParameters);
         }
-        catch (CantRunException e) {
+        catch (ExecutionException e) {
           exception[0] = e;
         }
       }
@@ -98,7 +98,7 @@ public class TestMethods extends TestMethod {
         }
         return null;
       }
-    }, data.getPackageName(), true);
+    }, data.getPackageName(), true, javaParameters);
 
   }
 

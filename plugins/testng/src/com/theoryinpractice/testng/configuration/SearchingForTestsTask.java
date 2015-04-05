@@ -22,6 +22,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
@@ -114,7 +115,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
   }
 
-  protected void logCantRunException(CantRunException e) {
+  protected void logCantRunException(ExecutionException e) {
     try {
       final String message = "CantRunException" + e.getMessage() + "\n";
       FileUtil.writeToFile(myTempFile, message.getBytes());

@@ -19,10 +19,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -34,12 +31,12 @@ class TestClass extends TestObject {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    super.initialize();
+  protected void initialize(JavaParameters javaParameters) throws ExecutionException {
+    super.initialize(javaParameters);
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
-    configureModule(myJavaParameters, module, data.getMainClassName());
-    myJavaParameters.getProgramParametersList().add(data.getMainClassName());
+    configureModule(javaParameters, module, data.getMainClassName());
+    javaParameters.getProgramParametersList().add(data.getMainClassName());
   }
 
   @Override

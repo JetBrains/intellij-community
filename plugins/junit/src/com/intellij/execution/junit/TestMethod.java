@@ -36,20 +36,20 @@ class TestMethod extends TestObject {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    defaultInitialize();
+  protected void initialize(JavaParameters javaParameters) throws ExecutionException {
+    defaultInitialize(javaParameters);
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
-    configureModule(getJavaParameters(), module, data.getMainClassName());
-    addJUnit3Parameter(data, module.getProject());
-    getJavaParameters().getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
+    configureModule(javaParameters, module, data.getMainClassName());
+    addJUnit3Parameter(javaParameters, data, module.getProject());
+    javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
   }
 
-  protected void defaultInitialize() throws ExecutionException {
-    super.initialize();
+  protected void defaultInitialize(JavaParameters javaParameters) throws ExecutionException {
+    super.initialize(javaParameters);
   }
 
-  protected void addJUnit3Parameter(final JUnitConfiguration.Data data, Project project) {
+  protected void addJUnit3Parameter(JavaParameters javaParameters, final JUnitConfiguration.Data data, Project project) throws ExecutionException {
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
     LOG.assertTrue(psiClass != null);
     if (JUnitUtil.isJUnit4TestClass(psiClass)) {
@@ -62,7 +62,7 @@ class TestMethod extends TestObject {
         return;
       }
     }
-    myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
+    javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
   }
 
   @Override

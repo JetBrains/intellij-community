@@ -17,6 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
@@ -33,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Collection;
 
 public class TestPackage extends TestObject {
   protected ServerSocket myServerSocket;
@@ -111,9 +110,9 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, getPackageName(data), false);
+          }, getPackageName(data), false, getJavaParameters());
         }
-        catch (CantRunException ignored) {}
+        catch (ExecutionException ignored) {}
       }
     };
   }
@@ -123,14 +122,14 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    super.initialize();
+  protected void initialize(JavaParameters javaParameters) throws ExecutionException {
+    super.initialize(javaParameters);
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     getClassFilter(data);//check if junit found
-    configureClasspath();
+    configureClasspath(javaParameters);
 
     try {
-      createTempFiles();
+      createTempFiles(javaParameters);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -138,20 +137,20 @@ public class TestPackage extends TestObject {
 
     try {
       myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      myJavaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
+      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
     }
     catch (IOException e) {
       LOG.error(e);
     }
   }
 
-  protected void configureClasspath() throws ExecutionException {
+  protected void configureClasspath(final JavaParameters javaParameters) throws ExecutionException {
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
         try {
-          myConfiguration.configureClasspath(myJavaParameters);
+          myConfiguration.configureClasspath(javaParameters);
         }
         catch (CantRunException e) {
           exception[0] = e;

@@ -17,6 +17,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -48,7 +49,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   }
 
 
-  protected abstract void search() throws CantRunException;
+  protected abstract void search() throws ExecutionException;
   protected abstract void onFound();
 
   public void ensureFinished() {
@@ -77,14 +78,14 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       mySocket = myServerSocket.accept();
-      final CantRunException[] ex = new CantRunException[1];
+      final ExecutionException[] ex = new ExecutionException[1];
       DumbService.getInstance(getProject()).repeatUntilPassesInSmartMode(new Runnable() {
         @Override
         public void run() {
           try {
             search();
           }
-          catch (CantRunException e) {
+          catch (ExecutionException e) {
             ex[0] = e;
           }
         }
@@ -104,7 +105,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     }
   }
 
-  protected void logCantRunException(CantRunException e) throws CantRunException {
+  protected void logCantRunException(ExecutionException e) throws ExecutionException {
     throw e;
   }
 

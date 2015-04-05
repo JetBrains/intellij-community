@@ -51,7 +51,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    @SuppressWarnings("deprecation") Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Project project = getEnvironment().getProject();
     return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), project, true);
   }
 

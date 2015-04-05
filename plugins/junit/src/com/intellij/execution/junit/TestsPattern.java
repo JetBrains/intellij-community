@@ -21,6 +21,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -72,7 +73,7 @@ public class TestsPattern extends TestPackage {
     if (classNames.size() == data.getPatterns().size()) {
       return new SearchForTestsTask(project, myServerSocket) {
         @Override
-        protected void search() throws CantRunException {
+        protected void search() throws ExecutionException {
           final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME)
                                                         ? FunctionUtil.<String>id()
                                                         : new Function<String, String>() {
@@ -81,7 +82,7 @@ public class TestsPattern extends TestPackage {
                                                             return className;
                                                           }
                                                         };
-          addClassesListToJavaParameters(classNames, nameFunction, "", false);
+          addClassesListToJavaParameters(classNames, nameFunction, "", false, getJavaParameters());
         }
 
         @Override
@@ -99,17 +100,17 @@ public class TestsPattern extends TestPackage {
                                            : className).trim(), GlobalSearchScope.allScope(project));
   }
 
-  protected void configureClasspath() throws CantRunException {
+  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
 
     final Module module = myConfiguration.getConfigurationModule().getModule();
 
     if (module != null) {
-      JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+      JavaParametersUtil.configureModule(module, javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
     else {
       JavaParametersUtil
-        .configureProject(myConfiguration.getProject(), myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+        .configureProject(myConfiguration.getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
   }
 
