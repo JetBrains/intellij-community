@@ -18,9 +18,9 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
@@ -73,7 +73,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
           manager.updateRepository(root);
           root.refresh(false, true);
-          notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
+          notifyAboutResult(taskResult, resultListener, exceptions, project);
         }
         finally {
           DvcsUtil.workingTreeChangeFinished(project, token);
@@ -82,7 +82,10 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     });
   }
 
-  private static void notifyAboutErrorResult(GitTaskResult taskResult, GitRebaseLineListener resultListener, List<VcsException> exceptions, Project project) {
+  private static void notifyAboutResult(GitTaskResult taskResult,
+                                        GitRebaseLineListener resultListener,
+                                        List<VcsException> exceptions,
+                                        Project project) {
     if (taskResult == GitTaskResult.CANCELLED) {
       return;
     }
@@ -124,10 +127,10 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     }
 
     if (isError) {
-      Messages.showErrorDialog(project, message, title);
+      VcsNotifier.getInstance(project).notifyError(title, message);
     }
     else {
-      Messages.showInfoMessage(project, message, title);
+      VcsNotifier.getInstance(project).notifySuccess(title, message);
     }
   }
 
