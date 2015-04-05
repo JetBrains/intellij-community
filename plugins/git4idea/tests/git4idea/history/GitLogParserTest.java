@@ -147,6 +147,36 @@ public class GitLogParserTest extends GitPlatformTest {
     doTestOneRecord(STATUS);
   }
 
+  public void test_char_0001_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Commit \u0001subject", "Commit subject");
+  }
+
+  public void test_char_0003_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Commit \u0003subject", "Commit \u0003subject");
+  }
+
+  // this is not fixed, keeping the test for the record and possible future fixx
+  @SuppressWarnings("unused")
+  public void _test_both_chars_0001_and_0003_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage", "Subject of the \u0003# weird message");
+  }
+
+  public void test_char_0001_twice_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message", "Subject of the # weird message");
+  }
+
+  private void doTestCustomCommitMessage(@NotNull String subject, @NotNull String expectedSubject) {
+    Map<GitTestLogRecordInfo, Object> data = ContainerUtil.newHashMap(myRecord.myData);
+    data.put(GitTestLogRecordInfo.SUBJECT, subject);
+    myRecord = new GitTestLogRecord(data);
+
+    myParser = new GitLogParser(myProject, STATUS, GIT_LOG_OPTIONS);
+    String s = myRecord.prepareOutputLine(NONE);
+    List<GitLogRecord> records = myParser.parse(s);
+    assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size());
+    assertEquals(records.get(0).getSubject(), expectedSubject);
+  }
+
   private void doTestOneRecord(NameStatus option) throws VcsException {
     String s = myRecord.prepareOutputLine(option);
     GitLogRecord record = myParser.parseOneRecord(s);
