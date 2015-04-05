@@ -39,4 +39,8 @@ public class ValueTest extends LombokParsingTestCase {
   public void testValueBuilder() throws IOException {
     doTest();
   }
+
+  public void testValueAndBuilder93() throws IOException {
+    doTest();
+  }
 }
