@@ -1,12 +1,12 @@
 <project name="Lombok IntelliJIdea Plugin" default="init" basedir=".">
-  <property name="ideaVersion" value="139.1408.1"/>
-  <property name="ideaBuildVersion" value="139.1408.1"/>
+  <property name="ideaVersion" value="14.1.1"/>
+  <property name="ideaBuildVersion" value="14.1.1"/>
 
   <target name="init">
     <tstamp/>
     <mkdir dir="${basedir}/Tools"/>
 
-    <get src="http://download-cf.jetbrains.com/idea/ideaIC-${ideaVersion}.tar.gz"
+    <get src="http://download.jetbrains.com/idea/ideaIC-${ideaVersion}.tar.gz"
          dest="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz"
          verbose="false" skipexisting="true" usetimestamp="true"/>
     <checksum file="${basedir}/Tools/ideaIC-${ideaVersion}.tar.gz" property="downloadChecksum" algorithm="SHA-256"/>
