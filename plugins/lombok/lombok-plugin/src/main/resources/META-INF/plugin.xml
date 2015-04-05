@@ -208,6 +208,8 @@
 				    <li>Fixed #82: Abstract Class + @Delegate</li>
 				    <li>Fixed #83: Getting inconvertible types error assigning new builder instance</li>
 				    <li>Fixed #84: Properly find usages of @Getters & @Setters on fields with @Acccessor prefixes</li>
+				    <li>Fixed #90: Renaming a field with different case doesn't rename getter</li>
+				    <li>Fixed #92: Improved @Wither support</li>
 				    <li>Fixed #93: IntelliJ unable to resolve constructor when using @Builder and @Value together</li>
 				</ol>
 			</li>
