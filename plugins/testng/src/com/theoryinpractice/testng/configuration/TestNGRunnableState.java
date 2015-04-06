@@ -86,7 +86,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   private int port;
   private String debugPort;
   private File myTempFile;
-  private ServerSocket myServerSocket;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
@@ -338,9 +337,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
 
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
     }*/
+    createServerSocket(javaParameters);
     try {
-      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
       myTempFile = FileUtil.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());

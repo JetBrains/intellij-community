@@ -43,7 +43,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 
 public class TestPackage extends TestObject {
-  protected ServerSocket myServerSocket;
   private boolean myFoundTests = true;
 
   public TestPackage(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -135,13 +134,7 @@ public class TestPackage extends TestObject {
       LOG.error(e);
     }
 
-    try {
-      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    createServerSocket(javaParameters);
   }
 
   protected void configureClasspath(final JavaParameters javaParameters) throws ExecutionException {

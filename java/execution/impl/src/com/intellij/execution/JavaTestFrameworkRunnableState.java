@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.OSProcessHandler;
@@ -28,13 +29,21 @@ import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+
 public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineState {
+  private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
+  protected ServerSocket myServerSocket;
+
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
   }
@@ -74,5 +83,15 @@ public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineStat
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(configuration, handler, runnerSettings);
     return result;
+  }
+
+  protected void createServerSocket(JavaParameters javaParameters) {
+    try {
+      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 }
