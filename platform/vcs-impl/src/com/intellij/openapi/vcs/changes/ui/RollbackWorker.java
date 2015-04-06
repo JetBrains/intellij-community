@@ -197,18 +197,8 @@ public class RollbackWorker {
               manager.fileDirty(beforeRevision.getFile());
             }
             else {
-              if (beforeRevision != null) {
-                final FilePath parent = beforeRevision.getFile().getParentPath();
-                if (parent != null) {
-                  manager.dirDirtyRecursively(parent);
-                }
-              }
-              if (afterRevision != null) {
-                final FilePath parent = afterRevision.getFile().getParentPath();
-                if (parent != null) {
-                  manager.dirDirtyRecursively(parent);
-                }
-              }
+              markDirty(manager, beforeRevision);
+              markDirty(manager, afterRevision);
             }
           }
 
@@ -219,6 +209,15 @@ public class RollbackWorker {
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
+    }
+
+    private void markDirty(@NotNull VcsDirtyScopeManager manager, @Nullable ContentRevision revision) {
+      if (revision != null) {
+        FilePath parent = revision.getFile().getParentPath();
+        if (parent != null) {
+          manager.dirDirtyRecursively(parent);
+        }
+      }
     }
 
     private void deleteAddedFilesLocally(final List<Change> changes) {
