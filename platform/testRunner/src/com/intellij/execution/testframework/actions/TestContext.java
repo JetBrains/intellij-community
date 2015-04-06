@@ -14,30 +14,31 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2.ui.actions;
+package com.intellij.execution.testframework.actions;
 
-import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestTreeViewStructure;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 
 public class TestContext {
   public static final DataKey<TestContext> DATA_KEY = DataKey.create("JUNIT_CONTEXT");
-  @Deprecated public static final String TEST_CONTEXT = DATA_KEY.getName();
 
-  private final JUnitRunningModel myModel;
-  private final TestProxy mySelection;
+  private final TestFrameworkRunningModel myModel;
+  private final AbstractTestProxy mySelection;
 
-  public TestContext(final JUnitRunningModel model, final TestProxy selection) {
+  public TestContext(final TestFrameworkRunningModel model, final AbstractTestProxy selection) {
     myModel = model;
     mySelection = selection;
   }
 
-  public JUnitRunningModel getModel() {
+  public TestFrameworkRunningModel getModel() {
     return myModel;
   }
 
-  public TestProxy getSelection() {
+  public AbstractTestProxy getSelection() {
     return mySelection;
   }
 
@@ -46,7 +47,8 @@ public class TestContext {
   }
 
   public boolean treeContainsSelection() {
-    return getModel().hasInTree(getSelection());
+    final AbstractTreeStructure structure = getModel().getTreeBuilder().getTreeStructure();
+    return structure instanceof TestTreeViewStructure && ((TestTreeViewStructure)structure).getFilter().shouldAccept(getSelection());
   }
 
   public static TestContext from(final AnActionEvent event) {

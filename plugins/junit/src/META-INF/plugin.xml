@@ -64,11 +64,6 @@
 
   <actions>
     <group>
-      <separator/>
-      <action id="JUnitTesting.SelectInTree" class="com.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
-      <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
-    </group>
-    <group>
       <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" text="Exclude from suite" id="excludeFromSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>

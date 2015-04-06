@@ -176,10 +176,6 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     return TreeUtil.getPath((TreeNode) myTreeView.getModel().getRoot(), node);
   }
 
-  public boolean hasInTree(final AbstractTestProxy test) {
-    return getStructure().getFilter().shouldAccept(test);
-  }
-
   public JUnitConfiguration getConfiguration() {
     return myProperties.getConfiguration();
   }
