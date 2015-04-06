@@ -59,6 +59,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
   }
 
   @NotNull
+  @SuppressWarnings("deprecation")
   public Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> result = new ArrayList<PsiField>();
     final boolean classAnnotatedWithValue = PsiAnnotationUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class);

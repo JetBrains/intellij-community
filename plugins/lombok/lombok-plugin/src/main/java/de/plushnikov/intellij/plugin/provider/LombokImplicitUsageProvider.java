@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * Provides implicit usages of lombok fields
  */
+@SuppressWarnings("deprecation")
 public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static final List<Class<? extends Annotation>> ANNOTATIONS = Arrays.asList(

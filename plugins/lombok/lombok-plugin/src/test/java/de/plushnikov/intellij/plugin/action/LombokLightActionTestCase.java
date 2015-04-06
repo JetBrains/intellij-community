@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.AsyncResult;
 import de.plushnikov.lombok.LombokLightCodeInsightTestCase;
 
 public abstract class LombokLightActionTestCase extends LombokLightCodeInsightTestCase {
@@ -18,8 +19,8 @@ public abstract class LombokLightActionTestCase extends LombokLightCodeInsightTe
   protected void performActionTest() {
     AnAction anAction = getAction();
 
-    DataContext context = DataManager.getInstance().getDataContext();
-    AnActionEvent anActionEvent = new AnActionEvent(null, context, "", anAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    AsyncResult<DataContext> contextResult = DataManager.getInstance().getDataContextFromFocus();
+    AnActionEvent anActionEvent = new AnActionEvent(null, contextResult.getResult(), "", anAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
 
     anAction.actionPerformed(anActionEvent);
     FileDocumentManager.getInstance().saveAllDocuments();

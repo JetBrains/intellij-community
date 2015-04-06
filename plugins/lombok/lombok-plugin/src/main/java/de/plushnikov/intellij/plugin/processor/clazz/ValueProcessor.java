@@ -65,6 +65,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     return result;
   }
 
+  @SuppressWarnings("deprecation")
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     //TODO add support for final Modifier on class
     /*//@Value class are final
