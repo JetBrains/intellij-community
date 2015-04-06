@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -325,12 +326,14 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitForStatement(GrForStatement statement) {
     startElement(statement);
     final GrForClause clause = statement.getClause();
+    final GrVariable parameter = clause == null ? null : clause.getDeclaredVariable();
     if (clause instanceof GrTraditionalForClause) {
       final GrTraditionalForClause traditionalForClause = (GrTraditionalForClause)clause;
 
       final GrCondition initialization = traditionalForClause.getInitialization();
       if (initialization != null) {
         initialization.accept(this);
+        pop();
       }
 
       final GrExpression condition = traditionalForClause.getCondition();
@@ -352,39 +355,36 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         pop();
       }
       addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(condition)));
-
-      final GrVariable variable = traditionalForClause.getDeclaredVariable();
-      if (variable != null) {
-        addInstruction(new FlushVariableInstruction<V>(myFactory.getVarFactory().createVariableValue(variable, false)));
-      }
     }
-    //final Set<GrVariable> declaredVars = ContainerUtil.newTroveSet();
-    //if (clause instanceof GrForInClause) {
-    //  final GrForInClause forInClause = (GrForInClause)clause;
-    //  final GrVariable parameter = forInClause.getDeclaredVariable();
-    //  if (parameter != null) {
-    //    declaredVars.add(parameter);
-    //  }
-    //
-    //  final GrExpression iteratedExpression = forInClause.getIteratedExpression();
-    //  if (iteratedExpression != null) {
-    //    iteratedExpression.accept(this);
-    //    addInstruction(new GrMemberReferenceInstruction(iteratedExpression, safe));
-    //  }
-    //
-    //  final ControlFlowOffset forStart = myFlow.getNextOffset();
-    //  final DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter, false);
-    //  addInstruction(new FlushVariableInstruction(dfaVariable));
-    //
-    //  pushUnknown();
-    //  addInstruction(new ConditionalGotoInstruction(myFlow.getEndOffset(statement), true, null));
-    //  GrStatement forBody = statement.getBody();
-    //  if (forBody != null) {
-    //    forBody.accept(this);
-    //  }
-    //  addInstruction(new GotoInstruction(forStart));
-    //}
+    else if (clause instanceof GrForInClause) {
+      final GrForInClause forInClause = (GrForInClause)clause;
+
+      final GrExpression iteratedValue = forInClause.getIteratedExpression();
+      if (iteratedValue != null) {
+        iteratedValue.accept(this);
+        addInstruction(new GrMemberReferenceInstruction<V>(
+          iteratedValue,
+          myFactory.createValue(iteratedValue),
+          false
+        ));
+      }
+
+      final ControlFlowImpl.ControlFlowOffset loopStartOffset = myFlow.getNextOffset();
+      removeVariable(parameter);
+
+      pushUnknown();
+      addInstruction(new ConditionalGotoInstruction(myFlow.getEndOffset(statement), true, null));
+
+      final GrStatement body = statement.getBody();
+      if (body != null) {
+        body.accept(this);
+      }
+
+      addInstruction(new GotoInstruction(loopStartOffset));
+    }
+    
     finishElement(statement);
+    removeVariable(parameter);
   }
 
   @Override
