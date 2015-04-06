@@ -118,7 +118,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
   private int myMinMarkHeight;// height for horizontal, width for vertical stripes
-  private static final int myPreviewLines = Math.max(0, Math.min(25, Integer.getInteger("preview.lines", 5)));// Actually preview has myPreviewLines * 2 + 1 lines (above + below + current one)
+  private static final int myPreviewLines = Math.max(2, Math.min(25, Integer.getInteger("preview.lines", 5)));// Actually preview has myPreviewLines * 2 + 1 lines (above + below + current one)
   private static final int myCachePreviewLines = 100;// Actually cache image has myCachePreviewLines * 2 + 1 lines (above + below + current one)
   @Nullable private LightweightHint myEditorPreviewHint = null;
   @NotNull private final EditorFragmentRenderer myEditorFragmentRenderer;
