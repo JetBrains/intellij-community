@@ -28,6 +28,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -80,7 +81,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private long start;
   private long end;
   private TestTreeBuilder treeBuilder;
-  private Animator animator;
 
   private final TreeRootNode rootNode;
   private static final String NO_PACKAGE = "No Package";
@@ -88,6 +88,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private int myStatus = MessageHelper.PASSED_TEST;
   private Set<String> startedMethods = new HashSet<String>();
   private TestProxy myLastSelected;
+  private TestsProgressAnimator animator;
 
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
@@ -135,7 +136,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     treeBuilder = new TestTreeBuilder(tree, structure);
     Disposer.register(this, treeBuilder);
 
-    animator = new Animator(this, treeBuilder);
+    animator = new TestsProgressAnimator(treeBuilder);
 
     openSourceListener = new OpenSourceSelectionListener();
     tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
