@@ -21,11 +21,10 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.model.StateEvent;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestsUIUtil;
-import com.intellij.execution.testframework.ToolbarPanel;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -63,7 +62,14 @@ public class JUnitToolbarPanel extends ToolbarPanel {
   public void setModel(final TestFrameworkRunningModel model) {
     super.setModel(model);
     final JUnitRunningModel jUnitModel = (JUnitRunningModel)model;
-    JUnitActions.installAutoscrollToFirstDefect(jUnitModel);
+    jUnitModel.addListener(new JUnitAdapter() {
+      public void onRunnerStateChanged(final StateEvent event) {
+        if (event.isRunning() || !JUnitConsoleProperties.SELECT_FIRST_DEFECT.value(jUnitModel.getProperties()))
+          return;
+        final AbstractTestProxy firstDefect = Filter.DEFECTIVE_LEAF.detectIn(jUnitModel.getRoot().getAllTests());
+        if (firstDefect != null) jUnitModel.selectAndNotify(firstDefect);
+      }
+    });
     RunningTestTracker.install(jUnitModel);
     jUnitModel.addListener(new LvcsLabeler(jUnitModel));
     jUnitModel.addListener(new JUnitAdapter() {
