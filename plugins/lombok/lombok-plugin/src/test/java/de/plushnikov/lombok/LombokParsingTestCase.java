@@ -72,10 +72,10 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
   }
 
   private void compareClasses(PsiClass[] beforeClasses, PsiClass[] afterClasses) {
-    LOG.info("Before classes: " + Arrays.toString(beforeClasses));
-    LOG.info("After classes: " + Arrays.toString(afterClasses));
+    String before = "Before classes: " + Arrays.toString(beforeClasses);
+    String after = "After classes: " + Arrays.toString(afterClasses);
 
-    assertEquals("Class counts are different", afterClasses.length, beforeClasses.length);
+    assertEquals("Class counts are different " + before + " <> " + after, afterClasses.length, beforeClasses.length);
 
     for (PsiClass afterClass : afterClasses) {
       boolean compared = false;

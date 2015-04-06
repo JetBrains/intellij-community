@@ -4,10 +4,10 @@ import lombok.val;
 
 public class ValInspection {
 
-    private val field;
+//    private val field;
 
-    public void test(val x) {
-    }
+//    public void test(val x) {
+//    }
 
     public void test() {
         val a = 1;
@@ -18,8 +18,8 @@ public class ValInspection {
 
         val c = new int[]{1};
 
-        for (val i = 0; i < 10; i++) {
-            val j = 2;
-        }
+//        for (val i = 0; i < 10; i++) {
+//            val j = 2;
+//        }
     }
 }
