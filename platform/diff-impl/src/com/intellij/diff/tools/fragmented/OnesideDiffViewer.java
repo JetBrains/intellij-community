@@ -20,7 +20,6 @@ import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
@@ -34,13 +33,10 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
-import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
@@ -219,7 +215,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false);
       }
 
       if (myActualContent2 == null) {
@@ -245,7 +241,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.singletonList(new IntPair(0, data.getLines())), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false);
       }
 
       final DocumentContent content1 = myActualContent1;
@@ -290,7 +286,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
       LineNumberConvertor convertor = builder.getConvertor();
-      List<IntPair> changedLines = builder.getChangedLines();
+      List<LineRange> changedLines = builder.getChangedLines();
       boolean isEqual = builder.isEqual();
 
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
@@ -355,7 +351,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   private Runnable apply(@NotNull final CombinedEditorData data,
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
-                         @NotNull final List<IntPair> changedLines,
+                         @NotNull final List<LineRange> changedLines,
                          final boolean isEqual) {
     return new Runnable() {
       @Override
@@ -1078,15 +1074,15 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       super(new EditorEx[]{editor}, disposable);
     }
 
-    public void install(@Nullable List<IntPair> changedLines,
+    public void install(@Nullable List<LineRange> changedLines,
                         @NotNull UserDataHolder context,
                         @NotNull FoldingModelSupport.Settings settings) {
-      Iterator<int[]> it = map(changedLines, new Function<IntPair, int[]>() {
+      Iterator<int[]> it = map(changedLines, new Function<LineRange, int[]>() {
         @Override
-        public int[] fun(IntPair line) {
+        public int[] fun(LineRange line) {
           return new int[]{
-            line.val1,
-            line.val2};
+            line.start,
+            line.end};
         }
       });
       install(it, context, settings);

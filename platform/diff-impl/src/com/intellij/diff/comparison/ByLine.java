@@ -16,11 +16,11 @@
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.ChangeBuilder;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.IntPair;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.Range;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
+import com.intellij.diff.util.IntPair;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;

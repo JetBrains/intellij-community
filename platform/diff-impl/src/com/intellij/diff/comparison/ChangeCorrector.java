@@ -19,8 +19,8 @@ import com.intellij.diff.comparison.ByChar.Char;
 import com.intellij.diff.comparison.ByLine.Line;
 import com.intellij.diff.comparison.ByLine.LineWrapper;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.Range;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
