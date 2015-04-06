@@ -509,6 +509,28 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   @Override
+  public void visitWhileStatement(GrWhileStatement whileStatement) {
+    startElement(whileStatement);
+
+    final GrExpression condition = whileStatement.getCondition();
+    if (condition == null) {
+      pushUnknown();
+    }
+    else {
+      condition.accept(this);
+    }
+    addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(whileStatement), true, condition));
+
+    final GrStatement body = whileStatement.getBody();
+    if (body != null) {
+      body.accept(this);
+    }
+    addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(whileStatement)));
+    
+    finishElement(whileStatement);
+  }
+
+  @Override
   public void visitParameter(GrParameter parameter) {
     startElement(parameter);
     final GrExpression initializer = parameter.getInitializerGroovy();
