@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
   @Nullable private RootProvider myCurrentlySubscribedRootProvider = null;
 
-  LibraryOrderEntryBaseImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl instanceImpl) {
+  LibraryOrderEntryBaseImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel);
-    myProjectRootManagerImpl = instanceImpl;
+    myProjectRootManagerImpl = projectRootManager;
   }
 
   protected final void init() {

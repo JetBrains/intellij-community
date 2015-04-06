@@ -228,10 +228,10 @@ public class ClasspathStorage extends StateStorageBase<ClasspathStorage.MyStorag
     }
   }
 
-  public static void modulePathChanged(Module module, String path) {
+  public static void modulePathChanged(Module module, String newPath) {
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     if (provider != null) {
-      provider.modulePathChanged(module, path);
+      provider.modulePathChanged(module, newPath);
     }
   }
 }

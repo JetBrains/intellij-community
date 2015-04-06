@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -30,19 +31,20 @@ public class ExpandMacroToPathMap extends PathMacroMap {
   private final Map<String, String> myPlainMap = ContainerUtilRt.newLinkedHashMap();
   private final Map<String, String> myMacroExpands = ContainerUtil.newHashMap();
 
-  public void addMacroExpand(String macroName, String path) {
+  public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
     myMacroExpands.put(macroName, PathMacroMap.quotePath(path));
   }
 
-  public void put(String fromText, String toText) {
+  public void put(@NotNull String fromText, @NotNull String toText) {
     myPlainMap.put(fromText, toText);
   }
 
-  public void putAll(ExpandMacroToPathMap another) {
+  public void putAll(@NotNull ExpandMacroToPathMap another) {
     myPlainMap.putAll(another.myPlainMap);
     myMacroExpands.putAll(another.myMacroExpands);
   }
 
+  @Override
   public String substitute(String text, boolean caseSensitive) {
     if (text == null) {
       //noinspection ConstantConditions
@@ -66,7 +68,8 @@ public class ExpandMacroToPathMap extends PathMacroMap {
     return text;
   }
 
-  private static String replaceMacro(String text, String macroName, String replacement) {
+  @NotNull
+  private static String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
     while (true) {
       int start = findMacroIndex(text, macroName);
       if (start < 0) {
@@ -81,11 +84,11 @@ public class ExpandMacroToPathMap extends PathMacroMap {
     return text;
   }
 
-  private static int getSlashCount(String text, int pos) {
+  private static int getSlashCount(@NotNull String text, int pos) {
     return StringUtil.isChar(text, pos, '/') ? StringUtil.isChar(text, pos + 1, '/') ? 2 : 1 : 0;
   }
 
-  private static int findMacroIndex(String text, String macroName) {
+  private static int findMacroIndex(@NotNull String text, @NotNull String macroName) {
     int i = -1;
     while (true) {
       i = text.indexOf('$', i + 1);

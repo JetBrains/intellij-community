@@ -49,13 +49,14 @@ public interface LibraryTable {
 
   boolean isEditable();
 
+  @NotNull
   ModifiableModel getModifiableModel();
 
-  void addListener(Listener listener);
+  void addListener(@NotNull Listener listener);
   
-  void addListener(Listener listener, Disposable parentDisposable);
+  void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable);
 
-  void removeListener(Listener listener);
+  void removeListener(@NotNull Listener listener);
 
   interface ModifiableModel {
     Library createLibrary(String name);
