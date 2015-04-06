@@ -190,12 +190,14 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return RunManager.getInstance(context.getProject()).createRunConfiguration("", myConfigurationFactory);
   }
 
-  public static RunConfigurationProducer getInstance(Class<? extends RunConfigurationProducer> aClass) {
+  @NotNull
+  public static <T extends RunConfigurationProducer> T getInstance(Class<? extends T> aClass) {
     for (RunConfigurationProducer producer : Extensions.getExtensions(EP_NAME)) {
       if (aClass.isInstance(producer)) {
-        return producer;
+        return (T)producer;
       }
     }
+    assert false : aClass;
     return null;
   }
 }

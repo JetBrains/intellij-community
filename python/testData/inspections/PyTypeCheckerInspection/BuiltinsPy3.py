@@ -13,4 +13,4 @@ def test_numerics():
     divmod(False, False)
     divmod(<warning descr="Expected type 'Number', got 'bytes' instead">b'foo'</warning>, <warning descr="Expected type 'Number', got 'str' instead">'bar'</warning>)
     pow(False, True)
-    round(False, <warning descr="Expected type 'Integral | None', got 'str' instead">'foo'</warning>)
+    round(False, <warning descr="Expected type 'Optional[Integral]', got 'str' instead">'foo'</warning>)

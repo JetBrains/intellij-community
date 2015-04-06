@@ -113,7 +113,7 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public enum FillType {
-    BG_CENTER, TILE, STRETCH,
+    BG_CENTER, TILE, SCALE,
     CENTER, TOP_CENTER, BOTTOM_CENTER,
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
   }
@@ -141,7 +141,7 @@ final class PaintersHelper implements Painter.Listener {
               fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
             }
             catch (IllegalArgumentException e) {
-              fillType = FillType.STRETCH;
+              fillType = FillType.SCALE;
             }
             String url = parts[0].contains("://")? parts[0] :
                          VfsUtilCore.pathToUrl(parts[0].contains("/") ? parts[0] : PathManager.getConfigPath() + "/" + parts[0]);
@@ -184,21 +184,28 @@ final class PaintersHelper implements Painter.Listener {
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
 
-      if (fillType == FillType.STRETCH) {
-        if (scaled == null || scaled.getWidth(null) != cw || scaled.getHeight(null) != ch) {
-          scaled = image.getScaledInstance(cw, ch, Image.SCALE_SMOOTH);
+      if (fillType == FillType.SCALE) {
+        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
+        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
+        boolean useWidth = cw * h > ch * w;
+        int sw = useWidth ? cw : w * ch / h;
+        int sh = useWidth ? h * cw / w : ch;
+        if (sw0 != sw || sh0 != sh) {
+          scaled = image.getScaledInstance(sw, sh, Image.SCALE_SMOOTH);
         }
+        w = sw;
+        h = sh;
       }
 
       GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
       g.setColor(g.getBackground());
-      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER ||
-        fillType == FillType.TOP_CENTER || fillType == FillType.BOTTOM_CENTER) {
+      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER || fillType == FillType.SCALE ||
+          fillType == FillType.TOP_CENTER || fillType == FillType.BOTTOM_CENTER) {
         int x = i.left + (cw - w) / 2;
         int y = fillType == FillType.TOP_CENTER? i.top :
                 fillType == FillType.BOTTOM_CENTER? ch0 - i.bottom - h :
                 i.top + (ch - h) / 2;
-        UIUtil.drawImage(g, image, x, y, null);
+        UIUtil.drawImage(g, fillType == FillType.SCALE ? scaled : image, x, y, null);
         if (fillType == FillType.BG_CENTER) {
           g.setColor(component.getBackground());
           g.fillRect(0, 0, x, ch0);
@@ -224,9 +231,6 @@ final class PaintersHelper implements Painter.Listener {
           y = 0;
           x += w;
         }
-      }
-      else if (fillType == FillType.STRETCH) {
-        UIUtil.drawImage(g, scaled, i.left, i.top, null);
       }
       cfg.restore();
     }

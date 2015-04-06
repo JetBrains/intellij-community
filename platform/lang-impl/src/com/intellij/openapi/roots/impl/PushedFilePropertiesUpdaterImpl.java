@@ -288,14 +288,16 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       tasks.add(iteration);
     }
 
-    if (ourConcurrentlyFlag.get() == Boolean.TRUE && Registry.is("idea.concurrent.scanning.files.to.index")) {
-      invoke2xConcurrently(tasks);
-    } else {
-      for(Runnable r:tasks) r.run();
-    }
+    invoke2xConcurrentlyIfPossible(tasks);
   }
 
-  public static void invoke2xConcurrently(final List<Runnable> tasks) {
+  public static void invoke2xConcurrentlyIfPossible(final List<Runnable> tasks) {
+    if (tasks.size() == 1 ||
+        ApplicationManager.getApplication().isWriteAccessAllowed() ||
+        !Registry.is("idea.concurrent.scanning.files.to.index")) {
+      for(Runnable r:tasks) r.run();
+      return;
+    }
     final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
     Future<?> result = null;
     if (tasks.size() > 1) {
@@ -326,8 +328,6 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     //  }
     //});
   }
-
-  public static final ThreadLocal<Boolean> ourConcurrentlyFlag = new ThreadLocal<Boolean>();
 
   private void applyPushersToFile(final VirtualFile fileOrDir, final FilePropertyPusher[] pushers, final Object[] moduleValues) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {

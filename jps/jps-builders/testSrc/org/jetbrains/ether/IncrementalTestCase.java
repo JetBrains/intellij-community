@@ -214,20 +214,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
   }
 
-  protected static boolean isRunningOnAtLeastJava(int javaVersion) {
-    final String versionString = System.getProperty("java.version");
-    final String prefix = "1.";
-    final int startIndex = versionString.startsWith(prefix) ? prefix.length() : 0;
-    final int dotIndex = versionString.indexOf('.', startIndex);
-    try {
-      int version = Integer.parseInt(versionString.substring(startIndex, dotIndex > startIndex? dotIndex : versionString.length()));
-      return version >= javaVersion;
-    }
-    catch (NumberFormatException ignored) {
-    }
-    return false;
-  }
-
   private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
     private StringBuilder myLog;

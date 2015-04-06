@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedViewSwingImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -119,5 +120,11 @@ class PyExtractSuperclassViewSwingImpl
   @Override
   public String getSuperClassName() {
     return myExtractedSuperNameField.getText();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "refactoring.extract.superclass.dialog";
   }
 }

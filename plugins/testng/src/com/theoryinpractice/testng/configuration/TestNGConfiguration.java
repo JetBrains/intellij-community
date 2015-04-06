@@ -24,6 +24,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
@@ -275,7 +276,8 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
     data.setPatterns(patterns);
-    final Module module = TestNGPatternConfigurationProducer.findModule(this, getConfigurationModule().getModule(), patterns);
+    final Module module = RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class)
+      .findModule(this, getConfigurationModule().getModule(), patterns);
     if (module == null) {
       data.setScope(TestSearchScope.WHOLE_PROJECT);
       setModule(null);

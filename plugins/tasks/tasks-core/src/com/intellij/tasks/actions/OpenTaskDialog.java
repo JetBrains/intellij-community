@@ -148,7 +148,8 @@ public class OpenTaskDialog extends DialogWrapper {
               });
             }
             if (info == null) {
-              info = tasks[0];
+              VcsTaskHandler.TaskInfo[] current = handler.getCurrentTasks();
+              info = current.length > 0 ? current[0] : tasks[0];
             }
             myBranchFrom.setSelectedItem(info);
             myBranchFrom.addActionListener(new ActionListener() {

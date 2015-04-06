@@ -163,13 +163,7 @@ public abstract class AbstractConfigUtils {
   public abstract boolean isSDKLibrary(Library library);
 
   public Library[] getSDKLibrariesByModule(final Module module) {
-    final Condition<Library> condition = new Condition<Library>() {
-      @Override
-      public boolean value(Library library) {
-        return isSDKLibrary(library);
-      }
-    };
-    return LibrariesUtil.getLibrariesByCondition(module, condition);
+    return LibrariesUtil.getLibrariesByCondition(module, LIB_SEARCH_CONDITION);
   }
 
 

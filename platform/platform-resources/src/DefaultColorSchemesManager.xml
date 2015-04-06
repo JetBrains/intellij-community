@@ -27,7 +27,7 @@
       <option name="ADDED_LINES_COLOR" value="c9dec1"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8"/>
       <option name="DELETED_LINES_COLOR" value="9f9f9f"/>
-      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="ffffff"/>
+      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>
 
@@ -1164,7 +1164,7 @@
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
-      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="2d4249"/>
+      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="4c4638"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

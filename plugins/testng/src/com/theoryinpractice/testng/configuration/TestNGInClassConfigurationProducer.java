@@ -24,6 +24,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
@@ -95,7 +96,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    if (TestNGPatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 

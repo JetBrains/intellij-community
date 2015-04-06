@@ -183,19 +183,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType returnType = typeProvider.getReturnType(this, context);
-      if (returnType != null) {
-        returnType.assertValid(typeProvider.toString());
-        return returnType;
-      }
-    }
-    if (context.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
-      final PyAnnotation annotation = getAnnotation();
-      if (annotation != null) {
-        final PyType type = context.getType(annotation);
-        if (type != null) {
-          return type;
+      final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
+      if (returnTypeRef != null) {
+        final PyType returnType = returnTypeRef.get();
+        if (returnType != null) {
+          returnType.assertValid(typeProvider.toString());
         }
+        return returnType;
       }
     }
     final PyType docStringType = getReturnTypeFromDocString();

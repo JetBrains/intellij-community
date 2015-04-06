@@ -138,13 +138,22 @@ public class ModuleChunk {
     if (encoding != null) {
       appendOption(options, "-encoding", encoding.name());
     }
-    appendOption(options, "-source", getLanguageLevelOption(ApplicationManager.getApplication().runReadAction(new Computable<LanguageLevel>() {
+    
+    final String languageLevel = getLanguageLevelOption(ApplicationManager.getApplication().runReadAction(new Computable<LanguageLevel>() {
       @Override
       public LanguageLevel compute() {
         return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(myMainModule);
       }
-    })));
-    appendOption(options, "-target", CompilerConfiguration.getInstance(getProject()).getBytecodeTargetLevel(myMainModule));
+    }));
+    appendOption(options, "-source", languageLevel);
+    
+    String bytecodeTarget = CompilerConfiguration.getInstance(getProject()).getBytecodeTargetLevel(myMainModule);
+    if (StringUtil.isEmpty(bytecodeTarget)) {
+      // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+      bytecodeTarget = languageLevel;
+    }
+    appendOption(options, "-target", bytecodeTarget);
+    
     return options.toString();
   }
 

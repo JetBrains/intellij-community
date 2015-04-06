@@ -15,6 +15,8 @@
  */
 package org.jetbrains.ether;
 
+import com.intellij.openapi.util.SystemInfo;
+
 /**
  * @author: db
  * Date: 05.10.11
@@ -33,7 +35,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
   }
 
   public void testChangeMethodRefReturnType() throws Exception {
-    if (isRunningOnAtLeastJava(8)) {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
     else {
@@ -42,7 +44,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
   }
 
   public void testChangeLambdaTargetReturnType() throws Exception {
-    if (isRunningOnAtLeastJava(8)) {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
     else {
@@ -51,7 +53,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
   }
 
   public void testChangeSAMMethodSignature() throws Exception {
-    if (isRunningOnAtLeastJava(8)) {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
     else {
@@ -60,7 +62,7 @@ public class MethodPropertyTest extends IncrementalTestCase {
   }
 
   public void testChangeLambdaSAMMethodSignature() throws Exception {
-    if (isRunningOnAtLeastJava(8)) {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
       doTest();
     }
     else {

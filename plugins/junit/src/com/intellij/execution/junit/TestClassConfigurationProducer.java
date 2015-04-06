@@ -20,6 +20,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
@@ -46,7 +47,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
       }
     }
 
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     PsiClass testClass = JUnitUtil.getTestClass(location);

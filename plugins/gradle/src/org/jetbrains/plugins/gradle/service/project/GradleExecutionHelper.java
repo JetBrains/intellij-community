@@ -457,7 +457,18 @@ public class GradleExecutionHelper {
   @Nullable
   public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection) {
     try {
-      return connection.getModel(BuildEnvironment.class);
+      final BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
+      if (LOG.isDebugEnabled()) {
+        try {
+          LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+          LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
+          LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
+        }
+        catch (Throwable t) {
+          LOG.debug(t);
+        }
+      }
+      return buildEnvironment;
     }
     catch (Exception e) {
       LOG.warn("can not get BuildEnvironment model", e);

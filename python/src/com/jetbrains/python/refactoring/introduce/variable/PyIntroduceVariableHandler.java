@@ -52,7 +52,7 @@ public class PyIntroduceVariableHandler extends IntroduceHandler {
 
   @Override
   protected String getHelpId() {
-    return "python.reference.introduceVariable";
+    return "refactoring.introduceVariable";
   }
 
   @Override

@@ -18,33 +18,43 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.PatternConfigurationDelegate;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.sun.media.sound.PCMtoPCMCodec;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class PatternConfigurationProducer extends JUnitConfigurationProducer {
-  private static PatternConfigurationDelegate ourDelegate = new PatternConfigurationDelegate() {
-    @Override
-    protected boolean isTestClass(PsiClass psiClass) {
-      return JUnitUtil.isTestClass(psiClass);
-    }
+public class PatternConfigurationProducer extends PatternConfigurationDelegate<JUnitConfiguration> {
+  protected PatternConfigurationProducer() {
+    super(JUnitConfigurationType.getInstance());
+  }
 
-    @Override
-    protected boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
-      return JUnitUtil.getTestMethod(psiElement, checkAbstract) != null;
-    }
-  }; 
+  @Override
+  protected boolean isTestClass(PsiClass psiClass) {
+    return JUnitUtil.isTestClass(psiClass);
+  }
+
+  @Override
+  protected boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
+    return JUnitUtil.getTestMethod(psiElement, checkAbstract) != null;
+  }
+
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return !other.isProducedBy(TestMethodConfigurationProducer.class);
+  }
 
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
-    final PsiElement element = ourDelegate.checkPatterns(context, classes);
+    final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
       return false;
     }
@@ -68,20 +78,8 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     final TestObject testobject = unitConfiguration.getTestObject();
     if (testobject instanceof TestsPattern) {
       final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
-      if (ourDelegate.isConfiguredFromContext(context, patterns)) return true;
+      if (isConfiguredFromContext(context, patterns)) return true;
     }
     return false;
-  }
-
-  public static Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
-    return ourDelegate.findModule(configuration, contextModule, patterns);
-  }
-
-  public static boolean isMultipleElementsSelected(ConfigurationContext context) {
-    return ourDelegate.isMultipleElementsSelected(context);
-  }
-
-  public static Set<PsiElement> collectTestMembers(PsiElement[] elements, boolean checkAbstract) {
-    return ourDelegate.collectTestMembers(elements, checkAbstract);
   }
 }

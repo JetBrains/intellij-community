@@ -44,6 +44,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -101,8 +103,9 @@ public class EditorOptionsPanel {
   private JTextField   myQuickDocDelayTextField;
   private JComboBox    myRichCopyColorSchemeComboBox;
   private JCheckBox    myShowInlineDialogForCheckBox;
-  private JBLabel myStripTrailingSpacesExplanationLabel;
-  private JCheckBox myCbEnableRichCopyByDefault;
+  private JBLabel      myStripTrailingSpacesExplanationLabel;
+  private JCheckBox    myCbEnableRichCopyByDefault;
+  private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
 
@@ -160,6 +163,7 @@ public class EditorOptionsPanel {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     UISettings uiSettings = UISettings.getInstance();
+    VcsApplicationSettings vcsSettings = VcsApplicationSettings.getInstance();
 
     // Display
 
@@ -227,6 +231,8 @@ public class EditorOptionsPanel {
     myShowNotificationAfterReformatCodeCheckBox.setSelected(editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION);
     myShowNotificationAfterOptimizeImportsCheckBox.setSelected(editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION);
 
+    myShowWhitespacesModificationsInLSTGutterCheckBox.setSelected(vcsSettings.SHOW_WHITESPACES_IN_LST);
+
     myErrorHighlightingPanel.reset();
 
     RichCopySettings settings = RichCopySettings.getInstance();
@@ -265,6 +271,7 @@ public class EditorOptionsPanel {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
+    VcsApplicationSettings vcsSettings = VcsApplicationSettings.getInstance();
 
     // Display
 
@@ -341,6 +348,14 @@ public class EditorOptionsPanel {
 
     editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = myShowNotificationAfterReformatCodeCheckBox.isSelected();
     editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = myShowNotificationAfterOptimizeImportsCheckBox.isSelected();
+
+    if (vcsSettings.SHOW_WHITESPACES_IN_LST != myShowWhitespacesModificationsInLSTGutterCheckBox.isSelected()) {
+      vcsSettings.SHOW_WHITESPACES_IN_LST = myShowWhitespacesModificationsInLSTGutterCheckBox.isSelected();
+      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      for (Project project : projects) {
+        LineStatusTrackerManager.getInstance(project).updateSettings();
+      }
+    }
 
     reinitAllEditors();
 
@@ -432,6 +447,7 @@ public class EditorOptionsPanel {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
+    VcsApplicationSettings vcsSettings = VcsApplicationSettings.getInstance();
 
     // Display
     boolean isModified = isModified(myCbSmoothScrolling, editorSettings.isSmoothScrolling());
@@ -484,6 +500,8 @@ public class EditorOptionsPanel {
 
     isModified |= isModified(myShowNotificationAfterReformatCodeCheckBox, editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION);
     isModified |= isModified(myShowNotificationAfterOptimizeImportsCheckBox, editorSettings.getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION);
+
+    isModified |= isModified(myShowWhitespacesModificationsInLSTGutterCheckBox, vcsSettings.SHOW_WHITESPACES_IN_LST);
 
     isModified |= myErrorHighlightingPanel.isModified();
 

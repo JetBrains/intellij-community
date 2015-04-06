@@ -162,7 +162,7 @@ public class PyNames {
 
   public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
 
-  public static final String UNKNOWN_TYPE = "unknown";
+  public static final String UNKNOWN_TYPE = "Any";
 
   public static final String UNNAMED_ELEMENT = "<unnamed>";
 

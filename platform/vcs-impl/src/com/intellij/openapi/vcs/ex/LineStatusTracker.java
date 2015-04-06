@@ -80,14 +80,15 @@ public class LineStatusTracker {
   private boolean myAnathemaThrown;
   private boolean myReleased;
 
-  @NotNull private Mode myMode = Registry.is("diff.status.tracker.smart") ? Mode.SMART : Mode.DEFAULT;
+  @NotNull private Mode myMode;
 
   @NotNull private List<Range> myRanges;
 
   private LineStatusTracker(@NotNull final Document document,
                             @NotNull final Document vcsDocument,
                             @NotNull final Project project,
-                            @NotNull final VirtualFile virtualFile) {
+                            @NotNull final VirtualFile virtualFile,
+                            @NotNull final Mode mode) {
     myDocument = document;
     myVcsDocument = vcsDocument;
     myProject = project;
@@ -96,6 +97,8 @@ public class LineStatusTracker {
     myApplication = ApplicationManager.getApplication();
     myFileEditorManager = FileEditorManager.getInstance(myProject);
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+
+    myMode = mode;
 
     myRanges = new ArrayList<Range>();
   }
@@ -173,6 +176,7 @@ public class LineStatusTracker {
 
   public void setMode(@NotNull Mode mode) {
     synchronized (myLock) {
+      if (myMode == mode) return;
       myMode = mode;
       reinstallRanges();
     }
@@ -916,10 +920,11 @@ public class LineStatusTracker {
     }
   }
 
-  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document doc, final Project project) {
+  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document doc, final Project project,
+                                           @NotNull Mode mode) {
     final Document document = new DocumentImpl("", true);
     document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    return new LineStatusTracker(doc, document, project, virtualFile);
+    return new LineStatusTracker(doc, document, project, virtualFile, mode);
   }
 
   public static class RevisionPack {

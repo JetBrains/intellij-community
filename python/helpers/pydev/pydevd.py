@@ -394,6 +394,18 @@ class PyDB:
                 return False
         return True
 
+    def first_appearance_in_scope(self, trace):
+        if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):
+            return False
+        else:
+            trace = trace.tb_next
+            while trace is not None:
+                frame = trace.tb_frame
+                if not self.not_in_scope(frame.f_code.co_filename):
+                    return False
+                trace = trace.tb_next
+            return True
+
     def haveAliveThreads(self):
         for t in threadingEnumerate():
             if getattr(t, 'is_pydev_daemon_thread', False):
@@ -1146,6 +1158,8 @@ class PyDB:
                         type = 'python'
 
                     if type == 'python':
+                        if int(notify_always) == 1:
+                            pydev_log.warn("Deprecated parameter: 'notify always' policy removed in PyCharm\n")
                         exception_breakpoint = self.add_break_on_exception(
                             exception,
                             notify_always=int(notify_always) > 0,

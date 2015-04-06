@@ -215,7 +215,7 @@ public class DiffDrawUtil {
     // TODO: diff looks cool with wide markers. Maybe we can keep them ?
     highlighter.setThinErrorStripeMark(true);
 
-    installGutterRenderer(highlighter, type);
+    installGutterRenderer(highlighter, type, ignored);
 
     return highlighter;
   }
@@ -232,8 +232,15 @@ public class DiffDrawUtil {
     return highlighter;
   }
 
-  public static void installGutterRenderer(@NotNull RangeHighlighter highlighter, @NotNull TextDiffType type) {
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type));
+  public static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
+                                           @NotNull TextDiffType type) {
+    installGutterRenderer(highlighter, type, false);
+  }
+
+  public static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
+                                           @NotNull TextDiffType type,
+                                           boolean ignoredFoldingOutline) {
+    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline));
   }
 
   public static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter, @NotNull TextDiffType type) {

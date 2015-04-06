@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
@@ -44,6 +45,20 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   protected void addGroupByActions(DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
+    if (getTreeModel() instanceof ResourceBundleStructureViewModel) {
+      result.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
+          rebuild();
+        }
+      });
+    }
   }
 
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
