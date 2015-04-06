@@ -459,8 +459,8 @@ class StringToConstraintsTransformer {
     try {
       Pattern.compile(regex);
     }
-    catch (PatternSyntaxException ignored) {
-      throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression", regex));
+    catch (PatternSyntaxException e) {
+      throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression", e.getMessage()));
     }
   }
 }

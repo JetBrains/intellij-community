@@ -108,7 +108,7 @@ public class SearchDialog extends DialogWrapper {
     if (showScope) setModal(false);
     myShowScopePanel = showScope;
     myRunFindActionOnClose = runFindActionOnClose;
-    this.searchContext = (SearchContext)searchContext.clone();
+    this.searchContext = searchContext;
     setTitle(getDefaultTitle());
 
     if (runFindActionOnClose) {
@@ -125,7 +125,7 @@ public class SearchDialog extends DialogWrapper {
     this.useLastConfiguration = useLastConfiguration;
   }
 
-  public void setSearchPattern(final Configuration config) {
+  private void setSearchPattern(final Configuration config) {
     model.setShadowConfig(config);
     setValuesFromConfig(config);
     initiateValidation();
@@ -626,26 +626,21 @@ public class SearchDialog extends DialogWrapper {
             }
 
             final Configuration configuration = model.getConfig();
+            model = new SearchModel(createConfiguration());
+            model.setShadowConfig(configuration);
             configuration.setName(name);
             setValuesToConfig(configuration);
             setDialogTitle(configuration);
 
-            if (model.getShadowConfig() == null || model.getShadowConfig().isPredefined()) {
-              filterOutUnusedVariableConstraints(configuration);
-              existingTemplatesComponent.addConfigurationToUserTemplates(configuration);
-            }
-            else {  // ???
-              setValuesToConfig(model.getShadowConfig());
-              model.getShadowConfig().setName(name);
-            }
+            filterOutUnusedVariableConstraints(configuration);
+            configurationManager.addConfiguration(configuration);
+            existingTemplatesComponent.setUserTemplates(configurationManager);
           }
         }
       })
     );
 
-    panel.add(
-      Box.createHorizontalStrut(8)
-    );
+    panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
       createJButtonForAction(
@@ -659,7 +654,7 @@ public class SearchDialog extends DialogWrapper {
             EditVarConstraintsDialog.setProject(searchContext.getProject());
             new EditVarConstraintsDialog(
               searchContext.getProject(),
-              model, getVariablesFromListeners(),
+              model.getConfig(), getVariablesFromListeners(),
               (FileType)fileTypes.getSelectedItem()
             ).show();
             initiateValidation();
@@ -774,9 +769,7 @@ public class SearchDialog extends DialogWrapper {
       if (!setSomeText) {
         int selection = existingTemplatesComponent.getHistoryList().getSelectedIndex();
         if (selection != -1) {
-          setValuesFromConfig(
-            (Configuration)existingTemplatesComponent.getHistoryList().getSelectedValue()
-          );
+          setValuesFromConfig((Configuration)existingTemplatesComponent.getHistoryList().getSelectedValue());
         }
       }
     }

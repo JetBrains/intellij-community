@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 
@@ -28,14 +29,19 @@ import javax.swing.*;
 public abstract class IconWithTextAction extends AnAction implements CustomComponentAction {
 
   protected IconWithTextAction() {
+    this(null, null, null);
   }
 
   protected IconWithTextAction(String text) {
-    super(text);
+    this(text, null, null);
   }
 
   protected IconWithTextAction(String text, String description, Icon icon) {
     super(text, description, icon);
+    if (icon == null) {
+      getTemplatePresentation().setIcon(EmptyIcon.ICON_0);
+      getTemplatePresentation().setDisabledIcon(EmptyIcon.ICON_0);
+    }
   }
 
   public JComponent createCustomComponent(final Presentation presentation) {
