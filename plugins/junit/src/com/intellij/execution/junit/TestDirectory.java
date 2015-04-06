@@ -77,6 +77,11 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
+  protected boolean configureByModule(Module module) {
+    return module != null;
+  }
+
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(getConfiguration());
     ProgramParametersUtil.checkWorkingDirectoryExist(

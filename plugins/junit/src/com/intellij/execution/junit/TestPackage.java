@@ -121,29 +121,14 @@ public class TestPackage extends TestObject {
     super.initialize(javaParameters);
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     getClassFilter(data);//check if junit found
-    configureClasspath(javaParameters);
-
     createTempFiles(javaParameters);
 
     createServerSocket(javaParameters);
   }
 
-  protected void configureClasspath(final JavaParameters javaParameters) throws ExecutionException {
-    final ExecutionException[] exception = new ExecutionException[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          getConfiguration().configureClasspath(javaParameters);
-        }
-        catch (CantRunException e) {
-          exception[0] = e;
-        }
-      }
-    });
-    if (exception[0] != null) {
-      throw exception[0];
-    }
+  @Override
+  protected boolean configureByModule(Module module) {
+    return super.configureByModule(module) && getConfiguration().getPersistentData().getScope() != TestSearchScope.WHOLE_PROJECT;
   }
 
   protected TestClassFilter getClassFilter(final JUnitConfiguration.Data data) throws CantRunException {

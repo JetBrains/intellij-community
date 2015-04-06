@@ -40,7 +40,6 @@ class TestMethod extends TestObject {
     defaultInitialize(javaParameters);
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
-    configureModule(javaParameters, module, data.getMainClassName());
     addJUnit3Parameter(javaParameters, data, module.getProject());
     javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
   }

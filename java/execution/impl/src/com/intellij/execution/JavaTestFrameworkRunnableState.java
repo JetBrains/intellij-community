@@ -21,6 +21,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -30,7 +31,11 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
@@ -82,10 +87,32 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     }
   }
 
+  public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
+    RunConfigurationModule module = getConfiguration().getConfigurationModule();
+    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+    if (configureByModule(module.getModule())) {
+      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
+    }
+    else {
+      JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
+    }
+  }
+
+  protected boolean configureByModule(Module module) {
+    return module != null;
+  }
+
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     final Module module = getConfiguration().getConfigurationModule().getModule();
+
+    Project project = getConfiguration().getProject();
+    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
+    javaParameters.setJdk(jdk);
+
+
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
     for (Object patcher : patchers) {
       ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
@@ -98,6 +125,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
+
+    configureClasspath(javaParameters);
     return javaParameters;
   }
 

@@ -136,13 +136,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                 PsiPackage testPackage,
                                                 PsiDirectory testDir);
 
-  protected void configureModule(final JavaParameters parameters, final RunConfigurationModule configurationModule, final String mainClassName)
-    throws CantRunException {
-    int classPathType = JavaParametersUtil.getClasspathType(configurationModule, mainClassName, true);
-    JavaParametersUtil.configureModule(configurationModule, parameters, classPathType,
-                                       getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null);
-  }
-
   public void checkConfiguration() throws RuntimeConfigurationException{
     JavaParametersUtil.checkAlternativeJRE(getConfiguration());
     ProgramParametersUtil.checkWorkingDirectoryExist(getConfiguration(), getConfiguration().getProject(),
@@ -156,12 +149,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void initialize(JavaParameters javaParameters) throws ExecutionException {
     String parameters = getConfiguration().getProgramParameters();
     javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
-    final Module module = getConfiguration().getConfigurationModule().getModule();
-    if (javaParameters.getJdk() == null){
-      javaParameters.setJdk(module != null
-                            ? ModuleRootManager.getInstance(module).getSdk()
-                            : ProjectRootManager.getInstance(getConfiguration().getProject()).getProjectSdk());
-    }
 
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);

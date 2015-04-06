@@ -59,19 +59,6 @@ public class TestMethods extends TestMethod {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final Project project = module.getProject();
-    final ExecutionException[] exception = new ExecutionException[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          getConfiguration().configureClasspath(javaParameters);
-        }
-        catch (ExecutionException e) {
-          exception[0] = e;
-        }
-      }
-    });
-    if (exception[0] != null) throw exception[0];
     final LinkedHashSet<TestInfo> methods = new LinkedHashSet<TestInfo>();
     final GlobalSearchScope searchScope = getConfiguration().getConfigurationModule().getSearchScope();
     for (AbstractTestProxy failedTest : myFailedTests) {

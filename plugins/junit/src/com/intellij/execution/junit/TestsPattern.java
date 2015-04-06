@@ -23,12 +23,10 @@ package com.intellij.execution.junit;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,18 +98,9 @@ public class TestsPattern extends TestPackage {
                                            : className).trim(), GlobalSearchScope.allScope(project));
   }
 
-  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
-    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
-
-    final Module module = getConfiguration().getConfigurationModule().getModule();
-
-    if (module != null) {
-      JavaParametersUtil.configureModule(module, javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
-    }
-    else {
-      JavaParametersUtil
-        .configureProject(getConfiguration().getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
-    }
+  @Override
+  protected boolean configureByModule(Module module) {
+    return module != null;
   }
 
   @Override

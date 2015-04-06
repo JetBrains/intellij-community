@@ -35,7 +35,6 @@ class TestClass extends TestObject {
     super.initialize(javaParameters);
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
-    configureModule(javaParameters, module, data.getMainClassName());
     javaParameters.getProgramParametersList().add(data.getMainClassName());
   }
 

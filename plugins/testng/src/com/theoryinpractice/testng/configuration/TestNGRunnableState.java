@@ -194,39 +194,19 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
+  protected boolean configureByModule(Module module) {
+    return module != null && getConfiguration().getPersistantData().getScope() != TestSearchScope.WHOLE_PROJECT;
+  }
+
+  @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
-    final Project project = getConfiguration().getProject();
     final JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setupEnvs(getConfiguration().getPersistantData().getEnvs(), getConfiguration().getPersistantData().PASS_PARENT_ENVS);
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
-    Module module = getConfiguration().getConfigurationModule().getModule();
-    LanguageLevel effectiveLanguageLevel = module == null
-                                           ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel()
-                                           : EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-    final boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
-
-    LOG.info("Language level is " + effectiveLanguageLevel.toString());
-    LOG.info("is15 is " + is15);
     final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
-
-    // Configure rest of jars
-    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
-    javaParameters.setJdk(jdk);
-
-    LOG.info("Test scope is: " + getConfiguration().getPersistantData().getScope());
-    if (getConfiguration().getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
-      LOG.info("Configuring for whole project");
-      JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                          getConfiguration().ALTERNATIVE_JRE_PATH_ENABLED ? getConfiguration().ALTERNATIVE_JRE_PATH : null);
-    }
-    else {
-      LOG.info("Configuring for module:" + getConfiguration().getConfigurationModule().getModuleName());
-      JavaParametersUtil.configureModule(getConfiguration().getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                         getConfiguration().ALTERNATIVE_JRE_PATH_ENABLED ? getConfiguration().ALTERNATIVE_JRE_PATH : null);
-    }
 
     javaParameters.getClassPath().add(pathToBundledJar);
 
