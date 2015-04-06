@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.9.2</version>
+	<version>0.9.3</version>
 
   <idea-version since-build="138.00"/>
 
@@ -202,6 +202,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.9.3
+				<ol>
+				    <li></li>
+				</ol>
+			</li>
 		  <li>0.9.2
 				<ol>
 				    <li>Added #9:  Basic val support in IntelliJ 14.1</li>
