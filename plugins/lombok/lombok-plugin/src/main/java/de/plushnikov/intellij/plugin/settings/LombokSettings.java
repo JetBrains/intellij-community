@@ -15,10 +15,7 @@ import org.jetbrains.annotations.Nullable;
     name = "LombokSettings",
     storages = @Storage(id = "other", file = StoragePathMacros.APP_CONFIG + "/lombok.xml")
 )
-public class LombokSettings implements PersistentStateComponent<LombokSettings.State> {
-  static class State {
-    public String donationShown = "";
-  }
+public class LombokSettings implements PersistentStateComponent<LombokPluginState> {
 
   /**
    * Get the instance of this service.
@@ -29,25 +26,25 @@ public class LombokSettings implements PersistentStateComponent<LombokSettings.S
     return ServiceManager.getService(LombokSettings.class);
   }
 
-  private State myState = new State();
+  private LombokPluginState myState = new LombokPluginState();
 
   @Nullable
   @Override
-  public State getState() {
+  public LombokPluginState getState() {
     return myState;
   }
 
   @Override
-  public void loadState(State element) {
+  public void loadState(LombokPluginState element) {
     myState = element;
   }
 
   public boolean isDonationShown() {
-    return Version.PLUGIN_VERSION.equals(myState.donationShown);
+    return Version.PLUGIN_VERSION.equals(myState.getDonationShown());
   }
 
   public void setDonationShown() {
-    myState.donationShown = Version.PLUGIN_VERSION;
+    myState.setDonationShown(Version.PLUGIN_VERSION);
   }
 
 }

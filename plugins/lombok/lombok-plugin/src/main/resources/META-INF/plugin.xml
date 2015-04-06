@@ -204,7 +204,7 @@
 		<ul>
 		  <li>0.9.2
 				<ol>
-				    <li>Fixed #9:  Basic val support in IntelliJ 14.1</li>
+				    <li>Added #9:  Basic val support in IntelliJ 14.1</li>
 				    <li>Fixed #81: @Builder: buildMethod should have same throws-list as annotated static method</li>
 				    <li>Fixed #82: Abstract Class + @Delegate</li>
 				    <li>Fixed #83: Getting inconvertible types error assigning new builder instance</li>
