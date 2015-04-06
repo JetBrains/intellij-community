@@ -54,8 +54,8 @@ public class TestMethods extends TestMethod {
   }
 
   @Override
-  protected void initialize(final JavaParameters javaParameters) throws ExecutionException {
-    defaultInitialize(javaParameters);
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = super.createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final Project project = module.getProject();
@@ -87,6 +87,7 @@ public class TestMethods extends TestMethod {
       }
     }, data.getPackageName(), true, javaParameters);
 
+    return javaParameters;
   }
 
   @Override

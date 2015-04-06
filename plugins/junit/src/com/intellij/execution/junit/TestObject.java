@@ -146,12 +146,20 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return SourceScope.modulesWithDependencies(getConfiguration().getModules());
   }
 
-  protected void initialize(JavaParameters javaParameters) throws ExecutionException {
-    String parameters = getConfiguration().getProgramParameters();
+  private static void configureAdditionalClasspath(JavaParameters javaParameters) {
+    javaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+  }
+
+  @Override
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
+    javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
 
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-    javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
+
+    String parameters = getConfiguration().getProgramParameters();
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().add("@name" + parameters);
     }
@@ -169,17 +177,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         LOG.error(e);
       }
     }
-  }
-
-  private static void configureAdditionalClasspath(JavaParameters javaParameters) {
-    javaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-  }
-
-  @Override
-  protected JavaParameters createJavaParameters() throws ExecutionException {
-    JavaParameters javaParameters = super.createJavaParameters();
-    initialize(javaParameters);
     return javaParameters;
   }
 

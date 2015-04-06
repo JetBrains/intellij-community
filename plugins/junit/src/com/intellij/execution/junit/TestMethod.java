@@ -36,16 +36,17 @@ class TestMethod extends TestObject {
   }
 
   @Override
-  protected void initialize(JavaParameters javaParameters) throws ExecutionException {
-    defaultInitialize(javaParameters);
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
     addJUnit3Parameter(javaParameters, data, module.getProject());
     javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
+    return javaParameters;
   }
 
-  protected void defaultInitialize(JavaParameters javaParameters) throws ExecutionException {
-    super.initialize(javaParameters);
+  protected JavaParameters createDefaultJavaParameters() throws ExecutionException {
+    return super.createJavaParameters();
   }
 
   protected void addJUnit3Parameter(JavaParameters javaParameters, final JUnitConfiguration.Data data, Project project) throws ExecutionException {

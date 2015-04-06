@@ -102,13 +102,14 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  protected void initialize(JavaParameters javaParameters) throws ExecutionException {
-    super.initialize(javaParameters);
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = super.createJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     getClassFilter(data);//check if junit found
     createTempFiles(javaParameters);
 
     createServerSocket(javaParameters);
+    return javaParameters;
   }
 
   @Override
