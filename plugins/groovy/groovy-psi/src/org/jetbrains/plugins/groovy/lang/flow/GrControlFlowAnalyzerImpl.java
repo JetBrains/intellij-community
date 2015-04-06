@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -382,7 +383,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
       addInstruction(new GotoInstruction(loopStartOffset));
     }
-    
+
     finishElement(statement);
     removeVariable(parameter);
   }
@@ -539,6 +540,24 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     finishElement(literal);
   }
 
+  @Override
+  public void visitRangeExpression(GrRangeExpression range) {
+    startElement(range);
+
+    final GrExpression leftOperand = range.getLeftOperand();
+    leftOperand.accept(this);
+
+    final GrExpression rightOperand = range.getRightOperand();
+    if (rightOperand != null) {
+      rightOperand.accept(this);
+    }
+    else {
+      pushUnknown();
+    }
+
+    addInstruction(new GrRangeInstruction<V>(range));
+    finishElement(range);
+  }
 
   private void initialize(@NotNull GrVariable variable, @NotNull GrExpression initializer) {
     final DfaVariableValue dfaVariableValue = myFactory.getVarFactory().createVariableValue(variable, false);

@@ -36,7 +36,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -361,5 +363,17 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   }
 
   public void markNull(PsiElement element) {
+  }
+
+  @Override
+  public DfaInstructionState<V>[] visitRange(GrRangeInstruction<V> instruction, DfaMemoryState state) {
+    final DfaValue to = state.pop();
+    final DfaValue from = state.pop();
+    final GrRangeExpression expression = instruction.getExpression();
+    if (checkNotNullable(state, from, NullabilityProblem.passingNullableToNotNullParameter, expression.getLeftOperand())) {
+      checkNotNullable(state, to, NullabilityProblem.passingNullableToNotNullParameter, expression.getRightOperand());
+    }
+    state.push(myRunner.getFactory().createTypeValue(TypesUtil.createType("groovy.lang.Range", expression), Nullness.NOT_NULL));
+    return nextInstruction(instruction, myRunner.getInstructions(), state);
   }
 }

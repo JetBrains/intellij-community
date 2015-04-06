@@ -67,6 +67,13 @@ public abstract class GrInstructionVisitor extends InstructionVisitor {
   public DfaInstructionState[] visitTypeCastGroovy(GrTypeCastInstruction instruction, DfaMemoryState state) {
     return nextInstruction(instruction, state);
   }
+
+  public DfaInstructionState<V>[] visitRange(GrRangeInstruction<V> instruction, DfaMemoryState state) {
+    state.pop();
+    state.pop();
+    state.push(DfaUnknownValue.getInstance());
+    return nextInstruction(instruction, myRunner, state);
+  }
 }
 
 
