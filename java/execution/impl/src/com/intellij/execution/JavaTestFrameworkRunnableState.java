@@ -18,14 +18,17 @@ package com.intellij.execution;
 import com.intellij.ExtensionPoints;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
+import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +47,7 @@ import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -87,14 +91,32 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     final RunnerSettings runnerSettings = getRunnerSettings();
 
-    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(getConfiguration(), getFrameworkName(), executor);
+    final TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(getConfiguration(), getFrameworkName(), executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), null);
+    final BaseTestsOutputConsoleView consoleView =
+      SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), null);
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
     consoleView.attachToProcess(handler);
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        Runnable runnable = new Runnable() {
+          public void run() {
+            final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+            if (viewer.hasTestSuites() ||
+                !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), testConsoleProperties.isDebug())) {
+              TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewer.getRoot(), testConsoleProperties, null);
+            }
+          }
+        };
+        SwingUtilities.invokeLater(runnable);
+        handler.removeProcessListener(this);
+      }
+
+    });
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = createRerunFailedTestsAction(testConsoleProperties, consoleView);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
