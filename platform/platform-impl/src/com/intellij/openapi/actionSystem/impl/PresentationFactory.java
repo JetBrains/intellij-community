@@ -28,6 +28,7 @@ public class PresentationFactory {
     myAction2Presentation = new WeakHashMap<AnAction, Presentation>();
   }
 
+  @NotNull
   public final Presentation getPresentation(@NotNull AnAction action){
     Presentation presentation = myAction2Presentation.get(action);
     if (presentation == null || !action.isDefaultIcon()){
