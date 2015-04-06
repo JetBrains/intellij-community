@@ -64,4 +64,8 @@ public class GotoInstruction extends Instruction {
     };
   }
 
+  public void setOffset(ControlFlow.ControlFlowOffset offset) {
+    assert myOffset == null : "Offset already set";
+    myOffset = offset;
+  }
 }

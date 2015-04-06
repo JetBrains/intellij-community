@@ -38,4 +38,9 @@ public class GrRangeInstruction<V extends GrInstructionVisitor<V>> extends Instr
   public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
     return visitor.visitRange(this, stateBefore);
   }
+
+  @Override
+  public String toString() {
+    return myExpression.getText();
+  }
 }

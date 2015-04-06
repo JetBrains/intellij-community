@@ -45,21 +45,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
@@ -324,6 +326,124 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   @Override
+  public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+    startElement(switchStatement);
+
+    final GrExpression condition = switchStatement.getCondition();
+    if (condition != null) {
+      condition.accept(this);
+    }
+    else {
+      pushUnknown();
+    }
+
+    GotoInstruction fallbackGoto = null;
+    for (GrCaseSection section : switchStatement.getCaseSections()) {
+      startElement(section);
+
+      final List<ConditionalGotoInstruction> gotosToBlock = new ArrayList<ConditionalGotoInstruction>();
+      final GrCaseLabel[] labels = section.getCaseLabels();
+      for (int i = 0, length = labels.length; i < length; i++) {
+        final GrCaseLabel caseLabel = labels[i];
+        startElement(caseLabel);
+
+        // duplicate evaluated condition on top of the stack
+        addInstruction(new DupInstruction<V>());
+        // put case expression on top of the stack
+        final GrExpression labelValue = caseLabel.getValue();
+        if (labelValue == null) {
+          pushUnknown();
+        }
+        else {
+          labelValue.accept(this);
+        }
+
+        // do the match
+        if (labelValue instanceof GrReferenceExpression) {
+          if (((GrReferenceExpression)labelValue).resolve() instanceof PsiClass) {
+            addInstruction(new BinopInstruction<V>(DfaRelation.INSTANCEOF, labelValue));
+          }
+          else {
+            // we do not know what to do 
+            pop();
+            pop();
+            pushUnknown();
+          }
+        }
+        else if (labelValue != null) {
+          addInstruction(new BinopInstruction<V>(DfaRelation.EQ, labelValue));
+        }
+        else {
+          pop();
+          pop();
+          pushUnknown();
+        }
+
+        if (i == labels.length - 1) {
+          // if not matched then go to next case section
+          // if matched then next instruction is the start of the statements block
+          addInstruction(new ConditionalGotoInstruction<V>(
+            myFlow.getEndOffset(section),
+            true,
+            labelValue
+          ));
+        }
+        else {
+          // if matched go to the statements block
+          // if not matched then next instruction is the start of the next case label
+          gotosToBlock.add(addInstruction(new ConditionalGotoInstruction<V>(
+            null,
+            false,
+            labelValue
+          )));
+        }
+
+        finishElement(caseLabel);
+      }
+
+      final ControlFlowOffset statementsBlockOffset = myFlow.getNextOffset();
+      for (ConditionalGotoInstruction aGoto : gotosToBlock) {
+        aGoto.setOffset(statementsBlockOffset);
+      }
+      if (fallbackGoto != null) {
+        fallbackGoto.setOffset(statementsBlockOffset);
+      }
+      for (GrStatement statement : section.getStatements()) {
+        statement.accept(this);
+      }
+      fallbackGoto = addInstruction(new GotoInstruction<V>(null));
+
+      finishElement(section);
+    }
+
+    if (fallbackGoto != null) {
+      // last goto falls back to the very end
+      fallbackGoto.setOffset(myFlow.getEndOffset(switchStatement));
+    }
+
+    // now pop switch condition
+    pop();
+
+    finishElement(switchStatement);
+  }
+
+  @Override
+  public void visitBreakStatement(GrBreakStatement statement) {
+    final GrStatement targetStatement = statement.findTargetStatement();
+    if (targetStatement != null) {
+      addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(targetStatement)));
+    }
+  }
+
+  @Override
+  public void visitContinueStatement(GrContinueStatement statement) {
+    final GrStatement targetStatement = statement.findTargetStatement();
+    if (targetStatement != null) {
+      addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(targetStatement)));
+    }
+  }
+
+  @Override
   public void visitForStatement(GrForStatement statement) {
     startElement(statement);
     final GrForClause clause = statement.getClause();
@@ -503,14 +623,15 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     finishElement(expression);
   }
 
+  @Override
+  public void visitClosure(GrClosableBlock closure) {
+    push(myFactory.createValue(closure));
+  }
 
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
     startElement(labeledStatement);
-    final GrStatement childStatement = labeledStatement.getStatement();
-    if (childStatement != null) {
-      childStatement.accept(this);
-    }
+    super.visitLabeledStatement(labeledStatement);
     finishElement(labeledStatement);
   }
 
@@ -578,7 +699,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         pop();
       }
     }
-    
+
     push(myFactory.createValue(listOrMap));
 
     finishElement(listOrMap);
@@ -665,7 +786,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       ));
       //addInstruction(new ReturnInstruction<V>(false, element));
     }
-    else if (element instanceof GrStatement && element.getParent() instanceof GrCodeBlock) {
+    else if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
       if (element instanceof GrExpression) {
         pop();
       }
