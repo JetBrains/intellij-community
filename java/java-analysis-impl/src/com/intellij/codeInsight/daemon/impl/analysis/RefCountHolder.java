@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.pom.java.LanguageLevel;
@@ -29,24 +29,20 @@ import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 class RefCountHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RefCountHolder");
-
   private final PsiFile myFile;
-  private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
+  // resolved elements -> list of their references
+  private final MultiMap<PsiElement,PsiReference> myLocalRefsMap = MultiMap.createSet();
 
   private final Map<PsiAnchor, Boolean> myDclsUsedMap = new THashMap<PsiAnchor, Boolean>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
@@ -110,11 +106,11 @@ class RefCountHolder {
     myDclsUsedMap.clear();
   }
 
-  public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
+  void registerLocallyReferenced(@NotNull PsiNamedElement result) {
     myDclsUsedMap.put(PsiAnchor.create(result), Boolean.TRUE);
   }
 
-  public void registerReference(@NotNull PsiJavaReference ref, @NotNull JavaResolveResult resolveResult) {
+  void registerReference(@NotNull PsiReference ref, @NotNull JavaResolveResult resolveResult) {
     PsiElement refElement = resolveResult.getElement();
     PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
     if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
@@ -140,21 +136,23 @@ class RefCountHolder {
     if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter self-recursive calls
     if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter inner use of itself
     synchronized (myLocalRefsMap) {
-      myLocalRefsMap.put(ref, refElement);
+      myLocalRefsMap.putValue(refElement, ref);
     }
   }
 
   private void removeInvalidRefs() {
     synchronized (myLocalRefsMap) {
-      for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
-        PsiReference ref = iterator.next();
-        if (!ref.getElement().isValid()){
-          PsiElement value = myLocalRefsMap.get(ref);
-          iterator.remove();
-          List<PsiReference> array = myLocalRefsMap.getKeysByValue(value);
-          LOG.assertTrue(array != null);
-          array.remove(ref);
+      List<Pair<PsiElement, PsiReference>> toRemove = new ArrayList<Pair<PsiElement, PsiReference>>();
+      for (Map.Entry<PsiElement, Collection<PsiReference>> entry : myLocalRefsMap.entrySet()) {
+        PsiElement element = entry.getKey();
+        for (PsiReference ref : entry.getValue()) {
+          if (!ref.getElement().isValid()) {
+            toRemove.add(Pair.create(element, ref));
+          }
         }
+      }
+      for (Pair<PsiElement, PsiReference> pair : toRemove) {
+        myLocalRefsMap.remove(pair.first, pair.second);
       }
     }
     for (Iterator<PsiReference> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
@@ -173,12 +171,12 @@ class RefCountHolder {
     }
   }
 
-  public boolean isReferenced(@NotNull PsiNamedElement element) {
-    List<PsiReference> array;
+  public boolean isReferenced(@NotNull PsiElement element) {
+    Collection<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(element);
+      array = myLocalRefsMap.get(element);
     }
-    if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
+    if (!array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
     Boolean usedStatus = myDclsUsedMap.get(PsiAnchor.create(element));
     return usedStatus == Boolean.TRUE;
@@ -187,15 +185,15 @@ class RefCountHolder {
   boolean isReferencedByMethodReference(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
 
-    List<PsiReference> array;
+    Collection<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(method);
+      array = myLocalRefsMap.get(method);
     }
 
-    if (array != null && !array.isEmpty()) {
+    if (!array.isEmpty()) {
       for (PsiReference reference : array) {
         final PsiElement element = reference.getElement();
-        if (element != null && element instanceof PsiMethodReferenceExpression) {
+        if (element instanceof PsiMethodReferenceExpression) {
           return true;
         }
       }
@@ -204,7 +202,7 @@ class RefCountHolder {
     return false;
   }
 
-  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull List<PsiReference> array) {
+  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;
     PsiElement scope = parameter.getDeclarationScope();
@@ -234,11 +232,11 @@ class RefCountHolder {
   }
 
   boolean isReferencedForRead(@NotNull PsiVariable variable) {
-    List<PsiReference> array;
+    Collection<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(variable);
+      array = myLocalRefsMap.get(variable);
     }
-    if (array == null) return false;
+    if (array.isEmpty()) return false;
     for (PsiReference ref : array) {
       PsiElement refElement = ref.getElement();
       if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
@@ -257,11 +255,11 @@ class RefCountHolder {
   }
 
   boolean isReferencedForWrite(@NotNull PsiVariable variable) {
-    List<PsiReference> array;
+    Collection<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(variable);
+      array = myLocalRefsMap.get(variable);
     }
-    if (array == null) return false;
+    if (array.isEmpty()) return false;
     for (PsiReference ref : array) {
       final PsiElement refElement = ref.getElement();
       if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
