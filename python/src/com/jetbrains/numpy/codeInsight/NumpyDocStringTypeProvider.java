@@ -173,9 +173,13 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType parseSingleNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final PyPsiFacade facade = getPsiFacade(anchor);
-    typeString = getNumpyRealTypeName(typeString);
+    final String realTypeName = getNumpyRealTypeName(typeString);
+    PyType type = facade.parseTypeAnnotation(realTypeName, anchor);
+    if (type != null) {
+      return type;
+    }
 
-    final PyType type = facade.parseTypeAnnotation(typeString, anchor);
+    type = facade.parseTypeAnnotation(typeString, anchor);
     if (type != null) {
       return type;
     }
