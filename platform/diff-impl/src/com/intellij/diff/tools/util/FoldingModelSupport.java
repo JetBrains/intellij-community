@@ -65,11 +65,12 @@ public class FoldingModelSupport {
   @NotNull protected final List<FoldedBlock[]> myFoldings = new ArrayList<FoldedBlock[]>();
 
   private boolean myDuringSynchronize;
-  private boolean myShouldUpdateLineNumbers;
+  private final boolean[] myShouldUpdateLineNumbers;
 
   public FoldingModelSupport(@NotNull EditorEx[] editors, @NotNull Disposable disposable) {
     myEditors = editors;
     myCount = myEditors.length;
+    myShouldUpdateLineNumbers = new boolean[myCount];
 
     if (myCount > 1) {
       for (int i = 0; i < myCount; i++) {
@@ -264,7 +265,11 @@ public class FoldingModelSupport {
   public void onDocumentChanged(@NotNull DocumentEvent e) {
     if (StringUtil.indexOf(e.getOldFragment(), '\n') != -1 ||
         StringUtil.indexOf(e.getNewFragment(), '\n') != -1) {
-      myShouldUpdateLineNumbers = true;
+      for (int i = 0; i < myCount; i++) {
+        if (myEditors[i].getDocument() == e.getDocument()) {
+          myShouldUpdateLineNumbers[i] = true;
+        }
+      }
     }
   }
 
@@ -287,12 +292,15 @@ public class FoldingModelSupport {
   }
 
   private void updateLineNumbers(boolean force) {
-    if (!myShouldUpdateLineNumbers && !force) return;
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    for (FoldedBlock folding : getFoldedBlocks()) {
-      folding.updateLineNumbers();
+    for (int i = 0; i < myCount; i++) {
+      if (!myShouldUpdateLineNumbers[i] && !force) continue;
+      myShouldUpdateLineNumbers[i] = false;
+
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+      for (FoldedBlock folding : getFoldedBlocks()) {
+        folding.updateLineNumber(i);
+      }
     }
-    myShouldUpdateLineNumbers = false;
   }
 
   //
@@ -629,15 +637,13 @@ public class FoldingModelSupport {
       myHighlighters.clear();
     }
 
-    public void updateLineNumbers() {
-      for (int i = 0; i < myCount; i++) {
-        FoldRegion region = myRegions[i];
-        if (region == null || !region.isValid()) {
-          myLines[i] = -1;
-        }
-        else {
-          myLines[i] = myEditors[i].getDocument().getLineNumber(region.getStartOffset());
-        }
+    public void updateLineNumber(int index) {
+      FoldRegion region = myRegions[index];
+      if (region == null || !region.isValid()) {
+        myLines[index] = -1;
+      }
+      else {
+        myLines[index] = myEditors[index].getDocument().getLineNumber(region.getStartOffset());
       }
     }
 
