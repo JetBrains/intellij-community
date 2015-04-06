@@ -163,7 +163,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   protected void updateContextHints() {
     super.updateContextHints();
-    if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
+    if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }
 
   //
@@ -277,7 +277,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (myEditor1 != null && myEditor1.getDocument().getModificationStamp() != data.getStamp1()) return;
         if (myEditor2 != null && myEditor2.getDocument().getModificationStamp() != data.getStamp2()) return;
 
-        if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
+        if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
         if (data.isEqualContent()) myPanel.addContentsEqualNotification();
@@ -290,8 +290,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         }
 
         if (myFoldingModel != null) {
-          myFoldingModel.install(data.getFragments(), myRequest,
-                                 getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
+          myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
         }
 
         scrollOnRediff();
@@ -1003,8 +1002,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public void install(@Nullable final List<LineFragment> fragments,
                         @NotNull UserDataHolder context,
-                        boolean defaultExpanded,
-                        final int range) {
+                        @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(fragments, new Function<LineFragment, int[]>() {
         @Override
         public int[] fun(LineFragment fragment) {
@@ -1015,7 +1013,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
             fragment.getEndLine2()};
         }
       });
-      install(it, context, defaultExpanded, range);
+      install(it, context, settings);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {

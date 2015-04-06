@@ -84,14 +84,24 @@ public class FoldingModelSupport {
   // Init
   //
 
+  @Deprecated
+  protected void install(@Nullable final Iterator<int[]> changedLines,
+                         @NotNull final UserDataHolder context,
+                         final boolean defaultExpanded,
+                         final int range) {
+    install(changedLines, context, new Settings(range, defaultExpanded));
+  }
+
   /*
    * Iterator returns ranges of changed lines: start1, end1, start2, end2, ...
    */
   protected void install(@Nullable final Iterator<int[]> changedLines,
                          @NotNull final UserDataHolder context,
-                         final boolean defaultExpanded,
-                         final int range) {
+                         @NotNull final Settings settings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final int range = settings.range;
+    final boolean defaultExpanded = settings.defaultExpanded;
 
     if (changedLines == null) return;
     if (range == -1) return;
@@ -478,27 +488,32 @@ public class FoldingModelSupport {
     }
   }
 
+  @Deprecated
   public void updateContext(@NotNull UserDataHolder context, boolean defaultState) {
+    updateContext(context, new Settings(0, defaultState));
+  }
+
+  public void updateContext(@NotNull UserDataHolder context, @NotNull final Settings settings) {
     if (myFoldings.isEmpty()) return; // do not rewrite cache by initial state
-    context.putUserData(CACHE_KEY, getFoldingCache(defaultState));
+    context.putUserData(CACHE_KEY, getFoldingCache(settings));
   }
 
   @NotNull
-  private FoldingCache getFoldingCache(final boolean defaultState) {
+  private FoldingCache getFoldingCache(@NotNull final Settings settings) {
     return ApplicationManager.getApplication().runReadAction(new Computable<FoldingCache>() {
       @Override
       public FoldingCache compute() {
         List<FoldedRangeState>[] result = new List[myCount];
         for (int i = 0; i < myCount; i++) {
-          result[i] = getFoldedRanges(i);
+          result[i] = getFoldedRanges(i, settings);
         }
-        return new FoldingCache(result, defaultState);
+        return new FoldingCache(result, settings.defaultExpanded);
       }
     });
   }
 
   @NotNull
-  private List<FoldedRangeState> getFoldedRanges(int index) {
+  private List<FoldedRangeState> getFoldedRanges(int index, @NotNull Settings settings) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     List<FoldedRangeState> ranges = new ArrayList<FoldedRangeState>();
     DocumentEx document = myEditors[index].getDocument();
@@ -721,6 +736,16 @@ public class FoldingModelSupport {
     @Override
     public String toString() {
       return "[" + start + ", " + end + ')';
+    }
+  }
+
+  public static class Settings {
+    public final int range;
+    public final boolean defaultExpanded;
+
+    public Settings(int range, boolean defaultExpanded) {
+      this.range = range;
+      this.defaultExpanded = defaultExpanded;
     }
   }
 }
