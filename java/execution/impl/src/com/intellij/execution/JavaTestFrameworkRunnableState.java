@@ -22,7 +22,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -68,44 +67,40 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   @NotNull protected abstract T getConfiguration();
 
-  protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
-    final T configuration = getConfiguration();
-    final Object[] listeners = Extensions.getExtensions(epName);
-    for (final Object listener : listeners) {
-      boolean enabled = true;
-      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (ext.isListenerDisabled(configuration, listener, getRunnerSettings())) {
-          enabled = false;
-          break;
-        }
-      }
-      if (enabled) {
-        if (buf.length() > 0) buf.append(delimiter);
-        final Class classListener = listener.getClass();
-        buf.append(classListener.getName());
-        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
-      }
-    }
-  }
-
-  public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
-    RunConfigurationModule module = getConfiguration().getConfigurationModule();
-    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
-    final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
-    if (configureByModule(module.getModule())) {
-      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
-    }
-    else {
-      JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
-    }
-  }
-
   public SearchForTestsTask createSearchingForTestsTask() {
     return null;
   }
 
   protected boolean configureByModule(Module module) {
     return module != null;
+  }
+
+  protected ExecutionResult startSMRunner(Executor executor, OSProcessHandler handler) throws ExecutionException {
+    getJavaParameters().getVMParametersList().add("-Didea." + getFrameworkId()+ ".sm_runner");
+    getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+
+    final RunnerSettings runnerSettings = getRunnerSettings();
+
+    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(getConfiguration(), getFrameworkName(), executor);
+    testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
+
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), null);
+    Disposer.register(getConfiguration().getProject(), consoleView);
+    consoleView.attachToProcess(handler);
+
+    AbstractRerunFailedTestsAction rerunFailedTestsAction = createRerunFailedTestsAction(testConsoleProperties, consoleView);
+    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      @Override
+      public TestFrameworkRunningModel get() {
+        return ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+      }
+    });
+
+    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
+    result.setRestartActions(rerunFailedTestsAction);
+
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
+    return result;
   }
 
   @Override
@@ -135,35 +130,36 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     return javaParameters;
   }
 
-  protected ExecutionResult startSMRunner(Executor executor,
-                                          OSProcessHandler handler,
-                                          RunConfigurationBase configuration,
-                                          ExecutionEnvironment environment) throws ExecutionException {
-    getJavaParameters().getVMParametersList().add("-Didea." + getFrameworkId()+ ".sm_runner");
-    getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
-
-    final RunnerSettings runnerSettings = getRunnerSettings();
-
-    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(configuration, getFrameworkName(), executor);
-    testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
-
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, environment, null);
-    Disposer.register(configuration.getProject(), consoleView);
-    consoleView.attachToProcess(handler);
-
-    AbstractRerunFailedTestsAction rerunFailedTestsAction = createRerunFailedTestsAction(testConsoleProperties, consoleView);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+  protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
+    final T configuration = getConfiguration();
+    final Object[] listeners = Extensions.getExtensions(epName);
+    for (final Object listener : listeners) {
+      boolean enabled = true;
+      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+        if (ext.isListenerDisabled(configuration, listener, getRunnerSettings())) {
+          enabled = false;
+          break;
+        }
       }
-    });
+      if (enabled) {
+        if (buf.length() > 0) buf.append(delimiter);
+        final Class classListener = listener.getClass();
+        buf.append(classListener.getName());
+        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+      }
+    }
+  }
 
-    final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
-    result.setRestartActions(rerunFailedTestsAction);
-
-    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(configuration, handler, runnerSettings);
-    return result;
+  protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
+    RunConfigurationModule module = getConfiguration().getConfigurationModule();
+    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+    if (configureByModule(module.getModule())) {
+      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
+    }
+    else {
+      JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
+    }
   }
 
   protected void createServerSocket(JavaParameters javaParameters) {

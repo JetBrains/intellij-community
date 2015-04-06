@@ -42,7 +42,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -50,8 +49,6 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -185,7 +182,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final boolean smRunner = Registry.is("junit_sm_runner");
     if (smRunner) {
-      return startSMRunner(executor, createHandler(executor), getConfiguration(), getEnvironment());
+      return startSMRunner(executor, createHandler(executor));
     }
     final JUnitProcessHandler handler = createHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();

@@ -85,7 +85,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final boolean smRunner = Registry.is("testng_sm_runner");
     if (smRunner) {
-      return startSMRunner(executor, startProcess(), getConfiguration(), getEnvironment());
+      return startSMRunner(executor, startProcess());
     }
     OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
