@@ -199,7 +199,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   }
 
   public JUnitConfiguration getConfiguration() {
-    return myProperties.getConfiguration();
+    return (JUnitConfiguration)myProperties.getConfiguration();
   }
 
   private class MyTreeSelectionListener extends FocusAdapter implements TreeSelectionListener, Disposable {

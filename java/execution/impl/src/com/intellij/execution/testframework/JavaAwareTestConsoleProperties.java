@@ -23,15 +23,17 @@ package com.intellij.execution.testframework;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.Storage;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public abstract class JavaAwareTestConsoleProperties extends TestConsoleProperties {
-  public JavaAwareTestConsoleProperties(final Storage storage, Project project, Executor executor) {
-    super(storage, project, executor);
+public abstract class JavaAwareTestConsoleProperties extends SMTRunnerConsoleProperties {
+  public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
+    super(configuration, testFrameworkName, executor, false);
   }
 
   @Override

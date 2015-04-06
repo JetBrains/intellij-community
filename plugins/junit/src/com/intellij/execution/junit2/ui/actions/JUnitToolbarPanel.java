@@ -16,7 +16,6 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
@@ -26,13 +25,10 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.config.ToggleBooleanProperty;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -44,18 +40,6 @@ public class JUnitToolbarPanel extends ToolbarPanel {
                            final ExecutionEnvironment environment,
                            final JComponent parentComponent) {
     super(properties, environment, parentComponent);
-  }
-
-  @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         TestConsoleProperties properties,
-                                         ExecutionEnvironment environment, JComponent parent) {
-    super.appendAdditionalActions(actionGroup, properties, environment, parent);
-    actionGroup.addAction(new ToggleBooleanProperty(
-      ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
-      null,
-      AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun,
-      properties, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED)).setAsSecondary(true);
   }
 
 

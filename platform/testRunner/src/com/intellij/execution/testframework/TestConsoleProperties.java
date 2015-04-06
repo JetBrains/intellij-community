@@ -20,23 +20,30 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.Storage;
+import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -177,5 +184,18 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   public void setUsePredefinedMessageFilter(boolean usePredefinedMessageFilter) {
     myUsePredefinedMessageFilter = usePredefinedMessageFilter;
+  }
+
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                         ExecutionEnvironment environment, JComponent parent) {
+  }
+
+  @NotNull
+  protected ToggleBooleanProperty createIncludeNonStartedInRerun() {
+    return new ToggleBooleanProperty(
+      ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
+      null,
+      AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun,
+      this, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
 }

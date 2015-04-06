@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -74,6 +73,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
 
+  @NotNull protected abstract SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor);
+
   public SearchForTestsTask createSearchingForTestsTask() {
     return null;
   }
@@ -91,11 +92,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     final RunnerSettings runnerSettings = getRunnerSettings();
 
-    final TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(getConfiguration(), getFrameworkName(), executor);
+    final TestConsoleProperties testConsoleProperties = createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView =
       SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), null);
+    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
@@ -105,7 +107,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = new Runnable() {
           public void run() {
-            final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
             if (viewer.hasTestSuites() ||
                 !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), testConsoleProperties.isDebug())) {
               TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewer.getRoot(), testConsoleProperties, null);
@@ -122,7 +123,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {
-        return ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+        return viewer;
       }
     });
 

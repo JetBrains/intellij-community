@@ -153,19 +153,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myEnvironment, this){
-      @Override
-      protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                             TestConsoleProperties properties,
-                                             ExecutionEnvironment environment, JComponent parent) {
-        super.appendAdditionalActions(actionGroup, properties, environment, parent);
-        actionGroup.addAction(new ToggleBooleanProperty(
-          ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
-                                                    null,
-                                                    AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun,
-                                                    properties, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED)).setAsSecondary(true);
-      }
-    };
+    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myEnvironment, this);
     panel.setModel(this);
     return panel;
   }
