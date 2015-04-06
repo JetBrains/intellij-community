@@ -33,6 +33,7 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestPackage extends TestObject {
@@ -48,6 +49,7 @@ public class TestPackage extends TestObject {
     return data.getScope().getSourceScope(getConfiguration());
   }
 
+  @NotNull
   @Override
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     final JUnitProcessHandler handler = super.createHandler(executor);

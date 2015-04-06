@@ -82,10 +82,16 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   @NotNull
   @Override
+  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    return startProcess();
+  }
+
+  @NotNull
+  @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final boolean smRunner = Registry.is("testng_sm_runner");
-    if (smRunner) {
-      return startSMRunner(executor, startProcess());
+    final ExecutionResult executionResult = startSMRunner(executor);
+    if (executionResult != null) {
+      return executionResult;
     }
     OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();

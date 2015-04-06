@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   @NotNull protected abstract T getConfiguration();
 
+  @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
+
   public SearchForTestsTask createSearchingForTestsTask() {
     return null;
   }
@@ -75,8 +78,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     return module != null;
   }
 
-  protected ExecutionResult startSMRunner(Executor executor, OSProcessHandler handler) throws ExecutionException {
-    getJavaParameters().getVMParametersList().add("-Didea." + getFrameworkId()+ ".sm_runner");
+  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
+    if (!Registry.is(getFrameworkId() + "_sm_runner")) {
+      return null;
+    }
+    getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
     getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
 
     final RunnerSettings runnerSettings = getRunnerSettings();
@@ -86,6 +92,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     final ConsoleView consoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), null);
     Disposer.register(getConfiguration().getProject(), consoleView);
+
+    final OSProcessHandler handler = createHandler(executor);
     consoleView.attachToProcess(handler);
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = createRerunFailedTestsAction(testConsoleProperties, consoleView);

@@ -180,9 +180,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final boolean smRunner = Registry.is("junit_sm_runner");
-    if (smRunner) {
-      return startSMRunner(executor, createHandler(executor));
+    final ExecutionResult executionResult = startSMRunner(executor);
+    if (executionResult != null) {
+      return executionResult;
     }
     final JUnitProcessHandler handler = createHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();
@@ -299,6 +299,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     TestsUIUtil.notifyByBalloon(consoleProperties.getProject(), started, model != null ? model.getRoot() : null, consoleProperties, comment);
   }
 
+  @NotNull
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
     final String repeatMode = getConfiguration().getRepeatMode();
