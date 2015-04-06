@@ -15,7 +15,6 @@
  */
 package com.jetbrains.commandInterface.command;
 
-import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public interface Command {
+public interface Command extends CommandExecutor {
 
 
   /**
@@ -39,10 +38,10 @@ public interface Command {
    * @param tryCutOutArguments Try to remove information about arguments from help text (i.e. "[file] removes file" -> "removes file").
    *                           Command may or may not support it.
    *                           It should ignore argument if it does not know how to cut out argument info.
-   * @return Command readable help text
+   * @return Command help
    */
   @Nullable
-  String getHelp(boolean tryCutOutArguments);
+  Help getHelp(boolean tryCutOutArguments);
 
 
   /**
@@ -57,11 +56,4 @@ public interface Command {
   @NotNull
   List<Option> getOptions();
 
-  /**
-   * Execute command
-   *
-   * @param module     module to execute command against
-   * @param parameters command's arguments and options (just like entered by user but splitted by space)
-   */
-  void execute(@NotNull final Module module, @NotNull final List<String> parameters);
 }

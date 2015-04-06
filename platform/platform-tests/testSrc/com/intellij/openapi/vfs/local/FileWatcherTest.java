@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 
+@SuppressWarnings("Duplicates")
 public class FileWatcherTest extends PlatformLangTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
@@ -109,7 +110,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     ((LocalFileSystemImpl)myFileSystem).cleanupForNextTest();
 
     myAcceptedDirectories.clear();
-    myAcceptedDirectories.add(FileUtil.getTempDirectory());
+    myAcceptedDirectories.add(getTempDirectory().getAbsolutePath());
 
     LOG = FileWatcher.getLog();
     LOG.debug("================== setting up " + getName() + " ==================");

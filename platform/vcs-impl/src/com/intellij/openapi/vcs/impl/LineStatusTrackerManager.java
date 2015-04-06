@@ -208,6 +208,15 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     }
   }
 
+  public void updateSettings() {
+    synchronized (myLock) {
+      LineStatusTracker.Mode mode = getMode();
+      for (LineStatusTracker tracker : myLineStatusTrackers.values()) {
+        tracker.setMode(mode);
+      }
+    }
+  }
+
   private void resetTracker(@NotNull final VirtualFile virtualFile) {
     resetTracker(virtualFile, false);
   }
@@ -300,11 +309,16 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       if (myLineStatusTrackers.containsKey(document)) return;
       assert !myPartner.containsKey(document);
 
-      final LineStatusTracker tracker = LineStatusTracker.createOn(virtualFile, document, myProject);
+      final LineStatusTracker tracker = LineStatusTracker.createOn(virtualFile, document, myProject, getMode());
       myLineStatusTrackers.put(document, tracker);
 
       startAlarm(document, virtualFile);
     }
+  }
+
+  @NotNull
+  private static LineStatusTracker.Mode getMode() {
+    return VcsApplicationSettings.getInstance().SHOW_WHITESPACES_IN_LST ? LineStatusTracker.Mode.SMART : LineStatusTracker.Mode.DEFAULT;
   }
 
   private void startAlarm(@NotNull final Document document, @NotNull final VirtualFile virtualFile) {

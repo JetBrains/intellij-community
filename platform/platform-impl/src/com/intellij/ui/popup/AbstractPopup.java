@@ -1260,13 +1260,27 @@ public class AbstractPopup implements JBPopup {
 
     Dimension size = getSize();
     Dimension prefSize = myContent.computePreferredSize();
+    Point location = !myLocateWithinScreen ? null : getLocationOnScreen();
+    Rectangle screen = location == null ? null : ScreenUtil.getScreenRectangle(location);
 
     if (width) {
       size.width = prefSize.width;
+      if (screen != null) {
+        int delta = screen.width + screen.x - location.x;
+        if (size.width > delta) {
+          size.width = delta;
+        }
+      }
     }
 
     if (height) {
       size.height = prefSize.height;
+      if (screen != null) {
+        int delta = screen.height + screen.y - location.y;
+        if (size.height > delta) {
+          size.height = delta;
+        }
+      }
     }
 
     size = computeWindowSize(size);
@@ -1277,6 +1291,7 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  @Deprecated
   public void pack() {
     if (isBusy()) return;
 

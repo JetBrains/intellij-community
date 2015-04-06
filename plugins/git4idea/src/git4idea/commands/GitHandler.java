@@ -86,8 +86,8 @@ public abstract class GitHandler {
   private final File myWorkingDirectory;
 
   private boolean myEnvironmentCleanedUp = true; // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
-  private int mySshHandler;
-  private int myHttpHandler;
+  private int mySshHandler = -1;
+  private int myHttpHandler = -1;
   private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
@@ -606,8 +606,10 @@ public abstract class GitHandler {
     if (myEnvironmentCleanedUp) {
       return;
     }
-    if (isRemote()) {
+    if (mySshHandler > 0) {
       ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
+    }
+    if (myHttpHandler > 0) {
       ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
     }
     myEnvironmentCleanedUp = true;

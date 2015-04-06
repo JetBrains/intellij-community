@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -206,6 +207,6 @@ class MoverWrapper {
     final int selectionRelativeOffset = selectionStart - moveOffset;
     int newSelectionStart = insOffset + selectionRelativeOffset;
     int newSelectionEnd = newSelectionStart + selectionEnd - selectionStart;
-    editor.getSelectionModel().setSelection(newSelectionStart, newSelectionEnd);
+    EditorUtil.setSelectionExpandingFoldedRegionsIfNeeded(editor, newSelectionStart, newSelectionEnd);
   }
 }

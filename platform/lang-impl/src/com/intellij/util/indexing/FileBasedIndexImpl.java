@@ -46,6 +46,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -1790,7 +1791,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private void scheduleUpdate(@NotNull ID<?, ?> indexId, @NotNull Computable<Boolean> update, @NotNull Runnable successRunnable) {
-    if (myNotRequiringContentIndices.contains(indexId)) {
+    if (myNotRequiringContentIndices.contains(indexId) && !Registry.is("idea.concurrent.scanning.files.to.index")) {
       myContentlessIndicesUpdateQueue.submit(update, successRunnable);
     }
     else {
@@ -2356,7 +2357,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     @NotNull
     @Override
     public List<VirtualFile> getFiles() {
-      return myFiles;
+      synchronized (myFiles) {
+        return myFiles;
+      }
     }
 
     @Override
@@ -2383,7 +2386,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final ID<?, ?> indexId = affectedIndexCandidates.get(i);
             try {
               if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
-                myFiles.add(file);
+                synchronized (myFiles) {
+                  myFiles.add(file);
+                }
                 oldStuff = false;
                 break;
               }
@@ -2522,7 +2527,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public VirtualFile findFileById(Project project, int id) {
-    return IndexInfrastructure.findFileById((PersistentFS) ManagingFS.getInstance(), id);
+    return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
   }
 
   @Nullable
@@ -2566,45 +2571,76 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @Override
-  public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+    PushedFilePropertiesUpdaterImpl.invoke2xConcurrentlyIfPossible(collectScanRootRunnables(processor, project, indicator));
+  }
+
+  @Override
+  public void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull final Project project, final ProgressIndicator indicator) {
+    for(Runnable r: collectScanRootRunnables(processor, project, indicator)) r.run();
+  }
+
+  private static @NotNull List<Runnable> collectScanRootRunnables(@NotNull final ContentIterator processor,
+                                                  @NotNull final Project project,
+                                                  final ProgressIndicator indicator) {
     if (project.isDisposed()) {
-      return;
+      return Collections.emptyList();
     }
+
+    List<Runnable> tasks = new ArrayList<Runnable>();
+
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // iterate project content
-    projectFileIndex.iterateContent(processor);
+    tasks.add(new Runnable() {
+      @Override
+      public void run() {
+        projectFileIndex.iterateContent(processor);
+      }
+    });
+    /*
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    for(final Module module: modules) {
+      tasks.add(new Runnable() {
+        @Override
+        public void run() {
+          if (module.isDisposed()) return;
+          ModuleRootManager.getInstance(module).getFileIndex().iterateContent(processor);
+        }
+      });
+    }*/
 
-    if (project.isDisposed()) {
-      return;
-    }
-
-    Set<VirtualFile> visitedRoots = new THashSet<VirtualFile>();
+    final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
-        return;
+        return null;
       }
-      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
+      for (final VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator, visitedRoots, null);
+          tasks.add(new Runnable() {
+            @Override
+            public void run() {
+              if (project.isDisposed() || !root.isValid()) return;
+              iterateRecursively(root, processor, indicator, visitedRoots, null);
+            }
+          });
         }
       }
-      for (VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
+      for (final VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
         if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator, visitedRoots, null);
+          tasks.add(new Runnable() {
+            @Override
+            public void run() {
+              if (project.isDisposed() || !root.isValid()) return;
+              iterateRecursively(root, processor, indicator, visitedRoots, null);
+            }
+          });
         }
       }
     }
 
-    if (project.isDisposed()) {
-      return;
-    }
     // iterate associated libraries
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (module.isDisposed()) {
-        return;
-      }
+    for (final Module module : ModuleManager.getInstance(project).getModules()) {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry) {
@@ -2613,9 +2649,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final VirtualFile[] libSources = entry.getRootFiles(OrderRootType.SOURCES);
             final VirtualFile[] libClasses = entry.getRootFiles(OrderRootType.CLASSES);
             for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
-              for (VirtualFile root : roots) {
+              for (final VirtualFile root : roots) {
                 if (visitedRoots.add(root)) {
-                  iterateRecursively(root, processor, indicator, null, projectFileIndex);
+                  tasks.add(new Runnable() {
+                    @Override
+                    public void run() {
+                      if (project.isDisposed() || module.isDisposed() || !root.isValid()) return;
+                      iterateRecursively(root, processor, indicator, null, projectFileIndex);
+                    }
+                  });
                 }
               }
             }
@@ -2623,6 +2665,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
     }
+    return tasks;
   }
 
   private static void iterateRecursively(@Nullable final VirtualFile root,

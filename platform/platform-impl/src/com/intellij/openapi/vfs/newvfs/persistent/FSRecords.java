@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,12 +250,12 @@ public class FSRecords implements Forceable {
       final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
       if (!namesFile.exists()) {
-        invalidateIndex();
+        invalidateIndex("'" + namesFile.getAbsolutePath() + "' does not exist");
       }
 
       try {
         if (getCorruptionMarkerFile().exists()) {
-          invalidateIndex();
+          invalidateIndex("corruption marker found");
           throw new IOException("Corruption marker file found");
         }
 
@@ -346,8 +346,8 @@ public class FSRecords implements Forceable {
       }
     }
 
-    private static void invalidateIndex() {
-      LOG.info("Marking VFS as corrupted");
+    private static void invalidateIndex(String reason) {
+      LOG.info("Marking VFS as corrupted: " + reason);
       final File indexRoot = PathManager.getIndexRoot();
       if (indexRoot.exists()) {
         final String[] children = indexRoot.list();

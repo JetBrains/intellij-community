@@ -16,79 +16,94 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import gnu.trove.THashMap;
-import org.jdom.Element;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 @State(
   name = "DslActivationStatus",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivation.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/dslActivationStatus.xml")
+  }
 )
-public class DslActivationStatus implements PersistentStateComponent<Element> {
-  private final Map<VirtualFile, String> myStatus = new THashMap<VirtualFile, String>();
-  private static final String ENABLED = "enabled";
+public class DslActivationStatus implements PersistentStateComponent<DslActivationStatus.State> {
+
+  enum Status {
+    ACTIVE,
+    MODIFIED,
+    ERROR
+  }
+
+  public static class Entry {
+    @Attribute
+    public String url;
+    @Attribute
+    public Status status;
+    @Attribute
+    public String error;
+
+    public Entry() {
+    }
+
+    public Entry(String url, Status status, String error) {
+      this.url = url;
+      this.status = status;
+      this.error = error;
+    }
+  }
+
+  public static class State {
+    @AbstractCollection(surroundWithTag = false)
+    public Collection<Entry> entries = ContainerUtil.newArrayList();
+  }
+
+  private final Map<VirtualFile, Entry> myStatus = Collections.synchronizedMap(new FactoryMap<VirtualFile, Entry>() {
+    @Nullable
+    @Override
+    protected DslActivationStatus.Entry create(VirtualFile key) {
+      return new DslActivationStatus.Entry(key.getUrl(), Status.ACTIVE, null);
+    }
+  });
+
+  public Entry getGdslFileInfo(@NotNull VirtualFile file) {
+    return myStatus.get(file);
+  }
+
+  @Nullable
+  @Override
+  public State getState() {
+    final State state = new State();
+    state.entries = myStatus.values();
+    return state;
+  }
+
+  @Override
+  public void loadState(State state) {
+    synchronized (myStatus) {
+      myStatus.clear();
+      if (state.entries == null) return;
+      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
+      for (Entry entry : state.entries) {
+        if (entry.url == null || entry.status == null) continue;
+        final VirtualFile file = fileManager.findFileByUrl(entry.url);
+        if (file != null) {
+          myStatus.put(file, entry);
+        }
+      }
+    }
+  }
 
   public static DslActivationStatus getInstance() {
     return ServiceManager.getService(DslActivationStatus.class);
-  }
-
-  public synchronized void activateUntilModification(@NotNull VirtualFile vfile) {
-    myStatus.put(vfile, ENABLED);
-  }
-
-  public synchronized void disableFile(@NotNull VirtualFile vfile, @NotNull String error) {
-    myStatus.put(vfile, error);
-  }
-
-  @Nullable
-  public synchronized String getInactivityReason(VirtualFile file) {
-    String status = myStatus.get(file);
-    return ENABLED.equals(status) ? null : status;
-  }
-
-  public synchronized boolean isActivated(VirtualFile file) {
-    final String status = myStatus.get(file);
-    if (status == null) {
-      myStatus.put(file, ENABLED);
-      return true;
-    }
-    return ENABLED.equals(status);
-  }
-
-  @Nullable
-  @Override
-  public synchronized Element getState() {
-    Element root = new Element("x");
-    for (Map.Entry<VirtualFile, String> entry : myStatus.entrySet()) {
-      VirtualFile file = entry.getKey();
-      String status = entry.getValue();
-      Element element = new Element("file");
-      root.addContent(element);
-      element.setAttribute("url", file.getUrl());
-      if (!ENABLED.equals(status)) {
-        element.setAttribute("status", status);
-      }
-    }
-    return root;
-  }
-
-  @Override
-  public synchronized void loadState(Element state) {
-    List<Element> children = state.getChildren("file");
-    for (Element element : children) {
-      String url = element.getAttributeValue("url", "");
-      String status = element.getAttributeValue("status");
-      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (file != null) {
-        myStatus.put(file, StringUtil.isNotEmpty(status) ? status : ENABLED);
-      }
-    }
   }
 }

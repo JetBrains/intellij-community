@@ -67,6 +67,8 @@ import java.awt.event.WindowFocusListener;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   public static final Logger LOG = Logger.getInstance(SimpleDiffViewer.class);
 

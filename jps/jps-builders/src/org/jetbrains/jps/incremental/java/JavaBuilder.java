@@ -676,9 +676,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     
     if (bytecodeTarget == null) {
-      // last resort and backward compatibility: 
-      // check if user explicitly defined bytecode target in additional compiler options
-      bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+      if (!StringUtil.isEmpty(langLevel)) {
+        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+        bytecodeTarget = langLevel;
+      }
+      else {
+        // last resort and backward compatibility: 
+        // check if user explicitly defined bytecode target in additional compiler options
+        bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+      }
     }
 
     final int compilerSdkVersion = getCompilerSdkVersion(context);

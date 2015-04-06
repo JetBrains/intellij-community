@@ -390,10 +390,13 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
     if (contents.size() != 2) return false;
 
-    if (!canShowContent(contents.get(0), context)) return false;
-    if (!canShowContent(contents.get(1), context)) return false;
-
-    return wantShowContent(contents.get(0), context) || wantShowContent(contents.get(1), context);
+    boolean canShow = true;
+    boolean wantShow = false;
+    for (DiffContent content : contents) {
+      canShow &= canShowContent(content, context);
+      wantShow |= wantShowContent(content, context);
+    }
+    return canShow && wantShow;
   }
 
   public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {

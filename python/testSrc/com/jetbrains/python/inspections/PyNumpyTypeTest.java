@@ -33,4 +33,54 @@ public class PyNumpyTypeTest extends PyTestCase {
   public void testDtype() {
     doTest();
   }
+
+  public void testEmpty() {
+    doTest();
+  }
+
+  public void testTranspose() {
+    doTest();
+  }
+
+  public void testArgSort() {
+    doTest();
+  }
+
+  public void testVectorize() {
+    doTest();
+  }
+
+  public void testDefaultValue() {
+    doTest();
+  }
+
+  public void testDefaultValueKeyword() {
+    doTest();
+  }
+
+  public void testSort() {
+    doTest();
+  }
+
+  public void testUFunc() {
+    doTest();
+  }
+
+  public void testReturnOptional() {
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testReturnTuple() {
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testSlogdet() {
+    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
+    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
 }

@@ -48,6 +48,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -229,6 +230,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
 
       g2.setTransform(old);
+
+      IdeBackgroundUtil.paintEditorBackground(g, this);
     }
     finally {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();

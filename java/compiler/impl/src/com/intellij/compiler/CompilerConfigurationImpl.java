@@ -120,12 +120,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
-      public void beforeModuleRemoved(Project project, Module module) {
+      public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
       }
 
       @Override
-      public void moduleAdded(Project project, Module module) {
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         myProcessorsProfilesMap = null; // clear cache
       }
     });

@@ -3,12 +3,10 @@ package org.jetbrains.protocolReader
 import java.lang.reflect.Method
 import java.util.Arrays
 
-class ReadDelegate(private val typeHandler: TypeWriter<*>, private val isList: Boolean, hasNextNameParam: Boolean) {
-  class object {
-    private val STATIC_METHOD_PARAM_NAME_LIST = listOf(READER_NAME)
-    private val STATIC_METHOD_PARAM_NAME_LIST2 = Arrays.asList(READER_NAME, "nextName")
-  }
+private val STATIC_METHOD_PARAM_NAME_LIST = listOf(READER_NAME)
+private val STATIC_METHOD_PARAM_NAME_LIST2 = Arrays.asList(READER_NAME, "nextName")
 
+class ReadDelegate(private val typeHandler: TypeWriter<*>, private val isList: Boolean, hasNextNameParam: Boolean) {
   private val paramNames = if (hasNextNameParam) STATIC_METHOD_PARAM_NAME_LIST2 else STATIC_METHOD_PARAM_NAME_LIST
 
   fun write(scope: ClassScope, method: Method, out: TextOutput) {

@@ -30,12 +30,12 @@ public final class UnknownArgumentsInfo implements ArgumentsInfo {
    * Argument help text
    */
   @NotNull
-  private final String myHelp;
+  private final Help myHelp;
 
   /**
    * @param allArgumentsHelpText argument help text
    */
-  public UnknownArgumentsInfo(@NotNull final String allArgumentsHelpText) {
+  public UnknownArgumentsInfo(@NotNull final Help allArgumentsHelpText) {
     myHelp = allArgumentsHelpText;
   }
 

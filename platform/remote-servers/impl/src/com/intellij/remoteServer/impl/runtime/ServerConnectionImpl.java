@@ -229,6 +229,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
           myRemoteDeployments.clear();
         }
         myStatusText = "Cannot obtain deployments: " + errorMessage;
+        myEventDispatcher.queueConnectionStatusChanged(ServerConnectionImpl.this);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         onFinished.run();
       }
@@ -347,16 +348,20 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        setStatus(ConnectionStatus.DISCONNECTED);
+        setStatus(ConnectionStatus.DISCONNECTED, errorMessage);
         myRuntimeInstance = null;
-        myStatusText = errorMessage;
         callback.errorOccurred(errorMessage);
       }
     });
   }
 
   private void setStatus(final ConnectionStatus status) {
+    setStatus(status, null);
+  }
+
+  private void setStatus(final ConnectionStatus status, String statusText) {
     myStatus = status;
+    myStatusText = statusText;
     myEventDispatcher.queueConnectionStatusChanged(this);
   }
 

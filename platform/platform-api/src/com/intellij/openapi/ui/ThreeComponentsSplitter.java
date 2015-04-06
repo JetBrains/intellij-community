@@ -23,10 +23,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +93,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     myDividerWidth = onePixelDividers ? 1 : 7;
     if (onePixelDividers) {
-      final JBColor bg = new JBColor(Gray.xCA, Gray.x37);
+      Color bg = UIUtil.CONTRAST_BORDER_COLOR;
       myFirstDivider.setBackground(bg);
       myLastDivider.setBackground(bg);
     }

@@ -16,8 +16,10 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -30,6 +32,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ContentsUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +137,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
             @Override
             public void onSuccess() {
               final PluginsAdvertiserDialog advertiserDialog =
-                new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
+                new PluginsAdvertiserDialog(null, 
+                                            myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                            PluginManagerMain.mapToPluginIds(myAllPlugins));
               if (advertiserDialog.showAndGet()) {
                 myEnabledExtensions.add(extension);
                 myNotifications.updateAllNotifications();

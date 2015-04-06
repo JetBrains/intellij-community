@@ -55,7 +55,7 @@
                             <constraints border-constraint="West"/>
                             <properties/>
                           </component>
-                          <component id="ee75f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="mySourceDirField">
+                          <component id="ee75f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="mySourceDirField" custom-create="true">
                             <constraints border-constraint="Center"/>
                             <properties/>
                           </component>
@@ -72,7 +72,7 @@
                             <constraints border-constraint="West"/>
                             <properties/>
                           </component>
-                          <component id="cc2ae" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTargetDirField">
+                          <component id="cc2ae" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTargetDirField" custom-create="true">
                             <constraints border-constraint="Center"/>
                             <properties/>
                           </component>

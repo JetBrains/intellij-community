@@ -3,16 +3,17 @@ package org.jetbrains.protocolReader
 import gnu.trove.THashSet
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.JsonParseMethod
-
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
-import java.util.*
+import java.util.Arrays
+import java.util.Comparator
+import java.util.LinkedHashMap
 
 class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>) {
   private val visitedInterfaces = THashSet<Class<*>>(1)
   val methodMap = LinkedHashMap<Method, ReadDelegate>();
 
-  {
+  init {
     readInterfaceRecursive(type)
   }
 
@@ -55,7 +56,7 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       //noinspection SuspiciousMethodCalls
       var typeWriter: TypeWriter<*>? = typeToTypeHandler.get(returnType)
       if (typeWriter == null) {
-        typeWriter = InterfaceReader.createHandler(typeToTypeHandler, m.getReturnType())
+        typeWriter = createHandler(typeToTypeHandler, m.getReturnType())
         if (typeWriter == null) {
           throw JsonProtocolModelParseException("Unknown return type in " + m)
         }
@@ -67,7 +68,7 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       }
       val argument = arguments[0]
       if (argument == javaClass<JsonReaderEx>() || argument == javaClass<Any>()) {
-        methodMap.put(m, ReadDelegate(typeWriter!!, isList, arguments.size != 1))
+        methodMap.put(m, ReadDelegate(typeWriter!!, isList, arguments.size() != 1))
       }
       else {
         throw JsonProtocolModelParseException("Unrecognized argument type in " + m)

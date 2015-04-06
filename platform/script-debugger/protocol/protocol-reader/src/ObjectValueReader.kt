@@ -3,7 +3,7 @@ package org.jetbrains.protocolReader
 class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?) : ValueReader() {
   val primitiveValueName: String?
 
-  {
+  init {
     this.primitiveValueName = if (primitiveValueName == null || primitiveValueName.isEmpty()) null else primitiveValueName
   }
 

@@ -3,7 +3,7 @@ package org.jetbrains.protocolReader
 class MapReader(componentParser: ValueReader?) : ValueReader() {
   private val componentParser: ValueReader?
 
-  {
+  init {
     if (componentParser == null || componentParser is ObjectValueReader) {
       this.componentParser = componentParser
     }

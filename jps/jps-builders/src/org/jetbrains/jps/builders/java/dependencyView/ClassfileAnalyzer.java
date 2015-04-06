@@ -569,24 +569,8 @@ class ClassfileAnalyzer {
             // do not register access to own class members
             final String memberName = handle.getName();
             final String memberDescriptor = handle.getDesc();
-            if (isFieldAccessHandle(handle)) {
-              final int tag = handle.getTag();
-              int opCode;
-              if (tag == Opcodes.H_GETFIELD) {
-                opCode = Opcodes.GETFIELD;
-              }
-              else if (tag == Opcodes.H_GETSTATIC) {
-                opCode = Opcodes.GETSTATIC;
-              }
-              else if (tag == Opcodes.H_PUTFIELD) {
-                opCode = Opcodes.PUTFIELD;
-              }
-              else if (tag == Opcodes.H_PUTSTATIC) {
-                opCode = Opcodes.PUTSTATIC;
-              }
-              else {
-                opCode = Opcodes.H_GETFIELD;
-              }
+            final int opCode = getFieldAccessOpcode(handle);
+            if (opCode > 0) {
               registerFieldUsage(opCode, memberOwner, memberName, memberDescriptor);
             }
             else {
@@ -637,9 +621,18 @@ class ClassfileAnalyzer {
       };
     }
 
-    private boolean isFieldAccessHandle(Handle handle) {
-      final int tag = handle.getTag();
-      return tag == Opcodes.H_GETFIELD || tag == Opcodes.H_GETSTATIC || tag == Opcodes.H_PUTFIELD || tag == Opcodes.H_PUTSTATIC;
+    /**
+     * @param handle
+     * @return corresponding field access opcode or -1 if the handle does not represent field access handle
+     */
+    private int getFieldAccessOpcode(Handle handle) {
+      switch (handle.getTag()) {
+        case Opcodes.H_GETFIELD: return Opcodes.GETFIELD;
+        case Opcodes.H_GETSTATIC: return Opcodes.GETSTATIC;
+        case Opcodes.H_PUTFIELD: return Opcodes.PUTFIELD;
+        case Opcodes.H_PUTSTATIC: return Opcodes.PUTSTATIC;
+        default: return -1;
+      }
     }
 
     @Override

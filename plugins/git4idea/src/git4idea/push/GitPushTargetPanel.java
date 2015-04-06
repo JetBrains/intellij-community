@@ -288,8 +288,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       if (!remotes.isEmpty()) {
         renderer.append(SEPARATOR, targetTextAttributes);
         if (forceRenderedText != null) {
-          //if sync typing available we need to emulate editor changes
-          myTargetEditor.setText(forceRenderedText);
+          // update only appearance; do not update model in rendering!!!!
           renderer.append(forceRenderedText);
           return;
         }
@@ -391,10 +390,20 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetEditor.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        super.documentChanged(e);
-        listener.onTargetInEditModeChanged(myTargetEditor.getText());
+        //fire only about user's changes
+        if (myTargetEditor.isShowing()) {
+          listener.onTargetInEditModeChanged(myTargetEditor.getText());
+        }
       }
     });
+  }
+
+  @Override
+  public void forceUpdateEditableUiModel(@NotNull String forcedText) {
+    //if targetEditor is now editing by user, it shouldn't be force updated
+    if (!myTargetEditor.isShowing()) {
+      myTargetEditor.setText(forcedText);
+    }
   }
 
   private class MyGitTargetFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {

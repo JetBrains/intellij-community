@@ -52,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -100,10 +99,20 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     }
 
     if (!Comparing.equal(change1.getClass(), change2.getClass())) return false;
-    if (!Comparing.equal(change1.getBeforeRevision(), change2.getBeforeRevision())) return false;
-    if (!Comparing.equal(change1.getAfterRevision(), change2.getAfterRevision())) return false;
+    if (!isEquals(change1.getBeforeRevision(), change2.getBeforeRevision())) return false;
+    if (!isEquals(change1.getAfterRevision(), change2.getAfterRevision())) return false;
 
     return true;
+  }
+
+  private static boolean isEquals(@Nullable ContentRevision revision1, @Nullable ContentRevision revision2) {
+    if (Comparing.equal(revision1, revision2)) return true;
+    if (revision1 instanceof CurrentContentRevision && revision2 instanceof CurrentContentRevision) {
+      VirtualFile vFile1 = ((CurrentContentRevision)revision1).getVirtualFile();
+      VirtualFile vFile2 = ((CurrentContentRevision)revision2).getVirtualFile();
+      return Comparing.equal(vFile1, vFile2);
+    }
+    return false;
   }
 
   @Nullable

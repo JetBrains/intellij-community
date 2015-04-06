@@ -332,7 +332,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     LOG.assertTrue(containingClass != null);
 
     if (qualifierExpression != null) {
-      boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(functionalInterfaceType, methodCall), containingClass, substitutor);
+      boolean isReceiverType = false;
+      if (qualifierExpression instanceof PsiReferenceExpression && ArrayUtil.find(parameters, ((PsiReferenceExpression)qualifierExpression).resolve()) > -1) {
+        isReceiverType = PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(functionalInterfaceType, methodCall), containingClass, substitutor);
+      }
       return isReceiverType ? composeReceiverQualifierText(parameters, psiMethod, containingClass, qualifierExpression)
                             : qualifierExpression.getText();
     }

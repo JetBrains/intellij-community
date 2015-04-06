@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ public class VarProcessor {
 
   private Map<VarVersionPair, String> mapVarNames = new HashMap<VarVersionPair, String>();
   private VarVersionsProcessor varVersions;
-  private Map<VarVersionPair, String> thisVars = new HashMap<VarVersionPair, String>();
-  private Set<VarVersionPair> externalVars = new HashSet<VarVersionPair>();
+  private final Map<VarVersionPair, String> thisVars = new HashMap<VarVersionPair, String>();
+  private final Set<VarVersionPair> externalVars = new HashSet<VarVersionPair>();
 
   public void setVarVersions(RootStatement root) {
     varVersions = new VarVersionsProcessor();

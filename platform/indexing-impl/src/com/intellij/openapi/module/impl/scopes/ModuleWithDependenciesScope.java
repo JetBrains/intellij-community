@@ -176,10 +176,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Nullable
   private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    if (myProjectFileIndex.isInContent(file)) {
-      return myProjectFileIndex.getSourceRootForFile(file);
-    }
-    return myProjectFileIndex.getClassRootForFile(file);
+    VirtualFile root = myProjectFileIndex.getClassRootForFile(file);
+    return root != null ? root : myProjectFileIndex.getSourceRootForFile(file);
   }
 
   @TestOnly

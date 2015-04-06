@@ -2,6 +2,3 @@ class C:
     pass
 
 
-
-
-

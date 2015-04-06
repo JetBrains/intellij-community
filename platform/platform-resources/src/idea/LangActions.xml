@@ -401,27 +401,27 @@
       <reference ref="GotoNextBookmark"/>
       <reference ref="GotoPreviousBookmark"/>
 
-      <action id="GotoBookmark0" class="com.intellij.ide.bookmarks.actions.GotoBookmark0Action"/>
-      <action id="GotoBookmark1" class="com.intellij.ide.bookmarks.actions.GotoBookmark1Action"/>
-      <action id="GotoBookmark2" class="com.intellij.ide.bookmarks.actions.GotoBookmark2Action"/>
-      <action id="GotoBookmark3" class="com.intellij.ide.bookmarks.actions.GotoBookmark3Action"/>
-      <action id="GotoBookmark4" class="com.intellij.ide.bookmarks.actions.GotoBookmark4Action"/>
-      <action id="GotoBookmark5" class="com.intellij.ide.bookmarks.actions.GotoBookmark5Action"/>
-      <action id="GotoBookmark6" class="com.intellij.ide.bookmarks.actions.GotoBookmark6Action"/>
-      <action id="GotoBookmark7" class="com.intellij.ide.bookmarks.actions.GotoBookmark7Action"/>
-      <action id="GotoBookmark8" class="com.intellij.ide.bookmarks.actions.GotoBookmark8Action"/>
-      <action id="GotoBookmark9" class="com.intellij.ide.bookmarks.actions.GotoBookmark9Action"/>
+      <action id="GotoBookmark0" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark0Action"/>
+      <action id="GotoBookmark1" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark1Action"/>
+      <action id="GotoBookmark2" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark2Action"/>
+      <action id="GotoBookmark3" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark3Action"/>
+      <action id="GotoBookmark4" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark4Action"/>
+      <action id="GotoBookmark5" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark5Action"/>
+      <action id="GotoBookmark6" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark6Action"/>
+      <action id="GotoBookmark7" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark7Action"/>
+      <action id="GotoBookmark8" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark8Action"/>
+      <action id="GotoBookmark9" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark9Action"/>
 
-      <action id="ToggleBookmark0" class="com.intellij.ide.bookmarks.actions.ToggleBookmark0Action"/>
-      <action id="ToggleBookmark1" class="com.intellij.ide.bookmarks.actions.ToggleBookmark1Action"/>
-      <action id="ToggleBookmark2" class="com.intellij.ide.bookmarks.actions.ToggleBookmark2Action"/>
-      <action id="ToggleBookmark3" class="com.intellij.ide.bookmarks.actions.ToggleBookmark3Action"/>
-      <action id="ToggleBookmark4" class="com.intellij.ide.bookmarks.actions.ToggleBookmark4Action"/>
-      <action id="ToggleBookmark5" class="com.intellij.ide.bookmarks.actions.ToggleBookmark5Action"/>
-      <action id="ToggleBookmark6" class="com.intellij.ide.bookmarks.actions.ToggleBookmark6Action"/>
-      <action id="ToggleBookmark7" class="com.intellij.ide.bookmarks.actions.ToggleBookmark7Action"/>
-      <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleBookmark8Action"/>
-      <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleBookmark9Action"/>
+      <action id="ToggleBookmark0" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark0Action"/>
+      <action id="ToggleBookmark1" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark1Action"/>
+      <action id="ToggleBookmark2" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark2Action"/>
+      <action id="ToggleBookmark3" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark3Action"/>
+      <action id="ToggleBookmark4" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark4Action"/>
+      <action id="ToggleBookmark5" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark5Action"/>
+      <action id="ToggleBookmark6" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark6Action"/>
+      <action id="ToggleBookmark7" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark7Action"/>
+      <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark8Action"/>
+      <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark9Action"/>
 
     </group>
 
@@ -638,6 +638,10 @@
 
     <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
+    </action>
+
+    <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
     </action>
 
     <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"/>
@@ -940,5 +944,6 @@
 
     <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
 
+    <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
   </actions>
 </component>

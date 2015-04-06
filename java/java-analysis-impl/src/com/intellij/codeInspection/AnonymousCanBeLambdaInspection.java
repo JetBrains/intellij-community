@@ -238,10 +238,10 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, anonymousClass);
       body.accept(checker);
 
-      PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
-      final Set<PsiLocalVariable> conflictingLocals = checker.getLocals();
-      for (Iterator<PsiLocalVariable> iterator = conflictingLocals.iterator(); iterator.hasNext(); ) {
-        PsiLocalVariable local = iterator.next();
+      final PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(body.getProject());
+      final Set<PsiVariable> conflictingLocals = checker.getLocals();
+      for (Iterator<PsiVariable> iterator = conflictingLocals.iterator(); iterator.hasNext(); ) {
+        PsiVariable local = iterator.next();
         final String localName = local.getName();
         if (localName == null || helper.resolveReferencedVariable(localName, anonymousClass) == null) {
           iterator.remove();
@@ -252,7 +252,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
       ReplaceWithLambdaFix
-        .giveUniqueNames(project, lambdaContext, elementFactory, body, conflictingLocals.toArray(new PsiVariable[conflictingLocals.size()]));
+        .giveUniqueNames(project, anonymousClass, elementFactory, body, conflictingLocals.toArray(new PsiVariable[conflictingLocals.size()]));
 
       final String lambdaWithTypesDeclared = ReplaceWithLambdaFix.composeLambdaText(method, true);
       final String withoutTypesDeclared = ReplaceWithLambdaFix.composeLambdaText(method, false);
@@ -350,7 +350,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final Map<PsiVariable, String> names = new HashMap<PsiVariable, String>();
       for (PsiVariable parameter : parameters) {
         String parameterName = parameter.getName();
-        final String uniqueVariableName = codeStyleManager.suggestUniqueVariableName(parameterName, lambdaContext, false);
+        final String uniqueVariableName = codeStyleManager.suggestUniqueVariableName(parameterName, parameter.getParent(), false);
         if (!Comparing.equal(parameterName, uniqueVariableName)) {
           names.put(parameter, uniqueVariableName);
         }
@@ -451,7 +451,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
   private static class ForbiddenRefsChecker extends JavaRecursiveElementWalkingVisitor {
     private boolean myBodyContainsForbiddenRefs;
-    private final Set<PsiLocalVariable> myLocals = ContainerUtilRt.newHashSet(5);
+    private final Set<PsiVariable> myLocals = ContainerUtilRt.newHashSet(5);
 
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
@@ -502,11 +502,13 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitVariable(PsiVariable variable) {       
       if (myBodyContainsForbiddenRefs) return;
 
-      super.visitLocalVariable(variable);
-      myLocals.add(variable);
+      super.visitVariable(variable);
+      if (!(variable instanceof PsiField)) {
+        myLocals.add(variable);
+      }
     }
 
     @Override
@@ -590,7 +592,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       return myBodyContainsForbiddenRefs;
     }
 
-    public Set<PsiLocalVariable> getLocals() {
+    public Set<PsiVariable> getLocals() {
       return myLocals;
     }
   }

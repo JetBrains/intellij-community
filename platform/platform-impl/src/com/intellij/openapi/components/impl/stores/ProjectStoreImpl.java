@@ -133,6 +133,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
              .project(myProject).is();
   }
 
+  @NotNull
   @Override
   public TrackingPathMacroSubstitutor[] getSubstitutors() {
     return new TrackingPathMacroSubstitutor[] {getStateStorageManager().getMacroSubstitutor()};
@@ -154,7 +155,22 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final LocalFileSystem fs = LocalFileSystem.getInstance();
 
     final File file = new File(filePath);
-    if (!isIprPath(file)) {
+    if (isIprPath(file)) {
+      myScheme = StorageScheme.DEFAULT;
+
+      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath);
+
+      final String workspacePath = composeWsPath(filePath);
+      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath);
+
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath));
+        }
+      }, ModalityState.defaultModalityState());
+    }
+    else {
       myScheme = StorageScheme.DIRECTORY_BASED;
 
       final File dirStore = file.isDirectory() ? new File(file, Project.DIRECTORY_STORE_FOLDER)
@@ -176,21 +192,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
       }, ModalityState.defaultModalityState());
     }
-    else {
-      myScheme = StorageScheme.DEFAULT;
-
-      stateStorageManager.addMacro(StoragePathMacros.PROJECT_FILE, filePath);
-
-      final String workspacePath = composeWsPath(filePath);
-      stateStorageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath);
-
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath));
-        }
-      }, ModalityState.defaultModalityState());
-    }
 
     myPresentableUrl = null;
   }
@@ -200,7 +201,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private static String composeWsPath(String filePath) {
-    final int lastDot = filePath.lastIndexOf(".");
+    final int lastDot = filePath.lastIndexOf('.');
     final String filePathWithoutExt = lastDot > 0 ? filePath.substring(0, lastDot) : filePath;
     return filePathWithoutExt + WorkspaceFileType.DOT_DEFAULT_EXTENSION;
   }
@@ -284,7 +285,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
             BufferedReader in = new BufferedReader(new InputStreamReader(nameFile.getInputStream(), CharsetToolkit.UTF8_CHARSET));
             try {
               final String name = in.readLine();
-              if (name != null && name.length() > 0) {
+              if (name != null && !name.isEmpty()) {
                 return name.trim();
               }
             }
@@ -405,7 +406,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super(rootElementName, project);
     }
 
-    WsStorageData(final WsStorageData storageData) {
+    private WsStorageData(final WsStorageData storageData) {
       super(storageData);
     }
 
@@ -480,21 +481,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       dropUnableToSaveProjectNotification(myProject, status.getReadonlyFiles());
       throw new SaveCancelledException();
     }
-    else {
-      List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
-      readonlyFiles.clear();
-      for (Pair<SaveSession, VirtualFile> entry : oldList) {
-        errors = executeSave(entry.first, readonlyFiles, errors);
-      }
+    List<Pair<SaveSession, VirtualFile>> oldList = new ArrayList<Pair<SaveSession, VirtualFile>>(readonlyFiles);
+    readonlyFiles.clear();
+    for (Pair<SaveSession, VirtualFile> entry : oldList) {
+      errors = executeSave(entry.first, readonlyFiles, errors);
+    }
 
-      if (errors != null) {
-        CompoundRuntimeException.doThrow(errors);
-      }
+    if (errors != null) {
+      CompoundRuntimeException.doThrow(errors);
+    }
 
-      if (!readonlyFiles.isEmpty()) {
-        dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
-        throw new SaveCancelledException();
-      }
+    if (!readonlyFiles.isEmpty()) {
+      dropUnableToSaveProjectNotification(myProject, getFilesList(readonlyFiles));
+      throw new SaveCancelledException();
     }
 
     return errors;

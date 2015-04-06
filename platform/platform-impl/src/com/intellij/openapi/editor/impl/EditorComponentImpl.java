@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
@@ -172,6 +173,8 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       UIUtil.setupComposite((Graphics2D)g);
       UISettings.setupAntialiasing(g);
       myEditor.paint((Graphics2D)g);
+
+      IdeBackgroundUtil.paintEditorBackground(g, this);
     }
     finally {
       myApplication.editorPaintFinish();

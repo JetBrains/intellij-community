@@ -35,7 +35,7 @@ public class DirectoryContentImpl implements DiffContent, DirectoryContent {
   @Nullable
   @Override
   public OpenFileDescriptor getOpenFileDescriptor() {
-    if (myProject == null) return null;
+    if (myProject == null || myProject.isDefault()) return null;
     return new OpenFileDescriptor(myProject, myFile);
   }
 

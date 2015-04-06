@@ -81,6 +81,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private String myStatus = null;
   public static final String EMPTY_STRING = "                                                  ";
   private DirDiffPanel myPanel;
+  private volatile boolean myDisposed;
 
   public DirDiffTableModel(@NotNull Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
     myProject = project;
@@ -168,7 +169,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public boolean isOperationsEnabled() {
-    return mySrc.isOperationsEnabled() && myTrg.isOperationsEnabled();
+    return !myDisposed && mySrc.isOperationsEnabled() && myTrg.isOperationsEnabled();
   }
 
   public List<DirDiffElementImpl> getElements() {
@@ -217,6 +218,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
+          if (myDisposed) return;
           myUpdater = new Updater(loadingPanel, 100);
           myUpdater.start();
           myTree = new DTree(null, "", true);
@@ -310,11 +312,13 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final Application app = ApplicationManager.getApplication();
     app.executeOnPooledThread(new Runnable() {
       public void run() {
+        if (myDisposed) return;
         myTree.updateVisibility(mySettings);
         final ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
         fillElements(myTree, elements);
         final Runnable uiThread = new Runnable() {
           public void run() {
+            if (myDisposed) return;
             clear();
             myElements.addAll(elements);
             myUpdating.set(false);
@@ -405,6 +409,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public String getTitle() {
+    if (myDisposed) return "";
     return IdeBundle.message("diff.dialog.title", mySrc.getPresentablePath(), myTrg.getPresentablePath());
   }
 
@@ -562,6 +567,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myListeners.clear();
     myElements.clear();
     mySrc = null;
@@ -585,7 +591,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           @Override
           public void run() {
             ApplicationManager.getApplication().assertIsDispatchThread();
-            if (!Disposer.isDisposed(DirDiffTableModel.this)) {
+            if (!myDisposed) {
               DiffElement newElement = diff.get();
               if (newElement == null && element.getTarget() != null) {
                 final int row = myElements.indexOf(element);
@@ -643,7 +649,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           @Override
           public void run() {
             ApplicationManager.getApplication().assertIsDispatchThread();
-            if (!Disposer.isDisposed(DirDiffTableModel.this)) {
+            if (!myDisposed) {
               refreshElementAfterCopyFrom(element, diff.get());
               if (!errorMessage.isNull()) {
                 reportException(errorMessage.get());
@@ -723,7 +729,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       Runnable onFinish = new Runnable() {
         @Override
         public void run() {
-          if (!Disposer.isDisposed(DirDiffTableModel.this)) {
+          if (!myDisposed) {
             if (!errorMessage.isNull()) {
               reportException(errorMessage.get());
             }
@@ -872,7 +878,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
     @Override
     public void run() {
-      if (myLoadingPanel.isLoading()) {
+      if (!myDisposed && myLoadingPanel.isLoading()) {
         TimeoutUtil.sleep(mySleep);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

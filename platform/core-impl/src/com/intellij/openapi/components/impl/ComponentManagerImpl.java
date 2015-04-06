@@ -56,11 +56,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private final Map<Class, Object> myInitializedComponents = ContainerUtil.newConcurrentMap();
 
-  private boolean myComponentsCreated = false;
+  private boolean myComponentsCreated;
 
   private volatile MutablePicoContainer myPicoContainer;
-  private volatile boolean myDisposed = false;
-  private volatile boolean myDisposeCompleted = false;
+  private volatile boolean myDisposed;
+  private volatile boolean myDisposeCompleted;
 
   private MessageBus myMessageBus;
 
@@ -148,7 +148,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsCreated = false;
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   @Nullable
   protected <T> T getComponentFromContainer(@NotNull Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
@@ -225,7 +225,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
+  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public synchronized void registerComponent(@NotNull final ComponentConfig config, final PluginDescriptor pluginDescriptor) {
     if (!config.prepareClasses(isHeadless())) return;
 
@@ -267,7 +267,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
   @NotNull
   public synchronized <T> T[] getComponents(@NotNull Class<T> baseClass) {
     return myComponentsRegistry.getComponentsByType(baseClass);
@@ -331,7 +330,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed || temporarilyDisposed;
   }
 
-  protected volatile boolean temporarilyDisposed = false;
+  protected volatile boolean temporarilyDisposed;
   @TestOnly
   public void setTemporarilyDisposed(boolean disposed) {
     temporarilyDisposed = disposed;
@@ -400,7 +399,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return LOG.isDebugEnabled();
   }
 
-  protected class ComponentsRegistry {
+  private class ComponentsRegistry {
     private final Map<Class, Object> myInterfaceToLockMap = new THashMap<Class, Object>();
     private final Map<Class, Class> myInterfaceToClassMap = new THashMap<Class, Class>();
     private final List<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
@@ -408,7 +407,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private final List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
     private final List<Object> myImplementations = new ArrayList<Object>();
     private final Map<Class, ComponentConfig> myComponentClassToConfig = new THashMap<Class, ComponentConfig>();
-    private boolean myClassesLoaded = false;
+    private boolean myClassesLoaded;
 
     private void loadClasses() {
       assert !myClassesLoaded;
@@ -459,7 +458,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return myInterfaceToClassMap.containsKey(interfaceClass);
     }
 
-    public float getPercentageOfComponentsLoaded() {
+    private float getPercentageOfComponentsLoaded() {
       return ((float)myImplementations.size()) / myComponentConfigs.size();
     }
 
@@ -484,7 +483,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     @NotNull
-    public List<Object> getRegisteredImplementations() {
+    private List<Object> getRegisteredImplementations() {
       return myImplementations;
     }
 
@@ -500,8 +499,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return myNameToComponent.get(name);
     }
 
-    @SuppressWarnings({"unchecked"})
-    public <T> T[] getComponentsByType(final Class<T> baseClass) {
+    @SuppressWarnings("unchecked")
+    private <T> T[] getComponentsByType(final Class<T> baseClass) {
       List<T> array = new ArrayList<T>();
 
       //noinspection ForLoopReplaceableByForEach
@@ -516,7 +515,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return array.toArray((T[])Array.newInstance(baseClass, array.size()));
     }
 
-    public ComponentConfig[] getComponentConfigurations() {
+    private ComponentConfig[] getComponentConfigurations() {
         return myComponentConfigs.toArray(new ComponentConfig[myComponentConfigs.size()]);
     }
 
@@ -528,10 +527,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private class ComponentConfigComponentAdapter implements ComponentAdapter {
     private final ComponentConfig myConfig;
     private final ComponentAdapter myDelegate;
-    private boolean myInitialized = false;
-    private boolean myInitializing = false;
+    private boolean myInitialized;
+    private boolean myInitializing;
 
-    public ComponentConfigComponentAdapter(final ComponentConfig config, Class<?> implementationClass) {
+    public ComponentConfigComponentAdapter(@NotNull final ComponentConfig config, @NotNull Class<?> implementationClass) {
       myConfig = config;
 
       final String componentKey = config.getInterfaceClass();

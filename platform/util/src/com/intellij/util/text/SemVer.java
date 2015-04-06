@@ -22,10 +22,8 @@ import java.util.regex.Pattern;
 
 /**
  * See http://semver.org
- *
- * @author Sergey Simonchik
  */
-public class SemVer {
+public class SemVer implements Comparable<SemVer> {
   private final int myMajor;
   private final int myMinor;
   private final int myPatch;
@@ -116,4 +114,19 @@ public class SemVer {
     }
   }
 
+
+  @Override
+  public int compareTo(SemVer other) {
+    // null is not permitted
+    if (getMajor() != other.getMajor()) {
+      return getMajor() - other.getMajor();
+    }
+    if (getMinor() != other.getMinor()) {
+      return getMinor() - other.getMinor();
+    }
+    if (getPatch() != other.getPatch()) {
+      return getPatch() - other.getPatch();
+    }
+    return 0;
+  }
 }

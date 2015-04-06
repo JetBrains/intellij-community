@@ -71,6 +71,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+
 public class OnesideDiffViewer extends TextDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(OnesideDiffViewer.class);
 
@@ -1005,7 +1007,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
           DiffUtil.scrollToPoint(myEditor, myEditorPosition.myPoints[0]);
         }
         else {
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+          DiffUtil.scrollToCaret(myEditor);
         }
         myShouldScroll = false;
       }

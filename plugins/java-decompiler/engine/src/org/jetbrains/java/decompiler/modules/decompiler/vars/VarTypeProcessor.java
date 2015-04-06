@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ public class VarTypeProcessor {
   public static final int VAR_EXPLICIT_FINAL = 2;
   public static final int VAR_FINAL = 3;
 
-  private Map<VarVersionPair, VarType> mapExprentMinTypes = new HashMap<VarVersionPair, VarType>();
-  private Map<VarVersionPair, VarType> mapExprentMaxTypes = new HashMap<VarVersionPair, VarType>();
-  private Map<VarVersionPair, Integer> mapFinalVars = new HashMap<VarVersionPair, Integer>();
+  private final Map<VarVersionPair, VarType> mapExprentMinTypes = new HashMap<VarVersionPair, VarType>();
+  private final Map<VarVersionPair, VarType> mapExprentMaxTypes = new HashMap<VarVersionPair, VarType>();
+  private final Map<VarVersionPair, Integer> mapFinalVars = new HashMap<VarVersionPair, Integer>();
 
   private void setInitVars(RootStatement root) {
     StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);

@@ -18,6 +18,7 @@ package com.jetbrains.commandInterface.commandLine;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineCommand;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +59,8 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
 
     for (final Command command : commands) {
       final LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(command.getName());
-      final String help = command.getHelp(true);
-      result.addElement(lookupElementBuilder, help);
+      final Help help = command.getHelp(true);
+      result.addElement(lookupElementBuilder, (help != null ? help.getHelpString(): null));
     }
 
 

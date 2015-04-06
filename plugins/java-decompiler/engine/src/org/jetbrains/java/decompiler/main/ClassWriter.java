@@ -47,8 +47,8 @@ import java.util.*;
 
 public class ClassWriter {
 
-  private ClassReference14Processor ref14processor;
-  private PoolInterceptor interceptor;
+  private final ClassReference14Processor ref14processor;
+  private final PoolInterceptor interceptor;
 
   public ClassWriter() {
     ref14processor = new ClassReference14Processor();

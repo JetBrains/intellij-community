@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomDeclarationSearcher;
@@ -139,7 +140,7 @@ public class TargetElementUtilBase {
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
     if (file != null) {
-      for (TargetElementEvaluator evaluator : getInstance().targetElementEvaluator.allForLanguage(file.getLanguage())) {
+      for (TargetElementEvaluator evaluator : getInstance().getElementEvaluatorsEx(file.getLanguage())) {
         if (evaluator instanceof TargetElementEvaluatorEx && ((TargetElementEvaluatorEx)evaluator).isIdentifierPart(file, text, offset)) {
           return true;
         }
@@ -227,9 +228,16 @@ public class TargetElementUtilBase {
     return null;
   }
 
-  protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    return referenceOrReferencedElement != null &&
-        referenceOrReferencedElement.isValid();
+  protected boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+    if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return true;
+    
+    if (element != null) {
+      for (TargetElementEvaluatorEx evaluator : getElementEvaluatorsEx(element.getLanguage())) {
+        if (evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement)) return true;
+      }
+    }
+
+    return false;
   }
 
   @Nullable
@@ -284,6 +292,13 @@ public class TargetElementUtilBase {
 
   @Nullable
   protected PsiElement getNamedElement(@Nullable final PsiElement element) {
+    if (element == null) return null;
+    
+    for (TargetElementEvaluatorEx each : getElementEvaluatorsEx(element.getLanguage())) {
+      PsiElement result = each.getNamedElement(element);
+      if (result != null) return result;
+    }
+    
     PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
       // A bit hacky depends on navigation offset correctly overridden
@@ -352,6 +367,15 @@ public class TargetElementUtilBase {
   }
 
   protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
+  private Iterable<TargetElementEvaluatorEx> getElementEvaluatorsEx(@NotNull Language language) {
+    //noinspection unchecked
+    return ContainerUtil.iterate(targetElementEvaluator.allForLanguage(language), new Condition() {
+      @Override
+      public boolean value(Object evaluator) {
+        return evaluator instanceof TargetElementEvaluatorEx;
+      }
+    });
+  }
 
   public boolean acceptImplementationForReference(PsiReference reference, PsiElement element) {
     return true;

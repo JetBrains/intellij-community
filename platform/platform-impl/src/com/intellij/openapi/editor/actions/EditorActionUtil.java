@@ -39,11 +39,13 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.EditorPopupHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -252,11 +254,20 @@ public class EditorActionUtil {
     return isWordEnd(chars, offset, isCamel) || !isWordStart(chars, offset, isCamel) && isLexemeBoundary(editor, offset);
   }
 
+  /**
+   * Finds out whether there's a boundary between two lexemes of different type at given offset.
+   */
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
     if (!(editor instanceof EditorEx) || offset <= 0 || offset >= editor.getDocument().getTextLength()) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
-    return it.getStart() == offset;
+    if (it.getStart() != offset) {
+      return false;
+    }
+    IElementType rightToken = it.getTokenType();
+    it.retreat();
+    IElementType leftToken = it.getTokenType();
+    return !Comparing.equal(leftToken, rightToken);
   }
 
   public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {

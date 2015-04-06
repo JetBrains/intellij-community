@@ -26,7 +26,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -118,6 +117,11 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     );
   }
 
+  @CalledInAwt
+  protected void onSettingsChanged() {
+    rediff();
+  }
+
   //
   // Impl
   //
@@ -162,10 +166,6 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     return result;
   }
 
-  protected static int getLineCount(@NotNull Document document) {
-    return DiffUtil.getLineCount(document);
-  }
-
   private class MyFontSizeListener implements PropertyChangeListener {
     private boolean myDuringUpdate = false;
 
@@ -194,13 +194,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
   protected class MySetEditorSettingsAction extends SetEditorSettingsAction {
     public MySetEditorSettingsAction() {
-      super(myTextSettings);
-    }
-
-    @NotNull
-    @Override
-    public List<? extends Editor> getEditors() {
-      return TextDiffViewerBase.this.getEditors();
+      super(myTextSettings, getEditors());
     }
   }
 
@@ -280,7 +274,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       if (getCurrentSetting() == setting) return;
       getTextSettings().setHighlightPolicy(setting);
       update(e);
-      rediff();
+      onSettingsChanged();
     }
 
     @NotNull
@@ -311,7 +305,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       if (getCurrentSetting() == setting) return;
       getTextSettings().setIgnorePolicy(setting);
       update(e);
-      rediff();
+      onSettingsChanged();
     }
 
     @NotNull

@@ -50,7 +50,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   @NotNull
-  public static DiffContent create(@NotNull Project project,
+  public static DiffContent create(@Nullable Project project,
                                    @NotNull String content,
                                    @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();

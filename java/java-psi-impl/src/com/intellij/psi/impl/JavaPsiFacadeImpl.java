@@ -52,6 +52,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
+  private final ConcurrentMap<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
@@ -71,6 +72,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
         @Override
         public void modificationCountChanged() {
+          myClassCache.clear();
           final long now = modificationTracker.getJavaStructureModificationCount();
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
@@ -87,6 +89,24 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
+    Map<GlobalSearchScope, PsiClass> map = myClassCache.get(qualifiedName);
+    if (map == null) {
+      map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+      map = ConcurrencyUtil.cacheOrGet(myClassCache, qualifiedName, map);
+    }
+    PsiClass result = map.get(scope);
+    if (result == null) {
+      result = doFindClass(qualifiedName, scope);
+      if (result != null) {
+        map.put(scope, result);
+      }
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private PsiClass doFindClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     if (shouldUseSlowResolve()) {
       PsiClass[] classes = findClassesInDumbMode(qualifiedName, scope);
       if (classes.length != 0) {

@@ -61,14 +61,18 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
+    long started = System.currentTimeMillis();
     PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
+
+    LOG.info("Pushed properties in " + (System.currentTimeMillis() - started) + " ms");
 
     indicator.setIndeterminate(true);
     indicator.setText(IdeBundle.message("progress.indexing.scanning"));
 
     CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     long l = System.currentTimeMillis();
-    myIndex.iterateIndexableFiles(finder, myProject, indicator);
+    myIndex.iterateIndexableFilesConcurrently(finder, myProject, indicator);
+
     myIndex.filesUpdateEnumerationFinished();
 
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
@@ -83,7 +87,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       return;
     }
 
-    long started = System.currentTimeMillis();
+    started = System.currentTimeMillis();
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
 
     indicator.setIndeterminate(false);

@@ -174,10 +174,7 @@ public class CacheUpdateRunner extends DumbModeTask {
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {
-      int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-      if (threadsCount <= 0) {
-        threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
-      }
+      int threadsCount = indexingThreadCount();
       if (threadsCount == 1 || application.isWriteAccessAllowed()) {
         Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
@@ -199,6 +196,14 @@ public class CacheUpdateRunner extends DumbModeTask {
     }
 
     return isFinished.get();
+  }
+
+  public static int indexingThreadCount() {
+    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
+    if (threadsCount <= 0) {
+      threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
+    }
+    return threadsCount;
   }
 
   private static boolean waitForAll(@NotNull AtomicBoolean[] finishedRefs, @NotNull Future<?>[] futures) {

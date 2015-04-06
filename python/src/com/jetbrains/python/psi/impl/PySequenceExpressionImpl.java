@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
@@ -15,22 +16,10 @@ public class PySequenceExpressionImpl extends PyElementImpl {
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    if (child.getPsi() instanceof PyExpression) {
-      PyExpression expression = (PyExpression)child.getPsi();
-      ASTNode exprNode = expression.getNode();
-      ASTNode next = PyPsiUtils.getNextComma(exprNode);
-      ASTNode prev = PyPsiUtils.getPrevComma(exprNode);
-      super.deleteChildInternal(child);
-      if (next != null) {
-        deleteChildInternal(next);
-      }
-      else if (prev != null) {
-        deleteChildInternal(prev);
-      }
+    if (ArrayUtil.contains(child.getPsi(), getElements())) {
+      PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
     }
-    else {
-      super.deleteChildInternal(child);
-    }
+    super.deleteChildInternal(child);
   }
 
   @NotNull

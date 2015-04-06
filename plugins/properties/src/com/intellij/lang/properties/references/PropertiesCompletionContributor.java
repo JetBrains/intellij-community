@@ -99,7 +99,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
       String value = property.getValue();
       boolean hasBundle = resourceBundle != EmptyResourceBundle.getInstance();
       if (hasBundle) {
-        PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
+        PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
         IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
         if (defaultProperty != null) {
           value = defaultProperty.getValue();

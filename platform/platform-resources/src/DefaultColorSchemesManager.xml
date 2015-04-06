@@ -27,7 +27,7 @@
       <option name="ADDED_LINES_COLOR" value="c9dec1"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8"/>
       <option name="DELETED_LINES_COLOR" value="9f9f9f"/>
-      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="ffffff"/>
+      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
     </colors>
 
@@ -1157,14 +1157,14 @@
       <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
       <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
       <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
-      <option name="RIGHT_MARGIN_COLOR" value="323232" />
+      <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
       <option name="SELECTED_INDENT_GUIDE" value="505050" />
       <option name="SELECTED_TEARLINE_COLOR" value="787878" />
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
-      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="2d4249"/>
+      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="4c4638"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

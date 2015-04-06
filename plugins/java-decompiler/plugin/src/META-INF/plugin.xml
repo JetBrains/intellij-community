@@ -11,7 +11,7 @@
 
   <idea-version since-build="135"/>
 
-  <module value="com.intellij.modules.java"/>
+  <depends>com.intellij.modules.java</depends>
 
   <resource-bundle>messages.Decompiler</resource-bundle>
 

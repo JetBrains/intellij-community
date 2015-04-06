@@ -41,7 +41,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     if (!ep.canCreateConfigurable()) {
       return null;
     }
-    if (ep.displayName != null || ep.key != null || ep.groupId != null) {
+    if (ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
       return !ep.dynamic && ep.children == null && ep.childrenEPName == null
              ? (T)new ConfigurableWrapper(ep)
              : (T)new CompositeWrapper(ep);
@@ -87,7 +87,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             return null; // do not create configurable that cannot be cast to the specified type
           }
         }
-        else if (type == OptionalConfigurable.class) {
+        else if (type == Configurable.Assistant.class || type == OptionalConfigurable.class) {
           return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
         }
       }

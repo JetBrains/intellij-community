@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedViewSwingImpl;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersViewInitializationInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -37,5 +38,11 @@ public class PyPushDownViewSwingImpl extends MembersBasedViewSwingImpl<PyPushDow
 
     myCenterPanel.add(myPyMemberSelectionPanel, BorderLayout.CENTER);
     setTitle(PyPushDownHandler.REFACTORING_NAME);
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "refactoring.pushMembersDown";
   }
 }

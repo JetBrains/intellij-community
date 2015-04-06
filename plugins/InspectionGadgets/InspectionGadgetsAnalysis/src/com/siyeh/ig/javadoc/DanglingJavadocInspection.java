@@ -15,12 +15,14 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -127,8 +129,12 @@ public class DanglingJavadocInspection extends BaseInspection {
     @Override
     public void visitDocComment(PsiDocComment comment) {
       super.visitDocComment(comment);
-      final PsiDocCommentOwner owner = comment.getOwner();
-      if (owner != null) {
+      if (comment.getOwner() != null) {
+        return;
+      }
+      if (JavaDocUtil.isInsidePackageInfo(comment) &&
+          PsiTreeUtil.skipSiblingsForward(comment, PsiWhiteSpace.class) instanceof PsiPackageStatement &&
+          "package-info.java".equals(comment.getContainingFile().getName())) {
         return;
       }
       registerError(comment.getFirstChild());

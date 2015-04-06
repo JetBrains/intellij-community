@@ -72,7 +72,7 @@ import java.util.*;
  */
 public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
-  public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
+  static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private static final String IML_EXTENSION = ".iml";
   protected final Project myProject;
   protected final MessageBus myMessageBus;
@@ -92,14 +92,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return (ModuleManagerImpl)getInstance(project);
   }
 
-  protected void cleanCachedStuff() {
-    myCachedModuleComparator = null;
-    myCachedSortedModules = null;
-  }
-
   public ModuleManagerImpl(Project project, MessageBus messageBus) {
     myProject = project;
     myMessageBus = messageBus;
+  }
+
+  protected void cleanCachedStuff() {
+    myCachedModuleComparator = null;
+    myCachedSortedModules = null;
   }
 
 
@@ -139,7 +139,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     });
 
-    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, Module module, @Nullable String[] group) {
+    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, @NotNull Module module, @Nullable String[] group) {
       String[] cached = group == null ? null : paths.get(group);
       if (cached == null && group != null) {
         cached = new String[group.length];
@@ -185,7 +185,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
-  private ModulePath findCorrespondingPath(final Module existingModule) {
+  private ModulePath findCorrespondingPath(@NotNull Module existingModule) {
     for (ModulePath modulePath : myModulePaths) {
       if (modulePath.getPath().equals(existingModule.getModuleFilePath())) return modulePath;
     }
@@ -212,7 +212,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   @NotNull
-  public static ModulePath[] getPathsToModuleFiles(Element element) {
+  public static ModulePath[] getPathsToModuleFiles(@NotNull Element element) {
     final List<ModulePath> paths = new ArrayList<ModulePath>();
     final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
@@ -234,11 +234,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return paths.toArray(new ModulePath[paths.size()]);
   }
 
-  public void readExternal(final Element element) {
+  public void readExternal(@NotNull Element element) {
     myModulePaths = new ArrayList<ModulePath>(Arrays.asList(getPathsToModuleFiles(element)));
   }
 
-  protected void loadModules(final ModuleModelImpl moduleModel) {
+  protected void loadModules(@NotNull ModuleModelImpl moduleModel) {
     if (myModulePaths == null || myModulePaths.isEmpty()) {
       return;
     }
@@ -294,26 +294,26 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
-  protected boolean isUnknownModuleType(Module module) {
+  protected boolean isUnknownModuleType(@NotNull Module module) {
     return false;
   }
 
-  protected void showUnknownModuleTypeNotification(List<Module> types) {
+  protected void showUnknownModuleTypeNotification(@NotNull List<Module> types) {
   }
 
-  protected void fireModuleAdded(Module module) {
+  protected void fireModuleAdded(@NotNull Module module) {
     myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
   }
 
-  protected void fireModuleRemoved(Module module) {
+  protected void fireModuleRemoved(@NotNull Module module) {
     myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
   }
 
-  protected void fireBeforeModuleRemoved(Module module) {
+  protected void fireBeforeModuleRemoved(@NotNull Module module) {
     myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
   }
 
-  protected void fireModulesRenamed(List<Module> modules, final Map<Module, String> oldNames) {
+  protected void fireModulesRenamed(@NotNull List<Module> modules, @NotNull final Map<Module, String> oldNames) {
     if (!modules.isEmpty()) {
       myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, new Function<Module, String>() {
         @Override
@@ -324,7 +324,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
-  protected void onModuleLoadErrors(final List<ModuleLoadingErrorDescription> errors) {
+  protected void onModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
     myModuleModel.myModulesCache = null;
@@ -343,7 +343,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     fireModuleLoadErrors(errors);
   }
 
-  protected void fireModuleLoadErrors(List<ModuleLoadingErrorDescription> errors) {
+  protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }
@@ -364,12 +364,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
 
   private abstract static class SaveItem {
-
+    @NotNull
     protected abstract String getModuleName();
     protected abstract String getGroupPathString();
+    @NotNull
     protected abstract String getModuleFilePath();
 
-    public final void writeExternal(Element parentElement) {
+    public final void writeExternal(@NotNull Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
       final String url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath);
@@ -388,11 +389,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   private class ModuleSaveItem extends SaveItem{
     private final Module myModule;
 
-    public ModuleSaveItem(Module module) {
+    public ModuleSaveItem(@NotNull Module module) {
       myModule = module;
     }
 
     @Override
+    @NotNull
     protected String getModuleName() {
       return myModule.getName();
     }
@@ -404,6 +406,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
+    @NotNull
     protected String getModuleFilePath() {
       return myModule.getModuleFilePath().replace(File.separatorChar, '/');
     }
@@ -414,7 +417,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     private final String myFilePath;
     private final String myName;
 
-    public ModulePathSaveItem(ModulePath modulePath) {
+    private ModulePathSaveItem(@NotNull ModulePath modulePath) {
       myModulePath = modulePath;
       myFilePath = modulePath.getPath().replace(File.separatorChar, '/');
 
@@ -427,6 +430,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
+    @NotNull
     protected String getModuleName() {
       return myName;
     }
@@ -437,16 +441,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
+    @NotNull
     protected String getModuleFilePath() {
       return myFilePath;
     }
   }
 
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     final Element modules = new Element(ELEMENT_MODULES);
     final Module[] collection = getModules();
 
-    ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.length + myFailedModulePaths.size());
+    List<SaveItem> sorted = new ArrayList<SaveItem>(collection.length + myFailedModulePaths.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }
@@ -507,7 +512,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.getModules();
   }
 
-  private volatile Module[] myCachedSortedModules = null;
+  private volatile Module[] myCachedSortedModules;
 
   @Override
   @NotNull
@@ -526,7 +531,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.findModuleByName(name);
   }
 
-  private volatile Comparator<Module> myCachedModuleComparator = null;
+  private volatile Comparator<Module> myCachedModuleComparator;
 
   @Override
   @NotNull
@@ -556,7 +561,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   @Override
-  @NotNull public List<Module> getModuleDependentModules(@NotNull Module module) {
+  @NotNull
+  public List<Module> getModuleDependentModules(@NotNull Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.getModuleDependentModules(module);
   }
@@ -580,7 +586,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
-  protected void fireModuleAddedInWriteAction(final Module module) {
+  protected void fireModuleAddedInWriteAction(@NotNull final Module module) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -595,13 +601,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myModuleModel.projectClosed();
   }
 
-  public static void commitModelWithRunnable(ModifiableModuleModel model, Runnable runnable) {
+  public static void commitModelWithRunnable(@NotNull ModifiableModuleModel model, Runnable runnable) {
     ((ModuleModelImpl)model).commitWithRunnable(runnable);
   }
 
-  protected abstract ModuleEx createModule(String filePath);
+  @NotNull
+  protected abstract ModuleEx createModule(@NotNull String filePath);
 
-  protected abstract ModuleEx createAndLoadModule(String filePath) throws IOException;
+  @NotNull
+  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>(new EqualityPolicy.ByHashingStrategy<String>(FilePathHashingStrategy.create()));
@@ -613,11 +621,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     private boolean myIsWritable;
     private Map<Module, String[]> myModuleGroupPath;
 
-    ModuleModelImpl() {
+    private ModuleModelImpl() {
       myIsWritable = false;
     }
 
-    ModuleModelImpl(ModuleModelImpl that) {
+    private ModuleModelImpl(@NotNull ModuleModelImpl that) {
       myPathToModule.putAll(that.myPathToModule);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
@@ -641,6 +649,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return myModulesCache;
     }
 
+    @NotNull
     private Module[] getSortedModules() {
       Module[] allModules = getModules().clone();
       Arrays.sort(allModules, moduleDependencyComparator());
@@ -669,18 +678,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       return myNewNameToModule.get(newName);
     }
 
-    public Module getModuleByNewName(String newName) {
+    private Module getModuleByNewName(@NotNull String newName) {
       final Module moduleToBeRenamed = getModuleToBeRenamed(newName);
       if (moduleToBeRenamed != null) {
         return moduleToBeRenamed;
       }
       final Module moduleWithOldName = findModuleByName(newName);
-      if (myModuleToNewName.get(moduleWithOldName) == null) {
-        return moduleWithOldName;
-      }
-      else {
-        return null;
-      }
+      return myModuleToNewName.get(moduleWithOldName) == null ? moduleWithOldName : null;
     }
 
     @Override
@@ -711,13 +715,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
             module.setOption(option.getKey(),option.getValue());
           }
         }
-        module.loadModuleComponents();
         initModule(module);
       }
       return module;
     }
 
-    private String resolveShortWindowsName(String filePath) {
+    @NotNull
+    private String resolveShortWindowsName(@NotNull String filePath) {
       try {
         return FileUtil.resolveShortWindowsName(filePath);
       }
@@ -727,7 +731,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Nullable
-    private ModuleEx getModuleByFilePath(String filePath) {
+    private ModuleEx getModuleByFilePath(@NotNull String filePath) {
       return (ModuleEx)myPathToModule.get(filePath);
     }
 
@@ -743,7 +747,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException {
+    @NotNull
+    private Module loadModuleInternal(@NotNull String filePath) throws ModuleWithNameAlreadyExists, IOException {
       filePath = resolveShortWindowsName(filePath);
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {
@@ -770,16 +775,16 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           }
         }, ModalityState.any());
         module = createAndLoadModule(moduleFile.getPath());
-        module.loadModuleComponents();
         initModule(module);
       }
       return module;
     }
 
-    private void initModule(ModuleEx module) {
+    private void initModule(@NotNull ModuleEx module) {
       String path = module.getModuleFilePath();
       myModulesCache = null;
       myPathToModule.put(path, module);
+      module.loadModuleComponents();
       module.init();
     }
 
@@ -846,7 +851,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       ModifiableModelCommitter.multiCommit(rootModels, this);
     }
 
-    public void commitWithRunnable(Runnable runnable) {
+    private void commitWithRunnable(Runnable runnable) {
       commitModel(this, runnable);
       clearRenamingStuff();
     }

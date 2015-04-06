@@ -310,9 +310,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private int getVisibleRowCount() {
     // myTree.getVisibleRowCount returns 20
-    Rectangle bounds = myTree.getRowBounds(0);
-    int rowHeight = bounds == null ? 0 : bounds.height;
-    return rowHeight == 0 ? myTree.getVisibleRowCount() : myTree.getVisibleRect().height / rowHeight;
+    return TreeUtil.getVisibleRowCountForFixedRowHeight(myTree);
   }
 
   private void setupCentralPanel() {

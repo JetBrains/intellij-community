@@ -222,6 +222,13 @@ public class DiffUtil {
     editor.getScrollingModel().enableAnimation();
   }
 
+  public static void scrollToCaret(@Nullable Editor editor) {
+    if (editor == null) return;
+    editor.getScrollingModel().disableAnimation();
+    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    editor.getScrollingModel().enableAnimation();
+  }
+
   @NotNull
   public static Point getScrollingPosition(@Nullable Editor editor) {
     if (editor == null) return new Point(0, 0);

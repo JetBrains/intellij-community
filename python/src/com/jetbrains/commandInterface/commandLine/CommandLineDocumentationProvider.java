@@ -22,11 +22,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
 import com.jetbrains.commandInterface.commandLine.psi.*;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Provides quick help for arguments
@@ -37,34 +41,27 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   @Nullable
   @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
-    if (!(element instanceof CommandLinePart)) {
+    final Help help = findHelp(element);
+    if (help == null) {
       return null;
     }
-
-    final CommandLinePart commandLinePart = (CommandLinePart)element;
-    final Command realCommand = commandLinePart.findRealCommand();
-    if (realCommand == null) {
-      return null;
-    }
-
-    if (element instanceof CommandLineFile) {
-      return realCommand.getHelp(false); // We do not need arguments info in help text
-    }
-
-    final CommandLineElement commandLineElement = PyUtil.as(element, CommandLineElement.class);
-    if (commandLineElement == null) {
-      return null;
-    }
-
-
-    final MyCommandHelpObtainer helpObtainer = new MyCommandHelpObtainer(realCommand);
-    commandLineElement.accept(helpObtainer);
-
-    final String help = helpObtainer.myResultText;
-    // For some reason we can't return empty sting (leads to "fetchig doc" string)
-    return (StringUtil.isEmptyOrSpaces(help) ? null : help);
+    final String helpText = help.getHelpString();
+    // For some reason we can't return empty sting (leads to "fetching doc" string)
+    return (StringUtil.isEmptyOrSpaces(helpText) ? null : helpText);
   }
 
+  @Override
+  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
+    final Help help = findHelp(element);
+    if (help == null) {
+      return null;
+    }
+    final String externalHelpUrl = help.getExternalHelpUrl();
+    if (externalHelpUrl != null) {
+      return Collections.singletonList(externalHelpUrl);
+    }
+    return null;
+  }
 
   @Nullable
   @Override
@@ -79,26 +76,54 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   }
 
   /**
+   * Searches for help text for certain element
+   * @param element element to search help for
+   * @return help or
+   *
+   */
+  @Nullable
+  private static Help findHelp(@NotNull final PsiElement element) {
+    if (!(element instanceof CommandLinePart)) {
+      return null;
+    }
+
+    final CommandLinePart commandLinePart = (CommandLinePart)element;
+    final Command realCommand = commandLinePart.findRealCommand();
+    if (realCommand == null) {
+      return null;
+    }
+
+    final CommandLineElement commandLineElement = PyUtil.as(element, CommandLineElement.class);
+    if (commandLineElement == null) {
+      return null;
+    }
+
+
+    final MyCommandHelpObtainer helpObtainer = new MyCommandHelpObtainer();
+    commandLineElement.accept(helpObtainer);
+
+    return helpObtainer.myResultHelp;
+  }
+
+  /**
    * Fetches text from command line part as visitor
    */
   private static final class MyCommandHelpObtainer extends CommandLineVisitor {
-    private String myResultText;
-    private final Command myRealCommand;
-
-    private MyCommandHelpObtainer(@NotNull final Command realCommand) {
-      myRealCommand = realCommand;
-    }
+    private Help myResultHelp;
 
     @Override
     public void visitArgument(@NotNull final CommandLineArgument o) {
       super.visitArgument(o);
-      myResultText = o.findBestHelpText();
+      myResultHelp = o.findBestHelp();
     }
 
     @Override
-    public void visitCommand(@NotNull final CommandLineCommand o) {
+    public void visitCommand(@NotNull CommandLineCommand o) {
       super.visitCommand(o);
-      myResultText = myRealCommand.getHelp(false);
+      final Command realCommand = o.findRealCommand();
+      if (realCommand != null) {
+        myResultHelp = realCommand.getHelp(false); // Arguments are ok to display here;
+      }
     }
 
     @Override
@@ -108,7 +133,7 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
       if (option == null) {
         return;
       }
-      myResultText = option.getHelp();
+      myResultHelp = option.getHelp();
     }
   }
 }

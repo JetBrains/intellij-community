@@ -52,12 +52,12 @@ final class ArgumentHintLayer extends JPanel implements Listener {
    * Braces for mandatory args are [] according to GNU/POSIX recommendations
    */
   @NotNull
-  private static final Pair<String, String> MANDATORY_ARG_BRACES = Pair.create("[", "]");
+  private static final Pair<String, String> MANDATORY_ARG_BRACES = Pair.create("<", ">");
   /**
    * Braces for optional args are &lt;&gt; according to GNU/POSIX recommendations
    */
   @NotNull
-  private static final Pair<String, String> OPTIONAL_ARG_BRACES = Pair.create("<", ">");
+  private static final Pair<String, String> OPTIONAL_ARG_BRACES = Pair.create("[", "]");
 
   /**
    * Number of places after end of line before argument place
@@ -166,7 +166,7 @@ final class ArgumentHintLayer extends JPanel implements Listener {
     final int x = (myPromptWidthPx + (myCharWidthPx * myDocumentLengthInChars)) + spaceToRight;
 
     final boolean required = nextArg.first;
-    final String argumentText = nextArg.second.getHelpText();
+    final String argumentText = nextArg.second.getHelp().getHelpString();
 
 
     g.setColor(required ? myRequiredColor : myOptionalColor);

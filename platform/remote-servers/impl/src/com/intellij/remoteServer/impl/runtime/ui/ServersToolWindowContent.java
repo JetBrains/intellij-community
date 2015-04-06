@@ -166,7 +166,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   private void updateServerDetails(ServersTreeStructure.RemoteServerNode node) {
     RemoteServer<?> server = ((ServersTreeStructure.RemoteServerNode)node).getValue();
     ServerConnection connection = ServerConnectionManager.getInstance().getConnection(server);
-    if (connection == null || connection.getStatus() == ConnectionStatus.DISCONNECTED) {
+    if (connection == null) {
       showMessageLabel("Double-click on the server node to connect");
     }
     else {
@@ -193,13 +193,15 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
       @Override
       public void onConnectionCreated(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
-        pollDeployments(connection);
       }
 
       @Override
       public void onConnectionStatusChanged(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
         updateSelectedServerDetails();
+        if (connection.getStatus() == ConnectionStatus.CONNECTED) {
+          pollDeployments(connection);
+        }
       }
 
       @Override

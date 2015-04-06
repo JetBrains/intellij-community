@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -45,6 +46,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myCodeName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
+  private String myMicroVersion = null;
+  private String myPatchVersion = null;
+  private String myFullVersion = null;
   private String myBuildNumber = null;
   private String myApiVersion = null;
   private String myCompanyName = "JetBrains s.r.o.";
@@ -106,6 +110,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ELEMENT_VERSION = "version";
   private static final String ATTRIBUTE_MAJOR = "major";
   private static final String ATTRIBUTE_MINOR = "minor";
+  private static final String ATTRIBUTE_MICRO = "micro";
+  private static final String ATTRIBUTE_PATCH = "patch";
+  private static final String ATTRIBUTE_FULL = "full";
   private static final String ATTRIBUTE_CODENAME = "codename";
   private static final String ATTRIBUTE_NAME = "name";
   private static final String ELEMENT_BUILD = "build";
@@ -216,6 +223,40 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getMinorVersion() {
     return myMinorVersion;
+  }
+
+  @Override
+  public String getMicroVersion() {
+    return myMicroVersion;
+  }
+
+  @Override
+  public String getPatchVersion() {
+    return myPatchVersion;
+  }
+
+  @Override
+  public String getFullVersion() {
+    if (myFullVersion == null) {
+      if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
+        if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
+          return myMajorVersion + "." + myMinorVersion;
+        }
+        else {
+          return myMajorVersion + ".0";
+        }
+      }
+      else {
+        return getVersionName();
+      }
+    } else {
+      return MessageFormat.format(myFullVersion, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+    }
+  }
+
+  @Override
+  public String getStrictVersion() {
+    return myMajorVersion + "." + myMinorVersion + "." + StringUtil.notNullize(myMicroVersion, "0") + "." + StringUtil.notNullize(myPatchVersion, "0");
   }
 
   @Override
@@ -433,12 +474,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     buffer.append(getVersionName());
     buffer.append(" ");
     if (getMajorVersion() != null && !isEAP() && !isBetaOrRC()) {
-      buffer.append(getMajorVersion());
-
-      if (getMinorVersion() != null && getMinorVersion().length() > 0){
-        buffer.append(".");
-        buffer.append(getMinorVersion());
-      }
+      buffer.append(getFullVersion());
     }
     else {
       buffer.append(getBuild().asStringWithAllDetails());
@@ -513,6 +549,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (versionElement != null) {
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
+      myMicroVersion = versionElement.getAttributeValue(ATTRIBUTE_MICRO);
+      myPatchVersion = versionElement.getAttributeValue(ATTRIBUTE_PATCH);
+      myFullVersion = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ public class ConstantPool implements NewClassNameBuilder {
   public static final int FIELD = 1;
   public static final int METHOD = 2;
 
-  private List<PooledConstant> pool = new ArrayList<PooledConstant>();
-  private PoolInterceptor interceptor;
+  private final List<PooledConstant> pool = new ArrayList<PooledConstant>();
+  private final PoolInterceptor interceptor;
 
 
   public ConstantPool(DataInputStream in) throws IOException {

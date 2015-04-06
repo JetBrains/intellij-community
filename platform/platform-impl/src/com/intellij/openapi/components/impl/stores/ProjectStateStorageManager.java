@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   protected final ProjectImpl myProject;
   @NonNls protected static final String ROOT_TAG_NAME = "project";
 
-  public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, ProjectImpl project) {
+  public ProjectStateStorageManager(@NotNull TrackingPathMacroSubstitutor macroSubstitutor, @NotNull ProjectImpl project) {
     super(macroSubstitutor, ROOT_TAG_NAME, project, project.getPicoContainer());
     myProject = project;
   }
 
+  @NotNull
   @Override
   protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
     if (fileSpec.equals(StoragePathMacros.PROJECT_FILE)) {
@@ -46,6 +47,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     }
   }
 
+  @NotNull
   protected StorageData createIprStorageData(@NotNull String filePath) {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }

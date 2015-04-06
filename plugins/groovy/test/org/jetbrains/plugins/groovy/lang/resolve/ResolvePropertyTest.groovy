@@ -162,6 +162,13 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doUndefinedVarTest("undefinedVar2/A.groovy");
   }
 
+  public void testUndefinedVar3() {
+    resolveByText('''
+(aa, b) = [1, 4]
+c = a<caret>a
+''', GrBindingVariable)
+  }
+
   public void testDefinedVar1() throws Exception {
     doTest("definedVar1/A.groovy");
   }

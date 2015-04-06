@@ -36,10 +36,12 @@ import java.util.List;
  */
 public class AutoCloseableResourceInspectionBase extends BaseInspection {
 
+  public static final List<String> DEFAULT_IGNORED_TYPES =
+    Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream");
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
 
-  final List<String> ignoredTypes = new ArrayList(Arrays.asList("java.util.stream.Stream"));
+  final List<String> ignoredTypes = new ArrayList<String>(DEFAULT_IGNORED_TYPES);
 
   @Nls
   @NotNull
@@ -82,8 +84,8 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
-    final String ignoredTypesString = formatString(ignoredTypes);
-    if (!"java.util.stream.Stream".equals(ignoredTypesString)) {
+    if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
+      final String ignoredTypesString = formatString(ignoredTypes);
       node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
     }
   }

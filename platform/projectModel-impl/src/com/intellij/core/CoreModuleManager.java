@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -39,13 +40,15 @@ public class CoreModuleManager extends ModuleManagerImpl {
     myParentDisposable = parentDisposable;
   }
 
+  @NotNull
   @Override
-  protected ModuleEx createModule(String filePath) {
+  protected ModuleEx createModule(@NotNull String filePath) {
     return new CoreModule(myParentDisposable, myProject, filePath);
   }
 
+  @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(String filePath) throws IOException {
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException {
     final ModuleEx module = createModule(filePath);
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(filePath);
     try {

@@ -81,6 +81,15 @@ public class UseOfCloneInspection extends BaseInspection {
     }
 
     @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiMethod) || !CloneUtils.isClone((PsiMethod)target)) {
+        return;
+      }
+      registerError(expression, expression);
+    }
+
+    @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       final String qualifiedName = reference.getQualifiedName();
       if (!CommonClassNames.JAVA_LANG_CLONEABLE.equals(qualifiedName)) {

@@ -298,7 +298,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
       LOG.error(name + " has default state, but not marked to load it");
     }
 
@@ -312,9 +312,15 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
       }
 
       StateStorage stateStorage = getStateStorageManager().getStateStorage(storageSpec);
+      boolean forcedState = false;
       if (stateStorage != null && (stateStorage.hasState(component, name, stateClass, reloadData) ||
-                                   (changedStorages != null && changedStorages.contains(stateStorage)))) {
+                                   (forcedState = changedStorages != null && changedStorages.contains(stateStorage)))) {
         state = stateStorage.getState(component, name, stateClass, state);
+        if (state == null && forcedState) {
+          // state will be null if file deleted
+          // we must create empty (initial) state to reinit component
+          state = DefaultStateSerializer.deserializeState(new Element("state"), stateClass, null);
+        }
         break;
       }
     }

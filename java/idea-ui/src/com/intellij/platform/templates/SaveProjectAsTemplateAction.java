@@ -216,12 +216,17 @@ public class SaveProjectAsTemplateAction extends AnAction {
     else if (overwrite) {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         public void run() {
-          try {
-            VfsUtil.saveText(descriptionFile, text);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                VfsUtil.saveText(descriptionFile, text);
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            }
+          });
         }
       });
     }

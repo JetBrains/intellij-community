@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,11 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     return project.getComponent(BookmarkManager.class);
   }
 
-  public BookmarkManager(Project project, MessageBus bus, PsiDocumentManager documentManager, EditorColorsManager colorsManager) {
+  public BookmarkManager(Project project,
+                         MessageBus bus,
+                         PsiDocumentManager documentManager,
+                         EditorColorsManager colorsManager,
+                         EditorFactory editorFactory) {
     super(project);
     colorsManager.addEditorColorsListener(new EditorColorsListener() {
       @Override
@@ -77,7 +81,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       }
     }, project);
     myBus = bus;
-    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
 

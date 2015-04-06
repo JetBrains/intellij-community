@@ -42,9 +42,9 @@ public class PyTypeTest extends PyTestCase {
   public void testBinaryExprType() {
     doTest("int",
            "expr = 1 + 2");
-    doTest("str | unicode",
+    doTest("Union[str, unicode]",
            "expr = '1' + '2'");
-    doTest("str | unicode",
+    doTest("Union[str, unicode]",
            "expr = '%s' % ('a')");
     doTest("list[int]",
            "expr = [1] + [2]");
@@ -71,7 +71,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionOfTuples() {
-    doTest("(int | str, str | int)",
+    doTest("Union[Tuple[int, str], Tuple[str, int]]",
            "def x():\n" +
            "  if True:\n" +
            "    return (1, 'a')\n" +
@@ -101,7 +101,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-1425
   public void testNone() {
-    doTest("unknown",
+    doTest("Any",
            "class C:\n" +
            "    def __init__(self): self.foo = None\n" +
            "expr = C().foo");
@@ -238,7 +238,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnknownTypeInUnion() {
-    doTest("int | unknown",
+    doTest("Union[int, Any]",
            "def f(c, x):\n" +
            "    if c:\n" +
            "        return 1\n" +
@@ -361,7 +361,7 @@ public class PyTypeTest extends PyTestCase {
   public void testYieldFromType() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
     try {
-      doTest("str | int | float",
+      doTest("Union[str, int, float]",
              "def subgen():\n" +
              "    for i in [1, 2, 3]:\n" +
              "        yield i\n" +
@@ -570,7 +570,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testLogicalAndExpression() {
-    doTest("str | int",
+    doTest("Union[str, int]",
            "expr = 'foo' and 2");
   }
 
@@ -596,11 +596,11 @@ public class PyTypeTest extends PyTestCase {
                         "    foo(3)\n" +
                         "    foo('bar')\n";
     final PyExpression expr = parseExpr(text);
-    doTest("int | str | unknown", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("Union[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   public void testUpperBoundGeneric() {
-    doTest("int | str",
+    doTest("Union[int, str]",
            "def foo(x):\n" +
            "    '''\n" +
            "    :type x: T <= int or str\n" +
@@ -622,7 +622,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgument() {
-    doTest("list[int] | str | unicode",
+    doTest("Union[list[int], str, unicode]",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +
@@ -635,7 +635,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgumentWithSubscription() {
-    doTest("int | str | unicode",
+    doTest("Union[int, str, unicode]",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +
@@ -764,7 +764,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testNoResolveToFunctionsInTypes() {
-    doTest("C | unknown",
+    doTest("Union[C, Any]",
            "class C(object):\n" +
            "    def bar(self):\n" +
            "        pass\n" +
@@ -777,7 +777,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIsInstanceExpressionResolvedToTuple() {
-    doTest("str | unicode",
+    doTest("Union[str, unicode]",
            "string_types = str, unicode\n" +
            "\n" +
            "def f(x):\n" +
@@ -786,7 +786,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIsInstanceInConditionalExpression() {
-    doTest("str | int",
+    doTest("Union[str, int]",
            "def f(x):\n" +
            "    expr = x if isinstance(x, str) else 10\n");
   }
@@ -837,7 +837,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTupleIterationType() {
-    doTest("int | str",
+    doTest("Union[int, str]",
            "xs = (1, 'a')\n" +
            "for expr in xs:\n" +
            "    pass\n");
@@ -845,12 +845,12 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-12801
   public void testTupleConcatenation() {
-    doTest("(int, bool, str)",
+    doTest("Tuple[int, bool, str]",
            "expr = (1,) + (True, 'spam') + ()");
   }
 
   public void testTupleMultiplication() {
-    doTest("(int, bool, int, bool)",
+    doTest("Tuple[int, bool, int, bool]",
            "expr = (1, False) * 2");
   }
 
@@ -900,7 +900,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionTypeAttributeOfDifferentTypes() {
-    doTest("list | int",
+    doTest("Union[list, int]",
            "class Foo:\n" +
            "    x = []\n" +
            "\n" +
@@ -914,7 +914,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-11364
   public void testUnionTypeAttributeCallOfDifferentTypes() {
-    doTest("C1 | C2",
+    doTest("Union[C1, C2]",
            "class C1:\n" +
            "    def foo(self):\n" +
            "        return self\n" +
@@ -934,7 +934,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-12862
   public void testUnionTypeAttributeSubscriptionOfDifferentTypes() {
-    doTest("C1 | C2",
+    doTest("Union[C1, C2]",
            "class C1:\n" +
            "    def __getitem__(self, item):\n" +
            "        return self\n" +
@@ -955,7 +955,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-11541
   public void testIsInstanceBaseStringCheck() {
-    doTest("str | unicode",
+    doTest("Union[str, unicode]",
            "def f(x):\n" +
            "    if isinstance(x, basestring):\n" +
            "        expr = x\n");

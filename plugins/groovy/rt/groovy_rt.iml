@@ -12,6 +12,6 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="groovy-rt-constants" />
     <orderEntry type="library" scope="PROVIDED" name="griffon-rt" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Slf4j" level="project" />
   </component>
 </module>
-

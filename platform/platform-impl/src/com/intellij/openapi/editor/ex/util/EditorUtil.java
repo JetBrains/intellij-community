@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +228,6 @@ public final class EditorUtil {
    * long document lines - {@link Editor#logicalPositionToOffset(LogicalPosition)}
    * should be faster when soft wraps are enabled. To be removed in IDEA 16.
    */
-  @SuppressWarnings("UnusedDeclaration")
   public static int calcOffset(@NotNull EditorEx editor,
                                @NotNull CharSequence text,
                                int start,
@@ -865,6 +864,36 @@ public final class EditorUtil {
     }
     int line = document.getLineNumber(offset);
     return offset == document.getLineEndOffset(line);
+  }
+
+  /**
+   * Setting selection using {@link SelectionModel#setSelection(int, int)} or {@link Caret#setSelection(int, int)} methods can result
+   * in resulting selection range to be larger than requested (in case requested range intersects with collapsed fold regions).
+   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as 
+   * requested.
+   */
+  public static void setSelectionExpandingFoldedRegionsIfNeeded(@NotNull Editor editor, int startOffset, int endOffset) {
+    FoldingModel foldingModel = editor.getFoldingModel();
+    FoldRegion startFoldRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
+    if (startFoldRegion != null && (startFoldRegion.getStartOffset() == startOffset || startFoldRegion.isExpanded())) {
+      startFoldRegion = null;
+    }
+    FoldRegion endFoldRegion = foldingModel.getCollapsedRegionAtOffset(endOffset);
+    if (endFoldRegion != null && (endFoldRegion.getStartOffset() == endOffset || endFoldRegion.isExpanded())) {
+      endFoldRegion = null;
+    }
+    if (startFoldRegion != null || endFoldRegion != null) {
+      final FoldRegion finalStartFoldRegion = startFoldRegion;
+      final FoldRegion finalEndFoldRegion = endFoldRegion;
+      foldingModel.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
+          if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
+        }
+      });
+    }
+    editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ public class VarVersionNode implements IGraphNode {
 
   public static final int FLAG_PHANTOM_FINEXIT = 2;
 
-  public int var;
+  public final int var;
 
-  public int version;
+  public final int version;
 
-  public Set<VarVersionEdge> succs = new HashSet<VarVersionEdge>();
+  public final Set<VarVersionEdge> succs = new HashSet<VarVersionEdge>();
 
-  public Set<VarVersionEdge> preds = new HashSet<VarVersionEdge>();
+  public final Set<VarVersionEdge> preds = new HashSet<VarVersionEdge>();
 
   public int flags;
 

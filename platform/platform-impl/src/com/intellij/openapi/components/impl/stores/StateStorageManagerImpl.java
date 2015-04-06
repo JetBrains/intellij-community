@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StateStorage.SaveSession;
@@ -47,10 +46,8 @@ import java.util.regex.Pattern;
 public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
   private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
 
-  private static final boolean ourHeadlessEnvironment;
-  static {
-    final Application app = ApplicationManager.getApplication();
-    ourHeadlessEnvironment = app.isHeadlessEnvironment() || app.isUnitTestMode();
+  private static class Holder {
+    private static final boolean ourHeadlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
@@ -201,7 +198,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private StateStorage createFileStateStorage(@NotNull String fileSpec, @Nullable RoamingType roamingType) {
     String filePath = expandMacros(fileSpec);
 
-    if (!ourHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
+    if (!Holder.ourHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + filePath);
     }
 
@@ -264,8 +261,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     String expanded = file;
-    for (String macro : myMacros.keySet()) {
-      expanded = StringUtil.replace(expanded, macro, myMacros.get(macro));
+    for (Map.Entry<String, String> entry : myMacros.entrySet()) {
+      expanded = StringUtil.replace(expanded, entry.getKey(), entry.getValue());
     }
     return expanded;
   }
@@ -274,8 +271,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public String collapseMacros(@NotNull String path) {
     String result = path;
-    for (String macro : myMacros.keySet()) {
-      result = StringUtil.replace(result, myMacros.get(macro), macro);
+    for (Map.Entry<String, String> entry : myMacros.entrySet()) {
+      result = StringUtil.replace(result, entry.getValue(), entry.getKey());
     }
     return result;
   }
@@ -287,7 +284,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   protected class StateStorageManagerExternalizationSession implements ExternalizationSession {
-    final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
+    private final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>();
 
     @Override
     public void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state) {

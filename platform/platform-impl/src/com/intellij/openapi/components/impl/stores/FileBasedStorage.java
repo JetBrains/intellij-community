@@ -70,11 +70,13 @@ public class FileBasedStorage extends XmlElementStorage {
           @Override
           public void fileDeleted(@NotNull VirtualFileEvent event) {
             myCachedVirtualFile = null;
+            listener.storageFileChanged(event, FileBasedStorage.this);
           }
 
           @Override
           public void fileCreated(@NotNull VirtualFileEvent event) {
             myCachedVirtualFile = event.getFile();
+            listener.storageFileChanged(event, FileBasedStorage.this);
           }
 
           @Override

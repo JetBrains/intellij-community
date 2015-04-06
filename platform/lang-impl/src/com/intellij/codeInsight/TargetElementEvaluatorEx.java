@@ -15,11 +15,20 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
+ * @author Anton Makeev
  */
 public interface TargetElementEvaluatorEx extends TargetElementEvaluator {
   boolean isIdentifierPart(PsiFile element, CharSequence text, int offset);
+
+  @Nullable 
+  PsiElement getNamedElement(@NotNull PsiElement element);
+  
+  boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement);
 }

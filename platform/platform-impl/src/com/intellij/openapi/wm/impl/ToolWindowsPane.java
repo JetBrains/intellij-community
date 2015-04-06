@@ -1063,17 +1063,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
         JComponent c = getComponentAt(anchor);
         if (c instanceof Splitter) {
           Splitter splitter = (Splitter)c;
-          if (myInfo.isSplit()) {
-            InternalDecorator component = (InternalDecorator)splitter.getFirstComponent();
-            if (component != null) {
+          final InternalDecorator component =
+            myInfo.isSplit() ? (InternalDecorator)splitter.getFirstComponent() : (InternalDecorator)splitter.getSecondComponent();
+          if (myInfo.isSplit() && component != null) {
               myId2SplitProportion.put(component.getWindowInfo().getId(), splitter.getProportion());
-            }
-            setComponent(component, anchor, component != null ? component.getWindowInfo().getWeight() : 0);
           }
-          else {
-            InternalDecorator component = (InternalDecorator)splitter.getSecondComponent();
-            setComponent(component, anchor, component != null ? component.getWindowInfo().getWeight() : 0);
-          }
+          setComponent(component, anchor, component != null ? component.getWindowInfo().getWeight() : 0);
         } else {
           setComponent(null, anchor, 0);
         }

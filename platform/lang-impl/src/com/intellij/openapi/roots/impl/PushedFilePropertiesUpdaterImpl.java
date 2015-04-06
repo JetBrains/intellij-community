@@ -37,6 +37,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -55,10 +56,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 
 public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater");
@@ -253,6 +256,8 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       }
     });
 
+    List<Runnable> tasks = new ArrayList<Runnable>();
+
     for (final Module module : modules) {
       Runnable iteration = ApplicationManager.getApplication().runReadAction(new Computable<Runnable>() {
         @Override
@@ -280,8 +285,48 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
           };
         }
       });
-      iteration.run();
+      tasks.add(iteration);
     }
+
+    invoke2xConcurrentlyIfPossible(tasks);
+  }
+
+  public static void invoke2xConcurrentlyIfPossible(final List<Runnable> tasks) {
+    if (tasks.size() == 1 ||
+        ApplicationManager.getApplication().isWriteAccessAllowed() ||
+        !Registry.is("idea.concurrent.scanning.files.to.index")) {
+      for(Runnable r:tasks) r.run();
+      return;
+    }
+    final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
+    Future<?> result = null;
+    if (tasks.size() > 1) {
+      result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          Runnable runnable;
+          while ((runnable = tasksQueue.poll()) != null) runnable.run();
+        }
+      });
+    }
+
+    Runnable runnable;
+    while ((runnable = tasksQueue.poll()) != null) runnable.run();
+
+    if (result != null) {
+      try {
+        result.get();
+      } catch (Exception ex) {
+        LOG.error(ex);
+      }
+    }
+    //JobLauncher.getInstance().invokeConcurrently(tasks, null, false, false, new Processor<Runnable>() {
+    //  @Override
+    //  public boolean process(Runnable runnable) {
+    //    runnable.run();
+    //    return true;
+    //  }
+    //});
   }
 
   private void applyPushersToFile(final VirtualFile fileOrDir, final FilePropertyPusher[] pushers, final Object[] moduleValues) {

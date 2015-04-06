@@ -52,14 +52,14 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private final Project myProject;
   private final MessageBusConnection myConnection;
 
-  private volatile boolean myDisposed = false;
-  private volatile RootIndex myRootIndex = null;
+  private volatile boolean myDisposed;
+  private volatile RootIndex myRootIndex;
 
-  public DirectoryIndexImpl(@NotNull Project project) {
+  public DirectoryIndexImpl(@NotNull Project project, ModuleManager moduleManager) {
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
     subscribeToFileChanges();
-    markContentRootsForRefresh();
+    markContentRootsForRefresh(moduleManager);
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
@@ -99,8 +99,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     });
   }
 
-  protected void markContentRootsForRefresh() {
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+  private static void markContentRootsForRefresh(@NotNull ModuleManager moduleManager) {
+    Module[] modules = moduleManager.getModules();
     for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {

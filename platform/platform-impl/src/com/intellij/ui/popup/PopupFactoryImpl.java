@@ -558,7 +558,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Point p = getVisibleBestPopupLocation(editor);
     if (p == null) {
       final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
+      p = new Point(visibleArea.x + visibleArea.width / 3, visibleArea.y + visibleArea.height / 2);
     }
     return new RelativePoint(editor.getContentComponent(), p);
   }

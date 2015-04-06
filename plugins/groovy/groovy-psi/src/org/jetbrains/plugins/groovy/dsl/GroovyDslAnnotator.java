@@ -31,6 +31,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
+
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
 
 /**
  * @author peter
@@ -39,26 +42,30 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (psiElement instanceof GroovyFile) {
-      final VirtualFile vfile = ((GroovyFile)psiElement).getVirtualFile();
-      if (vfile != null && "gdsl".equals(vfile.getExtension()) &&
-          (!GroovyDslFileIndex.isActivated(vfile) || FileDocumentManager.getInstance().isFileModified(vfile))) {
-        final String reason = GroovyDslFileIndex.getInactivityReason(vfile);
-        final String message;
-        boolean modified = reason == null || GroovyDslFileIndex.MODIFIED.equals(reason);
-        if (modified) {
-          message = "DSL descriptor file has been changed and isn't currently executed.";
-        } else {
-          message = "DSL descriptor file has been disabled due to a processing error.";
-        }
-        final Annotation annotation = holder.createWarningAnnotation(psiElement, message);
-        annotation.setFileLevelAnnotation(true);
-        if (!modified) {
-          annotation.registerFix(GroovyQuickFixFactory.getInstance().createInvestigateFix(reason));
-        }
-        annotation.registerFix(new ActivateFix(vfile));
+    if (!(psiElement instanceof GroovyFile)) return;
+
+    final GroovyFile groovyFile = (GroovyFile)psiElement;
+    if (!GrFileIndexUtil.isGroovySourceFile(groovyFile)) return;
+    
+    final VirtualFile vfile = groovyFile.getVirtualFile();
+    if (!GdslUtil.GDSL_FILTER.value(vfile)) return;
+    
+    final DslActivationStatus.Status status = GroovyDslFileIndex.getStatus(vfile);
+    if (status == ACTIVE) return;
+
+    final String message = status == MODIFIED
+                           ? "DSL descriptor file has been changed and isn't currently executed."
+                           : "DSL descriptor file has been disabled due to a processing error.";
+
+    final Annotation annotation = holder.createWarningAnnotation(psiElement, message);
+    annotation.setFileLevelAnnotation(true);
+    if (status == ERROR) {
+      final String error = GroovyDslFileIndex.getError(vfile);
+      if (error != null) {
+        annotation.registerFix(GroovyQuickFixFactory.getInstance().createInvestigateFix(error));
       }
     }
+    annotation.registerFix(new ActivateFix(vfile));
   }
 
   private static class ActivateFix implements IntentionAction {
@@ -77,7 +84,8 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Activate DSL descriptor";
+      //noinspection DialogTitleCapitalization
+      return "Activate DSL Descriptor";
     }
 
     @Override
@@ -88,7 +96,7 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       FileDocumentManager.getInstance().saveAllDocuments();
-      GroovyDslFileIndex.activateUntilModification(myVfile);
+      GroovyDslFileIndex.activate(myVfile);
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
 

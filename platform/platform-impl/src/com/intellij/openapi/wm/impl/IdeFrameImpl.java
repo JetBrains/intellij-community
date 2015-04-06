@@ -86,6 +86,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   private IdeRootPane myRootPane;
   private final BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
+  private PropertyChangeListener myWindowsBorderUpdater = null;
   private boolean myRestoreFullScreen;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx,
@@ -127,13 +128,15 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
         updateBorder();
       }
     });
-
-    Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", new PropertyChangeListener() {
-      @Override
-      public void propertyChange(@NotNull PropertyChangeEvent evt) {
-        updateBorder();
-      }
-    });
+    if (SystemInfo.isWindows) {
+      myWindowsBorderUpdater = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(@NotNull PropertyChangeEvent evt) {
+          updateBorder();
+        }
+      };
+      Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
+    }
 
     IdeMenuBar.installAppMenuIfNeeded(this);
 
@@ -471,6 +474,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     if (myFrameDecorator != null) {
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
+    }
+    if (myWindowsBorderUpdater != null) {
+      Toolkit.getDefaultToolkit().removePropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
     }
 
     FocusTrackback.release(this);

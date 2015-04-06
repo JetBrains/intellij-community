@@ -15,15 +15,6 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -38,6 +29,9 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 public class Statement implements IMatchable {
 
@@ -79,14 +73,14 @@ public class Statement implements IMatchable {
   // private fields
   // *****************************************************************************
 
-  private Map<Integer, List<StatEdge>> mapSuccEdges = new HashMap<Integer, List<StatEdge>>();
-  private Map<Integer, List<StatEdge>> mapPredEdges = new HashMap<Integer, List<StatEdge>>();
+  private final Map<Integer, List<StatEdge>> mapSuccEdges = new HashMap<Integer, List<StatEdge>>();
+  private final Map<Integer, List<StatEdge>> mapPredEdges = new HashMap<Integer, List<StatEdge>>();
 
-  private Map<Integer, List<Statement>> mapSuccStates = new HashMap<Integer, List<Statement>>();
-  private Map<Integer, List<Statement>> mapPredStates = new HashMap<Integer, List<Statement>>();
+  private final Map<Integer, List<Statement>> mapSuccStates = new HashMap<Integer, List<Statement>>();
+  private final Map<Integer, List<Statement>> mapPredStates = new HashMap<Integer, List<Statement>>();
 
   // statement as graph
-  protected VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<Statement, Integer>();
+  protected final VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<Statement, Integer>();
 
   protected Statement parent;
 
@@ -94,9 +88,9 @@ public class Statement implements IMatchable {
 
   protected List<Exprent> exprents;
 
-  protected HashSet<StatEdge> labelEdges = new HashSet<StatEdge>();
+  protected final HashSet<StatEdge> labelEdges = new HashSet<StatEdge>();
 
-  protected List<Exprent> varDefinitions = new ArrayList<Exprent>();
+  protected final List<Exprent> varDefinitions = new ArrayList<Exprent>();
 
   // copied statement, s. deobfuscating of irreducible CFGs
   private boolean copied = false;

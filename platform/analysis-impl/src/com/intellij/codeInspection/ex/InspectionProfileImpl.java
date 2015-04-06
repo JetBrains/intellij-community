@@ -200,6 +200,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
+  @Deprecated // use corresponding constructor instead
   public void setBaseProfile(InspectionProfile profile) {
     throw new IncorrectOperationException();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
@@ -112,9 +111,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   };
 
   private static class Context {
-    final SmartPsiElementPointer element;
-    final String text;
-    final Rectangle viewRect;
+    private final SmartPsiElementPointer element;
+    private final String text;
+    private final Rectangle viewRect;
 
     public Context(SmartPsiElementPointer element, String text, Rectangle viewRect) {
       this.element = element;
@@ -253,7 +252,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myScrollPane.setBorder(null);
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
-    final MouseAdapter mouseAdapter = new MouseAdapter() {
+    final MouseListener mouseAdapter = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
         myManager.requestFocus();
@@ -268,12 +267,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     });
 
-    final FocusAdapter focusAdapter = new FocusAdapter() {
+    final FocusListener focusAdapter = new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
         Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject(getElement()));
 
-        if (!(previouslyFocused == myEditorPane)) {
+        if (previouslyFocused != myEditorPane) {
           if (myHint != null && !myHint.isDisposed()) myHint.cancel();
         }
       }
@@ -670,7 +669,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
-    EditDocumentationSourceAction() {
+    private EditDocumentationSourceAction() {
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
       getTemplatePresentation().setText("Edit Source");
@@ -697,8 +696,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
+
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    public ExternalDocAction() {
+    private ExternalDocAction() {
       super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
     }
@@ -722,10 +722,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         if (!processed) {
           final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
           final List<String> urls;
-          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl) && BrowserUtil.canBeBrowsed(myEffectiveExternalUrl)) {
+          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
             urls = Collections.singletonList(myEffectiveExternalUrl);
           } else {
-            urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
+            urls = provider.getUrlFor(element, originalElement);
             assert urls != null : provider;
             assert !urls.isEmpty() : provider;
           }
@@ -746,7 +746,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           presentation.setEnabled(element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement));
         }
         else {
-          List<String> urls = BrowserUtil.retainBrowsableUrls(provider.getUrlFor(element, originalElement));
+          final List<String> urls = provider.getUrlFor(element, originalElement);
           presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
         }
       }
@@ -867,16 +867,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class MyShowSettingsButton extends ActionButton {
 
-    MyShowSettingsButton() {
+    private MyShowSettingsButton() {
       this(new MyShowSettingsAction(), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
-    MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
+    private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
       myPresentation.setIcon(AllIcons.General.SecondaryGroup);
     }
 
-    public void hideSettings() {
+    private void hideSettings() {
       if (!mySettingsPanel.isVisible()) {
         return;
       }
@@ -906,7 +906,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private static abstract class MyDictionary<K, V> extends Dictionary<K, V> {
+  private abstract static class MyDictionary<K, V> extends Dictionary<K, V> {
     @Override
     public int size() {
       throw new UnsupportedOperationException();

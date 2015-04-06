@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergey.Malenkov
@@ -46,54 +47,54 @@ public final class SortedConfigurableGroup
     myGroupId = groupId;
   }
 
-  public SortedConfigurableGroup(Project project, Configurable... configurables) {
+  public SortedConfigurableGroup(Project project, Map<String, List<Configurable>> map) {
     myGroupId = "root";
     // create groups from configurations
-    HashMap<String, SortedConfigurableGroup> map = new HashMap<String, SortedConfigurableGroup>();
-    map.put(myGroupId, this);
-    for (Configurable configurable : configurables) {
-      String groupId = null;
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        groupId = wrapper.getExtensionPoint().groupId;
-      }
-      SortedConfigurableGroup composite = map.get(groupId);
-      if (composite == null) {
-        composite = new SortedConfigurableGroup(groupId);
-        map.put(groupId, composite);
-      }
-      composite.myList.add(configurable);
+    List<Configurable> list = map.remove(myGroupId);
+    if (list != null) {
+      myList.addAll(list);
     }
     // process supported groups
-    add(70, map.remove("appearance"));
-    add(60, map.remove("editor"));
-    SortedConfigurableGroup projectGroup = map.remove("project");
+    add(70, remove(map, "appearance"));
+    add(60, remove(map, "editor"));
+    SortedConfigurableGroup projectGroup = remove(map, "project");
     if (projectGroup != null && project != null && !project.isDefault()) {
       projectGroup.myDisplayName = StringUtil.first(
         OptionsBundle.message("configurable.group.project.named.settings.display.name", project.getName()),
         30, true);
     }
     add(40, projectGroup);
-    SortedConfigurableGroup build = map.remove("build");
+    SortedConfigurableGroup build = remove(map, "build");
     if (build == null) {
-      build = map.remove("build.tools");
+      build = remove(map, "build.tools");
     }
     else {
-      build.add(1000, map.remove("build.tools"));
+      build.add(1000, remove(map, "build.tools"));
     }
     add(30, build);
-    add(20, map.remove("language"));
-    add(10, map.remove("tools"));
-    add(-10, map.remove(null));
+    add(20, remove(map, "language"));
+    add(10, remove(map, "tools"));
+    add(-10, remove(map, "other"));
     // process unsupported groups
-    if (1 < map.size()) {
-      for (SortedConfigurableGroup group : map.values()) {
-        if (this != group) {
-          group.myDisplayName = OptionsBundle.message("configurable.group.category.named.settings.display.name", group.myGroupId);
+    if (0 < map.size()) {
+      for (String groupId : map.keySet().toArray(new String[map.size()])) {
+        SortedConfigurableGroup group = remove(map, groupId);
+        if (group != null) {
+          group.myDisplayName = OptionsBundle.message("configurable.group.category.named.settings.display.name", groupId);
           add(0, group);
         }
       }
     }
+  }
+
+  private static SortedConfigurableGroup remove(Map<String, List<Configurable>> map, String groupId) {
+    List<Configurable> list = map.remove(groupId);
+    if (list == null) {
+      return null;
+    }
+    SortedConfigurableGroup group = new SortedConfigurableGroup(groupId);
+    group.myList.addAll(list);
+    return group;
   }
 
   private void add(int weight, SortedConfigurableGroup configurable) {

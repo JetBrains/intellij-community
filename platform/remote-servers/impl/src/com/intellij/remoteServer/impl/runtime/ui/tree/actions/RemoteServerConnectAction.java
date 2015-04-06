@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 
@@ -37,6 +38,6 @@ public class RemoteServerConnectAction extends ServersTreeAction<ServersTreeStru
 
   @Override
   protected void doActionPerformed(ServersTreeStructure.RemoteServerNode node) {
-    ServerConnectionManager.getInstance().getOrCreateConnection(node.getValue());
+    ServerConnectionManager.getInstance().getOrCreateConnection(node.getValue()).connect(EmptyRunnable.INSTANCE);
   }
 }

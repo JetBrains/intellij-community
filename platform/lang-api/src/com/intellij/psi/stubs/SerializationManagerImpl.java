@@ -76,6 +76,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   public void repairNameStorage() {
     if (myNameStorageCrashed.getAndSet(false)) {
       try {
+        LOG.info("Name storage is repaired");
         if (myNameStorage != null) {
           myNameStorage.close();
         }

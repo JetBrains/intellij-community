@@ -1,6 +1,6 @@
 import a
-from b import f
+import b
 
 
 def main():
-    print(f(42))
+    print(b.f(42))

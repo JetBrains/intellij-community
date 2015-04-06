@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class TargetOptionsComponent extends JPanel {
   private static final String[] KNOWN_TARGETS = new String[] {"1.1", "1.2", "1.3","1.4","1.5", "1.6", "1.7", "1.8"};
-  private static final String COMPILER_DEFAULT = "JDK default";
+  private static final String COMPILER_DEFAULT = "Same as language level";
 
   private ComboBox myCbProjectTargetLevel;
   private JBTable myTable;
@@ -312,7 +312,7 @@ public class TargetOptionsComponent extends JPanel {
     combo.setEditor(new BasicComboBoxEditor() {
       @Override
       protected JTextField createEditorComponent() {
-        return new HintTextField(COMPILER_DEFAULT, 10);
+        return new HintTextField(COMPILER_DEFAULT, 12);
       }
     });
     return combo;

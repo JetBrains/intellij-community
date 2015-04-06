@@ -1,5 +1,7 @@
 package use_of_clone;
 
+import java.util.concurrent.Callable;
+
 class UseOfClone implements <warning descr="Use of 'Cloneable'">Cloneable</warning> {
 
   void f(int[] is) {
@@ -12,6 +14,10 @@ class UseOfClone implements <warning descr="Use of 'Cloneable'">Cloneable</warni
 
   void g(UseOfClone o) {
     o.<warning descr="Call to 'clone()'">clone</warning>();
+  }
+
+  void h() {
+    Callable r = <warning descr="Use of 'this::clone'">this::clone</warning>;
   }
 }
 interface I extends <warning descr="Use of 'Cloneable'">Cloneable</warning> {

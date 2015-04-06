@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*
@@ -323,5 +324,7 @@ try{} catch(IOException e) {/*comment*/}
     myFixture.enableInspections(inspection)
     testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
   }
+
+  public void testInvokingMethodReferenceWithDefaultParameters() { doTest(new GroovyAssignabilityCheckInspection()) }
 
 }

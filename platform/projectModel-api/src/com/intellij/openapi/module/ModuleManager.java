@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,23 +46,26 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related.
    *
-   * @param filePath the path at which the module is created.
+   * @param filePath     the path at which the module is created.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
+  @NotNull
+  public abstract Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
    *
    * @param filePath the path to load the module from.
    * @return the module instance.
-   * @throws InvalidDataException if the data in the .iml file is semantically incorrect.
-   * @throws IOException if an I/O error occurred when loading the module file.
-   * @throws JDOMException if the file contains invalid XML data.
+   * @throws InvalidDataException        if the data in the .iml file is semantically incorrect.
+   * @throws IOException                 if an I/O error occurred when loading the module file.
+   * @throws JDOMException               if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
-  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
+  @NotNull
+  public abstract Module loadModule(@NotNull String filePath)
+    throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.
@@ -76,7 +79,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the array of modules.
    */
-  @NotNull public abstract Module[] getModules();
+  @NotNull
+  public abstract Module[] getModules();
 
   /**
    * Returns the project module with the specified name.
@@ -84,7 +88,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @param name the name of the module to find.
    * @return the module instance, or null if no module with such name exists.
    */
-  @Nullable public abstract Module findModuleByName(@NonNls @NotNull String name);
+  @Nullable
+  public abstract Module findModuleByName(@NonNls @NotNull String name);
 
   /**
    * Returns the list of modules sorted by dependency (the modules which do not depend
@@ -93,7 +98,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the sorted array of modules.
    */
-  @NotNull public abstract Module[] getSortedModules();
+  @NotNull
+  public abstract Module[] getSortedModules();
 
   /**
    * Returns the module comparator which can be used for sorting modules by dependency
@@ -102,17 +108,18 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the module comparator instance.
    */
-  @NotNull public abstract Comparator<Module> moduleDependencyComparator();
+  @NotNull
+  public abstract Comparator<Module> moduleDependencyComparator();
 
   /**
    * Returns the list of modules which directly depend on the specified module.
    *
    * @param module the module for which the list of dependent modules is requested.
    * @return list of <i>modules that depend on</i> given module.
-   *
    * @see ModuleUtilCore#getAllDependentModules(Module)
    */
-  @NotNull public abstract List<Module> getModuleDependentModules(@NotNull Module module);
+  @NotNull
+  public abstract List<Module> getModuleDependentModules(@NotNull Module module);
 
   /**
    * Checks if one of the specified modules directly depends on the other module.
@@ -128,7 +135,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the module dependency graph.
    */
-  @NotNull public abstract Graph<Module> moduleGraph();
+  @NotNull
+  public abstract Graph<Module> moduleGraph();
 
   /**
    * Returns the graph of dependencies between modules in the project.
@@ -137,7 +145,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @return the module dependency graph.
    * @since 11.0
    */
-  @NotNull public abstract Graph<Module> moduleGraph(boolean includeTests);
+  @NotNull
+  public abstract Graph<Module> moduleGraph(boolean includeTests);
 
   /**
    * Returns the model for the list of modules in the project, which can be used to add,
@@ -145,7 +154,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @return the modifiable model instance.
    */
-  @NotNull public abstract ModifiableModuleModel getModifiableModel();
+  @NotNull
+  public abstract ModifiableModuleModel getModifiableModel();
 
 
   /**
@@ -155,5 +165,6 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
-  @Nullable public abstract String[] getModuleGroupPath(@NotNull Module module);
+  @Nullable
+  public abstract String[] getModuleGroupPath(@NotNull Module module);
 }

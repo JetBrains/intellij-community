@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class DecompilerContext {
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
   public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 
-  private static ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
+  private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
 
   private final Map<String, Object> properties;
   private StructContext structContext;

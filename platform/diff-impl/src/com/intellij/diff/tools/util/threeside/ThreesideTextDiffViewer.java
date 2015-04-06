@@ -37,7 +37,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -151,6 +150,10 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, forceReadOnly[i], true);
       DiffUtil.configureEditor(editor, content, myProject);
       editors.add(editor);
+
+      if (Registry.is("diff.divider.repainting.disable.blitting")) {
+        editor.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+      }
     }
 
     editors.get(0).setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
@@ -315,14 +318,21 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
     if (contents.size() != 3) return false;
 
-    if (!canShowContent(contents.get(0))) return false;
-    if (!canShowContent(contents.get(1))) return false;
-    if (!canShowContent(contents.get(2))) return false;
-
-    return true;
+    boolean canShow = true;
+    boolean wantShow = false;
+    for (DiffContent content : contents) {
+      canShow &= canShowContent(content);
+      wantShow |= wantShowContent(content);
+    }
+    return canShow && wantShow;
   }
 
   public static boolean canShowContent(@NotNull DiffContent content) {
+    if (content instanceof DocumentContent) return true;
+    return false;
+  }
+
+  public static boolean wantShowContent(@NotNull DiffContent content) {
     if (content instanceof DocumentContent) return true;
     return false;
   }
@@ -499,7 +509,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
         }
       }
       else {
-        getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        DiffUtil.scrollToCaret(getCurrentEditor());
       }
       return true;
     }

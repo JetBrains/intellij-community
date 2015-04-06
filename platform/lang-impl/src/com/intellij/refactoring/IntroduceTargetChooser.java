@@ -23,6 +23,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
@@ -70,7 +73,7 @@ public class IntroduceTargetChooser {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor, ranger);
     final DefaultListModel model = new DefaultListModel();
     for (T expr : expressions) {
-      model.addElement(expr);
+      model.addElement(SmartPointerManager.getInstance(expr.getProject()).createSmartPsiElementPointer(expr));
     }
     final JList list = new JBList(model);
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -84,14 +87,18 @@ public class IntroduceTargetChooser {
                                                     final boolean isSelected,
                                                     final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        final T expr = (T)value;
-        if (expr.isValid()) {
+        SmartPsiElementPointer<T> pointer = (SmartPsiElementPointer<T>)value;
+        final T expr = pointer.getElement();
+        if (expr != null) {
           String text = renderer.fun(expr);
           int firstNewLinePos = text.indexOf('\n');
           String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
           if (trimmedText.length() != text.length()) trimmedText += " ...";
           setText(trimmedText);
+        }
+        else {
+          setForeground(JBColor.RED);
+          setText("Invalid");
         }
         return rendererComponent;
       }
@@ -102,29 +109,36 @@ public class IntroduceTargetChooser {
       public void valueChanged(final ListSelectionEvent e) {
         highlighter.dropHighlight();
         final int index = list.getSelectedIndex();
-        if (index < 0 ) return;
-        final T expr = (T)model.get(index);
-        highlighter.highlight(expr, Collections.<PsiElement>singletonList(expr));
+        if (index < 0) return;
+        SmartPsiElementPointer<T> pointer = ((SmartPsiElementPointer<T>)model.get(index));
+        final T expr = pointer.getElement();
+        if (expr != null) {
+          highlighter.highlight(expr, Collections.<PsiElement>singletonList(expr));
+        }
       }
     });
 
     JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setTitle(title)
-          .setMovable(false)
-          .setResizable(false)
-          .setRequestFocus(true)
-          .setItemChoosenCallback(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                      callback.pass((T)list.getSelectedValue());
-                                    }
-                                  })
-          .addListener(new JBPopupAdapter() {
-                          @Override
-                          public void onClosed(LightweightWindowEvent event) {
-                            highlighter.dropHighlight();
-                          }
-                       })
-          .createPopup().showInBestPositionFor(editor);
+      .setTitle(title)
+      .setMovable(false)
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setItemChoosenCallback(new Runnable() {
+        @Override
+        public void run() {
+          SmartPsiElementPointer<T> value = (SmartPsiElementPointer<T>)list.getSelectedValue();
+          T expr = value.getElement();
+          if (expr != null) {
+            callback.pass(expr);
+          }
+        }
+      })
+      .addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          highlighter.dropHighlight();
+        }
+      })
+      .createPopup().showInBestPositionFor(editor);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,11 +76,13 @@ public abstract class PathMacroMap {
     substitute(e, caseSensitive, recursively, null);
   }
 
-  public String substituteRecursively(String text, boolean caseSensitive) {
+  @NotNull
+  public String substituteRecursively(@NotNull String text, boolean caseSensitive) {
     return substitute(text, caseSensitive);
   }
 
-  protected static String quotePath(String path) {
+  @NotNull
+  protected static String quotePath(@NotNull String path) {
     return FileUtil.toSystemIndependentName(path);
   }
 

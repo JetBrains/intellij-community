@@ -18,6 +18,7 @@ package com.jetbrains.commandInterface.commandLine;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Argument;
+import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineArgument;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,9 @@ public final class CommandLineArgumentReference extends CommandLineElementRefere
     // priority is used to display args before options
     if (argumentValues != null) {
       for (final String value : argumentValues) {
-        builder.addElement(LookupElementBuilder.create(value).withBoldness(true), getElement().findBestHelpText(), 1);
+        final Help help = getElement().findBestHelp();
+        final String helpText = (help != null ? help.getHelpString() : null);
+        builder.addElement(LookupElementBuilder.create(value).withBoldness(true), helpText, 1);
       }
     }
 
@@ -66,7 +69,7 @@ public final class CommandLineArgumentReference extends CommandLineElementRefere
     if (argumentOption == null) { // If not option argument
       for (final Option option : validationResult.getUnusedOptions()) {
         for (final String value : option.getAllNames()) {
-          builder.addElement(LookupElementBuilder.create(value), option.getHelp(), 0);
+          builder.addElement(LookupElementBuilder.create(value), option.getHelp().getHelpString(), 0);
         }
       }
     }

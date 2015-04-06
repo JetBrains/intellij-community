@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.BundleBase;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
@@ -265,7 +266,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener("Select base directory", "Select base directory for the Project",
                                             null, descriptor);
-    return LabeledComponent.create(myLocationField, "&Location");
+    return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand("&Location"));
   }
 
   private static File findSequentNonExistingUntitled() {

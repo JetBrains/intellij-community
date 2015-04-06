@@ -155,8 +155,7 @@ public class PyExceptionBreakpointType
   private static PyExceptionBreakpointProperties createDefaultBreakpointProperties() {
     PyExceptionBreakpointProperties p = new PyExceptionBreakpointProperties(BASE_EXCEPTION);
     p.setNotifyOnTerminate(true);
-    p.setNotifyAlways(false);
-    p.setNotifyAlways(false);
+    p.setNotifyOnlyOnFirst(false);
     return p;
   }
 
@@ -168,44 +167,27 @@ public class PyExceptionBreakpointType
 
   private static class PyExceptionBreakpointPropertiesPanel
     extends XBreakpointCustomPropertiesPanel<XBreakpoint<PyExceptionBreakpointProperties>> {
-    private JCheckBox myIgnoreLibrariesCheckBox;
     private JCheckBox myNotifyOnTerminateCheckBox;
     private JCheckBox myNotifyOnRaiseCheckBox;
-    private JRadioButton myAlwaysRadio;
-    private JRadioButton myOnlyOnFirstRadio;
+    private JCheckBox myIgnoreLibrariesCheckBox;
 
     @NotNull
     @Override
     public JComponent getComponent() {
-      myIgnoreLibrariesCheckBox = new JCheckBox("Ignore library files");
       myNotifyOnTerminateCheckBox = new JCheckBox("On termination");
       myNotifyOnRaiseCheckBox = new JCheckBox("On raise");
-      myAlwaysRadio = new JRadioButton("At each level of call chain");
-      myOnlyOnFirstRadio = new JRadioButton("At top of call chain");
-
-      ButtonGroup group = new ButtonGroup();
-      group.add(myAlwaysRadio);
-      group.add(myOnlyOnFirstRadio);
+      myIgnoreLibrariesCheckBox = new JCheckBox("Ignore library files");
 
       Box notificationsBox = Box.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(myIgnoreLibrariesCheckBox, BorderLayout.NORTH);
-      notificationsBox.add(panel);
-      panel = new JPanel(new BorderLayout());
       panel.add(myNotifyOnTerminateCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);
       panel = new JPanel(new BorderLayout());
       panel.add(myNotifyOnRaiseCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);
       panel = new JPanel(new BorderLayout());
-      EmptyBorder border = new EmptyBorder(0, 20, 0, 0);
-      panel.setBorder(border);
-      panel.add(myAlwaysRadio, BorderLayout.NORTH);
-      panel.add(myOnlyOnFirstRadio, BorderLayout.CENTER);
-
-
+      panel.add(myIgnoreLibrariesCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);
-
 
       panel = new JPanel(new BorderLayout());
       JPanel innerPanel = new JPanel(new BorderLayout());
@@ -215,58 +197,21 @@ public class PyExceptionBreakpointType
       panel.add(innerPanel, BorderLayout.NORTH);
       panel.setBorder(IdeBorderFactory.createTitledBorder("Activation policy", true));
 
-      ActionListener listener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          setRadioButtonsEnabled();
-        }
-      };
-
-      myNotifyOnRaiseCheckBox.addActionListener(listener);
-
-      setRadioButtonsEnabled();
-
       return panel;
-    }
-
-    private void setRadioButtonsEnabled() {
-      setRadioButtonsEnabled(myNotifyOnRaiseCheckBox.isSelected());
-    }
-
-    private void setNotifyOnRaiseSelected(boolean selected) {
-      myNotifyOnRaiseCheckBox.setSelected(selected);
-      setRadioButtonsEnabled(selected);
-    }
-
-    private void setRadioButtonsEnabled(boolean selected) {
-      myAlwaysRadio.setEnabled(selected);
-      myOnlyOnFirstRadio.setEnabled(selected);
-      if (selected && !(myAlwaysRadio.isSelected() || myOnlyOnFirstRadio.isSelected())) {
-        myAlwaysRadio.setSelected(true);
-      }
     }
 
     @Override
     public void saveTo(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
-      breakpoint.getProperties().setIgnoreLibraries(myIgnoreLibrariesCheckBox.isSelected());
       breakpoint.getProperties().setNotifyOnTerminate(myNotifyOnTerminateCheckBox.isSelected());
-
-      breakpoint.getProperties().setNotifyAlways(myNotifyOnRaiseCheckBox.isSelected() && myAlwaysRadio.isSelected());
-      breakpoint.getProperties().setNotifyOnlyOnFirst(myNotifyOnRaiseCheckBox.isSelected() && myOnlyOnFirstRadio.isSelected());
+      breakpoint.getProperties().setNotifyOnlyOnFirst(myNotifyOnRaiseCheckBox.isSelected());
+      breakpoint.getProperties().setIgnoreLibraries(myIgnoreLibrariesCheckBox.isSelected());
     }
 
     @Override
     public void loadFrom(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
       myIgnoreLibrariesCheckBox.setSelected(breakpoint.getProperties().isIgnoreLibraries());
       myNotifyOnTerminateCheckBox.setSelected(breakpoint.getProperties().isNotifyOnTerminate());
-
-      boolean always = breakpoint.getProperties().isNotifyAlways();
-      boolean onFirst = breakpoint.getProperties().isNotifyOnlyOnFirst();
-
-      setNotifyOnRaiseSelected(always || onFirst);
-
-      myAlwaysRadio.setSelected(always);
-      myOnlyOnFirstRadio.setSelected(onFirst);
+      myNotifyOnRaiseCheckBox.setSelected(breakpoint.getProperties().isNotifyOnlyOnFirst());
     }
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.FunctionParameter;
@@ -287,15 +288,8 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode node) {
-    //noinspection SuspiciousMethodCalls
-    if (Arrays.asList(getArguments()).contains(node.getPsi())) {
-      ASTNode next = PyPsiUtils.getNextComma(node);
-      if (next == null) {
-        next = PyPsiUtils.getPrevComma(node);
-      }
-      if (next != null) {
-        deleteChildInternal(next);
-      }
+    if (ArrayUtil.contains(node.getPsi(), getArguments())) {
+      PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, node.getPsi());
     }
     super.deleteChildInternal(node);
   }

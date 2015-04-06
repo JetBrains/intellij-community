@@ -72,6 +72,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @NotNull
   public static ConfigurableGroup[] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
+    if (Registry.is("ide.new.settings.dialog")) {
+      if (!withIdeSettings) {
+        project = getProject(project);
+      }
+      return new ConfigurableGroup[]{ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings)};
+    }
     ConfigurableGroup[] groups = !withIdeSettings
            ? new ConfigurableGroup[]{new ProjectConfigurablesGroup(getProject(project))}
            : (project == null)
@@ -80,9 +86,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                new ProjectConfigurablesGroup(project),
                new IdeConfigurablesGroup()};
 
-    return Registry.is("ide.new.settings.dialog")
-           ? new ConfigurableGroup[]{new SortedConfigurableGroup(project, getConfigurables(groups, true))}
-           : groups;
+    return groups;
   }
 
   @NotNull

@@ -349,7 +349,7 @@ public class LineStatusTrackerDrawing {
     }
   }
 
-  @NotNull
+  @Nullable
   private static Color getDiffColor(@NotNull Range range) {
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     switch (range.getType()) {
