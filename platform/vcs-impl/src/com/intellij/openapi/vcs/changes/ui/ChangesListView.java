@@ -64,7 +64,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
   private final Project myProject;
-  private TreeState myTreeState;
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
 
@@ -123,14 +122,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     }
   }
 
-  private void storeState() {
-    myTreeState = TreeState.createOn(this, (ChangesBrowserNode)getModel().getRoot());
-  }
-
-  private void restoreState() {
-    myTreeState.applyTo(this, (ChangesBrowserNode)getModel().getRoot());
-  }
-
   public boolean isShowFlatten() {
     return myShowFlatten;
   }
@@ -150,13 +141,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing,
                                                       switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
 
-    storeState();
+    TreeState state = TreeState.createOn(this, (ChangesBrowserNode)getModel().getRoot());
+    state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();
     setModel(model);
     setCellRenderer(isShowFlatten() ? myShowFlattenNodeRenderer : myNodeRenderer);
     ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
     expandPath(new TreePath(root.getPath()));
-    restoreState();
+    state.applyTo(this, (ChangesBrowserNode)getModel().getRoot());
     expandDefaultChangeList(oldModel, root);
   }
 
