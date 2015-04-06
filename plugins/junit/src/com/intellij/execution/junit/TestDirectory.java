@@ -48,7 +48,7 @@ class TestDirectory extends TestPackage {
   public SourceScope getSourceScope() {
     final String dirName = myConfiguration.getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
-    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(myEnvironment.getProject(), file, true);
+    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(myConfiguration.getProject(), file, true);
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
@@ -57,13 +57,13 @@ class TestDirectory extends TestPackage {
 
       @Override
       public Project getProject() {
-        return myEnvironment.getProject();
+        return myConfiguration.getProject();
       }
 
       @Override
       public GlobalSearchScope getLibrariesScope() {
         final Module module = myConfiguration.getConfigurationModule().getModule();
-        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(myEnvironment.getProject());
+        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(myConfiguration.getProject());
       }
 
       @Override
@@ -99,7 +99,7 @@ class TestDirectory extends TestPackage {
     if (file == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    final PsiDirectory directory = PsiManager.getInstance(myEnvironment.getProject()).findDirectory(file);
+    final PsiDirectory directory = PsiManager.getInstance(myConfiguration.getProject()).findDirectory(file);
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }

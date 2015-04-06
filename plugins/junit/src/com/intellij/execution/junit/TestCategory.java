@@ -50,7 +50,7 @@ class TestCategory extends TestPackage {
 
   @Override
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    return JavaPsiFacade.getInstance(myEnvironment.getProject()).findPackage("");
+    return JavaPsiFacade.getInstance(myConfiguration.getProject()).findPackage("");
   }
 
   @Override

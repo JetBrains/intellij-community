@@ -89,7 +89,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   @NonNls private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   protected final JUnitConfiguration myConfiguration;
-  protected final ExecutionEnvironment myEnvironment;
   protected File myTempFile = null;
   protected File myWorkingDirsFile = null;
   public File myListenersFile;
@@ -127,14 +126,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   protected TestObject(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(environment);
     myConfiguration = configuration;
-    myEnvironment = environment;
   }
 
   public abstract String suggestActionName();
-
-  public RunnerSettings getRunnerSettings() {
-    return myEnvironment.getRunnerSettings();
-  }
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
 
@@ -174,7 +168,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
     if (javaParameters.getJdk() == null){
       javaParameters.setJdk(module != null
                             ? ModuleRootManager.getInstance(module).getSdk()
-                            : ProjectRootManager.getInstance(myEnvironment.getProject()).getProjectSdk());
+                            : ProjectRootManager.getInstance(myConfiguration.getProject()).getProjectSdk());
     }
 
     configureAdditionalClasspath(javaParameters);
@@ -244,7 +238,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, myEnvironment, unboundOutputRoot);
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getEnvironment(), unboundOutputRoot);
     Disposer.register(myConfiguration.getProject(), consoleView);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
@@ -351,7 +345,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
     else {
       comment = null;
     }
-    TestsUIUtil.notifyByBalloon(myEnvironment.getProject(), started, model != null ? model.getRoot() : null, consoleProperties, comment);
+    TestsUIUtil.notifyByBalloon(consoleProperties.getProject(), started, model != null ? model.getRoot() : null, consoleProperties, comment);
   }
 
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {

@@ -81,14 +81,12 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private static final String TESTNG_TEST_FRAMEWORK_NAME = "TestNG";
   private final TestNGConfiguration config;
-  private final RunnerSettings runnerSettings;
   protected final IDEARemoteTestRunnerClient client;
   private int port;
   private File myTempFile;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
-    runnerSettings = environment.getRunnerSettings();
     this.config = config;
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
@@ -128,7 +126,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
     Disposer.register(console, unboundOutputRoot);
-    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(config, processHandler, runnerSettings);
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(config, processHandler, getEnvironment().getRunnerSettings());
     processHandler.addProcessListener(new ProcessAdapter() {
       private boolean myStarted = false;
 
