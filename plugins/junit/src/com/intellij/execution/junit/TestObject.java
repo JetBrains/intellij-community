@@ -16,7 +16,6 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.TestProxy;
@@ -156,13 +155,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   protected void initialize(JavaParameters javaParameters) throws ExecutionException {
     String parameters = getConfiguration().getProgramParameters();
-    getConfiguration().getPersistentData().setProgramParameters(null);
-    try {
-      JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
-    }
-    finally {
-      getConfiguration().getPersistentData().setProgramParameters(parameters);
-    }
     javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     final Module module = getConfiguration().getConfigurationModule().getModule();
     if (javaParameters.getJdk() == null){
@@ -171,31 +163,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                             : ProjectRootManager.getInstance(getConfiguration().getProject()).getProjectSdk());
     }
 
-    configureAdditionalClasspath(javaParameters);
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().add("@name" + parameters);
     }
-    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
-    }
 
-    final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
     final StringBuilder buf = new StringBuilder();
-    for (final Object listener : listeners) {
-      boolean enabled = true;
-      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (ext.isListenerDisabled(getConfiguration(), listener, getRunnerSettings())) {
-          enabled = false;
-          break;
-        }
-      }
-      if (enabled) {
-        final Class classListener = listener.getClass();
-        buf.append(classListener.getName()).append("\n");
-        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
-      }
-    }
+    collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
     if (buf.length() > 0) {
       try {
         myListenersFile = FileUtil.createTempFile("junit_listeners_", "");
@@ -216,13 +191,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
-    JavaParameters javaParameters = new JavaParameters();
+    JavaParameters javaParameters = super.createJavaParameters();
     initialize(javaParameters);
-    final Module module = getConfiguration().getConfigurationModule().getModule();
-    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
-    for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
-    }
     return javaParameters;
   }
 

@@ -196,10 +196,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final Project project = getConfiguration().getProject();
-    final JavaParameters javaParameters = new JavaParameters();
+    final JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setupEnvs(getConfiguration().getPersistantData().getEnvs(), getConfiguration().getPersistantData().PASS_PARENT_ENVS);
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
-    javaParameters.setWorkingDirectory(getConfiguration().getWorkingDirectory());
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
@@ -214,19 +213,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
 
     // Configure rest of jars
-    JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
-    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
-    for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
-    }
-    JavaSdkUtil.addRtJar(javaParameters.getClassPath());
-
-    // Append coverage parameters if appropriate
-    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
-    }
 
     LOG.info("Test scope is: " + getConfiguration().getPersistantData().getScope());
     if (getConfiguration().getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
@@ -264,45 +252,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
 
-    for (Object o : Extensions.getExtensions(IDEATestNGListener.EP_NAME)) {
-      boolean enabled = true;
-      for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (extension.isListenerDisabled(getConfiguration(), o, getRunnerSettings())) {
-          enabled = false;
-          break;
-        }
-      }
-      if (enabled) {
-        if (buf.length() > 0) buf.append(";");
-        buf.append(o.getClass().getName());
-        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(o.getClass()));
-      }
-    }
+    collectListeners(javaParameters, buf, IDEATestNGListener.EP_NAME, ";");
+
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
-
-   /* // Always include the source paths - just makes things easier :)
-    VirtualFile[] sources;
-    if ((data.getScope() == TestSearchScope.WHOLE_PROJECT && TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) || module == null) {
-      sources = ProjectRootManager.getInstance(project).getContentSourceRoots();
-    }
-    else {
-      sources = ModuleRootManager.getInstance(module).getSourceRoots();
-    }
-
-    if (sources.length > 0) {
-      StringBuffer sb = new StringBuffer();
-
-      for (int i = 0; i < sources.length; i++) {
-        VirtualFile source = sources[i];
-        sb.append(source.getPath());
-        if (i < sources.length - 1) {
-          sb.append(';');
-        }
-
-      }
-
-      javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
-    }*/
     createServerSocket(javaParameters);
     createTempFiles(javaParameters);
     return javaParameters;

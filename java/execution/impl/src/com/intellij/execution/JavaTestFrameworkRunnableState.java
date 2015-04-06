@@ -15,6 +15,7 @@
  */
 package com.intellij.execution;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -25,7 +26,11 @@ import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,6 +61,45 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   @NotNull protected abstract AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties, ConsoleView consoleView);
 
   @NotNull protected abstract T getConfiguration();
+
+  protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
+    final T configuration = getConfiguration();
+    final Object[] listeners = Extensions.getExtensions(epName);
+    for (final Object listener : listeners) {
+      boolean enabled = true;
+      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+        if (ext.isListenerDisabled(configuration, listener, getRunnerSettings())) {
+          enabled = false;
+          break;
+        }
+      }
+      if (enabled) {
+        if (buf.length() > 0) buf.append(delimiter);
+        final Class classListener = listener.getClass();
+        buf.append(classListener.getName());
+        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+      }
+    }
+  }
+
+  @Override
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = new JavaParameters();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
+    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
+    for (Object patcher : patchers) {
+      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
+    }
+
+    // Append coverage parameters if appropriate
+    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
+    }
+
+    JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
+    JavaSdkUtil.addRtJar(javaParameters.getClassPath());
+    return javaParameters;
+  }
 
   protected ExecutionResult startSMRunner(Executor executor,
                                           OSProcessHandler handler,
