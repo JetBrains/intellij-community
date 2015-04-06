@@ -559,6 +559,31 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     finishElement(range);
   }
 
+  @Override
+  public void visitListOrMap(GrListOrMap listOrMap) {
+    startElement(listOrMap);
+
+    if (listOrMap.isMap()) {
+      for (GrNamedArgument namedArgument : listOrMap.getNamedArguments()) {
+        final GrExpression expression = namedArgument.getExpression();
+        if (expression != null) {
+          expression.accept(this);
+          pop();
+        }
+      }
+    }
+    else {
+      for (GrExpression expression : listOrMap.getInitializers()) {
+        expression.accept(this);
+        pop();
+      }
+    }
+    
+    push(myFactory.createValue(listOrMap));
+
+    finishElement(listOrMap);
+  }
+
   private void initialize(@NotNull GrVariable variable, @NotNull GrExpression initializer) {
     final DfaVariableValue dfaVariableValue = myFactory.getVarFactory().createVariableValue(variable, false);
     push(dfaVariableValue, initializer);

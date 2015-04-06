@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -78,7 +79,7 @@ public class GrDfaValueFactory extends DfaValueFactory {
       return createLiteralValue((GrLiteral)expression);
     }
 
-    if (expression instanceof GrNewExpression || expression instanceof GrClosableBlock) {
+    if (expression instanceof GrNewExpression || expression instanceof GrClosableBlock || expression instanceof GrListOrMap) {
       return createTypeValue(expression.getType(), Nullness.NOT_NULL);
     }
 
@@ -119,7 +120,7 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
       PsiType type = refExpr.getNominalType();
       if (type == null) {
-        type = PsiType.getJavaLangObject(refExpr.getManager(),refExpr.getResolveScope());
+        type = PsiType.getJavaLangObject(refExpr.getManager(), refExpr.getResolveScope());
       }
 
       if (isEffectivelyUnqualified(refExpr)) {
