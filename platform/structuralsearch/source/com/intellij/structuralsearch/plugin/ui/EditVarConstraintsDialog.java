@@ -476,8 +476,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private static boolean validateIntOccurence(JTextField field) {
     try {
-      int a = Integer.parseInt(field.getText());
-      if (a==-1) throw new NumberFormatException();
+      if (Integer.parseInt(field.getText()) < 0) throw new NumberFormatException();
     } catch(NumberFormatException ex) {
       Messages.showErrorDialog(SSRBundle.message("invalid.occurence.count"), SSRBundle.message("invalid.occurence.count"));
       field.requestFocus();
