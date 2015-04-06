@@ -152,7 +152,7 @@ public class PyTypeChecker {
         return true;
       }
     }
-    if (actual instanceof PyFunctionType && expected instanceof PyClassType) {
+    if (actual instanceof PyFunctionTypeImpl && expected instanceof PyClassType) {
       final PyClass superClass = ((PyClassType)expected).getPyClass();
       if (PyNames.CALLABLE.equals(superClass.getName())) {
         return true;
@@ -491,10 +491,10 @@ public class PyTypeChecker {
       if (resolved instanceof PyTypedElement) {
         final PyTypedElement typedElement = (PyTypedElement)resolved;
         final PyType type = context.getType(typedElement);
-        if (!(type instanceof PyFunctionType)) {
+        if (!(type instanceof PyFunctionTypeImpl)) {
           return null;
         }
-        final PyCallable callable = ((PyFunctionType)type).getCallable();
+        final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
         final String operatorName = typedElement.getName();
         final boolean isRight = PyNames.isRightOperatorName(operatorName);
         final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
@@ -529,8 +529,8 @@ public class PyTypeChecker {
     resolved = ref.resolve();
     if (resolved instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)resolved);
-      if (type instanceof PyFunctionType) {
-        final PyCallable callable = ((PyFunctionType)type).getCallable();
+      if (type instanceof PyFunctionTypeImpl) {
+        final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
         final PyParameter[] parameters = callable.getParameterList().getParameters();
         if (parameters.length == 2) {
           final PyNamedParameter param = parameters[1].getAsNamed();

@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyFunctionType;
+import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         return type;
       }
     }
-    return new PyFunctionType(this);
+    return new PyFunctionTypeImpl(this);
   }
 
   @NotNull
