@@ -56,15 +56,15 @@ public class TestMethods extends TestMethod {
   @Override
   protected void initialize(final JavaParameters javaParameters) throws ExecutionException {
     defaultInitialize(javaParameters);
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    RunConfigurationModule module = myConfiguration.getConfigurationModule();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final Project project = module.getProject();
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
         try {
-          myConfiguration.configureClasspath(javaParameters);
+          getConfiguration().configureClasspath(javaParameters);
         }
         catch (ExecutionException e) {
           exception[0] = e;
@@ -73,7 +73,7 @@ public class TestMethods extends TestMethod {
     });
     if (exception[0] != null) throw exception[0];
     final LinkedHashSet<TestInfo> methods = new LinkedHashSet<TestInfo>();
-    final GlobalSearchScope searchScope = myConfiguration.getConfigurationModule().getSearchScope();
+    final GlobalSearchScope searchScope = getConfiguration().getConfigurationModule().getSearchScope();
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project, searchScope);
       if (location instanceof PsiMemberParameterizedLocation) {

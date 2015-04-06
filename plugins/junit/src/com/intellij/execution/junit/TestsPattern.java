@@ -50,7 +50,7 @@ public class TestsPattern extends TestPackage {
 
   @Override
   protected TestClassFilter getClassFilter(JUnitConfiguration.Data data) throws CantRunException {
-    return TestClassFilter.create(getSourceScope(), myConfiguration.getConfigurationModule().getModule(), data.getPatternPresentation());
+    return TestClassFilter.create(getSourceScope(), getConfiguration().getConfigurationModule().getModule(), data.getPatternPresentation());
   }
 
   @Override
@@ -60,8 +60,8 @@ public class TestsPattern extends TestPackage {
 
   @Override
   public SearchForTestsTask createSearchingForTestsTask() {
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final Project project = myConfiguration.getProject();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    final Project project = getConfiguration().getProject();
     final Set<String> classNames = new LinkedHashSet<String>();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = getTestClass(project, className);
@@ -101,16 +101,16 @@ public class TestsPattern extends TestPackage {
   }
 
   protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
-    final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
 
-    final Module module = myConfiguration.getConfigurationModule().getModule();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
 
     if (module != null) {
       JavaParametersUtil.configureModule(module, javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
     else {
       JavaParametersUtil
-        .configureProject(myConfiguration.getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+        .configureProject(getConfiguration().getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
   }
 
@@ -180,15 +180,15 @@ public class TestsPattern extends TestPackage {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     if (patterns.isEmpty()) {
       throw new RuntimeConfigurationWarning("No pattern selected");
     }
-    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(myConfiguration.getProject());
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getConfiguration().getProject());
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), className, searchScope);
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(getConfiguration().getProject(), className, searchScope);
       if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
         throw new RuntimeConfigurationWarning("Class " + className + " not a test");
       }

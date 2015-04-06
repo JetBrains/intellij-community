@@ -82,13 +82,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-public abstract class TestObject extends JavaTestFrameworkRunnableState {
+public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
   @NonNls private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
-  protected final JUnitConfiguration myConfiguration;
+  private final JUnitConfiguration myConfiguration;
   protected File myWorkingDirsFile = null;
   public File myListenersFile;
 
@@ -141,34 +141,34 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
     throws CantRunException {
     int classPathType = JavaParametersUtil.getClasspathType(configurationModule, mainClassName, true);
     JavaParametersUtil.configureModule(configurationModule, parameters, classPathType,
-                                       myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
+                                       getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null);
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException{
-    JavaParametersUtil.checkAlternativeJRE(myConfiguration);
-    ProgramParametersUtil.checkWorkingDirectoryExist(myConfiguration, myConfiguration.getProject(),
-                                                     myConfiguration.getConfigurationModule().getModule());
+    JavaParametersUtil.checkAlternativeJRE(getConfiguration());
+    ProgramParametersUtil.checkWorkingDirectoryExist(getConfiguration(), getConfiguration().getProject(),
+                                                     getConfiguration().getConfigurationModule().getModule());
   }
 
   public SourceScope getSourceScope() {
-    return SourceScope.modulesWithDependencies(myConfiguration.getModules());
+    return SourceScope.modulesWithDependencies(getConfiguration().getModules());
   }
 
   protected void initialize(JavaParameters javaParameters) throws ExecutionException {
-    String parameters = myConfiguration.getProgramParameters();
-    myConfiguration.getPersistentData().setProgramParameters(null);
+    String parameters = getConfiguration().getProgramParameters();
+    getConfiguration().getPersistentData().setProgramParameters(null);
     try {
-      JavaParametersUtil.configureConfiguration(javaParameters, myConfiguration);
+      JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
     }
     finally {
-      myConfiguration.getPersistentData().setProgramParameters(parameters);
+      getConfiguration().getPersistentData().setProgramParameters(parameters);
     }
     javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
-    final Module module = myConfiguration.getConfigurationModule().getModule();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
     if (javaParameters.getJdk() == null){
       javaParameters.setJdk(module != null
                             ? ModuleRootManager.getInstance(module).getSdk()
-                            : ProjectRootManager.getInstance(myConfiguration.getProject()).getProjectSdk());
+                            : ProjectRootManager.getInstance(getConfiguration().getProject()).getProjectSdk());
     }
 
     configureAdditionalClasspath(javaParameters);
@@ -177,7 +177,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
       javaParameters.getProgramParametersList().add("@name" + parameters);
     }
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.updateJavaParameters(myConfiguration, javaParameters, getRunnerSettings());
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
     }
 
     final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
@@ -185,7 +185,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
     for (final Object listener : listeners) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (ext.isListenerDisabled(myConfiguration, listener, getRunnerSettings())) {
+        if (ext.isListenerDisabled(getConfiguration(), listener, getRunnerSettings())) {
           enabled = false;
           break;
         }
@@ -218,7 +218,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = new JavaParameters();
     initialize(javaParameters);
-    final Module module = myConfiguration.getConfigurationModule().getModule();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
     for (Object patcher : patchers) {
       ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
@@ -231,15 +231,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final boolean smRunner = Registry.is("junit_sm_runner");
     if (smRunner) {
-      return startSMRunner(executor, createHandler(executor), myConfiguration, getEnvironment());
+      return startSMRunner(executor, createHandler(executor), getConfiguration(), getEnvironment());
     }
     final JUnitProcessHandler handler = createHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();
-    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
-    final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
+    final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(getConfiguration(), executor);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getEnvironment(), unboundOutputRoot);
-    Disposer.register(myConfiguration.getProject(), consoleView);
+    Disposer.register(getConfiguration().getProject(), consoleView);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
@@ -250,8 +250,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
         if (!isRunning()) return;
         super.notifyStart(root);
         unboundOutputRoot.addChild(root);
-        if (myConfiguration.isSaveOutputToFile()) {
-          unboundOutputRoot.setOutputFilePath(myConfiguration.getOutputFilePath());
+        if (getConfiguration().isSaveOutputToFile()) {
+          unboundOutputRoot.setOutputFilePath(getConfiguration().getOutputFilePath());
         }
         final JUnitRunningModel model = getModel();
         if (model != null) {
@@ -350,9 +350,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
 
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
-    final String repeatMode = myConfiguration.getRepeatMode();
+    final String repeatMode = getConfiguration().getRepeatMode();
     if (!RepeatCount.ONCE.equals(repeatMode)) {
-      final int repeatCount = myConfiguration.getRepeatCount();
+      final int repeatCount = getConfiguration().getRepeatCount();
       final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
                                  ? RepeatCount.getCountString(repeatCount) 
                                  : repeatMode;
@@ -362,22 +362,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   }
 
   private boolean forkPerModule() {
-    final String workingDirectory = myConfiguration.getWorkingDirectory();
-    return JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) &&
-           myConfiguration.getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE &&
+    final String workingDirectory = getConfiguration().getWorkingDirectory();
+    return JUnitConfiguration.TEST_PACKAGE.equals(getConfiguration().getPersistentData().TEST_OBJECT) &&
+           getConfiguration().getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE &&
            ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
            spansMultipleModules();
   }
 
   private boolean spansMultipleModules() {
-    final String qualifiedName = myConfiguration.getPackage();
+    final String qualifiedName = getConfiguration().getPackage();
     if (qualifiedName != null) {
-      final Project project = myConfiguration.getProject();
+      final Project project = getConfiguration().getProject();
       final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(qualifiedName);
       if (aPackage != null) {
-        final TestSearchScope scope = myConfiguration.getPersistentData().getScope();
+        final TestSearchScope scope = getConfiguration().getPersistentData().getScope();
         if (scope != null) {
-          final SourceScope sourceScope = scope.getSourceScope(myConfiguration);
+          final SourceScope sourceScope = scope.getSourceScope(getConfiguration());
           if (sourceScope != null) {
             final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project).intersectWith(
               sourceScope.getGlobalSearchScope());
@@ -391,7 +391,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   }
 
   private void appendForkInfo(Executor executor) throws ExecutionException {
-    final String forkMode = myConfiguration.getForkMode();
+    final String forkMode = getConfiguration().getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
       if (forkPerModule()) {
         if (getRunnerSettings() != null) {
@@ -417,7 +417,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(myConfiguration.getProject())) {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
           String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
           final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
           if (!classpath.equals(utilRtPath)) {
@@ -483,7 +483,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
           testNames.add(name);
         }
       }
-      final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+      final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
       if (perModule != null) {
         for (List<String> perModuleClasses : perModule.values()) {
           Collections.sort(perModuleClasses);
@@ -498,7 +498,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
       JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
 
       if (perModule != null && perModule.size() > 1) {
-        final String classpath = myConfiguration.getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT
+        final String classpath = getConfiguration().getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT
                                  ? null : javaParameters.getClassPath().getPathsString();
 
         final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
@@ -512,7 +512,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
               final JavaParameters parameters = new JavaParameters();
               configureAdditionalClasspath(parameters);
               JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                                 myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
+                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
+                                                   .getAlternativeJrePath() : null);
               wWriter.println(parameters.getClassPath().getPathsString());
             } else {
               wWriter.println(classpath);
@@ -567,5 +568,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
 
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
     parametersList.add("@" + tempFilePath);
+  }
+
+  @NotNull
+  public JUnitConfiguration getConfiguration() {
+    return myConfiguration;
   }
 }

@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
-public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineState {
+public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
@@ -54,6 +54,8 @@ public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineStat
   protected abstract void passTempFile(ParametersList parametersList, String tempFilePath);
 
   @NotNull protected abstract AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties, ConsoleView consoleView);
+
+  @NotNull protected abstract T getConfiguration();
 
   protected ExecutionResult startSMRunner(Executor executor,
                                           OSProcessHandler handler,

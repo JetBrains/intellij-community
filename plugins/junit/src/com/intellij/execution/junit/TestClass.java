@@ -33,15 +33,15 @@ class TestClass extends TestObject {
   @Override
   protected void initialize(JavaParameters javaParameters) throws ExecutionException {
     super.initialize(javaParameters);
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    RunConfigurationModule module = myConfiguration.getConfigurationModule();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    RunConfigurationModule module = getConfiguration().getConfigurationModule();
     configureModule(javaParameters, module, data.getMainClassName());
     javaParameters.getProgramParametersList().add(data.getMainClassName());
   }
 
   @Override
   public String suggestActionName() {
-    String name = myConfiguration.getPersistentData().MAIN_CLASS_NAME;
+    String name = getConfiguration().getPersistentData().MAIN_CLASS_NAME;
     if (name != null && name.endsWith(".")) {
       return name;
     }
@@ -73,8 +73,8 @@ class TestClass extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    final String testClassName = myConfiguration.getPersistentData().getMainClassName();
-    final JavaRunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
+    final String testClassName = getConfiguration().getPersistentData().getMainClassName();
+    final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, ExecutionBundle.message("no.test.class.specified.error.text"));
     if (!JUnitUtil.isTestClass(testClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));

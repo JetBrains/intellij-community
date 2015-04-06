@@ -68,7 +68,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
+public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private static final String TESTNG_TEST_FRAMEWORK_NAME = "TestNG";
   private final TestNGConfiguration config;
@@ -87,7 +87,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     final OSProcessHandler handler = super.startProcess();
-    final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
+    final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile);
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
@@ -108,15 +108,15 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final boolean smRunner = Registry.is("testng_sm_runner");
     if (smRunner) {
-      return startSMRunner(executor, startProcess(), config, getEnvironment());
+      return startSMRunner(executor, startProcess(), getConfiguration(), getEnvironment());
     }
     OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
-    final TestNGConsoleView console = new TestNGConsoleView(config, getEnvironment(), unboundOutputRoot, executor);
+    final TestNGConsoleView console = new TestNGConsoleView(getConfiguration(), getEnvironment(), unboundOutputRoot, executor);
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
     Disposer.register(console, unboundOutputRoot);
-    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(config, processHandler, getEnvironment().getRunnerSettings());
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), processHandler, getEnvironment().getRunnerSettings());
     processHandler.addProcessListener(new ProcessAdapter() {
       private boolean myStarted = false;
 
@@ -129,10 +129,10 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
       @Override
       public void startNotified(final ProcessEvent event) {
         TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
-        if (config.isSaveOutputToFile()) {
-          unboundOutputRoot.setOutputFilePath(config.getOutputFilePath());
+        if (getConfiguration().isSaveOutputToFile()) {
+          unboundOutputRoot.setOutputFilePath(getConfiguration().getOutputFilePath());
         }
-        client.prepareListening(listener, config.getProject(), port);
+        client.prepareListening(listener, getConfiguration().getProject(), port);
         myStarted = true;
       }
 
@@ -195,15 +195,15 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
-    final Project project = config.getProject();
+    final Project project = getConfiguration().getProject();
     final JavaParameters javaParameters = new JavaParameters();
-    javaParameters.setupEnvs(config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
+    javaParameters.setupEnvs(getConfiguration().getPersistantData().getEnvs(), getConfiguration().getPersistantData().PASS_PARENT_ENVS);
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
-    javaParameters.setWorkingDirectory(config.getWorkingDirectory());
+    javaParameters.setWorkingDirectory(getConfiguration().getWorkingDirectory());
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
-    Module module = config.getConfigurationModule().getModule();
+    Module module = getConfiguration().getConfigurationModule().getModule();
     LanguageLevel effectiveLanguageLevel = module == null
                                            ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel()
                                            : EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
@@ -214,7 +214,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
     final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
 
     // Configure rest of jars
-    JavaParametersUtil.configureConfiguration(javaParameters, config);
+    JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
@@ -225,19 +225,19 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
 
     // Append coverage parameters if appropriate
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.updateJavaParameters(config, javaParameters, getRunnerSettings());
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
     }
 
-    LOG.info("Test scope is: " + config.getPersistantData().getScope());
-    if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
+    LOG.info("Test scope is: " + getConfiguration().getPersistantData().getScope());
+    if (getConfiguration().getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
       LOG.info("Configuring for whole project");
-      JavaParametersUtil.configureProject(config.getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
+      JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                          getConfiguration().ALTERNATIVE_JRE_PATH_ENABLED ? getConfiguration().ALTERNATIVE_JRE_PATH : null);
     }
     else {
-      LOG.info("Configuring for module:" + config.getConfigurationModule().getModuleName());
-      JavaParametersUtil.configureModule(config.getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                         config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
+      LOG.info("Configuring for module:" + getConfiguration().getConfigurationModule().getModuleName());
+      JavaParametersUtil.configureModule(getConfiguration().getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                         getConfiguration().ALTERNATIVE_JRE_PATH_ENABLED ? getConfiguration().ALTERNATIVE_JRE_PATH : null);
     }
 
     javaParameters.getClassPath().add(pathToBundledJar);
@@ -249,9 +249,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
       throw new ExecutionException("Unable to bind to port " + port, e);
     }
 
-    final TestData data = config.getPersistantData();
+    final TestData data = getConfiguration().getPersistantData();
 
-    javaParameters.getProgramParametersList().add(supportSerializationProtocol(config) ? RemoteArgs.PORT : CommandLineArgs.PORT, String.valueOf(port));
+    javaParameters.getProgramParametersList().add(supportSerializationProtocol(getConfiguration()) ? RemoteArgs.PORT : CommandLineArgs.PORT, String.valueOf(port));
 
     if (data.getOutputDirectory() != null && !data.getOutputDirectory().isEmpty()) {
       javaParameters.getProgramParametersList().add(CommandLineArgs.OUTPUT_DIRECTORY, data.getOutputDirectory());
@@ -267,7 +267,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
     for (Object o : Extensions.getExtensions(IDEATestNGListener.EP_NAME)) {
       boolean enabled = true;
       for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (extension.isListenerDisabled(config, o, getRunnerSettings())) {
+        if (extension.isListenerDisabled(getConfiguration(), o, getRunnerSettings())) {
           enabled = false;
           break;
         }
@@ -345,5 +345,10 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
 
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
     parametersList.add("-temp", tempFilePath);
+  }
+
+  @NotNull
+  public TestNGConfiguration getConfiguration() {
+    return config;
   }
 }

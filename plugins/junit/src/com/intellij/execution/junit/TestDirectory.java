@@ -46,9 +46,10 @@ class TestDirectory extends TestPackage {
 
   @Override
   public SourceScope getSourceScope() {
-    final String dirName = myConfiguration.getPersistentData().getDirName();
+    final String dirName = getConfiguration().getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
-    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(myConfiguration.getProject(), file, true);
+    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(
+      getConfiguration().getProject(), file, true);
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
@@ -57,18 +58,19 @@ class TestDirectory extends TestPackage {
 
       @Override
       public Project getProject() {
-        return myConfiguration.getProject();
+        return getConfiguration().getProject();
       }
 
       @Override
       public GlobalSearchScope getLibrariesScope() {
-        final Module module = myConfiguration.getConfigurationModule().getModule();
-        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(myConfiguration.getProject());
+        final Module module = getConfiguration().getConfigurationModule().getModule();
+        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(
+          getConfiguration().getProject());
       }
 
       @Override
       public Module[] getModulesToCompile() {
-        final Collection<Module> validModules = myConfiguration.getValidModules();
+        final Collection<Module> validModules = getConfiguration().getValidModules();
         return validModules.toArray(new Module[validModules.size()]);
       }
     };
@@ -76,9 +78,10 @@ class TestDirectory extends TestPackage {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    JavaParametersUtil.checkAlternativeJRE(myConfiguration);
-    ProgramParametersUtil.checkWorkingDirectoryExist(myConfiguration, myConfiguration.getProject(), myConfiguration.getConfigurationModule().getModule());
-    final String dirName = myConfiguration.getPersistentData().getDirName();
+    JavaParametersUtil.checkAlternativeJRE(getConfiguration());
+    ProgramParametersUtil.checkWorkingDirectoryExist(
+      getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
+    final String dirName = getConfiguration().getPersistentData().getDirName();
     if (dirName == null || dirName.isEmpty()) {
       throw new RuntimeConfigurationError("Directory is not specified");
     }
@@ -86,7 +89,7 @@ class TestDirectory extends TestPackage {
     if (file == null) {
       throw new RuntimeConfigurationWarning("Directory \'" + dirName + "\' is not found");
     }
-    final Module module = myConfiguration.getConfigurationModule().getModule();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
     if (module == null) {
       throw new RuntimeConfigurationError("Module to choose classpath from is not specified");
     }
@@ -99,7 +102,7 @@ class TestDirectory extends TestPackage {
     if (file == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    final PsiDirectory directory = PsiManager.getInstance(myConfiguration.getProject()).findDirectory(file);
+    final PsiDirectory directory = PsiManager.getInstance(getConfiguration().getProject()).findDirectory(file);
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
