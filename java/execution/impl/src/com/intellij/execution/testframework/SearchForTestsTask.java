@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.testframework;
 
-import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -72,6 +74,21 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       myProcessIndicator = new BackgroundableProcessIndicator(this);
       ProgressManager.getInstance().runProcessWithProgressAsynchronously(this, myProcessIndicator);
     }
+  }
+
+  public void attachTaskToProcess(final OSProcessHandler handler) {
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(final ProcessEvent event) {
+        handler.removeProcessListener(this);
+        ensureFinished();
+      }
+
+      @Override
+      public void startNotified(final ProcessEvent event) {
+        startSearch();
+      }
+    });
   }
 
   @Override

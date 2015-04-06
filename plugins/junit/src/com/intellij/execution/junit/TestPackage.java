@@ -22,11 +22,8 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -54,23 +51,11 @@ public class TestPackage extends TestObject {
   @Override
   protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
     final JUnitProcessHandler handler = super.createHandler(executor);
-    final SearchForTestsTask task = createSearchingForTestsTask();
-    handler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void startNotified(ProcessEvent event) {
-        super.startNotified(event);
-        task.startSearch();
-      }
-
-      @Override
-      public void processTerminated(ProcessEvent event) {
-        handler.removeProcessListener(this);
-        task.ensureFinished();
-      }
-    });
+    createSearchingForTestsTask().attachTaskToProcess(handler);
     return handler;
   }
 
+  @Override
   public SearchForTestsTask createSearchingForTestsTask() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
 

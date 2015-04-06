@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -97,6 +98,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     else {
       JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
     }
+  }
+
+  public SearchForTestsTask createSearchingForTestsTask() {
+    return null;
   }
 
   protected boolean configureByModule(Module module) {

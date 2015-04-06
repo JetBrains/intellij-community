@@ -16,7 +16,6 @@
 
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
@@ -28,23 +27,14 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,9 +54,7 @@ import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
@@ -87,18 +75,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     final OSProcessHandler handler = super.startProcess();
-    final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile);
-    handler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void processTerminated(final ProcessEvent event) {
-        task.ensureFinished();
-      }
-
-      @Override
-      public void startNotified(final ProcessEvent event) {
-        task.startSearch();
-      }
-    });
+    createSearchingForTestsTask().attachTaskToProcess(handler);
 
     return handler;
   }
@@ -203,12 +180,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     final JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setupEnvs(getConfiguration().getPersistantData().getEnvs(), getConfiguration().getPersistantData().PASS_PARENT_ENVS);
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
+
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-
-    //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
-    final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
-
-    javaParameters.getClassPath().add(pathToBundledJar);
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(AfterClass.class));
 
     try {
       port = NetUtils.findAvailableSocketPort();
@@ -231,19 +205,16 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));
     }
-
     collectListeners(javaParameters, buf, IDEATestNGListener.EP_NAME, ";");
-
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(CommandLineArgs.LISTENER, buf.toString());
+
     createServerSocket(javaParameters);
     createTempFiles(javaParameters);
     return javaParameters;
   }
 
-  protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket,
-                                                              final TestNGConfiguration config,
-                                                              final File tempFile) {
-    return new SearchingForTestsTask(serverSocket, config, tempFile, client);
+  public SearchingForTestsTask createSearchingForTestsTask() {
+    return new SearchingForTestsTask(myServerSocket, config, myTempFile, client);
   }
 
   public static boolean supportSerializationProtocol(TestNGConfiguration config) {

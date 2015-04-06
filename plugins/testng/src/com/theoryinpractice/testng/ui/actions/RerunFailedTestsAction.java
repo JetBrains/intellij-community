@@ -50,9 +50,8 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         return new TestNGRunnableState(env, configuration) {
           @Override
-          protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket,
-                                                                      final TestNGConfiguration config, final File tempFile) {
-            return new SearchingForTestsTask(serverSocket, config, tempFile, client) {
+          public SearchingForTestsTask createSearchingForTestsTask() {
+            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile, client) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes) throws CantRunException {
                 final HashMap<PsiClass, Collection<PsiMethod>> fullClassList = ContainerUtil.newHashMap();
@@ -68,8 +67,8 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                   }
                 }
 
-                final GlobalSearchScope scope = config.getConfigurationModule().getSearchScope();
-                final Project project = config.getProject();
+                final GlobalSearchScope scope = getConfiguration().getConfigurationModule().getSearchScope();
+                final Project project = getConfiguration().getProject();
                 for (final AbstractTestProxy proxy : failedTests) {
                   ApplicationManager.getApplication().runReadAction(new Runnable() {
                     public void run() {
