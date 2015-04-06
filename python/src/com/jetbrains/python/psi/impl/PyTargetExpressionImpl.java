@@ -147,7 +147,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           if (type instanceof PyNoneType) {
             return null;
           }
-          if (type instanceof PyFunctionType) {
+          if (type instanceof PyFunctionTypeImpl) {
             return type;
           }
           // We are unsure about the type since it may be inferred from the stub based on incomplete information

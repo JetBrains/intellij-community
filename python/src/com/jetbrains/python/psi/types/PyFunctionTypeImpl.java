@@ -40,10 +40,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * @author vlan
  */
-public class PyFunctionType implements PyCallableType {
+public class PyFunctionTypeImpl implements PyCallableType {
   @NotNull private final PyCallable myCallable;
 
-  public PyFunctionType(@NotNull PyCallable callable) {
+  public PyFunctionTypeImpl(@NotNull PyCallable callable) {
     myCallable = callable;
   }
 
