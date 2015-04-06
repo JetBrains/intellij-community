@@ -17,7 +17,6 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
@@ -27,10 +26,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -47,7 +42,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -60,7 +54,6 @@ import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
@@ -73,9 +66,7 @@ import org.testng.remote.strprotocol.SerializedMessageSender;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.UnknownHostException;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
@@ -83,7 +74,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   private final TestNGConfiguration config;
   protected final IDEARemoteTestRunnerClient client;
   private int port;
-  private File myTempFile;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
@@ -188,12 +178,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
     final DefaultExecutionResult result = new DefaultExecutionResult(console, processHandler);
     result.setRestartActions(rerunFailedTestsAction);
     return result;
-  }
-
-  @NotNull
-  @Override
-  protected String getVMParameter() {
-    return "-Didea.testng.sm_runner";
   }
 
   @NotNull
@@ -320,14 +304,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
     }*/
     createServerSocket(javaParameters);
-    try {
-      myTempFile = FileUtil.createTempFile("idea_testng", ".tmp");
-      myTempFile.deleteOnExit();
-      javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    createTempFiles(javaParameters);
     return javaParameters;
   }
 
@@ -359,5 +336,14 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
       }
     }
     return Registry.is("testng.serialized.protocol.enabled") && !TestNGVersionChecker.isVersionIncompatible(project, scopeToDetermineTestngIn);
+  }
+
+  @NotNull
+  protected String getFrameworkId() {
+    return "testng";
+  }
+
+  protected void passTempFile(ParametersList parametersList, String tempFilePath) {
+    parametersList.add("-temp", tempFilePath);
   }
 }

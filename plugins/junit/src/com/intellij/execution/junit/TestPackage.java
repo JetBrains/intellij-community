@@ -127,12 +127,7 @@ public class TestPackage extends TestObject {
     getClassFilter(data);//check if junit found
     configureClasspath(javaParameters);
 
-    try {
-      createTempFiles(javaParameters);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    createTempFiles(javaParameters);
 
     createServerSocket(javaParameters);
   }

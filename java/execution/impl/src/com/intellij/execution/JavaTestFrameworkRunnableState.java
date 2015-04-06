@@ -15,11 +15,7 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.JavaCommandLineState;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -32,10 +28,12 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -43,6 +41,7 @@ import java.net.ServerSocket;
 public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
+  protected File myTempFile;
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
@@ -50,7 +49,9 @@ public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineStat
 
   @NotNull protected abstract String getFrameworkName();
 
-  @NotNull protected abstract String getVMParameter();
+  @NotNull protected abstract String getFrameworkId();
+
+  protected abstract void passTempFile(ParametersList parametersList, String tempFilePath);
 
   @NotNull protected abstract AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties, ConsoleView consoleView);
 
@@ -58,7 +59,7 @@ public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineStat
                                           OSProcessHandler handler,
                                           RunConfigurationBase configuration,
                                           ExecutionEnvironment environment) throws ExecutionException {
-    getJavaParameters().getVMParametersList().add(getVMParameter());
+    getJavaParameters().getVMParametersList().add("-Didea." + getFrameworkId()+ ".sm_runner");
     getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
 
     final RunnerSettings runnerSettings = getRunnerSettings();
@@ -94,4 +95,17 @@ public abstract class JavaTestFrameworkRunnableState extends JavaCommandLineStat
       LOG.error(e);
     }
   }
+
+  protected void createTempFiles(JavaParameters javaParameters) {
+    try {
+      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
+      myTempFile.deleteOnExit();
+      passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+
 }

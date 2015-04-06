@@ -89,7 +89,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   @NonNls private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   protected final JUnitConfiguration myConfiguration;
-  protected File myTempFile = null;
   protected File myWorkingDirsFile = null;
   public File myListenersFile;
 
@@ -147,7 +146,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
 
   public void checkConfiguration() throws RuntimeConfigurationException{
     JavaParametersUtil.checkAlternativeJRE(myConfiguration);
-    ProgramParametersUtil.checkWorkingDirectoryExist(myConfiguration, myConfiguration.getProject(), myConfiguration.getConfigurationModule().getModule());
+    ProgramParametersUtil.checkWorkingDirectoryExist(myConfiguration, myConfiguration.getProject(),
+                                                     myConfiguration.getConfigurationModule().getModule());
   }
 
   public SourceScope getSourceScope() {
@@ -534,13 +534,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
     }
   }
 
-  protected void createTempFiles(JavaParameters javaParameters) throws IOException {
-    myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
-    myTempFile.deleteOnExit();
-    javaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
-    myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_junit", ".tmp");
-    myWorkingDirsFile.deleteOnExit();
-    javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+  protected void createTempFiles(JavaParameters javaParameters) {
+    super.createTempFiles(javaParameters);
+    try {
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_junit", ".tmp");
+      myWorkingDirsFile.deleteOnExit();
+      javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   public void clear() {
@@ -552,13 +555,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState {
   }
 
   @NotNull
-  protected String getVMParameter() {
-    return "-Didea.junit.sm_runner";
-  }
-
-  @NotNull
   protected AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties,
                                                                         ConsoleView consoleView) {
     return new RerunFailedTestsAction(consoleView, testConsoleProperties);
+  }
+
+  @NotNull
+  protected String getFrameworkId() {
+    return "junit";
+  }
+
+  protected void passTempFile(ParametersList parametersList, String tempFilePath) {
+    parametersList.add("@" + tempFilePath);
   }
 }
