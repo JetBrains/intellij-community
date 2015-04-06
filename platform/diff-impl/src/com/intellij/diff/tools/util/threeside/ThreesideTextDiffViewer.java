@@ -24,12 +24,12 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.FocusTrackerSupport.ThreesideFocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffViewerBase;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
@@ -55,8 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,18 +70,14 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull protected final List<DocumentContent> myActualContents;
 
-  @NotNull private final List<MyEditorFocusListener> myEditorFocusListeners =
-    ContainerUtil.newArrayList(new MyEditorFocusListener(ThreeSide.LEFT),
-                               new MyEditorFocusListener(ThreeSide.BASE),
-                               new MyEditorFocusListener(ThreeSide.RIGHT));
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener2 = new MyVisibleAreaListener(Side.RIGHT);
 
   @NotNull protected final MySetEditorSettingsAction myEditorSettingsAction;
 
-  @Nullable private ThreesideSyncScrollSupport mySyncScrollListener;
+  @NotNull private final ThreesideFocusTrackerSupport myFocusTrackerSupport;
 
-  @NotNull private ThreeSide myCurrentSide;
+  @Nullable private ThreesideSyncScrollSupport mySyncScrollListener;
 
   public ThreesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
@@ -97,8 +91,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     myEditors = createEditors();
     List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, myEditors);
 
-    myCurrentSide = ThreeSide.BASE;
-
+    myFocusTrackerSupport = new ThreesideFocusTrackerSupport(myEditors);
     myContentPanel = new ThreesideTextContentPanel(myEditors, titlePanel);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
@@ -121,15 +114,14 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @CalledInAwt
   protected void processContextHints() {
     super.processContextHints();
-    ThreeSide side = myContext.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE);
-    if (side != null) myCurrentSide = side;
+    myFocusTrackerSupport.processContextHints(myRequest, myContext);
   }
 
   @Override
   @CalledInAwt
   protected void updateContextHints() {
     super.updateContextHints();
-    myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE, myCurrentSide);
+    myFocusTrackerSupport.updateContextHints(myRequest, myContext);
   }
 
   @NotNull
@@ -168,9 +160,6 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @Override
   protected void installEditorListeners() {
     super.installEditorListeners();
-    for (int i = 0; i < 3; i++) {
-      myEditors.get(i).getContentComponent().addFocusListener(myEditorFocusListeners.get(i));
-    }
 
     myEditors.get(0).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
     myEditors.get(1).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
@@ -189,10 +178,6 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @Override
   public void destroyEditorListeners() {
     super.destroyEditorListeners();
-
-    for (int i = 0; i < 3; i++) {
-      myEditors.get(i).getContentComponent().removeFocusListener(myEditorFocusListeners.get(i));
-    }
 
     myEditors.get(0).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
     myEditors.get(1).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
@@ -238,12 +223,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   public EditorEx getCurrentEditor() {
-    return myCurrentSide.select(myEditors);
+    return getCurrentSide().select(myEditors);
   }
 
   @NotNull
   public DocumentContent getCurrentContent() {
-    return myCurrentSide.select(myActualContents);
+    return getCurrentSide().select(myActualContents);
   }
 
   @NotNull
@@ -254,7 +239,11 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   public ThreeSide getCurrentSide() {
-    return myCurrentSide;
+    return myFocusTrackerSupport.getCurrentSide();
+  }
+
+  public void setCurrentSide(@NotNull ThreeSide side) {
+    myFocusTrackerSupport.setCurrentSide(side);
   }
 
   //
@@ -265,7 +254,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
     Editor editor = side.select(myEditors);
     DiffUtil.scrollEditor(editor, line, false);
-    myCurrentSide = side;
+    setCurrentSide(side);
   }
 
   @Nullable
@@ -365,26 +354,14 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       return getCurrentEditor();
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, myCurrentSide);
+      return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
     }
     else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getCurrentContent();
     }
     return super.getData(dataId);
   }
-
-  private class MyEditorFocusListener extends FocusAdapter {
-    @NotNull private final ThreeSide mySide;
-
-    private MyEditorFocusListener(@NotNull ThreeSide side) {
-      mySide = side;
-    }
-
-    public void focusGained(FocusEvent e) {
-      myCurrentSide = mySide;
-    }
-  }
-
+  
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @NotNull Side mySide;
 
