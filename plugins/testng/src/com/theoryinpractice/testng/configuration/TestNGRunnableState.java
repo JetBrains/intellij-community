@@ -84,7 +84,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
   private final RunnerSettings runnerSettings;
   protected final IDEARemoteTestRunnerClient client;
   private int port;
-  private String debugPort;
   private File myTempFile;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
@@ -94,21 +93,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
-    // Want debugging?
-    if (runnerSettings instanceof DebuggingRunnerData) {
-      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings);
-      debugPort = debuggingRunnerData.getDebugPort();
-      if (debugPort.length() == 0) {
-        try {
-          debugPort = DebuggerUtils.getInstance().findAvailableDebugAddress(true);
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-        }
-        debuggingRunnerData.setDebugPort(debugPort);
-      }
-      debuggingRunnerData.setLocal(true);
-    }
   }
 
   @NotNull
@@ -346,21 +330,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState {
     catch (IOException e) {
       LOG.error(e);
     }
-    // Configure for debugging
-    if (runnerSettings instanceof DebuggingRunnerData) {
-      ParametersList params = javaParameters.getVMParametersList();
-
-      String hostname = "localhost";
-      try {
-        hostname = InetAddress.getLocalHost().getHostName();
-      }
-      catch (UnknownHostException ignored) {
-      }
-      params.add("-Xdebug");
-      params.add("-Xrunjdwp:transport=dt_socket,address=" + hostname + ':' + debugPort + ",suspend=y,server=n");
-      //            params.add(debugPort);
-    }
-
     return javaParameters;
   }
 
