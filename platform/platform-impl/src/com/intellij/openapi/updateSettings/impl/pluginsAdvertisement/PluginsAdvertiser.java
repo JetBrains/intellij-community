@@ -41,8 +41,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -247,7 +245,7 @@ public class PluginsAdvertiser implements StartupActivity {
           @Override
           public void run() {
             try {
-              myAllPlugins = RepositoryHelper.loadPlugins(null);
+              myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(null);
               if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);
