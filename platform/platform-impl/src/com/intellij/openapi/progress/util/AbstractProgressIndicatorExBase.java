@@ -141,8 +141,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   private void doExitModality() {
     if (myModalityEntered) {
-      LaterInvocator.leaveModal(this);
       myModalityEntered = false;
+      LaterInvocator.leaveModal(this);
     }
   }
 
