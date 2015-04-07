@@ -83,7 +83,7 @@ public class LaterInvocator {
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
   private static volatile int ourQueueSkipCount = 0; // optimization
-  private static final Runnable ourFlushQueueRunnable = new FlushQueue();
+  private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
 
   private static final Stack<AWTEvent> ourEventStack = new Stack<AWTEvent>(); // guarded by RUN_LOCK
 
@@ -188,6 +188,9 @@ public class LaterInvocator {
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + modalEntity);
     }
+
+    //noinspection StatementWithEmptyBody
+    while (ourFlushQueueRunnable.runNextEvent());
 
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
 
@@ -308,12 +311,17 @@ public class LaterInvocator {
   private static final Object RUN_LOCK = new Object();
 
   private static class FlushQueue implements Runnable {
-    private RunnableInfo myLastInfo;
+    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private RunnableInfo myLastInfo;
 
     @Override
     public void run() {
       FLUSHER_SCHEDULED.set(false);
+      if (runNextEvent()) {
+        requestFlush();
+      }
+    }
 
+    private boolean runNextEvent() {
       final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;
 
@@ -338,9 +346,8 @@ public class LaterInvocator {
             if (!DEBUG) myLastInfo = null;
           }
         }
-
-        requestFlush();
       }
+      return lastInfo != null;
     }
 
     @Override
