@@ -1,7 +1,6 @@
 class A:
     pass
 
-
 class B(A):
     def meth_b1(self):
         pass

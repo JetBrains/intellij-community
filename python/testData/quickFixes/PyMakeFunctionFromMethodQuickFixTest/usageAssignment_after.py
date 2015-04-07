@@ -2,8 +2,8 @@ def m():
     print 1
 
 
-class A: pass
-
+class A:
+    pass
 
 b = A()
 a = m()

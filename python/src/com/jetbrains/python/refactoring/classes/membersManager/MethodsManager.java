@@ -189,7 +189,6 @@ class MethodsManager extends MembersManager<PyFunction> {
     }
     deleteElements(methodsToMove);
 
-    PyClassRefactoringUtil.insertPassIfNeeded(from);
     return result;
   }
 
