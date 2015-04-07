@@ -105,7 +105,11 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       panel.createActionLabel("Install plugins", new Runnable() {
         @Override
         public void run() {
-          PluginsAdvertiser.installAndEnablePlugins(plugins, new Runnable() {
+          Set<String> pluginIds = new HashSet<String>();
+          for (PluginsAdvertiser.Plugin plugin : plugins) {
+            pluginIds.add(plugin.myPluginId);
+          }
+          PluginsAdvertiser.installAndEnablePlugins(pluginIds, new Runnable() {
             public void run() {
               myEnabledExtensions.add(extension);
               myNotifications.updateAllNotifications();

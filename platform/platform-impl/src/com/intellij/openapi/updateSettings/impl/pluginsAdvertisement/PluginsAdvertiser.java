@@ -222,7 +222,7 @@ public class PluginsAdvertiser implements StartupActivity {
     return bundled.isEmpty() ? null : bundled;
   }
 
-  public static void installAndEnablePlugins(final @NotNull Set<Plugin> plugins, final @NotNull Runnable onSuccess) {
+  public static void installAndEnablePlugins(final @NotNull Set<String> pluginIds, final @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
       private List<IdeaPluginDescriptor> myAllPlugins;
@@ -231,13 +231,19 @@ public class PluginsAdvertiser implements StartupActivity {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
+          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId().getIdString())) {
+              myPlugins.add(PluginDownloader.createDownloader(descriptor));
+            }
+          }
           for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-            if (plugins.contains(new Plugin(loadedPlugin.getPluginId(), null, false))) {
+            if (pluginIds.contains(loadedPlugin.getPluginId().getIdString())) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
           }
         }
-        catch (Exception ignore) {
+        catch (Exception e) {
+          LOG.info(e);
         }
       }
 
