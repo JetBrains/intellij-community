@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -32,9 +31,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.ContentsUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,34 +112,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       panel.createActionLabel("Install plugins", new Runnable() {
         @Override
         public void run() {
-          ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
-            private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
-            private List<IdeaPluginDescriptor> myAllPlugins;
-
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              try {
-                myAllPlugins = RepositoryHelper.loadPlugins(indicator);
-                for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-                  if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), null, false))) {
-                    myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
-                  }
-                }
-              }
-              catch (Exception ignore) {
-              }
-            }
-
-            @Override
-            public void onSuccess() {
-              final PluginsAdvertiserDialog advertiserDialog =
-                new PluginsAdvertiserDialog(null, 
-                                            myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
-                                            PluginManagerMain.mapToPluginIds(myAllPlugins));
-              if (advertiserDialog.showAndGet()) {
-                myEnabledExtensions.add(extension);
-                myNotifications.updateAllNotifications();
-              }
+          installAndEnablePlugins(plugins, new Runnable() {
+            public void run() {
+              myEnabledExtensions.add(extension);
+              myNotifications.updateAllNotifications();
             }
           });
         }
@@ -180,6 +152,38 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
     });
     return panel;
+  }
+
+  private static void installAndEnablePlugins(final Set<PluginsAdvertiser.Plugin> plugins, final Runnable onSuccess) {
+    ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
+      private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
+      private List<IdeaPluginDescriptor> myAllPlugins;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          myAllPlugins = RepositoryHelper.loadPlugins(indicator);
+          for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
+            if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), null, false))) {
+              myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
+            }
+          }
+        }
+        catch (Exception ignore) {
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        final PluginsAdvertiserDialog advertiserDialog =
+          new PluginsAdvertiserDialog(null,
+                                      myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                      PluginManagerMain.mapToPluginIds(myAllPlugins));
+        if (advertiserDialog.showAndGet()) {
+          onSuccess.run();
+        }
+      }
+    });
   }
 
   private static boolean hasNonBundledPlugin(Set<PluginsAdvertiser.Plugin> plugins) {
