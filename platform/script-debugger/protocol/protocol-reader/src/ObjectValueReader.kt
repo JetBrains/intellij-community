@@ -46,6 +46,6 @@ class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, 
   }
 
   fun writeFactoryNewExpression(scope: ClassScope, out: TextOutput) {
-    out.append("new ").append(scope.requireFactoryGenerationAndGetName(type.type!!)).append(TYPE_FACTORY_NAME_POSTFIX).append("()")
+    out.append("new ").append(TYPE_FACTORY_NAME_PREFIX).append(scope.requireFactoryGenerationAndGetName(type.type!!)).append("()")
   }
 }

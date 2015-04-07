@@ -36,7 +36,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
     }
   }
 
-  public fun write(fileScope: FileScope) {
+  fun write(fileScope: FileScope) {
     val out = fileScope.output
     val valueImplClassName = fileScope.getTypeImplShortName(this)
     out.append("private static final class ").append(valueImplClassName)
@@ -67,16 +67,12 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
       out.newLine()
     }
 
-    if (subtypeAspect != null) {
-      subtypeAspect.writeSuperFieldJava(out)
-    }
+    subtypeAspect?.writeSuperFieldJava(out)
 
     writeConstructorMethod(valueImplClassName, classScope, out)
     out.newLine()
 
-    if (subtypeAspect != null) {
-      subtypeAspect.writeParseMethod(valueImplClassName, classScope, out)
-    }
+    subtypeAspect?.writeParseMethod(valueImplClassName, classScope, out)
 
     for (entry in methodHandlerMap.entrySet()) {
       out.newLine()
@@ -85,9 +81,7 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
     }
 
     writeBaseMethods(out)
-    if (subtypeAspect != null) {
-      subtypeAspect.writeGetSuperMethodJava(out)
-    }
+    subtypeAspect?.writeGetSuperMethodJava(out)
     out.indentOut().append('}')
   }
 
@@ -119,14 +113,10 @@ class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>?, privat
 
   private fun writeConstructorMethod(valueImplClassName: String, classScope: ClassScope, out: TextOutput) {
     out.newLine().append(valueImplClassName).append('(').append(JSON_READER_PARAMETER_DEF).comma().append("String name")
-    if (subtypeAspect != null) {
-      subtypeAspect.writeSuperConstructorParamJava(out)
-    }
+    subtypeAspect?.writeSuperConstructorParamJava(out)
     out.append(')').openBlock()
 
-    if (subtypeAspect != null) {
-      subtypeAspect.writeSuperConstructorInitialization(out)
-    }
+    subtypeAspect?.writeSuperConstructorInitialization(out)
 
     if (javaClass<JsonObjectBased>().isAssignableFrom(typeClass) || hasLazyFields) {
       out.append(PENDING_INPUT_READER_NAME).append(" = ").append(READER_NAME).append(".subReader()").semi().newLine()

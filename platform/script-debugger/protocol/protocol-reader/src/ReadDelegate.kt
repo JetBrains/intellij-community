@@ -14,7 +14,7 @@ class ReadDelegate(private val typeHandler: TypeWriter<*>, private val isList: B
     out.openBlock()
     out.append("return ")
     if (isList) {
-      out.append("readObjectArray(").append(READER_NAME).append(", new ").append(scope.requireFactoryGenerationAndGetName(typeHandler)).append(TYPE_FACTORY_NAME_POSTFIX).append("()").append(")")
+      out.append("readObjectArray(").append(READER_NAME).append(", new ").append(TYPE_FACTORY_NAME_PREFIX).append(scope.requireFactoryGenerationAndGetName(typeHandler)).append("()").append(")")
     }
     else {
       typeHandler.writeInstantiateCode(scope, out)
