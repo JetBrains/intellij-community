@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,12 +67,14 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
                                     @NotNull String testFrameworkName,
                                     @NotNull Executor executor,
                                     boolean printTestingStartedTime) {
-    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()),
-          config.getProject(),
-          executor);
+    super(getStorage(testFrameworkName), config.getProject(), executor);
     myConfiguration = config;
     myCustomFilter = new CompositeFilter(config.getProject());
     myPrintTestingStartedTime = printTestingStartedTime;
+  }
+
+  private static Storage.PropertiesComponentStorage getStorage(String testFrameworkName) {
+    return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());
   }
 
   public RunConfiguration getConfiguration() {
