@@ -196,10 +196,12 @@ public class DependentGroovycRunner {
           }
         }
         else if (line.startsWith(GroovyRtConstants.PATCHERS)) {
+          final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
           String s;
           while (!GroovyRtConstants.END.equals(s = reader.readLine())) {
             try {
-              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)Class.forName(s).newInstance();
+              final Class<?> patcherClass = classLoader.loadClass(s);
+              final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.newInstance();
               patchers.add(patcher);
             }
             catch (InstantiationException e) {
