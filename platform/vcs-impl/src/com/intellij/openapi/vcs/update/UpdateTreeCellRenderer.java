@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 
 import javax.swing.*;
 
@@ -36,5 +37,6 @@ public class UpdateTreeCellRenderer extends ColoredTreeCellRenderer{
       append(errorText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     setIcon(treeNode.getIcon(false));
+    SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 }

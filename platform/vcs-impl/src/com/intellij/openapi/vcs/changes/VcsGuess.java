@@ -29,11 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsGuess {
-  private final Project myProject;
+
+  @NotNull private final Project myProject;
   private final ProjectLevelVcsManagerImpl myVcsManager;
   private final FileIndexFacade myExcludedFileIndex;
 
-  VcsGuess(final Project project) {
+  public VcsGuess(@NotNull Project project) {
     myProject = project;
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);

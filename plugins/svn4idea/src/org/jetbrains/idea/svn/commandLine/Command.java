@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -34,6 +35,7 @@ public class Command {
   @Nullable private volatile SVNURL myRepositoryUrl;
   @NotNull private SvnTarget myTarget;
   @Nullable private Collection<File> myTargets;
+  @Nullable private PropertyValue myPropertyValue;
 
   @Nullable private ProgressTracker myCanceller;
 
@@ -43,6 +45,18 @@ public class Command {
 
   public void put(@Nullable Depth depth) {
     CommandUtil.put(myParameters, depth, false);
+  }
+
+  public void put(@NotNull SvnTarget target) {
+    CommandUtil.put(myParameters, target);
+  }
+
+  public void put(@Nullable SVNRevision revision) {
+    CommandUtil.put(myParameters, revision);
+  }
+
+  public void put(@NotNull String parameter, boolean condition) {
+    CommandUtil.put(myParameters, condition, parameter);
   }
 
   public void put(@NonNls @NotNull String... parameters) {
@@ -110,6 +124,11 @@ public class Command {
     });
   }
 
+  @Nullable
+  public PropertyValue getPropertyValue() {
+    return myPropertyValue;
+  }
+
   @NotNull
   public SvnCommandName getName() {
     return myName;
@@ -137,6 +156,10 @@ public class Command {
 
   public void setTargets(@Nullable Collection<File> targets) {
     myTargets = targets;
+  }
+
+  public void setPropertyValue(@Nullable PropertyValue propertyValue) {
+    myPropertyValue = propertyValue;
   }
 
   // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored

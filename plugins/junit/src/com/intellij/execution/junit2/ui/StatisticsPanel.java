@@ -18,7 +18,7 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.events.TestEvent;
-import com.intellij.execution.junit2.ui.actions.TestContext;
+import com.intellij.execution.testframework.actions.TestContext;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.testframework.TestsUIUtil;

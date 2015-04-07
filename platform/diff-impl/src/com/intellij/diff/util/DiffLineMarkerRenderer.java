@@ -25,10 +25,17 @@ import java.awt.*;
 
 public class DiffLineMarkerRenderer implements LineMarkerRenderer {
   @NotNull private final TextDiffType myDiffType;
+  private final boolean myIgnoredFoldingOutline;
 
   public DiffLineMarkerRenderer(@NotNull TextDiffType diffType) {
-    myDiffType = diffType;
+    this(diffType, false);
   }
+
+  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType, boolean ignoredFoldingOutline) {
+    myDiffType = diffType;
+    myIgnoredFoldingOutline = ignoredFoldingOutline;
+  }
+
 
   @Override
   public void paint(Editor editor, Graphics g, Rectangle range) {
@@ -36,21 +43,32 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
 
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     Graphics2D g2 = (Graphics2D)g;
-    int x = 0;
+    int x1 = 0;
+    int x2 = x1 + gutter.getWidth();
     int y = range.y;
-    int width = gutter.getWidth();
     int height = range.height;
 
     if (height > 2) {
-      g.setColor(color);
-      g.fillRect(x, y, width, height);
-      DiffDrawUtil.drawChunkBorderLine(g2, x, x + width, y - 1, color);
-      DiffDrawUtil.drawChunkBorderLine(g2, x, x + width, y + height - 1, color);
+      if (myIgnoredFoldingOutline) {
+        int xOutline = gutter.getWhitespaceSeparatorOffset();
+
+        g.setColor(myDiffType.getIgnoredColor(editor));
+        g.fillRect(xOutline, y, x2 - xOutline, height);
+
+        g.setColor(color);
+        g.fillRect(x1, y, xOutline - x1, height);
+      }
+      else {
+        g.setColor(color);
+        g.fillRect(x1, y, x2 - x1, height);
+      }
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color);
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y + height - 1, color);
     }
     else {
       // range is empty - insertion or deletion
       // Draw 2 pixel line in that case
-      DiffDrawUtil.drawDoubleChunkBorderLine(g2, x, x + width, y - 1, color);
+      DiffDrawUtil.drawDoubleChunkBorderLine(g2, x1, x2, y - 1, color);
     }
   }
 }

@@ -163,7 +163,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
     Disposer.register(this, myTreeBuilder);
 
-    myAnimator = new MyAnimator(this, myTreeBuilder);
+    myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
@@ -569,13 +569,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     };
   }
 
-
-  private static class MyAnimator extends TestsProgressAnimator {
-    public MyAnimator(final Disposable parentDisposable, final AbstractTestTreeBuilder builder) {
-      super(parentDisposable);
-      init(builder);
-    }
-  }
 
   private void updateCountersAndProgressOnTestCount(final int count, final boolean isCustomMessage) {
     if (!isModeConsistent(isCustomMessage)) return;

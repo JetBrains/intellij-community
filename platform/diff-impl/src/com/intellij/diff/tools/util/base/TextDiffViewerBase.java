@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util.base;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
@@ -129,6 +130,12 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   @NotNull
   protected TextDiffSettings getTextSettings() {
     return myTextSettings;
+  }
+
+  @NotNull
+  protected FoldingModelSupport.Settings getFoldingModelSettings() {
+    TextDiffSettings settings = getTextSettings();
+    return new FoldingModelSupport.Settings(settings.getContextRange(), settings.isExpandByDefault());
   }
 
   @NotNull

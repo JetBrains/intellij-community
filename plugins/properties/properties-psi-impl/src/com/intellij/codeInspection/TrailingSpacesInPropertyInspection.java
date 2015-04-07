@@ -23,26 +23,22 @@ import com.intellij.lang.properties.PropertySuppressableInspectionBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author cdr
@@ -85,24 +81,16 @@ public class TrailingSpacesInPropertyInspection extends PropertySuppressableInsp
     if (!(file instanceof PropertiesFile)) return null;
     final List<IProperty> properties = ((PropertiesFile)file).getProperties();
     final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
-
     for (IProperty property : properties) {
       ProgressManager.checkCanceled();
-
-      ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
-      if (keyNode != null) {
-        PsiElement key = keyNode.getPsi();
-        TextRange textRange = getTrailingSpaces(key, myIgnoreVisibleSpaces);
-        if (textRange != null) {
-          descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing Spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
-        }
-      }
-      ASTNode valueNode = ((PropertyImpl)property).getValueNode();
-      if (valueNode != null) {
-        PsiElement value = valueNode.getPsi();
-        TextRange textRange = getTrailingSpaces(value, myIgnoreVisibleSpaces);
-        if (textRange != null) {
-          descriptors.add(manager.createProblemDescriptor(value, textRange, "Trailing Spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
+      final PropertyImpl propertyImpl = (PropertyImpl)property;
+      for (ASTNode node : ContainerUtil.ar(propertyImpl.getKeyNode(), propertyImpl.getValueNode())) {
+        if (node != null) {
+          PsiElement key = node.getPsi();
+          TextRange textRange = getTrailingSpaces(key, myIgnoreVisibleSpaces);
+          if (textRange != null) {
+            descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
+          }
         }
       }
     }

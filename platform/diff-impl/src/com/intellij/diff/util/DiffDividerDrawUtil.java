@@ -18,9 +18,11 @@ package com.intellij.diff.util;
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -139,13 +141,15 @@ public class DiffDividerDrawUtil {
     final int height1 = editor1.getLineHeight();
     final int height2 = editor2.getLineHeight();
 
+    final EditorColorsScheme scheme = editor1.getColorsScheme();
+
     paintable.process(new DividerSeparatorPaintable.Handler() {
       @Override
       public boolean process(int line1, int line2) {
         if (leftInterval.startLine > line1 + 1 && rightInterval.startLine > line2 + 1) return true;
         if (leftInterval.endLine < line1 && rightInterval.endLine < line2) return false;
 
-        separators.add(createSeparator(transformations, line1, line2, height1, height2));
+        separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
         return true;
       }
     });
@@ -182,10 +186,11 @@ public class DiffDividerDrawUtil {
 
   @NotNull
   private static DividerSeparator createSeparator(@NotNull Transformation[] transformations,
-                                                  int line1, int line2, int height1, int height2) {
+                                                  int line1, int line2, int height1, int height2,
+                                                  @Nullable EditorColorsScheme scheme) {
     int start1 = transformations[0].transform(line1);
     int start2 = transformations[1].transform(line2);
-    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2);
+    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, scheme);
   }
 
   @NotNull
@@ -280,20 +285,26 @@ public class DiffDividerDrawUtil {
     private final int myStart2;
     private final int myEnd1;
     private final int myEnd2;
+    @Nullable private final EditorColorsScheme myScheme;
 
     public DividerSeparator(int start1, int start2, int end1, int end2) {
+      this(start1, start2, end1, end2, null);
+    }
+
+    public DividerSeparator(int start1, int start2, int end1, int end2, @Nullable EditorColorsScheme scheme) {
       myStart1 = start1;
       myStart2 = start2;
       myEnd1 = end1;
       myEnd2 = end2;
+      myScheme = scheme;
     }
 
     public void paint(Graphics2D g, int width) {
-      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2);
+      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myScheme);
     }
 
     public void paintOnScrollbar(Graphics2D g, int width) {
-      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart1, myEnd1);
+      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart1, myEnd1, myScheme);
     }
 
     public String toString() {

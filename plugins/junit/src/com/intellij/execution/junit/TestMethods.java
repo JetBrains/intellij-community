@@ -16,10 +16,10 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.TestProxy;
@@ -54,26 +54,13 @@ public class TestMethods extends TestMethod {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    defaultInitialize();
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    RunConfigurationModule module = myConfiguration.getConfigurationModule();
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = super.createDefaultJavaParameters();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final Project project = module.getProject();
-    final ExecutionException[] exception = new ExecutionException[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myConfiguration.configureClasspath(myJavaParameters);
-        }
-        catch (CantRunException e) {
-          exception[0] = e;
-        }
-      }
-    });
-    if (exception[0] != null) throw exception[0];
     final LinkedHashSet<TestInfo> methods = new LinkedHashSet<TestInfo>();
-    final GlobalSearchScope searchScope = myConfiguration.getConfigurationModule().getSearchScope();
+    final GlobalSearchScope searchScope = getConfiguration().getConfigurationModule().getSearchScope();
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project, searchScope);
       if (location instanceof PsiMemberParameterizedLocation) {
@@ -98,8 +85,9 @@ public class TestMethods extends TestMethod {
         }
         return null;
       }
-    }, data.getPackageName(), true, false);
+    }, data.getPackageName(), true, javaParameters);
 
+    return javaParameters;
   }
 
   @Override

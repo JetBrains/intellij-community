@@ -142,9 +142,14 @@ public class DiffUtil {
       editor.getSettings().setTabSize(codeStyleFacade.getTabSize(fileType));
       editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
     }
-    editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
+  }
+
+  public static void setFoldingModelSupport(@NotNull EditorEx editor) {
+    editor.getSettings().setFoldingOutlineShown(true);
+    editor.getSettings().setAutoCodeFoldingEnabled(false);
+    editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
   }
 
   @NotNull
@@ -165,10 +170,8 @@ public class DiffUtil {
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
     if (enableFolding) {
-      editor.getSettings().setFoldingOutlineShown(true);
-      editor.getSettings().setAutoCodeFoldingEnabled(false);
-    }
-    else {
+      setFoldingModelSupport(editor);
+    } else {
       editor.getSettings().setFoldingOutlineShown(false);
       editor.getFoldingModel().setFoldingEnabled(false);
     }
@@ -493,6 +496,10 @@ public class DiffUtil {
   //
   // Focus
   //
+
+  public static boolean isFocusedComponent(@Nullable Component component) {
+    return isFocusedComponent(null, component);
+  }
 
   public static boolean isFocusedComponent(@Nullable Project project, @Nullable Component component) {
     if (component == null) return false;

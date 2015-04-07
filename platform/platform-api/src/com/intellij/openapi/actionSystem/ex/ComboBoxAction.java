@@ -29,9 +29,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,13 +52,29 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   private boolean mySmallVariant = true;
   private String myPopupTitle;
-  private DataContext myDataContext;
 
   protected ComboBoxAction() {
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    ComboBoxButton button = (ComboBoxButton)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    if (button == null) {
+      Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
+      if (rootPane != null) {
+        button = (ComboBoxButton)
+          JBSwingUtilities.uiTraverser().breadthFirstTraversal(rootPane).filter(new Condition<Component>() {
+            @Override
+            public boolean value(Component component) {
+              return component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this;
+            }
+          }).first();
+      }
+      if (button == null) return;
+    }
+    if (!button.isShowing()) return;
+    button.showPopup();
   }
 
   @Override
@@ -85,8 +104,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   @Override
   public void update(AnActionEvent e) {
-    super.update(e);
-    myDataContext = e.getDataContext();
   }
 
   @NotNull
@@ -212,14 +229,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       myForceTransparent = transparent;
     }
 
-    public void showPopup() {
+    @NotNull
+    private Runnable setForcePressed() {
       myForcePressed = true;
       repaint();
 
-      Runnable onDispose = new Runnable() {
+      return new Runnable() {
         @Override
         public void run() {
-          // give button chance to handle action listener
+          // give the button a chance to handle action listener
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -231,9 +249,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           fireStateChanged();
         }
       };
-
-      myPopup = createPopup(onDispose);
-      myPopup.show(new RelativePoint(this, new Point(-1, getHeight())));
     }
 
     @Nullable
@@ -242,19 +257,26 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return myForcePressed ? null : super.getToolTipText();
     }
 
+    public void showPopup() {
+      createPopup(setForcePressed()).showUnderneathOf(this);
+    }
+
     protected JBPopup createPopup(Runnable onDispose) {
       DefaultActionGroup group = createPopupActionGroup(this);
 
       DataContext context = getDataContext();
-      myDataContext = null;
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         myPopupTitle, group, context, false, false, false, onDispose, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }
 
+    private ComboBoxAction getMyAction() {
+      return ComboBoxAction.this;
+    }
+
     protected DataContext getDataContext() {
-      return myDataContext == null ? DataManager.getInstance().getDataContext(this) : myDataContext;
+      return DataManager.getInstance().getDataContext(this);
     }
 
     @Override

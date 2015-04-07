@@ -383,7 +383,7 @@ void StopRoot(WatchRootInfo *info) {
     info->bInitialized = false;
 }
 
-void UpdateRoots() {
+void UpdateRoots(bool report) {
     char infoBuffer[256];
     strcpy_s(infoBuffer, "UNWATCHEABLE\n");
     for (int i = 0; i < ROOT_COUNT; i++) {
@@ -404,6 +404,11 @@ void UpdateRoots() {
             }
         }
     }
+
+    if (!report) {
+        return;
+    }
+
     EnterCriticalSection(&csOutput);
     fprintf(stdout, "%s", infoBuffer);
     puts("#\nREMAP");
@@ -488,14 +493,15 @@ int _tmain(int argc, _TCHAR *argv[]) {
             if (failed)
                 break;
 
-            UpdateRoots();
+            UpdateRoots(true);
         }
+
         if (!strcmp(buffer, "EXIT"))
             break;
     }
 
     MarkAllRootsUnused();
-    UpdateRoots();
+    UpdateRoots(false);
 
     DeleteCriticalSection(&csOutput);
 }

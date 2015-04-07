@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.commandLine.Command;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
@@ -150,28 +151,23 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                               @Nullable Depth depth,
                               @Nullable PropertyValue value,
                               boolean force) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
     boolean isDelete = value == null;
+    Command command = newCommand(isDelete ? SvnCommandName.propdel : SvnCommandName.propset);
 
-    parameters.add(property);
+    command.put(property);
     if (revision != null) {
-      parameters.add("--revprop");
-      CommandUtil.put(parameters, revision);
+      command.put("--revprop");
+      command.put(revision);
     }
     if (!isDelete) {
-      parameters.add(PropertyValue.toString(value));
+      command.setPropertyValue(value);
       // --force could only be used in "propset" command, but not in "propdel" command
-      CommandUtil.put(parameters, force, "--force");
+      command.put("--force", force);
     }
-    CommandUtil.put(parameters, target);
-    CommandUtil.put(parameters, depth);
+    command.put(target);
+    command.put(depth);
 
-    // For some reason, command setting ignore property when working directory equals target directory (like
-    // "svn propset svn:ignore *.java . --depth empty") tries to set ignore also on child files and fails with error like
-    // "svn: E200009: Cannot set 'svn:ignore' on a file ('...File1.java')". So here we manually force home directory to be used.
-    // NOTE: that setting other properties (not svn:ignore) does not cause such error.
-    execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
-            null);
+    execute(myVcs, target, null, command, null);
   }
 
   private void fillListParameters(@NotNull SvnTarget target,

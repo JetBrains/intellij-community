@@ -63,6 +63,10 @@ public class Java8RegressionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA138696() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

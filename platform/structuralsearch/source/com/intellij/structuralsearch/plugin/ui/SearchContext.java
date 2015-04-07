@@ -13,7 +13,7 @@ import com.intellij.psi.PsiManager;
 /**
  * Context of the search to be done
  */
-public final class SearchContext implements Cloneable {
+public final class SearchContext {
   private final PsiFile file;
   private final Project project;
 
@@ -46,13 +46,5 @@ public final class SearchContext implements Cloneable {
 
   public Editor getEditor() {
     return FileEditorManager.getInstance(project).getSelectedTextEditor();
-  }
-
-  protected Object clone() {
-    try {
-      return super.clone();
-    } catch(CloneNotSupportedException ex) {
-      return null;
-    }
   }
 }

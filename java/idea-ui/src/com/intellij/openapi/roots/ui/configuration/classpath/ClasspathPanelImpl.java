@@ -646,10 +646,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         selectionModel.addSelectionInterval(newRow, newRow);
       }
     }
-    List<OrderEntry> entries = getEntries();
-    myState.getRootModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
-
-    myModel.fireTableRowsUpdated(0, myModel.getRowCount() - 1);
     Rectangle cellRect = myEntryTable.getCellRect(selectionModel.getMinSelectionIndex(), 0, true);
     myEntryTable.scrollRectToVisible(cellRect);
     myEntryTable.repaint();
@@ -674,18 +670,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   public void stopEditing() {
     TableUtil.stopEditing(myEntryTable);
-  }
-
-  public List<OrderEntry> getEntries() {
-    final int count = myModel.getRowCount();
-    final List<OrderEntry> entries = new ArrayList<OrderEntry>(count);
-    for (int row = 0; row < count; row++) {
-      final OrderEntry entry = myModel.getItem(row).getEntry();
-      if (entry != null) {
-        entries.add(entry);
-      }
-    }
-    return entries;
   }
 
   private int myInsideChange = 0;

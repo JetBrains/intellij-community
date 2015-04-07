@@ -16,8 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.execution.testframework.TestTreeViewStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +26,14 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTRunnerTreeStructure extends AbstractTreeStructure
+public class SMTRunnerTreeStructure extends TestTreeViewStructure<SMTestProxy>
 {
   private final Object myRootNode;
-  private Filter myTestNodesFilter;
   private final Project myProject;
 
   public SMTRunnerTreeStructure(final Project project, final Object rootNode) {
     myProject = project;
     myRootNode = rootNode;
-    myTestNodesFilter = Filter.NO_FILTER;
   }
 
   @Override
@@ -58,14 +55,10 @@ public class SMTRunnerTreeStructure extends AbstractTreeStructure
                                        (NodeDescriptor<SMTestProxy>)parentDesc);
   }
 
-  public Filter getFilter() {
-    return myTestNodesFilter;
-  }
-
   @Override
   public Object[] getChildElements(final Object element) {
     final List<? extends SMTestProxy> results =
-        ((SMTestProxy)element).getChildren(myTestNodesFilter);
+        ((SMTestProxy)element).getChildren(getFilter());
 
     return results.toArray(new AbstractTestProxy[results.size()]);
   }
@@ -79,9 +72,5 @@ public class SMTRunnerTreeStructure extends AbstractTreeStructure
   @Override
   public Object getRootElement() {
     return myRootNode;
-  }
-
-  public void setFilter(final Filter nodesFilter) {
-    myTestNodesFilter = nodesFilter;
   }
 }

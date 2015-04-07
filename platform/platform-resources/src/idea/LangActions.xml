@@ -640,6 +640,10 @@
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
     </action>
 
+    <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
+    </action>
+
     <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>

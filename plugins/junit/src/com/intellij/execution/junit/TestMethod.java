@@ -36,20 +36,20 @@ class TestMethod extends TestObject {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    defaultInitialize();
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    RunConfigurationModule module = myConfiguration.getConfigurationModule();
-    configureModule(getJavaParameters(), module, data.getMainClassName());
-    addJUnit3Parameter(data, module.getProject());
-    getJavaParameters().getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = createDefaultJavaParameters();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    RunConfigurationModule module = getConfiguration().getConfigurationModule();
+    addJUnit3Parameter(javaParameters, data, module.getProject());
+    javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
+    return javaParameters;
   }
 
-  protected void defaultInitialize() throws ExecutionException {
-    super.initialize();
+  protected JavaParameters createDefaultJavaParameters() throws ExecutionException {
+    return super.createJavaParameters();
   }
 
-  protected void addJUnit3Parameter(final JUnitConfiguration.Data data, Project project) {
+  protected void addJUnit3Parameter(JavaParameters javaParameters, final JUnitConfiguration.Data data, Project project) throws ExecutionException {
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
     LOG.assertTrue(psiClass != null);
     if (JUnitUtil.isJUnit4TestClass(psiClass)) {
@@ -62,12 +62,12 @@ class TestMethod extends TestObject {
         return;
       }
     }
-    myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
+    javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
   }
 
   @Override
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(myConfiguration.getPersistentData().METHOD_NAME, 2) + "()";
+    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().METHOD_NAME, 2) + "()";
   }
 
   @Override
@@ -125,8 +125,8 @@ class TestMethod extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    final JavaRunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String testClass = data.getMainClassName();
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, ExecutionBundle.message("no.test.class.specified.error.text"));
 

@@ -181,6 +181,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }.execute().getResultObject();
   }
 
+  @NotNull
+  protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
+    return new WriteCommandAction<Editor>(null) {
+      @Override
+      protected void run(@NotNull Result<Editor> result) throws Throwable {
+        final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+        EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+
+        String newFileText = fakeDocument.getText();
+        Document document = EditorFactory.getInstance().createDocument(newFileText);
+        final Editor editor = EditorFactory.getInstance().createEditor(document);
+        ((EditorImpl)editor).setCaretActive();
+
+        EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+        result.setResult(editor);
+      }
+    }.execute().getResultObject();
+  }
+
   protected static Editor createEditor(@NotNull VirtualFile file) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
@@ -348,6 +367,35 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         assertEquals(failMessage, newFileText, fileText);
 
         EditorTestUtil.verifyCaretAndSelectionState(myEditor, carets, message);
+      }
+    });
+  }
+
+  protected static void checkResultByTextWithoutPSI(final String message,
+                                                    @NotNull final Editor editor,
+                                                    @NotNull final String fileText,
+                                                    final boolean ignoreTrailingSpaces,
+                                                    final String filePath) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+
+        if (ignoreTrailingSpaces) {
+          ((DocumentImpl)fakeDocument).stripTrailingSpaces(getProject());
+        }
+
+        EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+
+        String newFileText = fakeDocument.getText();
+        String fileText = editor.getDocument().getText();
+        String failMessage = getMessage("Text mismatch", message);
+        if (filePath != null && !newFileText.equals(fileText)) {
+          throw new FileComparisonFailure(failMessage, newFileText, fileText, filePath);
+        }
+        assertEquals(failMessage, newFileText, fileText);
+
+        EditorTestUtil.verifyCaretAndSelectionState(editor, carets, message);
       }
     });
   }

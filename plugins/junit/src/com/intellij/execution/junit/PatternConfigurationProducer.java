@@ -16,20 +16,17 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.PatternConfigurationDelegate;
+import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.sun.media.sound.PCMtoPCMCodec;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class PatternConfigurationProducer extends PatternConfigurationDelegate<JUnitConfiguration> {
+public class PatternConfigurationProducer extends AbstractPatternBasedConfigurationProducer<JUnitConfiguration> {
   protected PatternConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
   }

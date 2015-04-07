@@ -60,10 +60,40 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     return myResourceBundle;
   }
 
-  private Map<String, IProperty> getChildrenIdShowOnlyIncomplete() {
+  @NotNull
+  public StructureViewTreeElement[] getChildren() {
+    final Map<String, IProperty> propertyNames = getPropertiesMap(myResourceBundle, myShowOnlyIncomplete);
+    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
+    for (IProperty property : propertyNames.values()) {
+      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, property));
+    }
+    return result.toArray(new StructureViewTreeElement[result.size()]);
+  }
+
+  public static Map<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
+    final Map<String, IProperty> propertyNames;
+    if (onlyIncomplete) {
+      propertyNames = getChildrenIdShowOnlyIncomplete(resourceBundle);
+    } else {
+      propertyNames = new LinkedHashMap<String, IProperty>();
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        List<IProperty> properties = propertiesFile.getProperties();
+        for (IProperty property : properties) {
+          String name = property.getKey();
+          if (!propertyNames.containsKey(name)) {
+            propertyNames.put(name, property);
+          }
+        }
+      }
+    }
+    return propertyNames;
+  }
+
+  private static Map<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
     final Map<String, IProperty> propertyNames = new LinkedHashMap<String, IProperty>();
     TObjectIntHashMap<String> occurrences = new TObjectIntHashMap<String>();
-    for (PropertiesFile file : myResourceBundle.getPropertiesFiles()) {
+    for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       Map<String, IProperty> currentFilePropertyNames = new LinkedHashMap<String, IProperty>();
       for (IProperty property : file.getProperties()) {
         String name = property.getKey();
@@ -80,7 +110,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
         }
       }
     }
-    final int targetOccurrences = myResourceBundle.getPropertiesFiles().size();
+    final int targetOccurrences = resourceBundle.getPropertiesFiles().size();
     occurrences.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
       public boolean execute(String propertyName, int occurrences) {
@@ -91,31 +121,6 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       }
     });
     return propertyNames;
-  }
-
-  @NotNull
-  public StructureViewTreeElement[] getChildren() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
-    final Map<String, IProperty> propertyNames;
-    if (myShowOnlyIncomplete) {
-      propertyNames = getChildrenIdShowOnlyIncomplete();
-    } else {
-      propertyNames = new LinkedHashMap<String, IProperty>();
-      for (PropertiesFile propertiesFile : propertiesFiles) {
-        List<IProperty> properties = propertiesFile.getProperties();
-        for (IProperty property : properties) {
-          String name = property.getKey();
-          if (!propertyNames.containsKey(name)) {
-            propertyNames.put(name, property);
-          }
-        }
-      }
-    }
-    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
-    for (IProperty property : propertyNames.values()) {
-      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, property));
-    }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
   }
 
   @NotNull

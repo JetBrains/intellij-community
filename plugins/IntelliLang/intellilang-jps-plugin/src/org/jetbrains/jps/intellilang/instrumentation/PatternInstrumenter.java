@@ -23,8 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.intellilang.model.InstrumentationException;
 import org.jetbrains.org.objectweb.asm.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -291,7 +293,19 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       if (err == null) {
         err = e;
       }
-      myPostponedError = new RuntimeException("Operation '" + operationName + "' failed for " + myClassName + "." + methodName + "(): " + err.getMessage(), err);
+      final StringBuilder message = new StringBuilder();
+      message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
+      
+      final String errMessage = err.getMessage();
+      if (errMessage != null) {
+        message.append(errMessage);
+      }
+      
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      err.printStackTrace(new PrintStream(out));
+      message.append('\n').append(out.toString());
+      
+      myPostponedError = new RuntimeException(message.toString(), err);
     }
     if (myInstrumented) {
       processPostponedErrors();

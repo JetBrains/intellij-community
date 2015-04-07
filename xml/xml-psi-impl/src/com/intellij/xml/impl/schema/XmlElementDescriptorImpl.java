@@ -195,7 +195,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
                                  myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
         final String local = XmlUtil.findLocalNameByQualifiedName(substAttr);
         final XmlElementDescriptorImpl originalElement = (XmlElementDescriptorImpl)((XmlNSDescriptorImpl)getNSDescriptor()).getElementDescriptor(local, namespace);
-        if (originalElement != null) {
+        if (originalElement != null && originalElement != this) {
           type = originalElement.getType(context);
         }
       }

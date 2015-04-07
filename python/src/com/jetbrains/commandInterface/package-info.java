@@ -48,7 +48,7 @@
  *   <ol>
  *     <li>Implement {@link com.jetbrains.commandInterface.command.Command}</li>
  *     <li>Create list of {@link com.jetbrains.commandInterface.command.Command commands}</li>
- *     <li>Provide it to {@link com.jetbrains.commandInterface.console.CommandLineConsole#createConsole(com.intellij.openapi.module.Module, java.lang.String, java.util.List)}</li>
+ *     <li>Provide it to {@link com.jetbrains.commandInterface.console.CommandLineConsoleApi#createConsole(com.intellij.openapi.module.Module, java.lang.String, java.util.List)}</li>
  *   </ol>
  * @author Ilya.Kazakevich
  */

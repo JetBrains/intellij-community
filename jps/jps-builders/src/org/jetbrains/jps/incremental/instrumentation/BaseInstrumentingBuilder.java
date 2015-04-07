@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.instrumentation;
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
       final BinaryContent originalContent = compiledClass.getContent();
-      final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
+      final ClassReader reader = new FailSafeClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
       final int version = getClassFileVersion(reader);
       if (IS_INSTRUMENTED_KEY.get(compiledClass, Boolean.FALSE) || !canInstrument(compiledClass, version)) {
         // do not instrument the same content twice

@@ -159,7 +159,7 @@ public class RedundantCastUtil {
     }
 
     @Override public void visitReturnStatement(PsiReturnStatement statement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiLambdaExpression.class);
       if (method != null) {
         final PsiType returnType = method.getReturnType();
         final PsiExpression returnValue = statement.getReturnValue();

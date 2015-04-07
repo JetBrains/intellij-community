@@ -47,7 +47,10 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -146,7 +149,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   protected void updateContextHints() {
     myScrollToLineHelper.updateContext();
-    myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
+    myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }
 
   @NotNull
@@ -357,7 +360,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return new Runnable() {
       @Override
       public void run() {
-        myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
+        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
         if (isEqual) myPanel.addContentsEqualNotification();
@@ -386,7 +389,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
         myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
 
-        myFoldingModel.install(changedLines, myRequest, getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
+        myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
 
         myScrollToLineHelper.onRediff();
 
@@ -1075,7 +1078,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       super(new EditorEx[]{editor}, disposable);
     }
 
-    public void install(@Nullable List<IntPair> changedLines, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+    public void install(@Nullable List<IntPair> changedLines,
+                        @NotNull UserDataHolder context,
+                        @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(changedLines, new Function<IntPair, int[]>() {
         @Override
         public int[] fun(IntPair line) {
@@ -1084,7 +1089,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
             line.val2};
         }
       });
-      install(it, context, defaultExpanded, range);
+      install(it, context, settings);
     }
 
     @NotNull

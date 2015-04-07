@@ -72,6 +72,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -449,6 +450,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public boolean dispatch(AWTEvent e) {
         if (e instanceof KeyEvent) {
           dispatchKeyEvent((KeyEvent)e);
+        }
+        if (e instanceof WindowEvent && (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getSource() == myFrame) {
+          resetHoldState();
         }
         return false;
       }
@@ -2134,7 +2138,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return ApplicationManager.getApplication().getDisposed();
     }
   }
-  
+
   /**
    * This command creates and shows <code>WindowedDecorator</code>.
    */

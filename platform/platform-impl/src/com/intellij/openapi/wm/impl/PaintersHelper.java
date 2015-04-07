@@ -22,15 +22,16 @@ import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.VolatileImage;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Map;
@@ -113,7 +114,7 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   public enum FillType {
-    BG_CENTER, TILE, STRETCH,
+    BG_CENTER, TILE, SCALE,
     CENTER, TOP_CENTER, BOTTOM_CENTER,
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
   }
@@ -141,13 +142,12 @@ final class PaintersHelper implements Painter.Listener {
               fillType =  FillType.valueOf(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "");
             }
             catch (IllegalArgumentException e) {
-              fillType = FillType.STRETCH;
+              fillType = FillType.SCALE;
             }
             String url = parts[0].contains("://")? parts[0] :
                          VfsUtilCore.pathToUrl(parts[0].contains("/") ? parts[0] : PathManager.getConfigPath() + "/" + parts[0]);
 
-            //todo ImageLoader.loadFromUrl(new URL(url)); fails with AlphaComposite for unknown reason
-            image = ImageIO.read(new URL(url));
+            image = ImageLoader.loadFromUrl(new URL(url));
           }
           catch (Exception ignored) {
           }
@@ -169,7 +169,7 @@ final class PaintersHelper implements Painter.Listener {
 
   private abstract static class ImagePainter extends AbstractPainter {
 
-    Image scaled;
+    VolatileImage scaled;
 
     @Override
     public boolean needsRepaint() { return true; }
@@ -184,21 +184,43 @@ final class PaintersHelper implements Painter.Listener {
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
 
-      if (fillType == FillType.STRETCH) {
-        if (scaled == null || scaled.getWidth(null) != cw || scaled.getHeight(null) != ch) {
-          scaled = image.getScaledInstance(cw, ch, Image.SCALE_SMOOTH);
+      if (fillType == FillType.SCALE) {
+        int sw0 = scaled == null ? -1 : scaled.getWidth(null);
+        int sh0 = scaled == null ? -1 : scaled.getHeight(null);
+        boolean useWidth = cw * h > ch * w;
+        int sw = useWidth ? cw : w * ch / h;
+        int sh = useWidth ? h * cw / w : ch;
+        if (sw0 != sw || sh0 != sh || scaled != null && scaled.contentsLost()) {
+          if (sw0 != sw || sh0 != sh || scaled == null) {
+            scaled = createImage(g, sw, sh);
+          }
+          Graphics2D gg = scaled.createGraphics();
+          gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                              RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+          gg.drawImage(image, 0, 0, sw, sh, null);
+          gg.dispose();
         }
+        w = sw;
+        h = sh;
+      }
+      else if (scaled == null || scaled.contentsLost()) {
+        if (scaled == null) {
+          scaled = createImage(g, w, h);
+        }
+        Graphics gg = scaled.getGraphics();
+        gg.drawImage(image, 0, 0, null);
+        gg.dispose();
       }
 
       GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
       g.setColor(g.getBackground());
-      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER ||
-        fillType == FillType.TOP_CENTER || fillType == FillType.BOTTOM_CENTER) {
+      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER || fillType == FillType.SCALE ||
+          fillType == FillType.TOP_CENTER || fillType == FillType.BOTTOM_CENTER) {
         int x = i.left + (cw - w) / 2;
         int y = fillType == FillType.TOP_CENTER? i.top :
                 fillType == FillType.BOTTOM_CENTER? ch0 - i.bottom - h :
                 i.top + (ch - h) / 2;
-        UIUtil.drawImage(g, image, x, y, null);
+        UIUtil.drawImage(g, scaled, x, y, null);
         if (fillType == FillType.BG_CENTER) {
           g.setColor(component.getBackground());
           g.fillRect(0, 0, x, ch0);
@@ -211,24 +233,32 @@ final class PaintersHelper implements Painter.Listener {
                fillType == FillType.BOTTOM_LEFT || fillType == FillType.BOTTOM_RIGHT) {
         int x = fillType == FillType.TOP_LEFT || fillType == FillType.BOTTOM_LEFT ? i.left : cw0 - i.right - w;
         int y = fillType == FillType.TOP_LEFT || fillType == FillType.TOP_RIGHT ? i.top : ch0 - i.bottom - h;
-        UIUtil.drawImage(g, image, x, y, null);
+        UIUtil.drawImage(g, scaled, x, y, null);
       }
       else if (fillType == FillType.TILE) {
         int x = i.left;
         int y = i.top;
         while (w > 0 && x < cw) {
           while (h > 0 && y < ch) {
-            UIUtil.drawImage(g, image, x, y, null);
+            UIUtil.drawImage(g, scaled, x, y, null);
             y += h;
           }
           y = 0;
           x += w;
         }
       }
-      else if (fillType == FillType.STRETCH) {
-        UIUtil.drawImage(g, scaled, i.left, i.top, null);
-      }
       cfg.restore();
+    }
+
+    @NotNull
+    private static VolatileImage createImage(Graphics2D g, int w, int h) {
+      GraphicsConfiguration configuration = g.getDeviceConfiguration();
+      try {
+        return configuration.createCompatibleVolatileImage(w, h, new ImageCapabilities(true), Transparency.TRANSLUCENT);
+      }
+      catch (Exception e) {
+        return configuration.createCompatibleVolatileImage(w, h, Transparency.TRANSLUCENT);
+      }
     }
   }
 }
