@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ElementOnlyUsedFromTestCode.java</file>
+    <line>15</line>
+    <description>class &lt;code&gt;Bee&lt;/code&gt; only used from test code #loc</description>
+  </problem>
+
+  <problem>
+    <file>ElementOnlyUsedFromTestCode.java</file>
+    <line>21</line>
+    <description>method &lt;code&gt;method2()&lt;/code&gt; only called from test code #loc</description>
+  </problem>
+</problems>
