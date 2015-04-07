@@ -197,6 +197,7 @@ final class PaintersHelper implements Painter.Listener {
           Graphics2D gg = scaled.createGraphics();
           gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                               RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+          gg.setComposite(AlphaComposite.Src);
           gg.drawImage(image, 0, 0, sw, sh, null);
           gg.dispose();
         }
@@ -207,7 +208,8 @@ final class PaintersHelper implements Painter.Listener {
         if (scaled == null) {
           scaled = createImage(g, w, h);
         }
-        Graphics gg = scaled.getGraphics();
+        Graphics2D gg = scaled.createGraphics();
+        gg.setComposite(AlphaComposite.Src);
         gg.drawImage(image, 0, 0, null);
         gg.dispose();
       }
