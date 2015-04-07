@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,7 +341,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                                                "method1:1\n" +
                                                "method2:2\n" +
                                                "stderr1 ", "");
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("my_test", 1));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("my_test", 1l));
     myTest1.setFinished();
 
     //other output order

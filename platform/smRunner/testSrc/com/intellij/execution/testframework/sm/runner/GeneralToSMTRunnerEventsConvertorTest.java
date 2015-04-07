@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,7 +218,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10l));
 
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
@@ -263,7 +263,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnFinishedTesting_WithFailure() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", false, null, null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -279,7 +279,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnFinishedTesting_WithError() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", true, null, null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -295,7 +295,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnFinishedTesting_WithIgnored() {
     onTestStarted("test");
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("test", "", null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -342,7 +342,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals("suite3", test2.getParent().getName());
     assertEquals("suite2", test2.getParent().getParent().getName());
 
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test2", 10));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test2", 10l));
 
     //check that after finishing suite (suite3), current will be parent of finished suite (i.e. suite2)
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite3"));
@@ -387,7 +387,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite1"));
 
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite2", null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("suite2.test1", 10));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("suite2.test1", 10l));
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite2"));
 
     assertNotNull(test1);
