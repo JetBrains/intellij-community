@@ -61,7 +61,7 @@ class TypeCorrector extends PsiTypeMapper {
     PsiUtilCore.ensureValid(psiClass);
 
     final PsiClass mappedClass = mapClass(psiClass);
-    if (mappedClass == null) return null;
+    if (mappedClass == null) return classType;
 
     PsiClassType mappedType = new PsiCorrectedClassType(classType.getLanguageLevel(),
                                                         classType,
@@ -70,6 +70,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedType;
   }
 
+  @Nullable 
   private PsiClass mapClass(@NotNull PsiClass psiClass) {
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
@@ -84,18 +85,18 @@ class TypeCorrector extends PsiTypeMapper {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, myResolveScope);
   }
 
-  @Nullable
+  @NotNull 
   private PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = mappedClass.getTypeParameters();
     PsiTypeParameter[] originalTypeParameters = originalClass.getTypeParameters();
-    if (typeParameters.length != originalTypeParameters.length) return null;
+    if (typeParameters.length != originalTypeParameters.length) return substitutor;
 
     PsiSubstitutor mappedSubstitutor = PsiSubstitutor.EMPTY;
     for (int i = 0; i < originalTypeParameters.length; i++) {
       PsiType originalSubstitute = substitutor.substitute(originalTypeParameters[i]);
       if (originalSubstitute != null) {
         PsiType substitute = mapType(originalSubstitute);
-        if (substitute == null) return null;
+        if (substitute == null) return substitutor;
 
         mappedSubstitutor = mappedSubstitutor.put(typeParameters[i], substitute);
       }
@@ -109,15 +110,13 @@ class TypeCorrector extends PsiTypeMapper {
     }
     PsiClass mappedContaining = mappedClass.getContainingClass();
     PsiClass originalContaining = originalClass.getContainingClass();
+    //noinspection DoubleNegation
     if ((mappedContaining != null) != (originalContaining != null)) {
-      return null;
+      return substitutor;
     }
 
     if (mappedContaining != null) {
-      PsiSubstitutor outerSubstitutor = mapSubstitutor(originalContaining, mappedContaining, substitutor);
-      if (outerSubstitutor == null) return null;
-
-      return mappedSubstitutor.putAll(outerSubstitutor);
+      return mappedSubstitutor.putAll(mapSubstitutor(originalContaining, mappedContaining, substitutor));
     }
 
     return mappedSubstitutor;
@@ -244,12 +243,7 @@ class TypeCorrector extends PsiTypeMapper {
     public PsiSubstitutor getSubstitutor() {
       PsiSubstitutor result = myLazySubstitutor;
       if (result == null) {
-        result = mapSubstitutor(myPsiClass, myMappedClass, mySubstitutor);
-        if (result == null) {
-          //better ideas?
-          result = JavaPsiFacade.getElementFactory(myMappedClass.getProject()).createRawSubstitutor(myMappedClass);
-        }
-        myLazySubstitutor = result;
+        myLazySubstitutor = result = mapSubstitutor(myPsiClass, myMappedClass, mySubstitutor);
       }
       return result;
     }
