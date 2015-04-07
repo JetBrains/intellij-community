@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
@@ -90,7 +91,7 @@ class OutputFilesSink implements OutputFileConsumer {
       if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
         // register in mappings any non-temp class file
         try {
-          final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+          final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
           myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePath, reader);
         }
         catch (Throwable e) {

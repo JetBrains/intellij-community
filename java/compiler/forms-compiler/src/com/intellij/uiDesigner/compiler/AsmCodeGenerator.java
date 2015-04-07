@@ -15,6 +15,8 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
+import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
@@ -35,6 +37,7 @@ import java.util.*;
  * @author yole
  */
 public class AsmCodeGenerator {
+  private static final int ASM_API_VERSION = Opcodes.ASM5;
   private final LwRootContainer myRootContainer;
   private final InstrumentationClassFinder myFinder;
   private final ArrayList myErrors;
@@ -150,7 +153,7 @@ public class AsmCodeGenerator {
 
   public byte[] patchClass(InputStream classStream) {
     try {
-      final ClassReader reader = new ClassReader(classStream);
+      final ClassReader reader = new FailSafeClassReader(classStream);
       return patchClass(reader);
     }
     catch (IOException e) {
@@ -235,7 +238,7 @@ public class AsmCodeGenerator {
     private final boolean myExplicitSetupCall;
 
     public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
-      super(Opcodes.ASM5, cv);
+      super(ASM_API_VERSION, cv);
       myExplicitSetupCall = explicitSetupCall;
     }
 
@@ -259,11 +262,7 @@ public class AsmCodeGenerator {
       return myClassName;
     }
 
-    public MethodVisitor visitMethod(final int access,
-                                     final String name,
-                                     final String desc,
-                                     final String signature,
-                                     final String[] exceptions) {
+    public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
 
       if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME) ||
           name.equals(LOAD_BUTTON_TEXT_METHOD) || name.equals(LOAD_LABEL_TEXT_METHOD)) {
@@ -278,15 +277,12 @@ public class AsmCodeGenerator {
       if (name.equals(CONSTRUCTOR_NAME) && !myExplicitSetupCall) {
         return new FormConstructorVisitor(methodVisitor, myClassName, mySuperName);
       }
-      return methodVisitor;
+      return methodVisitor != null? new FailSafeMethodVisitor(ASM_API_VERSION, methodVisitor) : null;
     }
 
-    MethodVisitor visitNewMethod(final int access,
-                                 final String name,
-                                 final String desc,
-                                 final String signature,
-                                 final String[] exceptions) {
-      return super.visitMethod(access, name, desc, signature, exceptions);
+    MethodVisitor visitNewMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
+      final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+      return methodVisitor != null? new FailSafeMethodVisitor(ASM_API_VERSION, methodVisitor) : null;
     }
 
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
@@ -894,7 +890,7 @@ public class AsmCodeGenerator {
     }
   }
 
-  private class FormConstructorVisitor extends MethodVisitor {
+  private class FormConstructorVisitor extends FailSafeMethodVisitor {
     private final String myClassName;
     private final String mySuperName;
     private boolean callsSelfConstructor = false;
@@ -902,7 +898,7 @@ public class AsmCodeGenerator {
     private boolean mySuperCalled = false;
 
     public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
-      super(Opcodes.ASM5, mv);
+      super(ASM_API_VERSION, mv);
       myClassName = className;
       mySuperName = superName;
     }
@@ -959,7 +955,7 @@ public class AsmCodeGenerator {
     private boolean myExplicitSetupCall = false;
 
     public FirstPassClassVisitor() {
-      super(Opcodes.ASM5, new ClassVisitor(Opcodes.ASM5){});
+      super(ASM_API_VERSION, new ClassVisitor(ASM_API_VERSION) {});
     }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -973,9 +969,9 @@ public class AsmCodeGenerator {
       return myExplicitSetupCall;
     }
 
-    private class FirstPassConstructorVisitor extends MethodVisitor {
+    private class FirstPassConstructorVisitor extends FailSafeMethodVisitor {
       public FirstPassConstructorVisitor() {
-        super(Opcodes.ASM5, new MethodVisitor(Opcodes.ASM5){});
+        super(ASM_API_VERSION, new MethodVisitor(ASM_API_VERSION){});
       }
 
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {

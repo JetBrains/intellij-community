@@ -15,10 +15,13 @@
  */
 package com.intellij.compiler.notNullVerification;
 
+import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -126,7 +129,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
     final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
-    return new MethodVisitor(Opcodes.ASM5, v) {
+    return new FailSafeMethodVisitor(Opcodes.ASM5, v) {
       private final Map<Integer, NotNullState> myNotNullParams = new LinkedHashMap<Integer, NotNullState>();
       private int mySyntheticCount = 0;
       private NotNullState myMethodNotNull;
@@ -277,7 +280,19 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       if (err == null) {
         err = e;
       }
-      myPostponedError = new RuntimeException("Operation '" + operationName + "' failed for " + myClassName + "." + methodName + "(): " + err.getMessage(), err);
+      final StringBuilder message = new StringBuilder();
+      message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
+      
+      final String errMessage = err.getMessage();
+      if (errMessage != null) {
+        message.append(errMessage);
+      }
+      
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      err.printStackTrace(new PrintStream(out));
+      message.append('\n').append(out.toString());
+      
+      myPostponedError = new RuntimeException(message.toString(), err);
     }
     if (myIsModification) {
       processPostponedErrors();
