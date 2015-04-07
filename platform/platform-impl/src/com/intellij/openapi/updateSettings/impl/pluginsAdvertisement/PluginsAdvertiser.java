@@ -28,7 +28,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -218,6 +220,38 @@ public class PluginsAdvertiser implements StartupActivity {
       }
     }
     return bundled.isEmpty() ? null : bundled;
+  }
+
+  public static void installAndEnablePlugins(final @NotNull Set<Plugin> plugins, final @NotNull Runnable onSuccess) {
+    ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
+      private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
+      private List<IdeaPluginDescriptor> myAllPlugins;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
+          for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
+            if (plugins.contains(new Plugin(loadedPlugin.getPluginId(), null, false))) {
+              myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
+            }
+          }
+        }
+        catch (Exception ignore) {
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        final PluginsAdvertiserDialog advertiserDialog =
+          new PluginsAdvertiserDialog(null,
+                                      myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                      PluginManagerMain.mapToPluginIds(myAllPlugins));
+        if (advertiserDialog.showAndGet()) {
+          onSuccess.run();
+        }
+      }
+    });
   }
 
   @Override
