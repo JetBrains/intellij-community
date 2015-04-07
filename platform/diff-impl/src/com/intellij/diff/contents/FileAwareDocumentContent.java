@@ -1,7 +1,5 @@
-package com.intellij.openapi.vcs.changes.actions.diff;
+package com.intellij.diff.contents;
 
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContentImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
