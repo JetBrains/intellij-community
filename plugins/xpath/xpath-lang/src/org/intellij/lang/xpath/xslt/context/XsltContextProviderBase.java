@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -326,7 +326,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<ElementNames>() {
       public Result<ElementNames> compute() {
         final ElementNames names = new ElementNames();
-        final PsiFile[] associations = myFileAssociationsManager.getAssociationsFor(file, FileAssociationsManager.XML_FILES);
+        final PsiFile[] associations = myFileAssociationsManager.getAssociationsFor(file, FileAssociationsManager.Holder.XML_FILES);
 
         if (associations.length == 0) {
           fillFromSchema(file, names);
