@@ -72,9 +72,6 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
     }
     try {
       final MergeData mergeData = vcs.getMergeProvider().loadRevisions(myFile);
-      if (mergeData == null) {
-        return createErrorResult();
-      }
       final Charset charset = myFile.getCharset();
       final MergeRequest request = DiffRequestFactory.getInstance()
         .create3WayDiffRequest(CharsetToolkit.bytesToString(mergeData.CURRENT, charset),
