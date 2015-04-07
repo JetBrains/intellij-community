@@ -113,15 +113,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), properties.getConfiguration());
     actionGroup.addAction(myExportAction);
 
-    appendAdditionalActions(actionGroup, properties, environment, parent);
+    properties.appendAdditionalActions(actionGroup, environment, parent);
 
     add(ActionManager.getInstance().
       createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
       getComponent(), BorderLayout.CENTER);
-  }
-
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties,
-                                         ExecutionEnvironment environment, JComponent parent) {
   }
 
   public void setModel(final TestFrameworkRunningModel model) {

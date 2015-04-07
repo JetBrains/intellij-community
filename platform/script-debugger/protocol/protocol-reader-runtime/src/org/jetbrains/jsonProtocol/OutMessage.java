@@ -322,6 +322,7 @@ public abstract class OutMessage {
   public final void writeString(@NotNull String name, CharSequence value) {
     if (value != null) {
       try {
+        beginArguments();
         prepareWriteRaw(this, name);
         JsonUtil.escape(value, buffer);
       }

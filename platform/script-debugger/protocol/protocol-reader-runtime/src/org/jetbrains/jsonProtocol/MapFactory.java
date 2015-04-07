@@ -5,7 +5,7 @@ import org.jetbrains.io.JsonReaderEx;
 
 import java.util.Map;
 
-public final class MapFactory<T> extends ObjectFactory<Map<String, T>> {
+final class MapFactory<T> extends ObjectFactory<Map<String, T>> {
   private final ObjectFactory<T> valueFactory;
 
   public MapFactory(@NotNull ObjectFactory<T> valueFactory) {

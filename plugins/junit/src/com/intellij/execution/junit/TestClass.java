@@ -19,10 +19,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -34,17 +31,16 @@ class TestClass extends TestObject {
   }
 
   @Override
-  protected void initialize() throws ExecutionException {
-    super.initialize();
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    RunConfigurationModule module = myConfiguration.getConfigurationModule();
-    configureModule(myJavaParameters, module, data.getMainClassName());
-    myJavaParameters.getProgramParametersList().add(data.getMainClassName());
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    final JavaParameters javaParameters = super.createJavaParameters();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    javaParameters.getProgramParametersList().add(data.getMainClassName());
+    return javaParameters;
   }
 
   @Override
   public String suggestActionName() {
-    String name = myConfiguration.getPersistentData().MAIN_CLASS_NAME;
+    String name = getConfiguration().getPersistentData().MAIN_CLASS_NAME;
     if (name != null && name.endsWith(".")) {
       return name;
     }
@@ -76,8 +72,8 @@ class TestClass extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    final String testClassName = myConfiguration.getPersistentData().getMainClassName();
-    final JavaRunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
+    final String testClassName = getConfiguration().getPersistentData().getMainClassName();
+    final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, ExecutionBundle.message("no.test.class.specified.error.text"));
     if (!JUnitUtil.isTestClass(testClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));

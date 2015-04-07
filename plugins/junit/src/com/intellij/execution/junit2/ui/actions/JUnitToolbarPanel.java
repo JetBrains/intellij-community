@@ -16,24 +16,19 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.model.StateEvent;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestsUIUtil;
-import com.intellij.execution.testframework.ToolbarPanel;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.config.ToggleBooleanProperty;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -47,23 +42,18 @@ public class JUnitToolbarPanel extends ToolbarPanel {
     super(properties, environment, parentComponent);
   }
 
-  @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         TestConsoleProperties properties,
-                                         ExecutionEnvironment environment, JComponent parent) {
-    super.appendAdditionalActions(actionGroup, properties, environment, parent);
-    actionGroup.addAction(new ToggleBooleanProperty(
-      ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
-      null,
-      AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun,
-      properties, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED)).setAsSecondary(true);
-  }
-
 
   public void setModel(final TestFrameworkRunningModel model) {
     super.setModel(model);
     final JUnitRunningModel jUnitModel = (JUnitRunningModel)model;
-    JUnitActions.installAutoscrollToFirstDefect(jUnitModel);
+    jUnitModel.addListener(new JUnitAdapter() {
+      public void onRunnerStateChanged(final StateEvent event) {
+        if (event.isRunning() || !JUnitConsoleProperties.SELECT_FIRST_DEFECT.value(jUnitModel.getProperties()))
+          return;
+        final AbstractTestProxy firstDefect = Filter.DEFECTIVE_LEAF.detectIn(jUnitModel.getRoot().getAllTests());
+        if (firstDefect != null) jUnitModel.selectAndNotify(firstDefect);
+      }
+    });
     RunningTestTracker.install(jUnitModel);
     jUnitModel.addListener(new LvcsLabeler(jUnitModel));
     jUnitModel.addListener(new JUnitAdapter() {

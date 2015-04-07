@@ -346,6 +346,8 @@
       <reference ref="EditSource"/>
       <reference ref="ViewSource"/>
       <separator/>
+      <action id="Testing.SelectInTree" class="com.intellij.execution.testframework.actions.SelectInTreeAction"
+              text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
     </group>
 
     <!--  TODO: fix

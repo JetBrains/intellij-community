@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ig.redundancy;
 
-package com.intellij.execution.junit2.segments;
+import com.intellij.testFramework.PsiTestUtil;
+import com.siyeh.ig.IGInspectionTestCase;
 
-import com.intellij.openapi.diagnostic.Logger;
+/**
+ * @author Bas Leijdekkers
+ */
+public class ElementOnlyUsedFromTestCodeInspectionTest extends IGInspectionTestCase {
 
-public class TestingStatus {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.segments.TestingStatus");
 
-  
+
+  public void test() {
+    PsiTestUtil.addLibrary(myModule, getTestDataPath() + "/com/siyeh/igtest/redundancy/element_only_used_from_test_code/junit/");
+    doTest("com/siyeh/igtest/redundancy/element_only_used_from_test_code", new ElementOnlyUsedFromTestCodeInspection());
+  }
 
 }

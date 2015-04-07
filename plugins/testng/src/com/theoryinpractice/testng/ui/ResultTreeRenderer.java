@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -62,7 +63,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     }
 
                 } else {
-                    setIcon(root.isInProgress() ? Animator.getCurrentFrame() : getIcon(proxy));
+                    setIcon(root.isInProgress() ? TestsProgressAnimator.getCurrentFrame() : getIcon(proxy));
                     append(root.isInProgress() ? "Running tests..." : "Test Results", SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 }
 
@@ -77,10 +78,10 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                 } else {
                     append(proxy.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 }
-                setIcon(proxy.isInProgress() ? Animator.getCurrentFrame() : proxy.isInterrupted() ? PoolOfTestIcons.NOT_RAN : getIcon(proxy));
+                setIcon(proxy.isInProgress() ? TestsProgressAnimator.getCurrentFrame() : proxy.isInterrupted() ? PoolOfTestIcons.NOT_RAN : getIcon(proxy));
             }
         } else {
-            setIcon(Animator.getCurrentFrame());
+            setIcon(TestsProgressAnimator.getCurrentFrame());
             append(node.getUserObject() != null ? node.getUserObject().toString() : "null", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
     }

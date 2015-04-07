@@ -16,30 +16,33 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.config.Storage;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
-import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
 
 public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties {
-    @NonNls private static final String PREFIX = "TestNGSupport.";
-    private final TestNGConfiguration myConfiguration;
+  private final TestNGConfiguration myConfiguration;
 
     public TestNGConsoleProperties(TestNGConfiguration config, Executor executor)
     {
-      super(new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()), config.getProject(), executor);
+      super("TestNG", config, executor);
       myConfiguration = config;
     }
 
-    public TestNGConfiguration getConfiguration()
-    {
-        return myConfiguration;
-    }
 
   @Override
   protected GlobalSearchScope initScope() {
     return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+  }
+
+  @Override
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                         ExecutionEnvironment environment, JComponent parent) {
+    super.appendAdditionalActions(actionGroup, environment, parent);
+    actionGroup.addAction(createIncludeNonStartedInRerun()).setAsSecondary(true);
   }
 }

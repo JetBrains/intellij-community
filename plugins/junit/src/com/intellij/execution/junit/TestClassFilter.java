@@ -74,15 +74,32 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return new TestClassFilter(myBase, myScope.intersectWith(scope));
   }
 
-  public static TestClassFilter create(final SourceScope sourceScope, Module module) throws JUnitUtil.NoJUnitException {
-    if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
-    PsiClass testCase = module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
+  public static TestClassFilter create(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
+    final PsiClass testCase = getTestCase(sourceScope, module);
     return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope());
   }
 
-  public static TestClassFilter create(final SourceScope sourceScope, Module module, final String pattern) throws JUnitUtil.NoJUnitException {
+  private static PsiClass getTestCase(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
-    PsiClass testCase = module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
+    final JUnitUtil.NoJUnitException[] ex = new JUnitUtil.NoJUnitException[1];
+    final PsiClass testCase = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Override
+      public PsiClass compute() {
+        try {
+          return module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
+        }
+        catch (JUnitUtil.NoJUnitException e) {
+          ex[0] = e;
+          return null;
+        }
+      }
+    });
+    if (ex[0] != null) throw ex[0];
+    return testCase;
+  }
+
+  public static TestClassFilter create(final SourceScope sourceScope, Module module, final String pattern) throws JUnitUtil.NoJUnitException {
+    final PsiClass testCase = getTestCase(sourceScope, module);
     final String[] patterns = pattern.split("\\|\\|");
     final List<Pattern> compilePatterns = new ArrayList<Pattern>();
     for (String p : patterns) {
