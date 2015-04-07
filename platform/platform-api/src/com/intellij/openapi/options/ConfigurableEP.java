@@ -56,6 +56,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     return displayName = CommonBundle.message(resourceBundle, key);
   }
 
+  /**
+   * @return a resource bundle using the specified base name or {@code null}
+   */
+  public ResourceBundle findBundle() {
+    return bundle == null ? null : AbstractBundle.getResourceBundle(bundle, myPluginDescriptor.getPluginClassLoader());
+  }
+
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   public ConfigurableEP[] children;

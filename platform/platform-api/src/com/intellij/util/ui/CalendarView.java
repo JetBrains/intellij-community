@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.text.DateFormatSymbols;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -160,6 +161,8 @@ public class CalendarView extends JPanel {
   }
 
   public Date getDate() {
+    commitSpinners();
+
     //noinspection MagicConstant
     myCalendar.set(getIntValue(myYears), myMonths.getSelectedIndex(), myDays.getSelectedIndex() + 1,
         getIntValue(myHours), getIntValue(myMinutes), getIntValue(mySeconds));
@@ -183,6 +186,17 @@ public class CalendarView extends JPanel {
         runnable.run();
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ENTER, 0, this);
+  }
+
+  private void commitSpinners() {
+    try {
+      myYears.commitEdit();
+      myHours.commitEdit();
+      myMinutes.commitEdit();
+      mySeconds.commitEdit();
+    }
+    catch (ParseException ignore) {
+    }
   }
 }
 

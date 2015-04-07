@@ -246,10 +246,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     editor.setVerticalScrollbarVisible(true);
     editor.setBorder(null);
 
-    final EditorSettings editorSettings = editor.getSettings();
-    if (myHistoryViewer != editor) {
-      editorSettings.setAdditionalLinesCount(1);
-    }
+    EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setAdditionalLinesCount(1);
     editorSettings.setAdditionalColumnsCount(1);
   }
 
@@ -632,10 +630,23 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
         newInputHeight = panelSize.height - historyPreferredHeight;
       }
 
+      int oldHistoryHeight = history.getComponent().getHeight();
       int newHistoryHeight = panelSize.height - newInputHeight;
-      // apply
+      int delta = newHistoryHeight - ((newHistoryHeight / history.getLineHeight()) * history.getLineHeight());
+      newHistoryHeight -= delta;
+      newInputHeight += delta;
+
+      // apply new bounds & scroll history viewer
       input.getComponent().setBounds(0, newHistoryHeight, panelSize.width, newInputHeight);
       history.getComponent().setBounds(0, 0, panelSize.width, newHistoryHeight);
+      input.getComponent().doLayout();
+      history.getComponent().doLayout();
+      if (newHistoryHeight < oldHistoryHeight) {
+        JViewport viewport = history.getScrollPane().getViewport();
+        Point position = viewport.getViewPosition();
+        position.translate(0, oldHistoryHeight - newHistoryHeight);
+        viewport.setViewPosition(position);
+      }
     }
   }
 

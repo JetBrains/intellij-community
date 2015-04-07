@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.options.newEditor;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -1036,10 +1034,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     String key = configurable.getId() + ".settings.description";
     if (configurable instanceof ConfigurableWrapper) {
       ConfigurableWrapper wrapper = (ConfigurableWrapper) configurable;
-      ConfigurableEP ep = wrapper.getExtensionPoint();
-      final String bundle = ep.bundle;
-      if (StringUtil.isNotEmpty(bundle)) {
-        ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(bundle, ep.getPluginDescriptor().getPluginClassLoader());
+      ResourceBundle resourceBundle = wrapper.getExtensionPoint().findBundle();
+      if (resourceBundle != null) {
         return CommonBundle.message(resourceBundle, key);
       }
     }

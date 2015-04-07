@@ -283,7 +283,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
   }
 
-  public static final String LOCAL_CHANGES = Registry.is("vcs.merge.toolwindows") ? "Local Changes" : "Local";
+  public static final String LOCAL_CHANGES = Registry.is("vcs.merge.toolwindows") ? "Changes" : "Local";
   public static final String REPOSITORY = "Repository";
   public static final String INCOMING = "Incoming";
   public static final String SHELF = "Shelf";

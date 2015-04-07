@@ -43,33 +43,22 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    ComboBoxButton button = (ComboBoxButton)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
-    if (button == null || !button.isShowing()) return;
-    button.showPopup();
-  }
-
-  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    ComboBoxButton button = (ComboBoxButton)presentation.getClientProperty(CUSTOM_COMPONENT_PROPERTY);
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
-      presentation.setEnabled(button != null);
-      return;
     }
-
     try {
       if (project == null || project.isDisposed() || !project.isInitialized()) {
-        updateButton(null, null, null, presentation);
+        updatePresentation(null, null, null, presentation);
         presentation.setEnabled(false);
       }
       else {
-        updateButton(ExecutionTargetManager.getActiveTarget(project),
-                     RunManagerEx.getInstanceEx(project).getSelectedConfiguration(),
-                     project,
-                     presentation);
+        updatePresentation(ExecutionTargetManager.getActiveTarget(project),
+                           RunManagerEx.getInstanceEx(project).getSelectedConfiguration(),
+                           project,
+                           presentation);
         presentation.setEnabled(true);
       }
     }
@@ -78,10 +67,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static void updateButton(@Nullable ExecutionTarget target,
-                                   final @Nullable RunnerAndConfigurationSettings settings,
-                                   final @Nullable Project project,
-                                   final @NotNull Presentation presentation) {
+  private static void updatePresentation(@Nullable ExecutionTarget target,
+                                         @Nullable RunnerAndConfigurationSettings settings,
+                                         @Nullable Project project,
+                                         @NotNull Presentation presentation) {
     if (project != null && target != null && settings != null) {
       String name = settings.getName();
       if (target != DefaultExecutionTarget.INSTANCE) {
@@ -236,10 +225,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public void actionPerformed(AnActionEvent e) {
       ExecutionTargetManager.setActiveTarget(myProject, myTarget);
-      updateButton(ExecutionTargetManager.getActiveTarget(myProject),
-                   RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),
-                   myProject,
-                   e.getPresentation());
+      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject),
+                         RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),
+                         myProject,
+                         e.getPresentation());
     }
   }
 
@@ -270,7 +259,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public void actionPerformed(final AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
-      updateButton(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation());
+      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation());
     }
 
     @Override

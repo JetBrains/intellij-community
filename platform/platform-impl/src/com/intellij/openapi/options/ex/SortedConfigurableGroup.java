@@ -17,19 +17,15 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Sergey.Malenkov
@@ -38,70 +34,18 @@ public final class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
   implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
 
-  private ArrayList<Configurable> myList = new ArrayList<Configurable>();
-  private final String myGroupId;
-  private String myDisplayName;
-  private int myWeight;
+  private final String myId;
+  private final String myDisplayName;
+  private final String myHelpTopic;
+  private final int myWeight;
 
-  private SortedConfigurableGroup(String groupId) {
-    myGroupId = groupId;
-  }
+  List<Configurable> myList = ContainerUtil.newArrayList();
 
-  public SortedConfigurableGroup(Project project, Map<String, List<Configurable>> map) {
-    myGroupId = "root";
-    // create groups from configurations
-    List<Configurable> list = map.remove(myGroupId);
-    if (list != null) {
-      myList.addAll(list);
-    }
-    // process supported groups
-    add(70, remove(map, "appearance"));
-    add(60, remove(map, "editor"));
-    SortedConfigurableGroup projectGroup = remove(map, "project");
-    if (projectGroup != null && project != null && !project.isDefault()) {
-      projectGroup.myDisplayName = StringUtil.first(
-        OptionsBundle.message("configurable.group.project.named.settings.display.name", project.getName()),
-        30, true);
-    }
-    add(40, projectGroup);
-    SortedConfigurableGroup build = remove(map, "build");
-    if (build == null) {
-      build = remove(map, "build.tools");
-    }
-    else {
-      build.add(1000, remove(map, "build.tools"));
-    }
-    add(30, build);
-    add(20, remove(map, "language"));
-    add(10, remove(map, "tools"));
-    add(-10, remove(map, "other"));
-    // process unsupported groups
-    if (0 < map.size()) {
-      for (String groupId : map.keySet().toArray(new String[map.size()])) {
-        SortedConfigurableGroup group = remove(map, groupId);
-        if (group != null) {
-          group.myDisplayName = OptionsBundle.message("configurable.group.category.named.settings.display.name", groupId);
-          add(0, group);
-        }
-      }
-    }
-  }
-
-  private static SortedConfigurableGroup remove(Map<String, List<Configurable>> map, String groupId) {
-    List<Configurable> list = map.remove(groupId);
-    if (list == null) {
-      return null;
-    }
-    SortedConfigurableGroup group = new SortedConfigurableGroup(groupId);
-    group.myList.addAll(list);
-    return group;
-  }
-
-  private void add(int weight, SortedConfigurableGroup configurable) {
-    if (configurable != null) {
-      configurable.myWeight = weight;
-      myList.add(configurable);
-    }
+  SortedConfigurableGroup(String id, String displayName, String helpTopic, int weight) {
+    myId = id;
+    myDisplayName = displayName;
+    myHelpTopic = helpTopic;
+    myWeight = weight;
   }
 
   @Override
@@ -116,13 +60,13 @@ public final class SortedConfigurableGroup
   @NotNull
   @Override
   public String getId() {
-    return "configurable.group." + myGroupId;
+    return myId;
   }
 
   @Nullable
   @Override
   public String getHelpTopic() {
-    return "configurable.group." + myGroupId + ".help.topic";
+    return myHelpTopic;
   }
 
   @Override
@@ -133,7 +77,7 @@ public final class SortedConfigurableGroup
   @Nls
   @Override
   public String getDisplayName() {
-    return myDisplayName != null ? myDisplayName : OptionsBundle.message("configurable.group." + myGroupId + ".settings.display.name");
+    return myDisplayName;
   }
 
   @Override
