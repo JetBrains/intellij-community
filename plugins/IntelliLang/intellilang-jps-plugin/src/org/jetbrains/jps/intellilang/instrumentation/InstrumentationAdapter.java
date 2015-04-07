@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.intellilang.instrumentation;
 
+import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -23,7 +24,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-class InstrumentationAdapter extends MethodVisitor implements Opcodes {
+class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   @NonNls
   private static final String RETURN_VALUE_NAME = "$returnvalue$";
 
