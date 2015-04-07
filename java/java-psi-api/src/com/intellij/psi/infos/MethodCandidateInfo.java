@@ -326,9 +326,6 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public static CurrentCandidateProperties getCurrentMethod(PsiElement context) {
-    if (isOverloadCheck()) {
-      ourOverloadGuard.prohibitResultCaching(ourOverloadGuard.currentStack().get(0));
-    }
     final Map<PsiElement, CurrentCandidateProperties> currentMethodCandidates = CURRENT_CANDIDATE.get();
     return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
   }

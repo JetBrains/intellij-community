@@ -49,7 +49,6 @@ public class CloseTaskDialog extends DialogWrapper {
   private JLabel myTaskLabel;
   private JBCheckBox myMergeBranches;
   private JPanel myVcsPanel;
-  private JLabel myStateComboBoxLabel;
   private TaskStateCombo myStateCombo;
   private JBCheckBox myUpdateState;
   private final TaskManagerImpl myTaskManager;
@@ -64,6 +63,7 @@ public class CloseTaskDialog extends DialogWrapper {
     myTaskLabel.setIcon(task.getIcon());
 
     if (!TaskStateCombo.stateUpdatesSupportedFor(task)) {
+      myUpdateState.setVisible(false);
       myStateCombo.setVisible(false);
     }
 
@@ -99,10 +99,8 @@ public class CloseTaskDialog extends DialogWrapper {
     else {
       myVcsPanel.setVisible(false);
     }
-    final JComponent preferredFocusedComponent = getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      myStateCombo.registerUpDownAction(preferredFocusedComponent);
-    }
+
+    myStateCombo.showHintLabel(false);
     if (myUpdateState.isSelected()) {
       myStateCombo.scheduleUpdateOnce();
     }

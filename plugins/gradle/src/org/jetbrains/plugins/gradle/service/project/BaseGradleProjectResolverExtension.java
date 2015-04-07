@@ -67,6 +67,9 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -445,7 +448,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       final String[] lines = {
         "gradle.taskGraph.beforeTask { Task task ->",
         "    if (task instanceof JavaForkOptions) {",
-        "        task.jvmArgs '" + debuggerSetup.trim() + '\'',
+        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib') && !it?.startsWith('-Xrunjdwp')}",
+        "        jvmArgs << '" + debuggerSetup.trim() + '\'',
+        "        task.jvmArgs jvmArgs",
         "    }" +
         "}",
       };
@@ -571,16 +576,57 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ExternalSystemSourceType dirSourceType = type;
       try {
         if (dir.isGenerated() && !dirSourceType.isGenerated()) {
-          final ExternalSystemSourceType generatedType =
-            ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
+          final ExternalSystemSourceType generatedType = ExternalSystemSourceType.from(
+            dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded()
+          );
           dirSourceType = generatedType != null ? generatedType : dirSourceType;
         }
       }
       catch (UnsupportedMethodException e) {
         // org.gradle.tooling.model.idea.IdeaSourceDirectory.isGenerated method supported only since Gradle 2.2
         LOG.warn(e.getMessage());
+        printToolingProxyDiagnosticInfo(dir);
+      }
+      catch (Throwable e) {
+        LOG.debug(e);
+        printToolingProxyDiagnosticInfo(dir);
       }
       contentRoot.storePath(dirSourceType, dir.getDirectory().getAbsolutePath());
+    }
+  }
+
+  private static void printToolingProxyDiagnosticInfo(@Nullable Object obj) {
+    if (!LOG.isDebugEnabled() || obj == null) return;
+
+    LOG.debug(String.format("obj: %s", obj));
+    final Class<?> aClass = obj.getClass();
+    LOG.debug(String.format("obj class: %s", aClass));
+    LOG.debug(String.format("classloader: %s", aClass.getClassLoader()));
+    for (Method m : aClass.getDeclaredMethods()) {
+      LOG.debug(String.format("obj m: %s", m));
+    }
+
+    if (obj instanceof Proxy) {
+      try {
+        final Field hField = ReflectionUtil.findField(obj.getClass(), null, "h");
+        hField.setAccessible(true);
+        final Object h = hField.get(obj);
+        final Field delegateField = ReflectionUtil.findField(h.getClass(), null, "delegate");
+        delegateField.setAccessible(true);
+        final Object delegate = delegateField.get(h);
+        LOG.debug(String.format("delegate: %s", delegate));
+        LOG.debug(String.format("delegate class: %s", delegate.getClass()));
+        LOG.debug(String.format("delegate classloader: %s", delegate.getClass().getClassLoader()));
+        for (Method m : delegate.getClass().getDeclaredMethods()) {
+          LOG.debug(String.format("delegate m: %s", m));
+        }
+      }
+      catch (NoSuchFieldException e) {
+        LOG.debug(e);
+      }
+      catch (IllegalAccessException e) {
+        LOG.debug(e);
+      }
     }
   }
 

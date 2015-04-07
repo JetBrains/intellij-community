@@ -174,6 +174,7 @@ public class RunContentExecutor implements Disposable {
     @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(myRerunAction != null);
+      e.getPresentation().setEnabled(myRerunAction != null);
     }
   }
 

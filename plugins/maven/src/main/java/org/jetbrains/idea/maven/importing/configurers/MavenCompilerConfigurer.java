@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -31,16 +32,21 @@ import org.jetbrains.idea.maven.project.MavenProject;
  * @author Sergey Evdokimov
  */
 public class MavenCompilerConfigurer extends MavenModuleConfigurer {
+  
+  public static final Key<Boolean> IGNORE_MAVEN_COMPILER_TARGET_KEY = Key.create("idea.maven.skip.compiler.target.level");
+
   @Override
   public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
     if (module == null) return;
 
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
-    String targetLevel = mavenProject.getTargetLevel();
-    if (targetLevel != null || configuration.getBytecodeTargetLevel(module) == null) {
+    Boolean ignoreMavenCompilerTargetOption = module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY);
+    if (ignoreMavenCompilerTargetOption == null || !ignoreMavenCompilerTargetOption.booleanValue()) {
+      String targetLevel = mavenProject.getTargetLevel();
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
       configuration.setBytecodeTargetLevel(module, ObjectUtils.notNull(targetLevel, "1.5"));
     }
+    module.putUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY, Boolean.FALSE);
 
     // Exclude src/main/archetype-resources
     VirtualFile dir = VfsUtil.findRelativeFile(mavenProject.getDirectoryFile(), "src", "main", "resources", "archetype-resources");

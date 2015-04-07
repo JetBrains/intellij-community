@@ -592,7 +592,7 @@ public class BuildManager implements ApplicationComponent{
       LOG.info(e);
       result = null;
     }
-    return result;
+    return result != null && !result.first.isDone()? result : null;
   }
 
   @Nullable

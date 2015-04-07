@@ -622,8 +622,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (file != null && file.isValid() && file.isWritable()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {
-        IndentOptions docOptions = IndentOptions.retrieveFromAssociatedDocument(file);
-        if (docOptions != null) return docOptions;
+        IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
+        if (options != null) {
+          FileIndentOptionsProvider provider = options.getFileIndentOptionsProvider();
+          if (providerProcessor != null && provider != null) {
+            providerProcessor.process(provider);
+          }
+          return options;
+        }
       }
       FileIndentOptionsProvider[] providers = Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME);
       for (FileIndentOptionsProvider provider : providers) {
@@ -633,6 +639,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
             if (providerProcessor != null) {
               providerProcessor.process(provider);
             }
+            indentOptions.setFileIndentOptionsProvider(provider);
             logIndentOptions(file, provider, indentOptions);
             return indentOptions;
           }

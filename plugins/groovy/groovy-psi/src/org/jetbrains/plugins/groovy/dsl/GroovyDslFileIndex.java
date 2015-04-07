@@ -79,6 +79,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
 
+  private static final Collection<VirtualFile> BUNDLED_GDSLs = Collections.unmodifiableSet(
+    ContainerUtil.newHashSet(getBundledGdslFiles())
+  );
   @NonNls public static final ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
   @NonNls private static final String OUR_KEY = "ourKey";
   public static final String MODIFIED = "Modified";
@@ -100,7 +103,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
-        if (event.getFileName().endsWith(".gdsl")) {
+        if (event.isFromRefresh()) return;
+        if (event.getFileName().endsWith(".gdsl") && !BUNDLED_GDSLs.contains(event.getFile())) {
           disableFile(event.getFile(), MODIFIED);
         }
       }
@@ -148,7 +152,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   public static boolean isActivated(VirtualFile file) {
-    return DslActivationStatus.getInstance().isActivated(file);
+    return BUNDLED_GDSLs.contains(file) || DslActivationStatus.getInstance().isActivated(file);
   }
 
   public static void activateUntilModification(final VirtualFile vfile) {
@@ -299,8 +303,14 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final Key<CachedValue<List<GroovyDslScript>>> SCRIPTS_CACHE = Key.create("GdslScriptCache");
 
   private static List<VirtualFile> getGdslFiles(final Project project) {
-    List<VirtualFile> result = ContainerUtil.newArrayList();
+    final List<VirtualFile> result = ContainerUtil.newArrayList();
+    result.addAll(BUNDLED_GDSLs);
+    result.addAll(getProjectGdslFiles(project));
+    return result;
+  }
 
+  private static List<VirtualFile> getBundledGdslFiles() {
+    final List<VirtualFile> result = ContainerUtil.newArrayList();
     for (File file : getBundledScriptFolders()) {
       if (file.exists()) {
         File[] children = file.listFiles();
@@ -316,7 +326,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         }
       }
     }
+    return result;
+  }
 
+  private static List<VirtualFile> getProjectGdslFiles(Project project) {
+    final List<VirtualFile> result = ContainerUtil.newArrayList();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 

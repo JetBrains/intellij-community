@@ -234,6 +234,9 @@
     <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
                     serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
 
+    <projectService serviceInterface="com.intellij.externalDependencies.ExternalDependenciesManager"
+                    serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
+
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
 
     <!-- General -->

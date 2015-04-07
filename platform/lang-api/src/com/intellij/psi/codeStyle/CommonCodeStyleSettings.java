@@ -903,7 +903,8 @@ public class CommonCodeStyleSettings {
     public boolean USE_RELATIVE_INDENTS = false;
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
-    private final static Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS");
+    private FileIndentOptionsProvider myFileIndentOptionsProvider;
+    private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
@@ -986,17 +987,22 @@ public class CommonCodeStyleSettings {
     }
 
     @Nullable
-    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-      if (documentManager != null) {
-        Document document = documentManager.getDocument(file);
-        if (document != null) return document.getUserData(INDENT_OPTIONS_KEY);
-      }
-      return null;
+    FileIndentOptionsProvider getFileIndentOptionsProvider() {
+      return myFileIndentOptionsProvider;
+    }
+
+    void setFileIndentOptionsProvider(@NotNull FileIndentOptionsProvider provider) {
+      myFileIndentOptionsProvider = provider;
     }
 
     void associateWithDocument(@NotNull Document document) {
       document.putUserData(INDENT_OPTIONS_KEY, this);
+    }
+
+    @Nullable
+    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
   }
 }

@@ -137,7 +137,7 @@ fi
 
 VM_OPTIONS=""
 VM_OPTIONS_FILES_USED=""
-for vm_opts_file in "$@@product_uc@@_VM_OPTIONS" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"; do
+for vm_opts_file in "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" "$@@product_uc@@_VM_OPTIONS" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions"; do
   if [ -r "$vm_opts_file" ]; then
     VM_OPTIONS_DATA=`"$CAT" "$vm_opts_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
     VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"

@@ -54,7 +54,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   public ReformatCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
-    super(file.getProject(), file, COMMAND_NAME, PROGRESS_TEXT, false);
+    super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, false);
     mySelectionModel = selectionModel;
   }
 

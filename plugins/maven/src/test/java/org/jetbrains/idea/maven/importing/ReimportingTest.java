@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -250,6 +251,54 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertNotNull(dep2);
     assertTrue(((ModuleOrderEntryImpl)dep2).isProductionOnTestDependency());
 
+  }
+
+  public void testSettingTargetLevel() throws Exception {
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>project</artifactId>" +
+                          "<version>1</version>");
+    importProject();
+    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "<build>" +
+                          "  <plugins>" +
+                          "    <plugin>" +
+                          "      <artifactId>maven-compiler-plugin</artifactId>" +
+                          "        <configuration>" +
+                          "          <target>1.3</target>" +
+                          "        </configuration>" +
+                          "     </plugin>" +
+                          "  </plugins>" +
+                          "</build>");
+    importProject();
+    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "<build>" +
+                          "  <plugins>" +
+                          "    <plugin>" +
+                          "      <artifactId>maven-compiler-plugin</artifactId>" +
+                          "        <configuration>" +
+                          "          <target>1.6</target>" +
+                          "        </configuration>" +
+                          "     </plugin>" +
+                          "  </plugins>" +
+                          "</build>");
+
+    importProject();
+    assertEquals("1.6", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+
+    // after configuration/target element delete in maven-compiler-plugin CompilerConfiguration#getBytecodeTargetLevel should be also updated
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>project</artifactId>" +
+                          "<version>1</version>");
+    importProject();
+    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
   }
 
   private static String createPomXmlWithModuleDependency(final String dependencyType) {

@@ -509,6 +509,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       createComponent();
       if (!new Rectangle(myLayeredPane.getSize()).contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
+        myComp.removeAll();
+        myLayeredPane.remove(myComp);
         myLayeredPane = null;
         hide();
         return;
