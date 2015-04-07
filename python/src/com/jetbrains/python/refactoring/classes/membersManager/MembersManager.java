@@ -25,7 +25,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +129,6 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
       final Collection<PyMemberInfo<PyElement>> members = managerToMember.get(membersManager);
       TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, membersManager, members, to);
     }*/
-    PyClassRefactoringUtil.insertPassIfNeeded(from);
   }
 
 
@@ -245,7 +244,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    */
   protected static void deleteElements(@NotNull final Collection<? extends PsiElement> pyElementsToDelete) {
     for (final PsiElement element : pyElementsToDelete) {
-      element.delete();
+      PyUtil.deleteElementSafely(element);
     }
   }
 
