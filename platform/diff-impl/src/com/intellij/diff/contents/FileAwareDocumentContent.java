@@ -7,8 +7,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
@@ -38,34 +40,78 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   @NotNull
-  public static DiffContent create(@Nullable Project project,
-                                   @NotNull String content,
-                                   @NotNull FilePath path) {
-    VirtualFile localFile = LocalFileSystem.getInstance().findFileByPath(path.getPath());
-    FileType fileType = localFile != null ? localFile.getFileType() : path.getFileType();
-    Charset charset = localFile != null ? localFile.getCharset() : path.getCharset(project);
-    return create(project, content, fileType, localFile, charset);
+  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull String content, @NotNull FilePath path) {
+    return new Builder(project).init(path).create(content).build();
   }
 
   @NotNull
-  public static DiffContent create(@Nullable Project project,
-                                   @NotNull String content,
-                                   @NotNull VirtualFile file) {
-    FileType fileType = file.getFileType();
-    Charset charset = file.getCharset();
-    return create(project, content, fileType, file, charset);
+  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull String content, @NotNull VirtualFile file) {
+    return new Builder(project).init(file).create(content).build();
   }
 
   @NotNull
-  private static DiffContent create(@Nullable Project project,
-                                    @NotNull String content,
-                                    @Nullable FileType fileType,
-                                    @Nullable VirtualFile file,
-                                    @Nullable Charset charset) {
-    LineSeparator separator = StringUtil.detectSeparators(content);
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(content));
-    document.setReadOnly(true);
-    if (FileTypes.UNKNOWN.equals(fileType)) fileType = PlainTextFileType.INSTANCE;
-    return new FileAwareDocumentContent(project, document, fileType, file, separator, charset);
+  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull byte[] content, @NotNull FilePath path) {
+    return new Builder(project).init(path).create(content).build();
+  }
+
+  @NotNull
+  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile file) {
+    return new Builder(project).init(file).create(content).build();
+  }
+
+  private static class Builder {
+    private final Project myProject;
+    private Document myDocument;
+    private FileType myFileType;
+    private VirtualFile myLocalFile;
+    private LineSeparator mySeparator;
+    private Charset myCharset;
+
+    public Builder(@Nullable Project project) {
+      myProject = project;
+    }
+
+    //
+    // Impl
+    //
+
+    @NotNull
+    private Builder init(@NotNull FilePath path) {
+      myLocalFile = LocalFileSystem.getInstance().findFileByPath(path.getPath());
+      myFileType = myLocalFile != null ? myLocalFile.getFileType() : path.getFileType();
+      myCharset = myLocalFile != null ? myLocalFile.getCharset() : path.getCharset(myProject);
+      return this;
+    }
+
+    @NotNull
+    private Builder init(@NotNull VirtualFile file) {
+      myLocalFile = file;
+      myFileType = file.getFileType();
+      myCharset = file.getCharset();
+      return this;
+    }
+
+    @NotNull
+    private Builder create(@NotNull String content) {
+      mySeparator = StringUtil.detectSeparators(content);
+      myDocument = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(content));
+      myDocument.setReadOnly(true);
+      return this;
+    }
+
+    @NotNull
+    private Builder create(@NotNull byte[] content) {
+      assert myCharset != null;
+      // TODO: detect charset like in LoadTextUtil (Native2Ascii, etc) ?
+      Pair<String, Charset> pair = CharsetToolkit.bytesToStringWithCharset(content, myCharset);
+      myCharset = pair.second;
+      return create(pair.first);
+    }
+
+    @NotNull
+    public FileAwareDocumentContent build() {
+      if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
+      return new FileAwareDocumentContent(myProject, myDocument, myFileType, myLocalFile, mySeparator, myCharset);
+    }
   }
 }

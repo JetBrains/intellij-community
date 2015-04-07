@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.diff;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -34,6 +32,8 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.io.IOException;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -74,13 +74,17 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
       String title1 = remoteTitleBuilder.toString();
       String title2 = myVirtualFile.getPresentableUrl();
 
-      String contentText = CharsetToolkit.bytesToString(content.get(), myVirtualFile.getCharset());
-      DiffContent content1 = FileAwareDocumentContent.create(myProject, contentText, myVirtualFile);
-      DiffContent content2 = DiffContentFactory.getInstance().create(myProject, myVirtualFile);
+      try {
+        DiffContent content1 = DiffContentFactory.getInstance().createFromBytes(myProject, myVirtualFile, content.get());
+        DiffContent content2 = DiffContentFactory.getInstance().create(myProject, myVirtualFile);
 
-      DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+        DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
 
-      DiffManager.getInstance().showDiff(myProject, request);
+        DiffManager.getInstance().showDiff(myProject, request);
+      }
+      catch (IOException e) {
+        reportGeneralException(e);
+      }
     }
   }
 
