@@ -104,9 +104,14 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     });
   }
 
-  public void update(final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final Change[] changes = myForUpdateConvertor.convert(e);
-    e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(isEnabled(e));
+  }
+
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    Change[] changes = myForUpdateConvertor.convert(e);
+
+    return project != null && changes != null && changes.length > 0;
   }
 }
