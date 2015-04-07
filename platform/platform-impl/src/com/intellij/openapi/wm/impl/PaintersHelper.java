@@ -20,8 +20,8 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.VolatileImage;
+import java.io.File;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Map;
@@ -144,10 +145,13 @@ final class PaintersHelper implements Painter.Listener {
             catch (IllegalArgumentException e) {
               fillType = FillType.SCALE;
             }
-            String url = parts[0].contains("://")? parts[0] :
-                         VfsUtilCore.pathToUrl(parts[0].contains("/") ? parts[0] : PathManager.getConfigPath() + "/" + parts[0]);
+            String filePath = parts[0];
 
-            image = ImageLoader.loadFromUrl(new URL(url));
+            URL url = filePath.contains("://") ? new URL(filePath) :
+                      (FileUtil.isAbsolutePlatformIndependent(filePath)
+                       ? new File(filePath)
+                       : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
+            image = ImageLoader.loadFromUrl(url);
           }
           catch (Exception ignored) {
           }
