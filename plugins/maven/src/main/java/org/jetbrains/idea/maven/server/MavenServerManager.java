@@ -24,6 +24,8 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
@@ -61,6 +63,7 @@ import java.io.FilenameFilter;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.jar.Attributes;
 
 @State(
   name = "MavenVersion",
@@ -227,7 +230,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       private SimpleJavaParameters createJavaParameters() {
         final SimpleJavaParameters params = new SimpleJavaParameters();
 
-        params.setJdk(getJdk());
+        final Sdk jdk = getJdk();
+        params.setJdk(jdk);
 
         params.setWorkingDirectory(PathManager.getBinPath());
 
@@ -276,6 +280,16 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
             params.getVMParametersList().add(param);
           }
+        }
+
+        final String currentMavenVersion = forceMaven2 ? "2.2.1" : getCurrentMavenVersion();
+        String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+        if (StringUtil.compareVersionNumbers(currentMavenVersion, "3.3.1") >= 0
+            && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
+          new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                           "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
+                           "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer",
+                           NotificationType.WARNING).notify(null);
         }
 
         final List<String> classPath = new ArrayList<String>();
@@ -645,13 +659,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       state.vmOptions = DEFAULT_VM_OPTIONS;
     }
     if (state.embedderJdk == null) {
-      state.vmOptions = MavenRunnerSettings.USE_INTERNAL_JAVA;
+      state.embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
     }
-
-    //if(state.useMaven2 && !state.vmOptions.contains(FORCE_MAVEN2_OPTION)) {
-    //  state.vmOptions += (' ' + FORCE_MAVEN2_OPTION);
-    //}
-
     myState = state;
   }
 

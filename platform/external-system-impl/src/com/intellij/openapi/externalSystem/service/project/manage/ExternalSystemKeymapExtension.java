@@ -185,7 +185,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       myId = getActionPrefix(project, taskData.getLinkedExternalProjectPath()) + taskData.getName();
 
       Presentation template = getTemplatePresentation();
-      template.setText(myTaskData.getName(), false);
+      template.setText(myTaskData.getName() + " (" + group + ")", false);
       template.setIcon(ExternalSystemIcons.Task);
     }
 
