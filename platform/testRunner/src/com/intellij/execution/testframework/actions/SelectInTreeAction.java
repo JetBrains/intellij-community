@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2.ui.actions;
+package com.intellij.execution.testframework.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +24,7 @@ public class SelectInTreeAction extends AnAction {
     final TestContext context = TestContext.from(e);
     if (!shouldBeEnabled(context))
       return;
-    context.getModel().selectTest(context.getSelection());
+    context.getModel().getTreeBuilder().select(context.getSelection());
   }
 
   public void update(final AnActionEvent e) {

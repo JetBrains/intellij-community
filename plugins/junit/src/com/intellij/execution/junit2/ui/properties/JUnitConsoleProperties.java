@@ -18,33 +18,34 @@ package com.intellij.execution.junit2.ui.properties;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.config.Storage;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties {
-  @NonNls private static final String GROUP_NAME = "JUnitSupport.";
 
   private final JUnitConfiguration myConfiguration;
 
   public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, Executor executor) {
-    this(configuration, new Storage.PropertiesComponentStorage(GROUP_NAME, PropertiesComponent.getInstance()), executor);
-  }
-
-  public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, final Storage storage, Executor executor) {
-    super(storage, configuration.getProject(), executor);
+    super("JUnit", configuration, executor);
     myConfiguration = configuration;
   }
-
-  public JUnitConfiguration getConfiguration() { return myConfiguration; }
 
   @Override
   protected GlobalSearchScope initScope() {
     final SourceScope sourceScope = myConfiguration.getPersistentData().getScope().getSourceScope(myConfiguration);
     return sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(getProject());
+  }
+
+  @Override
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                         ExecutionEnvironment environment, JComponent parent) {
+    super.appendAdditionalActions(actionGroup, environment, parent);
+    actionGroup.addAction(createIncludeNonStartedInRerun()).setAsSecondary(true);
   }
 }

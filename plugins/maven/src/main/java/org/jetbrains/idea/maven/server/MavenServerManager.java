@@ -659,13 +659,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       state.vmOptions = DEFAULT_VM_OPTIONS;
     }
     if (state.embedderJdk == null) {
-      state.vmOptions = MavenRunnerSettings.USE_INTERNAL_JAVA;
+      state.embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
     }
-
-    //if(state.useMaven2 && !state.vmOptions.contains(FORCE_MAVEN2_OPTION)) {
-    //  state.vmOptions += (' ' + FORCE_MAVEN2_OPTION);
-    //}
-
     myState = state;
   }
 

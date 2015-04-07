@@ -58,7 +58,15 @@ public class DiffDrawUtil {
                                                 int x1, int x2,
                                                 int start1, int end1,
                                                 int start2, int end2) {
-    DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, end1, start2, end2);
+    drawConnectorLineSeparator(g, x1, x2, start1, end1, start2, end2, null);
+  }
+
+  public static void drawConnectorLineSeparator(@NotNull Graphics2D g,
+                                                int x1, int x2,
+                                                int start1, int end1,
+                                                int start2, int end2,
+                                                @Nullable EditorColorsScheme scheme) {
+    DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, start2, end1 - start1, scheme);
   }
 
   public static void drawDoubleChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {

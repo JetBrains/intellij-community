@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -57,8 +56,6 @@ public class Change {
   private boolean myIsReplaced;
   private Type myType;
   private final Map<String, Change> myOtherLayers;
-  // if null, vcs's is used. intended: for property conflict case
-  private Getter<MergeTexts> myMergeProvider;
 
   public Change(@Nullable final ContentRevision beforeRevision, @Nullable final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -77,14 +74,6 @@ public class Change {
     if (beforeRevision == null) return FileStatus.ADDED;
     if (afterRevision == null) return FileStatus.DELETED;
     return FileStatus.MODIFIED;
-  }
-
-  public Getter<MergeTexts> getMergeProvider() {
-    return myMergeProvider;
-  }
-
-  public void setMergeProvider(Getter<MergeTexts> mergeProvider) {
-    myMergeProvider = mergeProvider;
   }
 
   public void addAdditionalLayerElement(final String name, final Change change) {

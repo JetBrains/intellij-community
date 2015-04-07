@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class TestsProgressAnimator implements Runnable, Disposable {
+public class TestsProgressAnimator implements Runnable, Disposable {
   private static final int FRAMES_COUNT = 8;
   private static final int MOVIE_TIME = 800;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
@@ -37,8 +37,9 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   private AbstractTestProxy myCurrentTestCase;
   private AbstractTestTreeBuilder myTreeBuilder;
 
-  protected TestsProgressAnimator(Disposable parentDisposable) {
-    Disposer.register(parentDisposable, this);
+  public TestsProgressAnimator(AbstractTestTreeBuilder builder) {
+    Disposer.register(builder, this);
+    init(builder);
   }
 
   static {

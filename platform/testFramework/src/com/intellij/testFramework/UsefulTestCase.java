@@ -775,7 +775,7 @@ public abstract class UsefulTestCase extends TestCase {
     return testName.replaceAll("_.*", "");
   }
 
-  protected static void assertSameLinesWithFile(String filePath, String actualText) {
+  public static void assertSameLinesWithFile(String filePath, String actualText) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {

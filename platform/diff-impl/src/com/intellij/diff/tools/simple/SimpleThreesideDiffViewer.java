@@ -137,7 +137,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @Override
   protected void updateContextHints() {
     super.updateContextHints();
-    myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
+    myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }
 
   //
@@ -229,14 +229,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         if (myEditors.get(1).getDocument().getModificationStamp() != stamps[1]) return;
         if (myEditors.get(2).getDocument().getModificationStamp() != stamps[2]) return;
 
-        myFoldingModel.updateContext(myRequest, getTextSettings().isExpandByDefault());
+        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
         for (MergeLineFragment fragment : fragments) {
           myDiffChanges.add(new SimpleThreesideDiffChange(fragment, myEditors, comparisonPolicy));
         }
 
-        myFoldingModel.install(fragments, myRequest, getTextSettings().isExpandByDefault(), getTextSettings().getContextRange());
+        myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
 
         scrollOnRediff();
 
@@ -638,7 +638,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       assert editors.length == 3;
     }
 
-    public void install(@Nullable List<MergeLineFragment> fragments, @NotNull UserDataHolder context, boolean defaultExpanded, int range) {
+    public void install(@Nullable List<MergeLineFragment> fragments,
+                        @NotNull UserDataHolder context,
+                        @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(fragments, new Function<MergeLineFragment, int[]>() {
         @Override
         public int[] fun(MergeLineFragment fragment) {
@@ -651,7 +653,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
             fragment.getEndLine(ThreeSide.RIGHT)};
         }
       });
-      install(it, context, defaultExpanded, range);
+      install(it, context, settings);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {

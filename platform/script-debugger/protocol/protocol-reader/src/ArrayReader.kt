@@ -3,7 +3,7 @@ package org.jetbrains.protocolReader
 class ArrayReader(private val componentParser: ValueReader, private val isList: Boolean) : ValueReader() {
   override public fun appendFinishedValueTypeName(out: TextOutput) {
     if (isList) {
-      out.append("java.util.List<")
+      out.append("List<")
       componentParser.appendFinishedValueTypeName(out)
       out.append('>')
     }

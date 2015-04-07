@@ -6,30 +6,21 @@ fun appendMethodSignatureJava(method: Method, paramNames: List<String>, out: Tex
   out.append(method.getName()).append('(')
   var firstArg = true
   val types = method.getGenericParameterTypes()
-  run {
-    var i = 0
-    val length = types.size
-    while (i < length) {
-      val arg = types[i]
-      if (firstArg) {
-        firstArg = false
-      }
-      else {
-        out.comma()
-      }
-      writeJavaTypeName(arg, out)
-      out.space().append(paramNames.get(i))
-      i++
+  for (i in 0..types.size() - 1) {
+    val arg = types[i]
+    if (firstArg) {
+      firstArg = false
     }
+    else {
+      out.comma()
+    }
+    writeJavaTypeName(arg, out)
+    out.space().append(paramNames.get(i))
   }
   out.append(')')
 }
 
-fun writeMethodDeclarationJava(out: TextOutput, method: Method) {
-  writeMethodDeclarationJava(out, method, listOf<String>())
-}
-
-fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<String>) {
+fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<String> = listOf<String>()) {
   out.append("@Override").newLine().append("public ")
   writeJavaTypeName(m.getGenericReturnType(), out)
   out.space()

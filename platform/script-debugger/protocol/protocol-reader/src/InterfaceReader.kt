@@ -44,8 +44,6 @@ private val RAW_STRING_OR_MAP_PARSER = object : PrimitiveValueReader("Object", n
 
 private val JSON_PARSER = RawValueReader()
 
-private val MAP_PARSER = MapReader(null)
-
 private val STRING_INT_PAIR_PARSER = StringIntPairValueReader()
 
 val VOID_PARSER: ValueReader = object : ValueReader() {
@@ -179,9 +177,6 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
       }
       else if (type == javaClass<JsonReaderEx>()) {
         return JSON_PARSER
-      }
-      else if (type == javaClass<Map<Any, Any>>()) {
-        return MAP_PARSER
       }
       else if (type == javaClass<StringIntPair>()) {
         return STRING_INT_PAIR_PARSER

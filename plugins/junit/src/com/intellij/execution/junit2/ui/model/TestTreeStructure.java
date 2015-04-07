@@ -16,28 +16,17 @@
 
 package com.intellij.execution.junit2.ui.model;
 
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestTreeViewStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-class TestTreeStructure extends AbstractTreeStructure {
+class TestTreeStructure extends TestTreeViewStructure<TestProxy> {
   private final TestProxy myRootTest;
   private final JUnitConsoleProperties myProperties;
   private SpecialNode mySpecialNode;
-
-  public void setFilter(final Filter filter) {
-    myFilter = filter;
-  }
-
-  public Filter getFilter() {
-    return myFilter;
-  }
-
-  private Filter myFilter = Filter.NO_FILTER;
 
   public TestTreeStructure(final TestProxy rootTest, final JUnitConsoleProperties properties) {
     myRootTest = rootTest;
@@ -51,7 +40,7 @@ class TestTreeStructure extends AbstractTreeStructure {
   }
 
   public Object[] getChildElements(final Object element) {
-    final AbstractTestProxy[] children = ((TestProxy)element).selectChildren(myFilter);
+    final AbstractTestProxy[] children = ((TestProxy)element).selectChildren(getFilter());
     if (element == myRootTest) {
       if (children.length == 0 && myRootTest.getState().isPassed()) {
         mySpecialNode.setVisible(true);

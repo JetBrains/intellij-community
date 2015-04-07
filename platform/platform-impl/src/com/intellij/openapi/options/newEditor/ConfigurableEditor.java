@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.options.newEditor;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -287,9 +286,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     try {
       if (configurable instanceof ConfigurableWrapper) {
         ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        ConfigurableEP ep = wrapper.getExtensionPoint();
-        ResourceBundle bundle = AbstractBundle.getResourceBundle(ep.bundle, ep.getPluginDescriptor().getPluginClassLoader());
-        return CommonBundle.message(bundle, key);
+        ResourceBundle bundle = wrapper.getExtensionPoint().findBundle();
+        if (bundle != null) {
+          return CommonBundle.message(bundle, key);
+        }
       }
       return OptionsBundle.message(key);
     }

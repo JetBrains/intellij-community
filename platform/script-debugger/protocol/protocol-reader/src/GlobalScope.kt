@@ -5,30 +5,18 @@ import gnu.trove.THashSet
 
 import java.util.ArrayList
 
-fun GlobalScope(typeWriters: Collection<TypeWriter<*>>, basePackages: Collection<Map<Class<*>, String>>): GlobalScope {
-  return GlobalScope(State(typeWriters, basePackages))
-}
+fun GlobalScope(typeWriters: Collection<TypeWriter<*>>, basePackages: Collection<Map<Class<*>, String>>) = GlobalScope(State(typeWriters, basePackages))
 
 open class GlobalScope(val state: State) {
-  public fun getTypeImplReference(typeWriter: TypeWriter<*>): String {
-    return state.getTypeImplReference(typeWriter)
-  }
+  fun getTypeImplReference(typeWriter: TypeWriter<*>) = state.getTypeImplReference(typeWriter)
 
-  public fun requireFactoryGenerationAndGetName(typeWriter: TypeWriter<*>): String {
-    return state.requireFactoryGenerationAndGetName(typeWriter)
-  }
+  fun requireFactoryGenerationAndGetName(typeWriter: TypeWriter<*>) = state.requireFactoryGenerationAndGetName(typeWriter)
 
-  public fun getTypeImplShortName(typeWriter: TypeWriter<*>): String {
-    return state.getTypeImplShortName(typeWriter)
-  }
+  fun getTypeImplShortName(typeWriter: TypeWriter<*>) = state.getTypeImplShortName(typeWriter)
 
-  public fun newFileScope(output: StringBuilder): FileScope {
-    return FileScope(this, output)
-  }
+  fun newFileScope(output: StringBuilder) = FileScope(this, output)
 
-  public fun getTypeFactories(): List<TypeWriter<*>> {
-    return state.typesWithFactoriesList
-  }
+  fun getTypeFactories() = state.typesWithFactoriesList
 }
 
 private class State(typeWriters: Collection<TypeWriter<*>>, private val basePackages: Collection<Map<Class<*>, String>>) {
@@ -40,7 +28,7 @@ private class State(typeWriters: Collection<TypeWriter<*>>, private val basePack
     var uniqueCode = 0
     val result = THashMap<TypeWriter<*>, String>(typeWriters.size())
     for (handler in typeWriters) {
-      val conflict = result.put(handler, TYPE_NAME_PREFIX + Integer.toString(uniqueCode++))
+      val conflict = result.put(handler, 'M' + Integer.toString(uniqueCode++, Character.MAX_RADIX))
       if (conflict != null) {
         throw RuntimeException()
       }

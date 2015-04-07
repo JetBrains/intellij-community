@@ -19,8 +19,8 @@ import com.intellij.diff.comparison.AutoTestCase;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -98,7 +98,7 @@ public class OnesideFragmentBuilderAutoTest extends AutoTestCase {
     CharSequence text = builder.getText();
     List<ChangedBlock> blocks = builder.getBlocks();
     LineNumberConvertor convertor = builder.getConvertor();
-    List<DiffIterableUtil.IntPair> changedLines = builder.getChangedLines();
+    List<LineRange> changedLines = builder.getChangedLines();
     List<HighlightRange> ranges = builder.getRanges();
 
     // both documents - before and after - should be subsequence of result text.
@@ -181,9 +181,9 @@ public class OnesideFragmentBuilderAutoTest extends AutoTestCase {
     return true;
   }
 
-  private static boolean isLineChanged(int line, @NotNull List<DiffIterableUtil.IntPair> changedLines) {
-    for (DiffIterableUtil.IntPair changedLine : changedLines) {
-      if (changedLine.val1 <= line && changedLine.val2 > line) return true;
+  private static boolean isLineChanged(int line, @NotNull List<LineRange> changedLines) {
+    for (LineRange changedLine : changedLines) {
+      if (changedLine.start <= line && changedLine.end > line) return true;
     }
     return false;
   }

@@ -403,18 +403,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     element.addContent(patternsElement);
   }
 
-  public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
-    RunConfigurationModule module = getConfigurationModule();
-    final String jreHome = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
-    final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
-    if (myData.getScope() == TestSearchScope.WHOLE_PROJECT) {
-      JavaParametersUtil.configureProject(module.getProject(), javaParameters, pathType, jreHome);
-    }
-    else {
-      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
-    }
-  }
-
   public void setForkMode(@NotNull String forkMode) {
     myData.FORK_MODE = forkMode;
   }

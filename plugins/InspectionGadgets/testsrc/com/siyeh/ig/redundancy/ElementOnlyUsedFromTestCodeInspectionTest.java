@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.siyeh.ig.redundancy;
+
+import com.intellij.testFramework.PsiTestUtil;
+import com.siyeh.ig.IGInspectionTestCase;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/14/12
- * Time: 4:31 PM
+ * @author Bas Leijdekkers
  */
-public class MergeTexts {
-  private final String myLeft;
-  private final String myRight;
-  private final String myBase;
+public class ElementOnlyUsedFromTestCodeInspectionTest extends IGInspectionTestCase {
 
-  public MergeTexts(String left, String right, String base) {
-    myLeft = left;
-    myRight = right;
-    myBase = base;
+
+
+  public void test() {
+    PsiTestUtil.addLibrary(myModule, getTestDataPath() + "/com/siyeh/igtest/redundancy/element_only_used_from_test_code/junit/");
+    doTest("com/siyeh/igtest/redundancy/element_only_used_from_test_code", new ElementOnlyUsedFromTestCodeInspection());
   }
 
-  public String getLeft() {
-    return myLeft;
-  }
-
-  public String getRight() {
-    return myRight;
-  }
-
-  public String getBase() {
-    return myBase;
-  }
 }

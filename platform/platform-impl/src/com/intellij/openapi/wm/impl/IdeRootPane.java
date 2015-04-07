@@ -323,10 +323,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     if (layout instanceof BalloonLayoutImpl) ((BalloonLayoutImpl)layout).queueRelayout();
   }
 
-  public boolean isOptimizedDrawingEnabled() {
-    return myGlassPane.isVisible();
-  }
-
   public ToolWindowsPane getToolWindowsPane() {
     return myToolWindowsPane;
   }

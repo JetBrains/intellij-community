@@ -89,6 +89,12 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
   out.newLine().append("package ").append(configuration.packageName).append(';')
   out.newLine().newLine().append("import org.jetbrains.jsonProtocol.*;")
   out.newLine().newLine().append("import org.jetbrains.annotations.NotNull;")
+
+  out.newLine()
+  out.newLine().append("import java.util.List;")
+  out.newLine().append("import java.util.Map;")
+  out.newLine().append("import java.lang.String;")
+
   out.newLine().newLine().append("import static org.jetbrains.jsonProtocol.JsonReaders.*;")
   out.newLine().newLine().append("public final class ").append(configuration.className).space()
   out.append(if (configuration.root.type.isInterface()) "implements" else "extends").space().append(configuration.root.type.getCanonicalName()).openBlock(false)
@@ -112,7 +118,7 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
     }
 
     val originName = typeWriter.typeClass.getCanonicalName()
-    out.newLine().append("private static final class ").append(globalScope.getTypeImplShortName(typeWriter)).append(TYPE_FACTORY_NAME_POSTFIX).append(" extends ObjectFactory<")
+    out.newLine().append("private static final class ").append(TYPE_FACTORY_NAME_PREFIX).append(globalScope.getTypeImplShortName(typeWriter)).append(" extends ObjectFactory<")
     out.append(originName).append('>').openBlock()
     out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(JSON_READER_PARAMETER_DEF)
     out.append(')').openBlock()

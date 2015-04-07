@@ -97,7 +97,13 @@ class FieldProcessor(private val reader: InterfaceReader, typeClass: Class<*>) {
         if (addNotNullAnnotation) {
           out.append("@NotNull").newLine()
         }
-        writeMethodDeclarationJava(out, method)
+
+        out.append("@Override").newLine().append("public ")
+        fieldTypeParser.appendFinishedValueTypeName(out)
+        out.space()
+        out.append(method.getName())
+        out.append("()")
+
         out.openBlock()
         if (effectiveFieldName != null) {
           out.append("return ").append(FIELD_PREFIX).append(effectiveFieldName).semi()

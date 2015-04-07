@@ -71,6 +71,11 @@ public abstract class DiffContentFactory {
   public abstract DocumentContent createClipboardContent(@Nullable DocumentContent referenceContent);
 
   @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              @NotNull VirtualFile highlightFile,
+                                              @NotNull byte[] content) throws IOException;
+
+  @NotNull
   public abstract DiffContent createBinary(@Nullable Project project,
                                            @NotNull String name,
                                            @NotNull FileType type,

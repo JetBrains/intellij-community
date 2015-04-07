@@ -39,7 +39,7 @@ public class OptionsBundle {
   private OptionsBundle() {
   }
 
-  private static ResourceBundle getBundle() {
+  public static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);

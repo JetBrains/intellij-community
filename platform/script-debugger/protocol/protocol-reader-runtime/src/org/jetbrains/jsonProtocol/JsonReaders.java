@@ -16,7 +16,18 @@ import java.util.List;
 import java.util.Map;
 
 public final class JsonReaders {
+  public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<String>() {
+    @Override
+    public String read(JsonReaderEx reader) {
+      return reader.nextString();
+    }
+  };
+
   private JsonReaders() {
+  }
+
+  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<T> valueFactory) {
+    return new MapFactory<T>(valueFactory);
   }
 
   private static void checkIsNull(JsonReaderEx reader, String fieldName) {

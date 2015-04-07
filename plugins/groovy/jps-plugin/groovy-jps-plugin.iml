@@ -13,6 +13,6 @@
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="library" scope="PROVIDED" name="Groovy-Eclipse-Batch" level="project" />
+    <orderEntry type="module" module-name="instrumentation-util" />
   </component>
 </module>
-

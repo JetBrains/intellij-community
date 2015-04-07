@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.groovy;
 
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -456,7 +457,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
               target,
               new CompiledClass(outputFile, srcFile, readClassName(bytes), new BinaryContent(bytes))
             );
-            callback.associate(outputPath, sourcePath, new ClassReader(bytes));
+            callback.associate(outputPath, sourcePath, new FailSafeClassReader(bytes));
           }
           catch (Throwable e) {
             // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation

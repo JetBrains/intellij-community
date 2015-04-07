@@ -9,6 +9,7 @@ import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.module.Module;
@@ -426,7 +427,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     if (state instanceof TestPackage) {
       @SuppressWarnings("UnusedDeclaration")
       final JavaParameters parameters = ((TestPackage)state).getJavaParameters();
-      ((TestPackage)state).findTests();
+      final SearchForTestsTask task = ((TestPackage)state).createSearchingForTestsTask();
+      assertNotNull(task);
+      task.startSearch();
     }
     try {
       configuration.checkConfiguration();

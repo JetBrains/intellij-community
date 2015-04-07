@@ -159,7 +159,7 @@ class TypeCorrector extends PsiTypeMapper {
         @Override
         public PsiType fun(PsiType type) {
           if (type == null) {
-            LOG.error(myDelegate);
+            LOG.error(myDelegate + " of " + myDelegate.getClass() + "; substitutor=" + myDelegate.resolveGenerics().getSubstitutor());
             return null;
           }
           return mapType(type);

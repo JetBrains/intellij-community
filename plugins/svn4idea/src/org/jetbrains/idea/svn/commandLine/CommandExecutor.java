@@ -32,6 +32,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNCancelException;
 
 import java.io.ByteArrayOutputStream;
@@ -161,6 +162,7 @@ public class CommandExecutor {
     setupLocale();
     ensureMessageFile();
     ensureTargetsAdded();
+    ensurePropertyValueAdded();
   }
 
   private void setupLocale() {
@@ -212,6 +214,14 @@ public class CommandExecutor {
       else {
         myCommandLine.addParameters(targetsPaths);
       }
+    }
+  }
+
+  private void ensurePropertyValueAdded() throws SvnBindException {
+    PropertyValue propertyValue = myCommand.getPropertyValue();
+
+    if (propertyValue != null) {
+      ensureCommandFile("property-value", ".txt", PropertyValue.toString(propertyValue), "-F");
     }
   }
 

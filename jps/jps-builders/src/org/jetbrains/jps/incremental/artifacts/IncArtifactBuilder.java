@@ -89,10 +89,15 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
       final MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
+      final Set<String> deletedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       for (String sourcePath : deletedFiles) {
         final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
-          collectSourcesCorrespondingToOutputs(outputPaths, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
+          for (String outputPath : outputPaths) {
+            if (deletedOutputPaths.add(outputPath)) {
+              collectSourcesCorrespondingToOutput(outputPath, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
+            }
+          }
         }
       }
 
@@ -105,8 +110,11 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
           final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
           if (outputPaths != null) {
-            changedOutputPaths.addAll(outputPaths);
-            collectSourcesCorrespondingToOutputs(outputPaths, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
+            for (String outputPath : outputPaths) {
+              if (changedOutputPaths.add(outputPath)) {
+                collectSourcesCorrespondingToOutput(outputPath, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
+              }
+            }
           }
           return true;
         }
@@ -164,19 +172,16 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
   }
 
-  private static void collectSourcesCorrespondingToOutputs(Collection<String> outputPaths,
-                                                           String sourcePath,
-                                                           Collection<String> deletedFiles,
-                                                           ArtifactOutputToSourceMapping outSrcMapping,
-                                                           TIntObjectHashMap<Set<String>> filesToProcess,
-                                                           MultiMap<String, String> filesToDelete) throws IOException {
-    for (String outputPath : outputPaths) {
-      filesToDelete.putValue(outputPath, sourcePath);
-      final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-      if (sources != null) {
-        for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-          addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
-        }
+  private static void collectSourcesCorrespondingToOutput(String outputPath, String sourcePath,
+                                                          Collection<String> deletedFiles,
+                                                          ArtifactOutputToSourceMapping outSrcMapping,
+                                                          TIntObjectHashMap<Set<String>> filesToProcess,
+                                                          MultiMap<String, String> filesToDelete) throws IOException {
+    filesToDelete.putValue(outputPath, sourcePath);
+    final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+    if (sources != null) {
+      for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+        addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
       }
     }
   }

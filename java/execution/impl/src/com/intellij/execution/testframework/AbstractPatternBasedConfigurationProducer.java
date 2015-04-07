@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution;
+package com.intellij.execution.testframework;
 
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -35,11 +37,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class PatternConfigurationDelegate<T extends ModuleBasedConfiguration> extends JavaRunConfigurationProducerBase<T> implements Cloneable{
+public abstract class AbstractPatternBasedConfigurationProducer<T extends ModuleBasedConfiguration> extends JavaRunConfigurationProducerBase<T> implements Cloneable{
   protected abstract boolean isTestClass(PsiClass psiClass);
   protected abstract boolean isTestMethod(boolean checkAbstract, PsiElement psiElement);
 
-  public PatternConfigurationDelegate(ConfigurationType configurationType) {
+  public AbstractPatternBasedConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
 

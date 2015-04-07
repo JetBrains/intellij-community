@@ -20,7 +20,7 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.PatternConfigurationDelegate;
+import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -35,7 +35,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class TestNGPatternConfigurationProducer extends PatternConfigurationDelegate<TestNGConfiguration> {
+public class TestNGPatternConfigurationProducer extends AbstractPatternBasedConfigurationProducer<TestNGConfiguration> {
   public TestNGPatternConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
   }

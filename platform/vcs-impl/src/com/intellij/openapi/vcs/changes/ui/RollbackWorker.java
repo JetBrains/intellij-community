@@ -190,6 +190,8 @@ public class RollbackWorker {
           LocalHistory.getInstance().putSystemLabel(myProject, (myLocalHistoryActionName == null) ?
                                                                                              myOperationName : myLocalHistoryActionName, -1);
           final VcsDirtyScopeManager manager = PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
+          VcsGuess vcsGuess = new VcsGuess(myProject);
+
           for (Change change : changesToRefresh) {
             final ContentRevision beforeRevision = change.getBeforeRevision();
             final ContentRevision afterRevision = change.getAfterRevision();
@@ -197,18 +199,8 @@ public class RollbackWorker {
               manager.fileDirty(beforeRevision.getFile());
             }
             else {
-              if (beforeRevision != null) {
-                final FilePath parent = beforeRevision.getFile().getParentPath();
-                if (parent != null) {
-                  manager.dirDirtyRecursively(parent);
-                }
-              }
-              if (afterRevision != null) {
-                final FilePath parent = afterRevision.getFile().getParentPath();
-                if (parent != null) {
-                  manager.dirDirtyRecursively(parent);
-                }
-              }
+              markDirty(manager, vcsGuess, beforeRevision);
+              markDirty(manager, vcsGuess, afterRevision);
             }
           }
 
@@ -219,6 +211,22 @@ public class RollbackWorker {
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
+    }
+
+    private void markDirty(@NotNull VcsDirtyScopeManager manager, @NotNull VcsGuess vcsGuess, @Nullable ContentRevision revision) {
+      if (revision != null) {
+        FilePath parent = revision.getFile().getParentPath();
+        if (parent != null && couldBeMarkedDirty(vcsGuess, parent)) {
+          manager.dirDirtyRecursively(parent);
+        }
+        else {
+          manager.fileDirty(revision.getFile());
+        }
+      }
+    }
+
+    private boolean couldBeMarkedDirty(@NotNull VcsGuess vcsGuess, @NotNull FilePath path) {
+      return vcsGuess.getVcsForDirty(path) != null;
     }
 
     private void deleteAddedFilesLocally(final List<Change> changes) {

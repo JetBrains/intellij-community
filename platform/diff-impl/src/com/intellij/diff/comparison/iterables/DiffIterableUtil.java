@@ -18,6 +18,7 @@ package com.intellij.diff.comparison.iterables;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.DiffFragmentImpl;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -309,50 +310,6 @@ public class DiffIterableUtil {
     public DiffIterable finish() {
       finish(myLength1, myLength2);
       return create(myFirstChange, myLength1, myLength2);
-    }
-  }
-
-  public static class Range {
-    public final int start1;
-    public final int end1;
-    public final int start2;
-    public final int end2;
-
-    public Range(int start1, int end1, int start2, int end2) {
-      this.start1 = start1;
-      this.end1 = end1;
-      this.start2 = start2;
-      this.end2 = end2;
-    }
-  }
-
-  public static class IntPair {
-    public final int val1;
-    public final int val2;
-
-    public IntPair(int val1, int val2) {
-      this.val1 = val1;
-      this.val2 = val2;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      IntPair pair = (IntPair)o;
-
-      if (val1 != pair.val1) return false;
-      if (val2 != pair.val2) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = val1;
-      result = 31 * result + val2;
-      return result;
     }
   }
 }

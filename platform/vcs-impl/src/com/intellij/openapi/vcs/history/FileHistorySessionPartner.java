@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -44,7 +43,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private FileHistoryPanelImpl myFileHistoryPanel;
   private final VcsHistoryProvider myVcsHistoryProvider;
   private final AnnotationProvider myAnnotationProvider;
-  private final FilePath myPath;
+  @NotNull private final FilePath myPath;
   private final String myRepositoryPath;
   private final AbstractVcs myVcs;
   private final FileHistoryRefresherI myRefresherI;
@@ -52,7 +51,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
   public FileHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
-                                   final FilePath path,
+                                   @NotNull final FilePath path,
                                    final String repositoryPath,
                                    final AbstractVcs vcs,
                                    final FileHistoryRefresherI refresherI) {
@@ -130,13 +129,11 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
         assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
 
-        final VirtualFile file = myFileHistoryPanel.getVirtualFile();
-        if (file != null) {
-          ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), myFileHistoryPanel, "History", file.getName(), myRefresherI.isFirstTime());
+        ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), myFileHistoryPanel, "History", myPath.getName(),
+                                       myRefresherI.isFirstTime());
 
-          if (myRefresherI.isFirstTime()) {
-            toolWindow.activate(null);
-          }
+        if (myRefresherI.isFirstTime()) {
+          toolWindow.activate(null);
         }
       }
     });

@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.comparison.iterables;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.Range;
+import com.intellij.diff.util.Range;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.execution.actions;
 
-/*
- * User: anna
- * Date: 15-Jun-2010
- */
-package com.intellij.execution.junit;
-
-import com.intellij.execution.PatternConfigurationDelegate;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -37,39 +33,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class AddToTestsPatternAction extends AnAction {
+public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfiguration> extends AnAction {
+  @NotNull protected abstract AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
+
+  @NotNull protected abstract ConfigurationType getConfigurationType();
+
+  protected abstract boolean isPatternBasedConfiguration(T configuration);
+
+  protected abstract Set<String> getPatterns(T configuration);
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final Set<PsiElement> classes = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).collectTestMembers(psiElements,
-                                                                                                                                true);
+    final Set<PsiElement> classes = getPatternBasedProducer().collectTestMembers(psiElements, true);
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final List<JUnitConfiguration> patternConfigurations = collectPatternConfigurations(classes, project);
+    final List<T> patternConfigurations = collectPatternConfigurations(classes, project);
     if (patternConfigurations.size() == 1) {
-      final JUnitConfiguration configuration = patternConfigurations.get(0);
+      final T configuration = patternConfigurations.get(0);
       for (PsiElement aClass : classes) {
-        configuration.getPersistentData().getPatterns().add(PatternConfigurationDelegate.getQName(aClass));
+        getPatterns(configuration).add(AbstractPatternBasedConfigurationProducer.getQName(aClass));
       }
     } else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JUnitConfiguration>("Choose suite to add", patternConfigurations) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<T>("Choose suite to add", patternConfigurations) {
         @Override
-        public PopupStep onChosen(JUnitConfiguration configuration, boolean finalChoice) {
+        public PopupStep onChosen(T configuration, boolean finalChoice) {
           for (PsiElement aClass : classes) {
-            configuration.getPersistentData().getPatterns().add(PatternConfigurationDelegate.getQName(aClass));
+            getPatterns(configuration).add(AbstractPatternBasedConfigurationProducer.getQName(aClass));
           }
           return FINAL_CHOICE;
         }
 
         @Override
-        public Icon getIconFor(JUnitConfiguration configuration) {
+        public Icon getIconFor(T configuration) {
           return configuration.getIcon();
         }
 
         @NotNull
         @Override
-        public String getTextFor(JUnitConfiguration value) {
+        public String getTextFor(T value) {
           return value.getName();
         }
       }).showInBestPositionFor(dataContext);
@@ -83,11 +86,11 @@ public class AddToTestsPatternAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      final Set<PsiElement> foundMembers = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).collectTestMembers(psiElements, true);
+      final Set<PsiElement> foundMembers = getPatternBasedProducer().collectTestMembers(psiElements, true);
       if (foundMembers.isEmpty()) return;
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
-        final List<JUnitConfiguration> foundConfigurations = collectPatternConfigurations(foundMembers, project);
+        final List<T> foundConfigurations = collectPatternConfigurations(foundMembers, project);
         if (!foundConfigurations.isEmpty()) {
           presentation.setVisible(true);
           if (foundConfigurations.size() == 1) {
@@ -98,19 +101,17 @@ public class AddToTestsPatternAction extends AnAction {
     }
   }
 
-  private static List<JUnitConfiguration> collectPatternConfigurations(Set<PsiElement> foundClasses, Project project) {
-    final List<RunConfiguration> configurations = RunManager.getInstance(project).getConfigurationsList(
-      JUnitConfigurationType.getInstance());
-    final List<JUnitConfiguration> foundConfigurations = new ArrayList<JUnitConfiguration>();
+  private List<T> collectPatternConfigurations(Set<PsiElement> foundClasses, Project project) {
+    final List<RunConfiguration> configurations = RunManager.getInstance(project).getConfigurationsList(getConfigurationType());
+    final List<T> foundConfigurations = new ArrayList<T>();
     for (RunConfiguration configuration : configurations) {
-      final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
-      if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
-        if (foundClasses.size() > 1 || !data.getPatterns().contains(PatternConfigurationDelegate.getQName(foundClasses.iterator().next())) ) {
-          foundConfigurations.add((JUnitConfiguration)configuration);
+      if (isPatternBasedConfiguration((T)configuration)) {
+        if (foundClasses.size() > 1 ||
+            !getPatterns((T)configuration).contains(AbstractPatternBasedConfigurationProducer.getQName(foundClasses.iterator().next()))) {
+          foundConfigurations.add((T)configuration);
         }
       }
     }
     return foundConfigurations;
   }
-
 }

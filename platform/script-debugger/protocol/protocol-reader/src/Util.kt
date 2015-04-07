@@ -4,8 +4,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 
-public val TYPE_NAME_PREFIX: Char = 'M'
-public val TYPE_FACTORY_NAME_POSTFIX: Char = 'F'
+public val TYPE_FACTORY_NAME_PREFIX: Char = 'F'
 
 public val READER_NAME: String = "reader"
 public val PENDING_INPUT_READER_NAME: String = "inputReader"

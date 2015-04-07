@@ -69,6 +69,18 @@
       <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
     </extensionPoints>
 
+  <actions>
+    <group>
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGExcludeFromRunAction" text="Exclude from suite" id="excludeFromTestNGSuite"/>
+      <separator/>
+      <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
+    </group>
+    <group>
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGAddToTestsPatternAction" id="AddToTestNGSuite" text="Add to temp suite"/>
+      <add-to-group anchor="first" group-id="RunContextGroup"/>
+    </group>
+  </actions>
+
     <change-notes>
         <![CDATA[
             <li>TESTNG-151 Final passing test result is not properly hidden

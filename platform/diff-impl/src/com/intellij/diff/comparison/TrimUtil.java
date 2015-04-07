@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.IntPair;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.Range;
+import com.intellij.diff.util.IntPair;
+import com.intellij.diff.util.Range;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 

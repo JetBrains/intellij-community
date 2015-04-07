@@ -18,16 +18,14 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.openapi.options.OptionalConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -149,7 +147,65 @@ public class ConfigurableExtensionPointUtil {
    */
   public static ConfigurableGroup getConfigurableGroup(@NotNull List<Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
-    return new SortedConfigurableGroup(project, map);
+    Map<String, Node<SortedConfigurableGroup>> tree = ContainerUtil.newHashMap();
+    for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
+      addGroup(tree, project, entry.getKey(), entry.getValue(), null);
+    }
+    SortedConfigurableGroup root = getGroup(tree, "root");
+    if (!tree.isEmpty()) {
+      for (String groupId : tree.keySet()) {
+        LOG.warn("ignore group: " + groupId);
+      }
+    }
+    return root;
+  }
+
+  /**
+   * @param tree    a map that represents a tree of nodes
+   * @param groupId an identifier of a group to process children recursively
+   * @return the tree of groups starting from the specified one
+   */
+  private static SortedConfigurableGroup getGroup(Map<String, Node<SortedConfigurableGroup>> tree, String groupId) {
+    Node<SortedConfigurableGroup> node = tree.remove(groupId);
+    if (node.myChildren != null) {
+      for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
+        @SuppressWarnings("unchecked") // expected type
+        String childId = (String)iterator.next();
+        node.myValue.myList.add(getGroup(tree, childId));
+      }
+    }
+    return node.myValue;
+  }
+
+  private static void addGroup(Map<String, Node<SortedConfigurableGroup>> tree, Project project,
+                               String groupId, List<Configurable> configurables, ResourceBundle alternative) {
+    String id = "configurable.group." + groupId;
+    ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
+    if (bundle == null) {
+      LOG.warn("use other group instead of unexpected one: " + groupId);
+      groupId = "other";
+      id = "configurable.group." + groupId;
+      bundle = OptionsBundle.getBundle();
+    }
+    Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
+    if (node.myValue == null) {
+      int weight = getInt(bundle, id + ".settings.weight");
+      String help = getString(bundle, id + ".settings.help.topic");
+      String name = getString(bundle, id + ".settings.display.name");
+      if (name != null && project != null && 0 <= name.indexOf('{')) {
+        name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
+      }
+      node.myValue = new SortedConfigurableGroup(id, name, help, weight);
+    }
+    if (configurables != null) {
+      node.myValue.myList.addAll(configurables);
+    }
+    if (node.myParent == null && !groupId.equals("root")) {
+      String parentId = getString(bundle, id + ".settings.parent");
+      parentId = Node.cyclic(tree, parentId, "root", groupId, node);
+      node.myParent = Node.add(tree, parentId, groupId);
+      addGroup(tree, project, parentId, null, bundle);
+    }
   }
 
   /**
@@ -178,13 +234,7 @@ public class ConfigurableExtensionPointUtil {
               parentId = groupId;
             }
           }
-          if (parentId == null) {
-            parentId = "other";
-          }
-          if (Node.cyclic(tree, parentId, node)) {
-            LOG.warn("ignore cyclic dependency: " + parentId + " cannot contain " + id);
-            parentId = "other";
-          }
+          parentId = Node.cyclic(tree, parentId, "other", id, node);
           node.myParent = Node.add(tree, parentId, node);
           node.myValue = wrapper;
         }
@@ -303,6 +353,47 @@ public class ConfigurableExtensionPointUtil {
       return false;
     }
     return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
+  }
+
+  private static ResourceBundle getBundle(String resource, List<Configurable> configurables, ResourceBundle alternative) {
+    ResourceBundle bundle = OptionsBundle.getBundle();
+    if (getString(bundle, resource) != null) {
+      return bundle;
+    }
+    if (configurables != null) {
+      for (Configurable configurable : configurables) {
+        if (configurable instanceof ConfigurableWrapper) {
+          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+          bundle = wrapper.getExtensionPoint().findBundle();
+          if (getString(bundle, resource) != null) {
+            return bundle;
+          }
+        }
+      }
+    }
+    if (getString(alternative, resource) != null) {
+      return alternative;
+    }
+    return null;
+  }
+
+  private static String getString(ResourceBundle bundle, String resource) {
+    try {
+      return bundle == null ? null : bundle.getObject(resource).toString();
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
+  }
+
+  private static int getInt(ResourceBundle bundle, String resource) {
+    try {
+      String value = getString(bundle, resource);
+      return value == null ? 0 : Integer.parseInt(value);
+    }
+    catch (NumberFormatException ignored) {
+      return 0;
+    }
   }
 
   private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
@@ -444,6 +535,17 @@ public class ConfigurableExtensionPointUtil {
         }
       }
       return false;
+    }
+
+    private static <I, V> I cyclic(Map<I, Node<V>> tree, I id, I idDefault, I idNode, Node<V> parent) {
+      if (id == null) {
+        id = idDefault;
+      }
+      if (cyclic(tree, id, parent)) {
+        LOG.warn("ignore cyclic dependency: " + id + " cannot contain " + idNode);
+        id = idDefault;
+      }
+      return id;
     }
   }
 }
