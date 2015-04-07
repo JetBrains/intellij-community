@@ -69,7 +69,7 @@
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
     <group>
-      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to temp suite"/>
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
       <add-to-group anchor="first" group-id="RunContextGroup"/>
     </group>
   </actions>
