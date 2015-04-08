@@ -71,7 +71,7 @@ public class PyMoveSymbolProcessor {
   private void deleteElement() {
     final PsiElement elementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
     assert elementBody != null;
-    PyUtil.deleteElementSafely(elementBody);
+    elementBody.delete();
   }
 
   private void optimizeImports(@Nullable PsiFile originalFile) {
@@ -144,7 +144,7 @@ public class PyMoveSymbolProcessor {
         if (usage.getParent() instanceof PyGlobalStatement) {
           myScopeOwnersWithGlobal.add(ScopeUtil.getScopeOwner(usage));
           if (((PyGlobalStatement)usage.getParent()).getGlobals().length == 1) {
-            PyUtil.deleteElementSafely(usage.getParent());
+            usage.getParent().delete();
           }
           else {
             usage.delete();

@@ -17,11 +17,14 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -50,5 +53,15 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
       }
     }
     return super.addInternal(first, last, anchor, before);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement childElement = child.getPsi();
+    if (childElement instanceof PyStatement && getStatements().length == 1) {
+      childElement.replace(PyElementGenerator.getInstance(getProject()).createPassStatement());
+      return;
+    }
+    super.deleteChildInternal(child);
   }
 }
