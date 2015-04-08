@@ -34,6 +34,8 @@ import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -81,6 +83,12 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   private final Object myConsumerSemaphore = new Object();
 
   /**
+   * Listener that will be notified when console state (mode?) changed.
+   */
+  @NotNull
+  private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+
+  /**
    * @param module      module console runs on
    * @param title       console title
    * @param commandList List of commands (to be injected into {@link CommandLineFile}) if any
@@ -126,6 +134,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        notifyStateChangeListeners();
         setLanguage(CommandLineLanguage.INSTANCE);
         final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
         resetConsumer(null);
@@ -148,13 +157,22 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        notifyStateChangeListeners();
         resetConsumer(new ProcessModeConsumer(processHandler));
-
         // In process mode we do not need prompt and highlighting
         setLanguage(PlainTextLanguage.INSTANCE);
         setPrompt("");
       }
     }, ModalityState.NON_MODAL);
+  }
+
+  /**
+   * Notify listeners that state has been changed
+   */
+  private void notifyStateChangeListeners() {
+    for (final Runnable listener : myStateChangeListeners) {
+      listener.run();
+    }
   }
 
 
@@ -186,6 +204,15 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         myCurrentConsumer.consume(t);
       }
     }
+  }
+
+  /**
+   * Adds listener that will be notified when console state (mode?) changed.
+   * <strong>Called on EDT</strong>
+   * @param listener listener to notify
+   */
+  void addStateChangeListener(@NotNull final Runnable listener) {
+    myStateChangeListeners.add(listener);
   }
 
 
