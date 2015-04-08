@@ -34,41 +34,41 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * The following attributes are available for both extension points mentioned above:
  * <dl>
- *   <dt>{@code instance}</dt>
+ *   <dt>{@link ConfigurableEP#instanceClass instance}</dt>
  *   <dd>This attribute specifies a qualified name of a custom implementation of this interface.
  *   The constructor will be determined automatically from the tag name:
  *   <br>{@code <extensions defaultExtensionNs="com.intellij">}
  *   <br>{@code &nbsp;&nbsp;&nbsp;&nbsp;<projectConfigurable instance="fully.qualified.class.name"/>}
  *   <br>{@code </extensions>}</dd>
- *   <dt>{@code provider}</dt>
+ *   <dt>{@link ConfigurableEP#providerClass provider}</dt>
  *   <dd>This attribute can be used instead of the {@code instance} attribute.
  *   It specifies a qualified name of a custom implementation of the {@link ConfigurableProvider} interface,
  *   which provides another way to create a configurable component:
  *   <br>{@code <extensions defaultExtensionNs="com.intellij">}
  *   <br>{@code &nbsp;&nbsp;&nbsp;&nbsp;<projectConfigurable provider="fully.qualified.class.name"/>}
  *   <br>{@code </extensions>}</dd>
- *   <dt><strike>{@code implementation}</strike></dt>
+ *   <dt><strike>{@link ConfigurableEP#implementationClass implementation}</strike></dt>
  *   <dd>This attribute is deprecated and replaced with two attributes above.
  *   In fact, it works as the {@code instance} attribute.</dd>
- *   <dt>{@code nonDefaultProject}</dt>
+ *   <dt>{@link ConfigurableEP#nonDefaultProject nonDefaultProject}</dt>
  *   <dd>This attribute is applicable to the {@code projectConfigurable} extension only.
  *   If it is set to {@code true}, the corresponding project settings will be shown for a real project only,
  *   not for the {@link com.intellij.openapi.project.ProjectManager#getDefaultProject() template project},
  *   which provides default settings for all the new projects.</dd>
- *   <dt>{@code displayName}</dt>
+ *   <dt>{@link ConfigurableEP#displayName displayName}</dt>
  *   <dd>This attribute specifies the setting name visible to users.
  *   If the display name is not set, a configurable component will be instantiated to retrieve its name dynamically.
  *   This causes a loading of plugin classes and increases the delay before showing the settings dialog.
  *   It is highly recommended specifying the display name in XML to improve UI responsiveness.</dd>
- *   <dt>{@code key} and {@code bundle}</dt>
+ *   <dt>{@link ConfigurableEP#key key} and {@link ConfigurableEP#bundle bundle}</dt>
  *   <dd>These attributes specify the display name too, if the specified key is declared in the specified resource bundle.</dd>
- *   <dt>{@code id}</dt>
+ *   <dt>{@link ConfigurableEP#id id}</dt>
  *   <dd>This attribute specifies the {@link SearchableConfigurable#getId() unique identifier}
  *   for the configurable component.  It is also recommended specifying the identifier in XML.</dd>
- *   <dt>{@code parentId}</dt>
+ *   <dt>{@link ConfigurableEP#parentId parentId}</dt>
  *   <dd>This attribute is used to create a hierarchy of settings.
  *   If it is set, the configurable component will be a child of the specified parent component.</dd>
- *   <dt>{@code groupId}</dt>
+ *   <dt>{@link ConfigurableEP#groupId groupId}</dt>
  *   <dd>This attribute specifies a top-level group, which the configurable component belongs to.
  *   If this attribute is not set, the configurable component will be added to the Other Settings group.
  *   The following groups are supported:
@@ -102,18 +102,18 @@ import org.jetbrains.annotations.Nullable;
  *   </dl>
  *   The {@code parentId} and the {@code groupId} attributes should not be used together and the {@code parentId} has precedence.
  *   Currently, it is possible to specify a group identifier in the {@code parentId} attribute.</dd>
- *   <dt>{@code groupWeight}</dt>
+ *   <dt>{@link ConfigurableEP#groupWeight groupWeight}</dt>
  *   <dd>This attribute specifies the weight of a configurable component within a group or a parent configurable component.
  *   The default weight is {@code 0}. If one child in a group or a parent configurable component has non-zero weight,
  *   all children will be sorted descending by their weight. And if the weights are equal,
  *   the components will be sorted ascending by their display name.</dd>
- *   <dt>{@code dynamic}</dt>
+ *   <dt>{@link ConfigurableEP#dynamic dynamic}</dt>
  *   <dd>This attribute states that a custom configurable component implements the {@link Composite} interface
  *   and its children are dynamically calculated by calling the {@code getConfigurables} method.
  *   It is needed to improve performance, because we do not want to load any additional classes during the building a setting tree.</dd>
- *   <dt>{@code childrenEPName}</dt>
+ *   <dt>{@link ConfigurableEP#childrenEPName childrenEPName}</dt>
  *   <dd>This attribute specifies a name of the extension point that will be used to calculate children.</dd>
- *   <dt>{@code configurable}</dt>
+ *   <dt>{@link ConfigurableEP#children configurable}</dt>
  *   <dd>This is not an attribute, this is an inner tag. It specifies children directly in the main tag body. For example,
  *   <br>{@code <projectConfigurable id="tasks" nonDefaultProject="true" instance="com.intellij.tasks.config.TaskConfigurable">}
  *   <br>{@code &nbsp;&nbsp;&nbsp;&nbsp;<configurable id="tasks.servers" instance="com.intellij.tasks.config.TaskRepositoriesConfigurable"/>}
@@ -123,6 +123,7 @@ import org.jetbrains.annotations.Nullable;
  *   <br>{@code <projectConfigurable parentId="tasks" id="tasks.servers" nonDefaultProject="true" instance="com.intellij.tasks.config.TaskRepositoriesConfigurable"/>}</dd>
  * </dl>
  *
+ * @see ConfigurableEP
  * @see SearchableConfigurable
  */
 public interface Configurable extends UnnamedConfigurable {
