@@ -425,10 +425,14 @@ public class RedundantCastUtil {
       PsiTypeCastExpression castExpression = computeCastExpression.fun(newReturnExpression);
       PsiExpression castOperand = castExpression.getOperand();
       if (castOperand == null) return;
-      castExpression.replace(castOperand);
+      castOperand = (PsiExpression)castExpression.replace(castOperand);
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (interfaceType.equals(functionalInterfaceType)) {
-        addToResults(returnExpression);
+        final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(interfaceType);
+        final PsiType castExprType = castOperand.getType();
+        if (interfaceReturnType != null && castExprType != null && interfaceReturnType.isAssignableFrom(castExprType)) {
+          addToResults(returnExpression);
+        }
       }
     }
 

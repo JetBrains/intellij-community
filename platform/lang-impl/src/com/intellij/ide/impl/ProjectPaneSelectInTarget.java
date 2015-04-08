@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
@@ -33,15 +32,14 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
     super(project);
   }
 
+  @Override
   public String toString() {
     return SelectInManager.PROJECT;
   }
 
   @Override
   public boolean canSelect(PsiFileSystemItem file) {
-    if (!super.canSelect(file)) return false;
-    final VirtualFile vFile = file.getVirtualFile();
-    return canSelect(vFile);
+    return super.canSelect(file) && canSelect(file.getVirtualFile());
   }
 
   @Override
@@ -49,14 +47,14 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
     return canSelect(context);
   }
 
-  private boolean canSelect(final VirtualFile vFile) {
+  private boolean canSelect(VirtualFile vFile) {
     if (vFile != null && vFile.isValid()) {
-      ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (projectFileIndex.getModuleForFile(vFile) != null) {
+      ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (index.getContentRootForFile(vFile, false) != null) {
         return true;
       }
 
-      if (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile)) {
+      if (index.isInLibraryClasses(vFile) || index.isInLibrarySource(vFile)) {
         return true;
       }
 

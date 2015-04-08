@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+/*
+ * User: anna
+ * Date: 21-Mar-2008
+ */
+package com.intellij.codeInsight.daemon.quickFix;
+
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
+import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/redundantCast";
-
+public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RedundantCastInspection()
-    };
+    return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void testIntersection() { doTest(); }
-  public void testSer() { doTest(); }
-  public void testLambdaReturnExpressions() { doTest(); }
-  public void testLambdaReturnExpressions1() { doTest(); }
-  public void testPreventBadReturnTypeInReturnExpression() { doTest(); }
+  public void test() throws Exception {
+     doAllTests();
+   }
 
-  private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceWithOfNullable";
   }
 
   @Override
