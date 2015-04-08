@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 class Foo {
   @Contract("!null,true->!null")
   String delegationToInstance(@NotNull Foo f, boolean createIfNeeded) {
-    return <warning descr="Contract clause '!null, true -> !null' is violated: exception might be thrown instead of returning !null">f.getString(createIfNeeded)</warning>;
+    return f.getString(createIfNeeded); // not smart enough to check this 
   }
 
   @Contract("true->fail")
