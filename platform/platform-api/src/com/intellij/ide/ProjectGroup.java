@@ -15,10 +15,11 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public class ProjectGroup {
   private @NotNull String myName = "";
-  private List<String> myProjects = new ArrayList<String>();
+  private String myProjectPaths = "";
   private boolean myExpanded = false;
 
   public ProjectGroup(@NotNull String name) {
@@ -44,16 +45,34 @@ public class ProjectGroup {
     myName = name;
   }
 
+  //do not remove. bean getter
+  public String getProjectPaths() {
+    return myProjectPaths;
+  }
+
+  //do not remove. bean setter
+  public void setProjectPaths(String projectPaths) {
+    myProjectPaths = projectPaths;
+  }
+
   public void addProject(String path) {
-    myProjects.add(path);
+    final List<String> projects = getProjects();
+    projects.add(path);
+    save(projects);
+  }
+
+  protected void save(List<String> projects) {
+    myProjectPaths = StringUtil.join(projects, File.pathSeparator);
   }
 
   public List<String> getProjects() {
-    return Collections.unmodifiableList(myProjects);
+    return new ArrayList<String>(StringUtil.split(myProjectPaths, File.pathSeparator));
   }
 
   public void removeProject(String path) {
-    myProjects.remove(path);
+    final List<String> projects = getProjects();
+    projects.remove(path);
+    save(projects);
   }
 
   public boolean isExpanded() {
