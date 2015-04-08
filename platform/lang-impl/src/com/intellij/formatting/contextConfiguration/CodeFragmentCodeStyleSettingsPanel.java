@@ -39,6 +39,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
   private final SelectedTextFormatter mySelectedTextFormatter;
+  private SpacesPanelWithoutPreview mySpacesPanel;
 
   public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
                                             @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
@@ -63,9 +64,14 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
   @Override
   protected void initTabs(CodeStyleSettings settings) {
-    addTab(new SpacesPanelWithoutPreview(settings));
+    mySpacesPanel = new SpacesPanelWithoutPreview(settings);
+    addTab(mySpacesPanel);
     addTab(new WrappingAndBracesPanelWithoutPreview(settings));
     reset(getSettings());
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return mySpacesPanel.getPreferredFocusedComponent();
   }
 
   public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
@@ -128,6 +134,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     @Override
     protected String getPreviewText() {
       return null;
+    }
+
+    public JComponent getPreferredFocusedComponent() {
+      return myOptionsTree;
     }
   }
 

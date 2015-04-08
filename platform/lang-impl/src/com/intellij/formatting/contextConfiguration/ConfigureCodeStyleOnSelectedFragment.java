@@ -123,6 +123,12 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
     @Nullable
     @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myTabbedLanguagePanel.getPreferredFocusedComponent();
+    }
+
+    @Nullable
+    @Override
     protected JComponent createCenterPanel() {
       return myTabbedLanguagePanel.getPanel();
     }
