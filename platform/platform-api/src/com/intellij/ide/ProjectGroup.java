@@ -17,16 +17,16 @@ package com.intellij.ide;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ProjectGroup {
   private @NotNull String myName = "";
-  private Set<String> myProjects = new HashSet<String>();
+  private List<String> myProjects = new ArrayList<String>();
   private boolean myExpanded = false;
 
   public ProjectGroup(@NotNull String name) {
@@ -48,8 +48,8 @@ public class ProjectGroup {
     myProjects.add(path);
   }
 
-  public Set<String> getProjects() {
-    return Collections.unmodifiableSet(myProjects);
+  public List<String> getProjects() {
+    return Collections.unmodifiableList(myProjects);
   }
 
   public void removeProject(String path) {
