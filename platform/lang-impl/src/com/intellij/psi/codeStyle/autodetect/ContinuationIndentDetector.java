@@ -60,10 +60,10 @@ class ContinuationIndentDetector {
   }
 
   public boolean isContinuationIndent() {
-    if (myIncorrectBracketsOrder) {
+    if (myIncorrectBracketsOrder || myOpenedBrackets.isEmpty()) {
       return false;
     }
-    return myOpenedBrackets.contains(Bracket.LPARENTH);
+    return myOpenedBrackets.peek() == Bracket.LPARENTH;
   }
 
 

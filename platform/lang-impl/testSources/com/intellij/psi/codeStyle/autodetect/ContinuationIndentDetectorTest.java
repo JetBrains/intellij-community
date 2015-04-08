@@ -101,7 +101,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
       "  }\n" +
       "}"
     );
-    doCheckLinesWithContinuationIndents(7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+    doCheckLinesWithContinuationIndents(11, 16);
   }
 
   public void testClosingBracesAtLineStart() {
@@ -127,7 +127,7 @@ public class ContinuationIndentDetectorTest extends TestCase {
               "    )}\n" +
               ")\n" +
               "class T {}");
-    doCheckLinesWithContinuationIndents(1, 2, 3, 4, 5, 6);
+    doCheckLinesWithContinuationIndents(1, 2, 4, 5, 6);
   }
 
   private void doCheckLinesWithContinuationIndents(Integer... linesWithContinuationIndents) {
