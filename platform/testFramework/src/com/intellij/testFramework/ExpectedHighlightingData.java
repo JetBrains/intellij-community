@@ -607,12 +607,13 @@ public class ExpectedHighlightingData {
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
-    int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-    int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-    int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-    int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
+    int startLine = StringUtil.offsetToLineNumber(text, startOffset);
+    int endLine = StringUtil.offsetToLineNumber(text, endOffset);
 
-    return "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-           "(" + (x2 + 1) + ", " + (y2 + 1) + ")";
+    int startCol = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
+    int endCol = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
+
+    return "(" + (startLine + 1) + ", " + (startCol + 1) + ")" + "-" +
+           "(" + (endLine + 1) + ", " + (endCol + 1) + ")";
   }
 }
