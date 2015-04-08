@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public List<String> recentPaths = new SmartList<String>();
     public List<String> openPaths = new SmartList<String>();
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
+    public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
     public String lastPath;
 
     public String lastProjectLocation;
@@ -187,6 +188,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
+    return getRecentProjectsActions(addClearListItem, false);
+  }
+
+  @Override
+  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     final Set<String> paths;
     synchronized (myStateLock) {
       myState.validateRecentProjects();
@@ -203,21 +209,49 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     List<AnAction> actions = new SmartList<AnAction>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
-    for (final String path : paths) {
-      String projectName = getProjectName(path);
-      String displayName;
-      synchronized (myStateLock) {
-        displayName = myState.names.get(path);
-      }
-      if (StringUtil.isEmptyOrSpaces(displayName)) {
-        displayName = duplicates.contains(path) ? path : projectName;
+    if (useGroups) {
+      final List<ProjectGroup> groups = new ArrayList<ProjectGroup>(new ArrayList<ProjectGroup>(myState.groups));
+      final List<String> projectPaths = new ArrayList<String>(paths);
+      Collections.sort(groups, new Comparator<ProjectGroup>() {
+        @Override
+        public int compare(ProjectGroup o1, ProjectGroup o2) {
+          int ind1 = getGroupIndex(o1);
+          int ind2 = getGroupIndex(o2);
+          return ind1 == ind2 ? StringUtil.naturalCompare(o1.getName(), o2.getName()) : ind1 - ind2;
+        }
+
+        private int getGroupIndex(ProjectGroup group) {
+          int index = -1;
+          for (String path : group.getProjects()) {
+            final int i = projectPaths.indexOf(path);
+            if (index >= 0 && index > i) {
+              index = i;
+            }
+          }
+          return index;
+        }
+      });
+
+      for (ProjectGroup group : groups) {
+        paths.removeAll(group.getProjects());
       }
 
-      // It's better don't to remove non-existent projects. Sometimes projects stored
-      // on USB-sticks or flash-cards, and it will be nice to have them in the list
-      // when USB device or SD-card is mounted
-      if (new File(path).exists()) {
-        actions.add(new ReopenProjectAction(path, projectName, displayName));
+      for (ProjectGroup group : groups) {
+        final List<AnAction> children = new ArrayList<AnAction>();
+        for (String path : group.getProjects()) {
+          final AnAction action = createOpenAction(path, duplicates);
+          if (action != null) {
+            children.add(action);
+          }
+        }
+        actions.add(new ProjectGroupActionGroup(group, children));
+      }
+    }
+
+    for (final String path : paths) {
+      final AnAction action = createOpenAction(path, duplicates);
+      if (action != null) {
+        actions.add(action);
       }
     }
 
@@ -245,6 +279,25 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     return actions.toArray(new AnAction[actions.size()]);
+  }
+
+  private AnAction createOpenAction(String path, Set<String> duplicates) {
+    String projectName = getProjectName(path);
+    String displayName;
+    synchronized (myStateLock) {
+      displayName = myState.names.get(path);
+    }
+    if (StringUtil.isEmptyOrSpaces(displayName)) {
+      displayName = duplicates.contains(path) ? path : projectName;
+    }
+
+    // It's better don't to remove non-existent projects. Sometimes projects stored
+    // on USB-sticks or flash-cards, and it will be nice to have them in the list
+    // when USB device or SD-card is mounted
+    if (new File(path).exists()) {
+      return new ReopenProjectAction(path, projectName, displayName);
+    }
+    return null;
   }
 
   private void markPathRecent(String path) {
@@ -365,6 +418,23 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
       }
     }
+  }
+
+  @Override
+  public List<ProjectGroup> getGroups() {
+    return Collections.unmodifiableList(myState.groups);
+  }
+
+  @Override
+  public void addGroup(ProjectGroup group) {
+    if (!myState.groups.contains(group)) {
+      myState.groups.add(group);
+    }
+  }
+
+  @Override
+  public void removeGroup(ProjectGroup group) {
+    myState.groups.remove(group);
   }
 
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
