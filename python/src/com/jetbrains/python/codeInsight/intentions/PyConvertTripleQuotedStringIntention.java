@@ -107,47 +107,7 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
           final boolean inLastLine = j == lines.size() - 1;
 
           if (StringUtil.containsIgnoreCase(info.prefix, "r")) {
-            boolean singleQuoteUsed = false, doubleQuoteUsed = false;
-            int chunkStart = 0;
-            boolean firstChunk = true;
-            for (int k = 0; k < line.length(); k++) {
-              if (line.charAt(k) == '\'') {
-                singleQuoteUsed = true;
-                if (doubleQuoteUsed) {
-                  if (!firstChunk) {
-                    result.append(" ");
-                  }
-                  result.append(info.prefix).append('\'').append(line.substring(chunkStart, k)).append('\'');
-                  chunkStart = k;
-                  doubleQuoteUsed = false;
-                  firstChunk = false;
-                }
-              }
-              else if (line.charAt(k) == '"') {
-                doubleQuoteUsed = true;
-                if (singleQuoteUsed) {
-                  if (!firstChunk) {
-                    result.append(" ");
-                  }
-                  result.append(info.prefix).append('"').append(line.substring(chunkStart, k)).append('"');
-                  chunkStart = k;
-                  singleQuoteUsed = false;
-                  firstChunk = false;
-                }
-              }
-            }
-            if (!firstChunk) {
-              result.append(" ");
-            }
-            if (singleQuoteUsed) {
-              result.append(info.prefix).append('"').append(line.substring(chunkStart)).append('"');
-            }
-            else if (doubleQuoteUsed) {
-              result.append(info.prefix).append('\'').append(line.substring(chunkStart)).append('\'');
-            }
-            else {
-              result.append(info.prefix).append(info.quote).append(line.substring(chunkStart)).append(info.quote);
-            }
+            appendSplittedRawStringLine(result, info, line);
             if (!inLastLine || lastLineExcluded) {
               result.append(" ").append(info.quote).append("\\n").append(info.quote);
             }
@@ -182,6 +142,39 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       if (expression != null) {
         pyString.replace(expression);
       }
+    }
+  }
+
+  private static void appendSplittedRawStringLine(@NotNull StringBuilder result, @NotNull StringNodeInfo info, @NotNull String line) {
+    boolean singleQuoteUsed = false, doubleQuoteUsed = false;
+    int chunkStart = 0;
+    boolean firstChunk = true;
+    for (int k = 0; k <= line.length(); k++) {
+      if (k < line.length()) {
+        singleQuoteUsed |= line.charAt(k) == '\'';
+        doubleQuoteUsed |= line.charAt(k) == '"';
+      }
+      final char chunkQuote;
+      if ((k == line.length() || line.charAt(k) == '\'') && doubleQuoteUsed) {
+        chunkQuote = '\'';
+        doubleQuoteUsed = false;
+      }
+      else if ((k == line.length() || line.charAt(k) == '"') && singleQuoteUsed) {
+        chunkQuote = '"';
+        singleQuoteUsed = false;
+      }
+      else if (k == line.length()) {
+        chunkQuote = info.quote;
+      }
+      else {
+        continue;
+      }
+      if (!firstChunk) {
+        result.append(" ");
+      }
+      result.append(info.prefix).append(chunkQuote).append(line.substring(chunkStart, k)).append(chunkQuote);
+      firstChunk = false;
+      chunkStart = k;
     }
   }
 
