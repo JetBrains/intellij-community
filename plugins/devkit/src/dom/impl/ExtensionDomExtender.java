@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -241,29 +242,36 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (surroundWithTag) return; // todo Set, List, Array
     final String tagName = getStringAttribute(anno, "elementTag", evalHelper);
     final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper);
-    final PsiClass psiClass = getElementType(type);
-    if (tagName != null && attrName == null) {
-      registrar.registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class);
-    }
-    else if (tagName != null) {
-      registrar.registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
-        @Override
-        public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
-        }
-      });
-    }
-    else if (psiClass != null) {
-      final PsiModifierList modifierList = psiClass.getModifierList();
-      final PsiAnnotation tagAnno = modifierList == null? null : modifierList.findAnnotation(Tag.class.getName());
-      final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper);
-      if (classTagName != null) {
-        registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
+    final PsiType elementType = getElementType(type);
+    if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
+        || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
+        || TypeConversionUtil.isEnumType(elementType)) {
+      if (tagName != null && attrName == null) {
+        registrar.registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class);
+      }
+      else if (tagName != null) {
+        registrar.registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerXmlb(registrar, psiClass, Collections.<With>emptyList());
+            registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
           }
         });
+      }
+    }
+    else {
+      final PsiClass psiClass = PsiTypesUtil.getPsiClass(elementType);
+      if (psiClass != null) {
+        final PsiModifierList modifierList = psiClass.getModifierList();
+        final PsiAnnotation tagAnno = modifierList == null? null : modifierList.findAnnotation(Tag.class.getName());
+        final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper);
+        if (classTagName != null) {
+          registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
+            @Override
+            public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+              registerXmlb(registrar, psiClass, Collections.<With>emptyList());
+            }
+          });
+        }
       }
     }
   }
@@ -298,15 +306,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  public static PsiClass getElementType(final PsiType psiType) {
-    final PsiType elementType;
-    if (psiType instanceof PsiArrayType) elementType = ((PsiArrayType)psiType).getComponentType();
+  public static PsiType getElementType(final PsiType psiType) {
+    if (psiType instanceof PsiArrayType) {
+      return ((PsiArrayType)psiType).getComponentType();
+    }
     else if (psiType instanceof PsiClassType) {
       final PsiType[] types = ((PsiClassType)psiType).getParameters();
-      elementType = types.length == 1? types[0] : null;
+      return types.length == 1? types[0] : null;
     }
-    else elementType = null;
-    return PsiTypesUtil.getPsiClass(elementType);
+    else {
+      return null;
+    }
   }
 
   public static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
