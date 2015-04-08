@@ -17,13 +17,10 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-
-import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -47,13 +44,7 @@ public class CreateNewProjectGroupAction extends RecentProjectsWelcomeScreenActi
     if (newGroup != null) {
       final ProjectGroup group = new ProjectGroup(newGroup);
       RecentProjectsManager.getInstance().addGroup(group);
-      final DefaultListModel model = getDataModel(e);
-      if (model != null) {
-        model.clear();
-        for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
-          model.addElement(action);
-        }
-      }
+      rebuildRecentProjectsList(e);
     }
   }
 

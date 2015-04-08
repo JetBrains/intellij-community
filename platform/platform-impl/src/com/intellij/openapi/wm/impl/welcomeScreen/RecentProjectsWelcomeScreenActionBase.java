@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ProjectGroupActionGroup;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -78,5 +79,16 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
       }
     }
     return false;
+  }
+
+  public void rebuildRecentProjectsList(AnActionEvent e) {
+    final DefaultListModel model = getDataModel(e);
+    if (model != null) {
+      model.clear();
+      for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
+        //noinspection unchecked
+        model.addElement(action);
+      }
+    }
   }
 }
