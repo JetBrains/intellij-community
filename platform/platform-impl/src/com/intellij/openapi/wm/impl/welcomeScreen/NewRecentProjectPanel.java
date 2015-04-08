@@ -16,10 +16,14 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ReopenProjectAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ui.JBUI;
@@ -77,7 +81,21 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         }
       }
     });
+    list.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup");
+        if (group != null) {
+          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).getComponent().show(comp, x, y);
+        }
+      }
+    });
     return list;
+  }
+
+  @Override
+  protected boolean isUseGroups() {
+    return FlatWelcomeFrame.isUseProjectGroups();
   }
 
   @Override
