@@ -135,6 +135,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   enum MyResult {
     annoMethod,
     probableKeyword,
+    castVariable,
     localOrParameter,
     qualifiedWithField,
     qualifiedWithGetter,
@@ -172,6 +173,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
         return MyResult.improbableKeyword;
       }
+    }
+
+    if (item.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
+      return MyResult.castVariable;
     }
 
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
