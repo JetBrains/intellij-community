@@ -20,40 +20,17 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-
-public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
-  private final XDebuggerSuspendedActionHandler myStepIntoMyCodeHandler;
-
-  public PyStepIntoMyCodeAction() {
-    super();
-    myStepIntoMyCodeHandler = new XDebuggerSuspendedActionHandler() {
-      @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-        PyDebugProcess debugProcess = (PyDebugProcess)session.getDebugProcess();
-        debugProcess.startStepIntoMyCode();
-      }
-    };
-  }
-
-  @NotNull
+public class PyForceStepIntoAction extends XDebuggerActionBase {
   @Override
-  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return myStepIntoMyCodeHandler;
-  }
-
-  @Override
-  protected boolean isHidden(AnActionEvent event) {
-    Project project = event.getData(CommonDataKeys.PROJECT);
+  protected boolean isEnabled(AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
       if (settings != null) {
@@ -64,6 +41,12 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
       }
     }
 
-    return true;
+    return super.isEnabled(e);
+  }
+
+  @NotNull
+  @Override
+  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+    return debuggerSupport.getForceStepIntoHandler();
   }
 }
