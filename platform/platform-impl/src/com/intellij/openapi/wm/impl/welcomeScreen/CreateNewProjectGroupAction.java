@@ -19,20 +19,16 @@ import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class CreateNewProjectGroupAction extends DumbAwareAction {
+public class CreateNewProjectGroupAction extends RecentProjectsWelcomeScreenActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final InputValidator validator = new InputValidator() {
@@ -51,16 +47,11 @@ public class CreateNewProjectGroupAction extends DumbAwareAction {
     if (newGroup != null) {
       final ProjectGroup group = new ProjectGroup(newGroup);
       RecentProjectsManager.getInstance().addGroup(group);
-      final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-      if (component instanceof JList) {
-        final JList list = (JList)component;
-        ListModel model = list.getModel();
-        if (model instanceof NameFilteringListModel) {
-          model = ((NameFilteringListModel)model).getOriginalModel();
-            ((DefaultListModel)model).clear();
-          for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
-            ((DefaultListModel)model).addElement(action);
-          }
+      final DefaultListModel model = getDataModel(e);
+      if (model != null) {
+        model.clear();
+        for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
+          model.addElement(action);
         }
       }
     }
