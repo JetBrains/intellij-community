@@ -20,9 +20,9 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -160,10 +160,16 @@ public class RecentProjectPanel extends JPanel {
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
           if (rc == Messages.OK) {
-            RecentProjectsManager manager = RecentProjectsManagerBase.getInstance();
+            RecentProjectsManager manager = RecentProjectsManager.getInstance();
             for (Object projectAction : selection) {
               if (projectAction instanceof ReopenProjectAction) {
                 manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());
+              } else if (projectAction instanceof ProjectGroupActionGroup) {
+                final ProjectGroup group = ((ProjectGroupActionGroup)projectAction).getGroup();
+                for (String path : group.getProjects()) {
+                  manager.removePath(path);
+                }
+                manager.removeGroup(group);
               }
             }
             ListUtil.removeSelectedItems(myList);
@@ -404,6 +410,12 @@ public class RecentProjectPanel extends JPanel {
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       return new Dimension(Math.min(size.width, JBUI.scale(245)), size.height);
+    }
+
+    @NotNull
+    @Override
+    public Dimension getSize() {
+      return getPreferredSize();
     }
   }
 }

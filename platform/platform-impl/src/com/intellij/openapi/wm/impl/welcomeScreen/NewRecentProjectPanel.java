@@ -15,16 +15,20 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.ProjectGroup;
+import com.intellij.ide.ProjectGroupActionGroup;
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -152,31 +157,72 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         add(myName, nameCell);
         add(myPath, pathCell);
       }
-
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        if (Registry.is("removable.welcome.screen.projects")) {
-          if (myHovered) {
-            add(myCloseThisItem, closeButtonCell);
-            list.revalidate();
-          }
-          else {
-            remove(myCloseThisItem);
-            list.revalidate();
-          }
+      MySpacer spacer = new MySpacer();
+      class MySpacer extends NonOpaquePanel {
+        boolean selected;
+        boolean lastItem;
+        @Override
+        public Dimension getPreferredSize() {
+          return new Dimension(JBUI.scale(13), super.getPreferredSize().height);
         }
 
-        return this;
-      }
+        @Override
+        protected void paintComponent(Graphics g) {
+          final int x = getWidth() / 2;
+          final int y = getHeight() / 2;
+          Color fg = selected ? UIUtil.getListForeground(true) : ColorUtil.withAlpha(UIUtil.getListForeground(), 0.5);
+          UIUtil.drawVDottedLine((Graphics2D)g, x, 0, lastItem ? y : getHeight(), null, fg);
+          UIUtil.drawHDottedLine((Graphics2D)g, x, getWidth(), y, null, fg);
+        }
+      };
 
       @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        int h = myName.getPreferredSize().height + myPath.getPreferredSize().height;
-        return new Dimension(size.width, h + JBUI.scale(26));
+      public Component getListCellRendererComponent(JList list, final Object value, int index, final boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return new JPanel() {
+          {
+            myName.setFont(myName.getFont().deriveFont(Font.PLAIN));
+            setLayout(new BorderLayout());
+            setBackground(UIUtil.getListBackground(isSelected));
+            final Color fg = UIUtil.getListForeground(isSelected);
+            boolean isGroup = value instanceof ProjectGroupActionGroup;
+            boolean isInsideGroup = false;
+            boolean isLastInGroup = false;
+            if (value instanceof ReopenProjectAction) {
+              final String path = ((ReopenProjectAction)value).getProjectPath();
+              for (ProjectGroup group : RecentProjectsManager.getInstance().getGroups()) {
+                final List<String> projects = group.getProjects();
+                if (projects.contains(path)) {
+                  isInsideGroup = true;
+                  isLastInGroup = path.equals(projects.get(projects.size() - 1));
+                  break;
+                }
+              }
+            }
+
+            setBorder(JBUI.Borders.empty(5, 7));
+            if (isInsideGroup) {
+              spacer.selected = isSelected;
+              spacer.lastItem = isLastInGroup;
+              add(spacer, BorderLayout.WEST);
+            }
+            if (isGroup) {
+              final ProjectGroup group = ((ProjectGroupActionGroup)value).getGroup();
+              myName.setText(group.getName());
+              myName.setFont(myName.getFont().deriveFont(Font.BOLD));
+              add(myName);
+              add(new JLabel(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon()), BorderLayout.EAST);
+            } else if (value instanceof ReopenProjectAction) {
+              add(myName, BorderLayout.NORTH);
+              add(myPath, BorderLayout.SOUTH);
+            }
+          }
+
+          @Override
+          public Dimension getPreferredSize() {
+            return new Dimension(super.getPreferredSize().width, JBUI.scale(44));
+          }
+        };
       }
     };
   }
