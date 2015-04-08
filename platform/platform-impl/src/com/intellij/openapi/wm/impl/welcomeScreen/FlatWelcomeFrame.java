@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -171,7 +172,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
       super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
-      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0) {
+      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseProjectGroups()).length > 0) {
         final JComponent recentProjects = createRecentProjects();
         add(recentProjects, BorderLayout.WEST);
         final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
@@ -187,7 +188,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
             }
 
             private void removeIfNeeded() {
-              if (RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0) {
+              if (RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseProjectGroups()).length == 0) {
                 FlatWelcomeScreen.this.remove(recentProjects);
                 FlatWelcomeScreen.this.revalidate();
                 FlatWelcomeScreen.this.repaint();
@@ -581,6 +582,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
         };
       }
     }
+  }
+
+  public static boolean isUseProjectGroups() {
+    return Registry.is("welcome.screen.project.grouping.enabled");
   }
 
   private static Runnable createUsageTracker(final AnAction action) {
