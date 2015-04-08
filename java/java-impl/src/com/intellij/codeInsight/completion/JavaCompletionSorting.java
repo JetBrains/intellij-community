@@ -421,9 +421,6 @@ public class JavaCompletionSorting {
       if (lookupItem != null) {
         return lookupItem.getBracketsCount() * 10 + (lookupItem.isAddArrayInitializer() ? 1 : 0);
       }
-      if (element.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
-        return 239;
-      }
       return 0;
     }
   }

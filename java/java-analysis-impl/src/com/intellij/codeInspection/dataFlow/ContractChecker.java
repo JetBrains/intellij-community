@@ -97,7 +97,7 @@ class ContractChecker extends DataFlowRunner {
     }
 
     if (instruction instanceof ReturnInstruction) {
-      if (((ReturnInstruction)instruction).isViaException()) {
+      if (((ReturnInstruction)instruction).isViaException() && myContract.returnValue != MethodContract.ValueConstraint.NOT_NULL_VALUE) {
         ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
       }
     }
