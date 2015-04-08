@@ -134,6 +134,7 @@ DONT_TRACE = {
               'pydev_monkey_qt.py':PYDEV_FILE,
               'pydevd.py':PYDEV_FILE,
               'pydevd_additional_thread_info.py':PYDEV_FILE,
+              'pydevd_breakpoints.py':PYDEV_FILE,
               'pydevd_comm.py':PYDEV_FILE,
               'pydevd_console.py':PYDEV_FILE,
               'pydevd_constants.py':PYDEV_FILE,

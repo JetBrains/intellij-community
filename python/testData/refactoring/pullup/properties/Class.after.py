@@ -8,12 +8,6 @@ class AnyClass(SuperClass):
         super(AnyClass, self).__init__()
 
 
-
-
-
-
-
-
     def foo(self):
         pass
 

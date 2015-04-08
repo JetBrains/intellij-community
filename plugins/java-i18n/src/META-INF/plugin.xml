@@ -57,7 +57,7 @@
     <localInspection language="Properties" shortName="SuspiciousLocalesLanguages"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
                      displayName="Suspicious resource bundle locale languages"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"/>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,48 +24,53 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.jetbrains.annotations.NonNls;
-
 public interface Storage {
   void put(String key, String value);
   String get(String key);
 
   class PropertiesComponentStorage implements Storage {
     private static final Logger LOG = Logger.getInstance("#com.intellij.util.config.Storage.PropertiesComponentStorage");
+
     private final PropertiesComponent myPropertiesComponent;
     private final String myPrefix;
 
-    public PropertiesComponentStorage(@NonNls String prefix, PropertiesComponent propertiesComponent) {
+    public PropertiesComponentStorage(String prefix, PropertiesComponent propertiesComponent) {
       LOG.assertTrue(propertiesComponent != null || ApplicationManager.getApplication().isUnitTestMode());
       myPropertiesComponent = propertiesComponent;
       myPrefix = prefix;
     }
 
-    public PropertiesComponentStorage(@NonNls String prefix) {
+    public PropertiesComponentStorage(String prefix) {
       this(prefix, PropertiesComponent.getInstance());
     }
 
+    @Override
     public void put(String key, String value) {
-      if (myPropertiesComponent != null)
+      if (myPropertiesComponent != null) {
         myPropertiesComponent.setValue(myPrefix + key, value);
+      }
     }
 
+    @Override
     public String get(String key) {
       return myPropertiesComponent != null ? myPropertiesComponent.getValue(myPrefix + key) : null;
     }
 
+    @Override
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "PropertiesComponentStorage: " + myPrefix;
     }
   }
 
   class MapStorage implements Storage {
     private final Map<String, String> myValues = new HashMap<String, String>();
+
+    @Override
     public String get(String key) {
       return myValues.get(key);
     }
 
+    @Override
     public void put(String key, String value) {
       myValues.put(key, value);
     }

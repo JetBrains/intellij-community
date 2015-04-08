@@ -9,7 +9,8 @@ class Parent(object):
 
 
 class Child(Parent, object):
-    def __init__(self): pass
+    def __init__(self):
+        pass
 
     AC = 11
 

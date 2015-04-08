@@ -28,7 +28,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -41,8 +43,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -222,6 +222,44 @@ public class PluginsAdvertiser implements StartupActivity {
     return bundled.isEmpty() ? null : bundled;
   }
 
+  public static void installAndEnablePlugins(final @NotNull Set<String> pluginIds, final @NotNull Runnable onSuccess) {
+    ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
+      private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
+      private List<IdeaPluginDescriptor> myAllPlugins;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
+          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId().getIdString())) {
+              myPlugins.add(PluginDownloader.createDownloader(descriptor));
+            }
+          }
+          for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
+            if (pluginIds.contains(loadedPlugin.getPluginId().getIdString())) {
+              myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
+            }
+          }
+        }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        final PluginsAdvertiserDialog advertiserDialog =
+          new PluginsAdvertiserDialog(null,
+                                      myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                      PluginManagerMain.mapToPluginIds(myAllPlugins));
+        if (advertiserDialog.showAndGet()) {
+          onSuccess.run();
+        }
+      }
+    });
+  }
+
   @Override
   public void runActivity(@NotNull final Project project) {
     if (!UpdateSettings.getInstance().isCheckNeeded()) {
@@ -247,7 +285,7 @@ public class PluginsAdvertiser implements StartupActivity {
           @Override
           public void run() {
             try {
-              myAllPlugins = RepositoryHelper.loadPlugins(null);
+              myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(null);
               if (project.isDisposed()) return;
               if (extensions == null) {
                 loadSupportedExtensions(myAllPlugins);

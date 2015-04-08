@@ -45,8 +45,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author stathik
@@ -66,6 +65,24 @@ public class RepositoryHelper {
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.add(null);  // main plugin repository
     return hosts;
+  }
+
+  /**
+   * Loads list of plugins, compatible with a current build, from all configured repositories
+   */
+  @NotNull
+  public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) throws IOException {
+    List<IdeaPluginDescriptor> result = new ArrayList<IdeaPluginDescriptor>();
+    Set<String> addedPluginIds = new HashSet<String>();
+    for (String host : getPluginHosts()) {
+      List<IdeaPluginDescriptor> plugins = loadPlugins(host, null, indicator);
+      for (IdeaPluginDescriptor plugin : plugins) {
+        if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
+          result.add(plugin);
+        }
+      }
+    }
+    return result;
   }
 
   /**

@@ -178,6 +178,7 @@ return PyTokenTypes.DOCSTRING; }
 "=="                  { return PyTokenTypes.EQEQ; }
 "!="                  { return PyTokenTypes.NE; }
 "<>"                  { return PyTokenTypes.NE_OLD; }
+"->"                  { return PyTokenTypes.RARROW; }
 "+"                   { return PyTokenTypes.PLUS; }
 "-"                   { return PyTokenTypes.MINUS; }
 "*"                   { return PyTokenTypes.MULT; }

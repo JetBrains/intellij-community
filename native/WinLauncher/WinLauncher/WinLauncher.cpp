@@ -515,8 +515,8 @@ bool CreateJVM()
 
     buf << "Failed to create JVM: error code " << result << ".\n";
     buf << "JVM Path: " << jvmPath << "\n";
-    buf << "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in ";
-        "Computer > System Properties > System Settings > Environment Variables.";
+    buf << "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
+    buf << "Computer > System Properties > System Settings > Environment Variables.";
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }

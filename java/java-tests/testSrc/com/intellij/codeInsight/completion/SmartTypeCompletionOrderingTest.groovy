@@ -233,8 +233,8 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "local", "Foo.class", "Bar.class");
   }
 
-  public void testDontPreferCasted() throws Throwable {
-    checkPreferredItems(0, "b", "_o");
+  public void testPreferInstanceofed() throws Throwable {
+    checkPreferredItems(0, "_o", "b");
   }
 
   public void testInnerClassesProximity() throws Throwable {
@@ -313,6 +313,9 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
   public void testPreferLocalOverFactoryMatchingName() {
     checkPreferredItems 0, 'e', 'createEvent'
+  }
+  public void testPreferLocalOverThis() {
+    checkPreferredItems 0, 'value', 'this', 'hashCode'
   }
 
   public void testGetLogger() {

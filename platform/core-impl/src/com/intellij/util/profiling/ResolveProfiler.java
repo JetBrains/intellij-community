@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.util;
+package com.intellij.util.profiling;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,6 +78,10 @@ public class ResolveProfiler {
     return getThreadInfo().finish();
   }
 
+  public static void write(String prefix, @NotNull PsiElement expression, long time) {
+    write(getInfo(prefix, expression, time));
+  }
+
   public static void write(@NotNull String s) {
     if (DISABLED) return;
 
@@ -111,4 +118,12 @@ public class ResolveProfiler {
     }
     return info;
   }
+
+  public static String getInfo(String prefix, @NotNull PsiElement expression, long time) {
+    PsiFile file = expression.getContainingFile();
+    String text = expression.getText();
+    String textInfo = text != null ? StringUtil.escapeLineBreak(text) : "<null>";
+    return prefix + " :: " + (file != null ? file.getName() : "<no file>") + " :: " + textInfo + " :: " + expression.hashCode()+ " :: " + time;
+  }
+
 }

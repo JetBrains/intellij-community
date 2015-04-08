@@ -92,10 +92,12 @@ public class StringRef {
     return that == this || that instanceof StringRef && toString().equals(that.toString());
   }
 
+  @Nullable
   public static String toString(@Nullable StringRef ref) {
     return ref != null ? ref.getString() : null;
   }
 
+  @Nullable
   public static StringRef fromString(@Nullable String source) {
     return source == null ? null : new StringRef(source);
   }
@@ -105,6 +107,7 @@ public class StringRef {
     return new StringRef(source == null ? "" : source);
   }
 
+  @Nullable
   public static StringRef fromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
     final int nameId = DataInputOutputUtil.readINT(in);
 

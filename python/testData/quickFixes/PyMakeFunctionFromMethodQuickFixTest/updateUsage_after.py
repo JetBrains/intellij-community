@@ -5,7 +5,7 @@ def foo():
     print("Hello Pycharm!")
 
 
-class A: pass
-
+class A:
+    pass
 
 foo()

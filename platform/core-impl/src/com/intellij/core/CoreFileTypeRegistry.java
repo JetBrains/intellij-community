@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,12 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
   @NotNull
   @Override
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
+    if (file instanceof LightVirtualFile) {
+      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+      if (fileType != null) {
+        return fileType;
+      }
+    }
     return getFileTypeByFileName(file.getName());
   }
 

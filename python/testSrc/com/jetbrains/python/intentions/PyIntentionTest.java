@@ -252,9 +252,8 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-8989
-  public void testConvertTripleQuotedStringIsNotAvailableForRawStrings() {
-    myFixture.configureByFile("intentions/" + getTestName(false) + ".py");
-    assertEmpty(myFixture.filterAvailableIntentions(PyBundle.message("INTN.triple.quoted.string")));
+  public void testConvertTripleQuotedStringRawStrings() {
+    doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
 
   // PY-8989

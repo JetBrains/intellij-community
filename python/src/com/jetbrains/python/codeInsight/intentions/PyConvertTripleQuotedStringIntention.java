@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,23 +76,18 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
 
-      boolean insideTripleQuotedString = false;
       for (StringNodeInfo info : extractStringNodesInfo(string)) {
-        // Can't handle triple quoted raw strings: there is no obvious way to insert linefeed or escape quote inside them
-        if (StringUtil.containsIgnoreCase(info.prefix, "r") && info.isTripleQuoted) {
-          return false;
-        }
         if (info.isTripleQuoted && info.node.getTextRange().contains(caretOffset)) {
-          insideTripleQuotedString = true;
+          return true;
         }
       }
-      return insideTripleQuotedString;
     }
     return false;
   }
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
+    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
+                                                                           PyStringLiteralExpression.class);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (pyString != null) {
       final StringBuilder result = new StringBuilder();
@@ -107,15 +103,24 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
 
         final boolean inLastNode = i == nodeInfos.size() - 1;
         for (int j = 0; j < lines.size(); j++) {
-
+          final String line = lines.get(j);
           final boolean inLastLine = j == lines.size() - 1;
-          result.append(info.prefix);
-          result.append(info.quote);
-          result.append(convertToValidSubString(lines.get(j), info.quote, info.isTripleQuoted));
-          if (!inLastLine || lastLineExcluded) {
-            result.append("\\n");
+
+          if (StringUtil.containsIgnoreCase(info.prefix, "r")) {
+            appendSplittedRawStringLine(result, info, line);
+            if (!inLastLine || lastLineExcluded) {
+              result.append(" ").append(info.quote).append("\\n").append(info.quote);
+            }
           }
-          result.append(info.quote);
+          else {
+            result.append(info.prefix);
+            result.append(info.quote);
+            result.append(convertToValidSubString(line, info.quote, info.isTripleQuoted));
+            if (!inLastLine || lastLineExcluded) {
+              result.append("\\n");
+            }
+            result.append(info.quote);
+          }
           if (!(inLastNode && inLastLine)) {
             result.append("\n");
           }
@@ -128,13 +133,48 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(pyString), result.toString());
 
       final PsiElement parent = pyString.getParent();
-      if ((parent instanceof PyParenthesizedExpression || parent instanceof PyTupleExpression)
-          && expression instanceof PyParenthesizedExpression) {
+      if (expression instanceof PyParenthesizedExpression &&
+          (parent instanceof PyParenthesizedExpression ||
+           parent instanceof PyTupleExpression ||
+           parent instanceof PyArgumentList && ArrayUtil.getFirstElement(((PyArgumentList)parent).getArguments()) == pyString)) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
       }
       if (expression != null) {
         pyString.replace(expression);
       }
+    }
+  }
+
+  private static void appendSplittedRawStringLine(@NotNull StringBuilder result, @NotNull StringNodeInfo info, @NotNull String line) {
+    boolean singleQuoteUsed = false, doubleQuoteUsed = false;
+    int chunkStart = 0;
+    boolean firstChunk = true;
+    for (int k = 0; k <= line.length(); k++) {
+      if (k < line.length()) {
+        singleQuoteUsed |= line.charAt(k) == '\'';
+        doubleQuoteUsed |= line.charAt(k) == '"';
+      }
+      final char chunkQuote;
+      if ((k == line.length() || line.charAt(k) == '\'') && doubleQuoteUsed) {
+        chunkQuote = '\'';
+        doubleQuoteUsed = false;
+      }
+      else if ((k == line.length() || line.charAt(k) == '"') && singleQuoteUsed) {
+        chunkQuote = '"';
+        singleQuoteUsed = false;
+      }
+      else if (k == line.length()) {
+        chunkQuote = info.quote;
+      }
+      else {
+        continue;
+      }
+      if (!firstChunk) {
+        result.append(" ");
+      }
+      result.append(info.prefix).append(chunkQuote).append(line.substring(chunkStart, k)).append(chunkQuote);
+      firstChunk = false;
+      chunkStart = k;
     }
   }
 
