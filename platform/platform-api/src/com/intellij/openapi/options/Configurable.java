@@ -59,12 +59,12 @@ import org.jetbrains.annotations.Nullable;
  *   <dd>This attribute specifies the setting name visible to users.
  *   If the display name is not set, a configurable component will be instantiated to retrieve its name dynamically.
  *   This causes a loading of plugin classes and increases the delay before showing the settings dialog.
- *   It is highly recommended specifiyng the display name in XML to improve UI responsiveness.</dd>
+ *   It is highly recommended specifying the display name in XML to improve UI responsiveness.</dd>
  *   <dt>{@code key} and {@code bundle}</dt>
  *   <dd>These attributes specify the display name too, if the specified key is declared in the specified resource bundle.</dd>
  *   <dt>{@code id}</dt>
  *   <dd>This attribute specifies the {@link SearchableConfigurable#getId() unique identifier}
- *   for the configurable component.  It is also recommended specifiyng the identifier in XML.</dd>
+ *   for the configurable component.  It is also recommended specifying the identifier in XML.</dd>
  *   <dt>{@code parentId}</dt>
  *   <dd>This attribute is used to create a hierarchy of settings.
  *   If it is set, the configurable component will be a child of the specified parent component.</dd>
@@ -76,7 +76,7 @@ import org.jetbrains.annotations.Nullable;
  *     <dt>ROOT {@code groupId="root"}</dt>
  *     <dd>This is the invisible root group that contains all other groups.
  *     Usually, you should not place your settings here.</dd>
- *     <dt>Appearance &amp; Behavior {@code groupId="appearance"}</dt>
+ *     <dt>Appearance & Behavior {@code groupId="appearance"}</dt>
  *     <dd>This group contains settings to personalize IDE appearance and behavior:
  *     change themes and font size, tune the keymap, and configure plugins and system settings,
  *     such as password policies, HTTP proxy, updates and more.</dd>
@@ -92,7 +92,7 @@ import org.jetbrains.annotations.Nullable;
  *     <dt>Build Tools {@code groupId="build.tools"}</dt>
  *     <dd>This is subgroup of the group above. Here you can configure your project integration
  *     with the different build tools, such as Maven, Gradle, or Gant.</dd>
- *     <dt>Languages &amp; Frameworks {@code groupId="language"}</dt>
+ *     <dt>Languages & Frameworks {@code groupId="language"}</dt>
  *     <dd>This group is intended to configure the settings related to specific frameworks and technologies used in your project.</dd>
  *     <dt>Tools {@code groupId="tools"}</dt>
  *     <dd>This group contains settings to configure integration with third-party applications,
