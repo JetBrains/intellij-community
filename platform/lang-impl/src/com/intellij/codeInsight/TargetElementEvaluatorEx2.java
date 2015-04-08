@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Dennis.Ushakov
- */
-public interface TargetElementEvaluatorEx extends TargetElementEvaluator {
-  boolean isIdentifierPart(PsiFile element, CharSequence text, int offset);
+public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluatorEx {
+  @Nullable 
+  public abstract PsiElement getNamedElement(@NotNull PsiElement element);
+  
+  public abstract boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement);
 }
