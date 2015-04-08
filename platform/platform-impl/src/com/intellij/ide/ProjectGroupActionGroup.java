@@ -16,9 +16,12 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsWelcomeScreenActionBase;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -30,6 +33,22 @@ public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbA
   public ProjectGroupActionGroup(ProjectGroup group, List<AnAction> children) {
     super(group.getName(), children);
     myGroup = group;
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    new RecentProjectsWelcomeScreenActionBase() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myGroup.setExpanded(!myGroup.isExpanded());
+        final JList list = getList(e);
+        if (list != null) {
+          final int index = list.getSelectedIndex();
+          rebuildRecentProjectsList(e);
+          list.setSelectedIndex(index);
+        }
+      }
+    }.actionPerformed(e);
   }
 
   @Override
