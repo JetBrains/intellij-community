@@ -69,6 +69,10 @@ String bar() { return "z"; }
     assert inferNullity(parse('String bar() { if (equals(2)) return null; return "a"; }; ')) == NULLABLE
   }
 
+  void "test ternary branch returns null"() {
+    assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? null : "a"; }; ')) == NULLABLE
+  }
+
   void "test delegation to nullable means nothing"() {
     assert inferNullity(parse('String foo() { return bar("2"); }; String bar(String s) { if (s != "2") return null; return "a"; }; ')) == UNKNOWN
   }

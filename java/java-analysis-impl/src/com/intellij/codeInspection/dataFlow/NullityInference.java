@@ -86,6 +86,9 @@ public class NullityInference {
           else if (value instanceof PsiLambdaExpression || value.getType() instanceof PsiPrimitiveType) {
             hasNotNulls.set(true);
           }
+          else if (containsNulls(value)) {
+            hasNulls.set(true);
+          }
           else if (value instanceof PsiMethodCallExpression) {
             PsiMethod target = ((PsiMethodCallExpression)value).resolveMethod();
             if (target == null) {
@@ -99,6 +102,16 @@ public class NullityInference {
             hasUnknowns.set(true);
           }
           super.visitReturnStatement(statement);
+        }
+
+        private boolean containsNulls(PsiExpression value) {
+          if (value instanceof PsiConditionalExpression) {
+            return containsNulls(((PsiConditionalExpression)value).getElseExpression()) || containsNulls(((PsiConditionalExpression)value).getThenExpression());
+          }
+          if (value instanceof PsiParenthesizedExpression) {
+            return containsNulls(((PsiParenthesizedExpression)value).getExpression());
+          }
+          return value instanceof PsiLiteralExpression && value.textMatches(PsiKeyword.NULL);
         }
 
         @Override
