@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,23 +76,18 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
 
-      boolean insideTripleQuotedString = false;
       for (StringNodeInfo info : extractStringNodesInfo(string)) {
-        // Can't handle triple quoted raw strings: there is no obvious way to insert linefeed or escape quote inside them
-        if (StringUtil.containsIgnoreCase(info.prefix, "r") && info.isTripleQuoted) {
-          return false;
-        }
         if (info.isTripleQuoted && info.node.getTextRange().contains(caretOffset)) {
-          insideTripleQuotedString = true;
+          return true;
         }
       }
-      return insideTripleQuotedString;
     }
     return false;
   }
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
+    final PyStringLiteralExpression pyString = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
+                                                                           PyStringLiteralExpression.class);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (pyString != null) {
       final StringBuilder result = new StringBuilder();
@@ -107,15 +103,64 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
 
         final boolean inLastNode = i == nodeInfos.size() - 1;
         for (int j = 0; j < lines.size(); j++) {
-
+          final String line = lines.get(j);
           final boolean inLastLine = j == lines.size() - 1;
-          result.append(info.prefix);
-          result.append(info.quote);
-          result.append(convertToValidSubString(lines.get(j), info.quote, info.isTripleQuoted));
-          if (!inLastLine || lastLineExcluded) {
-            result.append("\\n");
+
+          if (StringUtil.containsIgnoreCase(info.prefix, "r")) {
+            boolean singleQuoteUsed = false, doubleQuoteUsed = false;
+            int chunkStart = 0;
+            boolean firstChunk = true;
+            for (int k = 0; k < line.length(); k++) {
+              if (line.charAt(k) == '\'') {
+                singleQuoteUsed = true;
+                if (doubleQuoteUsed) {
+                  if (!firstChunk) {
+                    result.append(" ");
+                  }
+                  result.append(info.prefix).append('\'').append(line.substring(chunkStart, k)).append('\'');
+                  chunkStart = k;
+                  doubleQuoteUsed = false;
+                  firstChunk = false;
+                }
+              }
+              else if (line.charAt(k) == '"') {
+                doubleQuoteUsed = true;
+                if (singleQuoteUsed) {
+                  if (!firstChunk) {
+                    result.append(" ");
+                  }
+                  result.append(info.prefix).append('"').append(line.substring(chunkStart, k)).append('"');
+                  chunkStart = k;
+                  singleQuoteUsed = false;
+                  firstChunk = false;
+                }
+              }
+            }
+            if (!firstChunk) {
+              result.append(" ");
+            }
+            if (singleQuoteUsed) {
+              result.append(info.prefix).append('"').append(line.substring(chunkStart)).append('"');
+            }
+            else if (doubleQuoteUsed) {
+              result.append(info.prefix).append('\'').append(line.substring(chunkStart)).append('\'');
+            }
+            else {
+              result.append(info.prefix).append(info.quote).append(line.substring(chunkStart)).append(info.quote);
+            }
+            if (!inLastLine || lastLineExcluded) {
+              result.append(" ").append(info.quote).append("\\n").append(info.quote);
+            }
           }
-          result.append(info.quote);
+          else {
+            result.append(info.prefix);
+            result.append(info.quote);
+            result.append(convertToValidSubString(line, info.quote, info.isTripleQuoted));
+            if (!inLastLine || lastLineExcluded) {
+              result.append("\\n");
+            }
+            result.append(info.quote);
+          }
           if (!(inLastNode && inLastLine)) {
             result.append("\n");
           }
@@ -128,8 +173,10 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(pyString), result.toString());
 
       final PsiElement parent = pyString.getParent();
-      if ((parent instanceof PyParenthesizedExpression || parent instanceof PyTupleExpression)
-          && expression instanceof PyParenthesizedExpression) {
+      if (expression instanceof PyParenthesizedExpression &&
+          (parent instanceof PyParenthesizedExpression ||
+           parent instanceof PyTupleExpression ||
+           parent instanceof PyArgumentList && ArrayUtil.getFirstElement(((PyArgumentList)parent).getArguments()) == pyString)) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
       }
       if (expression != null) {
