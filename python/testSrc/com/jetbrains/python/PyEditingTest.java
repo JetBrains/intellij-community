@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author yole
@@ -317,6 +318,48 @@ public class PyEditingTest extends PyTestCase {
     doTestEnter("a = 'test(<caret>)'",
                 "a = 'test(' \\\n" +
                 "    ')'");
+  }
+
+  public void testEnterAfterDefKeywordInFunction() {
+    doTestEnter("def <caret>func():\n" +
+                "    pass",
+                "def \\\n" +
+                "        func():\n" +
+                "    pass");
+  }
+
+  public void testEnterBeforeColonInFunction() {
+    doTestEnter("def func()<caret>:\n" +
+                "    pass",
+                "def func()\\\n" +
+                "        :\n" +
+                "    pass");
+  }
+
+  // PY-15469
+  public void testEnterBeforeArrowInFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doTestEnter("def func() <caret>-> int:\n" +
+                    "    pass",
+                    "def func() \\\n" +
+                    "        -> int:\n" +
+                    "    pass");
+      }
+    });
+  }
+
+  // PY-15469
+  public void testEnterAfterArrowInFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doTestEnter("def func() -><caret> int:\n" +
+                    "    pass",
+                    "def func() ->\\\n" +
+                    "        int:\n" +
+                    "    pass");
+      }
+    });
   }
 
   private void doTestEnter(String before, final String after) {
