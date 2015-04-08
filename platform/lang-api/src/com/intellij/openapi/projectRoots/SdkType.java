@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,15 +39,29 @@ public abstract class SdkType implements SdkTypeId {
 
   private final String myName;
 
+  public SdkType(@NotNull String name) {
+    myName = name;
+  }
+
   /**
-   * @return path to set up file chooser to or null if not applicable
+   * Returns a recommended starting path for a file chooser (where SDKs of this type are usually may be found),
+   * or {@code null} if not applicable/no SDKs found.
+   * <p/>
+   * E.g. for Python SDK on Unix the method may return either {@code "/usr/bin"} or {@code "/usr/bin/python"}
+   * (if there is only one Python interpreter installed on a host).
    */
   @Nullable
   public abstract String suggestHomePath();
 
+  /**
+   * Returns a list of all valid SDKs found on this host.
+   * <p/>
+   * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
+   */
+  @NotNull
   public Collection<String> suggestHomePaths() {
-    String s = suggestHomePath();
-    return s == null ? Collections.<String>emptyList() : Collections.singletonList(s);
+    String home = suggestHomePath();
+    return home != null ? Collections.singletonList(home) : Collections.<String>emptyList();
   }
 
   /**
@@ -58,13 +71,11 @@ public abstract class SdkType implements SdkTypeId {
    * @param homePath the path selected in the file chooser.
    * @return the path to be used as the SDK home.
    */
-
   public String adjustSelectedSdkHome(String homePath) {
     return homePath;
   }
 
   public abstract boolean isValidSdkHome(String path);
-
 
   @Override
   @Nullable
@@ -103,10 +114,6 @@ public abstract class SdkType implements SdkTypeId {
     return loadAdditionalData(additional);
   }
 
-  public SdkType(@NotNull @NonNls String name) {
-    myName = name;
-  }
-
   @NotNull
   @Override
   public String getName() {
@@ -120,7 +127,6 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  @NonNls
   public String getHelpTopic() {
     return "preferences.jdks";
   }
@@ -129,6 +135,7 @@ public abstract class SdkType implements SdkTypeId {
     return IconUtil.getAddIcon();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof SdkType)) return false;
@@ -140,10 +147,12 @@ public abstract class SdkType implements SdkTypeId {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }
 
+  @Override
   public String toString() {
     return getName();
   }
