@@ -19,6 +19,7 @@ import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -43,6 +44,10 @@ public class MoveProjectToGroupActionGroup extends DefaultActionGroup implements
     });
     for (ProjectGroup group : groups) {
       add(new MoveProjectToGroupAction(group));
+    }
+    if (groups.size() > 0) {
+      add(Separator.getInstance());
+      add(new RemoveSelectedProjectsFromGroupsAction());
     }
   }
 }
