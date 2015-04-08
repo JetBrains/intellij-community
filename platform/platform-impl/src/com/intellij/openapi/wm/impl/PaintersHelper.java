@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -78,11 +79,10 @@ final class PaintersHelper implements Painter.Listener {
 
   public void paint(Graphics g, JComponent current) {
     if (myPainters.isEmpty()) return;
+    Rectangle clip = ObjectUtils.notNull(g.getClipBounds(), current.getBounds());
 
     Graphics2D g2d = (Graphics2D)g;
     for (Painter painter : myPainters) {
-      Rectangle clip = g.getClipBounds();
-
       Component component = myPainter2Component.get(painter);
       if (component.getParent() == null) continue;
       Rectangle componentBounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), current);
