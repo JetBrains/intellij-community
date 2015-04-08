@@ -144,37 +144,48 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
       if (new File("/usr/libexec/java_home").canExecute()) {
         String path = ExecUtil.execAndReadLine(new GeneralCommandLine("/usr/libexec/java_home"));
-        if (path != null && new File(path).exists()) {
+        if (path != null && new File(path).isDirectory()) {
           return path;
         }
       }
-      return "/System/Library/Frameworks/JavaVM.framework/Versions";
+
+      String home = checkKnownLocations("/Library/Java/JavaVirtualMachines", "/System/Library/Java/JavaVirtualMachines");
+      if (home != null) return home;
     }
 
     if (SystemInfo.isLinux) {
-      final String[] homes = {"/usr/java", "/opt/java", "/usr/lib/jvm"};
-      for (String home : homes) {
-        if (new File(home).isDirectory()) {
-          return home;
-        }
-      }
+      String home = checkKnownLocations("/usr/java", "/opt/java", "/usr/lib/jvm");
+      if (home != null) return home;
     }
 
     if (SystemInfo.isSolaris) {
-      return "/usr/jdk";
+      String home = checkKnownLocations("/usr/jdk");
+      if (home != null) return home;
     }
 
-    if (SystemInfo.isWindows) {
-      String property = System.getProperty("java.home");
-      if (property == null) return null;
-      File javaHome = new File(property).getParentFile();//actually java.home points to to jre home
-      if (javaHome != null && JdkUtil.checkForJdk(javaHome)) {
+    String property = System.getProperty("java.home");
+    if (property != null) {
+      File javaHome = new File(property);
+      if (javaHome.getName().equals("jre")) {
+        javaHome = javaHome.getParentFile();
+      }
+      if (javaHome != null && javaHome.isDirectory()) {
         return javaHome.getAbsolutePath();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static String checkKnownLocations(String... locations) {
+    for (String home : locations) {
+      if (new File(home).isDirectory()) {
+        return home;
       }
     }
 
