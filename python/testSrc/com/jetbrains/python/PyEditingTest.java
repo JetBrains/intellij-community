@@ -362,6 +362,20 @@ public class PyEditingTest extends PyTestCase {
     });
   }
 
+  // PY-15469
+  public void testEnterDoesNotInsertSlashInsideArrow() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTestEnter("def func() -<caret>> int:\n" +
+                    "    pass",
+                    "def func() -\n" +
+                    "> int:\n" +
+                    "    pass");
+      }
+    });
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

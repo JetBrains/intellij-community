@@ -138,6 +138,7 @@ public class PyTokenTypes {
   public static final PyElementType LTLTEQ = new PyElementType("LTLTEQ");// <<=
   public static final PyElementType GTGTEQ = new PyElementType("GTGTEQ");// >>=
   public static final PyElementType EXPEQ = new PyElementType("EXPEQ");// **=
+  public static final PyElementType RARROW = new PyElementType("RARROW");// ->
 
   public static final TokenSet OPERATIONS = TokenSet.create(
       PLUS, MINUS, MULT, AT, EXP, DIV, FLOORDIV, PERC, LTLT, GTGT, AND, OR,
