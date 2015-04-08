@@ -57,8 +57,8 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     assertTrue(bundle.getDefaultPropertiesFile().equals(bundle2.getDefaultPropertiesFile()));
     assertEquals("prop_core", bundle.getBaseName());
 
-    assertEquals("English", propertiesFile.getLocale().getDisplayLanguage());
-    assertEquals("Finnish", propertiesFile2.getLocale().getDisplayLanguage());
+    assertNotSame(propertiesFile.getLocale().getLanguage(), propertiesFile.getLocale().getDisplayLanguage());
+    assertNotSame(propertiesFile2.getLocale().getLanguage(), propertiesFile2.getLocale().getDisplayLanguage());
   }
 
   public void testPropertiesFileNotAssociatedWhileLanguageCodeNotRecognized() {
