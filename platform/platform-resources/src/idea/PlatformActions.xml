@@ -555,6 +555,7 @@
     <group id="WelcomeScreenRecentProjectActionGroup">
       <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction" text="New Project Group"/>
+      <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.MoveProjectToGroupActionGroup" text="Move To Group" popup="true"/>
     </group>
 
     <group id="FileChooser">
