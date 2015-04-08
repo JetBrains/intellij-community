@@ -442,9 +442,17 @@ public class MavenProject {
 
   public Map<String, String> getAnnotationProcessorOptions() {
     Element compilerConfig = getCompilerConfig();
+    if (compilerConfig != null) {
+      return getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig);
+    }
+    MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
+    if (bscMavenPlugin != null) {
+      return getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin);
+    }
+    return Collections.emptyMap();
+  }
 
-    if (compilerConfig == null) return Collections.emptyMap();
-
+  private Map<String, String> getAnnotationProcessorOptionsFromCompilerConfig(Element compilerConfig) {
     Map<String, String> res = null;
 
     String compilerArgument = compilerConfig.getChildText("compilerArgument");
@@ -486,6 +494,21 @@ public class MavenProject {
 
     if (res == null) return Collections.emptyMap();
 
+    return res;
+  }
+
+  private Map<String, String> getAnnotationProcessorOptionsFromProcessorPlugin(MavenPlugin bscMavenPlugin) {
+    Element cfg = bscMavenPlugin.getGoalConfiguration("process");
+    if (cfg == null) {
+      cfg = bscMavenPlugin.getConfigurationElement();
+    }
+    LinkedHashMap<String, String> res = new LinkedHashMap<String, String>();
+    if (cfg != null) {
+      List<Element> options = cfg.getChild("options").getChildren();
+      for (Element option : options) {
+        res.put(option.getName(), option.getText());
+      }
+    }
     return res;
   }
 
