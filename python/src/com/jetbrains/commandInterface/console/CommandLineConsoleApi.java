@@ -16,7 +16,6 @@
 package com.jetbrains.commandInterface.console;
 
 import com.intellij.execution.console.LanguageConsoleBuilder;
-import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -72,7 +71,7 @@ public final class CommandLineConsoleApi {
 
     final ContentManager contentManager = window.getContentManager();
     contentManager.removeAllContents(true);
-    final LanguageConsoleImpl console = CommandConsole.createConsole(module, consoleName, commandList);
+    final CommandConsole console = CommandConsole.createConsole(module, consoleName, commandList);
 
 
     final Content content = new ContentImpl(console.getComponent(), "", true);

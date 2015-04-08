@@ -46,7 +46,7 @@ import java.awt.*;
  */
 @SuppressWarnings({"InstanceVariableMayNotBeInitialized", "NonSerializableFieldInSerializableClass", "DeserializableClassInSecureContext",
   "SerializableClassInSecureContext"}) // Nobody would serialize this class
-final class ArgumentHintLayer extends JPanel implements Listener {
+final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // Runnable to hide on console state changes
 
   /**
    * Braces for mandatory args are [] according to GNU/POSIX recommendations
@@ -114,8 +114,6 @@ final class ArgumentHintLayer extends JPanel implements Listener {
     myConsole = console;
     myDocumentLengthInChars = console.getEditorDocument().getTextLength();
     myLastText = console.getFile().getText();
-
-
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     myRequiredColor = scheme.getAttributes(ConsoleViewContentType.ERROR_OUTPUT_KEY).getForegroundColor();
     myOptionalColor = scheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES).getForegroundColor();
@@ -190,6 +188,12 @@ final class ArgumentHintLayer extends JPanel implements Listener {
     return String.format("%s%s%s", braces.first, textToShow, braces.second);
   }
 
+  @Override
+  public void run() {
+    // Console state changed! Hide...
+    myNextArg = null;
+    repaint();
+  }
 
   /**
    * Attaches argument displaying layer to console. Be sure your console has commands.
@@ -198,13 +202,14 @@ final class ArgumentHintLayer extends JPanel implements Listener {
    * @param console console to attach
    * @throws IllegalArgumentException is passed argument is not {@link CommandLineFile}
    */
-  static void attach(@NotNull final LanguageConsoleImpl console) {
+  static void attach(@NotNull final CommandConsole console) {
     final PsiFile consoleFile = console.getFile();
     if (!(consoleFile instanceof CommandLineFile)) {
       throw new IllegalArgumentException(
         String.format("Passed argument is %s, but has to be %s", consoleFile.getClass(), CommandLineFile.class));
     }
     final ArgumentHintLayer argumentHintLayer = new ArgumentHintLayer(console);
+    console.addStateChangeListener(argumentHintLayer);
     final MessageBusConnection connection = console.getProject().getMessageBus().connect();
     connection.subscribe(PsiModificationTracker.TOPIC, argumentHintLayer);
     console.addLayerToPane(argumentHintLayer);
