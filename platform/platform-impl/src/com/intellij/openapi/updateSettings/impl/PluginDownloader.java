@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -305,7 +307,14 @@ public class PluginDownloader {
       PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber);
       downloader.setDescriptor(descriptor);
       downloader.setDescription(descriptor.getDescription());
-      downloader.setDepends(((PluginNode)descriptor).getDepends());
+      List<PluginId> depends;
+      if (descriptor instanceof PluginNode) {
+        depends = ((PluginNode)descriptor).getDepends();
+      }
+      else {
+        depends = new ArrayList<PluginId>(Arrays.asList(descriptor.getDependentPluginIds()));
+      }
+      downloader.setDepends(depends);
       return downloader;
     }
     catch (URISyntaxException e) {

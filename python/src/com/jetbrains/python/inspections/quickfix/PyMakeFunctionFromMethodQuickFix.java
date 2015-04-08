@@ -66,7 +66,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     PyUtil.deleteParameter(problemFunction, 0);
 
     PsiElement copy = problemFunction.copy();
-    PyUtil.deleteElementSafely(problemFunction);
+    problemFunction.delete();
     final PsiFile file = containingClass.getContainingFile();
     PyClass aClass = PsiTreeUtil.getTopmostParentOfType(containingClass, PyClass.class);
     if (aClass == null)

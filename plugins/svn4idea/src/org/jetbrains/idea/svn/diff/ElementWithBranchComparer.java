@@ -140,7 +140,7 @@ public abstract class ElementWithBranchComparer {
     }
   }
 
-  private void reportGeneralException(final Exception e) {
+  protected void reportGeneralException(final Exception e) {
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
         Messages.showMessageDialog(myProject, e.getMessage(),

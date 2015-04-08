@@ -34,10 +34,6 @@ public class SuspiciousLanguagesInspectionTest extends LightCodeInsightFixtureTe
     doTest("p.properties", "p_en.properties");
   }
 
-  public void testSimple2() {
-    doTest("p.properties", "p_asd.properties");
-  }
-
   public void testWithAdditionalLocales() {
     doTest("p.properties", "p_asd.properties", "asd");
   }

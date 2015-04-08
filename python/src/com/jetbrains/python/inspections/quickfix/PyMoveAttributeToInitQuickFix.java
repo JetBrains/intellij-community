@@ -63,7 +63,7 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
   private static boolean removeDefinition(PyAssignmentStatement assignment) {
     final PyStatementList statementList = PsiTreeUtil.getParentOfType(assignment, PyStatementList.class);
     if (statementList == null) return false;
-    PyUtil.deleteElementSafely(assignment);
+    assignment.delete();
     return true;
   }
 }

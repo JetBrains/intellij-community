@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.contents.DiffContent;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.actions.diff.FileAwareDocumentContent;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -132,18 +130,15 @@ public class VcsHistoryUtil {
   @NotNull
   private static DiffContent createContent(@NotNull Project project, @NotNull byte[] content, @NotNull VcsFileRevision revision,
                                            @NotNull FilePath filePath) throws IOException {
+    DiffContentFactoryImpl contentFactory = DiffContentFactoryImpl.getInstanceImpl();
     if (isCurrent(revision)) {
       VirtualFile file = filePath.getVirtualFile();
-      if (file != null) return DiffContentFactory.getInstance().create(project, file);
+      if (file != null) return contentFactory.create(project, file);
     }
     if (isEmpty(revision)) {
-      return DiffContentFactory.getInstance().createEmpty();
+      return contentFactory.createEmpty();
     }
-    if (filePath.getFileType().isBinary()) {
-      return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
-    }
-    String text = CharsetToolkit.bytesToString(content, filePath.getCharset());
-    return FileAwareDocumentContent.create(project, text, filePath);
+    return contentFactory.createFromBytes(project, filePath, content);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {

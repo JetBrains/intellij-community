@@ -19,7 +19,7 @@ import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.IntPair;
+import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -60,7 +60,7 @@ public class OnesideFragmentBuilderTest extends UsefulTestCase {
 
     assertFalse(builder.isEqual());
     assertEquals(builder.getText().toString(), "A\nB\nC\nD\n");
-    assertEquals(builder.getChangedLines(), Collections.singletonList(new IntPair(1, 3)));
+    assertEquals(builder.getChangedLines(), Collections.singletonList(new LineRange(1, 3)));
 
     assertEquals(builder.getBlocks().size(), 1);
     ChangedBlock block = builder.getBlocks().get(0);

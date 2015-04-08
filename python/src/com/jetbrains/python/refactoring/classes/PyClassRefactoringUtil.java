@@ -204,16 +204,6 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  public static <T extends PyElement & PyStatementListContainer> void insertPassIfNeeded(@NotNull T element) {
-    final PyStatementList statements = element.getStatementList();
-    if (statements.getStatements().length == 0) {
-      statements.add(
-        PyElementGenerator.getInstance(element.getProject())
-          .createFromText(LanguageLevel.getDefault(), PyPassStatement.class, PyNames.PASS)
-      );
-    }
-  }
-
   /**
    * Restores references saved by {@link #rememberNamedReferences(com.intellij.psi.PsiElement, String...)}.
    *

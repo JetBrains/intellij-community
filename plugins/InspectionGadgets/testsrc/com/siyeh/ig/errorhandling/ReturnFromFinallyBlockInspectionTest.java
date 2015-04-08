@@ -1,10 +1,18 @@
 package com.siyeh.ig.errorhandling;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ReturnFromFinallyBlockInspectionTest extends IGInspectionTestCase {
+public class ReturnFromFinallyBlockInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/errorhandling/return_from_finally_block", new ReturnFromFinallyBlockInspection());
+  public void testReturnFromFinallyBlock() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ReturnFromFinallyBlockInspection();
   }
 }

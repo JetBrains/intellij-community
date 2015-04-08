@@ -212,8 +212,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       int index = 0;
       List<Change> changes = new ArrayList<Change>();
       for (DirectoryChange change : iterFileChanges()) {
-        changes.add(change);
         if (selectedSet.contains(change)) index = changes.size();
+        changes.add(change);
       }
 
       ShowDiffAction.showDiffForChange(myProject, changes, index, new ShowDiffContext(DiffDialogHints.FRAME));
