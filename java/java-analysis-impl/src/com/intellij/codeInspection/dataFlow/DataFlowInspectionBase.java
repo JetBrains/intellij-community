@@ -211,10 +211,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
-      if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_8)) {
-        ContainerUtil.addIfNotNull(fixes, ReplaceOptionalOfWithOfNullableFix.registerReplaceOptionalOfWithOfNullableFix(qualifier));
-      }
-      
+      ContainerUtil.addIfNotNull(fixes, ReplaceOptionalOfWithOfNullableFix.registerReplaceOptionalOfWithOfNullableFix(qualifier));
       return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
     }
     catch (IncorrectOperationException e) {
@@ -770,6 +767,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private static class ReplaceOptionalOfWithOfNullableFix implements LocalQuickFix {
 
+    public static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
+    public static final String JAVA_OPTIONAL = "java.util.Optional";
+    private final String myTargetMethodName;
+
+    public ReplaceOptionalOfWithOfNullableFix(final String targetMethodName) {
+      myTargetMethodName = targetMethodName;
+    }
+
     private static LocalQuickFix registerReplaceOptionalOfWithOfNullableFix(PsiExpression qualifier) {
       final PsiElement argList = PsiUtil.skipParenthesizedExprUp(qualifier).getParent();
       if (argList instanceof PsiExpressionList) {
@@ -778,10 +783,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
           if (method != null) {
             final PsiClass containingClass = method.getContainingClass();
-            if ("of".equals(method.getName()) &&
-                containingClass != null &&
-                "java.util.Optional".equals(containingClass.getQualifiedName())) {
-              return new ReplaceOptionalOfWithOfNullableFix();
+            if ("of".equals(method.getName()) && containingClass != null) {
+              final String qualifiedName = containingClass.getQualifiedName();
+              if (JAVA_OPTIONAL.equals(qualifiedName)) {
+                return new ReplaceOptionalOfWithOfNullableFix("ofNullable");
+              } 
+              else if (GUAVA_OPTIONAL.equals(qualifiedName)) {
+                return new ReplaceOptionalOfWithOfNullableFix("fromNullable");
+              }
             }
           }
         }
@@ -799,7 +808,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with '.ofNullable()'";
+      return "Replace with '." + myTargetMethodName + "()'";
     }
 
     @Override
