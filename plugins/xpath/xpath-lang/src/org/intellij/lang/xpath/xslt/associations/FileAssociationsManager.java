@@ -27,8 +27,10 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class FileAssociationsManager extends SimpleModificationTracker {
-    public static final FileType[] XML_FILES = new FileType[]{ StdFileTypes.XML, StdFileTypes.XHTML };
-    public static final List<FileType> XML_FILES_LIST = Arrays.asList(XML_FILES);
+    public static class Holder {
+        public static final FileType[] XML_FILES = {StdFileTypes.XML, StdFileTypes.XHTML};
+        public static final List<FileType> XML_FILES_LIST = Arrays.asList(XML_FILES);
+    }
 
     public abstract void removeAssociations(PsiFile file);
 

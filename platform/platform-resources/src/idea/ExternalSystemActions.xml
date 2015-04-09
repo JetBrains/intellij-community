@@ -84,6 +84,9 @@
     <action id="ExternalSystem.GroupTasks"
             class="com.intellij.openapi.externalSystem.action.task.GroupTasksAction" text="Group Tasks">
     </action>
+    <action id="ExternalSystem.ShowInheritedTasks"
+            class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
+    </action>
 
     <group id="ExternalSystemView.BaseProjectMenu">
       <reference ref="ExternalSystem.OpenConfig"/>

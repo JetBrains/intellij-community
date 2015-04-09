@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Locates all references to a specified PSI element.
  *
- * @see com.intellij.psi.PsiReference
+ * @see PsiReference
  * @author max
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
@@ -61,6 +61,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       this(elementToSearch, scope, ignoreAccessScope, null);
     }
 
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;
@@ -83,7 +84,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     /**
      * Same as {@link #getScopeDeterminedByUser()}. Use {@link #getEffectiveSearchScope} instead
      */
-    @Deprecated()
+    @Deprecated
     @NotNull
     public SearchScope getScope() {
       return myScope;
@@ -167,7 +168,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
 
   @NotNull
-  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
+  private static Query<PsiReference> uniqueResults(@NotNull Query<PsiReference> composite) {
     return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 

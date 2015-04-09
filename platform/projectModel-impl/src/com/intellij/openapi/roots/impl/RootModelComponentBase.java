@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  *  @author dsl
  */
 public abstract class RootModelComponentBase implements Disposable {
+  @NotNull
   private final RootModelImpl myRootModel;
   private boolean myDisposed;
 
@@ -33,6 +34,7 @@ public abstract class RootModelComponentBase implements Disposable {
   }
 
 
+  @NotNull
   public RootModelImpl getRootModel() {
     return myRootModel;
   }

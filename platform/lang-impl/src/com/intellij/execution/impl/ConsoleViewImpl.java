@@ -70,10 +70,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -963,9 +960,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void registerConsoleEditorActions() {
-    HyperlinkNavigationAction hyperlinkNavigationAction = new HyperlinkNavigationAction();
-    hyperlinkNavigationAction.registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
-    registerActionHandler(myEditor, IdeActions.ACTION_GOTO_DECLARATION, hyperlinkNavigationAction);
+    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_GOTO_DECLARATION);
+    CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(shortcuts, CommonShortcuts.ENTER.getShortcuts()));
+    new HyperlinkNavigationAction().registerCustomShortcutSet(shortcutSet, myEditor.getContentComponent());
+
 
     if (!myIsViewer) {
       new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());

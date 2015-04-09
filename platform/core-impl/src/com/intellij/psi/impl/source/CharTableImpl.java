@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.CharTable;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TIntObjectHashMap;
@@ -40,11 +41,7 @@ public class CharTableImpl implements CharTable {
   @NotNull
   @Override
   public CharSequence intern(@NotNull final CharSequence text) {
-    CharSequence result;
-    if (text.length() > INTERN_THRESHOLD) result = createSequence(text);
-    else result = doIntern(text);
-
-    return result;
+    return text.length() > INTERN_THRESHOLD ? createSequence(text) : doIntern(text);
   }
 
   @NotNull
@@ -210,27 +207,23 @@ public class CharTableImpl implements CharTable {
     for (Field field : aClass.getDeclaredFields()) {
       if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
       if ((field.getModifiers() & Modifier.PUBLIC) == 0) continue;
-      String typeName;
-      try {
-        typeName = (String)field.get(null);
+      String typeName = ReflectionUtil.getField(aClass, null, String.class, field.getName());
+      if (typeName != null) {
+        staticIntern(typeName);
       }
-      catch (Exception e) {
-        continue;
-      }
-      staticIntern(typeName);
     }
   }
 
   private static class StringHashToCharSequencesMap extends TIntObjectHashMap<Object> {
-    StringHashToCharSequencesMap(int capacity, float loadFactor) {
+    private StringHashToCharSequencesMap(int capacity, float loadFactor) {
       super(capacity, loadFactor);
     }
 
-    CharSequence get(CharSequence sequence, int startOffset, int endOffset) {
+    private CharSequence get(CharSequence sequence, int startOffset, int endOffset) {
       return getSubSequenceWithHashCode(subSequenceHashCode(sequence, startOffset, endOffset), sequence, startOffset, endOffset);
     }
 
-    CharSequence getSubSequenceWithHashCode(int hashCode, CharSequence sequence, int startOffset, int endOffset) {
+    private CharSequence getSubSequenceWithHashCode(int hashCode, CharSequence sequence, int startOffset, int endOffset) {
       Object o = get(hashCode);
       if (o == null) return null;
       if (o instanceof CharSequence) {
@@ -238,15 +231,16 @@ public class CharTableImpl implements CharTable {
           return (CharSequence)o;
         }
         return null;
-      } else if (o instanceof CharSequence[]) {
+      }
+      if (o instanceof CharSequence[]) {
         for(CharSequence cs:(CharSequence[])o) {
           if (charSequenceSubSequenceEquals(cs, sequence, startOffset, endOffset)) {
             return cs;
           }
         }
-      } else {
-        assert false:o.getClass();
+        return null;
       }
+      assert false:o.getClass();
       return null;
     }
 
@@ -259,15 +253,15 @@ public class CharTableImpl implements CharTable {
       return true;
     }
 
-    CharSequence get(CharSequence sequence) {
+    private CharSequence get(CharSequence sequence) {
       return get(sequence, 0, sequence.length());
     }
 
-    CharSequence add(CharSequence sequence) {
+    private CharSequence add(CharSequence sequence) {
       return add(sequence, 0, sequence.length());
     }
 
-    CharSequence add(CharSequence sequence, int startOffset, int endOffset) {
+    private CharSequence add(CharSequence sequence, int startOffset, int endOffset) {
       int hashCode = subSequenceHashCode(sequence, startOffset, endOffset);
       return getOrAddSubSequenceWithHashCode(hashCode, sequence, startOffset, endOffset);
     }

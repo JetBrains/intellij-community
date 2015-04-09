@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ public class ConcurrentPackedBitArrayTest extends TestCase {
     ConcurrentPackedBitsArray bitSet = new ConcurrentPackedBitsArray(4);
     int N = 3000;
     for (int i=0; i<N;i++) {
-      assertEquals(0, bitSet.get(i));
+      assertEquals(0, bitSet.get(i) & 0xf);
       bitSet.set(i, 0xa);
-      assertEquals(0xa, bitSet.get(i));
+      assertEquals(0xa, bitSet.get(i) & 0xf);
       bitSet.set(i, 0x2);
-      assertEquals(0x2, bitSet.get(i));
+      assertEquals(0x2, bitSet.get(i) & 0xf);
     }
 
     try {

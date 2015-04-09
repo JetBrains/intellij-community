@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
+  private final Collection<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
@@ -337,7 +337,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void reDetect(@NotNull Collection<VirtualFile> files) {
-    final List<VirtualFile> changed = new ArrayList<VirtualFile>();
+    final Collection<VirtualFile> changed = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       boolean shouldRedetect = wasAutoDetectedBefore(file) && isDetectable(file);
       if (toLog()) {
@@ -476,7 +476,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       int id = ((VirtualFileWithId)file).getId();
       if (id < 0) return UnknownFileType.INSTANCE;
 
-      //boolean autoDetectWasRun = this.autoDetectWasRun.get(id);
       long flags = packedFlags.get(id);
       boolean autoDetectWasRun = (flags & AUTO_DETECT_WAS_RUN_MASK) != 0;
       if (autoDetectWasRun) {
@@ -486,33 +485,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         return type;
       }
-      boolean wasDetectedAsText = false;
-      boolean wasDetectedAsBinary = false;
-      boolean wasAutoDetectRun = false;
       if ((flags & ATTRIBUTES_WERE_LOADED_MASK) == 0) {
-        DataInputStream stream = autoDetectedAttribute.readAttribute(file);
-        try {
-          try {
-            byte status = stream != null ? stream.readByte() : 0;
-            wasAutoDetectRun = stream != null;
-            wasDetectedAsText = BitUtil.isSet(status, AUTO_DETECTED_AS_TEXT_MASK);
-            wasDetectedAsBinary = BitUtil.isSet(status, AUTO_DETECTED_AS_BINARY_MASK);
-          }
-          finally {
-            if (stream != null) {
-              stream.close();
-            }
-          }
-        }
-        catch (IOException ignored) {
-        }
-        flags = ATTRIBUTES_WERE_LOADED_MASK;
-        flags = BitUtil.set(flags, AUTO_DETECTED_AS_TEXT_MASK, wasDetectedAsText);
-        flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasDetectedAsBinary);
-        flags = BitUtil.set(flags, AUTO_DETECT_WAS_RUN_MASK, wasAutoDetectRun);
-
+        flags = readFlagsFromCache(file);
         packedFlags.set(id, flags);
       }
+      boolean wasDetectedAsText = BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK);
+      boolean wasDetectedAsBinary = BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK);
+      boolean wasAutoDetectRun = BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK);
       if (wasAutoDetectRun && (wasDetectedAsText || wasDetectedAsBinary)) {
         return wasDetectedAsText ? FileTypes.PLAIN_TEXT : UnknownFileType.INSTANCE;
       }
@@ -530,6 +509,51 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return fileType;
   }
 
+  private volatile FileAttribute autoDetectedAttribute;
+  protected byte readFlagsFromCache(@NotNull VirtualFile file) {
+    DataInputStream stream = autoDetectedAttribute.readAttribute(file);
+    boolean wasAutoDetectRun = false;
+    byte status = 0;
+    try {
+      try {
+        status = stream != null ? stream.readByte() : 0;
+        wasAutoDetectRun = stream != null;
+      }
+      finally {
+        if (stream != null) {
+          stream.close();
+        }
+      }
+    }
+    catch (IOException ignored) {
+    }
+    status = (byte)BitUtil.set(status, ATTRIBUTES_WERE_LOADED_MASK, wasAutoDetectRun);
+
+    return status;
+  }
+
+  protected void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
+    DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
+    try {
+      try {
+        stream.writeByte(flags);
+      }
+      finally {
+        stream.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void clearCaches() {
+    int count = fileTypeChangedCount.incrementAndGet();
+    autoDetectedAttribute = autoDetectedAttribute.newVersion(count);
+    PropertiesComponent.getInstance().setValue("fileTypeChangedCounter", Integer.toString(count));
+    packedFlags.clear();
+  }
+
   @NotNull
   private FileType getAutoDetectedType(@NotNull VirtualFile file, int id) {
     long flags = packedFlags.get(id);
@@ -545,27 +569,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileType();
   }
 
-  private volatile FileAttribute autoDetectedAttribute;
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
     boolean wasAutodetectedAsText = fileType == FileTypes.PLAIN_TEXT;
     boolean wasAutodetectedAsBinary = fileType == FileTypes.UNKNOWN;
-    try {
-      try {
-        int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
-        flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
-        stream.writeByte(flags);
-      }
-      finally {
-        stream.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+
+    int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
+    flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
+    writeFlagsToCache(file, flags);
     if (file instanceof VirtualFileWithId) {
       int id = Math.abs(((VirtualFileWithId)file).getId());
-      int flags = AUTO_DETECT_WAS_RUN_MASK | ATTRIBUTES_WERE_LOADED_MASK;
+      flags = AUTO_DETECT_WAS_RUN_MASK | ATTRIBUTES_WERE_LOADED_MASK;
       flags = BitUtil.set(flags, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
       flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
       packedFlags.set(id, flags);
@@ -816,13 +829,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void fireFileTypesChanged() {
     clearCaches();
     myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
-  }
-
-  private void clearCaches() {
-    int count = fileTypeChangedCount.incrementAndGet();
-    autoDetectedAttribute = autoDetectedAttribute.newVersion(count);
-    PropertiesComponent.getInstance().setValue("fileTypeChangedCounter", Integer.toString(count));
-    packedFlags.clear();
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();

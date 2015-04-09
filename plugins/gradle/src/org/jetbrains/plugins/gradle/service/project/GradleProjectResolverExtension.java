@@ -97,9 +97,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
                                            @NotNull DataNode<ProjectData> ideProject);
 
   @NotNull
-  Collection<TaskData> filterRootProjectTasks(@NotNull List<TaskData> allTasks);
-
-  @NotNull
   Set<Class> getExtraProjectModelClasses();
 
   /**

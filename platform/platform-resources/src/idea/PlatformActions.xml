@@ -552,6 +552,12 @@
       <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction" text="Check for Update"/>
     </group>
 
+    <group id="WelcomeScreenRecentProjectActionGroup">
+      <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
+      <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction" text="New Project Group"/>
+      <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.MoveProjectToGroupActionGroup" text="Move To Group" popup="true"/>
+    </group>
+
     <group id="FileChooser">
       <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"/>
     </group>
