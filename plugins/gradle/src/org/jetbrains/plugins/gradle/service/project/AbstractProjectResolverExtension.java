@@ -129,7 +129,7 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
   @NotNull
   @Override
   public Collection<TaskData> filterRootProjectTasks(@NotNull List<TaskData> allTasks) {
-    return nextResolver.filterRootProjectTasks(allTasks);
+    return Collections.emptyList();
   }
 
   @NotNull

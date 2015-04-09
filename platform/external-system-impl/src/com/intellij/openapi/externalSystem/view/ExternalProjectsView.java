@@ -16,24 +16,17 @@
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.execution.*;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction;
 import com.intellij.openapi.externalSystem.model.*;
-import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
@@ -41,19 +34,16 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -63,8 +53,6 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -73,18 +61,14 @@ import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -288,18 +272,23 @@ public class ExternalProjectsView extends SimpleToolWindowPanel implements DataP
       }
     });
 
-    ActionManager actionManager = ActionManager.getInstance();
-
-    DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction gearAction = actionManager.getAction("ExternalSystem.GroupTasks");
-    if(gearAction instanceof ExternalSystemViewGearAction) {
-      ((ExternalSystemViewGearAction)gearAction).setView(this);
-      group.add(gearAction);
-    }
-
-    myToolWindow.setAdditionalGearActions(group);
+    myToolWindow.setAdditionalGearActions(createAdditionalGearActionsGroup());
 
     scheduleStructureUpdate();
+  }
+
+  private ActionGroup createAdditionalGearActionsGroup() {
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup group = new DefaultActionGroup();
+    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks"};
+    for (String id : ids) {
+      final AnAction gearAction = actionManager.getAction(id);
+      if (gearAction instanceof ExternalSystemViewGearAction) {
+        ((ExternalSystemViewGearAction)gearAction).setView(this);
+        group.add(gearAction);
+      }
+    }
+    return group;
   }
 
   private void initStructure() {
@@ -459,17 +448,32 @@ public class ExternalProjectsView extends SimpleToolWindowPanel implements DataP
   public void setGroupTasks(boolean value) {
     if (myState.groupTasks != value) {
       myState.groupTasks = value;
-      scheduleStructureRequest(new Runnable() {
-        public void run() {
-          assert myStructure != null;
-          final List<TasksNode> tasksNodes = myStructure.getNodes(TasksNode.class);
-          for (TasksNode tasksNode : tasksNodes) {
-            tasksNode.cleanUpCache();
-            updateUpTo(tasksNode);
-          }
-        }
-      });
+      scheduleTasksRebuild();
     }
+  }
+
+  public boolean showInheritedTasks() {
+    return myState.showInheritedTasks;
+  }
+
+  public void setShowInheritedTasks(boolean value) {
+    if (myState.showInheritedTasks != value) {
+      myState.showInheritedTasks = value;
+      scheduleStructureUpdate();
+    }
+  }
+
+  private void scheduleTasksRebuild() {
+    scheduleStructureRequest(new Runnable() {
+      public void run() {
+        assert myStructure != null;
+        final List<TasksNode> tasksNodes = myStructure.getNodes(TasksNode.class);
+        for (TasksNode tasksNode : tasksNodes) {
+          tasksNode.cleanUpCache();
+          updateUpTo(tasksNode);
+        }
+      }
+    });
   }
 
   private void scheduleTasksUpdate() {

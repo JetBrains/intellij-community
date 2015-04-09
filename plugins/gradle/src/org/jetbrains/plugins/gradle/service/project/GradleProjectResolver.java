@@ -30,7 +30,6 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.BooleanFunction;
@@ -267,19 +266,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         final Collection<TaskData> moduleTasks = projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
         allTasks.addAll(moduleTasks);
       }
-    }
-
-    // populate root project tasks
-    final Collection<TaskData> rootProjectTaskCandidates = projectResolverChain.filterRootProjectTasks(allTasks);
-
-    Set<Couple<String>> rootProjectTaskCandidatesMap = ContainerUtilRt.newHashSet();
-    for (final TaskData taskData : rootProjectTaskCandidates) {
-      rootProjectTaskCandidatesMap.add(Couple.of(taskData.getName(), taskData.getDescription()));
-    }
-    for (final Couple<String> p : rootProjectTaskCandidatesMap) {
-      projectDataNode.createChild(
-        ProjectKeys.TASK,
-        new TaskData(GradleConstants.SYSTEM_ID, p.first, projectData.getLinkedExternalProjectPath(), p.second));
     }
 
     // ensure unique library names

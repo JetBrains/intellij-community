@@ -15,11 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.view;
 
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
-
-import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
@@ -28,6 +25,7 @@ import java.io.Serializable;
 @Tag("projects_view")
 public class ExternalProjectsViewState {
   public boolean groupTasks = true;
+  public boolean showInheritedTasks = true;
   @Tag("tree_state")
   public Element treeState;
 }
