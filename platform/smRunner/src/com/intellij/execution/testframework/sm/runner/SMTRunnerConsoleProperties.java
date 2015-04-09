@@ -52,9 +52,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
-                                    @NotNull String testFrameworkName,
-                                    @NotNull Executor executor) {
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
     this(config, testFrameworkName, executor, true);
   }
 
@@ -139,9 +137,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Nullable
-  protected Navigatable findSuitableNavigatableForLine(@NotNull final Project project,
-                                                       @NotNull final VirtualFile file,
-                                                       final int line) {
+  protected Navigatable findSuitableNavigatableForLine(@NotNull Project project, @NotNull VirtualFile file, int line) {
     // lets find first non-ws psi element
     
     final Document doc = FileDocumentManager.getInstance().getDocument(file);

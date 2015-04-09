@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,11 @@ import javax.swing.*;
 import java.util.List;
 
 /**
+ * Processes events of test runner in general text-based form.
+ * <p/>
+ * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
+ *
  * @author: Roman Chernyatchik
- * <p/>
- * Processes events of test runner in general text-based form
- * <p/>
- * NB: Test name should be unique for all suites. E.g. it can consist of suite name
- * and name of test method
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
@@ -68,34 +67,32 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
 
-  public abstract void onUncapturedOutput(@NotNull final String text,
-                                          final Key outputType);
+  public abstract void onUncapturedOutput(@NotNull String text, Key outputType);
 
-  public abstract void onError(@NotNull final String localizedMessage,
-                               @Nullable final String stackTrace,
-                               final boolean isCritical);
+  public abstract void onError(@NotNull String localizedMessage, @Nullable String stackTrace, boolean isCritical);
+
+  public abstract void onFinishTesting();
 
   // Custom progress statistics
 
   /**
    * @param categoryName If isn't empty then progress statistics will use only custom start/failed events.
    *                     If name is null statistics will be switched to normal mode
-   * @param testCount    - 0 will be considered as unknown tests number
+   * @param testCount    0 will be considered as unknown tests number
    */
-  public abstract void onCustomProgressTestsCategory(@Nullable final String categoryName,
-                                                     final int testCount);
+  public abstract void onCustomProgressTestsCategory(@Nullable String categoryName, int testCount);
 
   public abstract void onCustomProgressTestStarted();
 
   public abstract void onCustomProgressTestFailed();
+
+  // workflow/service methods
 
   public abstract void onTestsReporterAttached();
 
   public abstract void setLocator(@NotNull TestLocationProvider locator);
 
   public abstract void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
-
-  public abstract void onFinishTesting();
 
   public abstract void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
 
@@ -115,18 +112,12 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     return Conditions.alwaysFalse();
   }
 
-  /**
-   * Adds runnable to Event Dispatch Queue
-   * if we aren't in UnitTest of Headless environment mode
-   *
-   * @param runnable Runnable
-   */
   public void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
-    final boolean unitTestMode = application.isUnitTestMode();
-    if (unitTestMode) {
+    if (application.isUnitTestMode()) {
       UIUtil.invokeLaterIfNeeded(runnable);
-    } else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
+    }
+    else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
     else {
