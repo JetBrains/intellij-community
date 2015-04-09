@@ -18,6 +18,8 @@ package com.intellij.execution.testframework.sm.runner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Roman Chernyatchik
  *
@@ -57,4 +59,8 @@ public interface SMTRunnerEventsListener {
   void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
+
+  void onSuiteTreeNodeAdded(SMTestProxy testProxy);
+  void onSuiteTreeStarted(SMTestProxy suite);
+
 }

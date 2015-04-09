@@ -271,6 +271,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     fireOnTestNodeAdded(testProxy);
   }
 
+  @Override
+  public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {
+    updateOnTestStarted(false);
+    _addTestOrSuite(testProxy);
+  }
+
+  @Override
+  public void onSuiteTreeStarted(SMTestProxy suite) {
+    _addTestOrSuite(suite);
+  }
+
   public void onTestFailed(@NotNull final SMTestProxy test) {
     updateOnTestFailed(false);
     updateIconProgress();

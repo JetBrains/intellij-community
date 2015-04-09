@@ -209,6 +209,28 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSuiteTreeNodeAdded(testName, locationHint);
+    }
+  }
+
+  private void fireOnSuiteTreeStarted(String suiteName, String locationHint) {
+
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSuiteTreeStarted(suiteName, locationHint);
+    }
+  }
+
+  private void fireOnSuiteTreeEnded(String suiteName) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSuiteTreeEnded(suiteName);
+    }
+  }
+
   private void fireOnTestOutput(@NotNull TestOutputEvent testOutputEvent) {
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
@@ -285,6 +307,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     @NonNls private static final String MESSAGE = "message";
     @NonNls private static final String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
+    @NonNls private static final String SUITE_TREE_STARTED = "suiteTreeStarted";
+    @NonNls private static final String SUITE_TREE_ENDED = "suiteTreeEnded";
+    @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
     @NonNls private static final String ATTR_KEY_STATUS = "status";
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
     @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
@@ -454,6 +479,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else if (TEST_REPORTER_ATTACHED.equals(name)) {
         fireOnTestFrameworkAttached();
+      }
+      else if (SUITE_TREE_STARTED.equals(name)) {
+        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+      }
+      else if (SUITE_TREE_ENDED.equals(name)) {
+        fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
+      }
+      else if (SUITE_TREE_NODE.equals(name)) {
+        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
       }
       else {
         GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);

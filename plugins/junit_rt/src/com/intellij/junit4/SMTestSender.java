@@ -20,7 +20,7 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.execution.junit.ComparisonFailureData;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import junit.framework.ComparisonFailure;
@@ -31,6 +31,8 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,10 +42,10 @@ class SMTestSender extends RunListener {
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
 
   private String myCurrentClassName;
+  private boolean myIgnoreTopSuite;
 
   public void testRunStarted(Description description) throws Exception {
-    myCurrentClassName = description.toString();
-    System.out.println("##teamcity[testSuiteStarted name =\'" + myCurrentClassName + "\']");
+    myCurrentClassName = myIgnoreTopSuite ? description.toString() : null;
   }
 
   public void testRunFinished(Result result) throws Exception {
@@ -52,7 +54,16 @@ class SMTestSender extends RunListener {
     }
   }
 
+  //todo provide test locationHint=junit:://classname.testname + test locator
   public void testStarted(Description description) throws Exception {
+    final String className = JUnit4ReflectionUtil.getClassName(description);
+    if (!className.equals(myCurrentClassName)) {
+      if (myCurrentClassName != null) {
+        System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+      }
+      myCurrentClassName = className;
+      System.out.println("##teamcity[testSuiteStarted name =\'" + myCurrentClassName + "\']");
+    }
     System.out.println("##teamcity[testStarted name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
   }
 
@@ -165,5 +176,33 @@ class SMTestSender extends RunListener {
       return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
     }
     return null;
+  }
+
+  private static void sendTree(JUnit4IdeaTestRunner runner, Object description, List tests) {
+    if (tests.isEmpty()) {
+      System.out.println("##teamcity[suiteTreeNode name=\'" + JUnit4ReflectionUtil.getMethodName((Description)description)
+                         + "\' locationHint=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+    }
+    boolean pass = false;
+    for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
+      final Object next = iterator.next();
+      final List childTests = runner.getChildTests(next);
+      if (childTests.isEmpty() && !pass) {
+        pass = true;
+        System.out.println("##teamcity[suiteTreeStarted name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+      }
+      sendTree(runner, next, childTests);
+    }
+    if (pass) {
+      System.out.println("##teamcity[suiteTreeEnded name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+    }
+  }
+
+  public void sendTree(JUnit4IdeaTestRunner runner, Description description) {
+    final List tests = runner.getChildTests(description);
+    if (tests.isEmpty()) {
+      myIgnoreTopSuite = true;
+    }
+    sendTree(runner, description, tests);
   }
 }

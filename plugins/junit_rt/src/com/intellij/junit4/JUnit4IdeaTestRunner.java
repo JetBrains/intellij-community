@@ -17,6 +17,7 @@ package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
+import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
@@ -52,6 +53,9 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         description = getFilteredDescription(request, description);
       }
       TreeSender.sendTree(this, description, sendTree);
+      if (myTestsListener instanceof SMTestSender) {
+        ((SMTestSender)myTestsListener).sendTree(this, description);
+      }
     }
     catch (Exception e) {
       //noinspection HardCodedStringLiteral
