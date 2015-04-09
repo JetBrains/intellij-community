@@ -47,7 +47,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
   @NonNls public static final String EXPORTED_ATTR = JpsJavaModelSerializerExtension.EXPORTED_ATTRIBUTE;
 
   //cloning
-  private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported, DependencyScope scope) {
+  private ModuleLibraryOrderEntryImpl(@NotNull Library library, @NotNull RootModelImpl rootModel, boolean isExported, @NotNull DependencyScope scope) {
     super(rootModel, ProjectRootManagerImpl.getInstanceImpl(rootModel.getProject()));
     myLibrary = ((LibraryImpl)library).cloneLibrary(getRootModel());
     doinit();
@@ -55,13 +55,13 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
     myScope = scope;
   }
 
-  ModuleLibraryOrderEntryImpl(String name, final PersistentLibraryKind kind, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  ModuleLibraryOrderEntryImpl(String name, final PersistentLibraryKind kind, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, kind, getRootModel());
     doinit();
   }
 
-  ModuleLibraryOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+  ModuleLibraryOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     super(rootModel, projectRootManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;

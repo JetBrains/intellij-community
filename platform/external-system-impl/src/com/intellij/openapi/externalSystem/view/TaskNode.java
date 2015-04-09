@@ -58,6 +58,12 @@ public class TaskNode extends ExternalSystemNode<TaskData> {
   }
 
   @Override
+  public boolean isVisible() {
+    if (!super.isVisible()) return false;
+    return !myTaskData.isInherited() || getExternalProjectsView().showInheritedTasks();
+  }
+
+  @Override
   public String getName() {
     return myTaskData.getName();
   }

@@ -22,7 +22,16 @@ import java.awt.*;
 public class FontUtil {
   @NotNull
   public static String rightArrow(@NotNull Font font) {
-    char rightArrow = '\u2192';
-    return font.canDisplay(rightArrow) ? String.valueOf(rightArrow) : "->";
+    return canDisplay(font, '\u2192', "->");
+  }
+
+  @NotNull
+  public static String upArrow(@NotNull Font font, @NotNull String defaultValue) {
+    return canDisplay(font, '\u2191', defaultValue);
+  }
+
+  @NotNull
+  public static String canDisplay(@NotNull Font font, char value, @NotNull String defaultValue) {
+    return font.canDisplay(value) ? String.valueOf(value) : defaultValue;
   }
 }

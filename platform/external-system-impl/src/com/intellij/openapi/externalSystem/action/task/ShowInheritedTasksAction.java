@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.project.impl;
+package com.intellij.openapi.externalSystem.action.task;
 
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * @author Vladislav.Soroka
+ * @since 10/31/2014
  */
-class DefaultProject extends ProjectImpl {
-  private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-
-  protected DefaultProject(@NotNull ProjectManager manager, @NotNull String filePath, boolean optimiseTestLoadSpeed) {
-    super(manager, filePath, optimiseTestLoadSpeed, TEMPLATE_PROJECT_NAME);
+public class ShowInheritedTasksAction extends ExternalSystemViewGearAction {
+  @Override
+  protected boolean isSelected(@NotNull ExternalProjectsView view) {
+    return view.showInheritedTasks();
   }
 
   @Override
-  public boolean isDefault() {
-    return true;
+  protected void setSelected(@NotNull ExternalProjectsView view, boolean value) {
+    view.setShowInheritedTasks(value);
   }
 }

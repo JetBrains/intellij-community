@@ -3281,6 +3281,11 @@ public class UIUtil {
     return FontUtil.rightArrow(getLabelFont());
   }
 
+  @NotNull
+  public static String upArrow(@NotNull String defaultValue) {
+    return FontUtil.upArrow(getLabelFont(), defaultValue);
+  }
+
   public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {
     ButtonUI ui = alignSource.getUI();
     int leftGap = alignSource.getIconTextGap();

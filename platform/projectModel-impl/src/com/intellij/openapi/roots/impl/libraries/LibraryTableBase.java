@@ -41,6 +41,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private LibraryModel myModel = new LibraryModel();
   private boolean myFirstLoad = true;
 
+  @NotNull
   @Override
   public ModifiableModel getModifiableModel() {
     return new LibraryModel(myModel);
@@ -95,17 +96,17 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void addListener(Listener listener, Disposable parentDisposable) {
+  public void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     myDispatcher.removeListener(listener);
   }
 

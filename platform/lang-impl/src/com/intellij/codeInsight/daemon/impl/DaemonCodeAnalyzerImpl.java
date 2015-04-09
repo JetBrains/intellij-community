@@ -319,6 +319,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
+    myAlarm.cancelAllRequests();
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {
@@ -537,7 +538,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+          if (myAlarm.isEmpty()) {
+            myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+          }
         }
       });
     }

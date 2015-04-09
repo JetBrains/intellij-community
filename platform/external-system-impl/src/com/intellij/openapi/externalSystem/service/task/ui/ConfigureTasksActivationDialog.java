@@ -155,6 +155,8 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
         @Override
         public void run(AnActionButton button) {
           ProjectItem projectItem = (ProjectItem)projectCombobox.getSelectedItem();
+          if(projectItem == null) return;
+
           final ExternalProjectInfo projectData = ProjectDataManager.getInstance()
             .getExternalProjectData(myProject, myProjectSystemId, projectItem.myProjectSettings.getExternalProjectPath());
 
@@ -513,6 +515,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     @Override
     protected MyNode[] buildChildren() {
       ProjectItem item = (ProjectItem)projectCombobox.getSelectedItem();
+      if(item == null) return new MyNode[]{};
       if (item.myProjectSettings.getModules().isEmpty() || item.myProjectSettings.getModules().size() == 1) {
         final TaskActivationState tasksActivation =
           myStateProvider.getTasksActivation(myProjectSystemId, item.myProjectSettings.getExternalProjectPath());
