@@ -24,15 +24,12 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -226,18 +223,18 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
-              Icon icon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl());
-              icon = IconUtil.scale(icon, 16d/(double)icon.getIconWidth());
-              final JLabel projectIcon = new JLabel(" ", AllIcons.Nodes.Plugin, SwingConstants.LEFT) {
-                @Override
-                protected void paintComponent(Graphics g) {
-                  getIcon().paintIcon(this, g, 0, (getHeight() - getIcon().getIconHeight()) / 2);
-                }
-              };
-              projectIcon.setVerticalAlignment(SwingConstants.CENTER);
+              //Icon icon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl());
+              //icon = IconUtil.scale(icon, 16d/(double)icon.getIconWidth());
+              //final JLabel projectIcon = new JLabel(" ", AllIcons.Nodes.Plugin, SwingConstants.LEFT) {
+              //  @Override
+              //  protected void paintComponent(Graphics g) {
+              //    getIcon().paintIcon(this, g, 0, (getHeight() - getIcon().getIconHeight()) / 2);
+              //  }
+              //};
+              //projectIcon.setVerticalAlignment(SwingConstants.CENTER);
               final NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
               panel.add(p);
-              panel.add(projectIcon, BorderLayout.WEST);
+              //panel.add(projectIcon, BorderLayout.WEST);
               add(panel);
             }
           }
