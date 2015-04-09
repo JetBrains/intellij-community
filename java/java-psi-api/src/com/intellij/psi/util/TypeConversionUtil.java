@@ -971,7 +971,9 @@ public class TypeConversionUtil {
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("isAssignable");
 
-  public static boolean typesAgree(@NotNull PsiType typeLeft, @NotNull PsiType typeRight, final boolean allowUncheckedConversion) {
+  public static boolean typesAgree(final @NotNull PsiType typeLeft,
+                                   final @NotNull PsiType typeRight,
+                                   final boolean allowUncheckedConversion) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
@@ -1015,7 +1017,14 @@ public class TypeConversionUtil {
           return isAssignable(leftBound, typeRight, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, false);
+          final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true, new NotNullComputable<Boolean>() {
+            @NotNull
+            @Override
+            public Boolean compute() {
+              return isAssignable(typeRight, leftBound, false);
+            }
+          });
+          return assignable == null || assignable.booleanValue(); 
         }
       }
     }

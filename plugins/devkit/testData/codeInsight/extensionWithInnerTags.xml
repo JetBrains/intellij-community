@@ -1,0 +1,15 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+
+  <extensionPoints>
+    <extensionPoint name="tags" beanClass="ExtBeanWithInnerTags"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.myPlugin">
+    <tags>
+      <inner value="1"/>
+      <inner value="2"/>
+    </tags>
+  </extensions>
+
+</idea-plugin>

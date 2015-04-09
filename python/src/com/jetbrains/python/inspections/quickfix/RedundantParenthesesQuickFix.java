@@ -21,9 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,20 +42,26 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    PsiElement binaryExpression = ((PyParenthesizedExpression)element).getContainedExpression();
-    PyBinaryExpression parent = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
-    if (binaryExpression instanceof PyBinaryExpression && parent != null) {
-      if (!replaceBinaryExpression((PyBinaryExpression)binaryExpression)) {
-        element.replace(binaryExpression);
-      }
-    }
-    else {
-      while (element instanceof PyParenthesizedExpression) {
-        PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
-        if (expression != null) {
-          element = element.replace(expression);
+    if (element instanceof PyParenthesizedExpression) {
+      PsiElement binaryExpression = ((PyParenthesizedExpression)element).getContainedExpression();
+      PyBinaryExpression parent = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
+      if (binaryExpression instanceof PyBinaryExpression && parent != null) {
+        if (!replaceBinaryExpression((PyBinaryExpression)binaryExpression)) {
+          element.replace(binaryExpression);
         }
       }
+      else {
+        while (element instanceof PyParenthesizedExpression) {
+          PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
+          if (expression != null) {
+            element = element.replace(expression);
+          }
+        }
+      }
+    }
+    else if (element instanceof PyArgumentList) {
+      assert element.getParent() instanceof PyClass && ((PyArgumentList)element).getArguments().length == 0;
+      element.delete();
     }
   }
 

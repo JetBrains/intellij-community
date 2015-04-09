@@ -39,6 +39,8 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
   public boolean myIgnorePercOperator = false;
   public boolean myIgnoreTupleInReturn = false;
+  public boolean myIgnoreEmptyBaseClasses = false;
+
   @Nls
   @NotNull
   @Override
@@ -51,20 +53,12 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, myIgnorePercOperator, myIgnoreTupleInReturn);
+    return new Visitor(holder, session);
   }
 
-  private static class Visitor extends PyInspectionVisitor {
-    private final boolean myIgnorePercOperator;
-    private final boolean myIgnoreTupleInReturn;
-
-    public Visitor(@NotNull ProblemsHolder holder,
-                   @NotNull LocalInspectionToolSession session,
-                   boolean ignorePercOperator,
-                   boolean ignoreTupleInReturn) {
+  private class Visitor extends PyInspectionVisitor {
+    public Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
-      myIgnorePercOperator = ignorePercOperator;
-      myIgnoreTupleInReturn = ignoreTupleInReturn;
     }
 
     @Override
@@ -86,11 +80,11 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         
         if (node.getParent() instanceof PyPrintStatement)
           return;
-        registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+        registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
                   || node.getParent() instanceof PyReturnStatement) {
-          registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+          registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (expression instanceof PyBinaryExpression) {
         PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
@@ -104,12 +98,22 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           if (leftExpression instanceof PyParenthesizedExpression && rightExpression instanceof PyParenthesizedExpression &&
             !(((PyParenthesizedExpression)leftExpression).getContainedExpression() instanceof PyBinaryExpression) &&
             !(((PyParenthesizedExpression)rightExpression).getContainedExpression() instanceof PyBinaryExpression)) {
-            registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+            registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
           }
         }
       }
       else if (expression instanceof PyParenthesizedExpression) {
-        registerProblem(expression, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+        registerProblem(expression, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+      }
+    }
+
+    @Override
+    public void visitPyArgumentList(PyArgumentList node) {
+      if (!(node.getParent() instanceof PyClass)) {
+        return;
+      }
+      if (!myIgnoreEmptyBaseClasses && node.getArguments().length == 0) {
+        registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
     }
   }
@@ -119,6 +123,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore argument of % operator", "myIgnorePercOperator");
     panel.addCheckbox("Ignore tuples", "myIgnoreTupleInReturn");
+    panel.addCheckbox("Ignore empty lists of base classes", "myIgnoreEmptyBaseClasses");
     return panel;
   }
 }

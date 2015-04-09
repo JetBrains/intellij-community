@@ -140,7 +140,7 @@ public class TargetElementUtilBase {
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
     if (file != null) {
-      for (TargetElementEvaluator evaluator : getInstance().getElementEvaluatorsEx(file.getLanguage())) {
+      for (TargetElementEvaluatorEx evaluator : getInstance().getElementEvaluatorsEx(file.getLanguage())) {
         if (evaluator instanceof TargetElementEvaluatorEx && ((TargetElementEvaluatorEx)evaluator).isIdentifierPart(file, text, offset)) {
           return true;
         }
@@ -232,7 +232,7 @@ public class TargetElementUtilBase {
     if (referenceOrReferencedElement != null && referenceOrReferencedElement.isValid()) return true;
     
     if (element != null) {
-      for (TargetElementEvaluatorEx evaluator : getElementEvaluatorsEx(element.getLanguage())) {
+      for (TargetElementEvaluatorEx2 evaluator : getElementEvaluatorsEx2(element.getLanguage())) {
         if (evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement)) return true;
       }
     }
@@ -294,7 +294,7 @@ public class TargetElementUtilBase {
   protected PsiElement getNamedElement(@Nullable final PsiElement element) {
     if (element == null) return null;
     
-    for (TargetElementEvaluatorEx each : getElementEvaluatorsEx(element.getLanguage())) {
+    for (TargetElementEvaluatorEx2 each : getElementEvaluatorsEx2(element.getLanguage())) {
       PsiElement result = each.getNamedElement(element);
       if (result != null) return result;
     }
@@ -367,12 +367,22 @@ public class TargetElementUtilBase {
   }
 
   protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
+  
   private Iterable<TargetElementEvaluatorEx> getElementEvaluatorsEx(@NotNull Language language) {
     //noinspection unchecked
     return ContainerUtil.iterate(targetElementEvaluator.allForLanguage(language), new Condition() {
       @Override
       public boolean value(Object evaluator) {
         return evaluator instanceof TargetElementEvaluatorEx;
+      }
+    });
+  }
+  private Iterable<TargetElementEvaluatorEx2> getElementEvaluatorsEx2(@NotNull Language language) {
+    //noinspection unchecked
+    return ContainerUtil.iterate(targetElementEvaluator.allForLanguage(language), new Condition() {
+      @Override
+      public boolean value(Object evaluator) {
+        return evaluator instanceof TargetElementEvaluatorEx2;
       }
     });
   }

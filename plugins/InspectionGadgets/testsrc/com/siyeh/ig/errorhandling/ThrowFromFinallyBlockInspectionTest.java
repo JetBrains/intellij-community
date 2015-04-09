@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/14/12
- * Time: 4:31 PM
+ * (c) 2015 Silent Forest AB
+ * created: 07 April 2015
  */
-public class MergeTexts {
-  private final String myLeft;
-  private final String myRight;
-  private final String myBase;
+package com.siyeh.ig.errorhandling;
 
-  public MergeTexts(String left, String right, String base) {
-    myLeft = left;
-    myRight = right;
-    myBase = base;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author Bas Leijdekkers
+ */
+public class ThrowFromFinallyBlockInspectionTest extends LightInspectionTestCase {
+
+  public void testThrowFromFinallyBlock() {
+    doTest();
   }
 
-  public String getLeft() {
-    return myLeft;
-  }
-
-  public String getRight() {
-    return myRight;
-  }
-
-  public String getBase() {
-    return myBase;
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ThrowFromFinallyBlockInspection();
   }
 }

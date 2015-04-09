@@ -149,7 +149,7 @@ public class ConfigurableExtensionPointUtil {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
     Map<String, Node<SortedConfigurableGroup>> tree = ContainerUtil.newHashMap();
     for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
-      addGroup(tree, project, entry.getKey(), entry.getValue());
+      addGroup(tree, project, entry.getKey(), entry.getValue(), null);
     }
     SortedConfigurableGroup root = getGroup(tree, "root");
     if (!tree.isEmpty()) {
@@ -177,12 +177,14 @@ public class ConfigurableExtensionPointUtil {
     return node.myValue;
   }
 
-  private static void addGroup(Map<String, Node<SortedConfigurableGroup>> tree, Project project, String groupId, List<Configurable> configurables) {
+  private static void addGroup(Map<String, Node<SortedConfigurableGroup>> tree, Project project,
+                               String groupId, List<Configurable> configurables, ResourceBundle alternative) {
     String id = "configurable.group." + groupId;
-    ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables);
+    ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
       LOG.warn("use other group instead of unexpected one: " + groupId);
-      id = "configurable.group.other";
+      groupId = "other";
+      id = "configurable.group." + groupId;
       bundle = OptionsBundle.getBundle();
     }
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
@@ -202,7 +204,7 @@ public class ConfigurableExtensionPointUtil {
       String parentId = getString(bundle, id + ".settings.parent");
       parentId = Node.cyclic(tree, parentId, "root", groupId, node);
       node.myParent = Node.add(tree, parentId, groupId);
-      addGroup(tree, project, parentId, null);
+      addGroup(tree, project, parentId, null, bundle);
     }
   }
 
@@ -353,7 +355,7 @@ public class ConfigurableExtensionPointUtil {
     return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
   }
 
-  private static ResourceBundle getBundle(String resource, List<Configurable> configurables) {
+  private static ResourceBundle getBundle(String resource, List<Configurable> configurables, ResourceBundle alternative) {
     ResourceBundle bundle = OptionsBundle.getBundle();
     if (getString(bundle, resource) != null) {
       return bundle;
@@ -368,6 +370,9 @@ public class ConfigurableExtensionPointUtil {
           }
         }
       }
+    }
+    if (getString(alternative, resource) != null) {
+      return alternative;
     }
     return null;
   }

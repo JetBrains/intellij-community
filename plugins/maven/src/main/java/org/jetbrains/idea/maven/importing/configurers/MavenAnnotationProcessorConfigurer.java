@@ -173,7 +173,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
     if ("pom".equals(mavenProject.getPackaging())) return false;
 
     return mavenProject.getProcMode() != MavenProject.ProcMode.NONE
-           || mavenProject.getPluginConfiguration("org.bsc.maven", "maven-processor-plugin") != null;
+           || mavenProject.findPlugin("org.bsc.maven", "maven-processor-plugin") != null;
   }
 
 }

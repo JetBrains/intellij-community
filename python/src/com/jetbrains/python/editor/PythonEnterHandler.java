@@ -66,7 +66,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PyListLiteralExpression.class,
     PyArgumentList.class,
     PyParameterList.class,
-    PyFunction.class,
+    PyDecoratorList.class,
     PySliceExpression.class,
     PySubscriptionExpression.class,
     PyGeneratorExpression.class
@@ -248,7 +248,10 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (wrappableBefore instanceof PsiComment || wrappableAfter instanceof PsiComment) {
       return false;
     }
-    return wrappableAfter == null || wrappableBefore != wrappableAfter;
+    if (wrappableAfter == null) {
+      return !(wrappableBefore instanceof PyDecoratorList);
+    }
+    return wrappableBefore != wrappableAfter;
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element) {

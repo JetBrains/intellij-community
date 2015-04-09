@@ -53,18 +53,13 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseReturnTypeAnnotation() {
-    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.MINUS) {
+    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.RARROW) {
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
-      if (matchToken(PyTokenTypes.GT)) {
-        if (!myContext.getExpressionParser().parseSingleExpression(false)) {
-          myBuilder.error(message("PARSE.expected.expression"));
-        }
-        maybeReturnAnnotation.done(PyElementTypes.ANNOTATION);
+      if (!myContext.getExpressionParser().parseSingleExpression(false)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
-      else {
-        maybeReturnAnnotation.rollbackTo();
-      }
+      maybeReturnAnnotation.done(PyElementTypes.ANNOTATION);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,6 @@ public abstract class CvsFileContent implements VcsFileContent{
       throw new VcsException(CvsBundle.message("exception.text.cannot.find.revision", getRevisionNumber()));
     }
 
-    if (isDeleted()) {
-      throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", getRevisionNumber()));
-    }
     return myComparableCvsRevisionOnOperation.getContent();
   }
 

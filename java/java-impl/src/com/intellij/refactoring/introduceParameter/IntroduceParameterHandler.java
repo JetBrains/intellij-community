@@ -437,6 +437,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       }
 
       boolean mustBeFinal = false;
+      if (myExpr != null) {
+        final PsiElement parent = myExpr.getUserData(ElementToWorkOn.PARENT);
+        mustBeFinal = parent != null && PsiTreeUtil.getParentOfType(parent, PsiClass.class, PsiMethod.class) != method;
+      }
       for (PsiExpression occurrence : occurences) {
         if (PsiTreeUtil.getParentOfType(occurrence, PsiClass.class, PsiMethod.class) != method) {
           mustBeFinal = true;
@@ -703,6 +707,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     @Override
     protected AbstractExtractDialog createExtractMethodDialog(boolean direct) {
       return new MyAbstractExtractDialog();
+    }
+
+    @Override
+    protected boolean isNeedToChangeCallContext() {
+      return false;
     }
 
     public void setMethodName(String methodName) {

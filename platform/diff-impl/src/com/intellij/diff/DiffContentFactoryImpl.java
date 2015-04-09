@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.BinaryLightVirtualFile;
@@ -42,6 +44,11 @@ import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactory {
   public final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
+
+  @NotNull
+  public static DiffContentFactoryImpl getInstanceImpl() {
+    return (DiffContentFactoryImpl)ServiceManager.getService(DiffContentFactory.class);
+  }
 
   @Override
   @NotNull
@@ -134,6 +141,30 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
     if (readOnly) document.setReadOnly(true);
     return new DocumentContentImpl(document, type, highlightFile, separator, charset);
+  }
+
+  @NotNull
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull FilePath filePath,
+                                     @NotNull byte[] content) throws IOException {
+    if (filePath.getFileType().isBinary()) {
+      return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
+    }
+
+    return FileAwareDocumentContent.create(project, content, filePath);
+  }
+
+  @Override
+  @NotNull
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull VirtualFile highlightFile,
+                                     @NotNull byte[] content) throws IOException {
+    // TODO: check if FileType.UNKNOWN is actually a text ?
+    if (highlightFile.getFileType().isBinary()) {
+      return DiffContentFactory.getInstance().createBinary(project, highlightFile.getName(), highlightFile.getFileType(), content);
+    }
+
+    return FileAwareDocumentContent.create(project, content, highlightFile);
   }
 
   @Override

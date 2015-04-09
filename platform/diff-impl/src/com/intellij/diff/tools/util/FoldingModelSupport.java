@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -738,25 +739,6 @@ public class FoldingModelSupport {
       public void remove() {
       }
     };
-  }
-
-  private static class LineRange {
-    public final int start;
-    public final int end;
-
-    public LineRange(int start, int end) {
-      this.start = start;
-      this.end = end;
-    }
-
-    public boolean contains(int start, int end) {
-      return this.start <= start && this.end >= end;
-    }
-
-    @Override
-    public String toString() {
-      return "[" + start + ", " + end + ')';
-    }
   }
 
   public static class Settings {

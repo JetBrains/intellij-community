@@ -30,6 +30,7 @@ public class PsiMethodReferenceUtil {
                                                QualifierResolveResult qualifierResolveResult,
                                                PsiMethodReferenceExpression methodRef) {
     if (parameterTypes.length > 0 &&
+        !(parameterTypes[0] instanceof PsiPrimitiveType) &&
         !methodRef.isConstructor() &&
         isStaticallyReferenced(methodRef) &&
         isReceiverType(parameterTypes[0], qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor())) {

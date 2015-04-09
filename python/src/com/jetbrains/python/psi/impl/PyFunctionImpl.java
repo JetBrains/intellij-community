@@ -405,7 +405,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
     final boolean hasCustomDecorators = PyUtil.hasCustomDecorators(this) && !PyUtil.isDecoratedAsAbstract(this) && getProperty() == null;
-    final PyFunctionType type = new PyFunctionType(this);
+    final PyFunctionTypeImpl type = new PyFunctionTypeImpl(this);
     if (hasCustomDecorators) {
       return PyUnionType.createWeakType(type);
     }
@@ -532,11 +532,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public int getTextOffset() {
     final ASTNode name = getNameNode();
     return name != null ? name.getStartOffset() : super.getTextOffset();
-  }
-
-  public void delete() throws IncorrectOperationException {
-    ASTNode node = getNode();
-    node.getTreeParent().removeChild(node);
   }
 
   public PyStringLiteralExpression getDocStringExpression() {

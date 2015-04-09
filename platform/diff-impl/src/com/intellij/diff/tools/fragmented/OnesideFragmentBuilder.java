@@ -15,9 +15,9 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.IntPair;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -38,7 +38,7 @@ public class OnesideFragmentBuilder {
   @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<ChangedBlock>();
   @NotNull private final List<HighlightRange> myRanges = new ArrayList<HighlightRange>();
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
-  @NotNull private final List<IntPair> myChangedLines = new ArrayList<IntPair>();
+  @NotNull private final List<LineRange> myChangedLines = new ArrayList<LineRange>();
 
   public OnesideFragmentBuilder(@NotNull List<LineFragment> fragments,
                                 @NotNull Document document1,
@@ -141,7 +141,7 @@ public class OnesideFragmentBuilder {
     appendText(side, offset1, offset2, lines, startLine1, startLine2);
     int linesAfter = totalLines;
 
-    myChangedLines.add(new IntPair(linesBefore, linesAfter));
+    myChangedLines.add(new LineRange(linesBefore, linesAfter));
   }
 
   private void appendText(@NotNull Side side, int offset1, int offset2, int lines, int startLine1, int startLine2) {
@@ -199,7 +199,7 @@ public class OnesideFragmentBuilder {
   }
 
   @NotNull
-  public List<IntPair> getChangedLines() {
+  public List<LineRange> getChangedLines() {
     return myChangedLines;
   }
 }

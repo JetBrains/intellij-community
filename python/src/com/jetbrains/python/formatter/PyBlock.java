@@ -408,12 +408,12 @@ public class PyBlock implements ASTBlock {
       return ((PyFromImportStatement)elem).getImportElements();
     }
     else if (elem instanceof PyParenthesizedExpression) {
-      final PyParenthesizedExpression parenthesizedExpr = (PyParenthesizedExpression)elem;
-      if (parenthesizedExpr.getContainedExpression() instanceof PyTupleExpression) {
-        return (((PyTupleExpression)parenthesizedExpr.getContainedExpression()).getElements());
+      final PyExpression containedExpression = ((PyParenthesizedExpression)elem).getContainedExpression();
+      if (containedExpression instanceof PyTupleExpression) {
+        return ((PyTupleExpression)containedExpression).getElements();
       }
-      else {
-        return new PsiElement[]{parenthesizedExpr.getContainedExpression()};
+      else if (containedExpression != null) {
+        return new PsiElement[]{containedExpression};
       }
     }
     return PsiElement.EMPTY_ARRAY;

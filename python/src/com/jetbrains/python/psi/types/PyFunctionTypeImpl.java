@@ -40,10 +40,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * @author vlan
  */
-public class PyFunctionType implements PyCallableType {
+public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final PyCallable myCallable;
 
-  public PyFunctionType(@NotNull PyCallable callable) {
+  public PyFunctionTypeImpl(@NotNull PyCallable callable) {
     myCallable = callable;
   }
 
@@ -172,6 +172,7 @@ public class PyFunctionType implements PyCallableType {
   public void assertValid(String message) {
   }
 
+  @Override
   @NotNull
   public PyCallable getCallable() {
     return myCallable;
