@@ -251,6 +251,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   printUnusedModules(info.usedModules)
 
   //reorder(targetDirectory)
+  return info
 }
 
 public def layoutCommunityPlugins(String home) {
