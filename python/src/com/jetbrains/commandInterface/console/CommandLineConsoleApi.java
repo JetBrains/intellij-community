@@ -62,24 +62,32 @@ public final class CommandLineConsoleApi {
     @NotNull final String consoleName,
     @Nullable final List<Command> commandList) {
     final Project project = module.getProject();
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow window = toolWindowManager.getToolWindow(consoleName);
-    if (window == null) {
-      window = toolWindowManager.registerToolWindow(consoleName, true, ToolWindowAnchor.BOTTOM);
-    }
-    window.activate(null);
-
-    final ContentManager contentManager = window.getContentManager();
-    contentManager.removeAllContents(true);
     final CommandConsole console = CommandConsole.createConsole(module, consoleName, commandList);
 
+    final ToolWindowApi windowApi = new ToolWindowApi(project, consoleName);
+    // Add console to the toolwindow wrapping it with tabs
+    windowApi.add(ConsoleTabsPanel.wrapConsole(console, new MyCloseDelegate(windowApi)));
 
-    final Content content = new ContentImpl(console.getComponent(), "", true);
-    contentManager.addContent(content);
-
-    //showHiddenCommandWorkAround(console);
     ArgumentHintLayer.attach(console); // Display [arguments]
     return console;
+  }
+
+  /**
+   * Console tabs needs so-called "closer": engine to be called when user wishes to close tabs.
+   * We need to delegate this call to the {@link ToolWindowApi#close()}  to close whole window
+   */
+  private static final class MyCloseDelegate implements Runnable {
+    @NotNull
+    private final ToolWindowApi myWindowApi;
+
+    private MyCloseDelegate(@NotNull final ToolWindowApi windowApi) {
+      myWindowApi = windowApi;
+    }
+
+    @Override
+    public void run() {
+      myWindowApi.close();
+    }
   }
 }
 
