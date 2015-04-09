@@ -34,17 +34,18 @@ import org.jetbrains.annotations.NotNull;
  * Created by Max Medvedev on 21/03/14
  */
 public class BuildAndRestartConsoleAction extends AnAction implements Disposable {
+
   private Module myModule;
   private Project myProject;
   private Executor myExecutor;
   private RunContentDescriptor myContentDescriptor;
-  private GroovyShellActionBase myShellAction;
+  private GroovyShellHandler myShellAction;
 
   public BuildAndRestartConsoleAction(@NotNull Module module,
                                       @NotNull Project project,
                                       @NotNull Executor executor,
                                       @NotNull RunContentDescriptor contentDescriptor,
-                                      @NotNull GroovyShellActionBase action) {
+                                      @NotNull GroovyShellHandler action) {
     super("Restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
     myModule = module;
     myProject = project;
@@ -59,14 +60,10 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
   }
 
   private boolean isEnabled() {
-    if (myModule == null) return false;
+    if (myModule == null || myModule.isDisposed()) return false;
 
-    if (myModule.isDisposed()) return false;
-
-    ProcessHandler processHandler = myContentDescriptor.getProcessHandler();
-    if (processHandler == null) return false;
-
-    if (processHandler.isProcessTerminated()) return false;
+    final ProcessHandler processHandler = myContentDescriptor.getProcessHandler();
+    if (processHandler == null || processHandler.isProcessTerminated()) return false;
 
     return true;
   }
@@ -79,7 +76,7 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
   private static void rerun(@NotNull final Module module,
                             @NotNull final Project project,
                             @NotNull final RunContentDescriptor contentDescriptor,
-                            @NotNull final GroovyShellActionBase action,
+                            @NotNull final GroovyShellHandler action,
                             @NotNull final Executor executor) {
     ExecutionManager.getInstance(project).getContentManager().removeRunContent(executor, contentDescriptor);
     if (contentDescriptor.getProcessHandler() != null && contentDescriptor.getProcessHandler().isProcessTerminated()) {

@@ -199,7 +199,7 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
 
-    <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRunner" order="last"/>
+    <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.DefaultGroovyConsoleRunner" order="last"/>
 
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
@@ -1657,14 +1657,14 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
     <action id="Groovy.Shell"
-            class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
+            class="org.jetbrains.plugins.groovy.console.actions.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
     <action id="Groovy.Console"
-            class="org.jetbrains.plugins.groovy.console.GroovyConsoleAction"
+            class="org.jetbrains.plugins.groovy.console.actions.GroovyConsoleAction"
             text="Groovy Console..." description="Launch Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>

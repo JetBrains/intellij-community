@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -37,12 +40,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-/**
- * @author Max Medvedev
- */
-public abstract class GroovyConsoleImpl extends LanguageConsoleImpl {
+public abstract class GroovyLanguageConsoleView extends LanguageConsoleImpl {
 
-  public GroovyConsoleImpl(Project project, String name) {
+  public GroovyLanguageConsoleView(Project project, String name) {
     super(project, name, GroovyLanguage.INSTANCE);
   }
 
@@ -73,11 +73,6 @@ public abstract class GroovyConsoleImpl extends LanguageConsoleImpl {
       else if (statement instanceof GrTypeDefinition) {
         getFile().addTypeDefinition(prepareTypeDefinition((GrTypeDefinition)statement));
       }
-    }
-
-    PsiType scriptType = getFile().getInferredScriptReturnType();
-    if (scriptType != null) {
-      getFile().addVariable("_", scriptType);
     }
   }
 
@@ -125,5 +120,100 @@ public abstract class GroovyConsoleImpl extends LanguageConsoleImpl {
     }
 
     return buffer.toString();
+  }
+
+
+  public static class Console extends GroovyLanguageConsoleView {
+
+    public Console(Project project, String name) {
+      super(project, name);
+    }
+
+    @Override
+    protected boolean isShell() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    protected String addToHistoryInner(@NotNull TextRange textRange,
+                                       @NotNull EditorEx editor,
+                                       boolean erase,
+                                       boolean preserveMarkup) {
+      final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
+      processCode();
+      return result;
+    }
+
+    @NotNull
+    @Override
+    public String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
+      return super.prepareExecuteAction(addToHistory, preserveMarkup, clearInput);
+    }
+
+    @Override
+    public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
+      super.print(s, contentType);
+    }
+  }
+
+
+  public static class Shell extends GroovyLanguageConsoleView {
+
+    public Shell(Project project, String name) {
+      super(project, name);
+    }
+
+    @Override
+    protected boolean isShell() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    protected String addToHistoryInner(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean erase, boolean preserveMarkup) {
+      final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
+
+      if ("purge variables".equals(result.trim())) {
+        clearVariables();
+      }
+      else if ("purge classes".equals(result.trim())) {
+        clearClasses();
+      }
+      else if ("purge imports".equals(result.trim())) {
+        clearImports();
+      }
+      else if ("purge all".equals(result.trim())) {
+        clearVariables();
+        clearClasses();
+        clearImports();
+      }
+      else {
+        processCode();
+      }
+
+      return result;
+    }
+
+    private void clearVariables() {
+      getFile().clearVariables();
+    }
+
+    private void clearClasses() {
+      getFile().clearClasses();
+    }
+
+    private void clearImports() {
+      getFile().clearImports();
+    }
+
+    @Override
+    protected void processCode() {
+      super.processCode();
+      PsiType scriptType = getFile().getInferredScriptReturnType();
+      if (scriptType != null) {
+        getFile().addVariable("_", scriptType);
+      }
+    }
   }
 }

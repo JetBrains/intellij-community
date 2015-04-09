@@ -23,23 +23,31 @@ import com.intellij.openapi.project.Project;
  * @author peter
  */
 public class GroovyShellAction extends GroovyShellActionBase {
-  @Override
-  protected boolean isSuitableModule(Module module) {
-    return super.isSuitableModule(module) && DefaultGroovyShellRunner.hasGroovyWithNeededJars(module);
+
+  public GroovyShellAction() {
+    super(new MyHandler());
   }
 
-  @Override
-  protected GroovyShellRunner getRunner(Module module) {
-    return new DefaultGroovyShellRunner();
-  }
+  private static class MyHandler extends GroovyShellHandler {
 
-  @Override
-  public String getTitle() {
-    return "Groovy Shell";
-  }
+    @Override
+    public boolean isSuitableModule(Module module) {
+      return super.isSuitableModule(module) && DefaultGroovyShellRunner.hasGroovyWithNeededJars(module);
+    }
 
-  @Override
-  protected LanguageConsoleView createConsole(Project project, String title) {
-    return new GroovyShellConsoleImpl(project, title);
+    @Override
+    public GroovyShellRunner getRunner(Module module) {
+      return new DefaultGroovyShellRunner();
+    }
+
+    @Override
+    public String getTitle() {
+      return "Groovy Shell";
+    }
+
+    @Override
+    protected LanguageConsoleView createConsole(Project project, String title) {
+      return new GroovyLanguageConsoleView.Shell(project, title);
+    }
   }
 }

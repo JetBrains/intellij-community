@@ -65,7 +65,7 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
     return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (Groovy " + version + ")";
   }
 
-  static boolean hasGroovyWithNeededJars(Module module) {
+  public static boolean hasGroovyWithNeededJars(Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
     return (facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null || facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null) &&
