@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap
 class ExternalProjectBuilderImpl implements ModelBuilderService {
 
   private final cache = new ConcurrentHashMap<String, ExternalProject>()
+  private final myTasksFactory = new TasksFactory()
 
   @Override
   public boolean canBuild(String modelName) {
@@ -94,18 +95,25 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, ExternalTask> getTasks(Project project) {
-    def result = [:] as Map<String, ExternalTask>
+  Map<String, ExternalTask> getTasks(Project project) {
+    def result = [:] as Map<String, DefaultExternalTask>
 
-    project.tasks.all { Task task ->
-      ExternalTask externalTask = new DefaultExternalTask()
-      externalTask.name = task.name
-      externalTask.description = task.description
-      externalTask.group = task.group ?: "other"
-      externalTask.QName = task.path
-      result.put(externalTask.QName, externalTask)
+    myTasksFactory.getTasks(project).each { Task task ->
+      DefaultExternalTask externalTask = result.get(task.name)
+      if (externalTask == null) {
+        externalTask = new DefaultExternalTask()
+        externalTask.name = task.name
+        externalTask.QName = task.name
+        externalTask.description = task.description
+        externalTask.group = task.group ?: "other"
+        result.put(externalTask.name, externalTask)
+      }
+
+      def projectTaskPath = project.path + ':' + task.name
+      if (projectTaskPath.equals(task.path)) {
+        externalTask.QName = task.path
+      }
     }
-
     result
   }
 

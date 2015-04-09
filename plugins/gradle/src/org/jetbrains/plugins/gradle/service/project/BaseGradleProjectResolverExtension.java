@@ -345,6 +345,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
         taskData.setGroup(task.getGroup());
         ideModule.createChild(ProjectKeys.TASK, taskData);
+        taskData.setInherited(StringUtil.equals(task.getName(), task.getQName()));
         tasks.add(taskData);
       }
 

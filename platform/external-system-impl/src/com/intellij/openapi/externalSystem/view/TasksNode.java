@@ -94,6 +94,11 @@ public class TasksNode extends ExternalSystemNode {
           }
 
           @Override
+          public boolean isVisible() {
+            return hasChildren() && super.isVisible();
+          }
+
+          @Override
           public int compareTo(@NotNull ExternalSystemNode node) {
             return "other".equals(group) ? 1 : super.compareTo(node);
           }
