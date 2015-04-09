@@ -361,7 +361,7 @@ public class RecentProjectPanel extends JPanel {
       if (value instanceof ReopenProjectAction) {
         ReopenProjectAction item = (ReopenProjectAction)value;
         myName.setText(item.getTemplatePresentation().getText());
-        myPath.setText(getTitle2Text(item, myPath));
+        myPath.setText(getTitle2Text(item, myPath, JBUI.scale(40)));
       } else if (value instanceof ProjectGroupActionGroup) {
         final ProjectGroupActionGroup group = (ProjectGroupActionGroup)value;
         myName.setText(group.getGroup().getName());
@@ -370,7 +370,7 @@ public class RecentProjectPanel extends JPanel {
       return this;
     }
 
-    private String getTitle2Text(ReopenProjectAction action, JComponent pathLabel) {
+    protected String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
       String fullText = action.getProjectPath();
       if (fullText == null || fullText.length() == 0) return " ";
 
@@ -378,7 +378,7 @@ public class RecentProjectPanel extends JPanel {
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
-        int maxWidth = RecentProjectPanel.this.getWidth() - JBUI.scale(40);
+        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset;
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
           int left = 1; int right = 1;
           int center = fullText.length() / 2;

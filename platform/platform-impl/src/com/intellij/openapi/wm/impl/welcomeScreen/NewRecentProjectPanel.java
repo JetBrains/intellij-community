@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectsManager;
@@ -23,13 +24,15 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +54,11 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
       scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackground());
-      scrollPane.setSize(JBUI.size(245, 460));
-      scrollPane.setMinimumSize(JBUI.size(245, 460));
-      scrollPane.setPreferredSize(JBUI.size(245, 460));
+      final int width = 300;
+      final int height = 460;
+      scrollPane.setSize(JBUI.size(width, height));
+      scrollPane.setMinimumSize(JBUI.size(width, height));
+      scrollPane.setPreferredSize(JBUI.size(width, height));
     }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
@@ -64,7 +69,16 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   protected Dimension getPreferredScrollableViewportSize() {
     return null;//new Dimension(250, 430);
   }
-  
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    final JList list = UIUtil.findComponentOfType(this, JList.class);
+    if (list != null) {
+      list.updateUI();
+    }
+  }
+
   @Override
   protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
     final JBList list = super.createList(recentProjectActions, size);
@@ -157,34 +171,29 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         add(myName, nameCell);
         add(myPath, pathCell);
       }
-      MySpacer spacer = new MySpacer();
-      class MySpacer extends NonOpaquePanel {
-        boolean selected;
-        boolean lastItem;
+      JComponent spacer = new NonOpaquePanel() {
         @Override
         public Dimension getPreferredSize() {
-          return new Dimension(JBUI.scale(13), super.getPreferredSize().height);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-          final int x = getWidth() / 2;
-          final int y = getHeight() / 2;
-          Color fg = selected ? UIUtil.getListForeground(true) : ColorUtil.withAlpha(UIUtil.getListForeground(), 0.5);
-          UIUtil.drawVDottedLine((Graphics2D)g, x, 0, lastItem ? y : getHeight(), null, fg);
-          UIUtil.drawHDottedLine((Graphics2D)g, x, getWidth(), y, null, fg);
+          return new Dimension(JBUI.scale(15), super.getPreferredSize().height);
         }
       };
 
       @Override
       public Component getListCellRendererComponent(JList list, final Object value, int index, final boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        final Color fore = getListForeground(isSelected, list.hasFocus());
+        final Color back = getListBackground(isSelected, list.hasFocus());
+        final JLabel name = new JLabel();
+        final JLabel path = new JLabel();
+        name.setForeground(fore);
+        path.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());
+
+        setBackground(back);
+
         return new JPanel() {
           {
-            myName.setFont(myName.getFont().deriveFont(Font.PLAIN));
             setLayout(new BorderLayout());
             setBackground(UIUtil.getListBackground(isSelected));
-            final Color fg = UIUtil.getListForeground(isSelected);
+
             boolean isGroup = value instanceof ProjectGroupActionGroup;
             boolean isInsideGroup = false;
             boolean isLastInGroup = false;
@@ -202,19 +211,34 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
             setBorder(JBUI.Borders.empty(5, 7));
             if (isInsideGroup) {
-              spacer.selected = isSelected;
-              spacer.lastItem = isLastInGroup;
               add(spacer, BorderLayout.WEST);
             }
             if (isGroup) {
               final ProjectGroup group = ((ProjectGroupActionGroup)value).getGroup();
-              myName.setText(group.getName());
-              myName.setFont(myName.getFont().deriveFont(Font.BOLD));
-              add(myName);
+              name.setText(group.getName());
+              name.setIcon(AllIcons.Nodes.Folder);
+              name.setFont(name.getFont().deriveFont(Font.BOLD));
+              add(name);
               add(new JLabel(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon()), BorderLayout.EAST);
             } else if (value instanceof ReopenProjectAction) {
-              add(myName, BorderLayout.NORTH);
-              add(myPath, BorderLayout.SOUTH);
+              final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
+              name.setText(((ReopenProjectAction)value).getTemplatePresentation().getText());
+              path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
+              p.add(name, BorderLayout.NORTH);
+              p.add(path, BorderLayout.SOUTH);
+              Icon icon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl());
+              icon = IconUtil.scale(icon, 16d/(double)icon.getIconWidth());
+              final JLabel projectIcon = new JLabel(" ", AllIcons.Nodes.Plugin, SwingConstants.LEFT) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                  getIcon().paintIcon(this, g, 0, (getHeight() - getIcon().getIconHeight()) / 2);
+                }
+              };
+              projectIcon.setVerticalAlignment(SwingConstants.CENTER);
+              final NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+              panel.add(p);
+              panel.add(projectIcon, BorderLayout.WEST);
+              add(panel);
             }
           }
 
