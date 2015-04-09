@@ -49,6 +49,8 @@ public class PyBlock implements ASTBlock {
   private final PyBlockContext myContext;
   private List<PyBlock> _subBlocks = null;
   private Alignment myChildAlignment;
+  private final boolean myEmptyList;
+
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
 
   public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
@@ -95,6 +97,7 @@ public class PyBlock implements ASTBlock {
     _node = node;
     _wrap = wrap;
     myContext = context;
+    myEmptyList = node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).getElements().length == 0;
   }
 
   @NotNull
@@ -158,7 +161,7 @@ public class PyBlock implements ASTBlock {
       while (p != null) {
         ASTNode pNode = p.getNode();
         if (ourListElementTypes.contains(pNode.getElementType())) {
-          if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
+          if (needListAlignment(child) && !myEmptyList) {
 
             childAlignment = p.getChildAlignment();
             break;
@@ -196,7 +199,7 @@ public class PyBlock implements ASTBlock {
           !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
-      if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
+      if (needListAlignment(child) && !myEmptyList) {
         childAlignment = getAlignmentForChildren();
       }
       if (childType == PyTokenTypes.END_OF_LINE_COMMENT) {
@@ -477,16 +480,6 @@ public class PyBlock implements ASTBlock {
       PySliceExpression sliceExpression = (PySliceExpression)_node.getPsi();
       PyExpression operand = sliceExpression.getOperand();
       return operand.getNode() == child;
-    }
-    return false;
-  }
-
-  private static boolean isEmptyList(PsiElement psi) {
-    if (psi instanceof PyDictLiteralExpression) {
-      return ((PyDictLiteralExpression)psi).getElements().length == 0;
-    }
-    if (psi instanceof PySequenceExpression) {
-      return ((PySequenceExpression)psi).getElements().length == 0;
     }
     return false;
   }
