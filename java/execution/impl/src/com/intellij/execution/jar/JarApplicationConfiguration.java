@@ -31,6 +31,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +72,16 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     XmlSerializer.deserializeInto(myBean, element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
     myConfigurationModule.readExternal(element);
+  }
+
+  @Override
+  public RunConfiguration clone() {
+    JarApplicationConfiguration clone = (JarApplicationConfiguration)super.clone();
+    clone.myEnvs = new LinkedHashMap<String, String>(myEnvs);
+    clone.myConfigurationModule = new JavaRunConfigurationModule(getProject(), true);
+    clone.myConfigurationModule.setModule(myConfigurationModule.getModule());
+    clone.myBean = XmlSerializerUtil.createCopy(myBean);
+    return clone;
   }
 
   public void setModule(Module module) {
