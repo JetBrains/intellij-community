@@ -131,7 +131,7 @@ its-html-attributes =
     its-attribute.provRef.html?)
    | its-attribute.provenanceRecordsRef.html)? &
   (its-attribute.locQualityIssuesRef.html
-  | 
+  |
   ((its-attribute.locQualityIssueType.html? & its-attribute.locQualityIssueComment.html?) & its-attribute.locQualityIssueSeverity.html? & its-attribute.locQualityIssueProfileRef.html? & its-attribute.locQualityIssueEnabled.html?)
   )? &
   (((its-attribute.locQualityRatingScore.html, its-attribute.locQualityRatingScoreThreshold.html?) | (its-attribute.locQualityRatingVote.html, its-attribute.locQualityRatingVoteThreshold.html?)), its-attribute.locQualityRatingProfileRef.html?)? &

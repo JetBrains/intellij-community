@@ -29,7 +29,7 @@ its-locNote.type = string
 its-locNoteType.type =
     ## Localization note is an alert
     w:string "alert"
-    | 
+    |
     ## Localization note is a description
     w:string "description"
 
@@ -41,7 +41,7 @@ its-termInfoRef.type = w:iri-ref
 its-term.type =
     ## The value 'yes' means that this is a term
     w:string "yes"
-    | 
+    |
     ## The value 'no' means that this is not a term
     w:string "no"
 
@@ -51,10 +51,10 @@ its-termConfidence.type = its-confidence.type
 its-withinText.type =
     ## The element and its content are part of the flow of its parent element
     w:string "yes"
-    | 
+    |
     ## The element splits the text flow of its parent element and its content is an independent text flow
     w:string "no"
-    | 
+    |
     ## The element is part of the flow of its parent element, its content is an independent flow
     w:string "nested"
 
