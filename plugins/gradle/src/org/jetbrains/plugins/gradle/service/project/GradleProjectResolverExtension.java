@@ -96,13 +96,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
                                            @NotNull DataNode<ModuleData> ideModule,
                                            @NotNull DataNode<ProjectData> ideProject);
 
-  /**
-   * @deprecated to be removed in IDEA 15
-   */
-  @Deprecated
-  @NotNull
-  Collection<TaskData> filterRootProjectTasks(@NotNull List<TaskData> allTasks);
-
   @NotNull
   Set<Class> getExtraProjectModelClasses();
 

@@ -367,12 +367,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
-  public Collection<TaskData> filterRootProjectTasks(@NotNull List<TaskData> allTasks) {
-    return allTasks;
-  }
-
-  @NotNull
-  @Override
   public Set<Class> getExtraProjectModelClasses() {
     Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ExternalProject.class, ModuleExtendedModel.class);
     if (!resolverCtx.isPreviewMode()) {
