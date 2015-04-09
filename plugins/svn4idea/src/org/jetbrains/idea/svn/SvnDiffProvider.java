@@ -152,9 +152,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     }
 
     try {
-      final String message = getCommitMessage(path);
       return new VcsRevisionDescriptionImpl(new SvnRevisionNumber(svnInfo.getCommittedRevision()), svnInfo.getCommittedDate(),
-                                            svnInfo.getAuthor(), message);
+                                            svnInfo.getAuthor(), getCommitMessage(path, svnInfo.getCommittedRevision()));
     }
     catch (VcsException e) {
       LOG.info(e);    // most likely the file is unversioned
@@ -163,9 +162,9 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   @Nullable
-  private String getCommitMessage(File path) throws VcsException {
+  private String getCommitMessage(@NotNull File path, @Nullable SVNRevision revision) throws VcsException {
     PropertyValue property =
-      myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, SVNRevision.BASE);
+      myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, revision);
 
     return PropertyValue.toString(property);
   }
