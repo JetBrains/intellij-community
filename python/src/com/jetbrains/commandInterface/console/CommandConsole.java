@@ -62,7 +62,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Nobody will serialize console
-final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>,Condition<LanguageConsoleView> {
+final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView> {
   /**
    * List of commands (to be injected into {@link CommandLineFile}) if any
    */
@@ -87,6 +87,13 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   @NotNull
   private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+  /**
+   * Process handler currently running on console (if any)
+   *
+   * @see #switchToProcessMode(ProcessHandler)
+   */
+  @Nullable
+  private volatile ProcessHandler myProcessHandler;
 
   /**
    * @param module      module console runs on
@@ -116,6 +123,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
 
     console.switchToCommandMode();
+    console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
     return console;
   }
 
@@ -129,6 +137,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * Switches console to "command-mode" (see class doc for details)
    */
   private void switchToCommandMode() {
+    myProcessHandler = null;
     setPrompt(getTitle() + " > ");
 
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -154,6 +163,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param processHandler process to attach to
    */
   private void switchToProcessMode(@NotNull final ProcessHandler processHandler) {
+    myProcessHandler = processHandler;
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -175,12 +185,20 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     }
   }
 
+  /**
+   * @return process handler currently running on console (if any) or null if in {@link #switchToCommandMode() command mode}
+   * @see #switchToProcessMode(ProcessHandler)
+   */
+  @Nullable
+  ProcessHandler getProcessHandler() {
+    return myProcessHandler;
+  }
 
   /**
    * Chooses consumer to delegate execute action to.
    *
    * @param newConsumer new consumer to register to delegate execution to
-   *                  or null if just reset consumer
+   *                    or null if just reset consumer
    */
   private void resetConsumer(@Nullable final Consumer<String> newConsumer) {
     synchronized (myConsumerSemaphore) {
@@ -209,6 +227,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   /**
    * Adds listener that will be notified when console state (mode?) changed.
    * <strong>Called on EDT</strong>
+   *
    * @param listener listener to notify
    */
   void addStateChangeListener(@NotNull final Runnable listener) {
