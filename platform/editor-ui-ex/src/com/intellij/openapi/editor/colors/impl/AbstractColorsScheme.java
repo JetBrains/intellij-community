@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -41,9 +42,14 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
+import static com.intellij.openapi.editor.colors.EditorColors.*;
+import static com.intellij.openapi.util.Couple.of;
+import static com.intellij.ui.ColorUtil.fromHex;
+
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private static final String OS_VALUE_PREFIX = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "linux";
-  private static final int CURR_VERSION = 124;
+  private static final int CURR_VERSION = 141;
 
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
 
@@ -332,29 +338,32 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
       TextAttributes attr = new TextAttributes(e.getChild(VALUE_ELEMENT));
       myAttributesMap.put(name, attr);
-      migrateErrorStripeColorFrom45(name, attr);
+      migrateErrorStripeColorFrom14(name, attr);
     }
   }
 
-  private void migrateErrorStripeColorFrom45(final TextAttributesKey name, final TextAttributes attr) {
-    if (myVersion != 0) return;
-    Color defaultColor = DEFAULT_ERROR_STRIPE_COLOR.get(name.getExternalName());
-    if (defaultColor != null && attr.getErrorStripeColor() == null) {
-      attr.setErrorStripeColor(defaultColor);
+  private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {
+    if (myVersion >= 141 || myParentScheme == null) return;
+
+    Couple<Color> m = DEFAULT_STRIPE_COLORS.get(name.getExternalName());
+    if (m != null && Comparing.equal(m.first, attr.getErrorStripeColor())) {
+      attr.setErrorStripeColor(m.second);
     }
   }
-  public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<String, Color>();
-  static {
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.ERRORS_ATTRIBUTES.getExternalName(), Color.red);
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES.getExternalName(), Color.red);
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WARNINGS_ATTRIBUTES.getExternalName(), Color.yellow);
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.INFO_ATTRIBUTES.getExternalName(), Color.yellow.brighter());
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WEAK_WARNING_ATTRIBUTES.getExternalName(), Color.yellow.brighter());
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES.getExternalName(), Color.yellow);
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES.getExternalName(), Color.yellow);
-    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.DEPRECATED_ATTRIBUTES.getExternalName(), Color.yellow);
-  }
 
+  @SuppressWarnings("UseJBColor")
+  public static final THashMap<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
+    {
+      put(ERRORS_ATTRIBUTES.getExternalName(),                        of(Color.red,          fromHex("CF5B56")));
+      put(WARNINGS_ATTRIBUTES.getExternalName(),                      of(Color.yellow,       fromHex("EBC700")));
+      put("EXECUTIONPOINT_ATTRIBUTES",                                of(Color.blue,         fromHex("3763b0")));
+      put(IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),        of(fromHex("CCCFFF"),  fromHex("BAA8FF")));
+      put(WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),  of(fromHex("FFCCE5"),  fromHex("F0ADF0")));
+      put(TEXT_SEARCH_RESULT_ATTRIBUTES.getExternalName(),            of(fromHex("586E75"),  fromHex("71B362")));
+      put(TODO_DEFAULT_ATTRIBUTES.getExternalName(),                  of(fromHex("268BD2"),  fromHex("54AAE3")));
+    }
+  };
+  
   private void readColors(Element childNode) {
     for (final Object o : childNode.getChildren(OPTION_ELEMENT)) {
       Element colorElement = (Element)o;
