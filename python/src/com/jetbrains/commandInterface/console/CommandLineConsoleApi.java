@@ -77,31 +77,9 @@ public final class CommandLineConsoleApi {
     final Content content = new ContentImpl(console.getComponent(), "", true);
     contentManager.addContent(content);
 
-    showHiddenCommandWorkAround(console);
+    //showHiddenCommandWorkAround(console);
     ArgumentHintLayer.attach(console); // Display [arguments]
     return console;
-  }
-
-  /**
-   * TODO: Investigate why do we need this hack
-   * For some reason console is not displayed correctly unless we type something to it (i.e. space)
-   *
-   * @param console console to type space
-   */
-  private static void showHiddenCommandWorkAround(@NotNull final LanguageConsoleView console) {
-    console.getComponent().setVisible(true);
-    CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            console.getEditorDocument().insertString(0, " ");
-            console.getComponent().grabFocus();
-          }
-        });
-      }
-    }, null, null);
   }
 }
 
