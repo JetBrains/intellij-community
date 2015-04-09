@@ -17,19 +17,12 @@ package com.jetbrains.commandInterface.console;
 
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.toolWindowWithActions.WindowWithActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,30 +57,15 @@ public final class CommandLineConsoleApi {
     final Project project = module.getProject();
     final CommandConsole console = CommandConsole.createConsole(module, consoleName, commandList);
 
-    final ToolWindowApi windowApi = new ToolWindowApi(project, consoleName);
-    // Add console to the toolwindow wrapping it with tabs
-    windowApi.add(ConsoleTabsPanel.wrapConsole(console, new MyCloseDelegate(windowApi)));
+    // Show console on "toolwindow"
+    WindowWithActions.showConsoleWithProcess(console,
+                                             console.getEditor().getComponent(),
+                                             consoleName,
+                                             project,
+                                             null);
 
     ArgumentHintLayer.attach(console); // Display [arguments]
     return console;
-  }
-
-  /**
-   * Console tabs needs so-called "closer": engine to be called when user wishes to close tabs.
-   * We need to delegate this call to the {@link ToolWindowApi#close()}  to close whole window
-   */
-  private static final class MyCloseDelegate implements Runnable {
-    @NotNull
-    private final ToolWindowApi myWindowApi;
-
-    private MyCloseDelegate(@NotNull final ToolWindowApi windowApi) {
-      myWindowApi = windowApi;
-    }
-
-    @Override
-    public void run() {
-      myWindowApi.close();
-    }
   }
 }
 

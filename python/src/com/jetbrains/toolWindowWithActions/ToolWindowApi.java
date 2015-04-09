@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.commandInterface.console;
+package com.jetbrains.toolWindowWithActions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -40,7 +40,7 @@ final class ToolWindowApi {
   private final ToolWindowManager myToolWindowManager;
 
   /**
-   * @param project project
+   * @param project    project
    * @param windowName name to be used as id (and shown to user)
    */
   ToolWindowApi(@NotNull final Project project, @NotNull final String windowName) {
