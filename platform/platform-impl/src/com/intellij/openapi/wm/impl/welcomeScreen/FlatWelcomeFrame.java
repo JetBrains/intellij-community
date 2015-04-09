@@ -92,7 +92,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     setContentPane(myScreen.getWelcomePanel());
     setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
-    setSize(JBUI.size(666, 460));
+    final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
+    setSize(JBUI.size(width, 460));
     setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
     //int y = bounds.y + (bounds.height - getHeight()) / 2;
