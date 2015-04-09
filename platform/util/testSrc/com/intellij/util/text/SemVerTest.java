@@ -21,14 +21,17 @@ import org.jetbrains.annotations.NotNull;
 public class SemVerTest extends TestCase {
   public void testParsing() throws Exception {
     String version = "0.9.2";
-    SemVer semVer = parseNotNull(version);
-    assertEquals(new SemVer(version, 0, 9, 2), semVer);
+    assertEquals(new SemVer(version, 0, 9, 2), parseNotNull(version));
   }
 
   public void testExtendedVersion() throws Exception {
     String version = "0.9.2-dart";
-    SemVer semVer = parseNotNull(version);
-    assertEquals(new SemVer(version, 0, 9, 2), semVer);
+    assertEquals(new SemVer(version, 0, 9, 2), parseNotNull(version));
+  }
+
+  public void testGulp4Alpha() throws Exception {
+    String version = "4.0.0-alpha.1";
+    assertEquals(new SemVer(version, 4, 0, 0), parseNotNull(version));
   }
 
   public void testCompare() throws Exception {
