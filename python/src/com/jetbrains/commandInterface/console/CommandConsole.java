@@ -31,6 +31,7 @@ import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Nobody will serialize console
-final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView> {
+final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView>, ConsoleWithProcess {
   /**
    * List of commands (to be injected into {@link CommandLineFile}) if any
    */
@@ -189,8 +190,9 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @return process handler currently running on console (if any) or null if in {@link #switchToCommandMode() command mode}
    * @see #switchToProcessMode(ProcessHandler)
    */
+  @Override
   @Nullable
-  ProcessHandler getProcessHandler() {
+  public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
