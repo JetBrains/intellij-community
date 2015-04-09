@@ -351,8 +351,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
 
+  @Deprecated
+  @SuppressWarnings("unused")
+  public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<String, Color>();
+
   @SuppressWarnings("UseJBColor")
-  public static final THashMap<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
+  private static final Map<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
     {
       put(ERRORS_ATTRIBUTES.getExternalName(),                        of(Color.red,          fromHex("CF5B56")));
       put(WARNINGS_ATTRIBUTES.getExternalName(),                      of(Color.yellow,       fromHex("EBC700")));
