@@ -82,6 +82,10 @@ class SMTestSender extends RunListener {
 
       final int failureIdx = trace.indexOf(failureMessage);
       attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessage.length()) : trace);
+      final String filePath = notification.getFilePath();
+      if (filePath != null) {
+        attrs.put("expectedFile", filePath);
+      }
     } else {
       attrs.put("details", trace);
       attrs.put("error", "true");

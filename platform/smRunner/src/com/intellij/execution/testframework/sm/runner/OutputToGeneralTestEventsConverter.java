@@ -315,6 +315,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
     @NonNls private static final String ATTR_KEY_TEXT = "text";
     @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
+    @NonNls private static final String ATTR_KEY_EXPECTED_FILE_PATH = "expectedFile";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
     @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
@@ -392,8 +393,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
-      final boolean testError = testFailed.getAttributes().get(ATTR_KEY_TEST_ERROR) != null;
-      TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError);
+      final Map<String, String> attributes = testFailed.getAttributes();
+      final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
+      TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError, attributes.get(ATTR_KEY_EXPECTED_FILE_PATH));
       fireOnTestFailure(testFailedEvent);
     }
 
