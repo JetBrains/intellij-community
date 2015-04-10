@@ -11,6 +11,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -20,6 +21,8 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +34,8 @@ import java.util.List;
 public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private static final String WITHER_PREFIX = "with";
+
+  private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
 
   public WitherFieldProcessor() {
     super(Wither.class, PsiMethod.class);
@@ -112,12 +117,20 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   public boolean validConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class)) {
+    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class, Value.class, lombok.experimental.Value.class)) {
       return true;
     }
 
-    final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     final Collection<PsiField> constructorParameters = filterFields(psiClass);
+
+    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class)) {
+      final Collection<PsiField> requiredConstructorParameters = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
+      if (constructorParameters.size() == requiredConstructorParameters.size()) {
+        return true;
+      }
+    }
+
+    final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
 
     boolean constructorExists = false;
     for (PsiMethod classConstructor : classConstructors) {

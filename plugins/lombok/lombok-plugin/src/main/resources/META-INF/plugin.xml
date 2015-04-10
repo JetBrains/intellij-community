@@ -204,6 +204,7 @@
 		<ul>
 		<li>0.9.3
 				<ol>
+				    <li>Fixed #96: @Value and @Wither not playing well together</li>
 				    <li>Fixed #97: Two constructors being shown when using @Builder and @AllArgsConstructor together</li>
 				</ol>
 			</li>
