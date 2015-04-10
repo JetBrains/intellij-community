@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -90,7 +91,7 @@ public class ZipFileCache {
 
   @NotNull
   public static ZipFile acquire(@NotNull String path) throws IOException {
-    path = FileUtil.toCanonicalPath(path);
+    path = toCanonicalPath(path);
 
     synchronized (ourLock) {
       CacheRecord record = ourPathCache.get(path);
@@ -120,8 +121,19 @@ public class ZipFileCache {
     return record.file;
   }
 
-  private static ZipFile tryOpen(String path) throws IOException {
+  private static String toCanonicalPath(@NotNull String path) {
     path = FileUtil.toSystemDependentName(path);
+
+    File file = new File(path);
+    try {
+      return file.getCanonicalPath();
+    }
+    catch (IOException e) {
+      return file.getAbsolutePath();
+    }
+  }
+
+  private static ZipFile tryOpen(String path) throws IOException {
     debug("opening %s", path);
     try {
       return new ZipFile(path);
@@ -200,7 +212,8 @@ public class ZipFileCache {
 
     synchronized (ourLock) {
       for (String path : paths) {
-        path = FileUtil.toCanonicalPath(path);
+        path = toCanonicalPath(path);
+
         CacheRecord record = ourPathCache.remove(path);
         if (record != null) {
           ourFileCache.remove(record.file);
