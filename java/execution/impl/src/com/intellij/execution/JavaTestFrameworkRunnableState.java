@@ -157,7 +157,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
     }
 
-    JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
+    final String parameters = getConfiguration().getProgramParameters();
+    getConfiguration().setProgramParameters(null);
+    try {
+      JavaParametersUtil.configureConfiguration(javaParameters, getConfiguration());
+    }
+    finally {
+      getConfiguration().setProgramParameters(parameters);
+    }
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     configureClasspath(javaParameters);
