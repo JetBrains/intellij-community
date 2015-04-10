@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
-    assertXmlOutputEquals("<scheme name=\"test\" version=\"124\" parent_scheme=\"Default\" />", root);
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"141\" parent_scheme=\"Default\" />", root);
   }
 
   public void testWriteInheritedFromDarcula() throws Exception {
@@ -188,7 +188,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
-    assertXmlOutputEquals("<scheme name=\"test\" version=\"124\" parent_scheme=\"Darcula\" />", root);
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"141\" parent_scheme=\"Darcula\" />", root);
   }
 
   private static void assertXmlOutputEquals(String expected, Element root) throws IOException {
