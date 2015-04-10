@@ -18,8 +18,6 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +36,10 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myParams;
   }
 
+  public void clear() {
+    myParams = null;
+  }
+  
   @Override
   @NotNull
   protected OSProcessHandler startProcess() throws ExecutionException {

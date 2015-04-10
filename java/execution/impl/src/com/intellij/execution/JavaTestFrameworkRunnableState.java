@@ -113,6 +113,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
             }
 
             deleteTempFiles();
+            clear();
           }
         };
         SwingUtilities.invokeLater(runnable);

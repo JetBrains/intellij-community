@@ -515,9 +515,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  public void clear() {
-  }
-
   @NotNull
   protected String getFrameworkName() {
     return JUNIT_TEST_FRAMEWORK_NAME;
