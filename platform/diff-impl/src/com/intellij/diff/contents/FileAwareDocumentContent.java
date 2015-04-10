@@ -77,9 +77,9 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
     @NotNull
     private Builder init(@NotNull FilePath path) {
-      myLocalFile = LocalFileSystem.getInstance().findFileByPath(path.getPath());
-      myFileType = myLocalFile != null ? myLocalFile.getFileType() : path.getFileType();
-      myCharset = myLocalFile != null ? myLocalFile.getCharset() : path.getCharset(myProject);
+      path.refresh();
+      myFileType = path.getFileType();
+      myCharset = path.getCharset(myProject);
       return this;
     }
 
