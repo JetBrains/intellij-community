@@ -47,7 +47,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
 
   @NotNull
   public static DiffContentFactoryImpl getInstanceImpl() {
-    return (DiffContentFactoryImpl)ServiceManager.getService(DiffContentFactory.class);
+    return (DiffContentFactoryImpl)DiffContentFactory.getInstance();
   }
 
   @Override
