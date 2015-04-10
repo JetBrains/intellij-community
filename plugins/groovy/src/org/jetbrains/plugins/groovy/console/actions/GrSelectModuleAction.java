@@ -68,6 +68,7 @@ public class GrSelectModuleAction extends DumbAwareAction {
     GroovyConsoleUtil.selectModuleAndRun(project, new Consumer<Module>() {
       @Override
       public void consume(Module module) {
+        if (module.equals(myFile.getUserData(ModuleUtilCore.KEY_MODULE))) return;
         final GroovyConsole groovyConsole = myFile.getUserData(GroovyConsole.GROOVY_CONSOLE);
         if (groovyConsole == null || groovyConsole.stop()) {
           myFile.putUserData(ModuleUtilCore.KEY_MODULE, module);
