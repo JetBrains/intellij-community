@@ -34,13 +34,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class SMTestSender extends RunListener {
+  private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
-
+  
   private String myCurrentClassName;
   private boolean myIgnoreTopSuite;
 
@@ -54,7 +53,6 @@ class SMTestSender extends RunListener {
     }
   }
 
-  //todo provide test locationHint=junit:://classname.testname + test locator
   public void testStarted(Description description) throws Exception {
     final String className = JUnit4ReflectionUtil.getClassName(description);
     if (!className.equals(myCurrentClassName)) {
@@ -132,50 +130,41 @@ class SMTestSender extends RunListener {
     return isComparisonFailure(aClass.getSuperclass());
   }
 
-  private static ComparisonFailureData createExceptionNotification(Throwable assertion) {
+  static ComparisonFailureData createExceptionNotification(Throwable assertion) {
     if (isComparisonFailure(assertion)) {
       return ComparisonFailureData.create(assertion);
     }
-    final Throwable cause = assertion.getCause();
-    if (isComparisonFailure(cause)) {
-      try {
+    try {
+      final Throwable cause = assertion.getCause();
+      if (isComparisonFailure(cause)) {
         return ComparisonFailureData.create(assertion);
       }
-      catch (Throwable ignore) {
-      }
     }
-
+    catch (Throwable ignore) {
+    }
     final String message = assertion.getMessage();
-    if (message != null) {
-      ComparisonFailureData notification = createExceptionNotification(message, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"");
+    if (message != null  && acceptedByThreshold(message.length())) {
+      try {
+        return ExpectedPatterns.createExceptionNotification(message);
       }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\nExpected: (.*)\n\\s*got: (.*)");
-      }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\\s*expected same:<(.*)> was not:<(.*)>");
-      }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\\s*expected:<(.*)> but was:<(.*)>");
-      }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
-      }
-      if (notification != null) {
-        return notification;
-      }
+      catch (Throwable ignored) {}
     }
     return null;
   }
 
-  private static ComparisonFailureData createExceptionNotification(String message, final String regex) {
-    final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
-    if (matcher.matches()) {
-      return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+  private static boolean acceptedByThreshold(int messageLength) {
+    int threshold = 10000;
+    try {
+      final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
+      if (property != null) {
+        try {
+          threshold = Integer.parseInt(property);
+        }
+        catch (NumberFormatException ignore) {}
+      }
     }
-    return null;
+    catch (SecurityException ignored) {}
+    return messageLength < threshold;
   }
 
   private static void sendTree(JUnit4IdeaTestRunner runner, Object description, List tests) {
