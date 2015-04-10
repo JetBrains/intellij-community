@@ -73,7 +73,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
           final String actionName = configuration instanceof LocatableConfiguration
                                     ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
                                     : configurationType.getDisplayName();
-          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configurationType.getIcon()) {
+          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configuration.getIcon()) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               perform(fromContext, context);
