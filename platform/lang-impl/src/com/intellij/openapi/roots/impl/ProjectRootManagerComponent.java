@@ -31,6 +31,7 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
@@ -40,6 +41,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
@@ -266,9 +269,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     }
     else {
       flat.add(projectFilePath);
-      final VirtualFile workspaceFile = myProject.getWorkspaceFile();
+      // may be not existing yet
+      final String workspaceFile = ((ProjectImpl)myProject).getStateStore().getWorkspaceFilePath();
       if (workspaceFile != null) {
-        flat.add(workspaceFile.getPath());
+        flat.add(workspaceFile);
       }
     }
 
@@ -326,7 +330,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-    dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
+    if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
+    }
 
     if (myRootsChangeUpdaters.isEmpty()) return;
 
