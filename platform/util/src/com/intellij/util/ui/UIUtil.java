@@ -483,7 +483,7 @@ public class UIUtil {
     component.putClientProperty(key, value);
   }
 
-  public static String getHtmlBody(String text) {
+  public static String getHtmlBody(@NotNull String text) {
     int htmlIndex = 6 + text.indexOf("<html>");
     if (htmlIndex < 6) {
       return text.replaceAll("\n", "<br>");
