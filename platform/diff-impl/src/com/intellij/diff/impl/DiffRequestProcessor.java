@@ -76,6 +76,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;
 
+  @NotNull private final DiffSettings mySettings;
   @NotNull private final List<DiffTool> myAvailableTools;
   @NotNull private final LinkedList<DiffTool> myToolOrder;
 
@@ -96,6 +97,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     this(project, new UserDataHolderBase());
   }
 
+  public DiffRequestProcessor(@Nullable Project project, @NotNull String place) {
+    this(project, DiffUtil.createUserDataHolder(DiffUserDataKeysEx.PLACE, place));
+  }
+
   public DiffRequestProcessor(@Nullable Project project, @NotNull UserDataHolder context) {
     myProject = project;
 
@@ -104,6 +109,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myContext = new MyDiffContext(context);
     myActiveRequest = NoDiffRequest.INSTANCE;
+
+    mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeysEx.PLACE));
 
     // UI
 
@@ -479,7 +486,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected DiffSettings getSettings() {
-    return DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeysEx.PLACE));
+    return mySettings;
   }
 
   //

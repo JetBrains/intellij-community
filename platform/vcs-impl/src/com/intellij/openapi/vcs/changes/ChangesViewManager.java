@@ -561,8 +561,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
-      super(project);
-      putContextUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.CHANGES_VIEW);
+      super(project, DiffPlaces.CHANGES_VIEW);
     }
 
     @Override

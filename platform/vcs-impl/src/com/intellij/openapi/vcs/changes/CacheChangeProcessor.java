@@ -57,6 +57,11 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     myProject = project;
   }
 
+  public CacheChangeProcessor(@NotNull Project project, @NotNull String place) {
+    super(project, place);
+    myProject = project;
+  }
+
   //
   // Abstract
   //
