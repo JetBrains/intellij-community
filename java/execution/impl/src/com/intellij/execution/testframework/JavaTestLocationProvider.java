@@ -17,6 +17,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -64,7 +65,7 @@ public class JavaTestLocationProvider implements TestLocationProvider {
           for (PsiClass aClass : classes) {
             PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {
-              results.add(new PsiLocation<PsiMethod>(project, method));
+              results.add(MethodLocation.elementInClass(method, aClass));
             }
           }
         }
