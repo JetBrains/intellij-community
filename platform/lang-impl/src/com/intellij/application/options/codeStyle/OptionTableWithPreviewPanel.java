@@ -252,6 +252,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
     expandTree(tree);
 
+    treeTable.getColumnModel().getSelectionModel().setAnchorSelectionIndex(1);
+    treeTable.getColumnModel().getSelectionModel().setLeadSelectionIndex(1);
+
     int maxWidth = tree.getPreferredScrollableViewportSize().width + 10;
     final TableColumn titleColumn = treeTable.getColumnModel().getColumn(0);
     titleColumn.setPreferredWidth(maxWidth);
@@ -740,7 +743,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private MyIntOptionEditor() {
       super();
     }
-    
+
     public Object getPresentableValue() {
       int value = validateAndGetIntOption();
       return value == myDefaultValue && myDefaultValueText != null ? myDefaultValueText : value;
@@ -754,7 +757,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       catch (NumberFormatException nfe) {
         return myDefaultValue;
       }
-    }   
+    }
 
     public void setMinValue(int minValue) {
       myMinValue = minValue;
