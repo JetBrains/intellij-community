@@ -333,7 +333,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     initFonts();
   }
 
-  protected void readAttributes(@NotNull Element childNode) {
+  public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
       TextAttributes attr = new TextAttributes(e.getChild(VALUE_ELEMENT));
