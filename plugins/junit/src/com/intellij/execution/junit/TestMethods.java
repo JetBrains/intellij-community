@@ -33,6 +33,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -59,23 +60,26 @@ public class TestMethods extends TestMethod {
     addClassesListToJavaParameters(myFailedTests, new Function<AbstractTestProxy, String>() {
       @Override
       public String fun(AbstractTestProxy testInfo) {
-        if (testInfo != null) {
-          final Location location = testInfo.getLocation(project, searchScope);
-          LOG.assertTrue(location != null);
-          final PsiElement element = location.getPsiElement();
-          if (element instanceof PsiMethod) {
-            final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
-                                                                                : ((PsiMethod)element).getContainingClass();
-            if (containingClass != null) {
-              return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + testInfo.getName();
-            }
-          }
-        }
-        return null;
+        return testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null;
       }
     }, data.getPackageName(), true, javaParameters);
 
     return javaParameters;
+  }
+
+  @Nullable
+  public static String getTestPresentation(AbstractTestProxy testInfo, Project project, GlobalSearchScope searchScope) {
+    final Location location = testInfo.getLocation(project, searchScope);
+    LOG.assertTrue(location != null);
+    final PsiElement element = location.getPsiElement();
+    if (element instanceof PsiMethod) {
+      final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
+                                                                          : ((PsiMethod)element).getContainingClass();
+      if (containingClass != null) {
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + testInfo.getName();
+      }
+    }
+    return null;
   }
 
   @Override
