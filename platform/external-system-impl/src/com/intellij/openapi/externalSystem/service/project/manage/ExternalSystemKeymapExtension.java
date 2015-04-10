@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,14 +70,16 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     MultiMap<Pair<ProjectSystemId, String>, String> projectToActionsMapping = MultiMap.create();
 
     ActionManager actionManager = ActionManager.getInstance();
-    for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
-      AnAction eachAction = actionManager.getAction(eachId);
+    if (actionManager != null) {
+      for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
+        AnAction eachAction = actionManager.getAction(eachId);
 
-      if (!(eachAction instanceof MyExternalSystemAction)) continue;
-      if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
+        if (!(eachAction instanceof MyExternalSystemAction)) continue;
+        if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
 
-      MyExternalSystemAction taskAction = (MyExternalSystemAction)eachAction;
-      projectToActionsMapping.putValue(Pair.create(taskAction.getSystemId(), taskAction.getGroup()), eachId);
+        MyExternalSystemAction taskAction = (MyExternalSystemAction)eachAction;
+        projectToActionsMapping.putValue(Pair.create(taskAction.getSystemId(), taskAction.getGroup()), eachId);
+      }
     }
 
     Map<ProjectSystemId, KeymapGroup> keymapGroupMap = ContainerUtil.newHashMap();
@@ -119,28 +121,34 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
   private static void createActions(Project project, Collection<DataNode<TaskData>> taskData) {
     ActionManager manager = ActionManager.getInstance();
-    for (DataNode<TaskData> each : taskData) {
-      final DataNode<ModuleData> moduleData = ExternalSystemApiUtil.findParent(each, ProjectKeys.MODULE);
-      if (moduleData == null) continue;
-      ExternalSystemTaskAction eachAction = new ExternalSystemTaskAction(project, moduleData.getData().getInternalName(), each.getData());
+    if (manager != null) {
+      for (DataNode<TaskData> each : taskData) {
+        final DataNode<ModuleData> moduleData = ExternalSystemApiUtil.findParent(each, ProjectKeys.MODULE);
+        if (moduleData == null) continue;
+        ExternalSystemTaskAction eachAction = new ExternalSystemTaskAction(project, moduleData.getData().getInternalName(), each.getData());
 
-      manager.unregisterAction(eachAction.getId());
-      manager.registerAction(eachAction.getId(), eachAction);
+        manager.unregisterAction(eachAction.getId());
+        manager.registerAction(eachAction.getId(), eachAction);
+      }
     }
   }
 
   public static void clearActions(Project project) {
     ActionManager manager = ActionManager.getInstance();
-    for (String each : manager.getActionIds(getActionPrefix(project, null))) {
-      manager.unregisterAction(each);
+    if (manager != null) {
+      for (String each : manager.getActionIds(getActionPrefix(project, null))) {
+        manager.unregisterAction(each);
+      }
     }
   }
 
   public static void clearActions(Project project, Collection<DataNode<TaskData>> taskData) {
     ActionManager manager = ActionManager.getInstance();
-    for (DataNode<TaskData> each : taskData) {
-      for (String eachAction : manager.getActionIds(getActionPrefix(project, each.getData().getLinkedExternalProjectPath()))) {
-        manager.unregisterAction(eachAction);
+    if (manager != null) {
+      for (DataNode<TaskData> each : taskData) {
+        for (String eachAction : manager.getActionIds(getActionPrefix(project, each.getData().getLinkedExternalProjectPath()))) {
+          manager.unregisterAction(eachAction);
+        }
       }
     }
   }
@@ -157,12 +165,14 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
     ActionManager manager = ActionManager.getInstance();
-    for (RunnerAndConfigurationSettings configurationSettings : settings) {
-      ExternalSystemRunConfigurationAction runConfigurationAction =
-        new ExternalSystemRunConfigurationAction(project, configurationSettings);
-      String id = runConfigurationAction.getId();
-      manager.unregisterAction(id);
-      manager.registerAction(id, runConfigurationAction);
+    if (manager != null) {
+      for (RunnerAndConfigurationSettings configurationSettings : settings) {
+        ExternalSystemRunConfigurationAction runConfigurationAction =
+          new ExternalSystemRunConfigurationAction(project, configurationSettings);
+        String id = runConfigurationAction.getId();
+        manager.unregisterAction(id);
+        manager.registerAction(id, runConfigurationAction);
+      }
     }
   }
 
