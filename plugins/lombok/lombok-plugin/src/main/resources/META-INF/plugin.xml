@@ -204,7 +204,7 @@
 		<ul>
 		<li>0.9.3
 				<ol>
-				    <li></li>
+				    <li>Fixed #97: Two constructors being shown when using @Builder and @AllArgsConstructor together</li>
 				</ol>
 			</li>
 		  <li>0.9.2
