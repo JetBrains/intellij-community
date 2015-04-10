@@ -109,7 +109,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     myPanel = new TwosideTextDiffPanel(this, myContentPanel, this, context);
 
 
-    new MyFocusOppositePaneAction().setupAction(myPanel, this);
+    new MyFocusOppositePaneAction(true).setupAction(myPanel);
+    new MyFocusOppositePaneAction(false).setupAction(myPanel);
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
@@ -316,6 +317,14 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   @CalledInAwt
+  @NotNull
+  protected LogicalPosition transferPosition(@NotNull Side baseSide, @NotNull LogicalPosition position) {
+    if (mySyncScrollListener == null) return position;
+    int line = mySyncScrollListener.getScrollable().transfer(baseSide, position.line);
+    return new LogicalPosition(line, position.column);
+  }
+
+  @CalledInAwt
   protected void scrollToLine(@NotNull Side side, int line) {
     Editor editor = side.select(myEditor1, myEditor2);
     if (editor == null) return;
@@ -388,9 +397,20 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
+    public MyFocusOppositePaneAction(boolean scrollToPosition) {
+      super(scrollToPosition);
+    }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myEditor1 == null || myEditor2 == null) return;
+
+      if (myScrollToPosition) {
+        EditorEx currentEditor = myCurrentSide.select(myEditor1, myEditor2);
+        EditorEx targetEditor = myCurrentSide.other().select(myEditor1, myEditor2);
+        LogicalPosition position = transferPosition(myCurrentSide, currentEditor.getCaretModel().getLogicalPosition());
+        targetEditor.getCaretModel().moveToLogicalPosition(position);
+      }
 
       myCurrentSide = myCurrentSide.other();
       myPanel.requestFocus();

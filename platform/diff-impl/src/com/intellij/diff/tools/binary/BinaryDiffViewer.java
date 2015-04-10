@@ -108,7 +108,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
     myStatusPanel = new MyStatusPanel();
 
-    new MyFocusOppositePaneAction().setupAction(myPanel, this);
+    new MyFocusOppositePaneAction().setupAction(myPanel);
 
 
     installEditorListeners();

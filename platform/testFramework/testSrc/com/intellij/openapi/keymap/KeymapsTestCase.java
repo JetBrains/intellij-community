@@ -132,6 +132,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
     { "control E",                "RecentFiles", "Vcs.ShowMessageHistory"},
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
+    { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
+    { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
     });
     put("Mac OS X 10.5+", new String[][] {
     { "F5",                       "CopyElement", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},
