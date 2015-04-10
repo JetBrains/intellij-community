@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +62,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private final Project myProject;
     private Document myDocument;
     private FileType myFileType;
-    private VirtualFile myLocalFile;
+    private VirtualFile myHighlightFile;
     private LineSeparator mySeparator;
     private Charset myCharset;
 
@@ -78,6 +77,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     private Builder init(@NotNull FilePath path) {
       path.refresh();
+      myHighlightFile = path.getVirtualFile();
       myFileType = path.getFileType();
       myCharset = path.getCharset(myProject);
       return this;
@@ -85,7 +85,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
     @NotNull
     private Builder init(@NotNull VirtualFile highlightFile) {
-      myLocalFile = highlightFile;
+      myHighlightFile = highlightFile;
       myFileType = highlightFile.getFileType();
       myCharset = highlightFile.getCharset();
       return this;
@@ -111,7 +111,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     public FileAwareDocumentContent build() {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
-      return new FileAwareDocumentContent(myProject, myDocument, myFileType, myLocalFile, mySeparator, myCharset);
+      return new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
     }
   }
 }
