@@ -10,4 +10,9 @@ class HtmlTagCanBeJavadocTag {
    * <warning descr="'<code>...</code>' can be replaced with '{@code ...}'"><code></warning></code><warning descr="'<code>...</code>' can be replaced with '{@code ...}'"><code></warning></code>
    */
   void foo() {}
+
+  /**
+   * <warning descr="'<CODE>...</code>' can be replaced with '{@code ...}'"><CODE></warning>HEAVY CODE</CODE>
+   */
+  void bar() {}
 }
