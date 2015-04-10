@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-class ProjectStateStorageManager extends StateStorageManagerImpl {
+public class ProjectStateStorageManager extends StateStorageManagerImpl {
   protected final ProjectImpl myProject;
   @NonNls protected static final String ROOT_TAG_NAME = "project";
 
@@ -39,12 +39,10 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     if (fileSpec.equals(StoragePathMacros.PROJECT_FILE)) {
       return createIprStorageData(filePath);
     }
-    else if (fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
+    if (fileSpec.equals(StoragePathMacros.WORKSPACE_FILE)) {
       return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
     }
-    else {
-      return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
-    }
+    return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
   }
 
   @NotNull

@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class ModuleStateStorageManager extends StateStorageManagerImpl {
+public class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NonNls private static final String ROOT_TAG_NAME = "module";
   private final ModuleImpl myModule;
 
-  public ModuleStateStorageManager(@Nullable TrackingPathMacroSubstitutor pathMacroManager, @NotNull ModuleImpl module) {
+  public ModuleStateStorageManager(@NotNull TrackingPathMacroSubstitutor pathMacroManager, @NotNull ModuleImpl module) {
     super(pathMacroManager, ROOT_TAG_NAME, module, module.getPicoContainer());
 
     myModule = module;

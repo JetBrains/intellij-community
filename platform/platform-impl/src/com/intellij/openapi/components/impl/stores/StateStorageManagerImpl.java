@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,10 +46,6 @@ import java.util.regex.Pattern;
 
 public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
   private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
-
-  private static class Holder {
-    private static final boolean ourHeadlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
-  }
 
   private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
   private final Lock myStorageLock = new ReentrantLock();
@@ -59,16 +56,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   private StreamProvider myStreamProvider;
 
-  public StateStorageManagerImpl(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                                 String rootTagName,
-                                 @Nullable Disposable parentDisposable,
-                                 PicoContainer picoContainer) {
+  public StateStorageManagerImpl(@NotNull TrackingPathMacroSubstitutor pathMacroSubstitutor,
+                                 @NotNull String rootTagName,
+                                 @NotNull Disposable parentDisposable,
+                                 @NotNull PicoContainer picoContainer) {
     myPicoContainer = picoContainer;
     myRootTagName = rootTagName;
     myPathMacroSubstitutor = pathMacroSubstitutor;
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, this);
-    }
+    Disposer.register(parentDisposable, this);
   }
 
   @Override
@@ -113,7 +108,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     try {
       StateStorage stateStorage = myStorages.get(fileSpec);
       if (stateStorage == null) {
-        stateStorage = createFileStateStorage(fileSpec, roamingType);
+        stateStorage = createStateStorage(StateStorage.class, fileSpec, roamingType, StateSplitterEx.class);
         myStorages.put(fileSpec, stateStorage);
       }
       return stateStorage;
@@ -169,36 +164,32 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @SuppressWarnings("deprecation")
   @NotNull
   private StateStorage createStateStorage(Storage storageSpec) {
-    if (!storageSpec.storageClass().equals(StateStorage.class)) {
+    Class<? extends StateStorage> storageClass = storageSpec.storageClass();
+    String fileSpec = storageSpec.file();
+    RoamingType roamingType = storageSpec.roamingType();
+    Class<? extends StateSplitter> stateSplitter = storageSpec.stateSplitter();
+    return createStateStorage(storageClass, fileSpec, roamingType, stateSplitter);
+  }
+
+  // overridden in upsource
+  protected StateStorage createStateStorage(@NotNull Class<? extends StateStorage> storageClass,
+                                            @NotNull String fileSpec,
+                                            @NotNull RoamingType roamingType,
+                                            @NotNull Class<? extends StateSplitter> stateSplitter) {
+    if (!storageClass.equals(StateStorage.class)) {
       String key = UUID.randomUUID().toString();
-      ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
+      ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageClass);
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    else if (!storageSpec.stateSplitter().equals(StateSplitter.class) && !storageSpec.stateSplitter().equals(StateSplitterEx.class)) {
-      StateSplitter splitter = ReflectionUtil.newInstance(storageSpec.stateSplitter());
-      return new DirectoryBasedStorage(myPathMacroSubstitutor, expandMacros(storageSpec.file()), splitter, this, createStorageTopicListener());
-    }
-    else {
-      return createFileStateStorage(storageSpec.file(), storageSpec.roamingType());
-    }
-  }
+    final String filePath = expandMacros(fileSpec);
+    File file = new File(filePath).getAbsoluteFile();
 
-  @Override
-  public void clearStateStorage(@NotNull String file) {
-    myStorageLock.lock();
-    try {
-      myStorages.remove(file);
+    if (!stateSplitter.equals(StateSplitter.class) && !stateSplitter.equals(StateSplitterEx.class)) {
+      StateSplitter splitter = ReflectionUtil.newInstance(stateSplitter);
+      return new DirectoryBasedStorage(myPathMacroSubstitutor, file, splitter, this, createStorageTopicListener());
     }
-    finally {
-      myStorageLock.unlock();
-    }
-  }
 
-  @NotNull
-  private StateStorage createFileStateStorage(@NotNull String fileSpec, @Nullable RoamingType roamingType) {
-    String filePath = expandMacros(fileSpec);
-
-    if (!Holder.ourHeadlessEnvironment && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && PathUtilRt.getFileName(filePath).lastIndexOf('.') < 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + filePath);
     }
 
@@ -207,7 +198,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     beforeFileBasedStorageCreate();
-    return new FileBasedStorage(filePath, fileSpec, roamingType, getMacroSubstitutor(fileSpec), myRootTagName, StateStorageManagerImpl.this,
+    return new FileBasedStorage(file, fileSpec,
+                                roamingType, getMacroSubstitutor(fileSpec), myRootTagName, StateStorageManagerImpl.this,
                                 createStorageTopicListener(), myStreamProvider) {
       @Override
       @NotNull
@@ -220,6 +212,17 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         return StateStorageManagerImpl.this.isUseXmlProlog();
       }
     };
+  }
+
+  @Override
+  public void clearStateStorage(@NotNull String file) {
+    myStorageLock.lock();
+    try {
+      myStorages.remove(file);
+    }
+    finally {
+      myStorageLock.unlock();
+    }
   }
 
   @Nullable
@@ -245,6 +248,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myPathMacroSubstitutor;
   }
 
+  @NotNull
   protected abstract StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath);
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
