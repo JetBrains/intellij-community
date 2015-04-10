@@ -302,6 +302,12 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     return getCurrentSide().isLeft() ? myEditor1 : myEditor2;
   }
 
+  @NotNull
+  public DocumentContent getCurrentContent() {
+    //noinspection ConstantConditions
+    return getCurrentSide().isLeft() ? myActualContent1 : myActualContent2;
+  }
+
   @Nullable
   protected EditorEx getEditor1() {
     return myEditor1;
@@ -359,11 +365,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor() {
     EditorEx editor = getCurrentEditor();
 
-    DocumentContent content = getCurrentSide().select(myActualContent1, myActualContent2);
-    assert content != null;
-
     int offset = editor.getCaretModel().getOffset();
-    return content.getOpenFileDescriptor(offset);
+    return getCurrentContent().getOpenFileDescriptor(offset);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -442,6 +445,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
+    }
+    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+      return getCurrentContent();
     }
     return super.getData(dataId);
   }

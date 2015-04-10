@@ -263,6 +263,11 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
+  public DocumentContent getCurrentContent() {
+    return myCurrentSide.select(myActualContents);
+  }
+
+  @NotNull
   @Override
   protected List<? extends EditorEx> getEditors() {
     return myEditors;
@@ -306,10 +311,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor() {
     EditorEx editor = getCurrentEditor();
 
-    DocumentContent content = getCurrentSide().select(myActualContents);
-
     int offset = editor.getCaretModel().getOffset();
-    return content.getOpenFileDescriptor(offset);
+    return getCurrentContent().getOpenFileDescriptor(offset);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -391,6 +394,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
+    }
+    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+      return getCurrentContent();
     }
     return super.getData(dataId);
   }

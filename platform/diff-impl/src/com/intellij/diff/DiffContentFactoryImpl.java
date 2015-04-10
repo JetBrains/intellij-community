@@ -77,7 +77,14 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @Override
   @NotNull
   public DocumentContent create(@Nullable Project project, @NotNull Document document) {
+    return create(project, document, (FileType)null);
+  }
+
+  @Override
+  @NotNull
+  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file == null) return new DocumentContentImpl(document, fileType, null, null, null);
     return create(project, document, file);
   }
 

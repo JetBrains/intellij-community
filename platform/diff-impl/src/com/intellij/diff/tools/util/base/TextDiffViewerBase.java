@@ -26,7 +26,6 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -114,7 +113,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
   @NotNull
   protected List<AnAction> createEditorPopupActions() {
     return ContainerUtil.list(
-      ActionManager.getInstance().getAction("CompareClipboardWithSelection") // TODO: pass FileType to DataContext for highlighting
+      ActionManager.getInstance().getAction("CompareClipboardWithSelection")
     );
   }
 
