@@ -215,6 +215,22 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
+  public static <T> List<T> newUnmodifiableList(List<? extends T> originalList) {
+    int size = originalList.size();
+    if (size == 0) {
+      return emptyList();
+    }
+    else if (size == 1) {
+      return Collections.singletonList(originalList.get(0));
+    }
+    else {
+      return Collections.unmodifiableList(newArrayList(originalList));
+    }
+  }
+
+
+  @NotNull
   @Contract(pure=true)
   public static <T> List<T> newSmartList() {
     return new SmartList<T>();
