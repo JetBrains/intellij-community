@@ -43,6 +43,7 @@ class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
   }
 
   private static class IdeaIprStorageData extends IprStorageData {
+    @NotNull
     private final String myFilePath;
 
     public IdeaIprStorageData(@NotNull String rootElementName, @NotNull Project project, @NotNull String filePath) {
