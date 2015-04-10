@@ -111,6 +111,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
                 !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), testConsoleProperties.isDebug())) {
               TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewer.getRoot(), testConsoleProperties, null);
             }
+
+            deleteTempFiles();
           }
         };
         SwingUtilities.invokeLater(runnable);
@@ -214,5 +216,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     }
   }
 
+  protected void deleteTempFiles() {
+    if (myTempFile != null) {
+      FileUtil.delete(myTempFile);
+    }
+  }
 
 }

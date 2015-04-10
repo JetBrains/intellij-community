@@ -17,7 +17,10 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DeferredActionsQueue;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
@@ -55,7 +58,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -87,7 +89,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myWorkingDirsFile = null;
-  public File myListenersFile;
+  protected File myListenersFile;
 
   public static TestObject fromString(final String id,
                                       final JUnitConfiguration configuration,
@@ -235,12 +237,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       @Override
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
-        if (myTempFile != null) {
-          FileUtil.delete(myTempFile);
-        }
-        if (myListenersFile != null) {
-          FileUtil.delete(myListenersFile);
-        }
+        deleteTempFiles();
         final Runnable runnable = new Runnable() {
           @Override
           public void run() {
@@ -503,6 +500,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  @Override
+  protected void deleteTempFiles() {
+    super.deleteTempFiles();
+    if (myListenersFile != null) {
+      FileUtil.delete(myListenersFile);
+    }
+    
+    if (myWorkingDirsFile != null) {
+      FileUtil.delete(myWorkingDirsFile);
     }
   }
 
