@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -32,8 +34,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -1378,10 +1378,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
-      super(project);
+      super(project, DiffPlaces.COMMIT_DIALOG);
 
       putContextUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
-      putContextUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.COMMIT_DIALOG);
     }
 
     @NotNull
