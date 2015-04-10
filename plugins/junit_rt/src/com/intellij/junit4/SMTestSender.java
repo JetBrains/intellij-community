@@ -41,6 +41,7 @@ class SMTestSender extends RunListener {
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
   
   private String myCurrentClassName;
+  private String myParamName;
   private boolean myIgnoreTopSuite;
 
   public void testRunStarted(Description description) throws Exception {
@@ -48,6 +49,9 @@ class SMTestSender extends RunListener {
   }
 
   public void testRunFinished(Result result) throws Exception {
+    if (myParamName != null) {
+      System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']");
+    }
     if (myCurrentClassName != null) {
       System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
     }
@@ -62,7 +66,19 @@ class SMTestSender extends RunListener {
       myCurrentClassName = className;
       System.out.println("##teamcity[testSuiteStarted name =\'" + myCurrentClassName + "\']");
     }
-    System.out.println("##teamcity[testStarted name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
+    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    final int paramStart = methodName.indexOf('[');
+    if (paramStart > -1) {
+      final String paramName = methodName.substring(paramStart, methodName.length());
+      if (!paramName.equals(myParamName)) {
+        if (myParamName != null) {
+          System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']");
+        }
+        myParamName = paramName;
+        System.out.println("##teamcity[testSuiteStarted name =\'" + myParamName + "\']");
+      }
+    }
+    System.out.println("##teamcity[testStarted name=\'" + methodName + "\']");
   }
 
   public void testFinished(Description description) throws Exception {
@@ -181,16 +197,34 @@ class SMTestSender extends RunListener {
     for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
       final Object next = iterator.next();
       final List childTests = runner.getChildTests(next);
-      if (childTests.isEmpty() && !pass) {
+      final Description nextDescription = (Description)next;
+      if ((childTests.isEmpty() || isParameter(nextDescription)) && !pass) {
         pass = true;
-        System.out.println("##teamcity[suiteTreeStarted name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) +
-                           "\' locationHint=\'java:suite://" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+        final String className = JUnit4ReflectionUtil.getClassName((Description)description);
+        String locationHint = className;
+        if (isParameter((Description)description)) {
+          final String displayName = nextDescription.getDisplayName();
+          final int paramIdx = displayName.indexOf(locationHint);
+          if (paramIdx > -1) {
+            locationHint = displayName.substring(paramIdx + locationHint.length());
+            if (locationHint.startsWith("(") && locationHint.endsWith(")")) {
+              locationHint = locationHint.substring(1, locationHint.length() - 1) + "." + className; 
+            }
+          }
+        }
+        System.out.println("##teamcity[suiteTreeStarted name=\'" + className +
+                           "\' locationHint=\'java:suite://" + locationHint + "\']");
       }
       sendTree(runner, next, childTests);
     }
     if (pass) {
       System.out.println("##teamcity[suiteTreeEnded name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
     }
+  }
+
+  private static boolean isParameter(Description description) {
+    String displayName = description.getDisplayName();
+    return displayName.startsWith("[") && displayName.endsWith("]");
   }
 
   public void sendTree(JUnit4IdeaTestRunner runner, Description description) {
