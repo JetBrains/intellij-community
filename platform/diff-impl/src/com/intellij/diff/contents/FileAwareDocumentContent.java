@@ -21,22 +21,22 @@ import java.nio.charset.Charset;
 
 public class FileAwareDocumentContent extends DocumentContentImpl {
   @Nullable private final Project myProject;
-  @Nullable private final VirtualFile myLocalFile;
+  @Nullable private final VirtualFile myHighlightFile;
 
   public FileAwareDocumentContent(@Nullable Project project,
                                   @NotNull Document document,
                                   @Nullable FileType fileType,
-                                  @Nullable VirtualFile localFile,
+                                  @Nullable VirtualFile highlightFile,
                                   @Nullable LineSeparator separator,
                                   @Nullable Charset charset) {
-    super(document, fileType, localFile, separator, charset);
+    super(document, fileType, highlightFile, separator, charset);
     myProject = project;
-    myLocalFile = localFile;
+    myHighlightFile = highlightFile;
   }
 
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    if (myProject == null || myLocalFile == null) return null;
-    return new OpenFileDescriptor(myProject, myLocalFile, offset);
+    if (myProject == null || myHighlightFile == null) return null;
+    return new OpenFileDescriptor(myProject, myHighlightFile, offset);
   }
 
   @NotNull
@@ -45,8 +45,8 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   @NotNull
-  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull String content, @NotNull VirtualFile file) {
-    return new Builder(project).init(file).create(content).build();
+  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull String content, @NotNull VirtualFile highlightFile) {
+    return new Builder(project).init(highlightFile).create(content).build();
   }
 
   @NotNull
@@ -55,8 +55,8 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   }
 
   @NotNull
-  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile file) {
-    return new Builder(project).init(file).create(content).build();
+  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile highlightFile) {
+    return new Builder(project).init(highlightFile).create(content).build();
   }
 
   private static class Builder {
@@ -84,10 +84,10 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     }
 
     @NotNull
-    private Builder init(@NotNull VirtualFile file) {
-      myLocalFile = file;
-      myFileType = file.getFileType();
-      myCharset = file.getCharset();
+    private Builder init(@NotNull VirtualFile highlightFile) {
+      myLocalFile = highlightFile;
+      myFileType = highlightFile.getFileType();
+      myCharset = highlightFile.getCharset();
       return this;
     }
 
