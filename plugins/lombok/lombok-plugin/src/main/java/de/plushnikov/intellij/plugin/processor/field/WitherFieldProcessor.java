@@ -21,6 +21,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Wither;
@@ -123,7 +124,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
     final Collection<PsiField> constructorParameters = filterFields(psiClass);
 
-    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class)) {
+    if (PsiAnnotationUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class, Data.class)) {
       final Collection<PsiField> requiredConstructorParameters = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
       if (constructorParameters.size() == requiredConstructorParameters.size()) {
         return true;
