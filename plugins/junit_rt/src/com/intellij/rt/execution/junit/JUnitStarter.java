@@ -38,7 +38,17 @@ public class JUnitStarter {
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
   private static int    ourCount = 1;
-  public static boolean SM_RUNNER = System.getProperty("idea.junit.sm_runner") != null;
+  public static boolean SM_RUNNER = isSmRunner();
+
+  private static boolean isSmRunner() {
+    try {
+      final String property = System.getProperty("idea.junit.sm_runner");
+      return property != null;
+    }
+    catch (SecurityException e) {
+      return false;
+    }
+  }
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -147,8 +157,11 @@ public class JUnitStarter {
         return false;
       }
     }
-    final String forceJUnit3 = System.getProperty("idea.force.junit3");
-    if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return false;
+    try {
+      final String forceJUnit3 = System.getProperty("idea.force.junit3");
+      if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return false;
+    }
+    catch (SecurityException ignored) {}
     try {
       Class.forName("org.junit.Test");
       return true;

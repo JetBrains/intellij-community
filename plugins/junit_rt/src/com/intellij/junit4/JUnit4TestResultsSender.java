@@ -150,13 +150,16 @@ public class JUnit4TestResultsSender extends RunListener {
   
   private static boolean acceptedByThreshold(int messageLength) {
     int threshold = 10000;
-    final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
-    if (property != null) {
-      try {
-        threshold = Integer.parseInt(property);
+    try {
+      final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
+      if (property != null) {
+        try {
+          threshold = Integer.parseInt(property);
+        }
+        catch (NumberFormatException ignore) {}
       }
-      catch (NumberFormatException ignore) {}
     }
+    catch (SecurityException ignored) {}
     return messageLength < threshold;
   }
 

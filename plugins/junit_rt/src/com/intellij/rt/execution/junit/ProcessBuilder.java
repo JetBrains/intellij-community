@@ -24,7 +24,16 @@ import java.util.List;
  * Clone of GeneralCommandLine.
  */
 public class ProcessBuilder {
-  public static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+  public static final boolean isWindows = isWindows();
+
+  private static boolean isWindows() {
+    try {
+      return System.getProperty("os.name").toLowerCase().startsWith("windows");
+    }
+    catch (SecurityException e) {
+      return false;
+    }
+  }
 
   private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
 
