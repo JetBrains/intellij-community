@@ -18,13 +18,17 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.xmlb.SmartSerializer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +40,8 @@ import javax.swing.*;
  * Inspection to detect redundant parentheses in if/while statement.
  */
 public class PyRedundantParenthesesInspection extends PyInspection {
+
+  private final SmartSerializer mySerializer = new SmartSerializer();
 
   public boolean myIgnorePercOperator = false;
   public boolean myIgnoreTupleInReturn = false;
@@ -54,6 +60,16 @@ public class PyRedundantParenthesesInspection extends PyInspection {
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, session);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    mySerializer.writeExternal(this, node);
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    mySerializer.readExternal(this, node);
   }
 
   private class Visitor extends PyInspectionVisitor {
