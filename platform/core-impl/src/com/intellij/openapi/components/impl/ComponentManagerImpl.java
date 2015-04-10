@@ -16,6 +16,8 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
@@ -24,10 +26,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
@@ -150,7 +154,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @SuppressWarnings("unchecked")
   @Nullable
-  protected <T> T getComponentFromContainer(@NotNull Class<T> interfaceClass) {
+  private <T> T getComponentFromContainer(@NotNull Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
     if (initializedComponent != null) return initializedComponent;
 
@@ -285,16 +289,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   protected MutablePicoContainer createPicoContainer() {
-    MutablePicoContainer result;
-
-    if (myParentComponentManager != null) {
-      result = new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
-    }
-    else {
-      result = new DefaultPicoContainer();
-    }
-
-    return result;
+    return myParentComponentManager == null ? new DefaultPicoContainer() : new DefaultPicoContainer(myParentComponentManager.getPicoContainer());
   }
 
   @Override
@@ -336,8 +331,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     temporarilyDisposed = disposed;
   }
 
-  protected void loadComponentsConfiguration(@NotNull ComponentConfig[] components, @Nullable PluginDescriptor descriptor, boolean defaultProject) {
-    myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
+  protected void loadComponents() {
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
+    boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
+      myConfigurator.loadComponentsConfiguration(getMyComponentConfigsFromDescriptor(plugin), plugin, isDefaultProject);
+    }
+  }
+
+  @NotNull
+  protected ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+    return plugin.getAppComponents();
   }
 
   protected void bootstrapPicoContainer(@NotNull String name) {
@@ -390,9 +395,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (component instanceof NamedComponent) {
       return ((NamedComponent)component).getComponentName();
     }
-    else {
-      return component.getClass().getName();
-    }
+    return component.getClass().getName();
   }
 
   protected boolean logSlowComponents() {
@@ -425,16 +428,30 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       try {
         final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
         final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ?
-                                             interfaceClass : Class.forName(config.getImplementationClass(), true, loader);
-
-        if (myInterfaceToClassMap.get(interfaceClass) != null) {
-          throw new RuntimeException("Component already registered: " + interfaceClass.getName());
+                                             interfaceClass : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
+        boolean overrides = Boolean.parseBoolean(config.options.get("overrides"));
+        MutablePicoContainer picoContainer = getPicoContainer();
+        if (overrides) {
+          ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);
+          if (oldAdapter == null) {
+            throw new RuntimeException(config + " does not override anything");
+          }
+          picoContainer.unregisterComponent(oldAdapter.getComponentKey());
+          myInterfaceToClassMap.remove(interfaceClass);
+          myComponentClassToConfig.remove(oldAdapter.getComponentImplementation());
+          myComponentInterfaces.remove(interfaceClass);
         }
+        // implementationClass == null means we want to unregister this component
+        if (implementationClass != null) {
+          if (myInterfaceToClassMap.get(interfaceClass) != null) {
+            throw new RuntimeException("Component already registered: " + interfaceClass.getName());
+          }
 
-        getPicoContainer().registerComponent(new ComponentConfigComponentAdapter(config, implementationClass));
-        myInterfaceToClassMap.put(interfaceClass, implementationClass);
-        myComponentClassToConfig.put(implementationClass, config);
-        myComponentInterfaces.add(interfaceClass);
+          picoContainer.registerComponent(new ComponentConfigComponentAdapter(config, implementationClass));
+          myInterfaceToClassMap.put(interfaceClass, implementationClass);
+          myComponentClassToConfig.put(implementationClass, config);
+          myComponentInterfaces.add(interfaceClass);
+        }
       }
       catch (Throwable t) {
         handleInitComponentError(t, null, config);
@@ -515,6 +532,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return array.toArray((T[])Array.newInstance(baseClass, array.size()));
     }
 
+    @NotNull
     private ComponentConfig[] getComponentConfigurations() {
         return myComponentConfigs.toArray(new ComponentConfig[myComponentConfigs.size()]);
     }
