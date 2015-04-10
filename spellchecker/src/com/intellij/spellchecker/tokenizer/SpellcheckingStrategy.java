@@ -25,6 +25,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.TextSplitter;
 import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
@@ -69,6 +71,9 @@ public class SpellcheckingStrategy {
       if (fileType instanceof CustomSyntaxTableFileType) {
         return new CustomFileTypeTokenizer(((CustomSyntaxTableFileType)fileType).getSyntaxTable());
       }
+      return TEXT_TOKENIZER;
+    }
+    if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
       return TEXT_TOKENIZER;
     }
     return EMPTY_TOKENIZER;
