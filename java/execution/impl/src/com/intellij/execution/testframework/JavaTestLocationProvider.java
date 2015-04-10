@@ -18,6 +18,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -54,13 +55,12 @@ public class JavaTestLocationProvider implements TestLocationProvider {
       }
     }
     else if (TEST_PROTOCOL.equals(protocolId)) {
-      int p = locationData.lastIndexOf('.');
-      if (p > 0 && p < locationData.length() - 1) {
-        String className = locationData.substring(0, p);
+      final String className = StringUtil.getPackageName(locationData);
+      if (!StringUtil.isEmpty(className)) {
+        final String methodName = StringUtil.getShortName(locationData);
         PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(className, myScope);
         if (classes.length > 0) {
           results = ContainerUtil.newSmartList();
-          String methodName = locationData.substring(p + 1);
           for (PsiClass aClass : classes) {
             PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {

@@ -46,7 +46,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       System.out.println("##teamcity[testSuiteStarted name =\'" + className + "\']");
       myCurrentClassName = className;
     }
-    System.out.println("##teamcity[testStarted name=\'" + result.getMethod().getMethodName() + "\']");
+    final String methodName = result.getMethod().getMethodName();
+    System.out.println("##teamcity[testStarted name=\'" +
+                       methodName + "\' locationHint=\'java:test://" + className + "." + methodName + "\']");
   }
 
   public void onTestSuccess(ITestResult result) {

@@ -18,8 +18,6 @@ package org.testng;
 
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.testng.collections.Lists;
-import org.testng.remote.strprotocol.GenericMessage;
-import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
@@ -48,11 +46,11 @@ public class IDEARemoteTestNG extends TestNG {
         int testCount= 0;
 
         for (XmlSuite suite : suites) {
-          System.out.println("##teamcity[suiteTreeStarted name=\'" + suite.getName() + "\']");
+          System.out.println("##teamcity[suiteTreeStarted name=\'" + suite.getName() + "\' locationHint=\'java:suite://" + suite.getName() + "\']");
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {
             for (XmlClass aClass : test.getXmlClasses()) {
-              System.out.println("##teamcity[suiteTreeStarted name=\'" + aClass.getName() + "\']");
+              System.out.println("##teamcity[suiteTreeStarted name=\'" + aClass.getName() + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
               for (XmlInclude include : aClass.getIncludedMethods()) {
                 System.out.println("##teamcity[suiteTreeNode name=\'" + include.getName() + "\']");
               }

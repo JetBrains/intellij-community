@@ -173,8 +173,9 @@ class SMTestSender extends RunListener {
 
   private static void sendTree(JUnit4IdeaTestRunner runner, Object description, List tests) {
     if (tests.isEmpty()) {
-      System.out.println("##teamcity[suiteTreeNode name=\'" + JUnit4ReflectionUtil.getMethodName((Description)description)
-                         + "\' locationHint=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+      final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
+      System.out.println("##teamcity[suiteTreeNode name=\'" + methodName + 
+                         "\' locationHint=\'java:test://" + JUnit4ReflectionUtil.getClassName((Description)description) + "." + methodName + "\']");
     }
     boolean pass = false;
     for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
@@ -182,7 +183,8 @@ class SMTestSender extends RunListener {
       final List childTests = runner.getChildTests(next);
       if (childTests.isEmpty() && !pass) {
         pass = true;
-        System.out.println("##teamcity[suiteTreeStarted name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+        System.out.println("##teamcity[suiteTreeStarted name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) +
+                           "\' locationHint=\'java:suite://" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
       }
       sendTree(runner, next, childTests);
     }

@@ -96,7 +96,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView =
-      SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), null);
+      SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), new JavaTestLocationProvider(testConsoleProperties.getScope()));
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
