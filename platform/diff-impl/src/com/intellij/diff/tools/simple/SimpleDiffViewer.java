@@ -819,12 +819,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return getTextSettings().isEnableSyncScroll();
     }
 
-    public int transfer(@NotNull Side side, int line) {
+    public int transfer(@NotNull Side baseSide, int line) {
       if (myDiffChanges.isEmpty()) {
         return line;
       }
 
-      return super.transfer(side, line);
+      return super.transfer(baseSide, line);
     }
 
     @Override

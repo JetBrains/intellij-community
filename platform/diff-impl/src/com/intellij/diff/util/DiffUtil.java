@@ -203,10 +203,7 @@ public class DiffUtil {
     if (editor == null) return;
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(position);
-    ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.disableAnimation();
-    scrollingModel.scrollToCaret(ScrollType.CENTER);
-    scrollingModel.enableAnimation();
+    scrollToCaret(editor);
   }
 
   public static void scrollToLineAnimated(@Nullable final Editor editor, int line) {

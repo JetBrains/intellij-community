@@ -16,5 +16,10 @@
 package com.intellij.diff;
 
 public abstract class DiffContextEx extends DiffContext {
+  /*
+   * Reopen current DiffRequest.
+   * perform the same procedure as on switching between DiffRequests or between DiffViewers.
+   * this can be used, if some change in request or settings was made, and we need to reopen DiffViewer to apply them.
+   */
   public abstract void reloadDiffRequest();
 }

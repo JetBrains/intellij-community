@@ -35,7 +35,7 @@ public class SyncScrollSupport {
     boolean isSyncScrollEnabled();
 
     @CalledInAwt
-    int transfer(@NotNull Side side, int line);
+    int transfer(@NotNull Side baseSide, int line);
   }
 
   public static class TwosideSyncScrollSupport {
@@ -72,6 +72,15 @@ public class SyncScrollSupport {
       finally {
         myDuringSyncScroll = false;
       }
+    }
+
+    @NotNull
+    public SyncScrollable getScrollable() {
+      return myScrollable;
+    }
+
+    public boolean isDuringSyncScroll() {
+      return myDuringSyncScroll;
     }
   }
 

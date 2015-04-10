@@ -109,7 +109,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     myPanel = new TwosideTextDiffPanel(this, myContentPanel, this, context);
 
 
-    new MyFocusOppositePaneAction().setupAction(myPanel, this);
+    new MyFocusOppositePaneAction(true).setupAction(myPanel);
+    new MyFocusOppositePaneAction(false).setupAction(myPanel);
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();
@@ -301,6 +302,12 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     return getCurrentSide().isLeft() ? myEditor1 : myEditor2;
   }
 
+  @NotNull
+  public DocumentContent getCurrentContent() {
+    //noinspection ConstantConditions
+    return getCurrentSide().isLeft() ? myActualContent1 : myActualContent2;
+  }
+
   @Nullable
   protected EditorEx getEditor1() {
     return myEditor1;
@@ -314,6 +321,14 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
   // Abstract
   //
+
+  @CalledInAwt
+  @NotNull
+  protected LogicalPosition transferPosition(@NotNull Side baseSide, @NotNull LogicalPosition position) {
+    if (mySyncScrollListener == null) return position;
+    int line = mySyncScrollListener.getScrollable().transfer(baseSide, position.line);
+    return new LogicalPosition(line, position.column);
+  }
 
   @CalledInAwt
   protected void scrollToLine(@NotNull Side side, int line) {
@@ -350,11 +365,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor() {
     EditorEx editor = getCurrentEditor();
 
-    DocumentContent content = getCurrentSide().select(myActualContent1, myActualContent2);
-    assert content != null;
-
     int offset = editor.getCaretModel().getOffset();
-    return content.getOpenFileDescriptor(offset);
+    return getCurrentContent().getOpenFileDescriptor(offset);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -388,9 +400,20 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
+    public MyFocusOppositePaneAction(boolean scrollToPosition) {
+      super(scrollToPosition);
+    }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myEditor1 == null || myEditor2 == null) return;
+
+      if (myScrollToPosition) {
+        EditorEx currentEditor = myCurrentSide.select(myEditor1, myEditor2);
+        EditorEx targetEditor = myCurrentSide.other().select(myEditor1, myEditor2);
+        LogicalPosition position = transferPosition(myCurrentSide, currentEditor.getCaretModel().getLogicalPosition());
+        targetEditor.getCaretModel().moveToLogicalPosition(position);
+      }
 
       myCurrentSide = myCurrentSide.other();
       myPanel.requestFocus();
@@ -422,6 +445,9 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
+    }
+    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+      return getCurrentContent();
     }
     return super.getData(dataId);
   }
