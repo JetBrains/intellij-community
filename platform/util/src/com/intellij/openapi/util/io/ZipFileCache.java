@@ -18,6 +18,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,10 +211,15 @@ public class ZipFileCache {
 
     List<ZipFile> toClose = ContainerUtil.newSmartList();
 
+    paths = ContainerUtil.map(paths, new Function<String, String>() {
+      @Override
+      public String fun(String path) {
+        return toCanonicalPath(path);
+      }
+    });
+
     synchronized (ourLock) {
       for (String path : paths) {
-        path = toCanonicalPath(path);
-
         CacheRecord record = ourPathCache.remove(path);
         if (record != null) {
           ourFileCache.remove(record.file);
