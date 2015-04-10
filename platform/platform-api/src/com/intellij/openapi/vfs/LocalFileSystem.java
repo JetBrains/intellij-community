@@ -47,12 +47,20 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull File file);
 
+  /**
+   * @deprecated use {@link #findFileByIoFile(File)} instead
+   */
+  @Deprecated
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull IFile file);
 
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull File file);
 
+  /**
+   * @deprecated use {@link #refreshAndFindFileByIoFile(File)} instead
+   */
+  @Deprecated
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull IFile ioFile);
 
