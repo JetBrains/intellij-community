@@ -60,7 +60,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    final String visibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
+    final String visibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     return null != visibility;
   }
 

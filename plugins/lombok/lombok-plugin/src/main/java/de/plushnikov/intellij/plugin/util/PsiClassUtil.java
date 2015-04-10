@@ -185,15 +185,4 @@ public class PsiClassUtil {
     }
     return null;
   }
-
-  @Nullable
-  public static PsiClass getInnerClassByName(@NotNull PsiClass psiClass, @NotNull String className) {
-    PsiClass[] innerClasses = psiClass.getInnerClasses();
-    for (PsiClass innerClass : innerClasses) {
-      if (className.equals(innerClass.getName())) {
-        return innerClass;
-      }
-    }
-    return null;
-  }
 }

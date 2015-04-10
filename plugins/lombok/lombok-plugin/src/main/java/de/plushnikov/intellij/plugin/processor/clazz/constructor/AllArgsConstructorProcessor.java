@@ -44,7 +44,7 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
+    final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
       final String staticConstructorName = getStaticConstructorName(psiAnnotation);
       target.addAll(createAllArgsConstructor(psiClass, methodVisibility, psiAnnotation, staticConstructorName));
