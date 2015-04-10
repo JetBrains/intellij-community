@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -82,7 +83,7 @@ public class PyBlock implements ASTBlock {
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
   private Alignment myChildAlignment;
-  private final boolean myEmptyList;
+  private final boolean myEmptySequence;
 
   public PyBlock(final PyBlock parent,
                  final ASTNode node,
@@ -96,7 +97,7 @@ public class PyBlock implements ASTBlock {
     myNode = node;
     myWrap = wrap;
     myContext = context;
-    myEmptyList = node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).getElements().length == 0;
+    myEmptySequence = isEmptySequence(node);
   }
 
   @NotNull
@@ -133,7 +134,7 @@ public class PyBlock implements ASTBlock {
 
       final IElementType childType = child.getElementType();
 
-      if (child.getTextRange().getLength() == 0) continue;
+      if (child.getTextRange().isEmpty()) continue;
 
       if (childType == TokenType.WHITE_SPACE) {
         continue;
@@ -160,7 +161,7 @@ public class PyBlock implements ASTBlock {
       while (p != null) {
         final ASTNode pNode = p.getNode();
         if (ourListElementTypes.contains(pNode.getElementType())) {
-          if (needListAlignment(child) && !myEmptyList) {
+          if (needListAlignment(child) && !myEmptySequence) {
 
             childAlignment = p.getChildAlignment();
             break;
@@ -198,7 +199,7 @@ public class PyBlock implements ASTBlock {
           !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
-      if (needListAlignment(child) && !myEmptyList) {
+      if (needListAlignment(child) && !myEmptySequence) {
         childAlignment = getAlignmentForChildren();
       }
       if (childType == PyTokenTypes.END_OF_LINE_COMMENT) {
@@ -347,6 +348,10 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private static boolean isEmptySequence(@NotNull ASTNode node) {
+    return node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).isEmpty();
   }
 
   private boolean argumentMayHaveSameIndentAsFollowingStatementList() {
@@ -499,11 +504,8 @@ public class PyBlock implements ASTBlock {
     if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
       return false;
     }
-    if (PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType)) {
-      final PsiElement psi = child.getPsi();
-      if (psi instanceof PySequenceExpression && ((PySequenceExpression)psi).getElements().length == 0) {
-        return false;
-      }
+    if (PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType) && isEmptySequence(child)) {
+      return false;
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
       final ASTNode prevNonSpace = findPrevNonSpaceNode(child);
@@ -757,12 +759,8 @@ public class PyBlock implements ASTBlock {
         return null;
       }
       if (myNode.getPsi() instanceof PyDictLiteralExpression) {
-        final PyKeyValueExpression[] elements = ((PyDictLiteralExpression)myNode.getPsi()).getElements();
-        if (elements.length == 0) {
-          return null;
-        }
-        final PyKeyValueExpression last = elements[elements.length - 1];
-        if (last.getValue() == null) { // incomplete
+        final PyKeyValueExpression lastElement = ArrayUtil.getLastElement(((PyDictLiteralExpression)myNode.getPsi()).getElements());
+        if (lastElement == null || lastElement.getValue() == null /* incomplete */) {
           return null;
         }
       }
