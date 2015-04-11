@@ -19,7 +19,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,9 +58,6 @@ public class PropertiesUtil {
       }));
     }
   };
-
-  private static final Key<String> LAST_CALCULATION_FILE_NAME = Key.create("PROPERTIES_FILE_LAST_CALCULATION_FILE_NAME");
-  private static final Key<String> BASE_NAME = Key.create("PROPERTIES_FILE_BASE_NAME");
 
 
   /**
@@ -103,42 +99,31 @@ public class PropertiesUtil {
 
   @NotNull
   public static String getDefaultBaseName(@NotNull final VirtualFile file) {
-    final String lastBaseNameCalculationFileName = file.getUserData(LAST_CALCULATION_FILE_NAME);
     final String name = file.getName();
-    if (name.equals(lastBaseNameCalculationFileName)) {
-      final String baseName = file.getUserData(BASE_NAME);
-      LOG.assertTrue(baseName != null);
-      return baseName;
-    }
 
-    final String calculatedBaseName;
     if (!StringUtil.containsChar(name, '_')) {
-      calculatedBaseName = FileUtil.getNameWithoutExtension(name);
-    } else {
-      final Matcher matcher = LOCALE_PATTERN.matcher(name);
-      final String baseNameWithExtension;
-
-      int matchIndex = 0;
-      while (matcher.find(matchIndex)) {
-        final MatchResult matchResult = matcher.toMatchResult();
-        final String[] split = matchResult.group(1).split("_");
-        if (split.length > 1) {
-          final String langCode = split[1];
-          if (!LOCALES_LANGUAGE_CODES.getValue().contains(langCode)) {
-            matchIndex = matchResult.start(1) + 1;
-            continue;
-          }
-          baseNameWithExtension = name.substring(0, matchResult.start(1)) + name.substring(matchResult.end(1));
-          return FileUtil.getNameWithoutExtension(baseNameWithExtension);
-        }
-      }
-      baseNameWithExtension = name;
-      calculatedBaseName = FileUtil.getNameWithoutExtension(baseNameWithExtension);
+      return FileUtil.getNameWithoutExtension(name);
     }
 
-    file.putUserData(LAST_CALCULATION_FILE_NAME, name);
-    file.putUserData(BASE_NAME, calculatedBaseName);
-    return calculatedBaseName;
+    final Matcher matcher = LOCALE_PATTERN.matcher(name);
+    final String baseNameWithExtension;
+
+    int matchIndex = 0;
+    while (matcher.find(matchIndex)) {
+      final MatchResult matchResult = matcher.toMatchResult();
+      final String[] splitted = matchResult.group(1).split("_");
+      if (splitted.length > 1) {
+        final String langCode = splitted[1];
+        if (!LOCALES_LANGUAGE_CODES.getValue().contains(langCode)) {
+          matchIndex = matchResult.start(1) + 1;
+          continue;
+        }
+        baseNameWithExtension = name.substring(0, matchResult.start(1)) + name.substring(matchResult.end(1));
+        return FileUtil.getNameWithoutExtension(baseNameWithExtension);
+      }
+    }
+    baseNameWithExtension = name;
+    return FileUtil.getNameWithoutExtension(baseNameWithExtension);
   }
 
   @NotNull
