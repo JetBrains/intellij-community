@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
@@ -391,6 +392,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final TableLinkMouseListener listener = new TableLinkMouseListener();
     listener.installOn(myDualView.getFlatView());
     listener.installOn(myDualView.getTreeView());
+    myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
     createDualView();
     if (isStaticEmbedded) {
