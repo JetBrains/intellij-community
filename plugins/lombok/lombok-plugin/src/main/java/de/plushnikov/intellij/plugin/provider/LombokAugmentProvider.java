@@ -58,6 +58,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
     final List<Psi> emptyResult = Collections.emptyList();
+    // skip processing during index rebuild
+    final Project project = element.getProject();
+    if (DumbService.isDumb(project)) {
+      return emptyResult;
+    }
     // Expecting that we are only augmenting an PsiClass
     // Don't filter !isPhysical elements or code auto completion will not work
     if (!(element instanceof PsiClass) || !element.isValid()) {
@@ -65,11 +70,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     // skip processing for other as supported types
     if (!(type.isAssignableFrom(PsiMethod.class) || type.isAssignableFrom(PsiField.class) || type.isAssignableFrom(PsiClass.class))) {
-      return emptyResult;
-    }
-    // skip processing during index rebuild
-    final Project project = element.getProject();
-    if (DumbService.isDumb(project)) {
       return emptyResult;
     }
     // skip processing if plugin is disabled
