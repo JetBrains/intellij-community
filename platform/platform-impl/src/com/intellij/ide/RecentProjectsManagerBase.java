@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -39,6 +40,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -197,29 +199,36 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         return icon.getIcon();
       }
       try {
-        Image img = ImageLoader.loadFromUrl(file.toURL());
-        if (! (img instanceof BufferedImage)) {
-          // Create a buffered image with transparency
-          BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-
-          // Draw the image on to the buffered image
-          Graphics2D bGr = bimage.createGraphics();
-          bGr.drawImage(img, 0, 0, null);
-          bGr.dispose();
-
-          // Return the buffered image
-          img = bimage;
-        }
-        BufferedImage image = Scalr.resize((BufferedImage)img, Scalr.Method.ULTRA_QUALITY, JBUI.scale(16), null);
+        BufferedImage image = loadAndScaleImage(file);
         icon = new MyIcon(new ImageIcon(image), timestamp);
         ourProjectIcons.put(path, icon);
         return icon.getIcon();
       }
-      catch (MalformedURLException e) {
+      catch (Exception e) {
         e.printStackTrace();
       }
     }
     return null;
+  }
+
+  private static BufferedImage loadAndScaleImage(File file) {
+    try {
+      Image img = ImageLoader.loadFromUrl(file.toURL());
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, JBUI.scale(16), null);
+    }
+    catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public static Icon getProjectOrAppIcon(String path) {
+    final Icon icon = getProjectIcon(path);
+    if (icon != null) {
+      return icon;
+    }
+
+    return AllIcons.Nodes.IdeaProject;
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
