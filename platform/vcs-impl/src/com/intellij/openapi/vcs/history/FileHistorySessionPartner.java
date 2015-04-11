@@ -121,10 +121,6 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        String actionName = VcsBundle.message(myPath.isDirectory() ? "action.name.file.history.dir" : "action.name.file.history",
-                                              myPath.getName());
-        ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-
         myFileHistoryPanel = resetHistoryPanel();
         ToolWindow toolWindow = ToolWindowManager.getInstance(myVcs.getProject()).getToolWindow(ToolWindowId.VCS);
         assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
