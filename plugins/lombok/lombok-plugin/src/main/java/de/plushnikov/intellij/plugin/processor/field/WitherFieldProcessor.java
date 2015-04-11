@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -33,8 +32,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class WitherFieldProcessor extends AbstractFieldProcessor {
-
-  private static final String WITHER_PREFIX = "with";
 
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = new RequiredArgsConstructorProcessor();
 
@@ -105,18 +102,19 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     if (psiFieldName != null && fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(fieldContainingClass);
 
-      final String witherName = getWitherName(psiField);
-      final String defaultWitherName = defaultWitherName(psiFieldName);
-
-      if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1) ||
-          (!witherName.equals(defaultWitherName) && PsiMethodUtil.hasSimilarMethod(classMethods, defaultWitherName, 1))) {
-        builder.addWarning("Not generating %s(): A method with that name already exists", witherName);
-        return false;
+      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      final Collection<String> possibleWitherNames = LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
+      for (String witherName : possibleWitherNames) {
+        if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
+          builder.addWarning("Not generating %s(): A method with that name already exists", witherName);
+          return false;
+        }
       }
     }
     return true;
   }
 
+  @SuppressWarnings("deprecation")
   public boolean validConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (PsiAnnotationUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class, Value.class, lombok.experimental.Value.class)) {
       return true;
@@ -177,7 +175,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       final String psiFieldName = psiField.getName();
       final PsiType psiFieldType = psiField.getType();
 
-      result = new LombokLightMethodBuilder(psiField.getManager(), getWitherName(psiField, accessorsInfo))
+      result = new LombokLightMethodBuilder(psiField.getManager(), getWitherName(accessorsInfo, psiFieldName, psiFieldType))
           .withMethodReturnType(returnType)
           .withContainingClass(psiFieldContainingClass)
           .withNavigationElement(psiField)
@@ -194,25 +192,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  private String getWitherName(@NotNull PsiField psiField) {
-    AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-    return getWitherName(psiField, accessorsInfo);
-  }
-
-  private String getWitherName(@NotNull PsiField psiField, @NotNull AccessorsInfo accessorsInfo) {
-    return witherName(accessorsInfo.removePrefix(psiField.getName()), PsiType.BOOLEAN.equals(psiField.getType()));
-  }
-
-  private String witherName(String fieldName, boolean isBoolean) {
-    if (isBoolean && fieldName.startsWith("is") && fieldName.length() > 2 && Character.isUpperCase(fieldName.charAt(2))) {
-      return WITHER_PREFIX + fieldName.substring(2);
-    } else {
-      return defaultWitherName(fieldName);
-    }
-  }
-
-  private String defaultWitherName(String fieldName) {
-    return WITHER_PREFIX + StringUtil.capitalize(fieldName);
+  private String getWitherName(@NotNull AccessorsInfo accessorsInfo, String psiFieldName, PsiType psiFieldType) {
+    return LombokUtils.toWitherName(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiFieldType));
   }
 
   private String getConstructorCall(@NotNull PsiField psiField, @NotNull PsiClass psiClass) {

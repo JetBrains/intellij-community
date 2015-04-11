@@ -8,17 +8,14 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
-import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProcessor {
 
-  private final SetterFieldProcessor setterFieldProcessor;
-
   public LombokRenameFieldReferenceProcessor() {
-    setterFieldProcessor = new SetterFieldProcessor();
   }
 
   @Override
@@ -44,18 +41,18 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
       final String psiFieldName = psiField.getName();
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
-      final String getterName = setterFieldProcessor.getGetterName(accessorsInfo, psiFieldName, isBoolean, containingClass);
-      final String setterName = setterFieldProcessor.getSetterName(accessorsInfo, psiFieldName, isBoolean);
+      final String getterName = LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
+      final String setterName = LombokUtils.toSetterName(accessorsInfo, psiFieldName, isBoolean);
 
       final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
       final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);
 
       for (PsiMethod psiMethod : psiGetterMethods) {
-        allRenames.put(psiMethod, setterFieldProcessor.getGetterName(accessorsInfo, newName, isBoolean, containingClass));
+        allRenames.put(psiMethod, LombokUtils.toGetterName(accessorsInfo, newName, isBoolean));
       }
 
       for (PsiMethod psiMethod : psiSetterMethods) {
-        allRenames.put(psiMethod, setterFieldProcessor.getSetterName(accessorsInfo, newName, isBoolean));
+        allRenames.put(psiMethod, LombokUtils.toSetterName(accessorsInfo, newName, isBoolean));
       }
     }
   }

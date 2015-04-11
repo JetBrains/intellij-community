@@ -13,18 +13,15 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
-import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class LombokFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory {
-  private final SetterFieldProcessor setterFieldProcessor;
-
   public LombokFieldFindUsagesHandlerFactory(Project project) {
     super(project);
-    setterFieldProcessor = new SetterFieldProcessor();
   }
 
   @Override
@@ -48,8 +45,8 @@ public class LombokFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
           if (!fieldName.equals(psiFieldName)) {
             final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
-            final String getterName = setterFieldProcessor.getGetterName(accessorsInfo, psiFieldName, isBoolean, containingClass);
-            final String setterName = setterFieldProcessor.getSetterName(accessorsInfo, psiFieldName, isBoolean);
+            final String getterName = LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
+            final String setterName = LombokUtils.toSetterName(accessorsInfo, psiFieldName, isBoolean);
 
             final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
             final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);

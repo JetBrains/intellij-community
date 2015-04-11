@@ -94,31 +94,20 @@ public abstract class AbstractProcessor implements Processor {
   @NotNull
   public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
 
-  protected String getGetterName(final @NotNull PsiField psiField, final @NotNull PsiClass psiClass) {
+  protected String getGetterName(final @NotNull PsiField psiField) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
 
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
-    return getGetterName(accessorsInfo, psiFieldName, isBoolean, psiClass);
+    return LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
   }
 
-  public String getGetterName(AccessorsInfo accessorsInfo, String psiFieldName, boolean isBoolean, PsiClass psiClass) {
-    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiFieldName);
-    if (accessorsInfo.isFluent()) {
-      return LombokUtils.decapitalize(fieldNameWithoutPrefix);
-    }
-
-    final boolean useBooleanPrefix = isBoolean && !ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
-
-    return LombokUtils.toGetterName(fieldNameWithoutPrefix, useBooleanPrefix);
-  }
-
-  protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedConstructors) {
-    final Iterator<? extends PsiModifierListOwner> methodIterator = definedConstructors.iterator();
+  protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedMethods) {
+    final Iterator<? extends PsiModifierListOwner> methodIterator = definedMethods.iterator();
     while (methodIterator.hasNext()) {
-      PsiModifierListOwner definedConstructor = methodIterator.next();
-      if (PsiAnnotationUtil.isAnnotatedWith(definedConstructor, Tolerate.class)) {
+      PsiModifierListOwner definedMethod = methodIterator.next();
+      if (PsiAnnotationUtil.isAnnotatedWith(definedMethod, Tolerate.class)) {
         methodIterator.remove();
       }
     }

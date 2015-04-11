@@ -179,7 +179,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     if (doNotUseGetters) {
       return fieldName;
     } else {
-      final String getterName = getGetterName(classField, psiClass);
+      final String getterName = getGetterName(classField);
 
       boolean hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName);
 

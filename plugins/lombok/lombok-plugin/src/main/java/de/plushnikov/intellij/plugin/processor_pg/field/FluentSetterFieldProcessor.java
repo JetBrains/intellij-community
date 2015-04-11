@@ -9,8 +9,8 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.FluentSetter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Inspect and validate @FluentSetter lombok-pg annotation on a field
@@ -25,8 +25,8 @@ public class FluentSetterFieldProcessor extends SetterFieldProcessor {
   }
 
   @Override
-  public List<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
-    return Arrays.asList(getSetterName(psiField, isBoolean));
+  public Collection<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
+    return Collections.singletonList(getSetterName(psiField, isBoolean));
   }
 
   @Override

@@ -7,7 +7,7 @@ import de.plushnikov.intellij.plugin.language.LombokConfigFileType;
 import de.plushnikov.intellij.plugin.language.LombokConfigLanguage;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 public class LombokConfigFile extends PsiFileBase {
   public LombokConfigFile(@NotNull FileViewProvider viewProvider) {

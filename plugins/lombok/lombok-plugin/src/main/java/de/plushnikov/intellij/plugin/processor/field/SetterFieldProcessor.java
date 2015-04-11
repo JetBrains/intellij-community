@@ -111,23 +111,15 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  public List<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
-    return LombokUtils.toAllSetterNames(psiField.getName(), isBoolean);
+  public Collection<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    return LombokUtils.toAllSetterNames(accessorsInfo, psiField.getName(), isBoolean);
   }
 
   protected String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
 
-    final String psiFieldName = psiField.getName();
-    return getSetterName(accessorsInfo, psiFieldName, isBoolean);
-  }
-
-  public String getSetterName(AccessorsInfo accessorsInfo, String psiFieldName, boolean isBoolean) {
-    final String fieldNameWithoutPrefix = accessorsInfo.removePrefix(psiFieldName);
-    if (accessorsInfo.isFluent()) {
-      return LombokUtils.decapitalize(fieldNameWithoutPrefix);
-    }
-    return LombokUtils.toSetterName(fieldNameWithoutPrefix, isBoolean);
+    return LombokUtils.toSetterName(accessorsInfo, psiField.getName(), isBoolean);
   }
 
   @NotNull
