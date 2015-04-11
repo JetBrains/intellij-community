@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -100,10 +99,9 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     private Builder create(@NotNull byte[] content) {
       assert myCharset != null;
-      // TODO: detect charset like in LoadTextUtil (Native2Ascii, etc) ?
-      Pair<String, Charset> pair = CharsetToolkit.bytesToStringWithCharset(content, myCharset);
-      myCharset = pair.second;
-      return create(pair.first);
+
+      myCharset = guessCharset(content, myCharset, myFileType, myHighlightFile);
+      return create(CharsetToolkit.decodeString(content, myCharset));
     }
 
     @NotNull
@@ -111,5 +109,28 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
       return new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
     }
+  }
+
+  @NotNull
+  private static Charset guessCharset(@NotNull byte[] content,
+                                      @NotNull Charset currentCharset,
+                                      @Nullable FileType fileType,
+                                      @Nullable VirtualFile highlightFile) {
+
+    CharsetToolkit toolkit = new CharsetToolkit(content, currentCharset);
+    toolkit.setEnforce8Bit(true);
+
+    Charset charset = toolkit.guessFromBOM();
+
+    if (charset == null) {
+      CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
+      if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) charset = CharsetToolkit.UTF8_CHARSET;
+    }
+
+    if (charset == null) {
+      charset = currentCharset;
+    }
+
+    return charset;
   }
 }
