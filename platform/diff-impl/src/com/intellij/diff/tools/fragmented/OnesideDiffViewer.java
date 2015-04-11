@@ -26,10 +26,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FoldingModelSupport;
-import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
-import com.intellij.diff.tools.util.StatusPanel;
+import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
@@ -412,7 +409,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
         clearDiffPresentation();
-        if (isEqual) myPanel.addContentsEqualNotification();
+        if (isEqual) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
 
         TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
         myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
@@ -756,7 +753,8 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getPreferredFocusedComponent();
+    if (!myPanel.isGoodContent()) return null;
+    return myEditor.getComponent();
   }
 
   @NotNull

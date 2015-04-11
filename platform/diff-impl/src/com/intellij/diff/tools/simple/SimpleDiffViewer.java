@@ -250,7 +250,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addTooBigContentNotification();
+          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
         }
       };
     }
@@ -259,7 +259,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
+          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
         }
       };
     }
@@ -269,7 +269,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
+          myPanel.addNotification(DiffNotifications.ERROR);
         }
       };
     }
@@ -286,7 +286,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
-        if (data.isEqualContent()) myPanel.addContentsEqualNotification();
+        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {

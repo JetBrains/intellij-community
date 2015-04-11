@@ -23,6 +23,8 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -67,7 +69,7 @@ import java.util.List;
 public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(BinaryDiffViewer.class);
 
-  @NotNull private final BinaryDiffPanel myPanel;
+  @NotNull private final SimpleDiffPanel myPanel;
   @NotNull private final BinaryContentPanel myContentPanel;
   @NotNull private final MyStatusPanel myStatusPanel;
 
@@ -105,7 +107,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
     myContentPanel = new BinaryContentPanel(titlePanel, myEditor1, myEditor2);
 
-    myPanel = new BinaryDiffPanel(this, myContentPanel, this, context);
+    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
     myStatusPanel = new MyStatusPanel();
 
@@ -256,7 +258,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
           @Override
           public void run() {
             clearDiffPresentation();
-            myPanel.addInsertedContentNotification();
+            myPanel.addNotification(DiffNotifications.INSERTED_CONTENT);
           }
         };
       }
@@ -266,7 +268,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
           @Override
           public void run() {
             clearDiffPresentation();
-            myPanel.addRemovedContentNotification();
+            myPanel.addNotification(DiffNotifications.REMOVED_CONTENT);
           }
         };
       }
@@ -286,7 +288,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         return new Runnable() {
           @Override
           public void run() {
-            myPanel.addDiffErrorNotification();
+            myPanel.addNotification(DiffNotifications.ERROR);
             clearDiffPresentation();
           }
         };
@@ -314,7 +316,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         @Override
         public void run() {
           clearDiffPresentation();
-          if (equal) myPanel.addContentsEqualNotification();
+          if (equal) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
         }
       };
     }
@@ -323,7 +325,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
+          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
         }
       };
     }
@@ -333,7 +335,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
+          myPanel.addNotification(DiffNotifications.ERROR);
         }
       };
     }
@@ -357,7 +359,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getPreferredFocusedComponent();
+    return getCurrentEditor().getPreferredFocusedComponent();
   }
 
   @NotNull
@@ -375,8 +377,9 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     return myEditor1;
   }
 
-  @Nullable
+  @NotNull
   FileEditor getCurrentEditor() {
+    //noinspection ConstantConditions
     return getCurrentSide().select(myEditor1, myEditor2);
   }
 
@@ -393,13 +396,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {
-    ContentDiffRequest request = getRequest();
-    FileEditor editor = getCurrentEditor();
-    if (editor == null) return null;
-
-    DiffContent content = getCurrentSide().selectNotNull(request.getContents());
-
-    return content.getOpenFileDescriptor();
+    return getCurrentSide().selectNotNull(getRequest().getContents()).getOpenFileDescriptor();
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {

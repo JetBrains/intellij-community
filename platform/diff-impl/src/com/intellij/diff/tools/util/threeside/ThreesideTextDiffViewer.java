@@ -24,6 +24,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
@@ -64,7 +65,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull private final EditorFactory myEditorFactory = EditorFactory.getInstance();
 
-  @NotNull protected final ThreesideTextDiffPanel myPanel;
+  @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final ThreesideTextContentPanel myContentPanel;
 
   @NotNull protected final List<EditorEx> myEditors;
@@ -100,7 +101,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
     myContentPanel = new ThreesideTextContentPanel(myEditors, titlePanel);
 
-    myPanel = new ThreesideTextDiffPanel(this, myContentPanel, this, context);
+    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
 
     //new MyFocusOppositePaneAction().setupAction(myPanel, this); // TODO
@@ -237,7 +238,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getPreferredFocusedComponent();
+    return getCurrentEditor().getContentComponent();
   }
 
   @NotNull

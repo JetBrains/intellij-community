@@ -20,20 +20,19 @@ import com.intellij.diff.tools.util.base.DiffPanelBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class EditorsDiffPanelBase extends DiffPanelBase {
+public class SimpleDiffPanel extends DiffPanelBase {
   private static final String GOOD_CONTENT = "GoodContent";
   private static final String ERROR_CONTENT = "ErrorContent";
 
   @NotNull private final JComponent myEditorsPanel;
 
-  public EditorsDiffPanelBase(@NotNull JComponent editorPanel,
-                              @NotNull DataProvider dataProvider,
-                              @NotNull DiffContext context) {
+  public SimpleDiffPanel(@NotNull JComponent editorPanel,
+                         @NotNull DataProvider dataProvider,
+                         @NotNull DiffContext context) {
     super(context.getProject(), dataProvider, context);
     myEditorsPanel = editorPanel;
 
@@ -63,17 +62,7 @@ public abstract class EditorsDiffPanelBase extends DiffPanelBase {
   // Misc
   //
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
-    if (myCurrentCard != GOOD_CONTENT) return null;
-
-    return getCurrentEditor();
+  public boolean isGoodContent() {
+    return myCurrentCard == GOOD_CONTENT;
   }
-
-  //
-  // Abstract
-  //
-
-  @Nullable
-  protected abstract JComponent getCurrentEditor();
 }

@@ -202,7 +202,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addTooBigContentNotification();
+          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
         }
       };
     }
@@ -211,7 +211,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
+          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
         }
       };
     }
@@ -221,7 +221,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
+          myPanel.addNotification(DiffNotifications.ERROR);
         }
       };
     }
