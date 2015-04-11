@@ -93,10 +93,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
   private FileHistoryPanelImpl ensureHistoryPanelCreated() {
     if (myFileHistoryPanel == null) {
-      ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-      final VcsHistorySession copy = mySession.copyWithCachedRevision();
-      myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                    contentManager, myRefresherI);
+      myFileHistoryPanel = createFileHistoryPanel(mySession.copyWithCachedRevision());
     }
     return myFileHistoryPanel;
   }
@@ -104,13 +101,18 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private FileHistoryPanelImpl resetHistoryPanel() {
     final VcsHistorySession copy = mySession.copyWithCachedRevision();
     if (myFileHistoryPanel == null) {
-      ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-      myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
-                                                    contentManager, myRefresherI);
-    } else {
+      myFileHistoryPanel = createFileHistoryPanel(copy);
+    }
+    else {
       myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
     }
     return myFileHistoryPanel;
+  }
+
+  @NotNull
+  private FileHistoryPanelImpl createFileHistoryPanel(@NotNull VcsHistorySession copy) {
+    ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
+    return new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider, contentManager, myRefresherI);
   }
 
   public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
