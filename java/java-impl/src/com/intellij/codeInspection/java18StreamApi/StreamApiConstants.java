@@ -33,6 +33,10 @@ public interface StreamApiConstants {
   String ALL_MATCH = "allMatch";
   String MAP = "map";
   String FILTER = "filter";
+  String FOR_EACH = "forEach";
+  String FIND_FIRST = "findFirst";
+  String LIMIT = "limit";
+  String FLAT_MAP = "flatMap";
 
   String FAKE_FIND_MATCHED = "#findMatched";
   String FAKE_FIND_MATCHED_PATTERN = "filter(%s).findFirst().get()";
@@ -43,7 +47,7 @@ public interface StreamApiConstants {
     @NotNull
     @Override
     protected Set<String> compute() {
-      return ContainerUtil.newHashSet(MAP, FILTER);
+      return ContainerUtil.newLinkedHashSet(MAP, FILTER, FOR_EACH, ANY_MATCH, ALL_MATCH, FIND_FIRST, LIMIT, FLAT_MAP);
     }
   };
 
@@ -56,4 +60,7 @@ public interface StreamApiConstants {
       return map;
     }
   };
+
+  String SKIP = "skip";
+  String TO_ARRAY = "toArray";
 }
