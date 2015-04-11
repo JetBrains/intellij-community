@@ -69,7 +69,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     // skip processing during index rebuild
     final Project project = element.getProject();
-    if (DumbService.getInstance(project).isDumb()) {
+    if (DumbService.isDumb(project)) {
       return emptyResult;
     }
     // skip processing if plugin is disabled
@@ -119,6 +119,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   @Nullable
   protected PsiType inferType(PsiTypeElement typeElement) {
+    if (null == typeElement || DumbService.isDumb(typeElement.getProject())) {
+      return null;
+    }
     return valProcessor.inferType(typeElement);
   }
 
