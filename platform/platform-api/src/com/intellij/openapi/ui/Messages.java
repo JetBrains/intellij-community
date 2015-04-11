@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1706,6 +1706,7 @@ public class Messages {
       super(project, message, title, options, defaultOption, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
+      enableOkAction();
     }
 
     public InputDialog(@Nullable Project project,
@@ -1726,6 +1727,7 @@ public class Messages {
       super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
+      enableOkAction();
     }
 
     public InputDialog(String message,
@@ -1736,6 +1738,11 @@ public class Messages {
       super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
+      enableOkAction();
+    }
+
+    private void enableOkAction() {
+      getOKAction().setEnabled(myValidator == null || myValidator.checkInput(myField.getText().trim()));
     }
 
     @NotNull
