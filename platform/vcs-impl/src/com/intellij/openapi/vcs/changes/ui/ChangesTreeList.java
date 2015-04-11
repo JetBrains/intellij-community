@@ -928,6 +928,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     });
     myTree.setSelectionPaths(treeSelection.toArray(new TreePath[treeSelection.size()]));
+    if (treeSelection.size() == 1) myTree.scrollPathToVisible(treeSelection.get(0));
 
     // list
     final ListModel model = myList.getModel();
@@ -941,6 +942,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     }
     myList.setSelectedIndices(int2int(listSelection));
+    if (listSelection.size() == 1) myList.ensureIndexIsVisible(listSelection.get(0));
   }
 
   private static int[] int2int(List<Integer> treeSelection) {
