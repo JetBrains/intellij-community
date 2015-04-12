@@ -27,18 +27,20 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -51,6 +53,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.util.Comparator;
@@ -91,7 +96,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
           showDefineRemoteDialog();
         }
         else {
-          showRemoteSelector(event);
+          Component eventComponent = event.getComponent();
+          if (eventComponent != null) {
+            showRemoteSelector(eventComponent, event.getPoint());
+          }
         }
       }
     });
@@ -107,6 +115,21 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     add(myTargetEditor, BorderLayout.CENTER);
 
     updateComponents(defaultTarget);
+
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicyProvider(true);
+    myRemoteRenderer.setFocusable(true);
+    myTargetEditor.setFocusable(true);
+    setFocusTraversalPolicy(new MyGitTargetFocusTraversalPolicy());
+    myRemoteRenderer.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        // show in edit mode only
+        if (myTargetEditor.isShowing()) {
+          showRemoteSelector(myRemoteRenderer, new Point(myRemoteRenderer.getLocation()));
+        }
+      }
+    });
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -205,23 +228,33 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     });
   }
 
-  private void showRemoteSelector(@NotNull MouseEvent event) {
+  private void showRemoteSelector(@NotNull Component component, @NotNull Point point) {
     final List<String> remotes = getRemotes();
     if (remotes.size() <= 1) {
       return;
     }
-
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(null, remotes) {
+    ListPopup popup = new ListPopupImpl(new BaseListPopupStep<String>(null, remotes) {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         myRemoteRenderer.updateLinkText(selectedValue);
-        if (myFireOnChangeAction != null) {
+        if (myFireOnChangeAction != null && !myTargetEditor.isShowing()) {
+          //fireOnChange only when editing completed
           myFireOnChangeAction.run();
         }
         return super.onChosen(selectedValue, finalChoice);
       }
-    });
-    popup.show(new RelativePoint(event));
+    }) {
+      @Override
+      public void cancel(InputEvent e) {
+        super.cancel(e);
+        if (myTargetEditor.isShowing()) {
+          //repaint and force move focus to target editor component
+          GitPushTargetPanel.this.repaint();
+          IdeFocusManager.getInstance(myProject).requestFocus(myTargetEditor, true);
+        }
+      }
+    };
+    popup.show(new RelativePoint(component, point));
   }
 
   @NotNull
@@ -370,6 +403,30 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     //if targetEditor is now editing by user, it shouldn't be force updated
     if (!myTargetEditor.isShowing()) {
       myTargetEditor.setText(forcedText);
+    }
+  }
+
+  private class MyGitTargetFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull
+    @Override
+    protected List<Component> getOrderedComponents() {
+      return ContainerUtil.<Component>newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
+    }
+
+    @Override
+    public Component getComponentAfter(Container aContainer, Component aComponent) {
+      if (getRemotes().size() > 1) {
+        return super.getComponentAfter(aContainer, aComponent);
+      }
+      return aComponent;
+    }
+
+    @Override
+    public Component getComponentBefore(Container aContainer, Component aComponent) {
+      if (getRemotes().size() > 1) {
+        return super.getComponentBefore(aContainer, aComponent);
+      }
+      return aComponent;
     }
   }
 }
