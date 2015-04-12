@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.console;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -55,18 +56,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
-import static com.intellij.openapi.module.ModuleUtilCore.KEY_MODULE;
-
 public class GroovyConsole {
 
   public static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
-  public static final Key<String> MODULE_NAME = Key.create("Groovy console module name");
-  public static final Key<String> GROOVY_CONSOLE_TITLE = new Key<String>("Groovy console title");
 
   private static final Logger LOG = Logger.getInstance(GroovyConsole.class);
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private static final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
-
 
   private final Project myProject;
   private final RunContentDescriptor myContentDescriptor;
@@ -111,7 +107,7 @@ public class GroovyConsole {
 
   public static void createConsole(@NotNull final Project project,
                                    @NotNull final VirtualFile contentFile,
-                                   @Nullable final Consumer<GroovyConsole> callback) {
+                                   @NotNull final Consumer<GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) return;
 
@@ -119,13 +115,13 @@ public class GroovyConsole {
       @Override
       public void consume(Module module) {
         final GroovyConsole console = createConsole(project, contentFile, module);
-        if (callback != null && console != null) {
+        if (console != null) {
           callback.consume(console);
         }
       }
     };
 
-    final Module module = contentFile.getUserData(KEY_MODULE);
+    final Module module = GroovyProjectConsole.getInstance(project).getSelectedModule(contentFile);
     if (module != null) {
       initializer.consume(module);
     }
@@ -134,6 +130,7 @@ public class GroovyConsole {
     }
   }
 
+  @Nullable
   public static GroovyConsole createConsole(@NotNull Project project, @NotNull final VirtualFile contentFile, @NotNull Module module) {
     final ProcessHandler processHandler = createProcessHandler(module);
     if (processHandler == null) return null;
@@ -141,43 +138,36 @@ public class GroovyConsole {
     final String title = GroovyConsoleUtil.getTitle(module);
     final ConsoleViewImpl consoleView = new ConsoleViewImpl(project, true);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
+    final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
 
-    try {
-      final CloseAction closeAction = new CloseAction(defaultExecutor, descriptor, project);
-      consoleView.addCustomConsoleAction(closeAction);
+    final CloseAction closeAction = new CloseAction(defaultExecutor, descriptor, project);
+    consoleView.addCustomConsoleAction(closeAction);
 
-      final JComponent consoleViewComponent = consoleView.getComponent();
-      final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
-        ActionPlaces.UNKNOWN,
-        new DefaultActionGroup(consoleView.createConsoleActions()),
-        false
-      );
-      toolbar.setTargetComponent(consoleViewComponent);
+    final JComponent consoleViewComponent = consoleView.getComponent();
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.UNKNOWN,
+      new DefaultActionGroup(consoleView.createConsoleActions()),
+      false
+    );
+    toolbar.setTargetComponent(consoleViewComponent);
 
-      final JComponent ui = descriptor.getComponent();
-      ui.add(consoleViewComponent, BorderLayout.CENTER);
-      ui.add(toolbar.getComponent(), BorderLayout.WEST);
+    final JComponent ui = descriptor.getComponent();
+    ui.add(consoleViewComponent, BorderLayout.CENTER);
+    ui.add(toolbar.getComponent(), BorderLayout.WEST);
 
-      final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
+    contentFile.putUserData(GROOVY_CONSOLE, console);
 
-      contentFile.putUserData(GROOVY_CONSOLE_TITLE, title);
-      contentFile.putUserData(GROOVY_CONSOLE, console);
-      contentFile.putUserData(KEY_MODULE, module);
-      contentFile.putUserData(MODULE_NAME, module.getName());
+    consoleView.attachToProcess(processHandler);
+    processHandler.startNotify();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        contentFile.putUserData(GROOVY_CONSOLE, null);
+      }
+    });
+    ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultExecutor, descriptor);
 
-      return console;
-    }
-    finally {
-      consoleView.attachToProcess(processHandler);
-      processHandler.startNotify();
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(ProcessEvent event) {
-          contentFile.putUserData(GROOVY_CONSOLE, null);
-        }
-      });
-      ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultExecutor, descriptor);
-    }
+    return console;
   }
 
   private static ProcessHandler createProcessHandler(Module module) {
@@ -188,8 +178,9 @@ public class GroovyConsole {
       SdkTypeId sdkType = sdk.getSdkType();
       assert sdkType instanceof JavaSdkType;
       final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
-      final Process process = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true).createProcess();
-      return new OSProcessHandler(process);
+      final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
+      final Process process = commandLine.createProcess();
+      return new OSProcessHandler(process, commandLine.getCommandLineString());
     }
     catch (ExecutionException e) {
       LOG.warn(e);

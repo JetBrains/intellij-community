@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
@@ -32,17 +34,26 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class ModuleChooserUtil {
-  
+
   private static final String GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen";
 
   public static void selectModule(@NotNull Project project,
                                   final Condition<Module> check,
                                   final Function<Module, String> versionProvider,
                                   final Consumer<Module> callback) {
+    selectModule(project, check, versionProvider, callback, null);
+  }
+
+  public static void selectModule(@NotNull Project project,
+                                  final Condition<Module> check,
+                                  final Function<Module, String> versionProvider,
+                                  final Consumer<Module> callback,
+                                  @Nullable DataContext context) {
     final List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 
@@ -69,7 +80,7 @@ public class ModuleChooserUtil {
         @Override
         public String getIndexedString(Module value) {
           return value.getName();
-        } 
+        }
 
         @Override
         public boolean isSpeedSearchEnabled() {
@@ -96,8 +107,13 @@ public class ModuleChooserUtil {
         step.setDefaultOptionIndex(defaultOption);
       }
     }
-
-    JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
+    final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
+    if (context == null) {
+      listPopup.showCenteredInCurrentWindow(project);
+    }
+    else {
+      listPopup.showInBestPositionFor(context);
+    }
   }
 
   public static List<Module> getGroovyCompatibleModules(Project project, Condition<Module> condition) {

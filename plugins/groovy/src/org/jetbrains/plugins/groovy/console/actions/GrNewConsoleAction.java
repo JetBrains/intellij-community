@@ -44,7 +44,7 @@ public class GrNewConsoleAction extends DumbAwareAction {
           ScratchFileService.Option.create_new_always
         );
         assert contentFile != null;
-        GroovyProjectConsole.getInstance(project).addProjectConsole(contentFile);
+        GroovyProjectConsole.getInstance(project).setFileModule(contentFile, module);
         GroovyConsole.createConsole(project, contentFile, module);
         FileEditorManager.getInstance(project).openFile(contentFile, true);
       }

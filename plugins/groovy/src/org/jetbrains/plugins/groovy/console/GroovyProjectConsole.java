@@ -16,77 +16,82 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 
 @State(
   name = "GroovyProjectConsole",
   storages = {
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/other.xml", scheme = StorageScheme.DIRECTORY_BASED),
-    @Storage(file = StoragePathMacros.PROJECT_FILE)
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyConsole.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class GroovyProjectConsole implements PersistentStateComponent<GroovyProjectConsole.State> {
+public class GroovyProjectConsole implements PersistentStateComponent<GroovyProjectConsole.MyState> {
 
-  public static class State {
-    @AbstractCollection(surroundWithTag = false, elementTag = "path")
-    public Collection<String> paths = ContainerUtil.newArrayList();
-
-    public State() {
-    }
-
-    public State(Collection<String> paths) {
-      this.paths = paths;
-    }
+  public static class MyState {
+    public Map<String, String> map = ContainerUtil.newHashMap();
   }
 
-  private final Set<VirtualFile> files = Collections.synchronizedSet(ContainerUtil.<VirtualFile>newHashSet());
+  private final ModuleManager myModuleManager;
+  private final VirtualFileManager myFileManager;
+  private final Map<VirtualFile, Module> myFileModuleMap = Collections.synchronizedMap(ContainerUtil.<VirtualFile, Module>newHashMap());
+
+
+  public GroovyProjectConsole(ModuleManager manager, VirtualFileManager fileManager) {
+    myModuleManager = manager;
+    myFileManager = fileManager;
+  }
 
   @NotNull
   @Override
-  public State getState() {
-    synchronized (files) {
-      return new State(
-        ContainerUtil.filter(ContainerUtil.map(files, new Function<VirtualFile, String>() {
-          @Override
-          public String fun(VirtualFile file) {
-            return file.getCanonicalPath();
-          }
-        }), Condition.NOT_NULL)
-      );
+  public MyState getState() {
+    synchronized (myFileModuleMap) {
+      final MyState result = new MyState();
+      for (VirtualFile file : myFileModuleMap.keySet()) {
+        final Module module = myFileModuleMap.get(file);
+        result.map.put(
+          file.getCanonicalPath(),
+          module == null ? "" : module.getName()
+        );
+      }
+      return result;
     }
   }
 
   @Override
-  public void loadState(State state) {
-    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    synchronized (files) {
-      files.clear();
-      ContainerUtil.addAllNotNull(files, ContainerUtil.map(state.paths, new Function<String, VirtualFile>() {
-        @Override
-        public VirtualFile fun(String path) {
-          return fileManager.findFileByUrl(path);
+  public void loadState(MyState state) {
+    synchronized (myFileModuleMap) {
+      myFileModuleMap.clear();
+      for (Map.Entry<String, String> entry : state.map.entrySet()) {
+        final VirtualFile file = myFileManager.findFileByUrl(entry.getKey());
+        final Module module = myModuleManager.findModuleByName(entry.getValue());
+        if (file != null) {
+          myFileModuleMap.put(file, module);
         }
-      }));
+      }
     }
   }
 
   public boolean isProjectConsole(@NotNull VirtualFile file) {
-    return files.contains(file);
+    return myFileModuleMap.keySet().contains(file);
   }
 
-  public void addProjectConsole(@NotNull VirtualFile file) {
-    files.add(file);
+  @Nullable
+  public Module getSelectedModule(@NotNull VirtualFile file) {
+    return myFileModuleMap.get(file);
+  }
+
+  public void setFileModule(@NotNull VirtualFile file, @NotNull Module module) {
+    myFileModuleMap.put(file, module);
   }
 
   @NotNull

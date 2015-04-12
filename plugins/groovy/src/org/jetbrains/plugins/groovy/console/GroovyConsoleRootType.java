@@ -23,8 +23,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -62,43 +60,24 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
   @Nullable
   @Override
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
-    return file.getUserData(GroovyConsole.GROOVY_CONSOLE_TITLE);
+    final Module module = GroovyProjectConsole.getInstance(project).getSelectedModule(file);
+    return module == null ? null : GroovyConsoleUtil.getTitle(module);
   }
 
   @Override
   public void fileOpened(@NotNull final VirtualFile file, @NotNull FileEditorManager source) {
     final Project project = source.getProject();
-
-    findConsoleModule(project, file);
+    final GroovyProjectConsole projectConsole = GroovyProjectConsole.getInstance(project);
 
     for (FileEditor fileEditor : source.getAllEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
       final Editor editor = ((TextEditor)fileEditor).getEditor();
-      buildEditorHeader(editor, file);
+      final JPanel panel = new EditorHeaderComponent();
+      final DefaultActionGroup actionGroup = new DefaultActionGroup(new GrSelectModuleAction(projectConsole, file));
+      final ActionToolbar menu = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
+      panel.add(menu.getComponent());
+      editor.setHeaderComponent(panel);
+      executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
     }
-  }
-
-  private static void buildEditorHeader(Editor editor, VirtualFile file) {
-    final ActionToolbar menu = ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.UNKNOWN,
-      new DefaultActionGroup(new GrSelectModuleAction(file)),
-      true
-    );
-
-    final JPanel panel = new EditorHeaderComponent();
-    panel.add(menu.getComponent());
-    editor.setHeaderComponent(panel);
-
-    executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
-  }
-
-  @Nullable
-  private static Module findConsoleModule(@NotNull Project project, @NotNull VirtualFile file) {
-    final String moduleName = file.getUserData(GroovyConsole.MODULE_NAME);
-    if (moduleName == null) return null;
-    final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
-    file.putUserData(GroovyConsole.MODULE_NAME, null);
-    file.putUserData(ModuleUtilCore.KEY_MODULE, module);
-    return module;
   }
 }

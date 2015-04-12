@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.console;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -37,7 +38,7 @@ public class GroovyConsoleUtil {
       return GroovyFacetUtil.isSuitableModule(module);
     }
   };
-  
+
   private static final Function<Module, String> MODULE_VERSION = new Function<Module, String>() {
     @Override
     public String fun(@NotNull Module module) {
@@ -52,7 +53,7 @@ public class GroovyConsoleUtil {
              : (bundled ? "Bundled " : "") + "Groovy " + version;
     }
   };
-  
+
   static boolean hasGroovyAll(Module module) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
@@ -64,6 +65,10 @@ public class GroovyConsoleUtil {
 
   public static void selectModuleAndRun(Project project, Consumer<Module> consumer) {
     ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, MODULE_VERSION, consumer);
+  }
+
+  public static void selectModuleAndRun(Project project, Consumer<Module> consumer, DataContext context) {
+    ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, MODULE_VERSION, consumer, context);
   }
 
   public static String getTitle(@NotNull Module module) {

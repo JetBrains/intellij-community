@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ResolveScopeProvider;
@@ -29,8 +28,8 @@ public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
   @Nullable
   @Override
   public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
-    if (!GroovyProjectConsole.getInstance(project).isProjectConsole(file)) return null;
-    final Module module = file.getUserData(ModuleUtilCore.KEY_MODULE);
+    final GroovyProjectConsole projectConsole = GroovyProjectConsole.getInstance(project);
+    final Module module = projectConsole.getSelectedModule(file);
     return module == null ? null : module.getModuleWithDependenciesAndLibrariesScope(false);
   }
 }

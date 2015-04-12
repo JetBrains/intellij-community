@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,27 +31,28 @@ import org.jetbrains.plugins.groovy.console.GroovyProjectConsole;
 
 public class GrSelectModuleAction extends DumbAwareAction {
 
+  private final GroovyProjectConsole myProjectConsole;
   private final VirtualFile myFile;
 
-  public GrSelectModuleAction(VirtualFile file) {
+  public GrSelectModuleAction(GroovyProjectConsole console, VirtualFile file) {
     super(null, "Which module to use classpath of?", AllIcons.Nodes.Module);
+    myProjectConsole = console;
     myFile = file;
   }
 
   @Override
   public boolean displayTextInToolbar() {
-    return true;
+    return super.displayTextInToolbar();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project == null || !GroovyProjectConsole.getInstance(project).isProjectConsole(myFile)) {
-      e.getPresentation().setEnabled(false);
+    if (myProjectConsole.isProjectConsole(myFile)) {
+      final Module module = myProjectConsole.getSelectedModule(myFile);
+      e.getPresentation().setText(getText(module));
     }
     else {
-      final Module module = myFile.getUserData(ModuleUtilCore.KEY_MODULE);
-      e.getPresentation().setText(getText(module));
+      e.getPresentation().setVisible(false);
     }
   }
 
@@ -68,16 +68,15 @@ public class GrSelectModuleAction extends DumbAwareAction {
     GroovyConsoleUtil.selectModuleAndRun(project, new Consumer<Module>() {
       @Override
       public void consume(Module module) {
-        if (module.equals(myFile.getUserData(ModuleUtilCore.KEY_MODULE))) return;
+        final Module existingModule = myProjectConsole.getSelectedModule(myFile);
+        if (module.equals(existingModule)) return;
         final GroovyConsole groovyConsole = myFile.getUserData(GroovyConsole.GROOVY_CONSOLE);
         if (groovyConsole == null || groovyConsole.stop()) {
-          myFile.putUserData(ModuleUtilCore.KEY_MODULE, module);
-          myFile.putUserData(GroovyConsole.MODULE_NAME, module.getName());
+          myProjectConsole.setFileModule(myFile, module);
           myFile.putUserData(GroovyConsole.GROOVY_CONSOLE, null);
-          myFile.putUserData(GroovyConsole.GROOVY_CONSOLE_TITLE, GroovyConsoleUtil.getTitle(module));
           ProjectView.getInstance(project).refresh();
         }
       }
-    });
+    }, e.getDataContext());
   }
 }
