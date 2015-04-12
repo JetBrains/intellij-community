@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.imgscalr.Scalr;
@@ -199,8 +200,33 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         return icon.getIcon();
       }
       try {
-        BufferedImage image = loadAndScaleImage(file);
-        icon = new MyIcon(new ImageIcon(image), timestamp);
+        final BufferedImage image = loadAndScaleImage(file);
+        Icon ico = new Icon() {
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            if (UIUtil.isRetina()) {
+              final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+              newG.scale(0.5, 0.5);
+              newG.drawImage(image, x/2, y/2, null);
+              newG.scale(1, 1);
+              newG.dispose();
+            }
+            else {
+              g.drawImage(image, x, y, null);
+            }
+          }
+
+          @Override
+          public int getIconWidth() {
+            return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+          }
+
+          @Override
+          public int getIconHeight() {
+            return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+          }
+        };
+        icon = new MyIcon(ico, timestamp);
         ourProjectIcons.put(path, icon);
         return icon.getIcon();
       }
@@ -214,7 +240,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private static BufferedImage loadAndScaleImage(File file) {
     try {
       Image img = ImageLoader.loadFromUrl(file.toURL());
-      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, JBUI.scale(16), null);
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16), null);
     }
     catch (MalformedURLException e) {
       e.printStackTrace();
