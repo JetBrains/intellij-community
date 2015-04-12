@@ -822,6 +822,20 @@ public class DiffUtil {
   // UserData
   //
 
+  public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key, @Nullable T value) {
+    UserDataHolderBase holder = new UserDataHolderBase();
+    holder.putUserData(key, value);
+    return holder;
+  }
+
+  public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key1, @Nullable T value1,
+                                                            @NotNull Key<T> key2, @Nullable T value2) {
+    UserDataHolderBase holder = new UserDataHolderBase();
+    holder.putUserData(key1, value1);
+    holder.putUserData(key2, value2);
+    return holder;
+  }
+
   public static boolean isUserDataFlagSet(@NotNull Key<Boolean> key, UserDataHolder... holders) {
     for (UserDataHolder holder : holders) {
       if (holder == null) continue;
