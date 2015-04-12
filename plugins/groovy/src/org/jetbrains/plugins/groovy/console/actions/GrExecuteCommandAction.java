@@ -15,19 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.console.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
 
-public class GrExecuteCommandAction extends DumbAwareAction {
+public class GrExecuteCommandAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {

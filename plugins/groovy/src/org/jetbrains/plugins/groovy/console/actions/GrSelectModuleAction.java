@@ -17,9 +17,9 @@ package org.jetbrains.plugins.groovy.console.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
 import org.jetbrains.plugins.groovy.console.GroovyProjectConsole;
 
-public class GrSelectModuleAction extends DumbAwareAction {
+public class GrSelectModuleAction extends AnAction {
 
   private final GroovyProjectConsole myProjectConsole;
   private final VirtualFile myFile;

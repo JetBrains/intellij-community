@@ -17,10 +17,10 @@ package org.jetbrains.plugins.groovy.console.actions;
 
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
 import org.jetbrains.plugins.groovy.console.GroovyProjectConsole;
 
-public class GrNewConsoleAction extends DumbAwareAction {
+public class GrNewConsoleAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
