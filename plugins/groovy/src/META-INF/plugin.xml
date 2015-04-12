@@ -1558,7 +1558,7 @@
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslActivationStatus"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.console.GroovyProjectConsole"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.console.GroovyConsoleStateService"/>
 
   </extensions>
 

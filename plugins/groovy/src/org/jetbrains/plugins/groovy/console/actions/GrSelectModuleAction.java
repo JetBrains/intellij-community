@@ -27,14 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
-import org.jetbrains.plugins.groovy.console.GroovyProjectConsole;
+import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService;
 
 public class GrSelectModuleAction extends AnAction {
 
-  private final GroovyProjectConsole myProjectConsole;
+  private final GroovyConsoleStateService myProjectConsole;
   private final VirtualFile myFile;
 
-  public GrSelectModuleAction(GroovyProjectConsole console, VirtualFile file) {
+  public GrSelectModuleAction(GroovyConsoleStateService console, VirtualFile file) {
     super(null, "Which module to use classpath of?", AllIcons.Nodes.Module);
     myProjectConsole = console;
     myFile = file;

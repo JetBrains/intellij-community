@@ -31,13 +31,13 @@ import java.util.Collections;
 import java.util.Map;
 
 @State(
-  name = "GroovyProjectConsole",
+  name = "GroovyConsoleState",
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyConsole.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class GroovyProjectConsole implements PersistentStateComponent<GroovyProjectConsole.MyState> {
+public class GroovyConsoleStateService implements PersistentStateComponent<GroovyConsoleStateService.MyState> {
 
   public static class Entry {
     public String url;
@@ -54,7 +54,7 @@ public class GroovyProjectConsole implements PersistentStateComponent<GroovyProj
   private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap =
     Collections.synchronizedMap(ContainerUtil.<VirtualFile, Pair<Module, String>>newHashMap());
 
-  public GroovyProjectConsole(ModuleManager manager, VirtualFileManager fileManager) {
+  public GroovyConsoleStateService(ModuleManager manager, VirtualFileManager fileManager) {
     myModuleManager = manager;
     myFileManager = fileManager;
   }
@@ -112,7 +112,7 @@ public class GroovyProjectConsole implements PersistentStateComponent<GroovyProj
   }
 
   @NotNull
-  public static GroovyProjectConsole getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GroovyProjectConsole.class);
+  public static GroovyConsoleStateService getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, GroovyConsoleStateService.class);
   }
 }

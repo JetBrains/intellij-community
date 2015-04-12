@@ -53,19 +53,19 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
 
   @Override
   public boolean isIgnored(@NotNull Project project, @NotNull VirtualFile element) {
-    return !GroovyProjectConsole.getInstance(project).isProjectConsole(element);
+    return !GroovyConsoleStateService.getInstance(project).isProjectConsole(element);
   }
 
   @Nullable
   @Override
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
-    return GroovyProjectConsole.getInstance(project).getSelectedModuleTitle(file);
+    return GroovyConsoleStateService.getInstance(project).getSelectedModuleTitle(file);
   }
 
   @Override
   public void fileOpened(@NotNull final VirtualFile file, @NotNull FileEditorManager source) {
     final Project project = source.getProject();
-    final GroovyProjectConsole projectConsole = GroovyProjectConsole.getInstance(project);
+    final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
 
     for (FileEditor fileEditor : source.getAllEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;

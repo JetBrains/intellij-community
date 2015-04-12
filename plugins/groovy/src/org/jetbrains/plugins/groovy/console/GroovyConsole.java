@@ -121,7 +121,7 @@ public class GroovyConsole {
       }
     };
 
-    final Module module = GroovyProjectConsole.getInstance(project).getSelectedModule(contentFile);
+    final Module module = GroovyConsoleStateService.getInstance(project).getSelectedModule(contentFile);
     if (module != null) {
       initializer.consume(module);
     }
