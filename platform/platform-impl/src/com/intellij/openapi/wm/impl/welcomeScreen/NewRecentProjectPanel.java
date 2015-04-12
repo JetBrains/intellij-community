@@ -168,7 +168,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       JComponent spacer = new NonOpaquePanel() {
         @Override
         public Dimension getPreferredSize() {
-          return new Dimension(JBUI.scale(15), super.getPreferredSize().height);
+          return new Dimension(JBUI.scale(22), super.getPreferredSize().height);
         }
       };
 
@@ -209,7 +209,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             }
             if (isGroup) {
               final ProjectGroup group = ((ProjectGroupActionGroup)value).getGroup();
-              name.setText(group.getName());
+              name.setText(" " + group.getName());
               name.setIcon(AllIcons.Nodes.Folder);
               name.setFont(name.getFont().deriveFont(Font.BOLD));
               add(name);
@@ -221,12 +221,13 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
               Icon icon = RecentProjectsManagerBase.getProjectOrAppIcon(((ReopenProjectAction)value).getProjectPath());
-              final JLabel projectIcon = new JLabel(" ", icon, SwingConstants.LEFT) {
+              final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {
                   getIcon().paintIcon(this, g, 0, (getHeight() - getIcon().getIconHeight()) / 2);
                 }
               };
+              projectIcon.setBorder(JBUI.Borders.emptyRight(8));
               projectIcon.setVerticalAlignment(SwingConstants.CENTER);
               final NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
               panel.add(p);
