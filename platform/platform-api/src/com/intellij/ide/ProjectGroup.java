@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -66,7 +67,7 @@ public class ProjectGroup {
   }
 
   public List<String> getProjects() {
-    return new ArrayList<String>(StringUtil.split(myProjectPaths, File.pathSeparator));
+    return new ArrayList<String>(new HashSet<String>(StringUtil.split(myProjectPaths, File.pathSeparator)));
   }
 
   public void removeProject(String path) {
