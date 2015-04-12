@@ -206,15 +206,16 @@ class TeamcityTestResult(TestResult):
 
 
   def addSubTest(self, test, subtest, err):
+    location = self.init_suite(test)
     suite_name = self.getTestName(test)  # + " (subTests)"
     if not self.subtest_suite:
       self.subtest_suite = suite_name
-      self.messages.testSuiteStarted(self.subtest_suite)
+      self.messages.testSuiteStarted(self.subtest_suite, location=location)
     else:
       if suite_name != self.subtest_suite:
         self.messages.testSuiteFinished(self.subtest_suite)
         self.subtest_suite = suite_name
-        self.messages.testSuiteStarted(self.subtest_suite)
+        self.messages.testSuiteStarted(self.subtest_suite, location=location)
 
     name = self.getTestName(subtest, True)
     if err is not None:
