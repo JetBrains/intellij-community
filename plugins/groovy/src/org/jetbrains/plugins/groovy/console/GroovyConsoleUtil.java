@@ -23,7 +23,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
@@ -71,7 +73,8 @@ public class GroovyConsoleUtil {
     ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, MODULE_VERSION, consumer, context);
   }
 
-  public static String getTitle(@NotNull Module module) {
-    return String.format("%s (%s)", module.getName(), MODULE_VERSION.fun(module));
+  @Contract("null -> null; !null -> !null")
+  public static String getTitle(@Nullable Module module) {
+    return module == null ? null : String.format("%s (%s)", module.getName(), MODULE_VERSION.fun(module));
   }
 }

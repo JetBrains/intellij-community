@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +59,7 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
   @Nullable
   @Override
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
-    final Module module = GroovyProjectConsole.getInstance(project).getSelectedModule(file);
-    return module == null ? null : GroovyConsoleUtil.getTitle(module);
+    return GroovyProjectConsole.getInstance(project).getSelectedModuleTitle(file);
   }
 
   @Override

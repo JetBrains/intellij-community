@@ -19,12 +19,14 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -37,14 +39,20 @@ import java.util.Map;
 )
 public class GroovyProjectConsole implements PersistentStateComponent<GroovyProjectConsole.MyState> {
 
+  public static class Entry {
+    public String url;
+    public String moduleName;
+    public String title;
+  }
+
   public static class MyState {
-    public Map<String, String> map = ContainerUtil.newHashMap();
+    public Collection<Entry> list = ContainerUtil.newArrayList();
   }
 
   private final ModuleManager myModuleManager;
   private final VirtualFileManager myFileManager;
-  private final Map<VirtualFile, Module> myFileModuleMap = Collections.synchronizedMap(ContainerUtil.<VirtualFile, Module>newHashMap());
-
+  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap =
+    Collections.synchronizedMap(ContainerUtil.<VirtualFile, Pair<Module, String>>newHashMap());
 
   public GroovyProjectConsole(ModuleManager manager, VirtualFileManager fileManager) {
     myModuleManager = manager;
@@ -57,11 +65,13 @@ public class GroovyProjectConsole implements PersistentStateComponent<GroovyProj
     synchronized (myFileModuleMap) {
       final MyState result = new MyState();
       for (VirtualFile file : myFileModuleMap.keySet()) {
-        final Module module = myFileModuleMap.get(file);
-        result.map.put(
-          file.getCanonicalPath(),
-          module == null ? "" : module.getName()
-        );
+        final Pair<Module, String> pair = myFileModuleMap.get(file);
+        final Module module = pair == null ? null : pair.first;
+        final Entry e = new Entry();
+        e.url = file.getUrl();
+        e.moduleName = module == null ? "" : module.getName();
+        e.title = module == null ? "" : GroovyConsoleUtil.getTitle(module);
+        result.list.add(e);
       }
       return result;
     }
@@ -71,11 +81,11 @@ public class GroovyProjectConsole implements PersistentStateComponent<GroovyProj
   public void loadState(MyState state) {
     synchronized (myFileModuleMap) {
       myFileModuleMap.clear();
-      for (Map.Entry<String, String> entry : state.map.entrySet()) {
-        final VirtualFile file = myFileManager.findFileByUrl(entry.getKey());
-        final Module module = myModuleManager.findModuleByName(entry.getValue());
+      for (Entry entry : state.list) {
+        final VirtualFile file = myFileManager.findFileByUrl(entry.url);
+        final Module module = myModuleManager.findModuleByName(entry.moduleName);
         if (file != null) {
-          myFileModuleMap.put(file, module);
+          myFileModuleMap.put(file, Pair.create(module, entry.title));
         }
       }
     }
@@ -87,11 +97,18 @@ public class GroovyProjectConsole implements PersistentStateComponent<GroovyProj
 
   @Nullable
   public Module getSelectedModule(@NotNull VirtualFile file) {
-    return myFileModuleMap.get(file);
+    final Pair<Module, String> pair = myFileModuleMap.get(file);
+    return pair == null ? null : pair.first;
+  }
+
+  @Nullable
+  public String getSelectedModuleTitle(@NotNull VirtualFile file) {
+    final Pair<Module, String> pair = myFileModuleMap.get(file);
+    return pair == null ? null : pair.second;
   }
 
   public void setFileModule(@NotNull VirtualFile file, @NotNull Module module) {
-    myFileModuleMap.put(file, module);
+    myFileModuleMap.put(file, Pair.create(module, GroovyConsoleUtil.getTitle(module)));
   }
 
   @NotNull
