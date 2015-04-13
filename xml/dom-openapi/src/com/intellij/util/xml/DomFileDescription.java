@@ -161,8 +161,11 @@ public class DomFileDescription<T> {
 
   /**
    * The right place to call
-   * {@link #registerNamespacePolicy(String, String...)}
-   * and {@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}.
+   * <ul>
+   * <li>{@link #registerNamespacePolicy(String, String...)}</li>
+   * <li>{@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}</li>
+   * <li>{@link #registerReferenceInjector(DomReferenceInjector)}</li>
+   * </ul>
    */
   protected void initializeFileDescription() {}
 
