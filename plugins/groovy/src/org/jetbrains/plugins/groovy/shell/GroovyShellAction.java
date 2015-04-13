@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.shell;
 
-import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-
-/**
- * @author peter
- */
 public class GroovyShellAction extends GroovyShellActionBase {
 
   public GroovyShellAction() {
-    super(new MyHandler());
-  }
-
-  private static class MyHandler extends GroovyShellHandler {
-
-    @Override
-    public boolean isSuitableModule(Module module) {
-      return super.isSuitableModule(module) && DefaultGroovyShellRunner.hasGroovyWithNeededJars(module);
-    }
-
-    @Override
-    public GroovyShellRunner getRunner(Module module) {
-      return new DefaultGroovyShellRunner();
-    }
-
-    @Override
-    public String getTitle() {
-      return "Groovy Shell";
-    }
-
-    @Override
-    protected LanguageConsoleView createConsole(Project project, String title) {
-      return new GroovyLanguageConsoleView.Shell(project, title);
-    }
+    super(new DefaultGroovyShellRunner());
   }
 }

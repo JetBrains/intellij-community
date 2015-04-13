@@ -74,7 +74,7 @@ public class ModuleChooserUtil {
         @NotNull
         @Override
         public String getTextFor(Module value) {
-          return value.getName() + versions.get(value);
+          return String.format("%s (%s)", value.getName(), versions.get(value));
         }
 
         @Override

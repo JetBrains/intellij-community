@@ -26,43 +26,42 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.console.BuildAndRestartConsoleAction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.shell.GroovyShellHandler;
-import org.jetbrains.plugins.groovy.shell.GroovyShellRunner;
 
 import java.util.List;
 
-public class GroovyConsoleRunnerImpl extends AbstractConsoleRunnerWithHistory<LanguageConsoleView> {
+public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<LanguageConsoleView> {
 
+  private static final Logger LOG = Logger.getInstance(GroovyShellRunnerImpl.class);
   public static final Key<Boolean> GROOVY_SHELL_FILE = Key.create("GROOVY_SHELL_FILE");
   public static final String GROOVY_SHELL_EXECUTE = "Groovy.Shell.Execute";
 
-  private final GroovyShellHandler myHandler;
-  private final GroovyShellRunner myShellRunner;
+  private final GroovyShellConfig myShellRunner;
   private final Module myModule;
   private final Consumer<Module> myStarter = new Consumer<Module>() {
     @Override
     public void consume(Module module) {
-      myHandler.doRunShell(module);
+      doRunShell(myShellRunner, module);
     }
   };
 
-  public GroovyConsoleRunnerImpl(@NotNull String consoleTitle,
-                                 GroovyShellHandler handler, @NotNull GroovyShellRunner shellRunner,
-                                 @NotNull Module module) {
+  public GroovyShellRunnerImpl(@NotNull String consoleTitle,
+                               @NotNull GroovyShellConfig shellRunner,
+                               @NotNull Module module) {
     super(module.getProject(), consoleTitle, shellRunner.getWorkingDirectory(module));
-    myHandler = handler;
     myShellRunner = shellRunner;
     myModule = module;
   }
@@ -82,8 +81,8 @@ public class GroovyConsoleRunnerImpl extends AbstractConsoleRunnerWithHistory<La
 
   @Override
   protected LanguageConsoleView createConsoleView() {
-    final LanguageConsoleView res = myHandler.createConsole(getProject(), getConsoleTitle());
-    GroovyFileImpl file = (GroovyFileImpl)res.getFile();
+    final LanguageConsoleView res = new GroovyShellLanguageConsoleView(getProject(), getConsoleTitle());
+    final GroovyFileImpl file = (GroovyFileImpl)res.getFile();
     assert file.getContext() == null;
     file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
     file.setContext(myShellRunner.getContext(myModule));
@@ -113,16 +112,21 @@ public class GroovyConsoleRunnerImpl extends AbstractConsoleRunnerWithHistory<La
   protected ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler() {
     ProcessBackedConsoleExecuteActionHandler handler = new ProcessBackedConsoleExecuteActionHandler(getProcessHandler(), false) {
       @Override
-      public void processLine(@NotNull String line) {
-        super.processLine(myShellRunner.transformUserInput(line));
-      }
-
-      @Override
       public String getEmptyExecuteAction() {
         return GROOVY_SHELL_EXECUTE;
       }
     };
     new ConsoleHistoryController(getConsoleTitle(), null, getConsoleView()).install();
     return handler;
+  }
+
+  public static void doRunShell(final GroovyShellConfig config, final Module module) {
+    try {
+      new GroovyShellRunnerImpl(config.getTitle(), config, module).initAndRun();
+    }
+    catch (ExecutionException e) {
+      LOG.info(e);
+      Messages.showErrorDialog(module.getProject(), e.getMessage(), "Cannot Run " + config.getTitle());
+    }
   }
 }

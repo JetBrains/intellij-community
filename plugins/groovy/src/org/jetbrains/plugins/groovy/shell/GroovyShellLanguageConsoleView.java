@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-public abstract class GroovyLanguageConsoleView extends LanguageConsoleImpl {
+public class GroovyShellLanguageConsoleView extends LanguageConsoleImpl {
 
-  public GroovyLanguageConsoleView(Project project, String name) {
+  public GroovyShellLanguageConsoleView(Project project, String name) {
     super(project, name, GroovyLanguage.INSTANCE);
   }
 
@@ -49,10 +49,8 @@ public abstract class GroovyLanguageConsoleView extends LanguageConsoleImpl {
   @Override
   protected PsiFile createFile(@NotNull Project project,
                                @NotNull VirtualFile virtualFile) {
-    return new GroovyShellCodeFragment(project, (LightVirtualFile)virtualFile, isShell());
+    return new GroovyShellCodeFragment(project, (LightVirtualFile)virtualFile);
   }
-
-  protected abstract boolean isShell();
 
   protected void processCode() {
     for (GrTopStatement statement : getFile().getTopStatements()) {
@@ -72,6 +70,11 @@ public abstract class GroovyLanguageConsoleView extends LanguageConsoleImpl {
       else if (statement instanceof GrTypeDefinition) {
         getFile().addTypeDefinition(prepareTypeDefinition((GrTypeDefinition)statement));
       }
+    }
+
+    PsiType scriptType = getFile().getInferredScriptReturnType();
+    if (scriptType != null) {
+      getFile().addVariable("_", scriptType);
     }
   }
 
@@ -121,62 +124,41 @@ public abstract class GroovyLanguageConsoleView extends LanguageConsoleImpl {
     return buffer.toString();
   }
 
-  public static class Shell extends GroovyLanguageConsoleView {
+  @NotNull
+  @Override
+  protected String addToHistoryInner(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean erase, boolean preserveMarkup) {
+    final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
 
-    public Shell(Project project, String name) {
-      super(project, name);
+    if ("purge variables".equals(result.trim())) {
+      clearVariables();
+    }
+    else if ("purge classes".equals(result.trim())) {
+      clearClasses();
+    }
+    else if ("purge imports".equals(result.trim())) {
+      clearImports();
+    }
+    else if ("purge all".equals(result.trim())) {
+      clearVariables();
+      clearClasses();
+      clearImports();
+    }
+    else {
+      processCode();
     }
 
-    @Override
-    protected boolean isShell() {
-      return true;
-    }
+    return result;
+  }
 
-    @NotNull
-    @Override
-    protected String addToHistoryInner(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean erase, boolean preserveMarkup) {
-      final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
+  private void clearVariables() {
+    getFile().clearVariables();
+  }
 
-      if ("purge variables".equals(result.trim())) {
-        clearVariables();
-      }
-      else if ("purge classes".equals(result.trim())) {
-        clearClasses();
-      }
-      else if ("purge imports".equals(result.trim())) {
-        clearImports();
-      }
-      else if ("purge all".equals(result.trim())) {
-        clearVariables();
-        clearClasses();
-        clearImports();
-      }
-      else {
-        processCode();
-      }
+  private void clearClasses() {
+    getFile().clearClasses();
+  }
 
-      return result;
-    }
-
-    private void clearVariables() {
-      getFile().clearVariables();
-    }
-
-    private void clearClasses() {
-      getFile().clearClasses();
-    }
-
-    private void clearImports() {
-      getFile().clearImports();
-    }
-
-    @Override
-    protected void processCode() {
-      super.processCode();
-      PsiType scriptType = getFile().getInferredScriptReturnType();
-      if (scriptType != null) {
-        getFile().addVariable("_", scriptType);
-      }
-    }
+  private void clearImports() {
+    getFile().clearImports();
   }
 }

@@ -16,37 +16,35 @@
 package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 
-public abstract class GroovyShellHandler {
+public abstract class GroovyShellConfig {
 
-  private static final Logger LOG = Logger.getInstance(GroovyShellHandler.class);
+  @NotNull
+  public abstract String getWorkingDirectory(@NotNull Module module);
 
-  public void doRunShell(final Module module) {
-    final GroovyShellRunner shellRunner = getRunner(module);
-    if (shellRunner == null) return;
+  @NotNull
+  public abstract JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException;
 
-    try {
-      new GroovyConsoleRunnerImpl(getTitle(), this, shellRunner, module).initAndRun();
-    }
-    catch (ExecutionException e) {
-      LOG.info(e);
-      Messages.showErrorDialog(module.getProject(), e.getMessage(), "Cannot Run " + getTitle());
-    }
+
+  public abstract boolean canRun(@NotNull Module module);
+
+  @NotNull
+  public abstract String getVersion(@NotNull Module module);
+
+  @Nullable
+  public PsiElement getContext(@NotNull Module module) {
+    return null;
   }
 
   public boolean isSuitableModule(Module module) {
     return GroovyFacetUtil.isSuitableModule(module);
   }
 
-  public abstract GroovyShellRunner getRunner(Module module);
-
   public abstract String getTitle();
-
-  protected abstract LanguageConsoleView createConsole(Project project, String title);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,31 +27,31 @@ import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
 public abstract class GroovyShellActionBase extends AnAction {
 
-  private final GroovyShellHandler myHandler;
+  private final GroovyShellConfig myConfig;
 
   private final Condition<Module> APPLICABLE_MODULE = new Condition<Module>() {
     @Override
     public boolean value(Module module) {
-      return myHandler.isSuitableModule(module) && myHandler.getRunner(module) != null;
+      return myConfig.isSuitableModule(module);
     }
   };
 
-  private final Function<Module, String> TITLE_PROVIDER = new Function<Module, String>() {
+  private final Function<Module, String> VERSION_PROVIDER = new Function<Module, String>() {
     @Override
     public String fun(Module module) {
-      return myHandler.getRunner(module).getTitle(module);
+      return myConfig.getVersion(module);
     }
   };
 
   private final Consumer<Module> RUNNER = new Consumer<Module>() {
     @Override
     public void consume(final Module module) {
-      myHandler.doRunShell(module);
+      GroovyShellRunnerImpl.doRunShell(myConfig, module);
     }
   };
 
-  protected GroovyShellActionBase(GroovyShellHandler handler) {
-    myHandler = handler;
+  public GroovyShellActionBase(GroovyShellConfig runner) {
+    myConfig = runner;
   }
 
   @Override
@@ -68,6 +68,6 @@ public abstract class GroovyShellActionBase extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
-    ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, TITLE_PROVIDER, RUNNER);
+    ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, VERSION_PROVIDER, RUNNER);
   }
 }

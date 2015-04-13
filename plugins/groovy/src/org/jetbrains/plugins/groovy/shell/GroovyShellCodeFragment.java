@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,9 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
 
   private final Map<String, PsiVariable> myVariables = ContainerUtil.newHashMap();
   private final Map<String, GrTypeDefinition> myTypeDefinitions = ContainerUtil.newHashMap();
-  private final boolean myShell;
 
-  public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile, boolean isShell) {
+  public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile) {
     super(project, virtualFile);
-    myShell = isShell;
-  }
-
-  public boolean isShell() {
-    return myShell;
   }
 
   @Override
