@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
 public class GroovyConsoleUtil {
 
-  private static final Condition<Module> APPLICABLE_MODULE = new Condition<Module>() {
+  public static final Condition<Module> APPLICABLE_MODULE = new Condition<Module>() {
     @Override
     public boolean value(Module module) {
       return GroovyFacetUtil.isSuitableModule(module);

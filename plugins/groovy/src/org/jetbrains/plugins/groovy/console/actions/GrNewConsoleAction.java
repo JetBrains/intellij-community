@@ -23,29 +23,39 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType;
-import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
+import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
+
+import java.util.List;
+
+import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtil.APPLICABLE_MODULE;
 
 public class GrNewConsoleAction extends AnAction {
+
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(
+      project != null && !ModuleChooserUtil.getGroovyCompatibleModules(project, APPLICABLE_MODULE).isEmpty()
+    );
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
-    GroovyConsoleUtil.selectModuleAndRun(project, new Consumer<Module>() {
-      @Override
-      public void consume(Module module) {
-        final VirtualFile contentFile = ConsoleHistoryController.getContentFile(
-          GroovyConsoleRootType.getInstance(),
-          "groovy-console",
-          ScratchFileService.Option.create_new_always
-        );
-        assert contentFile != null;
-        GroovyConsole.createConsole(project, contentFile, module);
-        FileEditorManager.getInstance(project).openFile(contentFile, true);
-      }
-    });
+    final List<Module> modules = ModuleChooserUtil.getGroovyCompatibleModules(project, APPLICABLE_MODULE);
+    if (!modules.isEmpty()) {
+      final Module module = modules.get(0);
+      final VirtualFile contentFile = ConsoleHistoryController.getContentFile(
+        GroovyConsoleRootType.getInstance(),
+        "groovy-console",
+        ScratchFileService.Option.create_new_always
+      );
+      assert contentFile != null;
+      GroovyConsole.createConsole(project, contentFile, module);
+      FileEditorManager.getInstance(project).openFile(contentFile, true);
+    }
   }
 }
