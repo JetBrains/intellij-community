@@ -392,7 +392,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final TableLinkMouseListener listener = new TableLinkMouseListener();
     listener.installOn(myDualView.getFlatView());
     listener.installOn(myDualView.getTreeView());
-    myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
     createDualView();
     if (isStaticEmbedded) {
@@ -582,12 +582,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         return;
       }
     }
-    setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
+    setEmptyText(CommonBundle.getLoadingTreeNodeText());
   }
 
-  private void setEmptyText(String emptyText) {
-    myDualView.getFlatView().getEmptyText().setText(emptyText);
-    myDualView.getTreeView().getEmptyText().setText(emptyText);
+  private void setEmptyText(@NotNull String emptyText) {
+    myDualView.setEmptyText(emptyText);
   }
 
   protected void addActionsTo(DefaultActionGroup group) {
