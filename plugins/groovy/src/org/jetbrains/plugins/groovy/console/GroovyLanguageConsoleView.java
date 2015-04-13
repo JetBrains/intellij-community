@@ -122,42 +122,6 @@ public abstract class GroovyLanguageConsoleView extends LanguageConsoleImpl {
     return buffer.toString();
   }
 
-
-  public static class Console extends GroovyLanguageConsoleView {
-
-    public Console(Project project, String name) {
-      super(project, name);
-    }
-
-    @Override
-    protected boolean isShell() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    protected String addToHistoryInner(@NotNull TextRange textRange,
-                                       @NotNull EditorEx editor,
-                                       boolean erase,
-                                       boolean preserveMarkup) {
-      final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
-      processCode();
-      return result;
-    }
-
-    @NotNull
-    @Override
-    public String prepareExecuteAction(boolean addToHistory, boolean preserveMarkup, boolean clearInput) {
-      return super.prepareExecuteAction(addToHistory, preserveMarkup, clearInput);
-    }
-
-    @Override
-    public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
-      super.print(s, contentType);
-    }
-  }
-
-
   public static class Shell extends GroovyLanguageConsoleView {
 
     public Shell(Project project, String name) {
