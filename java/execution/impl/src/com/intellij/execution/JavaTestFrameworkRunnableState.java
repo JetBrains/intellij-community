@@ -21,7 +21,10 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.JavaTestLocationProvider;
+import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -114,13 +117,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = new Runnable() {
           public void run() {
-            final AbstractTestProxy viewerRoot = viewer.getRoot();
-            if (viewer.hasTestSuites() ||
-                !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), testConsoleProperties.isDebug())) {
-              TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewerRoot, testConsoleProperties, null);
-            }
-
-            viewerRoot.flush();
+            viewer.getRoot().flush();
             deleteTempFiles();
             clear();
           }

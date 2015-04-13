@@ -22,16 +22,17 @@ package com.intellij.execution.testframework;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.config.Storage;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public abstract class JavaAwareTestConsoleProperties extends SMTRunnerConsoleProperties {
+public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
     super(configuration, testFrameworkName, executor, false);
   }
@@ -40,6 +41,16 @@ public abstract class JavaAwareTestConsoleProperties extends SMTRunnerConsolePro
   public boolean isPaused() {
     final DebuggerSession debuggerSession = getDebugSession();
     return debuggerSession != null && debuggerSession.isPaused();
+  }
+
+  @Override
+  public T getConfiguration() {
+    return (T)super.getConfiguration();
+  }
+
+  @Override
+  public boolean fixEmptySuite() {
+    return ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), isDebug());
   }
 
   @Nullable

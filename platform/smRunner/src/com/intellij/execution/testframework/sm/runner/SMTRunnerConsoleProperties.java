@@ -161,4 +161,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
     return new OpenFileDescriptor(project, file, offset);
   }
+
+  public boolean fixEmptySuite() {
+    return false;
+  }
 }

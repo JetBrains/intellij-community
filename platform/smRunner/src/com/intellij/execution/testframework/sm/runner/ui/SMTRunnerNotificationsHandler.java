@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestStatusListener;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -83,6 +84,9 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
           type = MessageType.ERROR;
           break;
         } else if (testsRoot.isEmptySuite()) {
+          if (myConsoleProperties instanceof SMTRunnerConsoleProperties && ((SMTRunnerConsoleProperties)myConsoleProperties).fixEmptySuite()) {
+            return;
+          }
           msg = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.empty.test.suite");
           type = MessageType.WARNING;
           break;

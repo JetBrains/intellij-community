@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties {
+public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnitConfiguration> {
 
   private final JUnitConfiguration myConfiguration;
 
