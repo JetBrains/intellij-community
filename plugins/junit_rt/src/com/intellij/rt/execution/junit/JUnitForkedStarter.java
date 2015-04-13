@@ -216,6 +216,7 @@ public class JUnitForkedStarter {
                               String dynamicClasspath) throws IOException, InterruptedException {
     //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
+    tempFile.deleteOnExit();
     final String testOutputPath = tempFile.getAbsolutePath();
 
     final ProcessBuilder builder = new ProcessBuilder();
