@@ -80,10 +80,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private Map<PluginId, String> myOptionalConfigs;
   private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
   @Nullable private List<Element> myActionsElements;
-  private ComponentConfig[] myAppComponents = null;
-  private ComponentConfig[] myProjectComponents = null;
-  private ComponentConfig[] myModuleComponents = null;
-  private boolean myDeleted = false;
+  private ComponentConfig[] myAppComponents;
+  private ComponentConfig[] myProjectComponents;
+  private ComponentConfig[] myModuleComponents;
+  private boolean myDeleted;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
   @Nullable private MultiMap<String, Element> myExtensions;
@@ -97,7 +97,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String mySinceBuild;
   private String myUntilBuild;
   private Boolean mySkipped;
-  private List<String> myModules = null;
+  private List<String> myModules;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath) {
     myPath = pluginPath;
@@ -138,7 +138,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return result;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private static String createDescriptionKey(final PluginId id) {
     return "plugin." + id + ".description";
   }
@@ -190,7 +190,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  private void readExternal(@NotNull Element element) {
+  // used in upsource
+  protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
 
     url = pluginBean.url;
@@ -392,7 +393,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myExtensions;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   public List<File> getClassPath() {
     if (myPath.isDirectory()) {
@@ -627,7 +628,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalDescriptors;
   }
 
-  void setOptionalDescriptors(final Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors) {
+  void setOptionalDescriptors(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
 
