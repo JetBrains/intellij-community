@@ -240,19 +240,20 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Abstract
   //
 
-  @Nullable private ApplyData myApplyData;
+  @Nullable private ApplyData myQueuedApplyRequest;
 
   @CalledInAwt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     myIterationState = IterationState.NONE;
 
-    myApplyData = new ApplyData(request, force || (myApplyData != null && myApplyData.force), scrollToChangePolicy);
-    IdRunnable task = new IdRunnable(this) {
+    force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
+    myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
+    Runnable task = new Runnable() {
       @Override
       public void run() {
-        if (myApplyData == null || myDisposed) return;
-        doApplyRequest(myApplyData.request, myApplyData.force, myApplyData.scrollToChangePolicy);
-        myApplyData = null;
+        if (myQueuedApplyRequest == null || myDisposed) return;
+        doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
+        myQueuedApplyRequest = null;
       }
     };
 
