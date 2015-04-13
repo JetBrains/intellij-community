@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -71,11 +72,22 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public boolean checkInput(String inputString) {
+    boolean firstToken = true;
     for (String token : StringUtil.tokenize(inputString, myDelimiters)) {
       if (token.equals(".") || token.equals("..")) {
         myErrorText = "Can't create a directory with name '" + token + "'";
         return false;
       }
+      if (firstToken) {
+        final VirtualFile vFile = myDirectory.getVirtualFile();
+        final VirtualFile child = vFile.findChild(token);
+        if (child != null) {
+          myErrorText = "A " + (child.isDirectory() ? "directory" : "file") +
+                        " with name '" + token + "' already exists";
+          return false;
+        }
+      }
+      firstToken = false;
       if (FileTypeManager.getInstance().isFileIgnored(token)) {
         myErrorText = "Trying to create a " + (myIsDirectory ? "directory" : "package") +
                       " with an ignored name, the result will not be visible";

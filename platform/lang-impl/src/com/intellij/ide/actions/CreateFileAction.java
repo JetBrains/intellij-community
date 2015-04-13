@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -141,17 +142,28 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     @Override
     public boolean checkInput(String inputString) {
       final StringTokenizer tokenizer = new StringTokenizer(inputString, "\\/");
+      boolean firstToken = true;
       while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();
-        if (FileTypeManager.getInstance().isFileIgnored(getFileName(token))) {
-          myErrorText = "'" + token + "' is an ignored name (Settings | Editor | File Types | Ignore files and folders)";
-          return false;
-        }
         if (token.equals(".") || token.equals("..")) {
           myErrorText = tokenizer.hasMoreTokens()
                         ? "Can't create directory with name '" + token + "'"
                         : "Can't create file with name '" + token + "'";
           return false;
+        }
+        if (firstToken) {
+          final VirtualFile vFile = getDirectory().getVirtualFile();
+          final VirtualFile child = vFile.findChild(token);
+          if (child != null) {
+            myErrorText = "A " + (child.isDirectory() ? "directory" : "file") +
+                          " with name '" + token + "' already exists";
+            return false;
+          }
+        }
+        firstToken = false;
+        if (FileTypeManager.getInstance().isFileIgnored(getFileName(token))) {
+          myErrorText = "'" + token + "' is an ignored name (Settings | Editor | File Types | Ignore files and folders)";
+          return true;
         }
       }
       myErrorText = null;
