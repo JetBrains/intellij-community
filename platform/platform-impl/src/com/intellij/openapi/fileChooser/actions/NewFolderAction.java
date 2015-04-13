@@ -85,9 +85,13 @@ public class NewFolderAction extends FileChooserAction {
     public boolean checkInput(String inputString) {
       boolean firstToken = true;
       for (String token : StringUtil.tokenize(inputString, "\\/")) {
-        if (firstToken && myDirectory.findChild(token) != null) {
-          myErrorText = "A folder with name '" + token + "' already exists";
-          return false;
+        if (firstToken) {
+          final VirtualFile child = myDirectory.findChild(token);
+          if (child != null) {
+            myErrorText = "A " + (child.isDirectory() ? "folder" : "file") +
+                          " with name '" + token + "' already exists";
+            return false;
+          }
         }
         firstToken = false;
         if (token.equals(".") || token.equals("..")) {
